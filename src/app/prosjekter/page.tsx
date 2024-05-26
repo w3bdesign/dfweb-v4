@@ -4,6 +4,7 @@ import { groq } from "next-sanity";
 
 import type { Project } from "@/types/sanity.types";
 import ProsjekterListings from "@/components/Prosjekter/ProsjekterListings.component";
+import PageHeader from "@/components/UI/PageHeader.component";
 
 export default async function PostIndex() {
   const projectQuery = groq`
@@ -36,19 +37,27 @@ export default async function PostIndex() {
   return (
     <>
       <Header />
-      <h1>Page</h1>
-      <div>
-        {posts &&
-          posts.map((project: any) => (
-            <div key={project.id}>
-              <h1>{project.name}</h1>
-              <h2>{project.description}</h2>
-              <p>{project.subdescription}</p>
-              <a href={project.urlwww}>Website</a>
-              <a href={project.urlgithub}>GitHub</a>
-            </div>
-          ))}
-      </div>
+
+      <main
+        role="main"
+        aria-label="Innhold portefølje"
+        className="mt-32 bg-graybg"
+      >
+        <PageHeader>Prosjekter</PageHeader>
+        <div className="container mx-auto rounded"></div>
+        <div>
+          {posts &&
+            posts.map((project: any) => (
+              <div key={project.id}>
+                <h1>{project.name}</h1>
+                <h2>{project.description}</h2>
+                <p>{project.subdescription}</p>
+                <a href={project.urlwww}>Website</a>
+                <a href={project.urlgithub}>GitHub</a>
+              </div>
+            ))}
+        </div>
+      </main>
     </>
   );
 }
