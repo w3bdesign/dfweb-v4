@@ -15,8 +15,7 @@ export default async function PostIndex() {
 
   return (
     <>
-      <Header />
-      <h1>Page</h1>
+      <Header />    
       <div>Test</div>
     </>
   );

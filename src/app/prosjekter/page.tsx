@@ -38,7 +38,6 @@ export default async function PostIndex() {
   return (
     <>
       <Header />
-
       <main
         role="main"
         aria-label="Innhold portefølje"
