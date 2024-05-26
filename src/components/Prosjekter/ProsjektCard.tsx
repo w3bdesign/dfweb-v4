@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../UI/Button.component";
 
 interface ProjectProps {
   id: string;
@@ -29,26 +30,16 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <h1 className="text-xl text-center font-bold py-2">{name}</h1>
         <h2 className="text-md text-gray-600">{description}</h2>
         <p className="text-sm text-gray-500">{subdescription}</p>
-        <div className="flex justify-between mt-4">
+        <div className="flex justify-center mt-4">
           {urlwww && urlwww.length > 0 && (
-            <a
-              href={urlwww[0].url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
+            <Button href={urlwww[0].url} renderAs="a">
               Website
-            </a>
+            </Button>
           )}
           {urlgithub && urlgithub.length > 0 && (
-            <a
-              href={urlgithub[0].url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:underline"
-            >
+            <Button href={urlgithub[0].url} renderAs="a">
               GitHub
-            </a>
+            </Button>
           )}
         </div>
       </div>
