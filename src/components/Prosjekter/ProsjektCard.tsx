@@ -1,5 +1,7 @@
 import React from "react";
-import Button from "../UI/Button.component";
+import Image from "next/image";
+
+import Button from "@/components/UI/Button.component";
 
 interface ProjectProps {
   id: string;
@@ -21,11 +23,15 @@ const ProsjektCard: React.FC<ProjectProps> = ({
 }) => {
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <img
-        src={projectimage}
-        alt={name}
-        className="w-full h-48 object-cover p-4"
-      />
+      <div className="relative w-full h-48">
+        <Image
+          src={projectimage}
+          alt={name}
+          layout="fill"
+          objectFit="cover"
+          className="p-4"
+        />
+      </div>
       <div className="p-2">
         <h1 className="text-xl text-center font-bold py-2">{name}</h1>
         <h2 className="text-md text-gray-600">{description}</h2>
