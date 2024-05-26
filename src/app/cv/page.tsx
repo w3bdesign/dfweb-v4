@@ -4,6 +4,8 @@ import { groq } from "next-sanity";
 
 import type { Pagecontent } from "@/types/sanity.types";
 
+import CVContent from "@/components/CV/CVContent.component";
+
 export default async function PostIndex() {
   const pageContent = groq`
 *[_type == 'page']
@@ -17,7 +19,7 @@ export default async function PostIndex() {
     <>
       <Header />
       <h1>Page</h1>
-      <div>CV</div>
+      <div><CVContent /></div>
     </>
   );
 }
