@@ -5,6 +5,7 @@ import { groq } from "next-sanity";
 import type { Project } from "@/types/sanity.types";
 import ProsjekterListings from "@/components/Prosjekter/ProsjekterListings.component";
 import PageHeader from "@/components/UI/PageHeader.component";
+import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
 
 export default async function PostIndex() {
   const projectQuery = groq`
@@ -44,17 +45,19 @@ export default async function PostIndex() {
         className="mt-32 bg-graybg"
       >
         <PageHeader>Prosjekter</PageHeader>
-        <div className="container mx-auto rounded"></div>
-        <div>
+        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {posts &&
             posts.map((project: any) => (
-              <div key={project.id}>
-                <h1>{project.name}</h1>
-                <h2>{project.description}</h2>
-                <p>{project.subdescription}</p>
-                <a href={project.urlwww}>Website</a>
-                <a href={project.urlgithub}>GitHub</a>
-              </div>
+              <ProsjektCard
+                key={project.id}
+                id={project.id}
+                name={project.name}
+                description={project.description}
+                subdescription={project.subdescription}
+                projectimage={project.projectimage}
+                urlwww={project.urlwww}
+                urlgithub={project.urlgithub}
+              />
             ))}
         </div>
       </main>
