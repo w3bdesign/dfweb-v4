@@ -1,4 +1,5 @@
-import { client } from "@/utils/sanity/client";
+import Header from "@/components/header";
+import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
 export default async function PostIndex() {
@@ -10,5 +11,15 @@ export default async function PostIndex() {
 
   console.log(posts);
 
-  return posts.map((post: any) => <h1>{JSON.stringify(post)}</h1>);
+  return (
+    <>
+      <Header />
+      <h1>Page</h1>
+      <div>
+        {posts.map((post: any) => (
+          <h1 key={post._id}>{JSON.stringify(post)}</h1>
+        ))}
+      </div>
+    </>
+  );
 }
