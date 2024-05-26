@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/129bf1165c3a455fadb43ddf5f67e1bd)](https://www.codacy.com/gh/w3bdesign/dfweb-v3/dashboard)
+[![codecov](https://codecov.io/gh/w3bdesign/dfweb-v3/branch/master/graph/badge.svg?token=VML3KNGO0N)](https://codecov.io/gh/w3bdesign/dfweb-v3)
+[![Maintainability](https://api.codeclimate.com/v1/badges/33332dce96e1dedcf0b7/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v3/maintainability)
+[![CodeFactor](https://www.codefactor.io/repository/github/w3bdesign/dfweb-v3/badge)](https://www.codefactor.io/repository/github/w3bdesign/dfweb-v3)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=w3bdesign_dfweb-v3&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=w3bdesign_dfweb-v3)
 
-## Getting Started
+# Dfweb.no Portfolio Version 3
 
-First, run the development server:
+Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Live URL: <https://www.dfweb.no>
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> ## Frontend
+>
+> <img src="https://user-images.githubusercontent.com/45217974/160189236-fa986737-f5a2-42bf-9008-50c59c13a645.png" alt="Dfweb screenshot" />
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<br />
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+> ## Backend
+>
+> <img src="https://user-images.githubusercontent.com/45217974/163738342-3e8ecc1c-e0d0-4f1d-8fcf-cbbccc31a2d7.png" alt="Sanity backend" />
 
-## Learn More
+<br />
 
-To learn more about Next.js, take a look at the following resources:
+> ## Google Lighthouse
+>
+> <center><img src="https://user-images.githubusercontent.com/45217974/154784575-ec7c0df5-3724-4de0-b8ec-c0ee6ea42f6f.png" alt="Lighthouse score" /></center>
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### General
 
-## Deploy on Vercel
+- Next.js 14 with Typescript
+- Sanity.io for fetching project information and frontpage text
+- Storybook for component documentation
+- Chromatic for visual testing of Storybook components
+- Animations with Framer Motion
+- React testing library for unit testing
+- Cypress for E2E testing
+- Filter project display
+- Contact form with Email.js
+- Display CV with React-PDF
+- Polymorphic components
+- Automatic sitemap generation (see /api/siteMapGenerator.ts)
+- Google rich results for each individual page
+- 100% score in Google Lighthouse
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Design
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Fully responsive design tested on all devices
+- React Icons for project icons
+- Tailwind CSS for styling
+- Google fonts with Lato (optimized with @next/font for Next.js)
+- Animated reusable input fields
+
+### Accessibility
+
+- WCAG accessibility tested
+- Accessibility testing with Cypress Axe
+- Accessibility testing with Axe in Storybook for each component
+
+### Devops / Code quality
+
+- Continuous Integration with CircleCI
+- CircleCI will warn before deploy if tests fail (setup for React testing library, Cypress and Chromatic)
+- Code quality analysis with Codacy, Sonarcloud, LGTM and Codeclimate
+- E2E testing with Cypress integrated with CircleCI
+- E2E testing with Playwright integrated with Github actions
+- Unit testing with Jest and React Testing Library integrated with CircleCI
+- Test coverage setup with Codecov
+- 98% test coverage with Jest and React testing library
+
+## TODO
+
+- React Hook Form
