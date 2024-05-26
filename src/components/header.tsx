@@ -10,8 +10,33 @@ export default function Header() {
   const links = [
     {
       title: "Home",
-      name: "home",
-      hash: "#home",
+      name: "Hjem",
+      hash: "#hjem",
+      href: "/",
+    },
+    {
+      title: "Prosjekter",
+      name: "Prosjekter",
+      hash: "#prosjekter",
+      href: "/prosjekter",
+    },
+    {
+      title: "CV",
+      name: "CV",
+      hash: "#cv",
+      href: "/cv",
+    },
+    {
+      title: "Github",
+      name: "Github",
+      hash: "#github",
+      href: "https://github.com/w3bdesign",
+    },
+    {
+      title: "Kontakt",
+      name: "Kontakt",
+      hash: "#kontakt",
+      href: "/kontakt",
     },
   ];
   return (
@@ -35,7 +60,7 @@ export default function Header() {
                 className={clsx(
                   "flex w-full items-center justify-center px-3 py-3 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300"
                 )}
-                href={link.hash}
+                href={link.href}
               >
                 {link.name}
               </Link>
