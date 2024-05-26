@@ -11,7 +11,6 @@ import { BiCopyright } from "react-icons/bi";
 
 const Footer = () => (
   <footer
-    className="mt-6"
     aria-label="Innholdet for bunnteksten med copyright"
     data-testid="footer"
   >
