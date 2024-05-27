@@ -1,9 +1,7 @@
-import Header from "@/components/header";
+import Header from "@/components/Layout/Header.component";
 import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
-import type { Project } from "@/types/sanity.types";
-import ProsjekterListings from "@/components/Prosjekter/ProsjekterListings.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
 
@@ -44,7 +42,7 @@ export default async function PostIndex() {
         className="mt-32 bg-graybg"
       >
         <PageHeader>Prosjekter</PageHeader>
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-8">
           {posts &&
             posts.map((project: any) => (
               <ProsjektCard
