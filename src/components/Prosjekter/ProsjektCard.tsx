@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-
 import Button from "@/components/UI/Button.component";
 
 interface ProjectProps {
@@ -23,14 +22,12 @@ const ProsjektCard: React.FC<ProjectProps> = ({
 }) => {
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="relative w-full h-48">
+      <div className="relative w-full h-48 md:h-60">
         <Image
           src={projectimage}
           alt={name}
-          className="p-4"
-          style={{ width: "500px", height: "250px" }}
-          width="500"
-          height="250"
+          className="object-cover w-full h-full"
+          fill
         />
       </div>
       <div className="p-2 flex flex-col justify-between min-h-[350px]">
