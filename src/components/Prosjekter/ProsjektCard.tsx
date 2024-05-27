@@ -26,13 +26,13 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <Image
           src={projectimage}
           alt={name}
-          className="object-cover w-full h-full"
+          className="p-4 object-cover w-full h-full"
           fill
         />
       </div>
-      <div className="p-2 flex flex-col justify-between min-h-[350px]">
+      <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[320px]">
         <div>
-          <h1 className="mt-12 text-xl text-center font-bold py-2">{name}</h1>
+          <h1 className="xl:mt-4 text-xl text-center font-bold py-2">{name}</h1>
           <h2 className="text-md text-gray-600">{description}</h2>
           <p className="mt-4 text-sm text-gray-500 mt-2">{subdescription}</p>
         </div>
