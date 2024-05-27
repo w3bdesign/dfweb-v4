@@ -27,9 +27,8 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <Image
           src={projectimage}
           alt={name}
-          layout="fill"
           style={{ objectFit: "cover" }}
-          className="p-4"
+          className="p-4 object-fill"
         />
       </div>
       <div className="p-2">
