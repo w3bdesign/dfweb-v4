@@ -35,7 +35,7 @@ const Button = ({
     <Component
       type={type}
       data-cy="submit"
-      className="p-4 m-4 text-white transition duration-500 ease-in-out bg-gray-800 rounded hover:shadow-outline hover:bg-gray-600 disabled:opacity-50 disabled:pointer-events-none"
+      className="p-3 m-3 text-white transition duration-500 ease-in-out bg-primary rounded hover:shadow-outline hover:bg-hover disabled:opacity-50 disabled:pointer-events-none"
       href={href}
       target={targetLink}
       disabled={disabled}
