@@ -1,9 +1,7 @@
-import Header from "@/components/header";
+import Header from "@/components/Layout/Header.component";
 import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
-import type { Project } from "@/types/sanity.types";
-import ProsjekterListings from "@/components/Prosjekter/ProsjekterListings.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
 

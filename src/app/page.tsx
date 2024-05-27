@@ -1,6 +1,7 @@
-import Header from "@/components/header";
-import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
+
+import Header from "@/components/Layout/Header.component";
+import { client } from "@/lib/sanity/client";
 
 import type { Pagecontent } from "@/types/sanity.types";
 
@@ -16,7 +17,6 @@ export default async function PostIndex() {
   return (
     <>
       <Header />
-      <h1>Page</h1>
       <div>Hjem</div>
     </>
   );

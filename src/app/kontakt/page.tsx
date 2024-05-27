@@ -1,4 +1,4 @@
-import Header from "@/components/header";
+import Header from "@/components/Layout/Header.component";
 import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
