@@ -31,7 +31,8 @@ const KontaktContent = () => {
    */
   const handleSubmit = (event: IEvent) => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-    const TEMPLATE_KEY = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+    const TEMPLATE_KEY =
+      process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
     // Disable button
@@ -63,7 +64,9 @@ const KontaktContent = () => {
             <div className="p-4 mx-auto mt-4">
               <div className="p-4 text-lg rounded">
                 {serverResponse && (
-                  <h3 className="m-6 h-64 text-2xl md:text-3xl text-center">{serverResponse}</h3>
+                  <h3 className="m-6 h-64 text-2xl md:text-3xl text-center">
+                    {serverResponse}
+                  </h3>
                 )}
                 {!serverResponse && (
                   <form
@@ -112,9 +115,6 @@ const KontaktContent = () => {
               </div>
             </div>
           </div>
-        </div>
-        <div id="kontakt-filler" className="mt-0 lg:mt-40">
-          &nbsp;
         </div>
       </div>
     </main>
