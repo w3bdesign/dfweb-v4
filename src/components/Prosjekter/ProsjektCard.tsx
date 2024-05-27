@@ -27,14 +27,18 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <Image
           src={projectimage}
           alt={name}
-          style={{ objectFit: "cover" }}
-          className="p-4 object-fill"
+          className="p-4"
+          style={{ width: "500px", height: "250px" }}
+          width="500"
+          height="250"
         />
       </div>
-      <div className="p-2">
-        <h1 className="text-xl text-center font-bold py-2">{name}</h1>
-        <h2 className="text-md text-gray-600">{description}</h2>
-        <p className="text-sm text-gray-500 mt-2">{subdescription}</p>
+      <div className="p-2 flex flex-col justify-between min-h-[350px]">
+        <div>
+          <h1 className="mt-12 text-xl text-center font-bold py-2">{name}</h1>
+          <h2 className="text-md text-gray-600">{description}</h2>
+          <p className="mt-4 text-sm text-gray-500 mt-2">{subdescription}</p>
+        </div>
         <div className="flex justify-center mt-4">
           {urlwww && urlwww.length > 0 && (
             <Button href={urlwww[0].url} renderAs="a">
