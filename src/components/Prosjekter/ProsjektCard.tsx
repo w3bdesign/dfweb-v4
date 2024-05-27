@@ -39,7 +39,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <div className="flex justify-center mt-4">
           {urlwww && urlwww.length > 0 && (
             <Button href={urlwww[0].url} renderAs="a">
-              Website
+              Besøk
             </Button>
           )}
           {urlgithub && urlgithub.length > 0 && (
