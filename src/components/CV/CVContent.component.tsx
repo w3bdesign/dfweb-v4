@@ -24,7 +24,7 @@ const CVContent = () => (
                     src="/cv/page_1.webp"
                     alt="CV"
                     width={800}
-                    height={800}
+                    height={1000}
                   />
                 </div>
                 <br />
@@ -33,7 +33,7 @@ const CVContent = () => (
                     src="/cv/page_2.webp"
                     alt="CV"
                     width={800}
-                    height={800}
+                    height={1000}
                   />
                 </div>
               </div>
