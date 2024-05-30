@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
