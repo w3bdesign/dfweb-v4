@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { FC } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -7,7 +7,7 @@ import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 
 //pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/browse/pdfjs-dist@4.3.136/legacy/build/pdf.min.mjs`;
 
 type PdfViewerProps = { file: string };
 
@@ -17,9 +17,7 @@ type PdfViewerProps = { file: string };
  * @param {PdfViewerProps} props - The props object with the file to be rendered.
  * @return {JSX.Element} The PDF viewer component with the specified file.
  */
-const PdfViewer: FC<PdfViewerProps> = (props) => {
-  const { file } = props;
-
+const PdfViewer: FC<PdfViewerProps> = ({ file }) => {
   return (
     <Document file={file}>
       <Page
