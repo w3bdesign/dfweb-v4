@@ -19,7 +19,7 @@ type PdfViewerProps = { file: string };
  */
 const PdfViewer: FC<PdfViewerProps> = ({ file }) => {
   return (
-    <Document file={file}>
+    <Document file="https://dfweb-v4.vercel.app/cv/CV-dfweb.pdf">
       <Page
         //renderMode="svg"
         className="flex content-center justify-center -mt-12"
