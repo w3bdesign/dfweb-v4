@@ -3,10 +3,12 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import PageHeader from "@/components/UI/PageHeader.component";
+import PdfViewer from "./PDFViewer.component";
 
+/*
 const PdfViewer = dynamic(() => import("./PDFViewer.component"), {
   ssr: false
-});
+});*/
 
 /**
  * Renders CV content
