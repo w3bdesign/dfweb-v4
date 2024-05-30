@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useResizeObserver } from "@wojtekmaj/react-hooks";
+
 import { pdfjs, Document, Page } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
@@ -40,7 +40,7 @@ export default function Sample() {
     }
   }, []);
 
-  useResizeObserver(containerRef, resizeObserverOptions, onResize);
+
 
   function onFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const { files } = event.target;
