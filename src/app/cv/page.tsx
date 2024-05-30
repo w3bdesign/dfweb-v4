@@ -1,14 +1,12 @@
-import Test from "@/components/CV/Test";
 import Header from "@/components/Layout/Header.component";
 
-//import CVContent from "@/components/CV/CVContent.component";
-
+import CVContent from "@/components/CV/CVContent.component";
 
 export default async function PostIndex() {
   return (
     <>
       <Header />
-      <Test />
+      <CVContent />
     </>
   );
 }
