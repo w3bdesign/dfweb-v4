@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import type { FC } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -17,9 +17,7 @@ type PdfViewerProps = { file: string };
  * @param {PdfViewerProps} props - The props object with the file to be rendered.
  * @return {JSX.Element} The PDF viewer component with the specified file.
  */
-const PdfViewer: FC<PdfViewerProps> = (props) => {
-  const { file } = props;
-
+const PdfViewer: FC<PdfViewerProps> = ({ file }) => {
   return (
     <Document file={file}>
       <Page

@@ -1,16 +1,12 @@
-//import dynamic from "next/dynamic";
+import dynamic from "next/dynamic";
 
 import Link from "next/link";
 
 import PageHeader from "@/components/UI/PageHeader.component";
 
-/*
 const PdfViewer = dynamic(() => import("./PDFViewer.component"), {
   ssr: false,
 });
-*/
-
-import PdfViewer from "./PDFViewer.component";
 
 /**
  * Renders CV content
