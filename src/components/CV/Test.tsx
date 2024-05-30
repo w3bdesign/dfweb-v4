@@ -6,8 +6,6 @@ import { pdfjs, Document, Page } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 
-import "./Sample.css";
-
 import type { PDFDocumentProxy } from "pdfjs-dist";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -19,8 +17,6 @@ const options = {
   cMapUrl: "/cmaps/",
   standardFontDataUrl: "/standard_fonts/",
 };
-
-const resizeObserverOptions = {};
 
 const maxWidth = 800;
 
@@ -39,8 +35,6 @@ export default function Sample() {
       setContainerWidth(entry.contentRect.width);
     }
   }, []);
-
-
 
   function onFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const { files } = event.target;
