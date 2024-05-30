@@ -6,7 +6,7 @@ export default async function PostIndex() {
   return (
     <>
       <Header />
-      <CVContent />
+      CVContent
     </>
   );
 }
