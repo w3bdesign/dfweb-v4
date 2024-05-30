@@ -28,14 +28,6 @@ export default function Sample() {
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
 
-  const onResize = useCallback<ResizeObserverCallback>((entries) => {
-    const [entry] = entries;
-
-    if (entry) {
-      setContainerWidth(entry.contentRect.width);
-    }
-  }, []);
-
   function onFileChange(event: React.ChangeEvent<HTMLInputElement>): void {
     const { files } = event.target;
 
@@ -58,10 +50,6 @@ export default function Sample() {
         <h1>react-pdf sample page</h1>
       </header>
       <div className="Example__container">
-        <div className="Example__container__load">
-          <label htmlFor="file">Load from file:</label>{" "}
-          <input onChange={onFileChange} type="file" />
-        </div>
         <div className="Example__container__document" ref={setContainerRef}>
           <Document
             file={file}
