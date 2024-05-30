@@ -19,7 +19,7 @@ type PdfViewerProps = { file: string };
  */
 const PdfViewer: FC<PdfViewerProps> = ({ file }) => {
   return (
-    <Document file={file}>
+    <Document file="./cv.pdf">
       <Page
         //renderMode="svg"
         className="flex content-center justify-center -mt-12"
