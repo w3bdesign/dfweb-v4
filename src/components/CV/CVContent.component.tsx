@@ -25,6 +25,7 @@ const CVContent = () => (
                     alt="CV"
                     width={800}
                     height={1000}
+                    priority
                   />
                 </div>
                 <br />
