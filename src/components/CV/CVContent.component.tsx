@@ -24,7 +24,7 @@ const CVContent = () => (
           <div className="p-4 mx-auto h-96 md:h-full mt-4 flex justify-center items-center sm:block">
             <div className="p-4 text-lg rounded ">
               <div className="mt-4 hidden md:block">
-                <PdfViewer file="./cv/CV-dfweb.pdf" />
+                <PdfViewer file="./cv.pdf" />
               </div>
               <div className="mx-auto pt-2 text-center sm:mt-2 xs:mt-2 bg-gray-800 rounded w-64 h-12 text-white cursor-pointer">
                 <Link href="./cv/CV-dfweb.pdf">Last ned PDF</Link>
