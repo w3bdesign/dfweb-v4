@@ -49,7 +49,6 @@ const Section = ({ text, title }: IContent) => (
         >
           {title}
         </h2>
-        <br />
         <PortableText value={text} components={myPortableTextComponents} />
       </BounceInScroll>
     </div>
