@@ -33,19 +33,19 @@ const myPortableTextComponents = {
     bold: ({ children }: PortableTextMarkComponentProps) => <b>{children}</b>,
     italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
     code: ({ children }: PortableTextMarkComponentProps) => (
-      <span className="mt-4 text-lg">{children}</span>
+      <span className="mt-4 text-lg text-center block">{children}</span>
     ),
   },
 };
 
 const Section = ({ text, title }: IContent) => (
-  <section aria-label={title} data-testid="sanity-section">
+  <section aria-label={title} data-testid="sanity-section" className="py-6">
     <div className="mt-4 p-8 text-lg text-black bg-white rounded shadow h-full -mb-10">
       <BounceInScroll viewAmount={0}>
         <h2
           data-testid="sanity-title"
           data-cy={title}
-          className="text-3xl text-center"
+          className="text-3xl text-center mt-4"
         >
           {title}
         </h2>
