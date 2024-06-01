@@ -3,6 +3,8 @@
 import { PortableText } from "@portabletext/react";
 import { Fragment } from "react";
 
+import type { PortableTextMarkComponentProps } from "@portabletext/react";
+
 import BounceInScroll from "../Animations/BounceInScroll.component";
 
 interface IChild {
@@ -28,9 +30,11 @@ interface IContent {
 
 const myPortableTextComponents = {
   marks: {
-    bold: ({ children }) => <b>{children}</b>,
-    italic: ({ children }) => <i>{children}</i>,
-    code: ({ children }) => <span class="mt-4 text-lg">{children}</span>,
+    bold: ({ children }: PortableTextMarkComponentProps) => <b>{children}</b>,
+    italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
+    code: ({ children }: PortableTextMarkComponentProps) => (
+      <span className="mt-4 text-lg">{children}</span>
+    ),
   },
 };
 
