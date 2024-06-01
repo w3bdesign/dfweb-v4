@@ -40,12 +40,12 @@ const myPortableTextComponents = {
 
 const Section = ({ text, title }: IContent) => (
   <section aria-label={title} data-testid="sanity-section" className="py-6">
-    <div className="mt-4 p-8 text-lg text-black bg-white rounded shadow h-full -mb-10">
+    <div className="p-6 text-lg text-black bg-white rounded shadow h-full">
       <BounceInScroll viewAmount={0}>
         <h2
           data-testid="sanity-title"
           data-cy={title}
-          className="text-3xl text-center mt-4"
+          className="text-3xl text-center"
         >
           {title}
         </h2>
@@ -64,7 +64,9 @@ const Testing = ({ pageContent }: { pageContent: IContent[] }) => {
 
   return (
     <Fragment>
-      {pageContent?.map((page) => <Section key={page.id} {...page} />)}
+      <div className="mt-8">
+        {pageContent?.map((page) => <Section key={page.id} {...page} />)}
+      </div>
     </Fragment>
   );
 };
