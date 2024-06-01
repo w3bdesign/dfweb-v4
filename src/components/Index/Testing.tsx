@@ -1,11 +1,40 @@
 "use client";
-//import PortableText from "react-portable-text";
+
 import { PortableText } from "@portabletext/react";
 import { Fragment } from "react";
-import BounceInScroll from "../Animations/BounceInScroll.component";
-import { Pagecontent } from "../../../studio/sanity.types";
 
-const Section = ({ text, title }: any) => (
+import BounceInScroll from "../Animations/BounceInScroll.component";
+
+interface IChild {
+  _key: string;
+  _type: string;
+  marks: string[];
+  text: string;
+}
+
+interface IText {
+  _key: string;
+  _type: string;
+  children: IChild[];
+  markDefs: string[];
+  style: string;
+}
+
+interface IContent {
+  id: string;
+  text: IText[];
+  title: string;
+}
+
+const myPortableTextComponents = {
+  marks: {
+    bold: ({ children }) => <b>{children}</b>,
+    italic: ({ children }) => <i>{children}</i>,
+    code: ({ children }) => <span class="mt-4 text-lg">{children}</span>,
+  },
+};
+
+const Section = ({ text, title }: IContent) => (
   <section aria-label={title} data-testid="sanity-section">
     <div className="mt-4 p-8 text-lg text-black bg-white rounded shadow h-full -mb-10">
       <BounceInScroll viewAmount={0}>
@@ -17,44 +46,13 @@ const Section = ({ text, title }: any) => (
           {title}
         </h2>
         <br />
-        <PortableText value={text} />
+        <PortableText value={text} components={myPortableTextComponents} />
       </BounceInScroll>
     </div>
   </section>
 );
 
-const renderText = (textArray) => {
-  return textArray.map((block) => {
-    if (block._type === "block") {
-      const children = block.children?.map((child) => {
-        return <span key={child._key}>{child.text}</span>;
-      });
-
-      switch (block.style) {
-        case "h1":
-          return <h1 key={block._key}>{children}</h1>;
-        case "h2":
-          return <h2 key={block._key}>{children}</h2>;
-        case "h3":
-          return <h3 key={block._key}>{children}</h3>;
-        case "h4":
-          return <h4 key={block._key}>{children}</h4>;
-        case "h5":
-          return <h5 key={block._key}>{children}</h5>;
-        case "h6":
-          return <h6 key={block._key}>{children}</h6>;
-        case "blockquote":
-          return <blockquote key={block._key}>{children}</blockquote>;
-        default:
-          return <p key={block._key}>{children}</p>;
-      }
-    }
-
-    return null;
-  });
-};
-
-const Testing = ({ pageContent }: { pageContent: Pagecontent[] }) => {
+const Testing = ({ pageContent }: { pageContent: IContent[] }) => {
   console.log("Page Content er:", pageContent);
 
   return (
