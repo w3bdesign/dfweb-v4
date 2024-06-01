@@ -8,8 +8,6 @@ import { Pagecontent } from "../../../studio/sanity.types";
 const Section = ({ text, title }: any) => (
   <section aria-label={title} data-testid="sanity-section">
     <div className="mt-4 p-8 text-lg text-black bg-white rounded shadow h-full -mb-10">
-      Title er: {title}
-      Tekst er: {text}
       <BounceInScroll viewAmount={0}>
         <h2
           data-testid="sanity-title"
@@ -61,12 +59,7 @@ const Testing = ({ pageContent }: { pageContent: Pagecontent[] }) => {
 
   return (
     <Fragment>
-      {pageContent?.map((page) => (
-        <Fragment key={page.id}>
-          {page.title && <h1>{page.title}</h1>}
-          {page.text && renderText(page.text)}
-        </Fragment>
-      ))}
+      {pageContent?.map((page) => <Section key={page.id} {...page} />)}
     </Fragment>
   );
 };
