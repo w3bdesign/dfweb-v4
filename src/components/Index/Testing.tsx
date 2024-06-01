@@ -33,7 +33,7 @@ const myPortableTextComponents = {
     bold: ({ children }: PortableTextMarkComponentProps) => <b>{children}</b>,
     italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
     code: ({ children }: PortableTextMarkComponentProps) => (
-      <span className="mt-4 text-lg text-center block">{children}</span>
+      <span className="mt-4 text-lg block">{children}</span>
     ),
   },
 };
@@ -49,7 +49,11 @@ const Section = ({ text, title }: IContent) => (
         >
           {title}
         </h2>
-        <PortableText value={text} components={myPortableTextComponents} />
+        <div className="flex justify-center">
+          <div className="mt-4 text-lg text-left max-w-2xl">
+            <PortableText value={text} components={myPortableTextComponents} />
+          </div>
+        </div>
       </BounceInScroll>
     </div>
   </section>
