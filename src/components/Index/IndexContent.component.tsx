@@ -1,8 +1,8 @@
-"use client" 
+"use client";
 
-import Link from "next/link";
-import PortableText from "react-portable-text";
 import { Fragment, Key, ReactNode } from "react";
+import Link from "next/link";
+import { PortableText } from "@portabletext/react";
 
 import Hero from "./Hero.component";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
@@ -97,13 +97,7 @@ const Section = ({ text, title }: IContent) => (
           {title}
         </h2>
         <br />
-        <PortableText
-          content={text}
-          serializers={{
-            code: Code,
-            link: LinkComponent,
-          }}
-        />
+        <PortableText value={text} />
       </BounceInScroll>
     </div>
   </section>
