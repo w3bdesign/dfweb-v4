@@ -97,13 +97,7 @@ const Section = ({ text, title }: IContent) => (
           {title}
         </h2>
         <br />
-        <PortableText
-          content={text}
-          serializers={{
-            code: Code,
-            link: LinkComponent,
-          }}
-        />
+        <PortableText value={text} />
       </BounceInScroll>
     </div>
   </section>
