@@ -1,7 +1,8 @@
 "use client" 
 
 import Link from "next/link";
-import PortableText from "react-portable-text";
+//import PortableText from "react-portable-text";
+import { PortableText } from "@portabletext/react";
 import { Fragment, Key, ReactNode } from "react";
 
 import Hero from "./Hero.component";
