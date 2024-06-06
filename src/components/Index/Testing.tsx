@@ -1,7 +1,6 @@
 "use client";
 
 import { PortableText } from "@portabletext/react";
-import { Fragment } from "react";
 
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 
@@ -63,11 +62,9 @@ const Testing = ({ pageContent }: { pageContent: IContent[] }) => {
   console.log("Page Content er:", pageContent);
 
   return (
-    <Fragment>
-      <div className="mt-8">
-        {pageContent?.map((page) => <Section key={page.id} {...page} />)}
-      </div>
-    </Fragment>
+    <div className="mt-8">
+      {pageContent?.map((page) => <Section key={page.id} {...page} />)}
+    </div>
   );
 };
 
