@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+
 import Button from "@/components/UI/Button.component";
 
 interface ProjectProps {
@@ -27,7 +28,9 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           src={projectimage}
           alt={name}
           className="p-4 object-cover w-full h-full"
+          quality={100}
           fill
+          priority
         />
       </div>
       <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[320px]">
