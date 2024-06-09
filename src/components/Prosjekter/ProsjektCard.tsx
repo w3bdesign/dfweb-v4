@@ -28,9 +28,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           src={projectimage}
           alt={name}
           className="p-4 object-cover w-full h-full"
-          quality={100}
-          fill
-          priority
+          quality={80}
         />
       </div>
       <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[320px]">
