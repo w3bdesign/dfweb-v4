@@ -36,15 +36,6 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <div className="relative w-full h-48 md:h-60">
-        <Image
-          src={projectimage}
-          alt={name}
-          className="p-4 object-cover w-full h-full"
-          quality={80}
-          placeholder="blur"
-          blurDataURL={rgbDataURL(255, 255, 255)}
-          fill
-        />
         <img
           src={projectimage}
           alt={name}
