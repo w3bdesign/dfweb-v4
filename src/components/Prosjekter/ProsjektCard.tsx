@@ -21,9 +21,8 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   urlwww,
   urlgithub,
 }) => {
-
   const keyStr =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
   const triplet = (e1: number, e2: number, e3: number) =>
     keyStr.charAt(e1 >> 2) +
     keyStr.charAt(((e1 & 3) << 4) | (e2 >> 4)) +
@@ -45,6 +44,11 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           placeholder="blur"
           blurDataURL={rgbDataURL(255, 255, 255)}
           fill
+        />
+        <img
+          src={projectimage}
+          alt={name}
+          className="p-4 object-cover w-full h-full"
         />
       </div>
       <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[320px]">
