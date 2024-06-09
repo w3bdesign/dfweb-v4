@@ -5,7 +5,6 @@ import PageHeader from "@/components/UI/PageHeader.component";
 
 /**
  * Renders CV content
- * Uses React-pdf
  * @function CVContent
  * @returns {JSX.Element} - Rendered component
  */
@@ -19,7 +18,7 @@ const CVContent = () => (
           <div className="p-4 mx-auto h-96 md:h-full mt-4 flex justify-center items-center">
             <div className="p-4 text-lg rounded">
               <div className="mt-4 flex flex-col items-center md:block">
-                <div className="flex justify-center">
+                <div className="flex justify-center hidden md:block">
                   <Image
                     src="/cv/page_1.webp"
                     alt="CV"
@@ -29,7 +28,7 @@ const CVContent = () => (
                   />
                 </div>
                 <br />
-                <div className="flex justify-center">
+                <div className="flex justify-center hidden md:block">
                   <Image
                     src="/cv/page_2.webp"
                     alt="CV"
