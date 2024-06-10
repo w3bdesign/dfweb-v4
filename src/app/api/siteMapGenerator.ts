@@ -19,19 +19,19 @@ const siteMapGenerator = async (req: NextApiRequest, res: NextApiResponse) => {
     { url: "/", changefreq: "daily", priority: 0.3 },
     { url: "/prosjekter", changefreq: "daily", priority: 0.3 },
     { url: "/cv", changefreq: "daily", priority: 0.3 },
-    { url: "/kontakt", changefreq: "daily", priority: 0.3 }
+    { url: "/kontakt", changefreq: "daily", priority: 0.3 },
   ];
 
   // Create a stream to write to
   const stream = new SitemapStream({ hostname: `https://${req.headers.host}` });
 
   res.writeHead(200, {
-    "Content-Type": "application/xml"
+    "Content-Type": "application/xml",
   });
 
-  const xmlString = await streamToPromise(Readable.from(links).pipe(stream)).then((data: IData) =>
-    data.toString()
-  );
+  const xmlString = await streamToPromise(
+    Readable.from(links).pipe(stream),
+  ).then((data: IData) => data.toString());
 
   res.end(xmlString);
 };

@@ -10,7 +10,7 @@ describe("Test at navigasjon fungerer", () => {
   const links = [
     { link: "Hjem", testString: "Hei!", url: "" },
     //{ link: "CV", testString: "CV", url: "cv" },
-    { link: "Kontakt", testString: "Kontakt", url: "kontakt" }
+    { link: "Kontakt", testString: "Kontakt", url: "kontakt" },
   ];
 
   const testLink = (link: string, testString: string, url: string) => {

@@ -12,7 +12,7 @@ describe("Button", () => {
   it("Button laster inn og kan vises", () => {
     render(<Button onClick={handleOnClick}>Button</Button>);
     const button = screen.queryByRole("button", {
-      name: /button/i
+      name: /button/i,
     });
     expect(button).toBeInTheDocument();
   });
