@@ -51,7 +51,7 @@ const KontaktContent = () => {
       },
       () => {
         setServerResponse("Feil under sending av skjema");
-      }
+      },
     );
   };
 

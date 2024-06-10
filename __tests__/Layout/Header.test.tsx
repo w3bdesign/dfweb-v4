@@ -14,9 +14,9 @@ jest.mock("next/router", () => ({
       route: "/",
       pathname: "",
       query: "",
-      asPath: ""
+      asPath: "",
     };
-  }
+  },
 }));
 
 jest.mock("react-dom");

@@ -5,7 +5,7 @@ import { IAnimateBounceProps } from "./types/Animations.types";
 const bounceVariants: Variants = {
   offscreen: {
     y: 30,
-    opacity: 0
+    opacity: 0,
   },
   onscreen: {
     y: 0,
@@ -13,9 +13,9 @@ const bounceVariants: Variants = {
     transition: {
       type: "spring",
       bounce: 0.5,
-      duration: 1.5
-    }
-  }
+      duration: 1.5,
+    },
+  },
 };
 
 /**
@@ -27,7 +27,11 @@ const bounceVariants: Variants = {
  * @returns {JSX.Element} - Rendered component
  */
 
-const BounceInScroll = ({ children, cssClass, viewAmount }: IAnimateBounceProps) => (
+const BounceInScroll = ({
+  children,
+  cssClass,
+  viewAmount,
+}: IAnimateBounceProps) => (
   <motion.div
     initial="offscreen"
     whileInView="onscreen"

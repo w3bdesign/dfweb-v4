@@ -23,7 +23,7 @@ const Icons = () => {
     { id: 1, Icon: FaVuejs, iconName: "Vue" },
     { id: 2, Icon: SiTypescript, iconName: "Typescript" },
     { id: 3, Icon: SiWordpress, iconName: "Wordpress" },
-    { id: 4, Icon: FaPhp, iconName: "PHP" }
+    { id: 4, Icon: FaPhp, iconName: "PHP" },
   ];
 
   return (

@@ -17,8 +17,8 @@ const FadeDown = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
     animate: {
       y: 0,
       opacity: 1,
-      transition: { delay, type: "spring", duration: 0.5, stiffness: 100 }
-    }
+      transition: { delay, type: "spring", duration: 0.5, stiffness: 100 },
+    },
   };
   return (
     <motion.div

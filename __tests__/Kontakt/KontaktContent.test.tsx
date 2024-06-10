@@ -10,7 +10,7 @@ import emailjs from "@emailjs/browser";
 
 jest.mock("@emailjs/browser", () => ({
   sendForm: jest.fn(() => Promise.resolve()),
-  init: jest.fn()
+  init: jest.fn(),
 }));
 
 describe("KontaktContent", () => {
@@ -28,17 +28,19 @@ describe("KontaktContent", () => {
 
     // make emailjs.sendForm return a rejected promise
 
-    emailjs.sendForm.mockImplementation(() => Promise.reject(new Error("Error message")));
+    emailjs.sendForm.mockImplementation(() =>
+      Promise.reject(new Error("Error message")),
+    );
 
     // fill out form fields
     fireEvent.change(screen.getByLabelText(fulltNavn), {
-      target: { value: "Bruker Test" }
+      target: { value: "Bruker Test" },
     });
     fireEvent.change(screen.getByLabelText(telefonNummer), {
-      target: { value: "12345678" }
+      target: { value: "12345678" },
     });
     fireEvent.change(screen.getByLabelText("Hva ønsker du å si?"), {
-      target: { value: "Message" }
+      target: { value: "Message" },
     });
 
     const button = screen.getByText("Send skjema");
@@ -63,9 +65,15 @@ describe("KontaktContent", () => {
     const { getByRole } = render(<KontaktContent />);
 
     // fill out form fields
-    fireEvent.change(screen.getByLabelText(fulltNavn), { target: { value: "Bruker Test" } });
-    fireEvent.change(screen.getByLabelText(telefonNummer), { target: { value: "12345678" } });
-    fireEvent.change(screen.getByLabelText(hvaOnskerDu), { target: { value: "Message" } });
+    fireEvent.change(screen.getByLabelText(fulltNavn), {
+      target: { value: "Bruker Test" },
+    });
+    fireEvent.change(screen.getByLabelText(telefonNummer), {
+      target: { value: "12345678" },
+    });
+    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+      target: { value: "Message" },
+    });
 
     const form = getByRole("form", { name: /contact form/i });
     fireEvent.submit(form); // submit the form
@@ -75,6 +83,8 @@ describe("KontaktContent", () => {
 
     // assert success message is displayed
 
-    expect(screen.getByText("Feil under sending av skjema")).toBeInTheDocument();
+    expect(
+      screen.getByText("Feil under sending av skjema"),
+    ).toBeInTheDocument();
   });
 });

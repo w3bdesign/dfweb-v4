@@ -17,7 +17,9 @@ describe("IndexContent", () => {
   });
 
   it("Hero laster inn og kan vises", () => {
-    const hero = screen.getByRole("article", { name: /kontainer for animasjoner av introtekst/i });
+    const hero = screen.getByRole("article", {
+      name: /kontainer for animasjoner av introtekst/i,
+    });
     expect(hero).toBeInTheDocument();
   });
 

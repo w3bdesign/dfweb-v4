@@ -14,7 +14,7 @@ const PageTransition = ({ children, cssClass }: IAnimateProps) => {
   const pageTransitionVariants: Variants = {
     initial: { opacity: 0 },
     animate: { opacity: 1, transition: { duration: 1.0 } },
-    exit: { opacity: 0 }
+    exit: { opacity: 0 },
   };
   return (
     <AnimatePresence mode="wait">
