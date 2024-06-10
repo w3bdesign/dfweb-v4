@@ -4,6 +4,8 @@
 describe("Forside", () => {
   beforeEach(() => {
     cy.visit("/");
+    // Local:
+    // cy.visit("http://localhost:3000");
   });
 
   it(`Hei vises på forsiden`, () => {
