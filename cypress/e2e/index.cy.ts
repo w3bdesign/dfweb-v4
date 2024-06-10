@@ -3,9 +3,9 @@
 // https://cheatography.com/aiqbal/cheat-sheets/cypress-io/
 describe("Forside", () => {
   beforeEach(() => {
-    cy.visit("/");
+    //cy.visit("/");
     // Local:
-    // cy.visit("http://localhost:3000");
+     cy.visit("http://localhost:3000");
   });
 
   it(`Hei vises på forsiden`, () => {
