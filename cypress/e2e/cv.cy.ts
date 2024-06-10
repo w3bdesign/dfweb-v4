@@ -6,7 +6,7 @@ import { checkAccessibility } from "../support/functions";
 
 describe(`Test at CV vises og laster`, () => {
   beforeEach(() => {
-    cy.visit("/cv");
+    cy.visit("/cvx");
   });
 
   it(`Se at CV vises`, () => {
