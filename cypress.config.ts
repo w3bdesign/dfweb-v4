@@ -4,7 +4,7 @@ export default defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,
   e2e: {
-    setupNodeEvents(_on, config) {
+    setupNodeEvents(_on: any, config: any) {
       // e2e testing node events setup code
       return config;
     },
