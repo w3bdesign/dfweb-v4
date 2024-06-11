@@ -18,10 +18,12 @@ export default async function PostIndex() {
   return (
     <>
       <Header />
-      <div className="mt-32">
-        {posts[0].hero && <Hero content={posts[0].hero} />}
-      </div>
-      {posts[0].content && <Testing pageContent={posts[0].content} />}
+      <main>
+        <div className="mt-32">
+          {posts[0].hero && <Hero content={posts[0].hero} />}
+        </div>
+        {posts[0].content && <Testing pageContent={posts[0].content} />}
+      </main>
     </>
   );
 }
