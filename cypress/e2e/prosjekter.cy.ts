@@ -17,7 +17,7 @@ describe("Prosjekter Page", () => {
   it("should display project cards", () => {
     cy.get(".bg-white.shadow-md.rounded-lg.overflow-hidden").should(
       "have.length.at.least",
-      1
+      1,
     );
   });
 
