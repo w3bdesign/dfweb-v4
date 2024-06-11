@@ -4,13 +4,17 @@
 
 import { checkAccessibility } from "../support/functions";
 
-describe(`Test at CV vises og laster`, () => {
+describe("Test at CV vises og laster", () => {
   beforeEach(() => {
-    cy.visit("/cvx");
+    cy.visit("http://localhost:3000/cv");
   });
 
-  it(`Se at CV vises`, () => {
-    cy.get(".container > .text-2xl").should("be.visible");
+  it("Se at CV vises", () => {
+    cy.get("main#maincontent").should("be.visible");
+    cy.get('.container img[alt="CV"]')
+      .should("have.length", 2)
+      .and("be.visible");
+    cy.get('a[href="./cv.pdf"]').should("be.visible");
   });
 
   it("CV skal ikke ha noen a11y feilmeldinger", () => {
@@ -18,5 +22,3 @@ describe(`Test at CV vises og laster`, () => {
     checkAccessibility(5000);
   });
 });
-
-export {};

@@ -4,8 +4,18 @@ export default defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,
   e2e: {
-    setupNodeEvents(_on: any, config: any) {
-      // e2e testing node events setup code
+    setupNodeEvents(on, config) {
+      // Register the 'log' and 'table' tasks
+      on("task", {
+        log(message) {
+          console.log(message);
+          return null;
+        },
+        table(data) {
+          console.table(data);
+          return null;
+        },
+      });
       return config;
     },
     baseUrl: "http://localhost:3000",

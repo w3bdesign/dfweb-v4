@@ -8,7 +8,7 @@ describe("Kontakt", () => {
   const beVisible = "be.visible";
 
   beforeEach(() => {
-    cy.visit("/kontakt");
+    cy.visit("http://localhost:3000/kontakt");
   });
 
   it(`Navn vises`, () => {
