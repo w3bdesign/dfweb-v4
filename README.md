@@ -6,7 +6,7 @@ Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 
 > ## Frontend
 >
-> <img src="https://user-images.githubusercontent.com/45217974/160189236-fa986737-f5a2-42bf-9008-50c59c13a645.png" alt="Dfweb screenshot" />
+> <img src="https://private-user-images.githubusercontent.com/45217974/339231048-3fb90a01-5a45-4039-8eb5-7c2987dd4bea.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTgyNTg4NzIsIm5iZiI6MTcxODI1ODU3MiwicGF0aCI6Ii80NTIxNzk3NC8zMzkyMzEwNDgtM2ZiOTBhMDEtNWE0NS00MDM5LThlYjUtN2MyOTg3ZGQ0YmVhLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MTMlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjEzVDA2MDI1MlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTczYTk0MjU0NjViYzU4ODVlMmEyMTg1Yjk2Mzk0YTVjMmIyODhkNTg0N2UyZWExZDIzYjg2ZGIxMGJmMWJlMDAmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.iCLQSeBuz3bNVZEDANGEMSiSZGSkrHe-3QeEYJIaBi0" alt="Dfweb screenshot" />
 
 <br />
 
