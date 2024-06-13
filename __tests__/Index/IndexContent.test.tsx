@@ -120,19 +120,3 @@ describe("IndexContent Component", () => {
     expect(titles[0]).toHaveTextContent("Test Title 1");
   });
 });
-
-/*
-  test("renders Section with title and text", () => {
-    render(<IndexContent pageContent={mockContent} />);
-
-    // Check if the section titles are rendered
-    expect(screen.getByText("Test Title 1")).toBeInTheDocument();
-    expect(screen.getByText("Test Title 2")).toBeInTheDocument();
-
-    // Check if the text is rendered with correct marks
-    expect(screen.getByText("Bold Text")).toBeInTheDocument();
-    expect(screen.getByText("Bold Text").tagName).toBe("B");
-    expect(screen.getByText("Normal Text")).toBeInTheDocument();
-    expect(screen.getByText("Italic Text")).toBeInTheDocument();
-    expect(screen.getByText("Italic Text").tagName).toBe("I");
-  });*/
