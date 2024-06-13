@@ -1,10 +1,19 @@
-import React from "react";
+"use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { MotionDiv, MotionLi } from "@/lib/framer/client";
 
 export default function Header() {
+  const [isClient, setIsClient] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const links = [
     {
       title: "Home",
@@ -37,6 +46,7 @@ export default function Header() {
       href: "/kontakt",
     },
   ];
+
   return (
     <header className="z-[999] relative">
       <MotionDiv
@@ -56,12 +66,16 @@ export default function Header() {
             >
               <Link
                 prefetch={true}
-                className={clsx(
-                  "flex w-full items-center justify-center px-2 py-2 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 font-semibold text-lg"
-                )}
+                className="flex w-full items-center justify-center px-2 py-2 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 font-semibold text-lg"
                 href={link.href}
               >
-                <div className="glitch" data-text={link.name}>
+                <div
+                  className={clsx("glitch", {
+                    "underline underline-offset-4 decoration-2":
+                      pathname === link.href,
+                  })}
+                  data-text={link.name}
+                >
                   {link.name}
                 </div>
               </Link>
