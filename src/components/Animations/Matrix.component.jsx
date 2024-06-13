@@ -155,6 +155,7 @@ const ReactMatrixAnimation = ({
       ref={canvasRef}
       id={CANVAS_ID}
       style={{ width: "100%", height: "100%" }}
+      data-testid="matrix-canvas"
       className="absolute inset-0"
     />
   );
