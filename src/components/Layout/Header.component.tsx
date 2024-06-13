@@ -61,14 +61,13 @@ export default function Header() {
                 )}
                 href={link.href}
               >
-                {link.name}
+                <div className="glitch" data-text={link.name}>
+                  {link.name}
+                </div>
               </Link>
             </MotionLi>
           ))}
-          
         </ul>
-
-        
       </nav>
     </header>
   );
