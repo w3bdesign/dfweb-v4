@@ -35,10 +35,11 @@ const Button = ({
     <Component
       type={type}
       data-cy="submit"
-      className="p-3 m-3 text-white transition duration-500 ease-in-out bg-primary rounded hover:shadow-outline hover:bg-hover disabled:opacity-50 disabled:pointer-events-none"
+      className="glitch p-3 m-3 text-primaryButtonText transition duration-500 ease-in-out bg-primaryButtonBg rounded hover:shadow-outline hover:bg-secondaryButtonBg disabled:opacity-50 disabled:pointer-events-none"
       href={href}
       target={targetLink}
       disabled={disabled}
+      data-text={children}
       {...props}
     >
       {children}

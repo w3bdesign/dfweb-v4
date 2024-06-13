@@ -57,11 +57,13 @@ export default function Header() {
               <Link
                 prefetch={true}
                 className={clsx(
-                  "flex w-full items-center justify-center px-2 py-2 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 font-semibold text-lg",
+                  "flex w-full items-center justify-center px-2 py-2 hover:text-gray-950 transition dark:text-gray-500 dark:hover:text-gray-300 font-semibold text-lg"
                 )}
                 href={link.href}
               >
-                {link.name}
+                <div className="glitch" data-text={link.name}>
+                  {link.name}
+                </div>
               </Link>
             </MotionLi>
           ))}
