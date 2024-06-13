@@ -2,7 +2,7 @@ import { groq } from "next-sanity";
 
 import Header from "@/components/Layout/Header.component";
 import Hero from "@/components/Index/Hero.component";
-import Testing from "@/components/Index/Testing";
+import IndexContent from "@/components/Index/IndexContent.component";
 
 import { client } from "@/lib/sanity/client";
 
@@ -20,7 +20,7 @@ export default async function PostIndex() {
         <div className="mt-32">
           {posts[0].hero && <Hero content={posts[0].hero} />}
         </div>
-        {posts[0].content && <Testing pageContent={posts[0].content} />}
+        {posts[0].content && <IndexContent pageContent={posts[0].content} />}
       </main>
     </>
   );
