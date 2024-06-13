@@ -43,7 +43,7 @@ import { PortableText } from "@portabletext/react";
 jest.mock(
   "../../src/components/Animations/BounceInScroll.component",
   () =>
-    ({ children }) => <div>{children}</div>
+    ({ children }) => <div>{children}</div>,
 );
 
 // Mock the PortableText component
