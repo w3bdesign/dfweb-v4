@@ -13,8 +13,6 @@ export default async function PostIndex() {
 
   const posts = await client.fetch(pageContent);
 
-  console.log(posts);
-
   return (
     <>
       <Header />
