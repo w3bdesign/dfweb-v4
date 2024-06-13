@@ -19,21 +19,18 @@ const CVContent = () => (
             <div className="p-4 text-lg rounded">
               <div className="mt-4 flex flex-col items-center md:block">
                 <div className="flex justify-center hidden md:block">
-                  <Image
+                  <img
                     src="/cv/page_1.webp"
                     alt="CV"
-                    width={800}
-                    height={1000}
-                    priority
+                    className="w-2/3 mx-auto"
                   />
                 </div>
                 <br />
                 <div className="flex justify-center hidden md:block">
-                  <Image
+                  <img
                     src="/cv/page_2.webp"
                     alt="CV"
-                    width={800}
-                    height={1000}
+                    className="w-2/3 mx-auto"
                   />
                 </div>
               </div>
