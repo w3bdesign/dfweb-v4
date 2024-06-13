@@ -29,7 +29,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           className="p-4 object-cover w-full h-full"
         />
       </div>
-      <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[320px]">
+      <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[300px]">
         <div>
           <h1 className="xl:mt-4 text-xl text-center font-bold py-2">{name}</h1>
           <h2 className="text-md text-gray-600">{description}</h2>
