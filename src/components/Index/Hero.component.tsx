@@ -38,7 +38,7 @@ const Hero = ({ content }: IContent) => (
       <ReactMatrixAnimation />
     </Suspense>
     <FadeDown delay={0.1} cssClass="text-center">
-      <div className="relative z-10 mt-10 mb-4 bg-white p-2 opacity-80 md:mt-4 lg:mt-4 xl:mt-4">
+      <div className="relative z-10 mt-10 mb-4 bg-white p-2 opacity-90 md:mt-4 lg:mt-4 xl:mt-4">
         <div className="rounded text-black">
           <section>
             <FadeDown delay={0.5} cssClass="text-center">
