@@ -26,14 +26,11 @@ Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 
 - Next.js 14 with Typescript
 - Sanity.io for fetching project information and frontpage text
-- Storybook for component documentation
-- Chromatic for visual testing of Storybook components
+- Ladle for component documentation
 - Animations with Framer Motion
 - React testing library for unit testing
 - Cypress for E2E testing
-- Filter project display
 - Contact form with Email.js
-- Display CV with React-PDF
 - Polymorphic components
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
 - Google rich results for each individual page
