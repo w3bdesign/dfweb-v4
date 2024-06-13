@@ -125,13 +125,15 @@ const ReactMatrixAnimation = ({
       initMatrix(canvas);
     };
 
-    window.addEventListener("resize", handleResize);
+    const debouncedResize = debounce(handleResize, 100);
+
+    window.addEventListener("resize", debouncedResize);
     handleResize();
 
     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("resize", debouncedResize);
     };
   }, [initMatrix, tick]);
 
@@ -142,6 +144,14 @@ const ReactMatrixAnimation = ({
       style={{ width: "100%", height: "100%" }}
     />
   );
+};
+
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
 };
 
 export default ReactMatrixAnimation;
