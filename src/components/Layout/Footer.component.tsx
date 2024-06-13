@@ -15,7 +15,7 @@ const Footer = () => (
     aria-label="Innholdet for bunnteksten med copyright"
     data-testid="footer"
   >
-    <div className="mt-8 bg-gray-800 shadow">
+    <div className="mt-8 bg-footer shadow">
       <div className="w-full mx-auto p-6 text-center text-white font-semibold">
         <div className="flex justify-center items-center space-x-2">
           <span>Copyright Daniel Fjeldstad</span>
