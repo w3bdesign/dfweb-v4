@@ -25,7 +25,7 @@ describe("ReactMatrixAnimation", () => {
         backgroundColor="#000000"
         fontColor="#FFFFFF"
         tileSet={["A", "B", "C"]}
-      />
+      />,
     );
     const canvas = screen.getByTestId("matrix-canvas");
     expect(canvas).toBeInTheDocument();
