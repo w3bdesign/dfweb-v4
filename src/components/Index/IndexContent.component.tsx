@@ -64,11 +64,6 @@ const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   return (
     <div className="mt-8">
       {pageContent?.map((page) => <Section key={page.id} {...page} />)}
-    
-        <div className="bg-black glitch" data-text="GLITCH">
-          GLITCH
-        </div>
-     
     </div>
   );
 };
