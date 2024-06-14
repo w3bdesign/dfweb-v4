@@ -48,13 +48,13 @@ const Hero = ({ content }: IContent) => (
             </FadeDown>
             <FadeUp
               delay={0.9}
-              cssClass="mt-4 px-6 text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl"
+              cssClass="mt-4 w-full text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl"
             >
               <h1>{content.length > 0 && content[1].text}</h1>
             </FadeUp>
             <FadeDown
               delay={1.4}
-              cssClass="mt-4 px-6 text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl"
+              cssClass="mt-4 w-full text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl"
             >
               <h2>{content.length > 0 && content[2].text}</h2>
             </FadeDown>
