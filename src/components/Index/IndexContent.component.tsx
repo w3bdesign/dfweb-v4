@@ -5,6 +5,7 @@ import { PortableText } from "@portabletext/react";
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 
 import BounceInScroll from "../Animations/BounceInScroll.component";
+import Link from "next/link";
 
 interface IChild {
   _key: string;
@@ -33,6 +34,15 @@ const myPortableTextComponents = {
     italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
     code: ({ children }: PortableTextMarkComponentProps) => (
       <span className="mt-4 text-lg block">{children}</span>
+    ),
+    link: ({ text, value }: PortableTextMarkComponentProps) => (
+      <Link
+        className="glitch underline text-lg font-bold text-highlight"
+        href={value?.href}
+        data-text={text}
+      >
+        {text}
+      </Link>
     ),
   },
 };
