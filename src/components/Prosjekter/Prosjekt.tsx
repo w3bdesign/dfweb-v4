@@ -47,7 +47,7 @@ const Prosjekt: React.FC<ProjectProps> = ({
           )}
         </div>
       </div>
-      <div className="absolute inset-0 bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 overlay bg-[url('/images/matrix.jpg')]">
+      <div className="p-8 absolute inset-0 bg-opacity-80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 overlay bg-[url('/images/matrix.jpg')]">
         <div className="p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[300px]">
           <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-white">{name}</h1>
           <h2 className="text-md text-white">{description}</h2>
