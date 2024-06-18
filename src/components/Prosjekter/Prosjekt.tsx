@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+
 import Button from "@/components/UI/Button.component";
-import styles from "./Tiles.module.css";
+
+import styles from "./ProsjektCard.module.css";
 
 interface ProjectProps {
   id: string;
@@ -44,9 +46,11 @@ const ProsjektCard: React.FC<ProjectProps> = ({
     >
       <img src={projectimage} alt={name} className={styles.image} />
       <div className={styles.details}>
-        <span className={styles.title}>{name}</span>
-        <span className={styles.info}>{description}</span>
-        <span className={styles.info}>{subdescription}</span>
+        <div className={styles.textBackground}>
+          <span className={styles.title}>{name}</span>
+          <span className={styles.info}>{description}</span>
+          <span className={styles.info}>{subdescription}</span>
+        </div>
         {isHovered && (
           <div className={styles.buttons}>
             {urlwww && urlwww.length > 0 && (
@@ -67,3 +71,4 @@ const ProsjektCard: React.FC<ProjectProps> = ({
 };
 
 export default ProsjektCard;
+
