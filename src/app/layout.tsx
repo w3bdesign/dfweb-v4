@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 
 import "./globals.css";
 import "./glitch.css";
+import "./animate.css";
 
 import Footer from "@/components/Layout/Footer.component";
 
