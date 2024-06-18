@@ -47,18 +47,20 @@ const ProsjektCard: React.FC<ProjectProps> = ({
         <span className={styles.title}>{name}</span>
         <span className={styles.info}>{description}</span>
         <span className={styles.info}>{subdescription}</span>
-        <div className={styles.buttons}>
-          {urlwww && urlwww.length > 0 && (
-            <Button href={urlwww[0].url} renderAs="a">
-              Besøk
-            </Button>
-          )}
-          {urlgithub && urlgithub.length > 0 && (
-            <Button href={urlgithub[0].url} renderAs="a">
-              GitHub
-            </Button>
-          )}
-        </div>
+        {isHovered && (
+          <div className={styles.buttons}>
+            {urlwww && urlwww.length > 0 && (
+              <Button href={urlwww[0].url} renderAs="a">
+                Besøk
+              </Button>
+            )}
+            {urlgithub && urlgithub.length > 0 && (
+              <Button href={urlgithub[0].url} renderAs="a">
+                GitHub
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
