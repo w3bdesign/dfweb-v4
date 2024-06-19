@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
 import Button from "@/components/UI/Button.component";
-
 import styles from "./ProsjektCard.module.css";
 
 interface ProjectProps {
@@ -25,18 +23,36 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   urlgithub,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768); // Adjust the breakpoint as needed
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
+    if (!isMobile) {
+      setIsHovered(true);
+    }
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
+    if (!isMobile) {
+      setIsHovered(false);
+    }
   };
 
   return (
     <div
-      className={`${styles.tile} ${isHovered ? styles.hovered : ""}`}
+      className={`${styles.tile} ${isHovered && !isMobile ? styles.hovered : ""}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onFocus={handleMouseEnter}
@@ -44,31 +60,30 @@ const ProsjektCard: React.FC<ProjectProps> = ({
       tabIndex={0}
       aria-label={`Project: ${name}`}
     >
-      <img src={projectimage} alt={name} className={styles.image} />
+      <div className={styles.imageContainer}>
+        <img src={projectimage} alt={name} className={styles.image} />
+      </div>
       <div className={styles.details}>
-        <div className={styles.textBackground}>
+        <div className={`${styles.textBackground} ${isMobile ? styles.mobileTextBackground : ""}`}>
           <span className={styles.title}>{name}</span>
           <span className={styles.info}>{description}</span>
           <span className={styles.info}>{subdescription}</span>
         </div>
-        {isHovered && (
-          <div className={styles.buttons}>
-            {urlwww && urlwww.length > 0 && (
-              <Button href={urlwww[0].url} renderAs="a">
-                Besøk
-              </Button>
-            )}
-            {urlgithub && urlgithub.length > 0 && (
-              <Button href={urlgithub[0].url} renderAs="a">
-                GitHub
-              </Button>
-            )}
-          </div>
-        )}
+        <div className={`${styles.buttons} ${isMobile ? styles.mobileButtons : ""}`}>
+          {urlwww && urlwww.length > 0 && (
+            <Button href={urlwww[0].url} renderAs="a">
+              Besøk
+            </Button>
+          )}
+          {urlgithub && urlgithub.length > 0 && (
+            <Button href={urlgithub[0].url} renderAs="a">
+              GitHub
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default ProsjektCard;
-
