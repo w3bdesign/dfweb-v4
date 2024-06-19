@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Button from "@/components/UI/Button.component";
 import styles from "./ProsjektCard.module.css";
+import { urlFor } from "@/lib/sanity/helpers";
 
 interface ProjectProps {
   id: string;
@@ -61,15 +63,28 @@ const ProsjektCard: React.FC<ProjectProps> = ({
       aria-label={`Project: ${name}`}
     >
       <div className={styles.imageContainer}>
-        <img src={projectimage} alt={name} className={styles.image} />
+        <Image
+          className={styles.image}          
+          width="800"
+          height="650"
+          quality={100}
+          src={urlFor(projectimage).url() as string}
+          alt={name}
+          priority
+         
+        />
       </div>
       <div className={styles.details}>
-        <div className={`${styles.textBackground} ${isMobile ? styles.mobileTextBackground : ""}`}>
+        <div
+          className={`${styles.textBackground} ${isMobile ? styles.mobileTextBackground : ""}`}
+        >
           <span className={styles.title}>{name}</span>
           <span className={styles.info}>{description}</span>
           <span className={styles.info}>{subdescription}</span>
         </div>
-        <div className={`${styles.buttons} ${isMobile ? styles.mobileButtons : ""}`}>
+        <div
+          className={`${styles.buttons} ${isMobile ? styles.mobileButtons : ""}`}
+        >
           {urlwww && urlwww.length > 0 && (
             <Button href={urlwww[0].url} renderAs="a">
               Besøk
