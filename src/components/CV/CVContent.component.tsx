@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import PageHeader from "@/components/UI/PageHeader.component";
+import Button from "@/components/UI/Button.component";
 
 /**
  * Renders CV content
@@ -34,8 +34,10 @@ const CVContent = () => (
                   />
                 </div>
               </div>
-              <div className="mx-auto pt-2 text-center sm:mt-2 xs:mt-2 bg-gray-800 rounded w-64 h-12 text-white cursor-pointer">
-                <Link href="./cv.pdf">Last ned PDF</Link>
+              <div className="mx-auto text-center cursor-pointer">
+                <Button>
+                  <Link href="./cv.pdf">Last ned PDF</Link>
+                </Button>
               </div>
             </div>
           </div>
