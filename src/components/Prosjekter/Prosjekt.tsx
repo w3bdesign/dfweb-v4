@@ -64,14 +64,13 @@ const ProsjektCard: React.FC<ProjectProps> = ({
     >
       <div className={styles.imageContainer}>
         <Image
-          className={styles.image}          
+          className={styles.image}
           width="800"
           height="650"
           quality={100}
           src={urlFor(projectimage).url() as string}
           alt={name}
           priority
-         
         />
       </div>
       <div className={styles.details}>
