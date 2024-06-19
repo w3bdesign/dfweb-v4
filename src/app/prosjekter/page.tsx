@@ -3,7 +3,8 @@ import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
 import PageHeader from "@/components/UI/PageHeader.component";
-import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
+// import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
+import Prosjekt from "@/components/Prosjekter/Prosjekt";
 
 export default async function PostIndex() {
   const projectQuery = groq`
@@ -31,8 +32,6 @@ export default async function PostIndex() {
 
   const posts = await client.fetch<any>(projectQuery);
 
-  console.log(posts);
-
   return (
     <>
       <Header />
@@ -45,7 +44,7 @@ export default async function PostIndex() {
         <div className="container mx-auto grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-8">
           {posts &&
             posts.map((project: any) => (
-              <ProsjektCard
+              <Prosjekt
                 key={project.id}
                 id={project.id}
                 name={project.name}
