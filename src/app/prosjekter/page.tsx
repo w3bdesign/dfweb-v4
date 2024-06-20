@@ -3,10 +3,10 @@ import { client } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 
 import PageHeader from "@/components/UI/PageHeader.component";
+import Prosjekt from "@/components/Prosjekter/Prosjekt.component";
 // import ProsjektCard from "@/components/Prosjekter/ProsjektCard";
-import Prosjekt from "@/components/Prosjekter/Prosjekt";
 
-export default async function PostIndex() {
+export default async function Prosjekter() {
   const projectQuery = groq`
   
 *[_type == "project"]{
