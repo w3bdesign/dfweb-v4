@@ -1,6 +1,6 @@
 // <div className={styles.imageContainer} style={{ minWidth: "650px", minHeight: "400px" }}>
 // fill på bilde
-// 
+//
 
 "use client";
 
