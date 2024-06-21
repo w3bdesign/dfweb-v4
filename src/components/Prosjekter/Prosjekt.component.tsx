@@ -66,19 +66,19 @@ const ProsjektCard: React.FC<ProjectProps> = ({
       tabIndex={0}
       aria-label={`Project: ${name}`}
     >
-      <div className={styles.imageContainer}>
+      <div className={`${styles.imageContainer} ${styles.imageContainerLarge}`}>
         <Image
-          className={styles.image}
-          style={{ width: "550px", height: "300px" }}
-          height="300"
-          width="550"
-          quality={100}
+          className={`${styles.image} ${styles.imageLarge}`}
           src={urlFor(projectimage).url() as string}
           alt={name}
           priority
-          unoptimized
+          unoptimized          
+          width="550"
+          height="200"
+          sizes="(max-width: 767px) 550px, 100vw"
         />
       </div>
+
       <div className={styles.details}>
         <div
           className={`${styles.textBackground} ${isMobile ? styles.mobileTextBackground : ""}`}
