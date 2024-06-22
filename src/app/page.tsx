@@ -17,7 +17,7 @@ export default async function PostIndex() {
     <>
       <Header />
       <main>
-        <div className="mt-[4.5rem] md:mt-32">
+        <div className="mt-[4.5rem] md:mt-32 overflow-hidden max-w-[450px] md:max-w-full">
           {posts[0].hero && <Hero content={posts[0].hero} />}
         </div>
         {posts[0].content && <IndexContent pageContent={posts[0].content} />}
