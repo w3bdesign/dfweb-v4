@@ -72,7 +72,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           src={urlFor(projectimage).url() as string}
           alt={name}
           priority
-          unoptimized          
+          unoptimized
           width="550"
           height="200"
           sizes="(max-width: 767px) 550px, 100vw"
