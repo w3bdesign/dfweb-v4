@@ -6,9 +6,10 @@ import Icons from "./Icons.component";
 
 import FadeDown from "@/components/Animations/FadeDown.component";
 import FadeUp from "@/components/Animations/FadeUp.component";
+import RotatingLoader from "../Animations/RotatingLoader.component";
 
 const ReactMatrixAnimation = React.lazy(
-  () => import("../Animations/Matrix.component"),
+  () => import("../Animations/Matrix.component")
 );
 
 type THero = { text: string };
@@ -30,15 +31,25 @@ const Hero = ({ content }: IContent) => (
     aria-label="Kontainer for animasjoner av introtekst"
     id="main-hero"
     data-testid="main-hero"
-    className="relative flex flex-col justify-center text-lg h-[33rem] md:h-[28.125rem] overflow-hidden"
+    className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden"
   >
-    <Suspense
-      fallback={<div className="text-center">Loading animation...</div>}
-    >
-      <ReactMatrixAnimation />
-    </Suspense>
+    <div
+      className="absolute inset-0 w-full h-full md:hidden bg-cover bg-center bg-no-repeat -mt-2 mb-10"
+      style={{ backgroundImage: "url('/images/mobilbg.jpg')" }}
+    ></div>
+    <div className="hidden md:block absolute inset-0 w-full h-full">
+      <Suspense
+        fallback={
+          <div className="text-center">
+            <RotatingLoader />
+          </div>
+        }
+      >
+        <ReactMatrixAnimation />
+      </Suspense>
+    </div>
     <FadeDown delay={0.1}>
-      <div className="relative z-10 mt-12 mb-12 md:mb-4 bg-white p-2 opacity-90 md:mt-4 lg:mt-4 xl:mt-4">
+      <div className="relative z-10 mt-12 md:mb-4 bg-white p-2 opacity-90 md:mt-4 lg:mt-4 xl:mt-4 mb-14 md:mb-6">
         <div className="rounded text-black">
           <section>
             <FadeDown delay={0.5} cssClass="text-center">
