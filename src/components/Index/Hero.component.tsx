@@ -9,7 +9,7 @@ import FadeUp from "@/components/Animations/FadeUp.component";
 import RotatingLoader from "../Animations/RotatingLoader.component";
 
 const ReactMatrixAnimation = React.lazy(
-  () => import("../Animations/Matrix.component")
+  () => import("../Animations/Matrix.component"),
 );
 
 type THero = { text: string };
