@@ -37,7 +37,7 @@ const myPortableTextComponents = {
     ),
     link: ({ text, value }: PortableTextMarkComponentProps) => (
       <Link
-        className="glitch underline text-lg font-bold text-highlight"
+        className="glitch underline text-lg font-bold text-green-400"
         href={value?.href}
         data-text={text}
       >
@@ -49,12 +49,12 @@ const myPortableTextComponents = {
 
 const Section = ({ text, title }: IContent) => (
   <section aria-label={title} data-testid="sanity-section" className="py-6">
-    <div className="p-6 text-lg text-black bg-white rounded shadow h-full">
+    <div className="p-6 text-lg rounded h-full">
       <BounceInScroll viewAmount={0}>
         <h2
           data-testid="sanity-title"
           data-cy={title}
-          className="text-3xl text-center"
+          className="text-3xl text-center text-slate-200"
         >
           {title}
         </h2>
@@ -69,8 +69,6 @@ const Section = ({ text, title }: IContent) => (
 );
 
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
-  console.log("Page Content er:", pageContent);
-
   return (
     <div className="mt-8">
       {pageContent?.map((page) => <Section key={page.id} {...page} />)}
