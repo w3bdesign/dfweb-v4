@@ -37,7 +37,7 @@ const myPortableTextComponents = {
     ),
     link: ({ text, value }: PortableTextMarkComponentProps) => (
       <Link
-        className="glitch underline text-lg font-bold text-highlight"
+        className="glitch underline text-lg font-bold text-green-400"
         href={value?.href}
         data-text={text}
       >
