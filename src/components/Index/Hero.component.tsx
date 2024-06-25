@@ -53,7 +53,10 @@ const Hero = ({ content }: IContent) => (
         <div className="rounded">
           <section>
             <FadeDown delay={0.5} cssClass="text-center">
-              <h2 data-cy="hei" className="introtekst inline-block text-5xl text-slate-300">
+              <h2
+                data-cy="hei"
+                className="introtekst inline-block text-5xl text-slate-300"
+              >
                 {content.length > 0 ? content[0].text : "Hei!"}
               </h2>
             </FadeDown>
