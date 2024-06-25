@@ -31,7 +31,7 @@ const InputField = ({
   ...props
 }: IInputProps) => {
   const sharedClasses =
-    "cursor-pointer my-6 text-xl w-64 p-2 m-2 text-black border-gray-500 border rounded border-opacity-50 outline-none focus:border-blue-500 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
+    "cursor-pointer my-6 text-xl w-64 p-2 m-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-blue-500 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
   return (
     <label className="relative" htmlFor={htmlFor}>
@@ -58,8 +58,8 @@ const InputField = ({
         ></textarea>
       )}
       <span
-        className={`cursor-pointer text-lg text-black text-opacity-80 absolute left-5 ${
-          type === "textarea" ? "-top-[3.7rem]" : "top-0"
+        className={`cursor-pointer text-lg text-slate-200 text-opacity-80 absolute left-5 ${
+          type === "textarea" ? "-top-[3.5rem]" : "top-0"
         } px-1 transition duration-200 input-text`}
       >
         {label}

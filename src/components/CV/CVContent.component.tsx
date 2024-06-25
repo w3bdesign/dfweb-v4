@@ -14,7 +14,7 @@ const CVContent = () => (
     <div className="mt-32 bg-graybg">
       <PageHeader>CV</PageHeader>
       <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-        <div className="container mx-auto bg-white rounded shadow sm:mb-4">
+        <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
           <div className="p-4 mx-auto h-96 md:h-full mt-4 flex justify-center items-center">
             <div className="p-4 text-lg rounded">
               <div className="mt-4 flex flex-col items-center md:block">
@@ -34,7 +34,7 @@ const CVContent = () => (
                   />
                 </div>
               </div>
-              <div className="mx-auto text-center cursor-pointer">
+              <div className="mx-auto text-center cursor-pointer mt-4">
                 <Button>
                   <Link href="./cv.pdf">Last ned PDF</Link>
                 </Button>

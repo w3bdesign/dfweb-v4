@@ -41,7 +41,9 @@ export default function RootLayout({
         <meta property="og:site_name" content="dfweb.no" />
       </head>
 
-      <body className={`flex flex-col min-h-screen ${inter.className}`}>
+      <body
+        className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-400 antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+      >
         <div className="flex-grow">{children}</div>
         <Footer />
       </body>
