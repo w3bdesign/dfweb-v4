@@ -4,8 +4,6 @@ import Image from "next/image";
 import Button from "@/components/UI/Button.component";
 import { urlFor } from "@/lib/sanity/helpers";
 
-import styles from "./ProsjektCard.module.css";
-
 interface ProjectProps {
   id: string;
   name: string;
@@ -27,9 +25,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   return (
     <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden">
       <div className="relative w-full h-48 md:h-60">
-        <div
-          className={`${styles.imageContainer} ${styles.imageContainerLarge}`}
-        >
+        <div className="w-full h-full p-5 pb-[50px] relative overflow-hidden flex justify-center md:w-[750px] md:h-[350px]">
           <Image
             className="flex justify-center text-center"
             width="600"
