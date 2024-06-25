@@ -54,7 +54,6 @@ export default function Header() {
         initial={{ y: -50, x: "-50%", opacity: 0 }}
         animate={{ y: 0, x: "-50%", opacity: 1, transition: { duration: 0.6 } }}
       ></MotionDiv>
-
       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-[370px]">
         <ul className="flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5">
           {links.map((link) => (
