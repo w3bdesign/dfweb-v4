@@ -31,7 +31,7 @@ const InputField = ({
   ...props
 }: IInputProps) => {
   const sharedClasses =
-    "cursor-pointer my-6 text-xl w-64 p-2 m-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-blue-500 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
+    "cursor-pointer my-6 text-xl w-64 p-2 m-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
   return (
     <label className="relative" htmlFor={htmlFor}>
