@@ -65,7 +65,7 @@ export default function Header() {
             >
               <Link
                 prefetch={true}
-                className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-md md:text-lg ${
+                className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
                   pathname === link.href ? "text-green-400" : ""
                 }`}
                 href={link.href}
