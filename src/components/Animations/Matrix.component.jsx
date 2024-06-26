@@ -28,10 +28,10 @@ const hexToRgb = (hexValue) => {
  */
 
 const ReactMatrixAnimation = ({
-  tileSize = 20,
-  //fadeFactor = 0.05,
+  tileSize = 20,  
   fadeFactor = 0.5,
-  backgroundColor = "#030303",
+  //backgroundColor = "#030303",
+  backgroundColor = "#111111",
   fontColor = "#008529",
   tileSet = null,
 }) => {
