@@ -23,7 +23,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   urlgithub,
 }) => {
   return (
-    <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden">
+    <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden mx-4 md:m-0">
       <div className="relative w-full h-48 md:h-60">
         <div className="w-full h-full p-5 md:pb-[50px] relative overflow-hidden flex justify-center md:w-[750px] md:h-[350px]">
           {projectimage && (
