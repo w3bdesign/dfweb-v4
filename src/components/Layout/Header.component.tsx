@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { usePathname } from "next/navigation";
+
 import { MotionDiv, MotionLi } from "@/lib/framer/client";
 
 import MobileMenu from "./MobileMenu.component";
