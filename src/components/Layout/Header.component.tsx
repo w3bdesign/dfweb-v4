@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { MotionDiv, MotionLi } from "@/lib/framer/client";
 
-export default function Header() {
-  const [isClient, setIsClient] = useState(false);
-  const pathname = usePathname();
+import MobileMenu from "./MobileMenu.component";
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+export default function Header() {
+  const pathname = usePathname();
 
   const links = [
     {
@@ -54,8 +51,9 @@ export default function Header() {
         initial={{ y: -50, x: "-50%", opacity: 0 }}
         animate={{ y: 0, x: "-50%", opacity: 1, transition: { duration: 0.6 } }}
       ></MotionDiv>
-      <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-[370px]">
-        <ul className="flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5">
+
+      <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
+        <ul className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5">
           {links.map((link) => (
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
@@ -65,7 +63,7 @@ export default function Header() {
             >
               <Link
                 prefetch={true}
-                className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-md md:text-lg ${
+                className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
                   pathname === link.href ? "text-green-400" : ""
                 }`}
                 href={link.href}
@@ -83,6 +81,9 @@ export default function Header() {
             </MotionLi>
           ))}
         </ul>
+        <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+          <MobileMenu links={links} />
+        </div>
       </nav>
     </header>
   );
