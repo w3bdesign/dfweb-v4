@@ -23,22 +23,24 @@ const ProsjektCard: React.FC<ProjectProps> = ({
   urlgithub,
 }) => {
   return (
-    <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden">
+    <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden mx-4 md:m-0">
       <div className="relative w-full h-48 md:h-60">
-        <div className="w-full h-full p-5 pb-[50px] relative overflow-hidden flex justify-center md:w-[750px] md:h-[350px]">
-          <Image
-            className="flex justify-center text-center"
-            width="600"
-            height="300"
-            quality={100}
-            src={urlFor(projectimage).url() as string}
-            alt={name}
-            priority
-            unoptimized
-          />
+        <div className="w-full h-full p-5 md:pb-[50px] relative overflow-hidden flex justify-center md:w-[750px] md:h-[350px]">
+          {projectimage && (
+            <Image
+              className="flex justify-center text-center"
+              width="600"
+              height="350"
+              quality={100}
+              src={urlFor(projectimage).url() as string}
+              alt={name}
+              priority
+              unoptimized
+            />
+          )}
         </div>
       </div>
-      <div className="mt-12 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+      <div className="md:mt-12 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
         <div>
           <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
             {name}
