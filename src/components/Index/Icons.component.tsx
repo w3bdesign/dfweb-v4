@@ -27,7 +27,10 @@ const Icons = () => {
   ];
 
   return (
-    <div data-testid="icons" className="flex justify-center mt-4 p-2 text-slate-300">
+    <div
+      data-testid="icons"
+      className="flex justify-center mt-4 p-2 text-slate-300"
+    >
       {AnimateIcons.map(({ Icon, id, iconName }) => (
         <span className="p-2" key={id}>
           <Grow delay={1.8 + id * 0.2}>

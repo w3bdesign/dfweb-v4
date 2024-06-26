@@ -29,9 +29,9 @@ const hexToRgb = (hexValue) => {
 
 const ReactMatrixAnimation = ({
   tileSize = 20,
-  //fadeFactor = 0.05,
   fadeFactor = 0.5,
-  backgroundColor = "#030303",
+  //backgroundColor = "#030303",
+  backgroundColor = "#111111",
   fontColor = "#008529",
   tileSet = null,
 }) => {
@@ -40,6 +40,7 @@ const ReactMatrixAnimation = ({
   const maxStackHeightRef = useRef(0);
   const lastFrameTimeRef = useRef(0);
   const fps = 10; // Desired frames per second
+
   const frameInterval = 1000 / fps;
 
   const rgbBackground = hexToRgb(backgroundColor);
