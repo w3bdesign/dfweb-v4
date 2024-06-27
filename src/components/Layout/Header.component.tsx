@@ -9,6 +9,11 @@ import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
 
 import MobileMenu from "./MobileMenu.component";
 
+/**
+ * Renders the header component with navigation links and a hamburger menu for mobile devices.
+ *
+ * @return {JSX.Element} The header component.
+ */
 const Header = () => {
   const pathname = usePathname();
 
