@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 
 import { MotionDiv, MotionLi } from "@/lib/framer/client";
 
@@ -13,36 +14,21 @@ export default function Header() {
   const pathname = usePathname();
 
   const links = [
-    {
-      title: "Home",
-      name: "Hjem",
-      hash: "#hjem",
-      href: "/",
-    },
+    { title: "Home", name: "Hjem", hash: "#hjem", href: "/" },
     {
       title: "Prosjekter",
       name: "Prosjekter",
       hash: "#prosjekter",
       href: "/prosjekter",
     },
-    {
-      title: "CV",
-      name: "CV",
-      hash: "#cv",
-      href: "/cv",
-    },
+    { title: "CV", name: "CV", hash: "#cv", href: "/cv" },
     {
       title: "Github",
       name: "Github",
       hash: "#github",
       href: "https://github.com/w3bdesign",
     },
-    {
-      title: "Kontakt",
-      name: "Kontakt",
-      hash: "#kontakt",
-      href: "/kontakt",
-    },
+    { title: "Kontakt", name: "Kontakt", hash: "#kontakt", href: "/kontakt" },
   ];
 
   return (
@@ -62,23 +48,31 @@ export default function Header() {
               initial={{ y: -50, opacity: 0 }}
               animate={{ y: 0, opacity: 1, transition: { duration: 0.6 } }}
             >
-              <Link
-                prefetch={true}
-                className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-                  pathname === link.href ? "text-green-400" : ""
-                }`}
-                href={link.href}
-              >
-                <div
-                  className={clsx("glitch", {
-                    "underline underline-offset-4 decoration-2":
-                      pathname === link.href,
-                  })}
-                  data-text={link.name}
+              <motion.div className="relative" whileHover="hover">
+                <Link
+                  prefetch={true}
+                  className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+                    pathname === link.href ? "text-green-400" : ""
+                  }`}
+                  href={link.href}
                 >
-                  {link.name}
-                </div>
-              </Link>
+                  <div className="glitch relative" data-text={link.name}>
+                    {link.name}
+                    <motion.span
+                      className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                        pathname === link.href ? "bg-green-400" : "bg-white"
+                      }`}
+                      initial={{
+                        width: pathname === link.href ? "100%" : "0%",
+                      }}
+                      variants={{
+                        hover: { width: "100%" },
+                      }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </Link>
+              </motion.div>
             </MotionLi>
           ))}
         </ul>
