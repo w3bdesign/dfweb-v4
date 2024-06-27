@@ -19,13 +19,6 @@ interface IMobileMenuProps {
   links: ILink[];
 }
 
-/**
- * Renders the mobile menu.
- * Animates the X when clicked, and animates the menu items with Framer Motion
- * @function MobileMenu
- * @returns {JSX.Element} - Rendered component
- */
-
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef(null);
@@ -36,26 +29,47 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   useClickAway(ref, handleClickOutside);
 
-  const itemVariants = {
+  const menuVariants = {
     closed: {
-      opacity: 0,
-    },
-    open: { opacity: 1 },
-  };
-
-  const sideVariants = {
-    closed: {
+      x: "100%",
       transition: {
-        staggerChildren: 0.3,
-        staggerDirection: -1,
+        type: "spring",
+        stiffness: 400,
+        damping: 40,
+        delay: 0.2, // Delay the menu closing to allow text to fade out first
       },
     },
     open: {
+      x: 0,
       transition: {
-        staggerChildren: 0.3,
-        staggerDirection: 1,
+        type: "spring",
+        stiffness: 400,
+        damping: 40,
       },
     },
+  };
+
+  const itemVariants = {
+    closed: (i: number) => ({
+      x: i % 2 === 0 ? "-100%" : "100%",
+      opacity: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        duration: 0.15,
+      },
+    }),
+    open: (i: number) => ({
+      x: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        delay: i * 0.05,
+      },
+    }),
   };
 
   return (
@@ -65,66 +79,68 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       data-testid="mobilemenu"
     >
       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
-      <div
-        id="mobile-menu"
-        data-testid="mobile-menu"
-        data-cy="mobile-menu"
-        aria-hidden={!isExpanded}
-        className="absolute right-0 w-full text-center bg-gray-800 mt-4 w-30"
-      >
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.aside
-              initial={{ height: 0, opacity: 0 }}
-              animate={{
-                height: links.length * 62, // Adjust the height based on the number of links
-                opacity: 1,
-                transition: { delay: 0.15, duration: 1.6, ease: "easeInOut" },
-              }}
-              exit={{
-                height: 0,
-                transition: { delay: 0.15, duration: 1.6, ease: "easeInOut" },
-              }}
-            >
-              <nav aria-label="Navigasjon">
-                <motion.div
-                  initial="closed"
-                  animate="open"
-                  exit="closed"
-                  variants={sideVariants}
-                >
-                  <ul>
-                    {links.map(({ title, name, hash, href }) => (
-                      <motion.li
-                        key={title}
-                        className="block p-4 text-xl text-white hover:underline mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-                        data-cy="mobile-menu-item"
-                        variants={itemVariants}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id="mobile-menu"
+            data-testid="mobile-menu"
+            data-cy="mobile-menu"
+            aria-hidden={!isExpanded}
+            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-10"
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={menuVariants}
+          >
+            <nav aria-label="Navigasjon" className="w-full">
+              <motion.ul 
+                className="w-full"
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={{
+                  open: {
+                    transition: { staggerChildren: 0.07, delayChildren: 0.2 }
+                  },
+                  closed: {
+                    transition: { staggerChildren: 0.05, staggerDirection: -1 }
+                  }
+                }}
+              >
+                {links.map(({ title, name, hash, href }, index) => (
+                  <motion.li
+                    key={title}
+                    className="block p-4 text-xl text-white hover:underline mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+                    data-cy="mobile-menu-item"
+                    custom={index}
+                    variants={itemVariants}
+                  >
+                    {href.startsWith("http") ? (
+                      <a
+                        aria-label={name}
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        data-testid={`mobil-${name}`}
                       >
-                        {href.startsWith("http") ? (
-                          <a
-                            aria-label={name}
-                            href={href}
-                            target="_blank"
-                            rel="noreferrer"
-                            data-testid={`mobil-${name}`}
-                          >
-                            {name}
-                          </a>
-                        ) : (
-                          <Link href={href} data-testid={`mobil-${name}`} prefetch={true}>
-                            {name}
-                          </Link>
-                        )}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </motion.div>
-              </nav>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-      </div>
+                        {name}
+                      </a>
+                    ) : (
+                      <Link
+                        href={href}
+                        data-testid={`mobil-${name}`}
+                        prefetch={true}
+                      >
+                        {name}
+                      </Link>
+                    )}
+                  </motion.li>
+                ))}
+              </motion.ul>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
