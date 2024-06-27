@@ -5,8 +5,8 @@ Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 ## Live URL: <https://www.dfweb.no>
 
 > ## Frontend
->
-<img src="https://private-user-images.githubusercontent.com/45217974/343614850-f9ca1ba0-7e1b-451e-8b46-bfea50aa0280.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTk0NTczMzEsIm5iZiI6MTcxOTQ1NzAzMSwicGF0aCI6Ii80NTIxNzk3NC8zNDM2MTQ4NTAtZjljYTFiYTAtN2UxYi00NTFlLThiNDYtYmZlYTUwYWEwMjgwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MjclMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjI3VDAyNTcxMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWM0OTcwYzJkMWNmOGJjYmQ1MjZmNDRlNDBhNWZjZDY4MGFlYTNhMGU2ZGJlYzViN2U1YTNlMzVjNjhiZmE2MTEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.7kKYcpLf_nXEjV0epgqyYCUuJSqu251dEKLAEhRZkCE" alt="Dfweb screenshot" />
+
+![343614850-f9ca1ba0-7e1b-451e-8b46-bfea50aa0280](https://github.com/w3bdesign/dfweb-v4/assets/45217974/38d123e1-6667-4d2e-a163-ab8710d637e2)
 
 <br />
 
@@ -24,7 +24,7 @@ Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 
 ### General
 
-- Next.js 14 with Typescript and App directory
+- Next.js 14 with Typescript
 - Sanity.io for fetching project information and frontpage text
 - Ladle for component documentation
 - Animations with Framer Motion
