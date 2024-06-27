@@ -50,9 +50,9 @@ const Header = () => {
   ];
 
   return (
-    <header className="z-[999] relative">
+    <header className="z-[999] relative mr-6 md:mr-0">
       <MotionDiv
-        className="bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[36rem] sm:rounded-full mr-6 md:mr-0"
+        className="bg-slate-800 bg-opacity-80 w-screen fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[36rem] sm:rounded-full mr-6 md:mr-0"
         initial={{ y: -100, x: "-50%", opacity: 0 }}
         animate={{
           y: 0,
