@@ -18,7 +18,13 @@ const Header = () => {
   const pathname = usePathname();
 
   const links = [
-    { title: "Home", name: "Hjem", hash: "#hjem", href: "/" },
+    {
+      title: "Home",
+      name: "Hjem",
+      hash: "#hjem",
+      href: "/",
+      externalLink: false,
+    },
     {
       title: "Prosjekter",
       name: "Prosjekter",
