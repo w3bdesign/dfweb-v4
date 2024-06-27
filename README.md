@@ -1,3 +1,6 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+
 # Dfweb.no Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
@@ -24,7 +27,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ### General
 
-- Next.js 14 with Typescript
+- Next.js 14 with Typescript and App router
 - Sanity.io for fetching project information and frontpage text
 - Ladle for component documentation
 - Animations with Framer Motion
@@ -59,7 +62,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - E2E testing with Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
-- 98% test coverage with Jest and React testing library
+- 82% test coverage with Jest and React testing library
 
 ## TODO
 
