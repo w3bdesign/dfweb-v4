@@ -9,6 +9,8 @@ import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
 
 import MobileMenu from "./MobileMenu.component";
 
+import { LINKS } from "@/constants/LINKS";
+
 /**
  * Renders the header component with navigation links and a hamburger menu for mobile devices.
  *
@@ -16,38 +18,6 @@ import MobileMenu from "./MobileMenu.component";
  */
 const Header = () => {
   const pathname = usePathname();
-
-  const links = [
-    {
-      title: "Home",
-      name: "Hjem",
-      hash: "#hjem",
-      href: "/",
-      externalLink: false,
-    },
-    {
-      title: "Prosjekter",
-      name: "Prosjekter",
-      hash: "#prosjekter",
-      href: "/prosjekter",
-      externalLink: false,
-    },
-    { title: "CV", name: "CV", hash: "#cv", href: "/cv", externalLink: false },
-    {
-      title: "Github",
-      name: "Github",
-      hash: "#github",
-      href: "https://github.com/w3bdesign",
-      externalLink: true,
-    },
-    {
-      title: "Kontakt",
-      name: "Kontakt",
-      hash: "#kontakt",
-      href: "/kontakt",
-      externalLink: false,
-    },
-  ];
 
   return (
     <header className="z-[999] relative">
@@ -80,7 +50,7 @@ const Header = () => {
           initial="hidden"
           animate="visible"
         >
-          {links.map((link) => (
+          {LINKS.map((link) => (
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
               key={link.hash}
@@ -119,7 +89,7 @@ const Header = () => {
           ))}
         </MotionUl>
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-          <MobileMenu links={links} />
+          <MobileMenu links={LINKS} />
         </div>
       </nav>
     </header>
