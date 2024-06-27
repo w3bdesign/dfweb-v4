@@ -36,6 +36,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 400,
         damping: 40,
+        delay: 0.2, // Delay the menu closing to allow text to fade out first
       },
     },
     open: {
@@ -53,7 +54,10 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: i % 2 === 0 ? "-100%" : "100%",
       opacity: 0,
       transition: {
-        delay: 0.15,
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+        duration: 0.15,
       },
     }),
     open: (i: number) => ({
@@ -82,14 +86,27 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
             data-testid="mobile-menu"
             data-cy="mobile-menu"
             aria-hidden={!isExpanded}
-            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-50"
+            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-10"
             initial="closed"
             animate="open"
             exit="closed"
             variants={menuVariants}
           >
             <nav aria-label="Navigasjon" className="w-full">
-              <ul className="w-full">
+              <motion.ul 
+                className="w-full"
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={{
+                  open: {
+                    transition: { staggerChildren: 0.07, delayChildren: 0.2 }
+                  },
+                  closed: {
+                    transition: { staggerChildren: 0.05, staggerDirection: -1 }
+                  }
+                }}
+              >
                 {links.map(({ title, name, hash, href }, index) => (
                   <motion.li
                     key={title}
@@ -119,7 +136,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                     )}
                   </motion.li>
                 ))}
-              </ul>
+              </motion.ul>
             </nav>
           </motion.div>
         )}
