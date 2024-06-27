@@ -19,6 +19,12 @@ interface IMobileMenuProps {
   links: ILink[];
 }
 
+/**
+ * Renders the mobile menu component with animation and navigation links.
+ *
+ * @param {IMobileMenuProps} links - Array of navigation links
+ * @return {JSX.Element} - Rendered mobile menu component
+ */
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef(null);
@@ -36,7 +42,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 400,
         damping: 40,
-        delay: 0.2, // Delay the menu closing to allow text to fade out first
+        delay: 0.2,
       },
     },
     open: {
@@ -50,6 +56,12 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
   };
 
   const itemVariants = {
+      /**
+       * Returns an object with the CSS properties for a closed animation.
+       *
+       * @param {number} i - The index of the item being animated.
+       * @return {Object} An object with CSS properties for the closed animation.
+       */
     closed: (i: number) => ({
       x: i % 2 === 0 ? "-100%" : "100%",
       opacity: 0,
@@ -60,6 +72,19 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         duration: 0.15,
       },
     }),
+/**
+ * Returns an object representing the animation properties for opening an item.
+ *
+ * @param {number} i - The index of the item.
+ * @return {object} An object with the following properties:
+ *   - x: The x-coordinate of the item.
+ *   - opacity: The opacity of the item.
+ *   - transition: An object representing the animation properties.
+ *     - type: The type of the animation.
+ *     - stiffness: The stiffness of the animation.
+ *     - damping: The damping of the animation.
+ *     - delay: The delay of the animation.
+ */
     open: (i: number) => ({
       x: 0,
       opacity: 1,
@@ -93,18 +118,18 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
             variants={menuVariants}
           >
             <nav aria-label="Navigasjon" className="w-full">
-              <motion.ul 
+              <motion.ul
                 className="w-full"
                 initial="closed"
                 animate="open"
                 exit="closed"
                 variants={{
                   open: {
-                    transition: { staggerChildren: 0.07, delayChildren: 0.2 }
+                    transition: { staggerChildren: 0.07, delayChildren: 0.2 },
                   },
                   closed: {
-                    transition: { staggerChildren: 0.05, staggerDirection: -1 }
-                  }
+                    transition: { staggerChildren: 0.05, staggerDirection: -1 },
+                  },
                 }}
               >
                 {links.map(({ title, name, hash, href }, index) => (
