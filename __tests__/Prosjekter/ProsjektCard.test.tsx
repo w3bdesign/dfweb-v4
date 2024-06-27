@@ -7,7 +7,7 @@ import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard";
 jest.mock(
   "../../src/components/UI/Button.component",
   () =>
-    ({ href, renderAs, children }) => <a href={href}>{children}</a>
+    ({ href, renderAs, children }) => <a href={href}>{children}</a>,
 );
 
 // Mock the urlFor function
@@ -54,7 +54,7 @@ describe("ProsjektCard", () => {
     expect(visitButton).toBeInTheDocument();
     expect(visitButton.closest("a")).toHaveAttribute(
       "href",
-      "https://example.com"
+      "https://example.com",
     );
 
     // Check if the "GitHub" button is rendered with the correct href
@@ -62,7 +62,7 @@ describe("ProsjektCard", () => {
     expect(githubButton).toBeInTheDocument();
     expect(githubButton.closest("a")).toHaveAttribute(
       "href",
-      "https://github.com/example"
+      "https://github.com/example",
     );
   });
 
