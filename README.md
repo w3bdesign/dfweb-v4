@@ -1,6 +1,6 @@
 # Dfweb.no Portfolio Version 4
 
-Third version of my portfolio website with Next.js, Sanity.io and Typescript.
+Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
 
 ## Live URL: <https://www.dfweb.no>
 
