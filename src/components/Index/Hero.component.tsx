@@ -34,7 +34,7 @@ const Hero = ({ content }: IContent) => (
     className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden"
   >
     <div
-      className="absolute inset-0 w-full h-full md:hidden bg-cover bg-center bg-no-repeat -mt-2 mb-10"
+      className="absolute inset-0 w-screen h-full md:hidden bg-cover bg-center bg-no-repeat -mt-2 mb-10 p-2"
       style={{ backgroundImage: "url('/images/mobilbg.jpg')" }}
     ></div>
     <div className="hidden md:block absolute inset-0 w-full h-full">
