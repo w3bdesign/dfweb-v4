@@ -112,7 +112,11 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                             {name}
                           </a>
                         ) : (
-                          <Link href={href} data-testid={`mobil-${name}`} prefetch={true}>
+                          <Link
+                            href={href}
+                            data-testid={`mobil-${name}`}
+                            prefetch={true}
+                          >
                             {name}
                           </Link>
                         )}
