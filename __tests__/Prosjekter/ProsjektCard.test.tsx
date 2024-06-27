@@ -7,15 +7,26 @@ import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard";
 jest.mock(
   "../../src/components/UI/Button.component",
   () =>
-    ({ href, renderAs, children }) => <a href={href}>{children}</a>,
+    ({ href, renderAs, children }) => <a href={href}>{children}</a>
 );
+
+// Mock the urlFor function
+jest.mock("../../src/lib/sanity/helpers", () => ({
+  urlFor: jest.fn().mockReturnValue({
+    url: jest.fn().mockReturnValue("test-image.jpg"),
+  }),
+}));
 
 const mockProjectProps = {
   id: "1",
   name: "Test Project",
   description: "This is a test project",
   subdescription: "This is a subdescription",
-  projectimage: "test-image.jpg",
+  projectimage: {
+    asset: {
+      _ref: "image-Tb9Ew8CXIwaY6R1kjMvI0uRR-2000x3000-jpg",
+    },
+  },
   urlwww: [{ url: "https://example.com", _key: "1" }],
   urlgithub: [{ url: "https://github.com/example", _key: "1" }],
 };
@@ -43,7 +54,7 @@ describe("ProsjektCard", () => {
     expect(visitButton).toBeInTheDocument();
     expect(visitButton.closest("a")).toHaveAttribute(
       "href",
-      "https://example.com",
+      "https://example.com"
     );
 
     // Check if the "GitHub" button is rendered with the correct href
@@ -51,7 +62,7 @@ describe("ProsjektCard", () => {
     expect(githubButton).toBeInTheDocument();
     expect(githubButton.closest("a")).toHaveAttribute(
       "href",
-      "https://github.com/example",
+      "https://github.com/example"
     );
   });
 
