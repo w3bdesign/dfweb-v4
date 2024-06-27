@@ -21,7 +21,7 @@ const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
 
   return (
     <button
-      className="flex flex-col w-16 rounded justify-center items-center group z-50 pr-6"
+      className="flex flex-col w-16 rounded justify-center items-center group z-50"
       data-cy="hamburger"
       data-testid="hamburger"
       onClick={onClick}
