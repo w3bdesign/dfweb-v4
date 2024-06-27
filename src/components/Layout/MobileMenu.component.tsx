@@ -13,6 +13,7 @@ interface ILink {
   name: string;
   hash: string;
   href: string;
+  externalLink: boolean;
 }
 
 interface IMobileMenuProps {
@@ -132,35 +133,37 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                   },
                 }}
               >
-                {links.map(({ title, name, hash, href }, index) => (
-                  <motion.li
-                    key={title}
-                    className="block p-4 text-xl text-white hover:underline mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-                    data-cy="mobile-menu-item"
-                    custom={index}
-                    variants={itemVariants}
-                  >
-                    {href.startsWith("http") ? (
-                      <a
-                        aria-label={name}
-                        href={href}
-                        target="_blank"
-                        rel="noreferrer"
-                        data-testid={`mobil-${name}`}
-                      >
-                        {name}
-                      </a>
-                    ) : (
-                      <Link
-                        href={href}
-                        data-testid={`mobil-${name}`}
-                        prefetch={true}
-                      >
-                        {name}
-                      </Link>
-                    )}
-                  </motion.li>
-                ))}
+                {links.map(
+                  ({ title, name, hash, href, externalLink }, index) => (
+                    <motion.li
+                      key={title}
+                      className="block p-4 text-xl text-white hover:underline mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+                      data-cy="mobile-menu-item"
+                      custom={index}
+                      variants={itemVariants}
+                    >
+                      {externalLink ? (
+                        <a
+                          aria-label={name}
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          data-testid={`mobil-${name}`}
+                        >
+                          {name}
+                        </a>
+                      ) : (
+                        <Link
+                          href={href}
+                          data-testid={`mobil-${name}`}
+                          prefetch={true}
+                        >
+                          {name}
+                        </Link>
+                      )}
+                    </motion.li>
+                  )
+                )}
               </motion.ul>
             </nav>
           </motion.div>
