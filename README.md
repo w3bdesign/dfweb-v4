@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 # Dfweb.no Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
