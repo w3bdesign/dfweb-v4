@@ -9,7 +9,7 @@ import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
 
 import MobileMenu from "./MobileMenu.component";
 
-export default function Header() {
+const Header = () => {
   const pathname = usePathname();
 
   const links = [
@@ -105,4 +105,6 @@ export default function Header() {
       </nav>
     </header>
   );
-}
+};
+
+export default Header;
