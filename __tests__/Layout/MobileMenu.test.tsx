@@ -29,19 +29,19 @@ describe("MobileMenu - elementer eksisterer", () => {
     const hamburger = screen.getByTestId("hamburger");
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true })
+      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
   });
 

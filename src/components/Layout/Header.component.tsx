@@ -26,7 +26,7 @@ const Header = () => {
       href: "/prosjekter",
       externalLink: false,
     },
-    { title: "CV", name: "CV", hash: "#cv", href: "/cv", externalLink: false, },
+    { title: "CV", name: "CV", hash: "#cv", href: "/cv", externalLink: false },
     {
       title: "Github",
       name: "Github",
