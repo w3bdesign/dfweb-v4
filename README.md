@@ -5,8 +5,8 @@ Third version of my portfolio website with Next.js, Sanity.io and Typescript.
 ## Live URL: <https://www.dfweb.no>
 
 > ## Frontend
->
-<img src="https://private-user-images.githubusercontent.com/45217974/339231048-3fb90a01-5a45-4039-8eb5-7c2987dd4bea.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTg0MjY4MjEsIm5iZiI6MTcxODQyNjUyMSwicGF0aCI6Ii80NTIxNzk3NC8zMzkyMzEwNDgtM2ZiOTBhMDEtNWE0NS00MDM5LThlYjUtN2MyOTg3ZGQ0YmVhLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA2MTUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNjE1VDA0NDIwMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTZjZmRkYjcxMjcxOGRjNzFhNzJkYzQzMTNmNGViY2E4OWRkYmE3NmQzMTRiNzJjZWVlZGE4NDBmODZjNTE3OGEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.Dmm5O7RVjE0oviP-PZkJS5syBGMPY1WF-7cWLtDx9G8" alt="Dfweb screenshot" />
+
+![343614850-f9ca1ba0-7e1b-451e-8b46-bfea50aa0280](https://github.com/w3bdesign/dfweb-v4/assets/45217974/38d123e1-6667-4d2e-a163-ab8710d637e2)
 
 <br />
 
