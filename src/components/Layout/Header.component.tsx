@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
+import { LINKS } from "@/constants/LINKS";
 
 import MobileMenu from "./MobileMenu.component";
 
@@ -17,46 +18,14 @@ import MobileMenu from "./MobileMenu.component";
 const Header = () => {
   const pathname = usePathname();
 
-  const links = [
-    {
-      title: "Home",
-      name: "Hjem",
-      hash: "#hjem",
-      href: "/",
-      externalLink: false,
-    },
-    {
-      title: "Prosjekter",
-      name: "Prosjekter",
-      hash: "#prosjekter",
-      href: "/prosjekter",
-      externalLink: false,
-    },
-    { title: "CV", name: "CV", hash: "#cv", href: "/cv", externalLink: false },
-    {
-      title: "Github",
-      name: "Github",
-      hash: "#github",
-      href: "https://github.com/w3bdesign",
-      externalLink: true,
-    },
-    {
-      title: "Kontakt",
-      name: "Kontakt",
-      hash: "#kontakt",
-      href: "/kontakt",
-      externalLink: false,
-    },
-  ];
-
   return (
     <header className="z-[999] relative">
       <MotionDiv
-        className="bg-slate-800 bg-opacity-80 w-screen fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[36rem] sm:rounded-full mr-6 md:mr-0"
+        className="w-full max-w-[390px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-6 md:mr-0"
         initial={{ y: -100, x: "-50%", opacity: 0 }}
         animate={{
           y: 0,
-          x: "-56%",
+          x: "-50%",
           opacity: 1,
           transition: {
             y: { duration: 0.6, ease: "easeOut" },
@@ -80,7 +49,7 @@ const Header = () => {
           initial="hidden"
           animate="visible"
         >
-          {links.map((link) => (
+          {LINKS.map((link) => (
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
               key={link.hash}
@@ -119,7 +88,7 @@ const Header = () => {
           ))}
         </MotionUl>
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-          <MobileMenu links={links} />
+          <MobileMenu links={LINKS} />
         </div>
       </nav>
     </header>
