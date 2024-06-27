@@ -2,16 +2,17 @@
 
 import React from "react";
 import Link from "next/link";
-import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { MotionDiv, MotionLi } from "@/lib/framer/client";
+import { useMobile } from "@/hooks/useMobile";
 
 import MobileMenu from "./MobileMenu.component";
 
 export default function Header() {
   const pathname = usePathname();
+  const isMobile = useMobile();
 
   const links = [
     { title: "Home", name: "Hjem", hash: "#hjem", href: "/" },
@@ -35,8 +36,9 @@ export default function Header() {
     <header className="z-[999] relative">
       <MotionDiv
         className="bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] w-full shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] sm:w-[36rem] sm:rounded-full dark:bg-gray-900 dark:border-black/40 dark:bg-opacity-75"
-        initial={{ y: -50, x: "-50%", opacity: 0 }}
-        animate={{ y: 0, x: "-50%", opacity: 1, transition: { duration: 0.6 } }}
+        initial={isMobile ? { x: "-50%" } : { y: -50, x: "-50%", opacity: 0 }}
+        animate={isMobile ? { x: "-50%" } : { y: 0, x: "-50%", opacity: 1 }}
+        transition={{ duration: 0.6 }}
       ></MotionDiv>
 
       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
@@ -45,8 +47,9 @@ export default function Header() {
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
               key={link.hash}
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1, transition: { duration: 0.6 } }}
+              initial={isMobile ? {} : { y: -50, opacity: 0 }}
+              animate={isMobile ? {} : { y: 0, opacity: 1 }}
+              transition={{ duration: 0.6 }}
             >
               <motion.div className="relative" whileHover="hover">
                 <Link
