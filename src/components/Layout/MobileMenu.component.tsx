@@ -56,12 +56,12 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
   };
 
   const itemVariants = {
-      /**
-       * Returns an object with the CSS properties for a closed animation.
-       *
-       * @param {number} i - The index of the item being animated.
-       * @return {Object} An object with CSS properties for the closed animation.
-       */
+    /**
+     * Returns an object with the CSS properties for a closed animation.
+     *
+     * @param {number} i - The index of the item being animated.
+     * @return {Object} An object with CSS properties for the closed animation.
+     */
     closed: (i: number) => ({
       x: i % 2 === 0 ? "-100%" : "100%",
       opacity: 0,
@@ -72,19 +72,19 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         duration: 0.15,
       },
     }),
-/**
- * Returns an object representing the animation properties for opening an item.
- *
- * @param {number} i - The index of the item.
- * @return {object} An object with the following properties:
- *   - x: The x-coordinate of the item.
- *   - opacity: The opacity of the item.
- *   - transition: An object representing the animation properties.
- *     - type: The type of the animation.
- *     - stiffness: The stiffness of the animation.
- *     - damping: The damping of the animation.
- *     - delay: The delay of the animation.
- */
+    /**
+     * Returns an object representing the animation properties for opening an item.
+     *
+     * @param {number} i - The index of the item.
+     * @return {object} An object with the following properties:
+     *   - x: The x-coordinate of the item.
+     *   - opacity: The opacity of the item.
+     *   - transition: An object representing the animation properties.
+     *     - type: The type of the animation.
+     *     - stiffness: The stiffness of the animation.
+     *     - damping: The damping of the animation.
+     *     - delay: The delay of the animation.
+     */
     open: (i: number) => ({
       x: 0,
       opacity: 1,
@@ -111,7 +111,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
             data-testid="mobile-menu"
             data-cy="mobile-menu"
             aria-hidden={!isExpanded}
-            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-10"
+            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-10 -mt-4"
             initial="closed"
             animate="open"
             exit="closed"
