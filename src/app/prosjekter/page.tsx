@@ -44,8 +44,7 @@ export default async function Prosjekter() {
           {posts &&
             posts.map((project: any) => (
               <ProsjektCard
-                key={project.id}
-                id={project.id}
+                key={project.id}                
                 name={project.name}
                 description={project.description}
                 subdescription={project.subdescription}

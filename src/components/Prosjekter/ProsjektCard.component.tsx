@@ -6,7 +6,6 @@ import { urlFor } from "@/lib/sanity/helpers";
 import BounceInScroll from "../Animations/BounceInScroll.component";
 
 interface ProjectProps {
-  id: string;
   name: string;
   description: string;
   subdescription: string;
