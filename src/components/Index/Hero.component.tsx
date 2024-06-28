@@ -13,23 +13,21 @@ interface IContent {
   content: THero[];
 }
 
-/**
- * Renders Hero that is used on the front page
- * Uses Framer Motion for animations to show the text
- * @function Hero
- * @returns {JSX.Element} - Rendered component
- */
 const Hero = ({ content }: IContent) => (
   <div
     role="article"
     aria-label="Kontainer for animasjoner av introtekst"
     id="main-hero"
     data-testid="main-hero"
-    className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full max-w-full"
+    className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full"
   >
     <div
-      className="relative h-full md:hidden bg-cover bg-center bg-no-repeat -mt-2 mb-10 p-2 w-full"
-      style={{ backgroundImage: "url('/images/mobilbg.jpg')" }}
+      className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/images/mobilbg.jpg')",
+        top: "-0.5rem",
+        marginBottom: "2.5rem",
+      }}
     />
     <div className="hidden md:block absolute inset-0 w-full h-full">
       <Suspense
