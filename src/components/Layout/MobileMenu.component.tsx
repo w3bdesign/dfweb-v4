@@ -93,7 +93,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 300,
         damping: 24,
-        delay: i * 0.05,
+        delay: i * 0.15,
       },
     }),
   };
