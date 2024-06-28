@@ -48,7 +48,7 @@ const myPortableTextComponents = {
 };
 
 const Section = ({ text, title }: IContent) => (
-  <section aria-label={title} data-testid="sanity-section" className="py-6">
+  <section aria-label={title} data-testid="sanity-section" className="md:py-6">
     <div className="p-6 text-lg rounded h-full">
       <BounceInScroll viewAmount={0}>
         <h2
@@ -70,7 +70,7 @@ const Section = ({ text, title }: IContent) => (
 
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   return (
-    <div className="mt-8">
+    <div className="md:mt-8">
       {pageContent?.map((page) => <Section key={page.id} {...page} />)}
     </div>
   );
