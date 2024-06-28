@@ -1,19 +1,14 @@
 "use client";
-
 import React, { Suspense } from "react";
-
 import Icons from "./Icons.component";
-
 import FadeDown from "@/components/Animations/FadeDown.component";
 import FadeUp from "@/components/Animations/FadeUp.component";
 import RotatingLoader from "../Animations/RotatingLoader.component";
-
 const ReactMatrixAnimation = React.lazy(
   () => import("../Animations/Matrix.component")
 );
 
 type THero = { text: string };
-
 interface IContent {
   content: THero[];
 }
@@ -24,33 +19,18 @@ interface IContent {
  * @function Hero
  * @returns {JSX.Element} - Rendered component
  */
-
 const Hero = ({ content }: IContent) => (
   <div
     role="article"
     aria-label="Kontainer for animasjoner av introtekst"
     id="main-hero"
     data-testid="main-hero"
-    className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden"
+    className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full max-w-full"
   >
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
+    <div
+      className="relative h-full md:hidden bg-cover bg-center bg-no-repeat -mt-2 mb-10 p-2 w-full"
+      style={{ backgroundImage: "url('/images/mobilbg.jpg')" }}
+    />
     <div className="hidden md:block absolute inset-0 w-full h-full">
       <Suspense
         fallback={
