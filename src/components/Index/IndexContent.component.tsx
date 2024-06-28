@@ -70,7 +70,7 @@ const Section = ({ text, title }: IContent) => (
 
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   return (
-    <div className="mt-8">
+    <div className="md:mt-8">
       {pageContent?.map((page) => <Section key={page.id} {...page} />)}
     </div>
   );
