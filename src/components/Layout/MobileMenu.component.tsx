@@ -39,7 +39,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 400,
         damping: 40,
-        delay: 0.2,
+        delay: 0.3,
       },
     },
     open: {
@@ -60,7 +60,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 300,
         damping: 24,
-        duration: 0.15,
+        duration: 0.25,
       },
     }),
     open: (i: number) => ({
@@ -70,7 +70,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 300,
         damping: 24,
-        delay: i * 0.15,
+        delay: i * 0.25,
       },
     }),
   };
