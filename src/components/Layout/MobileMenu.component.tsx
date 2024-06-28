@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useClickAway } from "react-use";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { AnimatePresence, useCycle, motion } from "framer-motion";
 
@@ -20,15 +21,10 @@ interface IMobileMenuProps {
   links: ILink[];
 }
 
-/**
- * Renders the mobile menu component with animation and navigation links.
- *
- * @param {IMobileMenuProps} links - Array of navigation links
- * @return {JSX.Element} - Rendered mobile menu component
- */
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef(null);
+  const pathname = usePathname();
 
   const handleClickOutside = () => {
     setisExpanded(0);
@@ -57,12 +53,6 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
   };
 
   const itemVariants = {
-    /**
-     * Returns an object with the CSS properties for a closed animation.
-     *
-     * @param {number} i - The index of the item being animated.
-     * @return {Object} An object with CSS properties for the closed animation.
-     */
     closed: (i: number) => ({
       x: i % 2 === 0 ? "-100%" : "100%",
       opacity: 0,
@@ -73,19 +63,6 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         duration: 0.15,
       },
     }),
-    /**
-     * Returns an object representing the animation properties for opening an item.
-     *
-     * @param {number} i - The index of the item.
-     * @return {object} An object with the following properties:
-     *   - x: The x-coordinate of the item.
-     *   - opacity: The opacity of the item.
-     *   - transition: An object representing the animation properties.
-     *     - type: The type of the animation.
-     *     - stiffness: The stiffness of the animation.
-     *     - damping: The damping of the animation.
-     *     - delay: The delay of the animation.
-     */
     open: (i: number) => ({
       x: 0,
       opacity: 1,
@@ -137,7 +114,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                   ({ title, name, hash, href, externalLink }, index) => (
                     <motion.li
                       key={title}
-                      className="block p-4 text-xl text-white hover:underline mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+                      className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
                       data-cy="mobile-menu-item"
                       custom={index}
                       variants={itemVariants}
@@ -149,6 +126,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                           target="_blank"
                           rel="noreferrer"
                           data-testid={`mobil-${name}`}
+                          className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
                         >
                           {name}
                         </a>
@@ -157,12 +135,29 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                           href={href}
                           data-testid={`mobil-${name}`}
                           prefetch={true}
+                          className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+                            pathname === href ? "text-green-400" : ""
+                          }`}
                         >
-                          {name}
+                          <div className="glitch relative" data-text={name}>
+                            {name}
+                            <motion.span
+                              className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                                pathname === href ? "bg-green-400" : "bg-white"
+                              }`}
+                              initial={{
+                                width: pathname === href ? "100%" : "0%",
+                              }}
+                              animate={{
+                                width: pathname === href ? "100%" : "0%",
+                              }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
                         </Link>
                       )}
                     </motion.li>
-                  ),
+                  )
                 )}
               </motion.ul>
             </nav>
