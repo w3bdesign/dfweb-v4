@@ -112,7 +112,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
             data-testid="mobile-menu"
             data-cy="mobile-menu"
             aria-hidden={!isExpanded}
-            className="fixed top-0 right-0 w-screen h-screen bg-gray-800 flex items-center justify-center -z-10 -mt-4"
+            className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center -z-10 -mt-4"
             initial="closed"
             animate="open"
             exit="closed"
