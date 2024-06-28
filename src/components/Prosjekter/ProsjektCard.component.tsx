@@ -26,12 +26,11 @@ const ProsjektCard: React.FC<ProjectProps> = ({
     <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden mx-4 md:m-0">
       <BounceInScroll viewAmount={0.3}>
         <div className="relative w-full h-48 md:h-60">
-          <div className="w-full h-full p-5 md:pb-[50px] relative overflow-hidden flex justify-center md:w-[750px] md:h-[350px]">
+          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:w-[600px] md:h-[330px]">
             {projectimage && (
               <Image
-                className="flex justify-center text-center"
                 width="600"
-                height="350"
+                height="330"
                 quality={100}
                 src={urlFor(projectimage).url() as string}
                 alt={name}
@@ -41,14 +40,13 @@ const ProsjektCard: React.FC<ProjectProps> = ({
             )}
           </div>
         </div>
-        <div className="md:mt-12 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-          <div>
-            <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
-              {name}
-            </h1>
-            <h2 className="text-md">{description}</h2>
-            <p className="mt-4 text-sm mt-2">{subdescription}</p>
-          </div>
+        <div className="md:mt-20 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+          <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
+            {name}
+          </h1>
+          <h2 className="text-md">{description}</h2>
+          <p className="mt-4 text-sm mt-2">{subdescription}</p>
+
           <div className="flex justify-center mt-4">
             {urlwww && urlwww.length > 0 && (
               <Button href={urlwww[0].url} renderAs="a">
