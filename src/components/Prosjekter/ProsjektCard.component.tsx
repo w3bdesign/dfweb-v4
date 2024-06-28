@@ -26,11 +26,11 @@ const ProsjektCard: React.FC<ProjectProps> = ({
     <div className="bg-slate-700 shadow-md rounded-lg overflow-hidden mx-4 md:m-0">
       <BounceInScroll viewAmount={0.3}>
         <div className="relative w-full h-48 md:h-60">
-          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:w-[600px] md:h-[330px]">
+          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
               <Image
                 width="600"
-                height="330"
+                height="340"
                 quality={100}
                 src={urlFor(projectimage).url() as string}
                 alt={name}
@@ -40,7 +40,7 @@ const ProsjektCard: React.FC<ProjectProps> = ({
             )}
           </div>
         </div>
-        <div className="md:mt-20 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+        <div className="md:mt-16 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
           <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
             {name}
           </h1>
