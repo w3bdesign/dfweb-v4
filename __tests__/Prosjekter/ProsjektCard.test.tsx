@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 
-import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard";
+import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard.component";
 
 // Mock the Button component
 jest.mock(
