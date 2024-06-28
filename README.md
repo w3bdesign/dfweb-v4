@@ -29,6 +29,8 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ### General
 
+- Clean, modern, responsive and Matrix-inspired design
+- Matrix canvas rain effect on front page
 - Next.js 14 with Typescript and App router
 - Sanity.io for fetching project information and frontpage text
 - Ladle for component documentation
@@ -46,14 +48,12 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Fully responsive design tested on all devices
 - React Icons for project icons
 - Tailwind CSS for styling
-- Google fonts with Lato (optimized with @next/font for Next.js)
 - Animated reusable input fields
 
 ### Accessibility
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
-- Accessibility testing with Axe in Storybook for each component
 
 ### Devops / Code quality
 
@@ -65,7 +65,3 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 97% test coverage with Jest and React testing library
-
-## TODO
-
-- React Hook Form
