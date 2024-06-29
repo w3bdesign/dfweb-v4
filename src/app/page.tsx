@@ -20,7 +20,7 @@ export default async function PostIndex() {
         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
           {posts[0].hero && <Hero content={posts[0].hero} />}
         </div>
-        {posts[0].content && <IndexContent pageContent={posts[0].content} />}
+      
       </main>
     </>
   );
