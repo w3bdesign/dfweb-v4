@@ -26,7 +26,7 @@ const Header = () => {
         initial={{ y: -100, x: "-50%", opacity: 0 }}
         animate={{
           y: 0,
-          x: "-57%",
+          x: "-56%",
           opacity: 1,
           transition: {
             y: { duration: 0.6, ease: "easeOut" },
