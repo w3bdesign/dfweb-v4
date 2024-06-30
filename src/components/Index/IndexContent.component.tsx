@@ -59,7 +59,7 @@ const Section = ({ text, title }: IContent) => (
           {title}
         </h2>
         <div className="flex justify-center">
-          <div className="mt-4 text-lg text-left">
+          <div className="mt-4 text-lg text-left md:max-w-2xl">
             <PortableText value={text} components={myPortableTextComponents} />
           </div>
         </div>
