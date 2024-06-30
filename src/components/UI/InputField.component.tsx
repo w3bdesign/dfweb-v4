@@ -24,7 +24,7 @@ const InputField = ({
     "cursor-pointer peer block text-xl w-64 p-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
   return (
-    <div className="relative my-6 flex justify-center">
+    <div className="relative my-2 flex justify-center">
       <div className="relative">
         {type === "input" ? (
           <input
