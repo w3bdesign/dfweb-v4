@@ -1,3 +1,5 @@
+import React from "react";
+
 interface IInputProps {
   inputName: string;
   label: string;
@@ -8,18 +10,6 @@ interface IInputProps {
   type?: "input" | "textarea";
 }
 
-/**
- * Renders an input field or textarea based on the `type` prop.
- *
- * @param {IInputProps} inputName - The name of the input field.
- * @param {string} label - The label for the input field.
- * @param {string} inputPattern - The regex pattern for input validation.
- * @param {boolean} isRequired - Determines if the input field is required.
- * @param {string} htmlFor - The ID of the associated label.
- * @param {string} title - The title attribute for the input field.
- * @param {string} [type=input] - The type of input field to render.
- * @return {JSX.Element} - The rendered input field or textarea.
- */
 const InputField = ({
   inputName,
   label,
@@ -30,11 +20,16 @@ const InputField = ({
   type = "input",
   ...props
 }: IInputProps) => {
+  /*
+  const sharedClasses = 
+    "cursor-pointer peer block w-64 rounded-md border-gray-300 shadow-sm focus:border-primary-400 focus:ring focus:ring-primary-200 focus:ring-opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 bg-slate-700 text-slate-200 placeholder-transparent";
+*/
+
   const sharedClasses =
-    "cursor-pointer my-6 text-xl w-64 p-2 m-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
+    "cursor-pointer peer block my-6 text-xl w-64 p-2 m-2 bg-slate-700 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
   return (
-    <label className="relative" htmlFor={htmlFor}>
+    <div className="relative my-6">
       {type === "input" ? (
         <input
           name={inputName}
@@ -57,14 +52,15 @@ const InputField = ({
           {...props}
         ></textarea>
       )}
-      <span
-        className={`cursor-pointer text-lg text-slate-200 text-opacity-80 absolute left-5 ${
-          type === "textarea" ? "-top-[3.5rem]" : "top-0"
-        } px-1 transition duration-200 input-text`}
+      <label
+        htmlFor={htmlFor}
+        className={`absolute left-4 top-2 z-10 origin-[0] -translate-y-2 scale-75 transform bg-slate-700 px-2 text-slate-200 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary-600 ${
+          type === "textarea" ? "peer-focus:-top-4" : ""
+        }`}
       >
         {label}
-      </span>
-    </label>
+      </label>
+    </div>
   );
 };
 
