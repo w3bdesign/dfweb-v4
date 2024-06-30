@@ -59,7 +59,7 @@ const Section = ({ text, title }: IContent) => (
           {title}
         </h2>
         <div className="flex justify-center">
-          <div className="mt-4 text-lg text-left max-w-2xl">
+          <div className="mt-4 text-lg text-left md:max-w-2xl">
             <PortableText value={text} components={myPortableTextComponents} />
           </div>
         </div>
@@ -70,7 +70,7 @@ const Section = ({ text, title }: IContent) => (
 
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   return (
-    <div className="md:mt-8">
+    <div className="md:mt-8 w-screen md:w-full overflow-hidden">
       {pageContent?.map((page) => <Section key={page.id} {...page} />)}
     </div>
   );
