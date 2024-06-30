@@ -50,8 +50,8 @@ const InputField = ({
         )}
         <label
           htmlFor={htmlFor}
-          className={`absolute left-2 top-2 z-10 origin-[0] -translate-y-8 scale-75 transform bg-slate-700 px-2 text-slate-200 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary-600 ${
-            type === "textarea" ? "peer-focus:-top-4" : ""
+          className={`absolute cursor-pointer left-2 top-2 z-10 origin-[0] -translate-y-8 scale-75 transform bg-slate-700 px-2 text-slate-200 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary-600 ${
+            type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
           }`}
         >
           {label}
