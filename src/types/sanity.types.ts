@@ -152,7 +152,7 @@ export type Project = {
   _updatedAt: string;
   _rev: string;
   id?: number;
-  name?: string;
+  name: string;
   description?: string;
   subdescription?: string;
   projectcategory?: {
@@ -171,17 +171,7 @@ export type Project = {
       _key: string;
     } & Link
   >;
-  projectimage?: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    _type: "image";
-  };
+  projectimage: string;
 };
 
 export type SanityImageCrop = {
