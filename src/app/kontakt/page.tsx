@@ -15,8 +15,6 @@ export default async function PostIndex() {
 
   const posts = await client.fetch<Pagecontent>(pageContent);
 
-  console.log(posts);
-
   return (
     <>
       <Header />
