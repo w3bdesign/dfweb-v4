@@ -2,19 +2,13 @@ import React from "react";
 import Image from "next/image";
 
 import Button from "@/components/UI/Button.component";
-import { urlFor } from "@/lib/sanity/helpers";
 import BounceInScroll from "../Animations/BounceInScroll.component";
 
-interface ProjectProps {
-  name: string;
-  description: string;
-  subdescription: string;
-  projectimage: string;
-  urlwww: Array<{ url: string; _key: string }>;
-  urlgithub: Array<{ url: string; _key: string }>;
-}
+import { urlFor } from "@/lib/sanity/helpers";
 
-const ProsjektCard: React.FC<ProjectProps> = ({
+import type { Project } from "@/types/sanity.types";
+
+const ProsjektCard: React.FC<Project> = ({
   name,
   description,
   subdescription,
@@ -46,7 +40,6 @@ const ProsjektCard: React.FC<ProjectProps> = ({
           </h1>
           <h2 className="text-md">{description}</h2>
           <p className="mt-4 text-sm mt-2">{subdescription}</p>
-
           <div className="flex justify-center mt-4">
             {urlwww && urlwww.length > 0 && (
               <Button href={urlwww[0].url} renderAs="a">

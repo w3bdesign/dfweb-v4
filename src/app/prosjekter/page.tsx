@@ -5,8 +5,10 @@ import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 import { projectsQuery } from "@/lib/sanity/queries";
 import { client } from "@/lib/sanity/client";
 
+import type { Project } from "@/types/sanity.types";
+
 export default async function Prosjekter() {
-  const posts = await client.fetch(projectsQuery);
+  const posts: Project[] = await client.fetch(projectsQuery);
 
   return (
     <>
