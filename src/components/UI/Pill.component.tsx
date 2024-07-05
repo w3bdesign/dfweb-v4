@@ -1,4 +1,3 @@
-import Link from "next/link";
 import React from "react";
 
 interface PillProps {
@@ -27,9 +26,9 @@ const Pill: React.FC<PillProps> = ({ text, className = "", href, onClick }) => {
 
   if (href) {
     return (
-      <Link href={href} className={baseClasses} data-text={text}>
+      <a href={href} className={baseClasses} data-text={text}>
         {text}
-      </Link>
+      </a>
     );
   }
 
