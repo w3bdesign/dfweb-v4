@@ -36,7 +36,7 @@ function testAnimationComponent(
     let renderResult: RenderResult;
 
     beforeEach(() => {
-      renderResult = render(<Component delay={1}>{Component.name}</Component>);
+      render(<Component delay={1}>{Component.name}</Component>);
     });
 
     it(`${Component.name} loads and can be displayed`, () => {
