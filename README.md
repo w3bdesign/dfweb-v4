@@ -31,6 +31,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 - Clean, modern, responsive and Matrix-inspired design
 - Matrix canvas rain effect on front page
+- Custom 404 page with Matrix rain effect
 - Next.js 14 with Typescript and App router
 - Sanity.io for fetching project information and frontpage text
 - Ladle for component documentation
