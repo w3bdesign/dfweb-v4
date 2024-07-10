@@ -33,7 +33,7 @@ describe("Grow", () => {
       <div>
         <div
           data-testid="grow"
-          style="transform: scale(0) translateZ(0);"
+          style="transform: scale(0)"
         >
           Hello World
         </div>
