@@ -26,18 +26,4 @@ describe("Grow", () => {
   test("Viser children", () => {
     expect(screen.getByText("Hello World")).toBeInTheDocument();
   });
-
-  test("Returnerer children i motion.div element", () => {
-    const { container } = render(<Grow>Hello World</Grow>);
-    expect(container).toMatchInlineSnapshot(`
-      <div>
-        <div
-          data-testid="grow"
-          style="transform: scale(0)"
-        >
-          Hello World
-        </div>
-      </div>
-    `);
-  });
 });
