@@ -10,7 +10,7 @@ describe("Grow", () => {
     render(
       <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
         Hello World
-      </Grow>,
+      </Grow>
     );
   });
 
@@ -20,7 +20,7 @@ describe("Grow", () => {
 
   test("Legger til riktige animasjoner", () => {
     const element = screen.getByTestId("grow");
-    expect(element).toHaveStyle("transform: scale(0) translateZ(0);");
+    expect(element).toHaveStyle("transform: scale(0);");
   });
 
   test("Viser children", () => {
