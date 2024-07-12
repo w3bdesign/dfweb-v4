@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import MobileMenu from "../../src/components/Layout/MobileMenu.component";
 
@@ -29,19 +30,19 @@ describe("MobileMenu - elementer eksisterer", () => {
     const hamburger = screen.getByTestId("hamburger");
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: true })
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
   });
 
@@ -64,5 +65,24 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     expect(externalLink).toHaveAttribute("target", "_blank");
     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+  });
+
+  it("Lukker menyen", async () => {
+    const user = userEvent.setup();
+    const hamburger = screen.getByTestId("hamburger");
+
+    // Open the menu
+    await user.click(hamburger);
+
+    expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+
+    // Click outside the menu
+    await user.click(document.body);
+
+    // Check if the menu is closed    
+    expect(screen.getByTestId("hamburger")).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
   });
 });
