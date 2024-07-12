@@ -5,8 +5,11 @@ import Icons from "./Icons.component";
 import FadeDown from "@/components/Animations/FadeDown.component";
 import FadeUp from "@/components/Animations/FadeUp.component";
 import RotatingLoader from "../Animations/RotatingLoader.component";
-const ReactMatrixAnimation = React.lazy(
+import dynamic from "next/dynamic";
+
+const ReactMatrixAnimation = dynamic(
   () => import("../Animations/Matrix.component"),
+  { ssr: false }
 );
 
 type THero = { text: string };
