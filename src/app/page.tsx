@@ -1,3 +1,5 @@
+"use client";
+
 import { groq } from "next-sanity";
 
 import Header from "@/components/Layout/Header.component";
