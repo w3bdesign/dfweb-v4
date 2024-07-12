@@ -1,3 +1,5 @@
+"use client";
+
 import { PortableText } from "@portabletext/react";
 
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
