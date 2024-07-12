@@ -1,4 +1,3 @@
-"use client";
 import React, { Suspense } from "react";
 import Icons from "./Icons.component";
 import FadeDown from "@/components/Animations/FadeDown.component";
