@@ -79,7 +79,10 @@ describe("MobileMenu - elementer eksisterer", () => {
     // Click outside the menu
     await user.click(document.body);
 
-    // Check if the menu is closed
-    expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+    // Check if the menu is closed    
+    expect(screen.getByTestId("hamburger")).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
   });
 });
