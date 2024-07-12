@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { render, screen, RenderResult } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
 import PageTransition from "../../src/components/Animations/PageTransition.component";
@@ -33,8 +33,6 @@ function testAnimationComponent(
   expectedAttribute: string
 ) {
   describe(Component.name, () => {
-    let renderResult: RenderResult;
-
     beforeEach(() => {
       render(<Component delay={1}>{Component.name}</Component>);
     });
