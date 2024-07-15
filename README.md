@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=w3bdesign_dfweb-v4&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=w3bdesign_dfweb-v4)
-
+ 
 # Dfweb.no Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
