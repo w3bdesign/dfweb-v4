@@ -30,6 +30,7 @@ const hexToRgb = (hexValue) => {
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
+  //backgroundColor = "#030303",
   backgroundColor = "#111111",
   fontColor = "#008529",
   tileSet = null,
@@ -38,17 +39,18 @@ const ReactMatrixAnimation = ({
   const columnsRef = useRef([]);
   const maxStackHeightRef = useRef(0);
   const lastFrameTimeRef = useRef(0);
-  const mousePositionRef = useRef({ x: 0, y: 0 });
-  const debugInfoRef = useRef(null);
+  const fps = 10; // Desired frames per second
 
-  const fps = 10;
   const frameInterval = 1000 / fps;
 
   const rgbBackground = hexToRgb(backgroundColor);
-  const rgbFont = hexToRgb(fontColor);
+  if (!rgbBackground) {
+    throw new Error("Invalid background color. Use a hex value e.g. #030303");
+  }
 
-  if (!rgbBackground || !rgbFont) {
-    throw new Error("Invalid color value. Use hex values e.g. #030303");
+  const rgbFont = hexToRgb(fontColor);
+  if (!rgbFont) {
+    throw new Error("Invalid font color. Use a hex value e.g. #030303");
   }
 
   const initMatrix = useCallback(
@@ -88,21 +90,6 @@ const ReactMatrixAnimation = ({
       ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
 
       const columns = columnsRef.current;
-
-      // Check if mouse is inside the canvas
-      const rect = canvas.getBoundingClientRect();
-      const isMouseInside =
-        mousePositionRef.current.x >= rect.left &&
-        mousePositionRef.current.x <= rect.right &&
-        mousePositionRef.current.y >= rect.top &&
-        mousePositionRef.current.y <= rect.bottom;
-
-      // Update debug info
-      if (debugInfoRef.current) {
-        debugInfoRef.current.textContent = isMouseInside
-          ? "Mouse Inside"
-          : "Mouse Outside";
-      }
 
       for (let i = 0; i < columns.length; ++i) {
         const randomCharacter = getRandomCharacter();
@@ -152,41 +139,26 @@ const ReactMatrixAnimation = ({
       initMatrix(canvas);
     };
 
-    const handleMouseMove = (event) => {
-      mousePositionRef.current = {
-        x: event.clientX,
-        y: event.clientY,
-      };
-    };
-
     const debouncedResize = debounce(handleResize, 100);
 
     window.addEventListener("resize", debouncedResize);
-    window.addEventListener("mousemove", handleMouseMove);
-
     handleResize();
 
     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
 
     return () => {
       window.removeEventListener("resize", debouncedResize);
-      window.removeEventListener("mousemove", handleMouseMove);
     };
   }, [initMatrix, tick]);
 
   return (
-    <>
-      <canvas
-        ref={canvasRef}
-        id={CANVAS_ID}
-        style={{ width: "100%", height: "100%" }}
-        data-testid="matrix-canvas"
-        className="absolute inset-0"
-      />
-      <div className="absolute top-0 left-0 p-4 bg-black bg-opacity-50 text-white">
-        <h1 ref={debugInfoRef}>Mouse Outside</h1>
-      </div>
-    </>
+    <canvas
+      ref={canvasRef}
+      id={CANVAS_ID}
+      style={{ width: "100%", height: "100%" }}
+      data-testid="matrix-canvas"
+      className="absolute inset-0"
+    />
   );
 };
 
