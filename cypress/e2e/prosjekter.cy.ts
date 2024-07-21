@@ -17,7 +17,7 @@ describe("Prosjekter Page", () => {
   it("should display project cards", () => {
     cy.get(".bg-white.shadow-md.rounded-lg.overflow-hidden").should(
       "have.length.at.least",
-      1,
+      1
     );
   });
 
@@ -60,7 +60,7 @@ describe("Prosjekter Page", () => {
         cy.get("a")
           .contains("GitHub")
           .should("have.attr", "href")
-          .and("match", /^https:\/\/github\.com/);
+          .and("match", /^https:\/\/github\.com\/.+$/);
       });
   });
 
