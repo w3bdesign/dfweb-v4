@@ -171,17 +171,7 @@ export type Project = {
       _key: string
     } & Link
   >
-  projectimage?: {
-    asset?: {
-      _ref: string
-      _type: 'reference'
-      _weak?: boolean
-      [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
-    }
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    _type: 'image'
-  }
+  projectimage?: string
   featured?: boolean
   featureOrder?: number
 }
