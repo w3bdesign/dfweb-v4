@@ -171,7 +171,7 @@ export type Project = {
       _key: string
     } & Link
   >
-  projectimage?: string
+  projectimage: string
   featured?: boolean
   featureOrder?: number
 }
