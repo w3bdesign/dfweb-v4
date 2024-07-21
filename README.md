@@ -10,8 +10,8 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 ## Live URL: <https://www.dfweb.no>
 
 > ## Frontend
-
-![343614850-f9ca1ba0-7e1b-451e-8b46-bfea50aa0280](https://github.com/w3bdesign/dfweb-v4/assets/45217974/38d123e1-6667-4d2e-a163-ab8710d637e2)
+> 
+![image](https://github.com/user-attachments/assets/968b1231-0bd9-43b5-939d-ca875904f0f4)
 
 <br />
 
