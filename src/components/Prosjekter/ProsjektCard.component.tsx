@@ -38,8 +38,8 @@ const ProsjektCard: React.FC<Project> = ({
           <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
             {name}
           </h1>
-          <h2 className="text-md">{description}</h2>
-          <p className="mt-4 text-sm mt-2">{subdescription}</p>
+          <h2 className="text-md px-4">{description}</h2>
+          <p className="mt-4 text-sm mt-2 px-4">{subdescription}</p>
           <div className="flex justify-center mt-4">
             {urlwww && urlwww.length > 0 && (
               <Button href={urlwww[0].url} renderAs="a">

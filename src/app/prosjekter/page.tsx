@@ -6,6 +6,12 @@ import { projectsQuery } from "@/lib/sanity/queries";
 import { client } from "@/lib/sanity/client";
 
 import type { Project } from "@/types/sanity.types";
+import { Metadata } from "next/types";
+
+export const metadata: Metadata = {
+  title: "Prosjekter - Dfweb",
+  description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+};
 
 export default async function Prosjekter() {
   const posts: Project[] = await client.fetch(projectsQuery);

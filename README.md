@@ -61,7 +61,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library, Cypress and Chromatic)
-- Code quality analysis with Codacy, Sonarcloud, LGTM and Codeclimate
+- Code quality analysis with Codacy, Sonarcloud and Codeclimate
 - E2E testing with Cypress integrated with CircleCI
 - E2E testing with Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
