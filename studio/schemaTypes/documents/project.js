@@ -1,64 +1,68 @@
-import { Browser } from "phosphor-react";
+import {Browser} from 'phosphor-react'
 
 const project = {
-  // This is the display name for the type
-  title: "Project",
-
-  // The identifier for this document type used in the api's
-  name: "project",
-
+  title: 'Project',
+  name: 'project',
   icon: Browser,
-
-  // Documents have the type 'document'. Your schema may describe types beyond documents
-  // but let's get back to that later.
-  type: "document",
-
-  // Now we proceed to list the fields of our document
+  type: 'document',
   fields: [
     {
-      title: "Id",
-      name: "id",
-      type: "number"
+      title: 'Id',
+      name: 'id',
+      type: 'number',
     },
     {
-      title: "Name",
-      name: "name",
-      type: "string"
+      title: 'Name',
+      name: 'name',
+      type: 'string',
     },
     {
-      title: "Description",
-      name: "description",
-      type: "string"
+      title: 'Description',
+      name: 'description',
+      type: 'string',
     },
     {
-      title: "Technologies",
-      name: "subdescription",
-      type: "string"
+      title: 'Technologies',
+      name: 'subdescription',
+      type: 'string',
     },
     {
-      title: "Project category",
-      name: "projectcategory",
-      type: "reference",
-      to: [{ type: "category" }]
+      title: 'Project category',
+      name: 'projectcategory',
+      type: 'reference',
+      to: [{type: 'category'}],
     },
     {
-      title: "Project URL",
-      name: "urlwww",
-      type: "array",
-      of: [{ type: "link" }]
+      title: 'Project URL',
+      name: 'urlwww',
+      type: 'array',
+      of: [{type: 'link'}],
     },
     {
-      title: "Github URL",
-      name: "urlgithub",
-      type: "array",
-      of: [{ type: "link" }]
+      title: 'Github URL',
+      name: 'urlgithub',
+      type: 'array',
+      of: [{type: 'link'}],
     },
     {
-      title: "Project image",
-      name: "projectimage",
-      type: "image"
-    }
-  ]
-};
+      title: 'Project image',
+      name: 'projectimage',
+      type: 'image',
+    },
+    {
+      title: 'Featured',
+      name: 'featured',
+      type: 'boolean',
+      description: 'Set to true to feature this project at the top of the page',
+    },
+    {
+      title: 'Feature Order',
+      name: 'featureOrder',
+      type: 'number',
+      description: 'Order of the featured project (lower numbers appear first)',
+      hidden: ({document}) => !document?.featured,
+    },
+  ],
+}
 
-export default project;
+export default project
