@@ -30,9 +30,9 @@ const hexToRgb = (hexValue) => {
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
-  //backgroundColor = "#030303",
   backgroundColor = "#111111",
   fontColor = "#008529",
+  glowColor = "#00FF00",
   tileSet = null,
 }) => {
   const canvasRef = useRef(null);
@@ -87,17 +87,26 @@ const ReactMatrixAnimation = ({
       ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = `${tileSize - 2}px monospace`;
-      ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
 
       const columns = columnsRef.current;
 
       for (let i = 0; i < columns.length; ++i) {
         const randomCharacter = getRandomCharacter();
-        ctx.fillText(
-          randomCharacter,
-          columns[i].x,
-          columns[i].stackCounter * tileSize + tileSize
-        );
+        const y = columns[i].stackCounter * tileSize + tileSize;
+
+        // Draw regular characters
+        ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
+        ctx.fillText(randomCharacter, columns[i].x, y);
+
+        // Add glow effect to the last character
+        if (columns[i].stackCounter === Math.floor(columns[i].stackHeight) - 1) {
+          ctx.save();
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = glowColor;
+          ctx.fillText(randomCharacter, columns[i].x, y);
+          ctx.restore();
+        }
 
         if (++columns[i].stackCounter >= columns[i].stackHeight) {
           columns[i].stackHeight =
@@ -106,7 +115,7 @@ const ReactMatrixAnimation = ({
         }
       }
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, getRandomCharacter]
+    [fadeFactor, rgbBackground, rgbFont, tileSize, getRandomCharacter, glowColor]
   );
 
   const tick = useCallback(
