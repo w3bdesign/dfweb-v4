@@ -11,7 +11,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 > ## Frontend
 > 
-![image](https://github.com/user-attachments/assets/968b1231-0bd9-43b5-939d-ca875904f0f4)
+![image](https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4)
 
 <br />
 
