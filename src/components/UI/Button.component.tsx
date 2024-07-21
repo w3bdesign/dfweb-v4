@@ -35,7 +35,7 @@ const Button = ({
     <Component
       type={type}
       data-cy="submit"
-      className="glitch p-3 m-3 text-primaryButtonText transition duration-500 ease-in-out bg-primaryButtonBg rounded hover:shadow-outline hover:bg-secondaryButtonBg disabled:opacity-50 disabled:pointer-events-none"
+      className="glitch p-3 m-3 text-primaryButtonText transition duration-500 ease-in-out bg-emerald-700 rounded hover:shadow-outline hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
       href={href}
       target={targetLink}
       disabled={disabled}
