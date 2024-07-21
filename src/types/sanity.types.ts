@@ -152,7 +152,7 @@ export type Project = {
   _updatedAt: string
   _rev: string
   id?: number
-  name?: string
+  name: string
   description?: string
   subdescription?: string
   projectcategory?: {
