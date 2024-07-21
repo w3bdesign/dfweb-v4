@@ -15,6 +15,18 @@ const hexToRgb = (hexValue) => {
     : null;
 };
 
+/**
+ * Renders a matrix animation on a canvas element.
+ *
+ * @param {Object} props - The props object containing the following properties:
+ *   - {number} [tileSize=20] - The size of each tile in pixels.
+ *   - {number} [fadeFactor=0.05] - The opacity of the background color.
+ *   - {string} [backgroundColor="#030303"] - The background color in hex format.
+ *   - {string} [fontColor="#008529"] - The font color in hex format.
+ *   - {Array} [tileSet=null] - An array of characters to use in the animation.
+ * @return {JSX.Element} The canvas element displaying the matrix animation.
+ */
+
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
