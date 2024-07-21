@@ -6,44 +6,38 @@ export interface IButtonProps {
   renderAs?: ElementType;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
+  download?: boolean | string;
 }
 
-/**
- * Renders a button component with optional props.
- *
- * @param {IButtonProps} props - The props object containing the following properties:
- *   - children: The content of the button.
- *   - href: The URL the button should link to.
- *   - renderAs: The HTML element to render the button as. Defaults to "button".
- *   - type: The type of button. Defaults to "submit".
- *   - disabled: Whether the button should be disabled. Defaults to false.
- *   - ...props: Additional props to pass to the button component.
- * @return {JSX.Element} The rendered button component.
- */
 const Button = ({
   children,
   href,
   renderAs,
   type = "submit",
   disabled = false,
+  download,
   ...props
 }: IButtonProps) => {
   const Component = renderAs ?? "button";
-  const targetLink = renderAs ? "_blank" : undefined;
+  const isLink = renderAs === "a";
+  const targetLink = isLink ? "_blank" : undefined;
 
   return (
+   
     <Component
-      type={type}
+      type={isLink ? undefined : type}
       data-cy="submit"
-      className="glitch p-3 m-3 text-primaryButtonText transition duration-500 ease-in-out bg-primaryButtonBg rounded hover:shadow-outline hover:bg-secondaryButtonBg disabled:opacity-50 disabled:pointer-events-none"
+      className="glitch p-3 m-3 text-primaryButtonText transition duration-500 ease-in-out bg-emerald-700 rounded hover:shadow-outline hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
       href={href}
       target={targetLink}
       disabled={disabled}
       data-text={children}
+      download={download}
       {...props}
     >
       {children}
     </Component>
+   
   );
 };
 

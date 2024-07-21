@@ -34,9 +34,9 @@ const CVContent = () => (
                   />
                 </div>
               </div>
-              <div className="mx-auto text-center cursor-pointer mt-4">
-                <Button>
-                  <Link href="./cv.pdf">Last ned PDF</Link>
+              <div className="mx-auto text-center cursor-pointer mt-8">
+                <Button href="./cv.pdf" renderAs="a" type="button">
+                  Last ned PDF
                 </Button>
               </div>
             </div>
