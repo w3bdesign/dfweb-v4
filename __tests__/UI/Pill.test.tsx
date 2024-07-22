@@ -64,7 +64,7 @@ describe("Pill Component", () => {
       "border-opacity-30",
       "hover:bg-blue-400",
       "hover:bg-opacity-30",
-      "backdrop-blur-sm"
+      "backdrop-blur-sm",
     );
   });
 

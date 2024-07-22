@@ -10,7 +10,7 @@ describe("Grow", () => {
     render(
       <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
         Hello World
-      </Grow>
+      </Grow>,
     );
   });
 

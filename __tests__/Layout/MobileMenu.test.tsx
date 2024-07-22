@@ -30,19 +30,19 @@ describe("MobileMenu - elementer eksisterer", () => {
     const hamburger = screen.getByTestId("hamburger");
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true })
+      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
     ).toBeInTheDocument();
 
     fireEvent.click(hamburger);
 
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
   });
 
@@ -79,10 +79,10 @@ describe("MobileMenu - elementer eksisterer", () => {
     // Click outside the menu
     await user.click(document.body);
 
-    // Check if the menu is closed    
+    // Check if the menu is closed
     expect(screen.getByTestId("hamburger")).toHaveAttribute(
       "aria-expanded",
-      "false"
+      "false",
     );
   });
 });
