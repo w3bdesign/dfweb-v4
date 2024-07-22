@@ -32,7 +32,7 @@ const CVContent = () => (
                   />
                 </div>
               </div>
-              <div className="mx-auto text-center cursor-pointer mt-8">
+              <div className="mx-auto text-center mt-8">
                 <Button href="./cv.pdf" renderAs="a" type="button">
                   Last ned PDF
                 </Button>
