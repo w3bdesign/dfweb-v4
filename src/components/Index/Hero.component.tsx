@@ -28,7 +28,7 @@ const Hero = ({ content }: IContent) => (
     <div
       className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: "url('/images/mobilbg.jpg')",
+        backgroundImage: "url('/images/mobilbg.webp')",
         top: "-0.5rem",
         marginBottom: "2.5rem",
       }}
