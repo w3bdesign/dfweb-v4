@@ -23,7 +23,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'; base-uri 'self'; frame-src 'none'; img-src 'self' https://cdn.sanity.io data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
+            value: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https://cdn.sanity.io data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests;",
           },
         ],
       },
