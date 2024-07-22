@@ -18,7 +18,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 > ## Backend
 >
-> <img src="https://user-images.githubusercontent.com/45217974/163738342-3e8ecc1c-e0d0-4f1d-8fcf-cbbccc31a2d7.png" alt="Sanity backend" />
+![image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
 
 <br />
 
