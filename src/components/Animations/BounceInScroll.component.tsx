@@ -1,33 +1,24 @@
 "use client";
 
 import { Variants, motion } from "framer-motion";
-
 import { IAnimateBounceProps } from "./types/Animations.types";
 
 const bounceVariants: Variants = {
   offscreen: {
-    y: 30,
     opacity: 0,
+    scale: 0.98,
   },
   onscreen: {
-    y: 0,
     opacity: 1,
+    scale: 1,
     transition: {
       type: "spring",
-      bounce: 0.5,
-      duration: 1.5,
+      damping: 20,
+      stiffness: 100,
+      duration: 0.5,
     },
   },
 };
-
-/**
- * Bounce in content when content becomes visible in viewport
- * @function BounceInScroll
- * @param {ReactNode} children - Children content to render
- * @param {string} cssClass - CSS classes to apply to component
- * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
- * @returns {JSX.Element} - Rendered component
- */
 
 const BounceInScroll = ({
   children,
@@ -38,7 +29,7 @@ const BounceInScroll = ({
     initial="offscreen"
     whileInView="onscreen"
     viewport={{ once: true, amount: viewAmount || 0.2 }}
-    className={cssClass}
+    className={`${cssClass} overflow-hidden`} // Added overflow-hidden
     data-testid="bounceinscroll"
   >
     <motion.div variants={bounceVariants}>{children}</motion.div>
