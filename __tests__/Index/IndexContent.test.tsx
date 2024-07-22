@@ -7,7 +7,7 @@ import IndexContent from "../../src/components/Index/IndexContent.component";
 jest.mock(
   "../../src/components/Animations/BounceInScroll.component",
   () =>
-    ({ children }) => <div>{children}</div>
+    ({ children }) => <div>{children}</div>,
 );
 
 // Mock the PortableText component

@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 
 const ReactMatrixAnimation = dynamic(
   () => import("../Animations/Matrix.component"),
-  { ssr: false }
+  { ssr: false },
 );
 
 type THero = { text: string };

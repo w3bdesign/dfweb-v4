@@ -23,7 +23,6 @@ const Button = ({
   const targetLink = isLink ? "_blank" : undefined;
 
   return (
-   
     <Component
       type={isLink ? undefined : type}
       data-cy="submit"
@@ -37,7 +36,6 @@ const Button = ({
     >
       {children}
     </Component>
-   
   );
 };
 

@@ -30,7 +30,7 @@ type AnimationComponent =
 function testAnimationComponent(
   Component: AnimationComponent,
   testId: string,
-  expectedAttribute: string
+  expectedAttribute: string,
 ) {
   describe(Component.name, () => {
     beforeEach(() => {
