@@ -81,7 +81,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                     role="tabpanel"
                     id={`tabpanel-${tab.id}`}
                     aria-labelledby={`tab-${tab.id}`}
-                    className="p-4"
+                    className="px-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
