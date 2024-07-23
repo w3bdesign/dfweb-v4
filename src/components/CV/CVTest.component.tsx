@@ -164,8 +164,7 @@ const CV: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-gray-900 text-white">
-      
-      <Tabs tabs={tabs} vertical={true} />
+      <Tabs tabs={tabs} />
     </div>
   );
 };
