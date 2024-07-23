@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Tab {
   id: string;
@@ -49,7 +49,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, vertical = false }) => {
               ref={(el) => (tabRefs.current[index] = el)}
               onClick={() => handleTabClick(tab.id)}
               className={`px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
-                activeTab === tab.id ? "text-white" : ""
+                activeTab === tab.id ? "text-white relative z-10" : ""
               } ${vertical ? "flex-grow text-center" : "w-full text-left"}`}
               role="tab"
               aria-selected={activeTab === tab.id}
@@ -73,25 +73,26 @@ const Tabs: React.FC<TabsProps> = ({ tabs, vertical = false }) => {
         />
       </div>
       <div className={`${vertical ? "w-full" : "w-3/4"} bg-gray-800`}>
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            role="tabpanel"
-            id={`tabpanel-${tab.id}`}
-            aria-labelledby={`tab-${tab.id}`}
-            hidden={activeTab !== tab.id}
-            className="p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {tab.content}
-            </motion.div>
-          </div>
-        ))}
+        <AnimatePresence mode="wait">
+          {tabs.map(
+            (tab) =>
+              activeTab === tab.id && (
+                <motion.div
+                  key={tab.id}
+                  role="tabpanel"
+                  id={`tabpanel-${tab.id}`}
+                  aria-labelledby={`tab-${tab.id}`}
+                  className="p-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {tab.content}
+                </motion.div>
+              )
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
