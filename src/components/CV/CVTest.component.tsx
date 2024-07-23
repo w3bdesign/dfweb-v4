@@ -163,7 +163,7 @@ const CV: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto font-sans bg-gray-900 text-white">
+    <div className="max-w-4xl mx-auto bg-gray-900 text-white">
       <div className="p-4 bg-gray-800"></div>
       <Tabs tabs={tabs} vertical={true} />
     </div>
