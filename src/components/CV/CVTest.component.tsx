@@ -3,10 +3,6 @@
 import Tabs from "@/components/UI/Tabs.component";
 
 interface CVData {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
   keyQualifications: string[];
   experience: Array<{
     period: string;
@@ -23,10 +19,6 @@ interface CVData {
 }
 
 const cvData: CVData = {
-  name: "Daniel XXXXXXX",
-  address: "Veiåsen 6D, 1539 Moss",
-  phone: "xxxxxxxxxx",
-  email: "daniel@outlook.com",
   keyQualifications: [
     "Totalt over 10 års erfaring med utvikling og design av nettbutikker og nettsider, erfaring både med fullstack og frontend, men i nyere tid spesialisert på frontend.",
     "Erfaring med språk som Javascript (ES 6) og Typescript med rammeverk som React, Gatsby, Vue 2 og 3, Nuxt, Next, Node.js, Storybook, testing med Jest og Cypress samt design med Tailwind CSS, Bootstrap, Styled Components og mange andre relevante verktøy og rammeverk.",
@@ -118,8 +110,8 @@ const CV: React.FC = () => {
       label: "Nøkkelkvalifikasjoner",
       content: (
         <ul className="list-disc pl-5 text-gray-300">
-          {cvData.keyQualifications.map((qual, index) => (
-            <li key={index} className="mb-2">
+          {cvData.keyQualifications.map((qual, id) => (
+            <li key={id} className="mb-2">
               {qual}
             </li>
           ))}
@@ -131,8 +123,8 @@ const CV: React.FC = () => {
       label: "Erfaring",
       content: (
         <div className="text-gray-300">
-          {cvData.experience.map((exp, index) => (
-            <div key={index} className="mb-4">
+          {cvData.experience.map((exp, id) => (
+            <div key={id} className="mb-4">
               <h3 className="font-semibold text-white">
                 {exp.period} - {exp.company}
               </h3>
@@ -148,8 +140,8 @@ const CV: React.FC = () => {
       label: "Utdanning",
       content: (
         <div className="text-gray-300">
-          {cvData.education.map((edu, index) => (
-            <div key={index} className="mb-4">
+          {cvData.education.map((edu, id) => (
+            <div key={id} className="mb-4">
               <h3 className="font-semibold text-white">
                 {edu.period} - {edu.institution}
               </h3>
