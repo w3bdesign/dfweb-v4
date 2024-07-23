@@ -164,15 +164,7 @@ const CV: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto font-sans bg-gray-900 text-white">
-      <div className="p-6 bg-gray-800 rounded-t-lg">
-        <h1 className="text-3xl font-bold mb-4">CV</h1>
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold">{cvData.name}</h2>
-          <p>{cvData.address}</p>
-          <p>Telefon: {cvData.phone}</p>
-          <p>E-post: {cvData.email}</p>
-        </div>
-      </div>
+      <div className="p-4 bg-gray-800"></div>
       <Tabs tabs={tabs} vertical={true} />
     </div>
   );
