@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -38,20 +39,18 @@ const Tabs: React.FC<TabsProps> = ({ tabs, vertical = false }) => {
 
   return (
     <div
-      className={`flex ${vertical ? "flex-col" : "flex-col md:flex-row"} bg-gray-800 rounded-lg overflow-hidden`}
+      className={`flex ${vertical ? "flex-col" : "flex-row"} bg-gray-800 rounded-lg overflow-hidden`}
     >
-      <div className={`relative ${vertical ? "w-full" : "md:w-1/4"}`}>
-        <div
-          className={`flex ${vertical ? "flex-col" : "flex-row md:flex-col"}`}
-        >
+      <div className={`relative ${vertical ? "w-full" : "w-1/4"} bg-gray-700`}>
+        <div className={`flex ${vertical ? "flex-row" : "flex-col"}`}>
           {tabs.map((tab, index) => (
             <button
               key={tab.id}
               ref={(el) => (tabRefs.current[index] = el)}
               onClick={() => handleTabClick(tab.id)}
-              className={`px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
+              className={`px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 ${
                 activeTab === tab.id ? "text-white" : ""
-              }`}
+              } ${vertical ? "flex-grow text-center" : "w-full text-left"}`}
               role="tab"
               aria-selected={activeTab === tab.id}
               aria-controls={`tabpanel-${tab.id}`}
@@ -62,18 +61,18 @@ const Tabs: React.FC<TabsProps> = ({ tabs, vertical = false }) => {
           ))}
         </div>
         <motion.div
-          className="absolute bg-indigo-500 rounded-md"
+          className="absolute bg-indigo-500"
           initial={false}
           animate={{
-            width: sliderWidth,
-            height: sliderHeight,
+            width: vertical ? "100%" : sliderWidth,
+            height: vertical ? sliderHeight : "100%",
             x: vertical ? 0 : sliderLeft,
             y: vertical ? sliderTop : 0,
           }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
       </div>
-      <div className={`${vertical ? "w-full" : "md:w-3/4"} bg-gray-900`}>
+      <div className={`${vertical ? "w-full" : "w-3/4"} bg-gray-800`}>
         {tabs.map((tab) => (
           <div
             key={tab.id}
