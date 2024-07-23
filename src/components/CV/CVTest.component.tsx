@@ -173,9 +173,7 @@ const CV: React.FC = () => {
           <p>E-post: {cvData.email}</p>
         </div>
       </div>
-      <div className="bg-gray-800 p-6 rounded-b-lg">
-        <Tabs tabs={tabs} vertical={true} />
-      </div>
+      <Tabs tabs={tabs} vertical={true} />
     </div>
   );
 };
