@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,11 +15,11 @@ interface TabsProps {
 }
 
 /**
- * Renders a set of tabs with animations and transitions.
+ * Renders a set of tabs with content.
  *
  * @param {TabsProps} props - The props object containing the tabs and orientation.
  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- * @param {string} [props.orientation="vertical"] - The orientation of the tabs ("vertical" or "horizontal").
+ * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
  * @return {JSX.Element} The rendered Tabs component.
  */
 const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
@@ -32,12 +32,12 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const isVertical = orientation === "vertical";
 
   return (
-    <div className="bg-gray-800 p-6 rounded-b-lg">
+    <div className="bg-gray-800 p-6 rounded-lg">
       <div
-        className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg overflow-hidden`}
+        className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg h-[calc(70vh-12rem)]`}
       >
         <div
-          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700`}
+          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "sm:h-full" : ""}`}
         >
           <div
             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
@@ -70,7 +70,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
           </div>
         </div>
         <div
-          className={`${isVertical ? "sm:w-3/4 w-full" : "w-full"} bg-gray-800`}
+          className={`${isVertical ? "sm:w-3/4 w-full" : "w-full"} bg-gray-800 overflow-y-auto`}
         >
           <AnimatePresence mode="wait">
             {tabs.map(
