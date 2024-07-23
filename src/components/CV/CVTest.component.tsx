@@ -1,4 +1,4 @@
-"use client" 
+"use client";
 
 import React, { useState } from "react";
 
@@ -20,7 +20,7 @@ const CVSection = ({ title, content }) => (
   </div>
 );
 
-const CVContent = () => {
+const CVInnhold = () => {
   const [activeTab, setActiveTab] = useState("experience");
 
   const cvData = {
@@ -51,8 +51,7 @@ const CVContent = () => {
   };
 
   return (
-    <main id="maincontent" className="container mx-auto mt-8 p-4">
-      <h1 className="text-3xl font-bold mb-6">Interactive CV</h1>
+    <div>
       <div className="mb-4">
         {Object.keys(cvData).map((tab) => (
           <TabButton
@@ -68,23 +67,8 @@ const CVContent = () => {
           <CVSection key={index} title={item.title} content={item.content} />
         ))}
       </div>
-      <div className="mt-8 flex justify-center space-x-4">
-        <a
-          href="./cv.pdf"
-          download
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Download PDF
-        </a>
-        <a
-          href="#"
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
-        >
-          View Full CV
-        </a>
-      </div>
-    </main>
+    </div>
   );
 };
 
-export default CVContent;
+export default CVInnhold;
