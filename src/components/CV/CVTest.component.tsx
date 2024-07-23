@@ -124,7 +124,7 @@ const CV: React.FC = () => {
       content: (
         <div className="text-gray-300">
           {cvData.experience.map((exp, id) => (
-            <div key={id} className="mb-4">
+            <div key={id} className="mb-6">
               <h3 className="font-semibold text-white">
                 {exp.period} - {exp.company}
               </h3>
@@ -141,7 +141,7 @@ const CV: React.FC = () => {
       content: (
         <div className="text-gray-300">
           {cvData.education.map((edu, id) => (
-            <div key={id} className="mb-4">
+            <div key={id} className="mb-6">
               <h3 className="font-semibold text-white">
                 {edu.period} - {edu.institution}
               </h3>
