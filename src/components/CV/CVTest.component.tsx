@@ -1,3 +1,7 @@
+// https://mantine.dev/core/tabs/
+
+// https://nextui.org/docs/components/tabs
+
 "use client";
 
 import React, { useState } from "react";
