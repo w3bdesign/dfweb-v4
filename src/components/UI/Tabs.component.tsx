@@ -37,7 +37,11 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
         className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg h-[calc(70vh-12rem)]`}
       >
         <div
-          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "sm:h-full" : ""}`}
+          //className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "sm:h-full" : ""}`}
+
+          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "max-h-[135px] " : ""}`}
+
+
         >
           <div
             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
