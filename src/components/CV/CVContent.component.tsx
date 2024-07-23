@@ -16,7 +16,9 @@ const CVContent = () => (
         <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
           <div className="p-4 mx-auto h-96 md:h-full mt-4 flex justify-center items-center md:min-h-[540px]">
             <div className="p-4 text-lg rounded md:w-full">
+              <div className="md:block hidden">
               <CVTest />
+              </div>
               <div className="mx-auto text-center mt-8">
                 <Button href="./cv.pdf" renderAs="a" type="button">
                   Last ned PDF
