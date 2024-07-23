@@ -34,7 +34,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
       <div
-        className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg h-[calc(65vh-12rem)]`}
+        className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg h-[calc(65vh-8rem)]`}
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "max-h-[135px] " : ""}`}
@@ -84,7 +84,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                     role="tabpanel"
                     id={`tabpanel-${tab.id}`}
                     aria-labelledby={`tab-${tab.id}`}
-                    className="px-6"
+                    className="px-8"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
