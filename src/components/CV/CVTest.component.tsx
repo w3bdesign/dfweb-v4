@@ -1,78 +1,40 @@
-// https://mantine.dev/core/tabs/
+"use client"
 
-// https://nextui.org/docs/components/tabs
+import React from "react";
+import {Tabs, Tab, Card, CardBody, Switch} from "@nextui-org/react";
 
-"use client";
-
-import React, { useState } from "react";
-
-const TabButton = ({ label, isActive, onClick }) => (
-  <button
-    className={`px-4 py-2 font-semibold ${
-      isActive ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"
-    }`}
-    onClick={onClick}
-  >
-    {label}
-  </button>
-);
-
-const CVSection = ({ title, content }) => (
-  <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-    <h3 className="text-xl font-semibold mb-2">{title}</h3>
-    <p>{content}</p>
-  </div>
-);
-
-const CVInnhold = () => {
-  const [activeTab, setActiveTab] = useState("experience");
-
-  const cvData = {
-    experience: [
-      { title: "Senior Developer", content: "Company XYZ (2020-Present)" },
-      { title: "Full Stack Developer", content: "Tech Co. (2017-2020)" },
-    ],
-    education: [
-      {
-        title: "MSc in Computer Science",
-        content: "University ABC (2015-2017)",
-      },
-      {
-        title: "BSc in Software Engineering",
-        content: "Tech Institute (2011-2015)",
-      },
-    ],
-    skills: [
-      {
-        title: "Programming Languages",
-        content: "JavaScript, Python, Java, C++",
-      },
-      {
-        title: "Frameworks & Libraries",
-        content: "React, Node.js, Express, Django",
-      },
-    ],
-  };
-
+export default function App() {
+  const [isVertical, setIsVertical] = React.useState(true);
   return (
-    <div>
-      <div className="mb-4">
-        {Object.keys(cvData).map((tab) => (
-          <TabButton
-            key={tab}
-            label={tab.charAt(0).toUpperCase() + tab.slice(1)}
-            isActive={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
-          />
-        ))}
-      </div>
-      <div>
-        {cvData[activeTab].map((item, index) => (
-          <CVSection key={index} title={item.title} content={item.content} />
-        ))}
+    <div className="flex flex-col px-4">
+      <Switch className="mb-4" isSelected={isVertical} onValueChange={setIsVertical}>
+        Vertical
+      </Switch>
+      <div className="flex w-full flex-col">
+        <Tabs aria-label="Options" isVertical={isVertical}>
+          <Tab key="photos" title="Photos">
+            <Card>
+              <CardBody>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+              </CardBody>
+            </Card>  
+          </Tab>
+          <Tab key="music" title="Music">
+            <Card>
+              <CardBody>
+                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+              </CardBody>
+            </Card>  
+          </Tab>
+          <Tab key="videos" title="Videos">
+            <Card>
+              <CardBody>
+                Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              </CardBody>
+            </Card>  
+          </Tab>
+        </Tabs>
       </div>
     </div>
   );
-};
-
-export default CVInnhold;
+}
