@@ -42,7 +42,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
           <div
             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
           >
-            {tabs.map((tab) => (
+            {tabs.map((tab, index) => (
               <motion.button
                 key={tab.id}
                 onClick={() => handleTabClick(tab.id)}
@@ -50,7 +50,10 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                   activeTab === tab.id
                     ? "text-white"
                     : "text-gray-300 hover:text-white"
-                } ${isVertical ? "w-full text-left" : "flex-grow text-center"}`}
+                } ${isVertical ? "w-full text-left" : "flex-grow text-center"}
+                 ${index !== 0 ? "border-t border-gray-600" : ""}
+                 ${isVertical && index !== tabs.length - 1 ? "border-b border-gray-600" : ""}                
+                `}
                 role="tab"
                 aria-selected={activeTab === tab.id}
                 aria-controls={`tabpanel-${tab.id}`}
