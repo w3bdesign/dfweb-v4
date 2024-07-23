@@ -41,6 +41,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
         >
           <div
             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+            role="tablist"
           >
             {tabs.map((tab, index) => (
               <motion.button
@@ -92,7 +93,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                   >
                     {tab.content}
                   </motion.div>
-                ),
+                )
             )}
           </AnimatePresence>
         </div>
