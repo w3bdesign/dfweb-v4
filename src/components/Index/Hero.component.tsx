@@ -18,8 +18,7 @@ interface IContent {
 }
 
 const Hero = ({ content }: IContent) => (
-  <div
-    role="article"
+  <article    
     aria-label="Kontainer for animasjoner av introtekst"
     id="main-hero"
     data-testid="main-hero"
@@ -73,7 +72,7 @@ const Hero = ({ content }: IContent) => (
         </div>
       </div>
     </FadeDown>
-  </div>
+  </article>
 );
 
 export default Hero;
