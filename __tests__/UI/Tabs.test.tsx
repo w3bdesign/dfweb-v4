@@ -50,6 +50,8 @@ const mockTabs = [
         ))}
       </ul>
     ),
+    expectedTexts: mockCVData.keyQualifications,
+    unexpectedTexts: ["Example Company", "University of Example"],
   },
   {
     id: "experience",
@@ -67,6 +69,12 @@ const mockTabs = [
         ))}
       </div>
     ),
+    expectedTexts: [
+      "2020-2022 - Example Company",
+      "Software Developer",
+      "Worked on various projects",
+    ],
+    unexpectedTexts: ["Qualification 1"],
   },
   {
     id: "education",
@@ -84,72 +92,60 @@ const mockTabs = [
         ))}
       </div>
     ),
+    expectedTexts: [
+      "2016-2020 - University of Example",
+      "Bachelor in Computer Science",
+      "Studied various aspects of computer science",
+    ],
+    unexpectedTexts: ["Qualification 1"],
   },
 ];
 
 describe("Tabs", () => {
+  const renderTabs = () => render(<Tabs tabs={mockTabs} />);
+
+  const expectTextsToBePresent = (texts: string[]) => {
+    texts.forEach((text) => {
+      expect(screen.getByText(text)).toBeInTheDocument();
+    });
+  };
+
+  const expectTextsNotToBePresent = (texts: string[]) => {
+    texts.forEach((text) => {
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+    });
+  };
+
   it("renders all CV tab labels", () => {
-    render(<Tabs tabs={mockTabs} />);
-    expect(
-      screen.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })
-    ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Erfaring" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Utdanning" })).toBeInTheDocument();
+    renderTabs();
+    mockTabs.forEach((tab) => {
+      expect(screen.getByRole("tab", { name: tab.label })).toBeInTheDocument();
+    });
   });
 
-  it("renders the first tab content (Nøkkelkvalifikasjoner) by default", () => {
-    render(<Tabs tabs={mockTabs} />);
-    expect(screen.getByText("Qualification 1")).toBeInTheDocument();
-    expect(screen.getByText("Qualification 2")).toBeInTheDocument();
-    expect(screen.queryByText("Example Company")).not.toBeInTheDocument();
-    expect(screen.queryByText("University of Example")).not.toBeInTheDocument();
-  });
-
-  it("switches to Erfaring tab when clicked", () => {
-    render(<Tabs tabs={mockTabs} />);
-    fireEvent.click(screen.getByRole("tab", { name: "Erfaring" }));
-    expect(screen.getByText("2020-2022 - Example Company")).toBeInTheDocument();
-    expect(screen.getByText("Software Developer")).toBeInTheDocument();
-    expect(screen.getByText("Worked on various projects")).toBeInTheDocument();
-    expect(screen.queryByText("Qualification 1")).not.toBeInTheDocument();
-  });
-
-  it("switches to Utdanning tab when clicked", () => {
-    render(<Tabs tabs={mockTabs} />);
-    fireEvent.click(screen.getByRole("tab", { name: "Utdanning" }));
-    expect(
-      screen.getByText("2016-2020 - University of Example")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Bachelor in Computer Science")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Studied various aspects of computer science")
-    ).toBeInTheDocument();
-    expect(screen.queryByText("Qualification 1")).not.toBeInTheDocument();
+  it.each(mockTabs)("renders correct content for $label tab", (tab) => {
+    renderTabs();
+    if (tab.id !== mockTabs[0].id) {
+      fireEvent.click(screen.getByRole("tab", { name: tab.label }));
+    }
+    expectTextsToBePresent(tab.expectedTexts);
+    expectTextsNotToBePresent(tab.unexpectedTexts);
   });
 
   it("applies correct ARIA attributes to CV tabs", () => {
-    render(<Tabs tabs={mockTabs} />);
-    const qualificationsTab = screen.getByRole("tab", {
-      name: "Nøkkelkvalifikasjoner",
+    renderTabs();
+    mockTabs.forEach((tab, index) => {
+      const tabElement = screen.getByRole("tab", { name: tab.label });
+      expect(tabElement).toHaveAttribute(
+        "aria-selected",
+        index === 0 ? "true" : "false"
+      );
+      expect(tabElement).toHaveAttribute("aria-controls", `tabpanel-${tab.id}`);
     });
-    expect(qualificationsTab).toHaveAttribute("aria-selected", "true");
-    expect(qualificationsTab).toHaveAttribute(
-      "aria-controls",
-      "tabpanel-qualifications"
-    );
-
-    const experienceTab = screen.getByRole("tab", { name: "Erfaring" });
-    expect(experienceTab).toHaveAttribute("aria-selected", "false");
-    expect(experienceTab).toHaveAttribute(
-      "aria-controls",
-      "tabpanel-experience"
-    );
   });
 
   it("renders in vertical orientation by default", () => {
-    render(<Tabs tabs={mockTabs} />);
+    renderTabs();
     const tabList = screen.getByRole("tablist");
     expect(tabList).toHaveClass("sm:flex-col");
   });
