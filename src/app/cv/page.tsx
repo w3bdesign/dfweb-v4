@@ -1,6 +1,9 @@
 import Header from "@/components/Layout/Header.component";
 import CVContent from "@/components/CV/CVContent.component";
 
+import { client } from "@/lib/sanity/client";
+import { cvQuery } from "@/lib/sanity/queries";
+
 import { Metadata } from "next/types";
 
 export const metadata: Metadata = {
@@ -8,11 +11,13 @@ export const metadata: Metadata = {
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
 
-export default async function PostIndex() {
+export default async function CVPage() {
+  const cvData = await client.fetch(cvQuery);
+
   return (
     <>
       <Header />
-      <CVContent />
+      <CVContent cvData={cvData} />
     </>
   );
 }
