@@ -21,3 +21,21 @@ export const projectsQuery = groq`
     "projectimage": projectimage.asset->url
   }
 `;
+
+export const cvQuery = groq`
+  *[_type == "cv"][0] {
+    keyQualifications,
+    experience[] {
+      period,
+      company,
+      role,
+      description
+    },
+    education[] {
+      period,
+      institution,
+      degree,
+      description
+    }
+  }
+`;
