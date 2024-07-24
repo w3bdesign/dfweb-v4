@@ -81,7 +81,7 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[540px] min-h-[350px]">
               <div className="p-4 text-lg rounded md:w-full">
-                <div className="md:block hidden">
+                <div className="md:flex md:justify-center hidden">
                   <Tabs tabs={tabs} />
                 </div>
                 <div className="mx-auto text-center md:mt-8">
