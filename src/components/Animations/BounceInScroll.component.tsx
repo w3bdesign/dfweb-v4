@@ -37,7 +37,7 @@ const BounceInScroll = ({
   <motion.div
     initial="offscreen"
     whileInView="onscreen"
-    viewport={{ once: true, amount: viewAmount || 0.2 }}
+    viewport={{ once: true, amount: viewAmount ?? 0.2 }}
     className={cssClass}
     data-testid="bounceinscroll"
   >
