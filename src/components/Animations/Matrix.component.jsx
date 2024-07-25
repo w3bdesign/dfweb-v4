@@ -18,15 +18,15 @@ const hexToRgb = (hexValue) => {
 /**
  * Renders a matrix animation on a canvas element.
  *
- * @param {Object} props - The props object containing the following properties:
- *   - {number} [tileSize=20] - The size of each tile in pixels.
- *   - {number} [fadeFactor=0.05] - The opacity of the background color.
- *   - {string} [backgroundColor="#030303"] - The background color in hex format.
- *   - {string} [fontColor="#008529"] - The font color in hex format.
- *   - {Array} [tileSet=null] - An array of characters to use in the animation.
- * @return {JSX.Element} The canvas element displaying the matrix animation.
+ * @param {Object} props - The properties for the matrix animation.
+ * @param {number} [props.tileSize=20] - The size of each tile in the matrix.
+ * @param {number} [props.fadeFactor=0.5] - The opacity of the background.
+ * @param {string} [props.backgroundColor="#111111"] - The background color.
+ * @param {string} [props.fontColor="#008529"] - The color of the characters.
+ * @param {string} [props.glowColor="#00FF00"] - The color of the glow effect.
+ * @param {Array} [props.tileSet=null] - An array of characters to use in the matrix.
+ * @return {JSX.Element} The rendered matrix animation.
  */
-
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
@@ -39,8 +39,8 @@ const ReactMatrixAnimation = ({
   const columnsRef = useRef([]);
   const maxStackHeightRef = useRef(0);
   const lastFrameTimeRef = useRef(0);
-  const fps = 10; // Desired frames per second
-
+  const isInitializedRef = useRef(false);
+  const fps = 10;
   const frameInterval = 1000 / fps;
 
   const rgbBackground = hexToRgb(backgroundColor);
@@ -62,7 +62,7 @@ const ReactMatrixAnimation = ({
         const column = {
           x: i * tileSize,
           stackHeight: 10 + Math.random() * maxStackHeight,
-          stackCounter: 0,
+          stackCounter: -Math.floor(Math.random() * maxStackHeight), // Start with negative counter
         };
 
         columns.push(column);
@@ -91,31 +91,45 @@ const ReactMatrixAnimation = ({
       const columns = columnsRef.current;
 
       for (let i = 0; i < columns.length; ++i) {
-        const randomCharacter = getRandomCharacter();
-        const y = columns[i].stackCounter * tileSize + tileSize;
+        if (columns[i].stackCounter >= 0) {
+          const randomCharacter = getRandomCharacter();
+          const y = columns[i].stackCounter * tileSize + tileSize;
 
-        // Draw regular characters
-        ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
-        ctx.fillText(randomCharacter, columns[i].x, y);
-
-        // Add glow effect to the last character
-        if (columns[i].stackCounter === Math.floor(columns[i].stackHeight) - 1) {
-          ctx.save();
-          ctx.shadowColor = glowColor;
-          ctx.shadowBlur = 10;
-          ctx.fillStyle = glowColor;
+          // Draw regular characters
+          ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
           ctx.fillText(randomCharacter, columns[i].x, y);
-          ctx.restore();
+
+          // Add glow effect to the last character
+          if (
+            columns[i].stackCounter ===
+            Math.floor(columns[i].stackHeight) - 1
+          ) {
+            ctx.save();
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = glowColor;
+            ctx.fillText(randomCharacter, columns[i].x, y);
+            ctx.restore();
+          }
         }
 
-        if (++columns[i].stackCounter >= columns[i].stackHeight) {
+        columns[i].stackCounter++;
+
+        if (columns[i].stackCounter >= columns[i].stackHeight) {
           columns[i].stackHeight =
             10 + Math.random() * maxStackHeightRef.current;
           columns[i].stackCounter = 0;
         }
       }
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, getRandomCharacter, glowColor]
+    [
+      fadeFactor,
+      rgbBackground,
+      rgbFont,
+      tileSize,
+      getRandomCharacter,
+      glowColor,
+    ]
   );
 
   const tick = useCallback(
@@ -146,6 +160,7 @@ const ReactMatrixAnimation = ({
       canvas.height = boundingClientRect.height;
 
       initMatrix(canvas);
+      isInitializedRef.current = true;
     };
 
     const debouncedResize = debounce(handleResize, 100);
