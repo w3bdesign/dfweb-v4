@@ -51,7 +51,7 @@ const KontaktContent = () => {
       },
       () => {
         setServerResponse("Feil under sending av skjema");
-      },
+      }
     );
   };
 
@@ -59,19 +59,18 @@ const KontaktContent = () => {
     <main data-testid="kontaktcontent" id="maincontent">
       <div className="mt-32 bg-graybg">
         <PageHeader>Kontakt</PageHeader>
-        <div className="px-4 p lg:px-0 xl:px-0 md:px-0">
-          <div className="container mx-auto bg-slate-700 rounded shadow min-h-[31.25rem]">
-            <div className="p-4 mx-auto mt-4">
-              <div className="p-4 text-lg rounded">
-                {serverResponse && (
-                  <h3 className="m-6 h-64 text-2xl md:text-3xl text-center">
+        <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+          <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
+            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+              <div className="bg-gray-800 p-6 rounded-lg md:pt-8">
+                {serverResponse ? (
+                  <h3 className="m-6 h-64 text-2xl md:text-3xl text-center text-gray-300">
                     {serverResponse}
                   </h3>
-                )}
-                {!serverResponse && (
+                ) : (
                   <form
                     id="contact-form"
-                    className="text-center mt-6"
+                    className="text-center"
                     ref={formRef}
                     onSubmit={handleSubmit}
                     method="POST"
@@ -109,7 +108,7 @@ const KontaktContent = () => {
                       />
                       <br />
                     </fieldset>
-                    <div className="-mt-6">
+                    <div className="-mt-4">
                       <Button disabled={submitting}>Send skjema</Button>
                     </div>
                   </form>
