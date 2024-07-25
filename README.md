@@ -30,7 +30,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ## Features
 
-### General
+### 🛠️ General
 
 - Clean, modern, responsive and Matrix-inspired design
 - Matrix canvas rain effect on front page
@@ -47,19 +47,19 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Google rich results for each individual page
 - 99% score in Google Lighthouse
 
-### Design
+### 🎨 Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
 
-### Accessibility
+### ♿ Accessibility
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
 
-### Devops / Code quality
+### 🛡️ Devops / Code quality
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
