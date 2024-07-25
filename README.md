@@ -5,11 +5,11 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=w3bdesign_dfweb-v4&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=w3bdesign_dfweb-v4)
 [![Snyk](https://snyk.io/test/github/w3bdesign/dfweb-v4/badge.svg)](https://snyk.io/test/github/w3bdesign/dfweb-v4)
  
-# Dfweb.no Portfolio Version 4
+# 👨‍💻 Dfweb.no Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
 
-## Table of Contents
+## 📋 Table of Contents
 - [Live URL](#live-url)
 - [Frontend](#frontend)
 - [Backend](#backend)
@@ -20,7 +20,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
   - [Accessibility](#accessibility)
   - [Devops / Code quality](#devops--code-quality)
 
-## Live URL: <https://www.dfweb.no>
+## 🌐 Live URL: <https://www.dfweb.no>
 
 <details>
   <summary>Frontend</summary>
@@ -37,9 +37,9 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
   <img src="https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b" alt="Google Lighthouse Image" />
 </details>
 
-## Features
+## 🚀 Features
 
-### General
+### 🌟 General
 
 - Clean, modern, responsive and Matrix-inspired design
 - Matrix canvas rain effect on front page
@@ -56,19 +56,19 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Google rich results for each individual page
 - 99% score in Google Lighthouse
 
-### Design
+### 🎨 Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
 
-### Accessibility
+### ♿ Accessibility
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
 
-### Devops / Code quality
+### 🛠️ Devops / Code quality
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
