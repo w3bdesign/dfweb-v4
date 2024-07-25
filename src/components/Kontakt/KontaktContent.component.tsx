@@ -108,7 +108,7 @@ const KontaktContent = () => {
                       />
                       <br />
                     </fieldset>
-                    <div>
+                    <div className="-mt-4">
                       <Button disabled={submitting}>Send skjema</Button>
                     </div>
                   </form>
