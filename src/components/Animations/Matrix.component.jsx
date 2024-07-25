@@ -164,7 +164,7 @@ const ReactMatrixAnimation = ({
     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
 
     return () => {
-      window.removeEventListener("resize", demouncedResize);
+      window.removeEventListener("resize", debouncedResize);
     };
   }, [initMatrix, tick]);
 
