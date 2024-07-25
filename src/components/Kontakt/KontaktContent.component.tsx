@@ -61,7 +61,7 @@ const KontaktContent = () => {
         <PageHeader>Kontakt</PageHeader>
         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
-            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[550px] min-h-[400px]">
+            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
               <div className="bg-gray-800 p-6 rounded-lg md:pt-8">
                 {serverResponse ? (
                   <h3 className="m-6 h-64 text-2xl md:text-3xl text-center text-gray-300">
