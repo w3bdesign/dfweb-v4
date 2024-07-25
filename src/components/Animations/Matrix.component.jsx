@@ -15,18 +15,6 @@ const hexToRgb = (hexValue) => {
     : null;
 };
 
-/**
- * Renders a matrix animation on a canvas element.
- *
- * @param {Object} props - The props object containing the following properties:
- *   - {number} [tileSize=20] - The size of each tile in pixels.
- *   - {number} [fadeFactor=0.05] - The opacity of the background color.
- *   - {string} [backgroundColor="#030303"] - The background color in hex format.
- *   - {string} [fontColor="#008529"] - The font color in hex format.
- *   - {Array} [tileSet=null] - An array of characters to use in the animation.
- * @return {JSX.Element} The canvas element displaying the matrix animation.
- */
-
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
@@ -39,8 +27,8 @@ const ReactMatrixAnimation = ({
   const columnsRef = useRef([]);
   const maxStackHeightRef = useRef(0);
   const lastFrameTimeRef = useRef(0);
-  const fps = 10; // Desired frames per second
-
+  const isInitializedRef = useRef(false);
+  const fps = 10;
   const frameInterval = 1000 / fps;
 
   const rgbBackground = hexToRgb(backgroundColor);
@@ -53,6 +41,12 @@ const ReactMatrixAnimation = ({
     throw new Error("Invalid font color. Use a hex value e.g. #030303");
   }
 
+  const getRandomInt = useCallback((max) => {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return array[0] % max;
+  }, []);
+
   const initMatrix = useCallback(
     (canvas) => {
       const columns = [];
@@ -61,8 +55,8 @@ const ReactMatrixAnimation = ({
       for (let i = 0; i < canvas.width / tileSize; ++i) {
         const column = {
           x: i * tileSize,
-          stackHeight: 10 + Math.random() * maxStackHeight,
-          stackCounter: 0,
+          stackHeight: 10 + getRandomInt(maxStackHeight),
+          stackCounter: -getRandomInt(maxStackHeight * 2), // Start with negative counter, doubled range for more variety
         };
 
         columns.push(column);
@@ -71,16 +65,15 @@ const ReactMatrixAnimation = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize]
+    [tileSize, getRandomInt]
   );
 
   const getRandomCharacter = useCallback(() => {
     if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
-      const random = Math.floor(Math.random() * tileSet.length);
-      return tileSet[random];
+      return tileSet[getRandomInt(tileSet.length)];
     }
-    return String.fromCharCode(33 + Math.floor(Math.random() * 94));
-  }, [tileSet]);
+    return String.fromCharCode(33 + getRandomInt(94));
+  }, [tileSet, getRandomInt]);
 
   const draw = useCallback(
     (ctx, canvas) => {
@@ -91,31 +84,45 @@ const ReactMatrixAnimation = ({
       const columns = columnsRef.current;
 
       for (let i = 0; i < columns.length; ++i) {
-        const randomCharacter = getRandomCharacter();
-        const y = columns[i].stackCounter * tileSize + tileSize;
+        if (columns[i].stackCounter >= 0) {
+          const randomCharacter = getRandomCharacter();
+          const y = columns[i].stackCounter * tileSize + tileSize;
 
-        // Draw regular characters
-        ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
-        ctx.fillText(randomCharacter, columns[i].x, y);
-
-        // Add glow effect to the last character
-        if (columns[i].stackCounter === Math.floor(columns[i].stackHeight) - 1) {
-          ctx.save();
-          ctx.shadowColor = glowColor;
-          ctx.shadowBlur = 10;
-          ctx.fillStyle = glowColor;
+          // Draw regular characters
+          ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
           ctx.fillText(randomCharacter, columns[i].x, y);
-          ctx.restore();
+
+          // Add glow effect to the last character
+          if (
+            columns[i].stackCounter ===
+            Math.floor(columns[i].stackHeight) - 1
+          ) {
+            ctx.save();
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = glowColor;
+            ctx.fillText(randomCharacter, columns[i].x, y);
+            ctx.restore();
+          }
         }
 
-        if (++columns[i].stackCounter >= columns[i].stackHeight) {
-          columns[i].stackHeight =
-            10 + Math.random() * maxStackHeightRef.current;
+        columns[i].stackCounter++;
+
+        if (columns[i].stackCounter >= columns[i].stackHeight) {
+          columns[i].stackHeight = 10 + getRandomInt(maxStackHeightRef.current);
           columns[i].stackCounter = 0;
         }
       }
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, getRandomCharacter, glowColor]
+    [
+      fadeFactor,
+      rgbBackground,
+      rgbFont,
+      tileSize,
+      getRandomCharacter,
+      glowColor,
+      getRandomInt,
+    ]
   );
 
   const tick = useCallback(
@@ -146,6 +153,7 @@ const ReactMatrixAnimation = ({
       canvas.height = boundingClientRect.height;
 
       initMatrix(canvas);
+      isInitializedRef.current = true;
     };
 
     const debouncedResize = debounce(handleResize, 100);
