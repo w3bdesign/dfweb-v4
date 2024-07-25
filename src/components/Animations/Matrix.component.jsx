@@ -15,6 +15,18 @@ const hexToRgb = (hexValue) => {
     : null;
 };
 
+/**
+ * Renders a matrix animation on a canvas element.
+ *
+ * @param {Object} props - The properties for the matrix animation.
+ * @param {number} [props.tileSize=20] - The size of each tile in the matrix.
+ * @param {number} [props.fadeFactor=0.5] - The opacity of the background.
+ * @param {string} [props.backgroundColor="#111111"] - The background color.
+ * @param {string} [props.fontColor="#008529"] - The color of the characters.
+ * @param {string} [props.glowColor="#00FF00"] - The color of the glow effect.
+ * @param {Array} [props.tileSet=null] - An array of characters to use in the matrix.
+ * @return {JSX.Element} The rendered matrix animation.
+ */
 const ReactMatrixAnimation = ({
   tileSize = 20,
   fadeFactor = 0.5,
@@ -41,10 +53,6 @@ const ReactMatrixAnimation = ({
     throw new Error("Invalid font color. Use a hex value e.g. #030303");
   }
 
-  const getRandomInt = useCallback((max) => {
-    return Math.floor(Math.random() * max);
-  }, []);
-
   const initMatrix = useCallback(
     (canvas) => {
       const columns = [];
@@ -53,8 +61,8 @@ const ReactMatrixAnimation = ({
       for (let i = 0; i < canvas.width / tileSize; ++i) {
         const column = {
           x: i * tileSize,
-          stackHeight: 10 + getRandomInt(maxStackHeight),
-          stackCounter: -getRandomInt(maxStackHeight * 2), // Start with negative counter, doubled range for more variety
+          stackHeight: 10 + Math.random() * maxStackHeight,
+          stackCounter: -Math.floor(Math.random() * maxStackHeight), // Start with negative counter
         };
 
         columns.push(column);
@@ -63,15 +71,16 @@ const ReactMatrixAnimation = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize, getRandomInt]
+    [tileSize]
   );
 
   const getRandomCharacter = useCallback(() => {
     if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
-      return tileSet[getRandomInt(tileSet.length)];
+      const random = Math.floor(Math.random() * tileSet.length);
+      return tileSet[random];
     }
-    return String.fromCharCode(33 + getRandomInt(94));
-  }, [tileSet, getRandomInt]);
+    return String.fromCharCode(33 + Math.floor(Math.random() * 94));
+  }, [tileSet]);
 
   const draw = useCallback(
     (ctx, canvas) => {
@@ -107,7 +116,8 @@ const ReactMatrixAnimation = ({
         columns[i].stackCounter++;
 
         if (columns[i].stackCounter >= columns[i].stackHeight) {
-          columns[i].stackHeight = 10 + getRandomInt(maxStackHeightRef.current);
+          columns[i].stackHeight =
+            10 + Math.random() * maxStackHeightRef.current;
           columns[i].stackCounter = 0;
         }
       }
@@ -119,7 +129,6 @@ const ReactMatrixAnimation = ({
       tileSize,
       getRandomCharacter,
       glowColor,
-      getRandomInt,
     ]
   );
 
