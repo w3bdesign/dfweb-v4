@@ -9,28 +9,37 @@
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
 
+## Table of Contents
+- [Live URL](#live-url)
+- [Frontend](#frontend)
+- [Backend](#backend)
+- [Google Lighthouse](#google-lighthouse)
+- [Features](#features)
+  - [General](#general)
+  - [Design](#design)
+  - [Accessibility](#accessibility)
+  - [Devops / Code quality](#devops--code-quality)
+
 ## Live URL: <https://www.dfweb.no>
 
-> ## Frontend
-> 
-![image](https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4)
+<details>
+  <summary>Frontend</summary>
+  <img src="https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4" alt="Frontend Image" />
+</details>
 
-<br />
+<details>
+  <summary>Backend</summary>
+  <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+</details>
 
-> ## Backend
->
-![image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
-
-<br />
-
-> ## Google Lighthouse
->
-> ![image](https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b)
-
+<details>
+  <summary>Google Lighthouse</summary>
+  <img src="https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b" alt="Google Lighthouse Image" />
+</details>
 
 ## Features
 
-### 🛠️ General
+### General
 
 - Clean, modern, responsive and Matrix-inspired design
 - Matrix canvas rain effect on front page
@@ -47,19 +56,19 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Google rich results for each individual page
 - 99% score in Google Lighthouse
 
-### 🎨 Design
+### Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
 
-### ♿ Accessibility
+### Accessibility
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
 
-### 🛡️ Devops / Code quality
+### Devops / Code quality
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
