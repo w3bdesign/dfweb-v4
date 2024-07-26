@@ -1,4 +1,4 @@
-import Header from "@/components/Layout/Header.component";
+import RootLayout from "../RootLayout";
 import CVContent from "@/components/CV/CVContent.component";
 
 import { client } from "@/lib/sanity/client";
@@ -15,9 +15,8 @@ export default async function CVPage() {
   const cvData = await client.fetch(cvQuery);
 
   return (
-    <>
-      <Header />
+    <RootLayout>
       <CVContent cvData={cvData} />
-    </>
+    </RootLayout>
   );
 }

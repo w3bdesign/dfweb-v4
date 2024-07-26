@@ -1,7 +1,7 @@
 import { List } from "phosphor-react";
 
 const navigation = {
-  name: "Navigation",
+  name: "navigation",
   title: "Navigation",
   type: "document",
   icon: List,
@@ -13,22 +13,21 @@ const navigation = {
       validation: (Rule) => Rule.required()
     },
     {
-      title: "Slug",
-      name: "slug",
-      type: "slug",
-      description: "required",
-      validation: (Rule) => Rule.required(),
-      options: {
-        source: "title",
-        maxLength: 35
-      }
-    },
-    {
-      name: "navigation",
-      title: "Navigation",
-      description: "Navigation links",
+      name: "links",
+      title: "Navigation Links",
       type: "array",
-      of: [{ type: "link" }]
+      of: [
+        {
+          type: "object",
+          fields: [
+            { name: "title", type: "string", title: "Title" },
+            { name: "name", type: "string", title: "Name" },
+            { name: "hash", type: "string", title: "Hash" },
+            { name: "href", type: "string", title: "Href" },
+            { name: "externalLink", type: "boolean", title: "External Link" }
+          ]
+        }
+      ]
     }
   ]
 };
