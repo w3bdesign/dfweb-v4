@@ -14,21 +14,31 @@ const DynamicIndexContent = dynamic(
 );
 
 export default async function PostIndex() {
-  const pageContent = groq`
-    *[_type == 'page' && title match 'Hjem']{"id": _id, title, hero, content}
-  `;
+  const query = groq`{
+    "pageContent": *[_type == 'page' && title match 'Hjem'][0]{"id": _id, title, hero, content},
+    "navigation": *[_type == "navigation"][0] {
+      title,
+      links[] {
+        title,
+        name,
+        hash,
+        href,
+        externalLink
+      }
+    }
+  }`;
 
-  const posts = await client.fetch(pageContent);
+  const { pageContent, navigation } = await client.fetch(query);
 
   return (
     <>
-      <Header />
+      <Header navigationLinks={navigation.links} />
       <main>
         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-          {posts[0].hero && <DynamicHero content={posts[0].hero} />}
+          {pageContent.hero && <DynamicHero content={pageContent.hero} />}
         </div>
-        {posts[0].content && (
-          <DynamicIndexContent pageContent={posts[0].content} />
+        {pageContent.content && (
+          <DynamicIndexContent pageContent={pageContent.content} />
         )}
       </main>
     </>
