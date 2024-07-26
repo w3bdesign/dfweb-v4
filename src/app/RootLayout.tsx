@@ -17,9 +17,9 @@ const navigationQuery = groq`
 
 export default async function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const navigation = await client.fetch(navigationQuery);
 
   return (
