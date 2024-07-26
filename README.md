@@ -67,6 +67,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
+- Builds will fail if any a11y errors are found
 
 ### 🛠️ Devops / Code quality
 
