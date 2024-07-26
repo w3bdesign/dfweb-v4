@@ -21,7 +21,7 @@ const KontaktContent = () => {
   const formRef = useRef<HTMLFormElement>(null);
 
   const [serverResponse, setServerResponse] = useState<string>("");
-  const [submitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   /**
    * Handles the form submission and sends an email using the provided API keys.
@@ -36,7 +36,7 @@ const KontaktContent = () => {
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
     // Disable button
-    setIsSubmitting(true);
+    setSubmitting(true);
 
     event.preventDefault();
 
