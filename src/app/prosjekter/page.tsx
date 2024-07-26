@@ -1,4 +1,4 @@
-import Header from "@/components/Layout/Header.component";
+import RootLayout from "../RootLayout";
 import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 
@@ -31,8 +31,7 @@ export default async function Prosjekter() {
   const nonFeaturedProjects = posts.filter((project) => !project.featured);
 
   return (
-    <>
-      <Header />
+    <RootLayout>
       <main
         role="main"
         aria-label="Innhold portefølje"
@@ -56,6 +55,6 @@ export default async function Prosjekter() {
           </div>
         </div>
       </main>
-    </>
+    </RootLayout>
   );
 }

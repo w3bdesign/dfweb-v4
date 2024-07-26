@@ -1,7 +1,7 @@
 import { groq } from "next-sanity";
 import dynamic from "next/dynamic";
 
-import Header from "@/components/Layout/Header.component";
+import RootLayout from "./RootLayout";
 import { client } from "@/lib/sanity/client";
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
@@ -10,27 +10,31 @@ const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
 
 const DynamicIndexContent = dynamic(
   () => import("@/components/Index/IndexContent.component"),
-  { ssr: false },
+  { ssr: false }
 );
 
-export default async function PostIndex() {
-  const pageContent = groq`
-    *[_type == 'page' && title match 'Hjem']{"id": _id, title, hero, content}
+export default async function HomePage() {
+  const pageContentQuery = groq`
+    *[_type == 'page' && title match 'Hjem'][0]{
+      "id": _id, 
+      title, 
+      hero, 
+      content
+    }
   `;
 
-  const posts = await client.fetch(pageContent);
+  const pageContent = await client.fetch(pageContentQuery);
 
   return (
-    <>
-      <Header />
+    <RootLayout>
       <main>
         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-          {posts[0].hero && <DynamicHero content={posts[0].hero} />}
+          {pageContent.hero && <DynamicHero content={pageContent.hero} />}
         </div>
-        {posts[0].content && (
-          <DynamicIndexContent pageContent={posts[0].content} />
+        {pageContent.content && (
+          <DynamicIndexContent pageContent={pageContent.content} />
         )}
       </main>
-    </>
+    </RootLayout>
   );
 }

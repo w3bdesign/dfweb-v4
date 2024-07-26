@@ -1,5 +1,4 @@
-import Header from "@/components/Layout/Header.component";
-
+import RootLayout from "../RootLayout";
 import KontaktContent from "@/components/Kontakt/KontaktContent.component";
 
 import { Metadata } from "next/types";
@@ -11,9 +10,8 @@ export const metadata: Metadata = {
 
 export default async function PostIndex() {
   return (
-    <>
-      <Header />
+    <RootLayout>
       <KontaktContent />
-    </>
+    </RootLayout>
   );
 }

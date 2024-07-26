@@ -6,16 +6,22 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
-import { LINKS } from "@/constants/LINKS";
 
 import MobileMenu from "./MobileMenu.component";
 
-/**
- * Renders the header component with navigation links and a hamburger menu for mobile devices.
- *
- * @return {JSX.Element} The header component.
- */
-const Header = () => {
+interface NavigationLink {
+  title: string;
+  name: string;
+  hash: string;
+  href: string;
+  externalLink: boolean;
+}
+
+interface HeaderProps {
+  navigationLinks: NavigationLink[];
+}
+
+const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
   const pathname = usePathname();
 
   return (
@@ -49,10 +55,10 @@ const Header = () => {
           initial="hidden"
           animate="visible"
         >
-          {LINKS.map((link) => (
+          {navigationLinks.map((link) => (
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
-              key={link.hash}
+              key={link.name}
               variants={{
                 hidden: { y: -20, opacity: 0 },
                 visible: { y: 0, opacity: 1 },
@@ -88,7 +94,7 @@ const Header = () => {
           ))}
         </MotionUl>
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-          <MobileMenu links={LINKS} />
+          <MobileMenu links={navigationLinks} />
         </div>
       </nav>
     </header>
