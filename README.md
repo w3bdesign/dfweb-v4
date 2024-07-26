@@ -54,7 +54,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Polymorphic components
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
 - Google rich results for each individual page
-- 99% score in Google Lighthouse
+- 99% / 100% / 100% / 100% score in Google Lighthouse
 
 ### 🎨 Design
 
