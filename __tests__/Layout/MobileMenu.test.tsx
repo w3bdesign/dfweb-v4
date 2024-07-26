@@ -13,7 +13,7 @@ describe("MobileMenu - elementer eksisterer", () => {
   const testidMenu = "mobile-menu";
 
   beforeEach(() => {
-    render(<MobileMenu links={linksmock} />);
+    render(<MobileMenu />);
   });
 
   it("MobileMenu laster inn og kan vises", () => {

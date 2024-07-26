@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
-import { LINKS } from "@/constants/LINKS";
+import { client } from "@/lib/sanity/client";
+import { navigationQuery } from "@/lib/sanity/queries";
 
 import MobileMenu from "./MobileMenu.component";
 
@@ -17,6 +18,16 @@ import MobileMenu from "./MobileMenu.component";
  */
 const Header = () => {
   const pathname = usePathname();
+  const [links, setLinks] = useState([]);
+
+  useEffect(() => {
+    const fetchNavigation = async () => {
+      const data = await client.fetch(navigationQuery);
+      setLinks(data[0]?.navigation || []);
+    };
+
+    fetchNavigation();
+  }, []);
 
   return (
     <header className="z-[999] relative">
@@ -49,10 +60,10 @@ const Header = () => {
           initial="hidden"
           animate="visible"
         >
-          {LINKS.map((link) => (
+          {links.map((link) => (
             <MotionLi
               className="h-3/4 flex items-center justify-center relative"
-              key={link.hash}
+              key={link._key}
               variants={{
                 hidden: { y: -20, opacity: 0 },
                 visible: { y: 0, opacity: 1 },
@@ -63,18 +74,18 @@ const Header = () => {
                 <Link
                   prefetch={true}
                   className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-                    pathname === link.href ? "text-green-400" : ""
+                    pathname === link.url ? "text-green-400" : ""
                   }`}
-                  href={link.href}
+                  href={link.url}
                 >
-                  <div className="glitch relative" data-text={link.name}>
-                    {link.name}
+                  <div className="glitch relative" data-text={link.title}>
+                    {link.title}
                     <motion.span
                       className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-                        pathname === link.href ? "bg-green-400" : "bg-white"
+                        pathname === link.url ? "bg-green-400" : "bg-white"
                       }`}
                       initial={{
-                        width: pathname === link.href ? "100%" : "0%",
+                        width: pathname === link.url ? "100%" : "0%",
                       }}
                       variants={{
                         hover: { width: "100%" },
@@ -88,7 +99,7 @@ const Header = () => {
           ))}
         </MotionUl>
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-          <MobileMenu links={LINKS} />
+          <MobileMenu links={links} />
         </div>
       </nav>
     </header>

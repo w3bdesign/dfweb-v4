@@ -39,3 +39,15 @@ export const cvQuery = groq`
     }
   }
 `;
+
+export const navigationQuery = groq`
+  *[_type == "Navigation"] {
+    title,
+    slug,
+    navigation[] {
+      title,
+      url,
+      external
+    }
+  }
+`;
