@@ -37,8 +37,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: "100%",
       transition: {
         type: "spring",
-        stiffness: 200,
-        damping: 20,
+        stiffness: 100,
+        damping: 10,
         delay: 0.3,
       },
     },
@@ -46,8 +46,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: 0,
       transition: {
         type: "spring",
-        stiffness: 200,
-        damping: 20,
+        stiffness: 100,
+        damping: 10,
       },
     },
   };
@@ -60,7 +60,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 150,
         damping: 12,
-        duration: 0.25,
+        duration: 0.4,
       },
     }),
     open: (i: number) => ({
