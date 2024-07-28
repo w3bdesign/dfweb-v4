@@ -37,8 +37,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: "100%",
       transition: {
         type: "spring",
-        stiffness: 400,
-        damping: 40,
+        stiffness: 100,
+        damping: 10,
         delay: 0.3,
       },
     },
@@ -46,21 +46,21 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: 0,
       transition: {
         type: "spring",
-        stiffness: 400,
-        damping: 40,
+        stiffness: 100,
+        damping: 10,
       },
     },
   };
 
   const itemVariants = {
     closed: (i: number) => ({
-      x: i % 2 === 0 ? "-100%" : "100%",
+      x: i % 2 === 0 ? "-50%" : "50%",
       opacity: 0,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 24,
-        duration: 0.25,
+        stiffness: 150,
+        damping: 12,
+        duration: 0.4,
       },
     }),
     open: (i: number) => ({
@@ -68,8 +68,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 24,
+        stiffness: 150,
+        damping: 12,
         delay: i * 0.25,
       },
     }),
