@@ -58,7 +58,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       opacity: 0,
       transition: {
         type: "spring",
-        stiffness: 100,
+        stiffness: 120,
         damping: 12,
         duration: 0.25,
       },
@@ -68,7 +68,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 100,
+        stiffness: 120,
         damping: 12,
         delay: i * 0.25,
       },
