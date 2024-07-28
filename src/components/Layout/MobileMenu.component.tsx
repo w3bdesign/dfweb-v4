@@ -37,8 +37,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: "100%",
       transition: {
         type: "spring",
-        stiffness: 400,
-        damping: 40,
+        stiffness: 200,
+        damping: 20,
         delay: 0.3,
       },
     },
@@ -46,8 +46,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: 0,
       transition: {
         type: "spring",
-        stiffness: 400,
-        damping: 40,
+        stiffness: 200,
+        damping: 20,
       },
     },
   };
@@ -58,8 +58,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       opacity: 0,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 24,
+        stiffness: 150,
+        damping: 12,
         duration: 0.25,
       },
     }),
@@ -68,8 +68,8 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 24,
+        stiffness: 150,
+        damping: 12,
         delay: i * 0.25,
       },
     }),
