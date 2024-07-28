@@ -54,7 +54,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   const itemVariants = {
     closed: (i: number) => ({
-      x: i % 2 === 0 ? "-100%" : "100%",
+      x: i % 2 === 0 ? "-50%" : "50%",
       opacity: 0,
       transition: {
         type: "spring",
