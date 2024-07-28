@@ -34,10 +34,10 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   const menuVariants = {
     closed: {
-      x: "100%",
+      x: "120%",
       transition: {
         type: "spring",
-        stiffness: 100,
+        stiffness: 50,
         damping: 10,
         delay: 0.3,
       },
@@ -46,7 +46,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       x: 0,
       transition: {
         type: "spring",
-        stiffness: 100,
+        stiffness: 50,
         damping: 10,
       },
     },
@@ -60,7 +60,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
         type: "spring",
         stiffness: 150,
         damping: 12,
-        duration: 0.4,
+        duration: 0.25,
       },
     }),
     open: (i: number) => ({
