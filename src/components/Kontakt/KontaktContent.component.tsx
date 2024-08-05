@@ -1,58 +1,52 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import emailjs from "@emailjs/browser";
 
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import InputField from "@/components/UI/InputField.component";
 
-interface IEvent {
-  preventDefault: () => void;
-}
+const formSchema = z.object({
+  navn: z
+    .string()
+    .min(1, "Navn er påkrevd")
+    .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
+  telefon: z
+    .string()
+    .min(8, "Telefonnummer må være minst 8 siffer")
+    .regex(/^[0-9]+$/, "Vennligst bruk bare tall"),
+  tekst: z.string().min(1, "Melding er påkrevd"),
+});
 
-/**
- * Renders contact form. Uses EmailJS to send the emails.
- * @function KontaktContent
- * @returns {JSX.Element} - Rendered component
- */
+type FormData = z.infer<typeof formSchema>;
 
 const KontaktContent = () => {
-  const formRef = useRef<HTMLFormElement>(null);
-
   const [serverResponse, setServerResponse] = useState<string>("");
-  const [submitting, setSubmitting] = useState<boolean>(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+  });
 
-  /**
-   * Handles the form submission and sends an email using the provided API keys.
-   *
-   * @param {IEvent} event - The event object representing the form submission event.
-   * @return {void} No return value.
-   */
-  const handleSubmit = (event: IEvent) => {
+  const onSubmit = async (data: FormData) => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
     const TEMPLATE_KEY =
       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
-    // Disable button
-    setSubmitting(true);
-
-    event.preventDefault();
-
-    if (!formRef.current) {
-      return;
+    try {
+      emailjs.init(EMAIL_API_KEY);
+      await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+      setServerResponse("Takk for din beskjed");
+    } catch (error) {
+      setServerResponse("Feil under sending av skjema");
     }
-
-    emailjs.init(EMAIL_API_KEY);
-    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, formRef.current).then(
-      () => {
-        setServerResponse("Takk for din beskjed");
-      },
-      () => {
-        setServerResponse("Feil under sending av skjema");
-      },
-    );
   };
 
   return (
@@ -71,8 +65,7 @@ const KontaktContent = () => {
                   <form
                     id="contact-form"
                     className="text-center"
-                    ref={formRef}
-                    onSubmit={handleSubmit}
+                    onSubmit={handleSubmit(onSubmit)}
                     method="POST"
                     action="/api/form"
                     aria-label="Contact Form"
@@ -85,18 +78,18 @@ const KontaktContent = () => {
                         inputName="navn"
                         label="Fullt navn"
                         htmlFor="navn"
-                        inputPattern="[a-zA-ZæøåÆØÅ ]+"
-                        title="Vennligst bruk norske bokstaver"
-                        isRequired
+                        register={register}
+                        error={errors.navn}
+                        isRequired={true}
                       />
                       <br />
                       <InputField
                         inputName="telefon"
                         label="Telefonnummer"
                         htmlFor="telefon"
-                        isRequired
-                        inputPattern=".[0-9]{7}"
-                        title="Vennligst bruk bare tall"
+                        register={register}
+                        error={errors.telefon}
+                        isRequired={true}
                       />
                       <br />
                       <InputField
@@ -104,12 +97,14 @@ const KontaktContent = () => {
                         type="textarea"
                         label="Hva ønsker du å si?"
                         htmlFor="tekst"
-                        isRequired
+                        register={register}
+                        error={errors.tekst}
+                        isRequired={true}
                       />
                       <br />
                     </fieldset>
                     <div className="-mt-4">
-                      <Button disabled={submitting}>Send skjema</Button>
+                      <Button disabled={isSubmitting}>Send skjema</Button>
                     </div>
                   </form>
                 )}
