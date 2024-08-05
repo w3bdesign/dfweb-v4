@@ -10,7 +10,7 @@ interface IInputProps {
   title?: string;
   type?: "input" | "textarea";
   register: UseFormRegister<any>;
-  error?: FieldError | undefined;
+  error?: FieldError;
 }
 
 const InputField = ({
