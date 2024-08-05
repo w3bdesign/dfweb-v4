@@ -77,7 +77,7 @@ const InputField = ({
           }`}
         >
           {label}
-        </label>
+        </label> 
       </div>
       {error && (
         <p className="text-xs italic text-red-500 mt-2">{error.message}</p>
