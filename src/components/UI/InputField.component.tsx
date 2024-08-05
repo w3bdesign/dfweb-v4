@@ -1,12 +1,22 @@
 import React from "react";
-import { UseFormRegister, FieldError, ValidationRule } from "react-hook-form";
+import { UseFormRegister, FieldError } from "react-hook-form";
+
+// Predefined patterns
+const PATTERNS = {
+  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+  username: /^[a-zA-Z0-9_]{3,20}$/,
+  // Add more predefined patterns as needed
+};
+
+type PatternKey = keyof typeof PATTERNS;
 
 interface IInputProps {
   inputName: string;
   label: string;
   htmlFor: string;
   isRequired?: boolean;
-  inputPattern?: string;
+  patternKey?: PatternKey;
   title?: string;
   type?: "input" | "textarea";
   register: UseFormRegister<any>;
@@ -16,7 +26,7 @@ interface IInputProps {
 const InputField = ({
   inputName,
   label,
-  inputPattern,
+  patternKey,
   isRequired,
   htmlFor,
   title,
@@ -28,18 +38,12 @@ const InputField = ({
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
-  // Safely create RegExp object
-  const getPatternRule = (): ValidationRule<RegExp> | undefined => {
-    if (!inputPattern) return undefined;
-    try {
-      return {
-        value: new RegExp(inputPattern),
-        message: "Invalid input pattern",
-      };
-    } catch (e) {
-      console.error("Invalid regex pattern:", inputPattern);
-      return undefined;
-    }
+  const getPatternRule = () => {
+    if (!patternKey) return undefined;
+    return {
+      value: PATTERNS[patternKey],
+      message: `Invalid ${patternKey} format`,
+    };
   };
 
   return (
