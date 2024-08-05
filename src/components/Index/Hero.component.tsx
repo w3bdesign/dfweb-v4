@@ -1,11 +1,12 @@
 "use client";
 
 import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
+
 import Icons from "./Icons.component";
 import FadeDown from "@/components/Animations/FadeDown.component";
 import FadeUp from "@/components/Animations/FadeUp.component";
-import RotatingLoader from "../Animations/RotatingLoader.component";
-import dynamic from "next/dynamic";
+import RotatingLoader from "@/components/Animations/RotatingLoader.component";
 import MobileBackground from "./MobileBackground.component";
 
 const ReactMatrixAnimation = dynamic(
