@@ -1,5 +1,5 @@
 import React from "react";
-import { UseFormRegister, FieldError } from "react-hook-form";
+import { UseFormRegister, FieldError, ValidationRule } from "react-hook-form";
 
 interface IInputProps {
   inputName: string;
@@ -28,6 +28,20 @@ const InputField = ({
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
+  // Safely create RegExp object
+  const getPatternRule = (): ValidationRule<RegExp> | undefined => {
+    if (!inputPattern) return undefined;
+    try {
+      return {
+        value: new RegExp(inputPattern),
+        message: "Invalid input pattern",
+      };
+    } catch (e) {
+      console.error("Invalid regex pattern:", inputPattern);
+      return undefined;
+    }
+  };
+
   return (
     <div className="relative my-2 flex flex-col items-center">
       <div className="relative">
@@ -39,7 +53,7 @@ const InputField = ({
             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
             {...register(inputName, {
               required: isRequired,
-              pattern: inputPattern ? new RegExp(inputPattern) : undefined,
+              pattern: getPatternRule(),
             })}
             {...props}
           />
