@@ -18,7 +18,7 @@ const formSchema = z.object({
   telefon: z
     .string()
     .min(8, "Telefonnummer må være minst 8 siffer")
-    .regex(/^[0-9]+$/, "Vennligst bruk bare tall"),
+    .regex(/^\d+$/, "Vennligst bruk bare tall"),
   tekst: z.string().min(1, "Melding er påkrevd"),
 });
 
