@@ -13,7 +13,7 @@ interface IInputProps {
   error?: FieldError | undefined;
 }
 
-const InputField: React.FC<IInputProps> = ({
+const InputField = ({
   inputName,
   label,
   inputPattern,
@@ -24,7 +24,7 @@ const InputField: React.FC<IInputProps> = ({
   register,
   error,
   ...props
-}) => {
+}: IInputProps) => {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
@@ -36,7 +36,7 @@ const InputField: React.FC<IInputProps> = ({
             id={htmlFor}
             type="text"
             placeholder={label}
-            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
             {...register(inputName, {
               required: isRequired,
               pattern: inputPattern ? new RegExp(inputPattern) : undefined,
@@ -47,7 +47,7 @@ const InputField: React.FC<IInputProps> = ({
           <textarea
             id={htmlFor}
             placeholder={label}
-            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
             {...register(inputName, { required: isRequired })}
             {...props}
           ></textarea>
