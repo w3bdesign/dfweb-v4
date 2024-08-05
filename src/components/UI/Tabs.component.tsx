@@ -93,7 +93,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                   >
                     {tab.content}
                   </motion.div>
-                )
+                ),
             )}
           </AnimatePresence>
         </div>

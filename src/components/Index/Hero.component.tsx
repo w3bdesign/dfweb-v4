@@ -18,7 +18,7 @@ interface IContent {
 }
 
 const Hero = ({ content }: IContent) => (
-  <article    
+  <article
     aria-label="Kontainer for animasjoner av introtekst"
     id="main-hero"
     data-testid="main-hero"

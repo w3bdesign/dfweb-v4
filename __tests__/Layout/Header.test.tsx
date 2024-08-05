@@ -20,14 +20,26 @@ jest.mock("../../src/components/Layout/MobileMenu.component", () => {
 describe("Header", () => {
   const mockNavigationLinks = [
     { name: "Hjem", href: "/", title: "Hjem", hash: "", externalLink: false },
-    { name: "Prosjekter", href: "/prosjekter", title: "Prosjekter", hash: "", externalLink: false },
+    {
+      name: "Prosjekter",
+      href: "/prosjekter",
+      title: "Prosjekter",
+      hash: "",
+      externalLink: false,
+    },
     { name: "CV", href: "/cv", title: "CV", hash: "", externalLink: false },
-    { name: "Kontakt", href: "/kontakt", title: "Kontakt", hash: "", externalLink: false },
+    {
+      name: "Kontakt",
+      href: "/kontakt",
+      title: "Kontakt",
+      hash: "",
+      externalLink: false,
+    },
   ];
 
   it("renders Header with navigation links", () => {
     render(<Header navigationLinks={mockNavigationLinks} />);
-    
+
     // Check if the header is in the document
     const header = screen.getByRole("banner");
     expect(header).toBeInTheDocument();
@@ -36,7 +48,7 @@ describe("Header", () => {
     mockNavigationLinks.forEach((link) => {
       const linkElement = screen.getByText(link.name);
       expect(linkElement).toBeInTheDocument();
-      expect(linkElement.closest('a')).toHaveAttribute('href', link.href);
+      expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
     });
 
     // Check if the mobile menu is rendered

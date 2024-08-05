@@ -10,7 +10,7 @@ const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
 
 const DynamicIndexContent = dynamic(
   () => import("@/components/Index/IndexContent.component"),
-  { ssr: false }
+  { ssr: false },
 );
 
 export default async function HomePage() {

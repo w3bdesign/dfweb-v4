@@ -138,7 +138,7 @@ describe("Tabs", () => {
       const tabElement = screen.getByRole("tab", { name: tab.label });
       expect(tabElement).toHaveAttribute(
         "aria-selected",
-        index === 0 ? "true" : "false"
+        index === 0 ? "true" : "false",
       );
       expect(tabElement).toHaveAttribute("aria-controls", `tabpanel-${tab.id}`);
     });
