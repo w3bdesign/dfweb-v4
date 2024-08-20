@@ -86,6 +86,7 @@ const KontaktContent = () => {
                     method="POST"
                     action="/api/form"
                     aria-label="Contact Form"
+                    ref={formRef}
                   >
                     <fieldset>
                       <legend className="text-center mx-auto text-xl mt-4 sr-only">
