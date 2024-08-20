@@ -1,5 +1,5 @@
 import React from "react";
-import { UseFormRegister, FieldValues } from "react-hook-form";
+import { UseFormRegister, FieldValues, Path } from "react-hook-form";
 
 interface IInputProps<T extends FieldValues> {
   inputName: keyof T;
@@ -31,7 +31,7 @@ const InputField = <T extends FieldValues>({
       <div className="relative">
         {type === "input" ? (
           <input
-            {...register(inputName, {
+            {...register(inputName as Path<T>, {
               required: isRequired,
               pattern: inputPattern ? new RegExp(inputPattern) : undefined,
             })}
@@ -44,7 +44,7 @@ const InputField = <T extends FieldValues>({
           />
         ) : (
           <textarea
-            {...register(inputName, {
+            {...register(inputName as Path<T>, {
               required: isRequired,
             })}
             id={htmlFor}
