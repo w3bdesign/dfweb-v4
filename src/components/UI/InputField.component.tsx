@@ -1,18 +1,18 @@
 import React from "react";
 import { UseFormRegister, FieldValues } from "react-hook-form";
 
-interface IInputProps {
-  inputName: string;
+interface IInputProps<T extends FieldValues> {
+  inputName: keyof T;
   label: string;
   htmlFor: string;
   isRequired?: boolean;
   inputPattern?: string;
   title?: string;
   type?: "input" | "textarea";
-  register: UseFormRegister<FieldValues>;
+  register: UseFormRegister<T>;
 }
 
-const InputField = ({
+const InputField = <T extends FieldValues>({
   inputName,
   label,
   inputPattern,
@@ -22,7 +22,7 @@ const InputField = ({
   type = "input",
   register,
   ...props
-}: IInputProps) => {
+}: IInputProps<T>) => {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 

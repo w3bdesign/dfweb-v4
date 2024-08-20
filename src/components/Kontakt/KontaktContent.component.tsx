@@ -1,14 +1,11 @@
-"use client";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import emailjs from "@emailjs/browser";
-
-import Button from "@/components/UI/Button.component";
-import PageHeader from "@/components/UI/PageHeader.component";
-import InputField from "@/components/UI/InputField.component";
 import { useState } from "react";
+import emailjs from "@emailjs/browser";
+import PageHeader from "../UI/PageHeader.component";
+import Button from "../UI/Button.component";
+import InputField from "../UI/InputField.component";
 
 const schema = z.object({
   navn: z.string().min(1, "Fullt navn er påkrevd"),
@@ -17,12 +14,6 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-
-/**
- * Renders contact form. Uses EmailJS to send the emails.
- * @function KontaktContent
- * @returns {JSX.Element} - Rendered component
- */
 
 const KontaktContent = () => {
   const {
@@ -78,69 +69,47 @@ const KontaktContent = () => {
                     {serverResponse}
                   </h3>
                 ) : (
-                  <form
-                  id="contact-form"
-                  className="text-center"
-                  onSubmit={handleSubmit(onSubmit)}
-                  method="POST"
-                  action="/api/form"
-                  aria-label="Contact Form"
-                >
-                  <fieldset>
-                    <legend className="text-center mx-auto text-xl mt-4 sr-only">
-                      Kontaktskjema
-                    </legend>
-                    <div>
-                      <InputField
-                        inputName="navn"
-                        label="Fullt navn"
-                        htmlFor="navn"
-                        inputPattern="[a-zA-ZæøåÆØÅ ]+"
-                        title="Vennligst bruk norske bokstaver"
-                        isRequired
-                        register={register}
-                      />
-                      {errors.navn && (
-                        <p className="text-red-500">{errors.navn.message}</p>
-                      )}
-                    </div>
-                    <br />
-                    <div>
-                      <InputField
-                        inputName="telefon"
-                        label="Telefonnummer"
-                        htmlFor="telefon"
-                        isRequired
-                        inputPattern=".[0-9]{7}"
-                        title="Vennligst bruk bare tall"
-                        register={register}
-                      />
-                      {errors.telefon && (
-                        <p className="text-red-500">
-                          {errors.telefon.message}
-                        </p>
-                      )}
-                    </div>
-                    <br />
-                    <div>
-                      <InputField
-                        inputName="tekst"
-                        type="textarea"
-                        label="Hva ønsker du å si?"
-                        htmlFor="tekst"
-                        isRequired
-                        register={register}
-                      />
-                      {errors.tekst && (
-                        <p className="text-red-500">{errors.tekst.message}</p>
-                      )}
-                    </div>
-                    <br />
-                  </fieldset>
-                  <div className="-mt-4">
+                  <form onSubmit={handleSubmit(onSubmit)}>
+                    <InputField<FormData>
+                      inputName="navn"
+                      label="Fullt navn"
+                      htmlFor="navn"
+                      inputPattern="[a-zA-ZæøåÆØÅ ]+"
+                      title="Vennligst bruk norske bokstaver"
+                      isRequired
+                      register={register}
+                    />
+                    {errors.navn && (
+                      <p className="text-red-500">{errors.navn.message}</p>
+                    )}
+
+                    <InputField<FormData>
+                      inputName="telefon"
+                      label="Telefonnummer"
+                      htmlFor="telefon"
+                      isRequired
+                      inputPattern=".[0-9]{7}"
+                      title="Vennligst bruk bare tall"
+                      register={register}
+                    />
+                    {errors.telefon && (
+                      <p className="text-red-500">{errors.telefon.message}</p>
+                    )}
+
+                    <InputField<FormData>
+                      inputName="tekst"
+                      type="textarea"
+                      label="Hva ønsker du å si?"
+                      htmlFor="tekst"
+                      isRequired
+                      register={register}
+                    />
+                    {errors.tekst && (
+                      <p className="text-red-500">{errors.tekst.message}</p>
+                    )}
+
                     <Button disabled={submitting}>Send skjema</Button>
-                  </div>
-                </form>
+                  </form>
                 )}
               </div>
             </div>
