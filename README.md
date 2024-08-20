@@ -42,7 +42,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 ### 🌟 General
 
 - Clean, modern, responsive and Matrix-inspired design
-- 100% typescript
+- Components are 100% typescript
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
 - Next.js 14 with Typescript and App router
