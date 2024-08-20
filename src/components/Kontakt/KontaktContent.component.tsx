@@ -8,7 +8,7 @@ import emailjs from "@emailjs/browser";
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import InputField from "@/components/UI/InputField.component";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const schema = z.object({
   navn: z.string().min(1, "Fullt navn er påkrevd"),
@@ -25,8 +25,6 @@ type FormData = z.infer<typeof schema>;
  */
 
 const KontaktContent = () => {
-  const formRef = useRef<any>("test");
-
   const {
     register,
     handleSubmit,
@@ -50,20 +48,21 @@ const KontaktContent = () => {
       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
-    // Disable button
     setSubmitting(true);
 
     emailjs.init(EMAIL_API_KEY);
 
-    //emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, data).then(
-    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, formRef.current).then(
-      () => {
+    emailjs
+      .send(SERVICE_KEY, TEMPLATE_KEY, data)
+      .then(() => {
         setServerResponse("Takk for din beskjed");
-      },
-      () => {
+      })
+      .catch(() => {
         setServerResponse("Feil under sending av skjema");
-      }
-    );
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
   };
 
   return (
@@ -86,7 +85,6 @@ const KontaktContent = () => {
                     method="POST"
                     action="/api/form"
                     aria-label="Contact Form"
-                    ref={formRef}
                   >
                     <fieldset>
                       <legend className="text-center mx-auto text-xl mt-4 sr-only">
