@@ -8,6 +8,7 @@ import emailjs from "@emailjs/browser";
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import InputField from "@/components/UI/InputField.component";
+import { useState } from "react";
 
 const schema = z.object({
   navn: z.string().min(1, "Fullt navn er påkrevd"),
