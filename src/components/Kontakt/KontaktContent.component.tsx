@@ -79,68 +79,68 @@ const KontaktContent = () => {
                   </h3>
                 ) : (
                   <form
-                    id="contact-form"
-                    className="text-center"
-                    onSubmit={handleSubmit(onSubmit)}
-                    method="POST"
-                    action="/api/form"
-                    aria-label="Contact Form"
-                  >
-                    <fieldset>
-                      <legend className="text-center mx-auto text-xl mt-4 sr-only">
-                        Kontaktskjema
-                      </legend>
-                      <div>
-                        <InputField
-                          inputName="navn"
-                          label="Fullt navn"
-                          htmlFor="navn"
-                          inputPattern="[a-zA-ZæøåÆØÅ ]+"
-                          title="Vennligst bruk norske bokstaver"
-                          isRequired
-                          {...register("navn")}
-                        />
-                        {errors.navn && (
-                          <p className="text-red-500">{errors.navn.message}</p>
-                        )}
-                      </div>
-                      <br />
-                      <div>
-                        <InputField
-                          inputName="telefon"
-                          label="Telefonnummer"
-                          htmlFor="telefon"
-                          isRequired
-                          inputPattern=".[0-9]{7}"
-                          title="Vennligst bruk bare tall"
-                          {...register("telefon")}
-                        />
-                        {errors.telefon && (
-                          <p className="text-red-500">
-                            {errors.telefon.message}
-                          </p>
-                        )}
-                      </div>
-                      <br />
-                      <div>
-                        <InputField
-                          inputName="tekst"
-                          type="textarea"
-                          label="Hva ønsker du å si?"
-                          htmlFor="tekst"
-                          isRequired
-                          {...register("tekst")}
-                        />
-                        {errors.tekst && (
-                          <p className="text-red-500">{errors.tekst.message}</p>
-                        )}
-                      </div>
-                      <br />
-                    </fieldset>
-                    <div className="-mt-4">
-                      <Button disabled={submitting}>Send skjema</Button>
+                  id="contact-form"
+                  className="text-center"
+                  onSubmit={handleSubmit(onSubmit)}
+                  method="POST"
+                  action="/api/form"
+                  aria-label="Contact Form"
+                >
+                  <fieldset>
+                    <legend className="text-center mx-auto text-xl mt-4 sr-only">
+                      Kontaktskjema
+                    </legend>
+                    <div>
+                      <InputField
+                        inputName="navn"
+                        label="Fullt navn"
+                        htmlFor="navn"
+                        inputPattern="[a-zA-ZæøåÆØÅ ]+"
+                        title="Vennligst bruk norske bokstaver"
+                        isRequired
+                        register={register}
+                      />
+                      {errors.navn && (
+                        <p className="text-red-500">{errors.navn.message}</p>
+                      )}
                     </div>
-                  </form>
+                    <br />
+                    <div>
+                      <InputField
+                        inputName="telefon"
+                        label="Telefonnummer"
+                        htmlFor="telefon"
+                        isRequired
+                        inputPattern=".[0-9]{7}"
+                        title="Vennligst bruk bare tall"
+                        register={register}
+                      />
+                      {errors.telefon && (
+                        <p className="text-red-500">
+                          {errors.telefon.message}
+                        </p>
+                      )}
+                    </div>
+                    <br />
+                    <div>
+                      <InputField
+                        inputName="tekst"
+                        type="textarea"
+                        label="Hva ønsker du å si?"
+                        htmlFor="tekst"
+                        isRequired
+                        register={register}
+                      />
+                      {errors.tekst && (
+                        <p className="text-red-500">{errors.tekst.message}</p>
+                      )}
+                    </div>
+                    <br />
+                  </fieldset>
+                  <div className="-mt-4">
+                    <Button disabled={submitting}>Send skjema</Button>
+                  </div>
+                </form>
                 )}
               </div>
             </div>

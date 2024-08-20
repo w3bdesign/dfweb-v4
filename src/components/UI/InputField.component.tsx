@@ -1,4 +1,5 @@
 import React from "react";
+import { UseFormRegister, FieldValues } from "react-hook-form";
 
 interface IInputProps {
   inputName: string;
@@ -8,6 +9,7 @@ interface IInputProps {
   inputPattern?: string;
   title?: string;
   type?: "input" | "textarea";
+  register: UseFormRegister<FieldValues>;
 }
 
 const InputField = ({
@@ -18,6 +20,7 @@ const InputField = ({
   htmlFor,
   title,
   type = "input",
+  register,
   ...props
 }: IInputProps) => {
   const sharedClasses =
@@ -28,23 +31,25 @@ const InputField = ({
       <div className="relative">
         {type === "input" ? (
           <input
-            name={inputName}
+            {...register(inputName, {
+              required: isRequired,
+              pattern: inputPattern ? new RegExp(inputPattern) : undefined,
+            })}
             id={htmlFor}
             type="text"
             placeholder={label}
-            required={isRequired}
-            pattern={inputPattern}
             title={title}
             className={sharedClasses}
             {...props}
           />
         ) : (
           <textarea
-            name={inputName}
+            {...register(inputName, {
+              required: isRequired,
+            })}
             id={htmlFor}
             placeholder={label}
             className={sharedClasses}
-            required={isRequired}
             {...props}
           ></textarea>
         )}
