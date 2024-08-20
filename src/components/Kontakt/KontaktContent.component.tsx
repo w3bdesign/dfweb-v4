@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import emailjs from "@emailjs/browser";
 
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import InputField from "@/components/UI/InputField.component";
 
-interface IEvent {
-  preventDefault: () => void;
-}
+const schema = z.object({
+  navn: z.string().min(1, "Fullt navn er påkrevd"),
+  telefon: z.string().regex(/^[0-9]{8}$/, "Telefonnummer må være 8 sifre"),
+  tekst: z.string().min(1, "Hva ønsker du å si? er påkrevd"),
+});
+
+type FormData = z.infer<typeof schema>;
 
 /**
  * Renders contact form. Uses EmailJS to send the emails.
@@ -18,7 +24,13 @@ interface IEvent {
  */
 
 const KontaktContent = () => {
-  const formRef = useRef<HTMLFormElement>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
 
   const [serverResponse, setServerResponse] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -26,10 +38,10 @@ const KontaktContent = () => {
   /**
    * Handles the form submission and sends an email using the provided API keys.
    *
-   * @param {IEvent} event - The event object representing the form submission event.
+   * @param {FormData} data - The form data.
    * @return {void} No return value.
    */
-  const handleSubmit = (event: IEvent) => {
+  const onSubmit = (data: FormData) => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
     const TEMPLATE_KEY =
       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
@@ -38,14 +50,8 @@ const KontaktContent = () => {
     // Disable button
     setSubmitting(true);
 
-    event.preventDefault();
-
-    if (!formRef.current) {
-      return;
-    }
-
     emailjs.init(EMAIL_API_KEY);
-    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, formRef.current).then(
+    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, data).then(
       () => {
         setServerResponse("Takk for din beskjed");
       },
@@ -71,8 +77,7 @@ const KontaktContent = () => {
                   <form
                     id="contact-form"
                     className="text-center"
-                    ref={formRef}
-                    onSubmit={handleSubmit}
+                    onSubmit={handleSubmit(onSubmit)}
                     method="POST"
                     action="/api/form"
                     aria-label="Contact Form"
@@ -81,31 +86,51 @@ const KontaktContent = () => {
                       <legend className="text-center mx-auto text-xl mt-4 sr-only">
                         Kontaktskjema
                       </legend>
-                      <InputField
-                        inputName="navn"
-                        label="Fullt navn"
-                        htmlFor="navn"
-                        inputPattern="[a-zA-ZæøåÆØÅ ]+"
-                        title="Vennligst bruk norske bokstaver"
-                        isRequired
-                      />
+                      <div>
+                        <InputField
+                          inputName="navn"
+                          label="Fullt navn"
+                          htmlFor="navn"
+                          inputPattern="[a-zA-ZæøåÆØÅ ]+"
+                          title="Vennligst bruk norske bokstaver"
+                          isRequired
+                          {...register("navn")}
+                        />
+                        {errors.navn && (
+                          <p className="text-red-500">{errors.navn.message}</p>
+                        )}
+                      </div>
                       <br />
-                      <InputField
-                        inputName="telefon"
-                        label="Telefonnummer"
-                        htmlFor="telefon"
-                        isRequired
-                        inputPattern=".[0-9]{7}"
-                        title="Vennligst bruk bare tall"
-                      />
+                      <div>
+                        <InputField
+                          inputName="telefon"
+                          label="Telefonnummer"
+                          htmlFor="telefon"
+                          isRequired
+                          inputPattern=".[0-9]{7}"
+                          title="Vennligst bruk bare tall"
+                          {...register("telefon")}
+                        />
+                        {errors.telefon && (
+                          <p className="text-red-500">
+                            {errors.telefon.message}
+                          </p>
+                        )}
+                      </div>
                       <br />
-                      <InputField
-                        inputName="tekst"
-                        type="textarea"
-                        label="Hva ønsker du å si?"
-                        htmlFor="tekst"
-                        isRequired
-                      />
+                      <div>
+                        <InputField
+                          inputName="tekst"
+                          type="textarea"
+                          label="Hva ønsker du å si?"
+                          htmlFor="tekst"
+                          isRequired
+                          {...register("tekst")}
+                        />
+                        {errors.tekst && (
+                          <p className="text-red-500">{errors.tekst.message}</p>
+                        )}
+                      </div>
                       <br />
                     </fieldset>
                     <div className="-mt-4">

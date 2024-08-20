@@ -17,7 +17,11 @@ const customJestConfig = {
     "!src/lib/**/*.*",
     "!src/pages/**/*.*",
     "!src/utils/**/*.*"
-  ]
+  ],
+  moduleNameMapper: {
+    "^react-hook-form$": "react-hook-form/dist/index.cjs.js",
+    "^zod$": "zod/lib/index.cjs.js"
+  }
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

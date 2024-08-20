@@ -3,6 +3,9 @@
  */
 
 import { fireEvent, render, screen, act } from "@testing-library/react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
 
@@ -11,6 +14,16 @@ import emailjs from "@emailjs/browser";
 jest.mock("@emailjs/browser", () => ({
   sendForm: jest.fn(() => Promise.resolve()),
   init: jest.fn(),
+}));
+
+jest.mock("react-hook-form", () => ({
+  ...jest.requireActual("react-hook-form"),
+  useForm: jest.fn(),
+  FormProvider: jest.fn(({ children }) => <div>{children}</div>),
+}));
+
+jest.mock("@hookform/resolvers/zod", () => ({
+  zodResolver: jest.fn(),
 }));
 
 describe("KontaktContent", () => {
