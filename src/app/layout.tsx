@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ErrorBoundary } from "react-error-boundary";
 
 import "./globals.css";
 import "./glitch.css";
@@ -12,6 +13,15 @@ export const metadata: Metadata = {
   title: "Forside - Dfweb",
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
+
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre>{error.message}</pre>
+    </div>
+  );
+}
 
 export default function RootLayout({
   children,
@@ -43,7 +53,9 @@ export default function RootLayout({
       <body
         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-400 antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
       >
-        <div className="flex-grow">{children}</div>
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <div className="flex-grow">{children}</div>
+        </ErrorBoundary>
         <Footer />
       </body>
     </html>
