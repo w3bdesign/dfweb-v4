@@ -71,7 +71,7 @@ const KontaktContent = () => {
                     {serverResponse}
                   </h3>
                 ) : (
-                  <form onSubmit={handleSubmit(onSubmit)} role="form">
+                  <form onSubmit={handleSubmit(onSubmit)}>
                     <InputField<FormData>
                       inputName="navn"
                       label="Fullt navn"
