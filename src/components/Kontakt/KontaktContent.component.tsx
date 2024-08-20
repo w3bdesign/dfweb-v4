@@ -8,7 +8,7 @@ import emailjs from "@emailjs/browser";
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
 import InputField from "@/components/UI/InputField.component";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const schema = z.object({
   navn: z.string().min(1, "Fullt navn er påkrevd"),
@@ -25,6 +25,8 @@ type FormData = z.infer<typeof schema>;
  */
 
 const KontaktContent = () => {
+  const formRef = useRef<any>("test");
+
   const {
     register,
     handleSubmit,
@@ -52,13 +54,15 @@ const KontaktContent = () => {
     setSubmitting(true);
 
     emailjs.init(EMAIL_API_KEY);
-    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, data).then(
+
+    //emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, data).then(
+    emailjs.sendForm(SERVICE_KEY, TEMPLATE_KEY, formRef.current).then(
       () => {
         setServerResponse("Takk for din beskjed");
       },
       () => {
         setServerResponse("Feil under sending av skjema");
-      },
+      }
     );
   };
 
