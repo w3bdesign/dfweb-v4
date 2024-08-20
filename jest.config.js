@@ -19,8 +19,8 @@ const customJestConfig = {
     "!src/utils/**/*.*",
   ],
   moduleNameMapper: {
-    "^react-hook-form$": "<rootDir>/node_modules/react-hook-form/dist/index.cjs.mjs",
-    "^zod$": "zod/lib/index.cjs.js",
+    //"^react-hook-form$": "<rootDir>/node_modules/react-hook-form/dist/index.cjs.mjs",
+    //"^zod$": "zod/lib/index.cjs.js",
   },
 };
 
