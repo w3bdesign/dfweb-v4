@@ -3,9 +3,6 @@
  */
 
 import { fireEvent, render, screen, act } from "@testing-library/react";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
 
@@ -42,7 +39,7 @@ describe("KontaktContent", () => {
     // make emailjs.sendForm return a rejected promise
 
     emailjs.sendForm.mockImplementation(() =>
-      Promise.reject(new Error("Error message")),
+      Promise.reject(new Error("Error message"))
     );
 
     // fill out form fields
@@ -97,7 +94,7 @@ describe("KontaktContent", () => {
     // assert success message is displayed
 
     expect(
-      screen.getByText("Feil under sending av skjema"),
+      screen.getByText("Feil under sending av skjema")
     ).toBeInTheDocument();
   });
 });
