@@ -56,6 +56,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
 - Google rich results for each individual page
 - 99% / 100% / 100% / 100% score in Google Lighthouse
+- React Hook Form with Zod for efficient form handling and validation
 
 ### 🎨 Design
 
