@@ -1,19 +1,19 @@
 import React from "react";
 import { UseFormRegister, FieldValues, RegisterOptions } from "react-hook-form";
 
-interface IInputProps {
-  inputName: "navn" | "telefon" | "tekst";
+interface IInputProps<T extends FieldValues> {
+  inputName: keyof T;
   label: string;
   htmlFor: string;
   isRequired?: boolean;
   inputPattern?: string;
   title?: string;
   type?: "input" | "textarea";
-  register: UseFormRegister<FieldValues>;
+  register: UseFormRegister<T>;
   error?: string;
 }
 
-const InputField = ({
+function InputField<T extends FieldValues>({
   inputName,
   label,
   inputPattern,
@@ -24,7 +24,7 @@ const InputField = ({
   register,
   error,
   ...props
-}: IInputProps) => {
+}: IInputProps<T>) {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
@@ -66,6 +66,6 @@ const InputField = ({
       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
     </div>
   );
-};
+}
 
 export default InputField;

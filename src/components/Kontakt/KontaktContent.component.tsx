@@ -82,7 +82,7 @@ const KontaktContent = () => {
                       <legend className="text-center mx-auto text-xl mt-4 sr-only">
                         Kontaktskjema
                       </legend>
-                      <InputField
+                      <InputField<FormData>
                         inputName="navn"
                         label="Fullt navn"
                         htmlFor="navn"
@@ -91,7 +91,7 @@ const KontaktContent = () => {
                         isRequired
                       />
                       <br />
-                      <InputField
+                      <InputField<FormData>
                         inputName="telefon"
                         label="Telefonnummer"
                         htmlFor="telefon"
@@ -100,7 +100,7 @@ const KontaktContent = () => {
                         isRequired
                       />
                       <br />
-                      <InputField
+                      <InputField<FormData>
                         inputName="tekst"
                         type="textarea"
                         label="Hva ønsker du å si?"
