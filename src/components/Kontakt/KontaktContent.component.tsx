@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import emailjs from "@emailjs/browser";
+import { useState } from "react";
 
 import Button from "@/components/UI/Button.component";
 import PageHeader from "@/components/UI/PageHeader.component";
@@ -39,9 +40,9 @@ const KontaktContent = () => {
    * Handles the form submission and sends an email using the provided API keys.
    *
    * @param {FormData} data - The form data.
-   * @return {void} No return value.
+   * @return {Promise<void>} No return value.
    */
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData): Promise<void> => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
     const TEMPLATE_KEY = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";

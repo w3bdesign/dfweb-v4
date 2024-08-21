@@ -1,8 +1,8 @@
 import React from "react";
-import { UseFormRegister, FieldValues } from "react-hook-form";
+import { UseFormRegister, FieldValues, RegisterOptions } from "react-hook-form";
 
 interface IInputProps {
-  inputName: string;
+  inputName: "navn" | "telefon" | "tekst";
   label: string;
   htmlFor: string;
   isRequired?: boolean;
@@ -28,6 +28,11 @@ const InputField = ({
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
+  const registerOptions: RegisterOptions = {
+    required: isRequired,
+    ...(inputPattern ? { pattern: new RegExp(inputPattern) } : {}),
+  };
+
   return (
     <div className="relative my-2 flex flex-col items-center">
       <div className="relative">
@@ -37,7 +42,7 @@ const InputField = ({
             type="text"
             placeholder={label}
             className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
-            {...register(inputName, { required: isRequired, pattern: inputPattern ? new RegExp(inputPattern) : undefined })}
+            {...register(inputName, registerOptions)}
             {...props}
           />
         ) : (
@@ -45,7 +50,7 @@ const InputField = ({
             id={htmlFor}
             placeholder={label}
             className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
-            {...register(inputName, { required: isRequired })}
+            {...register(inputName, registerOptions)}
             {...props}
           ></textarea>
         )}
