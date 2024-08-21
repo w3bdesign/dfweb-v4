@@ -1,50 +1,66 @@
 import React from "react";
+import { UseFormRegister, FieldValues, RegisterOptions, Path } from "react-hook-form";
 
-interface IInputProps {
-  inputName: string;
+export interface InputProps<T extends FieldValues> {
+  name: Path<T>;
   label: string;
   htmlFor: string;
   isRequired?: boolean;
-  inputPattern?: string;
+  inputPattern?: RegExp;
   title?: string;
   type?: "input" | "textarea";
+  register: UseFormRegister<T>;
+  error?: string;
 }
 
-const InputField = ({
-  inputName,
+export function createRegisterOptions<T extends FieldValues>(
+  isRequired?: boolean,
+  inputPattern?: RegExp,
+  title?: string
+): RegisterOptions<T, Path<T>> {
+  return {
+    required: isRequired ? "Dette feltet er påkrevd" : false,
+    ...(inputPattern
+      ? { pattern: { value: inputPattern, message: title || "Ugyldig format" } }
+      : {}),
+  };
+}
+
+function InputField<T extends FieldValues>({
+  name,
   label,
   inputPattern,
   isRequired,
   htmlFor,
   title,
   type = "input",
+  register,
+  error,
   ...props
-}: IInputProps) => {
+}: InputProps<T>) {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
+  const registerOptions = createRegisterOptions<T>(isRequired, inputPattern, title);
+
   return (
-    <div className="relative my-2 flex justify-center">
+    <div className="relative my-2 flex flex-col items-center">
       <div className="relative">
         {type === "input" ? (
           <input
-            name={inputName}
             id={htmlFor}
             type="text"
             placeholder={label}
-            required={isRequired}
-            pattern={inputPattern}
-            title={title}
-            className={sharedClasses}
+            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            {...register(name, registerOptions)}
             {...props}
           />
         ) : (
           <textarea
-            name={inputName}
             id={htmlFor}
             placeholder={label}
-            className={sharedClasses}
-            required={isRequired}
+            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            {...register(name, registerOptions)}
             {...props}
           ></textarea>
         )}
@@ -57,8 +73,9 @@ const InputField = ({
           {label}
         </label>
       </div>
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
     </div>
   );
-};
+}
 
 export default InputField;
