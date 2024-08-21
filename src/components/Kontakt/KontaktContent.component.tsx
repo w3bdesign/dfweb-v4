@@ -83,7 +83,7 @@ const KontaktContent = () => {
                         Kontaktskjema
                       </legend>
                       <InputField<FormData>
-                        inputName="navn"
+                        name="navn"
                         label="Fullt navn"
                         htmlFor="navn"
                         register={register}
@@ -92,7 +92,7 @@ const KontaktContent = () => {
                       />
                       <br />
                       <InputField<FormData>
-                        inputName="telefon"
+                        name="telefon"
                         label="Telefonnummer"
                         htmlFor="telefon"
                         register={register}
@@ -101,7 +101,7 @@ const KontaktContent = () => {
                       />
                       <br />
                       <InputField<FormData>
-                        inputName="tekst"
+                        name="tekst"
                         type="textarea"
                         label="Hva ønsker du å si?"
                         htmlFor="tekst"

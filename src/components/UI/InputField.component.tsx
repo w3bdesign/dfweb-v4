@@ -1,8 +1,8 @@
 import React from "react";
-import { UseFormRegister, FieldValues, RegisterOptions } from "react-hook-form";
+import { UseFormRegister, FieldValues, RegisterOptions, Path } from "react-hook-form";
 
-interface IInputProps<T extends FieldValues> {
-  inputName: keyof T;
+export interface InputProps<T extends FieldValues> {
+  name: Path<T>;
   label: string;
   htmlFor: string;
   isRequired?: boolean;
@@ -14,7 +14,7 @@ interface IInputProps<T extends FieldValues> {
 }
 
 function InputField<T extends FieldValues>({
-  inputName,
+  name,
   label,
   inputPattern,
   isRequired,
@@ -24,13 +24,15 @@ function InputField<T extends FieldValues>({
   register,
   error,
   ...props
-}: IInputProps<T>) {
+}: InputProps<T>) {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
-  const registerOptions: RegisterOptions = {
-    required: isRequired,
-    ...(inputPattern ? { pattern: new RegExp(inputPattern) } : {}),
+  const registerOptions: RegisterOptions<T, Path<T>> = {
+    required: isRequired ? "Dette feltet er påkrevd" : false,
+    ...(inputPattern
+      ? { pattern: { value: new RegExp(inputPattern), message: title || "Ugyldig format" } }
+      : {}),
   };
 
   return (
@@ -42,7 +44,7 @@ function InputField<T extends FieldValues>({
             type="text"
             placeholder={label}
             className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
-            {...register(inputName, registerOptions)}
+            {...register(name, registerOptions)}
             {...props}
           />
         ) : (
@@ -50,7 +52,7 @@ function InputField<T extends FieldValues>({
             id={htmlFor}
             placeholder={label}
             className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
-            {...register(inputName, registerOptions)}
+            {...register(name, registerOptions)}
             {...props}
           ></textarea>
         )}
