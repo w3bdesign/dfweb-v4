@@ -6,7 +6,7 @@ export interface InputProps<T extends FieldValues> {
   label: string;
   htmlFor: string;
   isRequired?: boolean;
-  inputPattern?: string;
+  inputPattern?: RegExp;
   title?: string;
   type?: "input" | "textarea";
   register: UseFormRegister<T>;
@@ -15,13 +15,13 @@ export interface InputProps<T extends FieldValues> {
 
 export function createRegisterOptions<T extends FieldValues>(
   isRequired?: boolean,
-  inputPattern?: string,
+  inputPattern?: RegExp,
   title?: string
 ): RegisterOptions<T, Path<T>> {
   return {
     required: isRequired ? "Dette feltet er påkrevd" : false,
     ...(inputPattern
-      ? { pattern: { value: new RegExp(inputPattern), message: title || "Ugyldig format" } }
+      ? { pattern: { value: inputPattern, message: title || "Ugyldig format" } }
       : {}),
   };
 }

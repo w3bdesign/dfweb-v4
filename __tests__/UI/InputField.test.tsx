@@ -7,7 +7,7 @@ interface TestFormData {
   testField: string;
 }
 
-const TestComponent = ({ type = 'input', isRequired = false, inputPattern = '' }) => {
+const TestComponent = ({ type = 'input', isRequired = false, inputPattern }: { type?: 'input' | 'textarea', isRequired?: boolean, inputPattern?: RegExp }) => {
   const { register } = useForm<TestFormData>();
 
   return (
@@ -41,9 +41,10 @@ describe('InputField', () => {
   });
 
   it('creates correct register options when inputPattern is provided', () => {
-    const options = createRegisterOptions(false, '[A-Za-z]+');
+    const pattern = /[A-Za-z]+/;
+    const options = createRegisterOptions(false, pattern);
     expect(options.pattern).toBeDefined();
-    expect((options.pattern as { value: RegExp }).value).toEqual(/[A-Za-z]+/);
+    expect((options.pattern as { value: RegExp }).value).toEqual(pattern);
   });
 
   it('displays an error message when provided', () => {

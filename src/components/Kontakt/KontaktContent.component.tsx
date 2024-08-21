@@ -89,6 +89,8 @@ const KontaktContent = () => {
                         register={register}
                         error={errors.navn?.message}
                         isRequired
+                        inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+                        title="Vennligst bruk norske bokstaver"
                       />
                       <br />
                       <InputField<FormData>
@@ -98,6 +100,8 @@ const KontaktContent = () => {
                         register={register}
                         error={errors.telefon?.message}
                         isRequired
+                        inputPattern={/^[0-9]{8}$/}
+                        title="Vennligst oppgi et gyldig telefonnummer"
                       />
                       <br />
                       <InputField<FormData>
