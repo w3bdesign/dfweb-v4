@@ -20,6 +20,7 @@ const nextConfig = {
       base-uri 'self';
       form-action 'self';
       frame-ancestors 'none';
+      connect-src 'self' https://api.emailjs.com;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
 
