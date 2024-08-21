@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, render, screen, act, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
 import emailjs from "@emailjs/browser";
 
@@ -105,5 +105,50 @@ describe("KontaktContent", () => {
     });
 
     expect(emailjs.send).not.toHaveBeenCalled();
+  });
+
+  test("displays validation error for invalid name format", async () => {
+    render(<KontaktContent />);
+
+    fireEvent.change(screen.getByLabelText(fulltNavn), {
+      target: { value: "User123" }, // Invalid name format
+    });
+    fireEvent.change(screen.getByLabelText(telefonNummer), {
+      target: { value: "12345678" },
+    });
+    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+      target: { value: "Test melding" },
+    });
+
+    fireEvent.click(screen.getByText("Send skjema"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Vennligst bruk norske bokstaver")).toBeInTheDocument();
+    });
+
+    expect(emailjs.send).not.toHaveBeenCalled();
+  });
+
+  test("disables submit button while submitting", async () => {
+    render(<KontaktContent />);
+
+    fireEvent.change(screen.getByLabelText(fulltNavn), {
+      target: { value: "Bruker Test" },
+    });
+    fireEvent.change(screen.getByLabelText(telefonNummer), {
+      target: { value: "12345678" },
+    });
+    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+      target: { value: "Test melding" },
+    });
+
+    const submitButton = screen.getByText("Send skjema");
+    fireEvent.click(submitButton);
+
+    expect(submitButton).toBeDisabled();
+
+    await waitFor(() => {
+      expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
+    });
   });
 });

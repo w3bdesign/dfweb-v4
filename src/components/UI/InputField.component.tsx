@@ -13,6 +13,19 @@ export interface InputProps<T extends FieldValues> {
   error?: string;
 }
 
+export function createRegisterOptions<T extends FieldValues>(
+  isRequired?: boolean,
+  inputPattern?: string,
+  title?: string
+): RegisterOptions<T, Path<T>> {
+  return {
+    required: isRequired ? "Dette feltet er påkrevd" : false,
+    ...(inputPattern
+      ? { pattern: { value: new RegExp(inputPattern), message: title || "Ugyldig format" } }
+      : {}),
+  };
+}
+
 function InputField<T extends FieldValues>({
   name,
   label,
@@ -28,12 +41,7 @@ function InputField<T extends FieldValues>({
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
-  const registerOptions: RegisterOptions<T, Path<T>> = {
-    required: isRequired ? "Dette feltet er påkrevd" : false,
-    ...(inputPattern
-      ? { pattern: { value: new RegExp(inputPattern), message: title || "Ugyldig format" } }
-      : {}),
-  };
+  const registerOptions = createRegisterOptions<T>(isRequired, inputPattern, title);
 
   return (
     <div className="relative my-2 flex flex-col items-center">
