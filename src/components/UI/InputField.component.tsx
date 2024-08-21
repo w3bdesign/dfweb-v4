@@ -1,4 +1,5 @@
 import React from "react";
+import { UseFormRegister, FieldValues } from "react-hook-form";
 
 interface IInputProps {
   inputName: string;
@@ -8,6 +9,8 @@ interface IInputProps {
   inputPattern?: string;
   title?: string;
   type?: "input" | "textarea";
+  register: UseFormRegister<FieldValues>;
+  error?: string;
 }
 
 const InputField = ({
@@ -18,33 +21,31 @@ const InputField = ({
   htmlFor,
   title,
   type = "input",
+  register,
+  error,
   ...props
 }: IInputProps) => {
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
   return (
-    <div className="relative my-2 flex justify-center">
+    <div className="relative my-2 flex flex-col items-center">
       <div className="relative">
         {type === "input" ? (
           <input
-            name={inputName}
             id={htmlFor}
             type="text"
             placeholder={label}
-            required={isRequired}
-            pattern={inputPattern}
-            title={title}
-            className={sharedClasses}
+            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            {...register(inputName, { required: isRequired, pattern: inputPattern ? new RegExp(inputPattern) : undefined })}
             {...props}
           />
         ) : (
           <textarea
-            name={inputName}
             id={htmlFor}
             placeholder={label}
-            className={sharedClasses}
-            required={isRequired}
+            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            {...register(inputName, { required: isRequired })}
             {...props}
           ></textarea>
         )}
@@ -57,6 +58,7 @@ const InputField = ({
           {label}
         </label>
       </div>
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
     </div>
   );
 };
