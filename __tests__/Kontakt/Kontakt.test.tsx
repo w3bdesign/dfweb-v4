@@ -3,7 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
+import KontaktPage from "../../src/app/kontakt/page";
 import emailjs from "@emailjs/browser";
 
 jest.mock("@emailjs/browser", () => ({
@@ -11,7 +11,13 @@ jest.mock("@emailjs/browser", () => ({
   init: jest.fn(),
 }));
 
-describe("KontaktContent", () => {
+jest.mock("../../src/app/RootLayout", () => {
+  return function DummyRootLayout({ children }: { children: React.ReactNode }) {
+    return <div>{children}</div>;
+  };
+});
+
+describe("KontaktPage", () => {
   const fulltNavn = "Fullt navn";
   const telefonNummer = "Telefonnummer";
   const hvaOnskerDu = "Hva ønsker du å si?";
@@ -21,12 +27,12 @@ describe("KontaktContent", () => {
   });
 
   test("renders the component", () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
     expect(screen.getByTestId("kontaktcontent")).toBeInTheDocument();
   });
 
   test("submits the form successfully", async () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "Bruker Test" },
@@ -50,7 +56,7 @@ describe("KontaktContent", () => {
   test("displays error message on form submission failure", async () => {
     emailjs.send.mockRejectedValueOnce(new Error("Test error"));
 
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "Bruker Test" },
@@ -72,7 +78,7 @@ describe("KontaktContent", () => {
   });
 
   test("displays validation errors for empty fields", async () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.click(screen.getByText("Send skjema"));
 
@@ -86,7 +92,7 @@ describe("KontaktContent", () => {
   });
 
   test("displays validation error for invalid phone number", async () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "Bruker Test" },
@@ -108,7 +114,7 @@ describe("KontaktContent", () => {
   });
 
   test("displays validation error for invalid name format", async () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "User123" }, // Invalid name format
@@ -130,7 +136,7 @@ describe("KontaktContent", () => {
   });
 
   test("disables submit button while submitting", async () => {
-    render(<KontaktContent />);
+    render(<KontaktPage />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "Bruker Test" },
