@@ -1,15 +1,15 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FC, useState } from "react";
 
 import Button from "@/components/UI/Button.component";
 import InputField from "@/components/UI/InputField.component";
 import { FormData, formSchema } from "./FormSchema";
 import { handleSubmit } from "./SubmitHandler";
 
-const ContactForm: React.FC = () => {
+const ContactForm: FC = () => {
   const {
     register,
     handleSubmit: hookFormSubmit,
