@@ -10,7 +10,7 @@ export interface InputProps<T extends FieldValues> {
   title?: string;
   type?: "input" | "textarea";
   register: UseFormRegister<T>;
-  error?: string;
+  error?: string | undefined;
 }
 
 export function createRegisterOptions<T extends FieldValues>(
