@@ -1,20 +1,22 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Path, UseFormRegister, FieldValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Button from './Button.component';
 import InputField from './InputField.component';
 
+type FieldConfig<T extends FieldValues> = {
+  name: Path<T>;
+  label: string;
+  type?: string;
+  inputPattern?: RegExp;
+  title?: string;
+};
+
 interface GenericFormProps<T extends z.ZodType<any, any>> {
   formSchema: T;
   onSubmit: (data: z.infer<T>) => Promise<void>;
-  fields: Array<{
-    name: keyof z.infer<T>;
-    label: string;
-    type?: string;
-    inputPattern?: RegExp;
-    title?: string;
-  }>;
+  fields: FieldConfig<z.infer<T>>[];
   submitButtonText: string;
 }
 
@@ -46,12 +48,12 @@ function GenericForm<T extends z.ZodType<any, any>>({
           Kontaktskjema
         </legend>
         {fields.map((field) => (
-          <React.Fragment key={field.name.toString()}>
+          <React.Fragment key={field.name}>
             <InputField<z.infer<T>>
               name={field.name}
               label={field.label}
-              htmlFor={field.name.toString()}
-              register={register}
+              htmlFor={field.name}
+              register={register as UseFormRegister<z.infer<T>>}
               error={errors[field.name]?.message?.toString()}
               isRequired
               type={field.type}
