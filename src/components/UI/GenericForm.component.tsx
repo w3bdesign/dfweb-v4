@@ -1,36 +1,40 @@
 import React from 'react';
-import { useForm, Path, UseFormRegister, FieldValues } from 'react-hook-form';
+import { useForm, Path, FieldValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Button from './Button.component';
 import InputField from './InputField.component';
 
+type InputType = 'input' | 'textarea';
+
 type FieldConfig<T extends FieldValues> = {
   name: Path<T>;
   label: string;
-  type?: string;
+  type?: InputType;
   inputPattern?: RegExp;
   title?: string;
 };
 
-interface GenericFormProps<T extends z.ZodType<any, any>> {
-  formSchema: T;
-  onSubmit: (data: z.infer<T>) => Promise<void>;
-  fields: FieldConfig<z.infer<T>>[];
+interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
+  formSchema: TSchema;
+  onSubmit: (data: z.infer<TSchema>) => Promise<void>;
+  fields: FieldConfig<z.infer<TSchema>>[];
   submitButtonText: string;
 }
 
-function GenericForm<T extends z.ZodType<any, any>>({
+function GenericForm<TSchema extends z.ZodType<FieldValues>>({
   formSchema,
   onSubmit,
   fields,
   submitButtonText,
-}: GenericFormProps<T>) {
+}: GenericFormProps<TSchema>) {
+  type FormData = z.infer<TSchema>;
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<z.infer<T>>({
+  } = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
 
@@ -49,12 +53,12 @@ function GenericForm<T extends z.ZodType<any, any>>({
         </legend>
         {fields.map((field) => (
           <React.Fragment key={field.name}>
-            <InputField<z.infer<T>>
+            <InputField<FormData>
               name={field.name}
               label={field.label}
               htmlFor={field.name}
-              register={register as UseFormRegister<z.infer<T>>}
-              error={errors[field.name]?.message?.toString()}
+              register={register}
+              error={errors[field.name]?.message as string | undefined}
               isRequired
               type={field.type}
               inputPattern={field.inputPattern}
