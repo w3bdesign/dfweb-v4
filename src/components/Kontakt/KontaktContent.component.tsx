@@ -9,7 +9,7 @@ import GenericForm from "@/components/UI/GenericForm.component";
 
 const formSchema = z.object({
   navn: z.string().min(1, "Fullt navn er påkrevd").regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
-  telefon: z.string().min(1, "Telefonnummer er påkrevd").regex(/^[0-9]{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
+  telefon: z.string().min(1, "Telefonnummer er påkrevd").regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
   tekst: z.string().min(1, "Beskjed er påkrevd"),
 });
 
@@ -54,7 +54,7 @@ const KontaktContent = () => {
     {
       name: "telefon" as const,
       label: "Telefonnummer",
-      inputPattern: /^[0-9]{8}$/,
+      inputPattern: /^\d{8}$/,
       title: "Vennligst oppgi et gyldig telefonnummer",
     },
     {
