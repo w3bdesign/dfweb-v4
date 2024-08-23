@@ -22,6 +22,14 @@ interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
   readonly submitButtonText: string;
 }
 
+/**
+ * A generic, reusable form component that can be easily customized and extended.
+ * It uses Zod for schema validation and react-hook-form for form handling.
+ * 
+ * @template TSchema - The Zod schema type for form validation.
+ * @param {Readonly<GenericFormProps<TSchema>>} props - The props for the GenericForm component.
+ * @returns {JSX.Element} The rendered form.
+ */
 function GenericForm<TSchema extends z.ZodType<FieldValues>>({
   formSchema,
   onSubmit,
