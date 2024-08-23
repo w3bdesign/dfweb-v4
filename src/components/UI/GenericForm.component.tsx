@@ -8,18 +8,18 @@ import InputField from './InputField.component';
 type InputType = 'input' | 'textarea';
 
 type FieldConfig<T extends FieldValues> = {
-  name: Path<T>;
-  label: string;
-  type?: InputType;
-  inputPattern?: RegExp;
-  title?: string;
+  readonly name: Path<T>;
+  readonly label: string;
+  readonly type?: InputType;
+  readonly inputPattern?: RegExp;
+  readonly title?: string;
 };
 
 interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
-  formSchema: TSchema;
-  onSubmit: (data: z.infer<TSchema>) => Promise<void>;
-  fields: FieldConfig<z.infer<TSchema>>[];
-  submitButtonText: string;
+  readonly formSchema: TSchema;
+  readonly onSubmit: (data: z.infer<TSchema>) => Promise<void>;
+  readonly fields: ReadonlyArray<FieldConfig<z.infer<TSchema>>>;
+  readonly submitButtonText: string;
 }
 
 function GenericForm<TSchema extends z.ZodType<FieldValues>>({
@@ -27,7 +27,7 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
   onSubmit,
   fields,
   submitButtonText,
-}: GenericFormProps<TSchema>) {
+}: Readonly<GenericFormProps<TSchema>>) {
   type FormData = z.infer<TSchema>;
 
   const {
