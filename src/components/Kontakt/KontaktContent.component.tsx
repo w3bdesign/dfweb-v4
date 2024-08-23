@@ -60,7 +60,7 @@ const KontaktContent = () => {
     {
       name: "tekst" as const,
       label: "Hva ønsker du å si?",
-      type: "textarea",
+      type: "textarea" as const,
     },
   ];
 
