@@ -9,15 +9,15 @@
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
 
 ## 📋 Table of Contents
-- Live URL
-- Frontend
-- Backend
-- Google Lighthouse
-- Features
-  - General
-  - Design
-  - Accessibility
-  - Devops / Code quality
+- [Live URL](#live-url)
+- [Frontend](#frontend)
+- [Backend](#backend)
+- [Google Lighthouse](#google-lighthouse)
+- [Features](#features)
+  - [General](#general)
+  - [Design](#design)
+  - [Accessibility](#accessibility)
+  - [Devops / Code quality](#devops--code-quality)
 
 ## 🌐 Live URL: <https://www.dfweb.no>
 
