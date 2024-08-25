@@ -21,14 +21,15 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ## 🌐 Live URL: <https://www.dfweb.no>
 
+### Frontend
 <img src="https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4" alt="Frontend Image" />
 
 * * *
-
+### Sanity backend
 <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
 
 * * *
-
+# Google Lighthouse
 <img src="https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b" alt="Google Lighthouse Image" />
 
 ## 🚀 Features
