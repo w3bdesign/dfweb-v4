@@ -17,7 +17,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
   - [General](#general)
   - [Design](#design)
   - [Accessibility](#accessibility)
-  - [Devops / Code quality](#devops--code-quality)
+  - [Devops Code quality](#devops-code-quality)
 
 ## 🌐 Live URL: <https://www.dfweb.no>
 
@@ -72,7 +72,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Accessibility testing with Cypress Axe
 - Builds will fail if any a11y errors are found
 
-### 🛠️ Devops / Code quality
+### 🛠️ Devops Code quality
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
