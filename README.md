@@ -4,11 +4,11 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=w3bdesign_dfweb-v4&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=w3bdesign_dfweb-v4)
  
-# 👨‍💻 Dfweb.no Portfolio Version 4
+# Dfwebno Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
 
-## 📋 Table of Contents
+## Table of Contents
 - [Live URL](#live-url)
 - [Frontend](#frontend)
 - [Backend](#backend)
@@ -17,29 +17,31 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
   - [General](#general)
   - [Design](#design)
   - [Accessibility](#accessibility)
-  - [Devops Code quality](#devops-code-quality)
+  - [Devops and Code quality](#devops-and-code-quality)
 
-## 🌐 Live URL: <https://www.dfweb.no>
+## Live URL
 
-### Frontend
+https://www.dfweb.no
+
+## Frontend
 
 <img src="https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4" alt="Frontend Image" />
 
 * * *
 
-### Sanity backend
+## Backend
 
 <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
 
 * * *
 
-### Google Lighthouse
+## Google Lighthouse
 
 <img src="https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b" alt="Google Lighthouse Image" />
 
-## 🚀 Features
+## Features
 
-### 🌟 General
+### General
 
 - Clean, modern, responsive and Matrix-inspired design
 - Components are 100% typescript
@@ -59,20 +61,20 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
 
-### 🎨 Design
+### Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
 
-### ♿ Accessibility
+### Accessibility
 
 - WCAG accessibility tested
 - Accessibility testing with Cypress Axe
 - Builds will fail if any a11y errors are found
 
-### 🛠️ Devops Code quality
+### Devops and Code quality
 
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
