@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { PortableText } from "@portabletext/react";
 
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 
 import BounceInScroll from "../Animations/BounceInScroll.component";
-import Link from "next/link";
 
 interface IChild {
   _key: string;
