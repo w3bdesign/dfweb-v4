@@ -71,7 +71,7 @@ const KontaktContent = () => {
         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
-              <div className="bg-gray-800 p-6 rounded-lg pt-8">
+              <div className="bg-gray-800 p-2 md:p-6 rounded-lg pt-8">
                 {serverResponse ? (
                   <h3 className="m-2 h-32 text-2xl md:text-3xl text-center text-gray-300">
                     {serverResponse}
