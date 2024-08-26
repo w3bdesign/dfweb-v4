@@ -8,8 +8,14 @@ import PageHeader from "@/components/UI/PageHeader.component";
 import GenericForm from "@/components/UI/GenericForm.component";
 
 const formSchema = z.object({
-  navn: z.string().min(1, "Fullt navn er påkrevd").regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
-  telefon: z.string().min(1, "Telefonnummer er påkrevd").regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
+  navn: z
+    .string()
+    .min(1, "Fullt navn er påkrevd")
+    .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
+  telefon: z
+    .string()
+    .min(1, "Telefonnummer er påkrevd")
+    .regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
   tekst: z.string().min(1, "Beskjed er påkrevd"),
 });
 
@@ -32,7 +38,8 @@ const KontaktContent = () => {
    */
   const onSubmit = async (data: FormData): Promise<void> => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-    const TEMPLATE_KEY = process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+    const TEMPLATE_KEY =
+      process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
     try {
@@ -71,18 +78,20 @@ const KontaktContent = () => {
         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
-              <div className="bg-gray-800 p-6 rounded-lg pt-8">
+              <div className="p-2 md:p-6 pt-8">
                 {serverResponse ? (
-                  <h3 className="m-2 h-32 text-2xl md:text-3xl text-center text-gray-300">
+                  <h3 className="m-2 h-32 text-xl md:text-3xl text-center text-gray-300">
                     {serverResponse}
                   </h3>
                 ) : (
-                  <GenericForm<typeof formSchema>
-                    formSchema={formSchema}
-                    onSubmit={onSubmit}
-                    fields={formFields}
-                    submitButtonText="Send skjema"
-                  />
+                  <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+                    <GenericForm<typeof formSchema>
+                      formSchema={formSchema}
+                      onSubmit={onSubmit}
+                      fields={formFields}
+                      submitButtonText="Send skjema"
+                    />
+                  </div>
                 )}
               </div>
             </div>
