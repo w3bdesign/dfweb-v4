@@ -1,6 +1,17 @@
 import { Article } from "phosphor-react";
 
-const pagecontent = {
+export const pagecontent: {
+  title: string;
+  name: string;
+  icon: any;
+  type: string;
+  fields: {
+    title: string;
+    name: string;
+    type: string;
+    of?: { type: string }[];
+  }[];
+} = {
   // This is the display name for the type
   title: "Page content",
 
@@ -33,5 +44,3 @@ const pagecontent = {
     }
   ]
 };
-
-export default pagecontent;

@@ -1,4 +1,4 @@
-export default {
+export const cv = {
   name: 'cv',
   title: 'CV',
   type: 'document',

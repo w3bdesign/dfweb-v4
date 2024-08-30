@@ -1,6 +1,6 @@
 import { List } from "phosphor-react";
 
-const navigation = {
+export const navigation = {
   name: "navigation",
   title: "Navigation",
   type: "document",
@@ -10,7 +10,7 @@ const navigation = {
       title: "Title",
       name: "title",
       type: "string",
-      validation: (Rule) => Rule.required()
+      validation: (Rule: any) => Rule.required()
     },
     {
       name: "links",
@@ -31,5 +31,3 @@ const navigation = {
     }
   ]
 };
-
-export default navigation;

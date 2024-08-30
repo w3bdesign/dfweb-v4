@@ -1,4 +1,3 @@
-// Documents
 import project from "./documents/project";
 import category from "./documents/category";
 import page from "./documents/page";
@@ -9,4 +8,4 @@ import link from "./objects/link";
 import pagecontent from "./objects/pagecontent";
 import herocontent from "./objects/herocontent";
 
-export const types = [project, category, page, navigation, link, pagecontent, herocontent];
+export const types: Array<any> = [project, category, page, navigation, link, pagecontent, herocontent];

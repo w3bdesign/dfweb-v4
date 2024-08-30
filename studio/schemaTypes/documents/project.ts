@@ -1,6 +1,6 @@
-import {Browser} from 'phosphor-react'
+import { Browser } from 'phosphor-react';
 
-const project = {
+export const project = {
   title: 'Project',
   name: 'project',
   icon: Browser,
@@ -30,19 +30,19 @@ const project = {
       title: 'Project category',
       name: 'projectcategory',
       type: 'reference',
-      to: [{type: 'category'}],
+      to: [{ type: 'category' }],
     },
     {
       title: 'Project URL',
       name: 'urlwww',
       type: 'array',
-      of: [{type: 'link'}],
+      of: [{ type: 'link' }],
     },
     {
       title: 'Github URL',
       name: 'urlgithub',
       type: 'array',
-      of: [{type: 'link'}],
+      of: [{ type: 'link' }],
     },
     {
       title: 'Project image',
@@ -60,9 +60,7 @@ const project = {
       name: 'featureOrder',
       type: 'number',
       description: 'Order of the featured project (lower numbers appear first)',
-      hidden: ({document}) => !document?.featured,
+      hidden: ({ document }) => !document?.featured,
     },
   ],
-}
-
-export default project
+};

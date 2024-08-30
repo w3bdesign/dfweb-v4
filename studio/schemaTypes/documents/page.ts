@@ -1,6 +1,6 @@
 import { Browsers } from "phosphor-react";
 
-const page = {
+export const page = {
   // This is the display name for the type
   title: "Page",
 
@@ -44,5 +44,3 @@ const page = {
     }
   ]
 };
-
-export default page;

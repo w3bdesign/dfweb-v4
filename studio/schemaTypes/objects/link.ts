@@ -1,6 +1,6 @@
 import { ArrowSquareOut } from "phosphor-react";
 
-const link = {
+export const link = {
   name: "link",
   title: "Link",
   type: "object",
@@ -42,5 +42,3 @@ const link = {
     }
   }
 };
-
-export default link;
