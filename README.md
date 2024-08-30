@@ -37,7 +37,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ## Google Lighthouse
 
-<img src="https://github.com/user-attachments/assets/56616d37-be9f-4459-91f0-6906b189bd1b" alt="Google Lighthouse Image" />
+![image](https://github.com/user-attachments/assets/ee0f3d41-a312-4063-b2d9-c24a1507363d)
 
 ## Features
 
