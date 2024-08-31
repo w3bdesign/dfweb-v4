@@ -1,5 +1,5 @@
 // @ts-ignore
-import { Article } from "phosphor-react";
+import { Article } from "@phosphor-icons/react";
 import { defineField, defineType } from 'sanity'
 
 const pagecontent = defineType({
