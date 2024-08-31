@@ -1,6 +1,7 @@
-import { Article } from "phosphor-react";
+import { Article } from "@phosphor-icons/react";
+import { defineField, defineType } from 'sanity'
 
-const herocontent = {
+const herocontent = defineType({
   // This is the display name for the type
   title: "Hero content",
 
@@ -15,12 +16,12 @@ const herocontent = {
 
   // Now we proceed to list the fields of our document
   fields: [
-    {
+    defineField({
       title: "Text",
       name: "text",
       type: "string"
-    }
+    })
   ]
-};
+});
 
 export default herocontent;

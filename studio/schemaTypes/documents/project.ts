@@ -1,5 +1,5 @@
-import { Browser } from 'phosphor-react'
-import { defineField, defineType, Rule } from 'sanity'
+import { Browser } from '@phosphor-icons/react'
+import { defineField, defineType } from 'sanity'
 
 const project = defineType({
   title: 'Project',

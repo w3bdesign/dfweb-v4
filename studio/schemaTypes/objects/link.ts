@@ -1,5 +1,5 @@
-import {ArrowSquareOut} from 'phosphor-react'
-import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
+import { ArrowSquareOut } from '@phosphor-icons/react'
+import { defineField, defineType, StringRule, BooleanRule } from 'sanity'
 
 const link = defineType({
   name: 'link',

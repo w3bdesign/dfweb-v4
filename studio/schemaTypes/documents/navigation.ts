@@ -1,4 +1,4 @@
-import { List } from "phosphor-react";
+import { List } from "@phosphor-icons/react";
 import { defineField, defineType, StringRule } from 'sanity'
 
 const navigation = defineType({
