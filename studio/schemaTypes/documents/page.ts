@@ -1,10 +1,10 @@
-import {RiCrossLine} from 'react-icons/ri'
+import {RiPagesLine} from 'react-icons/ri'
 import {defineField, defineType, SchemaTypeDefinition} from 'sanity'
 
 const page: SchemaTypeDefinition = defineType({
   title: 'Page',
   name: 'page',
-  icon: RiCrossLine,
+  icon: RiPagesLine,
   type: 'document',
   fields: [
     defineField({
