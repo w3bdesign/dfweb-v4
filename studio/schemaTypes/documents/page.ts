@@ -1,5 +1,4 @@
-// @ts-ignore
-import {Browsers} from "@phosphor-icons/react";
+import { RiCrossLine } from "react-icons/ri";
 
 const page = {
   // This is the display name for the type
@@ -8,7 +7,7 @@ const page = {
   // The identifier for this document type used in the api's
   name: 'page',
 
-  icon: Browsers,
+  icon: RiCrossLine,
 
   // Documents have the type 'document'. Your schema may describe types beyond documents
   // but let's get back to that later.

@@ -1,12 +1,11 @@
-// @ts-ignore
-import { List } from "@phosphor-icons/react";
+import { RiListCheck } from "react-icons/ri";
 import { defineField, defineType, StringRule } from 'sanity'
 
 const navigation = defineType({
   name: "navigation",
   title: "Navigation",
   type: "document",
-  icon: List,
+  icon: RiListCheck,
   fields: [
     defineField({
       title: "Title",
