@@ -1,48 +1,40 @@
-import { RiCrossLine } from "react-icons/ri";
+import {RiCrossLine} from 'react-icons/ri'
+import {defineField, defineType, SchemaTypeDefinition} from 'sanity'
 
-const page = {
-  // This is the display name for the type
+const page: SchemaTypeDefinition = defineType({
   title: 'Page',
-
-  // The identifier for this document type used in the api's
   name: 'page',
-
   icon: RiCrossLine,
-
-  // Documents have the type 'document'. Your schema may describe types beyond documents
-  // but let's get back to that later.
   type: 'document',
-
-  // Now we proceed to list the fields of our document
   fields: [
-    {
+    defineField({
       title: 'Name',
       name: 'title',
       type: 'string',
-    },
-    {
+    }),
+    defineField({
       title: 'Header',
       name: 'header',
       type: 'string',
-    },
-    {
+    }),
+    defineField({
       title: 'Hero content',
       description: 'Only supported in Hjem/Index page',
       name: 'hero',
       type: 'array',
       of: [{type: 'herocontent'}],
-      hidden: ({document}: any) => document?.title !== 'Hjem',
-      validation: (Rule: any) => Rule.max(3),
-    },
-    {
+      hidden: ({document}) => document?.title !== 'Hjem',
+      validation: (Rule) => Rule.max(3),
+    }),
+    defineField({
       title: 'Main content',
       description: 'Only supported in Hjem/Index page',
       name: 'content',
       type: 'array',
       of: [{type: 'pagecontent'}],
-      hidden: ({document}: any) => document?.title !== 'Hjem',
-    },
+      hidden: ({document}) => document?.title !== 'Hjem',
+    }),
   ],
-}
+})
 
 export default page
