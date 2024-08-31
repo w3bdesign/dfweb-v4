@@ -1,18 +1,19 @@
 import { List } from "phosphor-react";
+import { defineField, defineType, StringRule } from 'sanity'
 
-const navigation = {
+const navigation = defineType({
   name: "navigation",
   title: "Navigation",
   type: "document",
   icon: List,
   fields: [
-    {
+    defineField({
       title: "Title",
       name: "title",
       type: "string",
-      validation: (Rule) => Rule.required()
-    },
-    {
+      validation: (Rule: StringRule) => Rule.required()
+    }),
+    defineField({
       name: "links",
       title: "Navigation Links",
       type: "array",
@@ -20,16 +21,16 @@ const navigation = {
         {
           type: "object",
           fields: [
-            { name: "title", type: "string", title: "Title" },
-            { name: "name", type: "string", title: "Name" },
-            { name: "hash", type: "string", title: "Hash" },
-            { name: "href", type: "string", title: "Href" },
-            { name: "externalLink", type: "boolean", title: "External Link" }
+            defineField({ name: "title", type: "string", title: "Title" }),
+            defineField({ name: "name", type: "string", title: "Name" }),
+            defineField({ name: "hash", type: "string", title: "Hash" }),
+            defineField({ name: "href", type: "string", title: "Href" }),
+            defineField({ name: "externalLink", type: "boolean", title: "External Link" })
           ]
         }
       ]
-    }
+    })
   ]
-};
+});
 
 export default navigation;
