@@ -1,5 +1,4 @@
-// @ts-ignore
-import { Article } from "@phosphor-icons/react";
+import { RiArticleLine } from "react-icons/ri";
 import { defineField, defineType } from 'sanity'
 
 const herocontent = defineType({
@@ -9,7 +8,7 @@ const herocontent = defineType({
   // The identifier for this document type used in the api's
   name: "herocontent",
 
-  icon: Article,
+  icon: RiArticleLine,
 
   // Documents have the type 'document'. Your schema may describe types beyond documents
   // but let's get back to that later.

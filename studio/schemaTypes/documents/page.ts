@@ -1,5 +1,9 @@
+<<<<<<< Updated upstream
 // @ts-ignore
 import {Browsers} from 'phosphor-react'
+=======
+import { RiBrowsersLine } from "react-icons/ri";
+>>>>>>> Stashed changes
 
 const page = {
   // This is the display name for the type
@@ -8,7 +12,7 @@ const page = {
   // The identifier for this document type used in the api's
   name: 'page',
 
-  icon: Browsers,
+  icon: RiBrowsersLine,
 
   // Documents have the type 'document'. Your schema may describe types beyond documents
   // but let's get back to that later.

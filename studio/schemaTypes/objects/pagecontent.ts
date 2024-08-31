@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 // @ts-ignore
 import { Article } from "phosphor-react";
+=======
+import { RiArticleLine } from "react-icons/ri";
+import { defineField, defineType } from 'sanity'
+>>>>>>> Stashed changes
 
 const pagecontent = {
   // This is the display name for the type
@@ -8,7 +13,7 @@ const pagecontent = {
   // The identifier for this document type used in the api's
   name: "pagecontent",
 
-  icon: Article,
+  icon: RiArticleLine,
 
   // Documents have the type 'document'. Your schema may describe types beyond documents
   // but let's get back to that later.

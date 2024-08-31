@@ -1,11 +1,10 @@
-// @ts-ignore
-import { Browser } from '@phosphor-icons/react'
+import { RiBrowserLine } from 'react-icons/ri'
 import { defineField, defineType } from 'sanity'
 
 const project = defineType({
   title: 'Project',
   name: 'project',
-  icon: Browser,
+  icon: RiBrowserLine,
   type: 'document',
   fields: [
     defineField({

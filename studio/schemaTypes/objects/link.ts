@@ -1,12 +1,11 @@
-// @ts-ignore
-import { ArrowSquareOut } from '@phosphor-icons/react'
+import { RiExternalLinkLine } from 'react-icons/ri'
 import { defineField, defineType, StringRule, BooleanRule } from 'sanity'
 
 const link = defineType({
   name: 'link',
   title: 'Link',
   type: 'object',
-  icon: ArrowSquareOut,
+  icon: RiExternalLinkLine,
   fields: [
     defineField({
       name: 'title',
