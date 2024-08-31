@@ -1,4 +1,4 @@
-import { defineField, defineType } from 'sanity'
+import { defineField, defineType, StringRule, NumberRule } from 'sanity'
 
 const category = defineType({
   // This is the display name for the type
@@ -17,15 +17,15 @@ const category = defineType({
       title: "Id",
       name: "id",
       type: "number",
-      validation: (Rule) => Rule.required()
+      validation: (Rule: NumberRule) => Rule.required()
     }),
     defineField({
       title: "Name",
       name: "name",
       type: "string",
-      validation: (Rule) => Rule.required()
+      validation: (Rule: StringRule) => Rule.required()
     })
   ]
-})
+});
 
-export default category
+export default category;

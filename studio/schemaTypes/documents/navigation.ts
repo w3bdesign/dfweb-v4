@@ -1,5 +1,6 @@
-import { List } from "phosphor-react";
-import { defineField, defineType } from 'sanity'
+// @ts-ignore
+import { List } from "@phosphor-icons/react";
+import { defineField, defineType, StringRule } from 'sanity'
 
 const navigation = defineType({
   name: "navigation",
@@ -11,7 +12,7 @@ const navigation = defineType({
       title: "Title",
       name: "title",
       type: "string",
-      validation: (Rule) => Rule.required()
+      validation: (Rule: StringRule) => Rule.required()
     }),
     defineField({
       name: "links",

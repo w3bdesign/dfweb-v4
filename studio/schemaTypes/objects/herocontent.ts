@@ -1,4 +1,5 @@
-import { Article } from "phosphor-react";
+// @ts-ignore
+import { Article } from "@phosphor-icons/react";
 import { defineField, defineType } from 'sanity'
 
 const herocontent = defineType({
