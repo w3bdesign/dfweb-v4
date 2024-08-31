@@ -1,3 +1,5 @@
+
+// @ts-ignore
 import { Browsers } from "phosphor-react";
 
 const page = {

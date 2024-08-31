@@ -1,3 +1,4 @@
+// @ts-ignore
 import { ArrowSquareOut } from '@phosphor-icons/react'
 import { defineField, defineType, StringRule, BooleanRule } from 'sanity'
 

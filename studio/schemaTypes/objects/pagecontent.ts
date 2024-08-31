@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Article } from "phosphor-react";
 
 const pagecontent = {
