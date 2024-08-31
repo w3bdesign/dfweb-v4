@@ -1,10 +1,10 @@
-import { RiBrowserLine } from 'react-icons/ri'
+import { RiEraserLine } from 'react-icons/ri'
 import { defineField, defineType } from 'sanity'
 
 const project = defineType({
   title: 'Project',
   name: 'project',
-  icon: RiBrowserLine,
+  icon: RiEraserLine,
   type: 'document',
   fields: [
     defineField({
