@@ -1,5 +1,5 @@
 // @ts-ignore
-import {Browsers} from 'phosphor-react'
+import {Browsers} from "@phosphor-icons/react";
 
 const page = {
   // This is the display name for the type
