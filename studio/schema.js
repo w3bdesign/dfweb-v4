@@ -1,4 +1,3 @@
-// @ts-ignore
 // Documents
 import project from "./documents/project";
 import category from "./documents/category";
