@@ -1,11 +1,12 @@
 import { Article } from "phosphor-react";
+import { defineField, defineType } from 'sanity'
 
-const pagecontent = {
+const herocontent = defineType({
   // This is the display name for the type
-  title: "Page content",
+  title: "Hero content",
 
   // The identifier for this document type used in the api's
-  name: "pagecontent",
+  name: "herocontent",
 
   icon: Article,
 
@@ -15,23 +16,12 @@ const pagecontent = {
 
   // Now we proceed to list the fields of our document
   fields: [
-    {
-      title: "Id",
-      name: "id",
-      type: "number"
-    },
-    {
-      title: "Title",
-      name: "title",
-      type: "string"
-    },
-    {
+    defineField({
       title: "Text",
       name: "text",
-      type: "array",
-      of: [{ type: "block" }]
-    }
+      type: "string"
+    })
   ]
-};
+});
 
-export default pagecontent;
+export default herocontent;

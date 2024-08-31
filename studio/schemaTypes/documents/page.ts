@@ -1,6 +1,7 @@
 import { Browsers } from "phosphor-react";
+import { defineField, defineType } from 'sanity'
 
-const page = {
+const page = defineType({
   // This is the display name for the type
   title: "Page",
 
@@ -15,17 +16,17 @@ const page = {
 
   // Now we proceed to list the fields of our document
   fields: [
-    {
+    defineField({
       title: "Name",
       name: "title",
       type: "string"
-    },
-    {
+    }),
+    defineField({
       title: "Header",
       name: "header",
       type: "string"
-    },
-    {
+    }),
+    defineField({
       title: "Hero content",
       description: "Only supported in Hjem/Index page",
       name: "hero",
@@ -33,16 +34,16 @@ const page = {
       of: [{ type: "herocontent" }],
       hidden: ({ document }) => document?.title !== "Hjem",
       validation: (Rule) => Rule.max(3)
-    },
-    {
+    }),
+    defineField({
       title: "Main content",
       description: "Only supported in Hjem/Index page",
       name: "content",
       type: "array",
       of: [{ type: "pagecontent" }],
       hidden: ({ document }) => document?.title !== "Hjem"
-    }
+    })
   ]
-};
+});
 
 export default page;
