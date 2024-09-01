@@ -10,14 +10,21 @@ jest.mock(
     ({ children }) => <div data-testid="bounce-in-scroll">{children}</div>,
 );
 
+// Mock the Button component
+jest.mock(
+  "../../src/components/UI/Button.component",
+  () =>
+    ({ onClick, children }) => <button onClick={onClick}>{children}</button>,
+);
+
 // Mock the PortableText component
 jest.mock("@portabletext/react", () => ({
   PortableText: ({ value }) => (
     <div data-testid="portable-text">
-      {value.map((block, index) => (
-        <div key={index}>
-          {block.children.map((child, childIndex) => (
-            <span key={childIndex}>{child.text}</span>
+      {value.map((block) => (
+        <div key={block._key}>
+          {block.children.map((child) => (
+            <span key={child._key}>{child.text}</span>
           ))}
         </div>
       ))}
@@ -86,20 +93,20 @@ describe("IndexContent Component", () => {
 
   test("renders error trigger buttons in development environment", () => {
     render(<IndexContent pageContent={mockContent} />);
-    const errorButtons = screen.getAllByRole("button", { name: /utløs testfeil/i });
+    const errorButtons = screen.getAllByText("Utløs Testfeil");
     expect(errorButtons).toHaveLength(2);
   });
 
   test("does not render error trigger buttons in production environment", () => {
     process.env.NODE_ENV = 'production';
     render(<IndexContent pageContent={mockContent} />);
-    const errorButtons = screen.queryAllByRole("button", { name: /utløs testfeil/i });
+    const errorButtons = screen.queryAllByText("Utløs Testfeil");
     expect(errorButtons).toHaveLength(0);
   });
 
   test("throws error when error button is clicked", () => {
     render(<IndexContent pageContent={mockContent} />);
-    const errorButton = screen.getAllByRole("button", { name: /utløs testfeil/i })[0];
+    const errorButton = screen.getAllByText("Utløs Testfeil")[0];
 
     expect(() => {
       fireEvent.click(errorButton);
