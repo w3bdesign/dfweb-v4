@@ -85,4 +85,4 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - E2E testing with Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
-- 100% test coverage with Jest and React testing library
+- 99% test coverage with Jest and React testing library
