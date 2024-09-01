@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PortableText } from "@portabletext/react";
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 import BounceInScroll from "../Animations/BounceInScroll.component";
+import { useState } from "react";
 
 interface IChild {
   _key: string;
@@ -47,8 +48,14 @@ const myPortableTextComponents = {
 
 const Section = ({ text, title }: IContent) => {
   if (!title || !text) {
-    console.error(`Invalid section data: title=${title}, text=${JSON.stringify(text)}`);
+    console.error(`Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`);
     return null;
+  }
+
+  const [shouldError, setShouldError] = useState(false);
+
+  if (shouldError) {
+    throw new Error("En uventet feil har oppstått");
   }
 
   return (
@@ -67,6 +74,12 @@ const Section = ({ text, title }: IContent) => {
               <PortableText value={text} components={myPortableTextComponents} />
             </div>
           </div>
+          <button
+            onClick={() => setShouldError(true)}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Utløs Testfeil
+          </button>
         </BounceInScroll>
       </div>
     </section>
@@ -75,13 +88,7 @@ const Section = ({ text, title }: IContent) => {
 
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   if (!pageContent || pageContent.length === 0) {
-    console.error('No page content available');
-    return (
-      <div className="text-center py-10">
-        <h2 className="text-2xl font-bold text-red-500">Error: No content available</h2>
-        <p className="mt-2 text-gray-600">Please try refreshing the page or contact support if the issue persists.</p>
-      </div>
-    );
+    throw new Error("Ingen innhold tilgjengelig");
   }
 
   return (
