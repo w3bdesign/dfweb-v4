@@ -26,7 +26,7 @@ export default defineType({
       title: 'Title',
       name: 'title',
       type: 'string',
-      validation: Rule => Rule.required(),
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'links',
@@ -65,7 +65,10 @@ export default defineType({
               const {title, icon} = selection
               return {
                 title,
-                media: icon && icon in iconMap ? iconMap[icon as keyof typeof iconMap] : RiNavigationLine,
+                media:
+                  icon && icon in iconMap
+                    ? iconMap[icon as keyof typeof iconMap]
+                    : RiNavigationLine,
               }
             },
           },

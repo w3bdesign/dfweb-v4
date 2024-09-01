@@ -38,7 +38,7 @@ const myPortableTextComponents = {
     link: ({ text, value }: PortableTextMarkComponentProps) => (
       <Link
         className="glitch underline text-lg font-bold text-green-400"
-        href={value?.href || '#'}
+        href={value?.href || "#"}
         data-text={text}
       >
         {text}
@@ -51,7 +51,9 @@ const Section = ({ text, title }: IContent) => {
   const [shouldError, setShouldError] = useState(false);
 
   if (!title || !text) {
-    console.error(`Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`);
+    console.error(
+      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+    );
     return null;
   }
 
@@ -60,7 +62,11 @@ const Section = ({ text, title }: IContent) => {
   }
 
   return (
-    <section aria-label={title} data-testid="sanity-section" className="md:py-6">
+    <section
+      aria-label={title}
+      data-testid="sanity-section"
+      className="md:py-6"
+    >
       <div className="p-6 text-lg rounded h-full">
         <BounceInScroll viewAmount={0}>
           <h2
@@ -72,14 +78,14 @@ const Section = ({ text, title }: IContent) => {
           </h2>
           <div className="flex justify-center">
             <div className="mt-4 text-lg text-left md:max-w-3xl">
-              <PortableText value={text} components={myPortableTextComponents} />
+              <PortableText
+                value={text}
+                components={myPortableTextComponents}
+              />
             </div>
           </div>
-          {process.env.NODE_ENV === 'development' && (
-            <Button
-              onClick={() => setShouldError(true)}
-              type="button"
-            >
+          {process.env.NODE_ENV === "development" && (
+            <Button onClick={() => setShouldError(true)} type="button">
               Utløs Testfeil
             </Button>
           )}

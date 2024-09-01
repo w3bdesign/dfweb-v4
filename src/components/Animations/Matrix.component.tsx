@@ -86,7 +86,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize, getRandomInt]
+    [tileSize, getRandomInt],
   );
 
   const getRandomCharacter = useCallback((): string => {
@@ -143,11 +143,15 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       getRandomCharacter,
       glowColor,
       getRandomInt,
-    ]
+    ],
   );
 
   const tick = useCallback(
-    (timestamp: number, ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    (
+      timestamp: number,
+      ctx: CanvasRenderingContext2D,
+      canvas: HTMLCanvasElement,
+    ) => {
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = timestamp;
       }
@@ -161,7 +165,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [draw, frameInterval]
+    [draw, frameInterval],
   );
 
   useEffect(() => {
@@ -205,7 +209,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
 const debounce = <T extends (...args: unknown[]) => void>(
   func: T,
-  wait: number
+  wait: number,
 ): ((...args: Parameters<T>) => void) => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return (...args: Parameters<T>) => {
@@ -216,4 +220,4 @@ const debounce = <T extends (...args: unknown[]) => void>(
   };
 };
 
-export default ReactMatrixAnimation; 
+export default ReactMatrixAnimation;

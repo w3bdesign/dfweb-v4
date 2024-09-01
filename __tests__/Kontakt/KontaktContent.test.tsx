@@ -65,7 +65,9 @@ describe("KontaktContent", () => {
     fireEvent.click(screen.getByText("Send skjema"));
 
     await waitFor(() => {
-      expect(screen.getByText("Feil under sending av skjema")).toBeInTheDocument();
+      expect(
+        screen.getByText("Feil under sending av skjema"),
+      ).toBeInTheDocument();
     });
 
     expect(emailjs.send).toHaveBeenCalledTimes(1);
@@ -101,7 +103,9 @@ describe("KontaktContent", () => {
     fireEvent.click(screen.getByText("Send skjema"));
 
     await waitFor(() => {
-      expect(screen.getByText("Vennligst oppgi et gyldig telefonnummer")).toBeInTheDocument();
+      expect(
+        screen.getByText("Vennligst oppgi et gyldig telefonnummer"),
+      ).toBeInTheDocument();
     });
 
     expect(emailjs.send).not.toHaveBeenCalled();
@@ -123,7 +127,9 @@ describe("KontaktContent", () => {
     fireEvent.click(screen.getByText("Send skjema"));
 
     await waitFor(() => {
-      expect(screen.getByText("Vennligst bruk norske bokstaver")).toBeInTheDocument();
+      expect(
+        screen.getByText("Vennligst bruk norske bokstaver"),
+      ).toBeInTheDocument();
     });
 
     expect(emailjs.send).not.toHaveBeenCalled();

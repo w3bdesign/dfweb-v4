@@ -11,7 +11,7 @@ import MobileBackground from "./MobileBackground.component";
 
 const ReactMatrixAnimation = dynamic(
   () => import("../Animations/Matrix.component"),
-  { ssr: false }
+  { ssr: false },
 );
 
 type THero = { text: string };
