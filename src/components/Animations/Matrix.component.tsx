@@ -216,4 +216,4 @@ const debounce = <T extends (...args: unknown[]) => void>(
   };
 };
 
-export default ReactMatrixAnimation;
+export default ReactMatrixAnimation; 
