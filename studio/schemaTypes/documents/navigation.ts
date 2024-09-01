@@ -6,10 +6,9 @@ import {
   RiGithubLine,
   RiMailLine,
 } from 'react-icons/ri'
-import {defineField, defineType, StringRule} from 'sanity'
-import {IconType} from 'react-icons'
+import {defineField, defineType} from 'sanity'
 
-const iconMap: Record<string, IconType> = {
+const iconMap = {
   RiHome4Line,
   RiProjectorLine,
   RiFileList3Line,
@@ -17,7 +16,7 @@ const iconMap: Record<string, IconType> = {
   RiMailLine,
 }
 
-const navigation = defineType({
+export default defineType({
   name: 'navigation',
   title: 'Navigation',
   type: 'document',
@@ -27,7 +26,7 @@ const navigation = defineType({
       title: 'Title',
       name: 'title',
       type: 'string',
-      validation: (Rule: StringRule) => Rule.required(),
+      validation: Rule => Rule.required(),
     }),
     defineField({
       name: 'links',
@@ -62,10 +61,13 @@ const navigation = defineType({
               title: 'title',
               icon: 'icon',
             },
-            prepare: ({title, icon}: {title?: string; icon?: string}) => ({
-              title,
-              media: icon ? iconMap[icon] : RiNavigationLine,
-            }),
+            prepare(selection) {
+              const {title, icon} = selection
+              return {
+                title,
+                media: icon && icon in iconMap ? iconMap[icon as keyof typeof iconMap] : RiNavigationLine,
+              }
+            },
           },
         },
       ],
@@ -75,14 +77,12 @@ const navigation = defineType({
     select: {
       title: 'title',
     },
-    prepare(selection: {title: string}) {
+    prepare(selection) {
       const {title} = selection
       return {
-        title: title,
+        title,
         media: RiNavigationLine,
       }
     },
   },
 })
-
-export default navigation
