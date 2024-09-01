@@ -23,7 +23,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
       <ReactMatrixAnimation />
       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
         <h1 className="text-white text-5xl m-6">
-          Har du funnet en feil i Matrix, Neo?
+          Har du funnet en feil i Matrix?
         </h1>
         <p className="text-white text-xl mb-6">
           {error.message || "En uventet feil har oppstått."}
