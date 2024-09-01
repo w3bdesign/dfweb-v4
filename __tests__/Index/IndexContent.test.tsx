@@ -12,18 +12,13 @@ jest.mock(
 
 // Mock the PortableText component
 jest.mock("@portabletext/react", () => ({
-  PortableText: ({ value, components }) => (
-    <div>
+  PortableText: ({ value }) => (
+    <div data-testid="portable-text">
       {value.map((block, index) => (
-        <div key={block._key || index}>
-          {block.children.map((child, childIndex) => {
-            const MarkComponent = components?.marks?.[child.marks[0]];
-            return MarkComponent ? (
-              <MarkComponent key={child._key || childIndex}>{child.text}</MarkComponent>
-            ) : (
-              <span key={child._key || childIndex}>{child.text}</span>
-            );
-          })}
+        <div key={index}>
+          {block.children.map((child, childIndex) => (
+            <span key={childIndex}>{child.text}</span>
+          ))}
         </div>
       ))}
     </div>
@@ -64,17 +59,6 @@ const mockContent = [
   },
 ];
 
-// Define the mark components
-const Bold = ({ children }) => <strong>{children}</strong>;
-const Italic = ({ children }) => <em>{children}</em>;
-
-const components = {
-  marks: {
-    bold: Bold,
-    italic: Italic,
-  },
-};
-
 describe("IndexContent Component", () => {
   test("renders IndexContent with given content", () => {
     render(<IndexContent pageContent={mockContent} />);
@@ -85,13 +69,14 @@ describe("IndexContent Component", () => {
     expect(titles[1]).toHaveTextContent("Test Title 2");
 
     // Check if the content is rendered
-    expect(screen.getByText("Bold Text Normal Text")).toBeInTheDocument();
-    expect(screen.getByText("Italic Text")).toBeInTheDocument();
+    const portableTexts = screen.getAllByTestId("portable-text");
+    expect(portableTexts[0]).toHaveTextContent("Bold Text Normal Text");
+    expect(portableTexts[1]).toHaveTextContent("Italic Text");
   });
 
   test("renders error trigger buttons", () => {
     render(<IndexContent pageContent={mockContent} />);
-    const errorButtons = screen.getAllByText("Utløs Testfeil");
+    const errorButtons = screen.getAllByRole("button", { name: /utløs testfeil/i });
     expect(errorButtons).toHaveLength(2);
   });
 
@@ -99,7 +84,7 @@ describe("IndexContent Component", () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
     render(<IndexContent pageContent={mockContent} />);
-    const errorButton = screen.getAllByText("Utløs Testfeil")[0];
+    const errorButton = screen.getAllByRole("button", { name: /utløs testfeil/i })[0];
 
     expect(() => {
       fireEvent.click(errorButton);
@@ -109,9 +94,13 @@ describe("IndexContent Component", () => {
   });
 
   test("throws error when no content is provided", () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     expect(() => {
       render(<IndexContent pageContent={[]} />);
     }).toThrow("Ingen innhold tilgjengelig");
+
+    consoleErrorSpy.mockRestore();
   });
 
   test("renders BounceInScroll component", () => {
