@@ -81,26 +81,18 @@ describe("IndexContent Component", () => {
   });
 
   test("throws error when error button is clicked", () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
     render(<IndexContent pageContent={mockContent} />);
     const errorButton = screen.getAllByRole("button", { name: /utløs testfeil/i })[0];
 
     expect(() => {
       fireEvent.click(errorButton);
     }).toThrow("En uventet feil har oppstått");
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("throws error when no content is provided", () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
     expect(() => {
       render(<IndexContent pageContent={[]} />);
     }).toThrow("Ingen innhold tilgjengelig");
-
-    consoleErrorSpy.mockRestore();
   });
 
   test("renders BounceInScroll component", () => {
