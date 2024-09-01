@@ -1,30 +1,30 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import ErrorBoundary from '../../src/components/ErrorBoundary/ErrorBoundary';
+import React from "react";
+import { render } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import ErrorBoundary from "../../src/components/ErrorBoundary/ErrorBoundary";
 
-describe('ErrorBoundary', () => {
+describe("ErrorBoundary", () => {
   let consoleErrorSpy;
-  const errorMock = new Error('Dette er en testfeil');
+  const errorMock = new Error("Dette er en testfeil");
 
   beforeAll(() => {
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterAll(() => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should render children when there is no error', () => {
+  it("should render children when there is no error", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <div>Test Innhold</div>
       </ErrorBoundary>
     );
-    expect(getByText('Test Innhold')).toBeInTheDocument();
+    expect(getByText("Test Innhold")).toBeInTheDocument();
   });
 
-  it('should render error fallback when there is an error', () => {
+  it("should render error fallback when there is an error", () => {
     const ErrorComponent = () => {
       throw errorMock;
     };
@@ -35,12 +35,14 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(getByText('Har du funnet en feil i Matrix, Neo?')).toBeInTheDocument();
-    expect(getByText('Dette er en testfeil')).toBeInTheDocument();
-    expect(getByText('Returner til Matrix')).toBeInTheDocument();
+    expect(
+      getByText("Har du funnet en feil i Matrix, Neo?")
+    ).toBeInTheDocument();
+    expect(getByText("Dette er en testfeil")).toBeInTheDocument();
+    expect(getByText("Returner til Matrix")).toBeInTheDocument();
   });
 
-  it('should call console.error when an error occurs', () => {
+  it("should call console.error when an error occurs", () => {
     const ErrorComponent = () => {
       throw errorMock;
     };
@@ -51,6 +53,10 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith('Uventet feil i Matrix:', errorMock, expect.any(Object));
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Uventet feil i Matrix:",
+      errorMock,
+      expect.any(Object)
+    );
   });
 });
