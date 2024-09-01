@@ -60,6 +60,16 @@ const mockContent = [
 ];
 
 describe("IndexContent Component", () => {
+  const originalNodeEnv = process.env.NODE_ENV;
+
+  beforeEach(() => {
+    process.env.NODE_ENV = 'development';
+  });
+
+  afterEach(() => {
+    process.env.NODE_ENV = originalNodeEnv;
+  });
+
   test("renders IndexContent with given content", () => {
     render(<IndexContent pageContent={mockContent} />);
 
@@ -74,10 +84,17 @@ describe("IndexContent Component", () => {
     expect(portableTexts[1]).toHaveTextContent("Italic Text");
   });
 
-  test("renders error trigger buttons", () => {
+  test("renders error trigger buttons in development environment", () => {
     render(<IndexContent pageContent={mockContent} />);
     const errorButtons = screen.getAllByRole("button", { name: /utløs testfeil/i });
     expect(errorButtons).toHaveLength(2);
+  });
+
+  test("does not render error trigger buttons in production environment", () => {
+    process.env.NODE_ENV = 'production';
+    render(<IndexContent pageContent={mockContent} />);
+    const errorButtons = screen.queryAllByRole("button", { name: /utløs testfeil/i });
+    expect(errorButtons).toHaveLength(0);
   });
 
   test("throws error when error button is clicked", () => {
