@@ -1,5 +1,5 @@
-import { RiEraserLine } from 'react-icons/ri'
-import { defineField, defineType } from 'sanity'
+import {RiEraserLine} from 'react-icons/ri'
+import {defineField, defineType} from 'sanity'
 
 const project = defineType({
   title: 'Project',

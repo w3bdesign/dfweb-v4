@@ -1,5 +1,5 @@
-import { RiExternalLinkLine } from 'react-icons/ri'
-import { defineField, defineType, StringRule, BooleanRule } from 'sanity'
+import {RiExternalLinkLine} from 'react-icons/ri'
+import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
 
 const link = defineType({
   name: 'link',

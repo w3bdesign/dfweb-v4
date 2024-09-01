@@ -1,5 +1,10 @@
 import React from "react";
-import { UseFormRegister, FieldValues, RegisterOptions, Path } from "react-hook-form";
+import {
+  UseFormRegister,
+  FieldValues,
+  RegisterOptions,
+  Path,
+} from "react-hook-form";
 
 export interface InputProps<T extends FieldValues> {
   name: Path<T>;
@@ -16,7 +21,7 @@ export interface InputProps<T extends FieldValues> {
 export function createRegisterOptions<T extends FieldValues>(
   isRequired?: boolean,
   inputPattern?: RegExp,
-  title?: string
+  title?: string,
 ): RegisterOptions<T, Path<T>> {
   return {
     required: isRequired ? "Dette feltet er påkrevd" : false,
@@ -41,7 +46,11 @@ function InputField<T extends FieldValues>({
   const sharedClasses =
     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-200 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
 
-  const registerOptions = createRegisterOptions<T>(isRequired, inputPattern, title);
+  const registerOptions = createRegisterOptions<T>(
+    isRequired,
+    inputPattern,
+    title,
+  );
 
   return (
     <div className="relative my-2 flex flex-col items-center">
@@ -51,7 +60,7 @@ function InputField<T extends FieldValues>({
             id={htmlFor}
             type="text"
             placeholder={label}
-            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
             {...register(name, registerOptions)}
             {...props}
           />
@@ -59,7 +68,7 @@ function InputField<T extends FieldValues>({
           <textarea
             id={htmlFor}
             placeholder={label}
-            className={`${sharedClasses} ${error ? 'border-red-500' : ''}`}
+            className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
             {...register(name, registerOptions)}
             {...props}
           ></textarea>

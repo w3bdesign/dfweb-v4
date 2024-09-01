@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 import IndexContent from "../../src/components/Index/IndexContent.component";
 
 // Mock the BounceInScroll component
@@ -70,7 +70,7 @@ describe("IndexContent Component", () => {
   const originalNodeEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
-    process.env.NODE_ENV = 'development';
+    process.env.NODE_ENV = "development";
   });
 
   afterEach(() => {
@@ -98,7 +98,7 @@ describe("IndexContent Component", () => {
   });
 
   test("does not render error trigger buttons in production environment", () => {
-    process.env.NODE_ENV = 'production';
+    process.env.NODE_ENV = "production";
     render(<IndexContent pageContent={mockContent} />);
     const errorButtons = screen.queryAllByText("Utløs Testfeil");
     expect(errorButtons).toHaveLength(0);
@@ -126,8 +126,10 @@ describe("IndexContent Component", () => {
   });
 
   test("handles invalid section data", () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     const invalidContent = [
       {
         id: "3",
@@ -137,9 +139,11 @@ describe("IndexContent Component", () => {
     ];
 
     render(<IndexContent pageContent={invalidContent} />);
-    
+
     expect(screen.queryByTestId("sanity-section")).not.toBeInTheDocument();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Ugyldig seksjon data"));
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Ugyldig seksjon data"),
+    );
 
     consoleErrorSpy.mockRestore();
   });

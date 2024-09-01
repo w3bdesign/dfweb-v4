@@ -1,11 +1,11 @@
-import React from 'react';
-import { useForm, Path, FieldValues } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import Button from './Button.component';
-import InputField from './InputField.component';
+import React from "react";
+import { useForm, Path, FieldValues } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import Button from "./Button.component";
+import InputField from "./InputField.component";
 
-type InputType = 'input' | 'textarea';
+type InputType = "input" | "textarea";
 
 type FieldConfig<T extends FieldValues> = {
   readonly name: Path<T>;
@@ -25,7 +25,7 @@ interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
 /**
  * A generic, reusable form component that can be easily customized and extended.
  * It uses Zod for schema validation and react-hook-form for form handling.
- * 
+ *
  * @template TSchema - The Zod schema type for form validation.
  * @param {Readonly<GenericFormProps<TSchema>>} props - The props for the GenericForm component.
  * @returns {JSX.Element} The rendered form.

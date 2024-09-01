@@ -19,7 +19,7 @@ describe("ErrorBoundary", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <div>Test Innhold</div>
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
     expect(getByText("Test Innhold")).toBeInTheDocument();
   });
@@ -32,11 +32,11 @@ describe("ErrorBoundary", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
 
     expect(
-      getByText("Har du funnet en feil i Matrix, Neo?")
+      getByText("Har du funnet en feil i Matrix, Neo?"),
     ).toBeInTheDocument();
     expect(getByText("Dette er en testfeil")).toBeInTheDocument();
     expect(getByText("Returner til Matrix")).toBeInTheDocument();
@@ -50,13 +50,13 @@ describe("ErrorBoundary", () => {
     render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>
+      </ErrorBoundary>,
     );
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Uventet feil i Matrix:",
       errorMock,
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 });
