@@ -60,6 +60,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - 100% / 100% / 100% / 100% score in Google Lighthouse
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
+- Error handling with react-error-boundary for improved user experience and easier debugging
 
 ### Design
 
