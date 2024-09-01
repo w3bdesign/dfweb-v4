@@ -104,34 +104,34 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       const columns = columnsRef.current;
 
-      for (let i = 0; i < columns.length; ++i) {
-        if (columns[i].stackCounter >= 0) {
+      for (const column of columns) {
+        if (column.stackCounter >= 0) {
           const randomCharacter = getRandomCharacter();
-          const y = columns[i].stackCounter * tileSize + tileSize;
+          const y = column.stackCounter * tileSize + tileSize;
 
           // Draw regular characters
           ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
-          ctx.fillText(randomCharacter, columns[i].x, y);
+          ctx.fillText(randomCharacter, column.x, y);
 
           // Add glow effect to the last character
           if (
-            columns[i].stackCounter ===
-            Math.floor(columns[i].stackHeight) - 1
+            column.stackCounter ===
+            Math.floor(column.stackHeight) - 1
           ) {
             ctx.save();
             ctx.shadowColor = glowColor;
             ctx.shadowBlur = 10;
             ctx.fillStyle = glowColor;
-            ctx.fillText(randomCharacter, columns[i].x, y);
+            ctx.fillText(randomCharacter, column.x, y);
             ctx.restore();
           }
         }
 
-        columns[i].stackCounter++;
+        column.stackCounter++;
 
-        if (columns[i].stackCounter >= columns[i].stackHeight) {
-          columns[i].stackHeight = 10 + getRandomInt(maxStackHeightRef.current);
-          columns[i].stackCounter = 0;
+        if (column.stackCounter >= column.stackHeight) {
+          column.stackHeight = 10 + getRandomInt(maxStackHeightRef.current);
+          column.stackCounter = 0;
         }
       }
     },
