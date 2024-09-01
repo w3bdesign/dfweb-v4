@@ -1,4 +1,4 @@
-import type { ElementType, ReactNode } from "react";
+import type { ElementType, ReactNode, MouseEventHandler } from "react";
 
 export interface IButtonProps {
   children: ReactNode;
@@ -7,6 +7,7 @@ export interface IButtonProps {
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
   download?: boolean | string;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
 }
 
 const Button = ({
@@ -16,6 +17,7 @@ const Button = ({
   type = "submit",
   disabled = false,
   download,
+  onClick,
   ...props
 }: IButtonProps) => {
   const Component = renderAs ?? "button";
@@ -32,6 +34,7 @@ const Button = ({
       disabled={disabled}
       data-text={children}
       download={download}
+      onClick={onClick}
       {...props}
     >
       {children}

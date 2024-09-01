@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PortableText } from "@portabletext/react";
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 import BounceInScroll from "../Animations/BounceInScroll.component";
+import Button from "../UI/Button.component";
 import { useState } from "react";
 
 interface IChild {
@@ -75,12 +76,12 @@ const Section = ({ text, title }: IContent) => {
             </div>
           </div>
           {process.env.NODE_ENV === 'development' && (
-            <button
+            <Button
               onClick={() => setShouldError(true)}
-              className="mt-4 px-4 py-2 bg-yellow-500 text-black font-bold rounded hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50"
+              type="button"
             >
               Utløs Testfeil
-            </button>
+            </Button>
           )}
         </BounceInScroll>
       </div>
