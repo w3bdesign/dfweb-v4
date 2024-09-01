@@ -4,21 +4,46 @@ import '@testing-library/jest-dom';
 import ErrorBoundary from '../../src/components/ErrorBoundary/ErrorBoundary';
 
 describe('ErrorBoundary', () => {
-  it('renders children when there is no error', () => {
-    render(
-      <ErrorBoundary>
-        <div>Test Content</div>
-      </ErrorBoundary>
-    );
-    expect(screen.getByText('Test Content')).toBeInTheDocument();
+  let consoleErrorSpy;
+  const errorMock = new Error('Dette er en testfeil');
+
+  beforeAll(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  it('renders error fallback when there is an error', () => {
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should render children when there is no error', () => {
+    const { getByText } = render(
+      <ErrorBoundary>
+        <div>Test Innhold</div>
+      </ErrorBoundary>
+    );
+    expect(getByText('Test Innhold')).toBeInTheDocument();
+  });
+
+  it('should render error fallback when there is an error', () => {
     const ErrorComponent = () => {
-      throw new Error('Test error');
+      throw errorMock;
     };
 
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { getByText } = render(
+      <ErrorBoundary>
+        <ErrorComponent />
+      </ErrorBoundary>
+    );
+
+    expect(getByText('Har du funnet en feil i Matrix, Neo?')).toBeInTheDocument();
+    expect(getByText('Dette er en testfeil')).toBeInTheDocument();
+    expect(getByText('Returner til Matrix')).toBeInTheDocument();
+  });
+
+  it('should call console.error when an error occurs', () => {
+    const ErrorComponent = () => {
+      throw errorMock;
+    };
 
     render(
       <ErrorBoundary>
@@ -26,10 +51,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('Har du funnet en feil i Matrix, Neo?')).toBeInTheDocument();
-    expect(screen.getByText('Test error')).toBeInTheDocument();
-    expect(screen.getByText('Returner til Matrix')).toBeInTheDocument();
-
-    consoleErrorSpy.mockRestore();
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Uventet feil i Matrix:', errorMock, expect.any(Object));
   });
 });
