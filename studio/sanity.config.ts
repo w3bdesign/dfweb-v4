@@ -6,7 +6,7 @@ export default defineConfig({
   name: 'default',
   title: 'dfweb-v4',
   projectId: '41s7iutf',
-  dataset: 'production',  
+  dataset: 'production',
   plugins: [structureTool()],
   schema: {
     types: schemaTypes,
