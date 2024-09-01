@@ -203,9 +203,12 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   );
 };
 
-const debounce = <F extends (...args: any[]) => any>(func: F, wait: number): ((...args: Parameters<F>) => void) => {
+const debounce = <T extends (...args: unknown[]) => void>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<F>) => {
+  return (...args: Parameters<T>) => {
     if (timeout !== null) {
       clearTimeout(timeout);
     }
