@@ -74,12 +74,14 @@ const Section = ({ text, title }: IContent) => {
               <PortableText value={text} components={myPortableTextComponents} />
             </div>
           </div>
-          <button
-            onClick={() => setShouldError(true)}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Utløs Testfeil
-          </button>
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={() => setShouldError(true)}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Utløs Testfeil
+            </button>
+          )}
         </BounceInScroll>
       </div>
     </section>
