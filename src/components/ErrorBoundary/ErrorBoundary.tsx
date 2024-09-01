@@ -3,6 +3,7 @@
 import React, { ReactNode } from 'react';
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+import Pill from "@/components/UI/Pill.component";
 
 interface ErrorFallbackProps {
   error: Error;
@@ -13,16 +14,11 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
     <div className="absolute w-full h-full">
       <ReactMatrixAnimation />
       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-        <h1 className="text-red-500 text-5xl m-6">Oops! Something went wrong.</h1>
+        <h1 className="text-white text-5xl m-6">Har du funnet en feil i Matrix, Neo?</h1>
         <p className="text-white text-xl mb-6">
-          {error.message || 'An unexpected error occurred.'}
+          {error.message || 'En uventet feil har oppstått.'}
         </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-300"
-        >
-          Refresh Page
-        </button>
+        <Pill href="/" text="Returner til Matrix" onClick={() => window.location.reload()} />
       </div>
     </div>
   );
@@ -35,7 +31,7 @@ interface ErrorBoundaryProps {
 const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children }) => {
   return (
     <ReactErrorBoundary FallbackComponent={ErrorFallback} onError={(error, info) => {
-      console.error("Uncaught error:", error, info);
+      console.error("Uventet feil i Matrix:", error, info);
     }}>
       {children}
     </ReactErrorBoundary>
