@@ -8,6 +8,7 @@ const nextConfig = {
       },
     ],
   },
+  /*
   async headers() {    
     
     const cspHeader = `
@@ -44,6 +45,7 @@ const nextConfig = {
       },
     ];
   },
+  */
 };
 
 export default nextConfig;
