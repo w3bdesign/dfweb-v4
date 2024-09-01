@@ -47,12 +47,12 @@ const myPortableTextComponents = {
 };
 
 const Section = ({ text, title }: IContent) => {
+  const [shouldError, setShouldError] = useState(false);
+
   if (!title || !text) {
     console.error(`Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`);
     return null;
   }
-
-  const [shouldError, setShouldError] = useState(false);
 
   if (shouldError) {
     throw new Error("En uventet feil har oppstått");
