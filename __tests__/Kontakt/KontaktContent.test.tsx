@@ -15,19 +15,13 @@ describe("KontaktContent", () => {
   const fulltNavn = "Fullt navn";
   const telefonNummer = "Telefonnummer";
   const hvaOnskerDu = "Hva ønsker du å si?";
+  const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test("renders the component", () => {
-    render(<KontaktContent />);
-    expect(screen.getByTestId("kontaktcontent")).toBeInTheDocument();
-  });
-
-  test("submits the form successfully", async () => {
-    render(<KontaktContent />);
-
+  const fillFormWithValidData = () => {
     fireEvent.change(screen.getByLabelText(fulltNavn), {
       target: { value: "Bruker Test" },
     });
@@ -37,8 +31,22 @@ describe("KontaktContent", () => {
     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
       target: { value: "Test melding" },
     });
+  };
 
-    fireEvent.click(screen.getByText("Send skjema"));
+  test("renders the component", () => {
+    render(<KontaktContent />);
+    expect(screen.getByTestId("kontaktcontent")).toBeInTheDocument();
+  });
+
+  test("submits the form successfully and disables submit button while submitting", async () => {
+    render(<KontaktContent />);
+
+    fillFormWithValidData();
+
+    const submitButton = screen.getByText(sendSkjemaText);
+    fireEvent.click(submitButton);
+
+    expect(submitButton).toBeDisabled();
 
     await waitFor(() => {
       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
@@ -52,21 +60,12 @@ describe("KontaktContent", () => {
 
     render(<KontaktContent />);
 
-    fireEvent.change(screen.getByLabelText(fulltNavn), {
-      target: { value: "Bruker Test" },
-    });
-    fireEvent.change(screen.getByLabelText(telefonNummer), {
-      target: { value: "12345678" },
-    });
-    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-      target: { value: "Test melding" },
-    });
-
-    fireEvent.click(screen.getByText("Send skjema"));
+    fillFormWithValidData();
+    fireEvent.click(screen.getByText(sendSkjemaText));
 
     await waitFor(() => {
       expect(
-        screen.getByText("Feil under sending av skjema"),
+        screen.getByText("Feil under sending av skjema")
       ).toBeInTheDocument();
     });
 
@@ -76,7 +75,7 @@ describe("KontaktContent", () => {
   test("displays validation errors for empty fields", async () => {
     render(<KontaktContent />);
 
-    fireEvent.click(screen.getByText("Send skjema"));
+    fireEvent.click(screen.getByText(sendSkjemaText));
 
     await waitFor(() => {
       expect(screen.getByText("Fullt navn er påkrevd")).toBeInTheDocument();
@@ -87,11 +86,11 @@ describe("KontaktContent", () => {
     expect(emailjs.send).not.toHaveBeenCalled();
   });
 
-  test("displays validation error for invalid phone number", async () => {
+  test("displays validation errors for invalid inputs", async () => {
     render(<KontaktContent />);
 
     fireEvent.change(screen.getByLabelText(fulltNavn), {
-      target: { value: "Bruker Test" },
+      target: { value: "User123" }, // Invalid name format
     });
     fireEvent.change(screen.getByLabelText(telefonNummer), {
       target: { value: "123" }, // Invalid phone number
@@ -100,61 +99,17 @@ describe("KontaktContent", () => {
       target: { value: "Test melding" },
     });
 
-    fireEvent.click(screen.getByText("Send skjema"));
+    fireEvent.click(screen.getByText(sendSkjemaText));
 
     await waitFor(() => {
       expect(
-        screen.getByText("Vennligst oppgi et gyldig telefonnummer"),
+        screen.getByText("Vennligst bruk norske bokstaver")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Vennligst oppgi et gyldig telefonnummer")
       ).toBeInTheDocument();
     });
 
     expect(emailjs.send).not.toHaveBeenCalled();
-  });
-
-  test("displays validation error for invalid name format", async () => {
-    render(<KontaktContent />);
-
-    fireEvent.change(screen.getByLabelText(fulltNavn), {
-      target: { value: "User123" }, // Invalid name format
-    });
-    fireEvent.change(screen.getByLabelText(telefonNummer), {
-      target: { value: "12345678" },
-    });
-    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-      target: { value: "Test melding" },
-    });
-
-    fireEvent.click(screen.getByText("Send skjema"));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Vennligst bruk norske bokstaver"),
-      ).toBeInTheDocument();
-    });
-
-    expect(emailjs.send).not.toHaveBeenCalled();
-  });
-
-  test("disables submit button while submitting", async () => {
-    render(<KontaktContent />);
-
-    fireEvent.change(screen.getByLabelText(fulltNavn), {
-      target: { value: "Bruker Test" },
-    });
-    fireEvent.change(screen.getByLabelText(telefonNummer), {
-      target: { value: "12345678" },
-    });
-    fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-      target: { value: "Test melding" },
-    });
-
-    const submitButton = screen.getByText("Send skjema");
-    fireEvent.click(submitButton);
-
-    expect(submitButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
-    });
   });
 });
