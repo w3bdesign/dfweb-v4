@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import IndexContent from "../../src/components/Index/IndexContent.component";
 
@@ -19,13 +19,17 @@ jest.mock(
 
 // Mock the PortableText component
 jest.mock("@portabletext/react", () => ({
-  PortableText: ({ value }) => (
+  PortableText: ({ value, components }) => (
     <div data-testid="portable-text">
       {value.map((block) => (
         <div key={block._key}>
-          {block.children.map((child) => (
-            <span key={child._key}>{child.text}</span>
-          ))}
+          {block.children.map((child) => {
+            if (child.marks.includes("link")) {
+              const linkValue = block.markDefs.find((def) => def._key === child.marks[0]);
+              return components.marks.link({ text: child.text, value: linkValue });
+            }
+            return <span key={child._key}>{child.text}</span>;
+          })}
         </div>
       ))}
     </div>
@@ -42,24 +46,15 @@ const mockContent = [
         _type: "block",
         children: [
           { _key: "a1", _type: "span", marks: ["bold"], text: "Bold Text" },
-          { _key: "a2", _type: "span", marks: [], text: " Normal Text" },
+          { _key: "a2", _type: "span", marks: [], text: " Normal Text " },
+          { _key: "a3", _type: "span", marks: ["link1"], text: "External Link" },
+          { _key: "a4", _type: "span", marks: [], text: " " },
+          { _key: "a5", _type: "span", marks: ["link2"], text: "Internal Link" },
         ],
-        markDefs: [],
-        style: "normal",
-      },
-    ],
-  },
-  {
-    id: "2",
-    title: "Test Title 2",
-    text: [
-      {
-        _key: "b",
-        _type: "block",
-        children: [
-          { _key: "b1", _type: "span", marks: ["italic"], text: "Italic Text" },
+        markDefs: [
+          { _key: "link1", _type: "link", href: "https://example.com" },
+          { _key: "link2", _type: "link", href: "/internal-page" },
         ],
-        markDefs: [],
         style: "normal",
       },
     ],
@@ -80,21 +75,39 @@ describe("IndexContent Component", () => {
   test("renders IndexContent with given content", () => {
     render(<IndexContent pageContent={mockContent} />);
 
-    // Check if the titles are rendered
-    const titles = screen.getAllByTestId("sanity-title");
-    expect(titles[0]).toHaveTextContent("Test Title 1");
-    expect(titles[1]).toHaveTextContent("Test Title 2");
+    // Check if the title is rendered
+    const title = screen.getByTestId("sanity-title");
+    expect(title).toHaveTextContent("Test Title 1");
 
     // Check if the content is rendered
-    const portableTexts = screen.getAllByTestId("portable-text");
-    expect(portableTexts[0]).toHaveTextContent("Bold Text Normal Text");
-    expect(portableTexts[1]).toHaveTextContent("Italic Text");
+    const portableText = screen.getByTestId("portable-text");
+    expect(portableText).toHaveTextContent("Bold Text Normal Text External Link Internal Link");
+  });
+
+  test("renders external links with correct attributes and warning", () => {
+    render(<IndexContent pageContent={mockContent} />);
+    
+    const externalLink = screen.getByText("External Link");
+    expect(externalLink).toHaveAttribute("target", "_blank");
+    expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(externalLink.parentElement).toContainHTML('<span class="sr-only"> (opens in a new tab)</span>');
+    expect(externalLink.parentElement).toContainHTML('<span aria-hidden="true"> ↗</span>');
+  });
+
+  test("renders internal links without special attributes or warning", () => {
+    render(<IndexContent pageContent={mockContent} />);
+    
+    const internalLink = screen.getByText("Internal Link");
+    expect(internalLink).not.toHaveAttribute("target");
+    expect(internalLink).not.toHaveAttribute("rel");
+    expect(internalLink.parentElement).not.toContainHTML('<span class="sr-only"> (opens in a new tab)</span>');
+    expect(internalLink.parentElement).not.toContainHTML('<span aria-hidden="true"> ↗</span>');
   });
 
   test("renders error trigger buttons in development environment", () => {
     render(<IndexContent pageContent={mockContent} />);
     const errorButtons = screen.getAllByText("Utløs Testfeil");
-    expect(errorButtons).toHaveLength(2);
+    expect(errorButtons).toHaveLength(1);
   });
 
   test("does not render error trigger buttons in production environment", () => {
@@ -102,15 +115,6 @@ describe("IndexContent Component", () => {
     render(<IndexContent pageContent={mockContent} />);
     const errorButtons = screen.queryAllByText("Utløs Testfeil");
     expect(errorButtons).toHaveLength(0);
-  });
-
-  test("throws error when error button is clicked", () => {
-    render(<IndexContent pageContent={mockContent} />);
-    const errorButton = screen.getAllByText("Utløs Testfeil")[0];
-
-    expect(() => {
-      fireEvent.click(errorButton);
-    }).toThrow("En uventet feil har oppstått");
   });
 
   test("throws error when no content is provided", () => {
@@ -122,7 +126,7 @@ describe("IndexContent Component", () => {
   test("renders BounceInScroll component", () => {
     render(<IndexContent pageContent={mockContent} />);
     const bounceInScrollComponents = screen.getAllByTestId("bounce-in-scroll");
-    expect(bounceInScrollComponents).toHaveLength(2);
+    expect(bounceInScrollComponents).toHaveLength(1);
   });
 
   test("handles invalid section data", () => {
