@@ -3,13 +3,6 @@ import { render, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ErrorBoundary from "../../src/components/ErrorBoundary/ErrorBoundary";
 
-// Mock the Pill component
-jest.mock("@/components/UI/Pill.component", () => {
-  return function MockPill({ text, onClick }) {
-    return <button onClick={onClick}>{text}</button>;
-  };
-});
-
 describe("ErrorBoundary", () => {
   let consoleErrorSpy;
   const errorMock = new Error("Dette er en testfeil");
@@ -26,7 +19,7 @@ describe("ErrorBoundary", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <div>Test Innhold</div>
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(getByText("Test Innhold")).toBeInTheDocument();
   });
@@ -39,12 +32,10 @@ describe("ErrorBoundary", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
-    expect(
-      getByText("Har du funnet en feil i Matrix?"),
-    ).toBeInTheDocument();
+    expect(getByText("Har du funnet en feil i Matrix?")).toBeInTheDocument();
     expect(getByText("Dette er en testfeil")).toBeInTheDocument();
     expect(getByText("Returner til Matrix")).toBeInTheDocument();
   });
@@ -57,13 +48,13 @@ describe("ErrorBoundary", () => {
     render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Uventet feil i Matrix:",
       errorMock,
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 
@@ -75,13 +66,13 @@ describe("ErrorBoundary", () => {
     const { getByText } = render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
 
     const reloadMock = jest.fn();
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(window, "location", {
       writable: true,
-      value: { reload: reloadMock }
+      value: { reload: reloadMock },
     });
 
     const returnButton = getByText("Returner til Matrix");
