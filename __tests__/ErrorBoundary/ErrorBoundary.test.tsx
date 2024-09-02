@@ -3,6 +3,13 @@ import { render, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ErrorBoundary from "../../src/components/ErrorBoundary/ErrorBoundary";
 
+// Mock the Pill component
+jest.mock("@/components/UI/Pill.component", () => {
+  return function MockPill({ text, onClick }) {
+    return <button onClick={onClick}>{text}</button>;
+  };
+});
+
 describe("ErrorBoundary", () => {
   let consoleErrorSpy;
   const errorMock = new Error("Dette er en testfeil");
@@ -73,8 +80,8 @@ describe("ErrorBoundary", () => {
 
     const reloadMock = jest.fn();
     Object.defineProperty(window, 'location', {
-      value: { reload: reloadMock },
-      writable: true
+      writable: true,
+      value: { reload: reloadMock }
     });
 
     const returnButton = getByText("Returner til Matrix");
