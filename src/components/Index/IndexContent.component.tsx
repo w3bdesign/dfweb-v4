@@ -35,15 +35,30 @@ const myPortableTextComponents = {
     code: ({ children }: PortableTextMarkComponentProps) => (
       <span className="mt-4 text-lg block">{children}</span>
     ),
-    link: ({ text, value }: PortableTextMarkComponentProps) => (
-      <Link
-        className="glitch underline text-lg font-bold text-green-400"
-        href={value?.href || "#"}
-        data-text={text}
-      >
-        {text}
-      </Link>
-    ),
+    link: ({ text, value }: PortableTextMarkComponentProps) => {
+      const href = value?.href || "#";
+      const isExternal = href.startsWith('http') || href.startsWith('//');
+      
+      return (
+        <Link
+          className="glitch underline text-lg font-bold text-green-400"
+          href={href}
+          data-text={text}
+          {...(isExternal ? {
+            target: "_blank",
+            rel: "noopener noreferrer",
+          } : {})}
+        >
+          {text}
+          {isExternal && (
+            <>
+              <span className="sr-only"> (opens in a new tab)</span>
+              <span aria-hidden="true"> ↗</span>
+            </>
+          )}
+        </Link>
+      );
+    },
   },
 };
 
