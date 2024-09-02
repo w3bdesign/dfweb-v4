@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ErrorBoundary from "../../src/components/ErrorBoundary/ErrorBoundary";
 
@@ -58,5 +58,28 @@ describe("ErrorBoundary", () => {
       errorMock,
       expect.any(Object),
     );
+  });
+
+  it("should reload the page when the 'Returner til Matrix' button is clicked", () => {
+    const ErrorComponent = () => {
+      throw errorMock;
+    };
+
+    const { getByText } = render(
+      <ErrorBoundary>
+        <ErrorComponent />
+      </ErrorBoundary>,
+    );
+
+    const reloadMock = jest.fn();
+    Object.defineProperty(window, 'location', {
+      value: { reload: reloadMock },
+      writable: true
+    });
+
+    const returnButton = getByText("Returner til Matrix");
+    fireEvent.click(returnButton);
+
+    expect(reloadMock).toHaveBeenCalledTimes(1);
   });
 });
