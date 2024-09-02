@@ -7,15 +7,15 @@ import {
 } from "react-hook-form";
 
 export interface InputProps<T extends FieldValues> {
-  name: Path<T>;
-  label: string;
-  htmlFor: string;
-  isRequired?: boolean;
-  inputPattern?: RegExp;
-  title?: string;
-  type?: "input" | "textarea";
-  register: UseFormRegister<T>;
-  error?: string;
+  readonly name: Path<T>;
+  readonly label: string;
+  readonly htmlFor: string;
+  readonly isRequired?: boolean;
+  readonly inputPattern?: RegExp;
+  readonly title?: string;
+  readonly type?: "input" | "textarea";
+  readonly register: UseFormRegister<T>;
+  readonly error?: string;
 }
 
 export function createRegisterOptions<T extends FieldValues>(
@@ -26,7 +26,7 @@ export function createRegisterOptions<T extends FieldValues>(
   return {
     required: isRequired ? "Dette feltet er påkrevd" : false,
     ...(inputPattern
-      ? { pattern: { value: inputPattern, message: title || "Ugyldig format" } }
+      ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
       : {}),
   };
 }
