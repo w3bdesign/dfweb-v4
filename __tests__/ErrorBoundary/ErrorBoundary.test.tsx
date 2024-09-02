@@ -36,7 +36,7 @@ describe("ErrorBoundary", () => {
     );
 
     expect(
-      getByText("Har du funnet en feil i Matrix, Neo?"),
+      getByText("Har du funnet en feil i Matrix?"),
     ).toBeInTheDocument();
     expect(getByText("Dette er en testfeil")).toBeInTheDocument();
     expect(getByText("Returner til Matrix")).toBeInTheDocument();
