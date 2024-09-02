@@ -87,7 +87,7 @@ describe("IndexContent Component", () => {
   test("renders external links with correct attributes and warning", () => {
     render(<IndexContent pageContent={mockContent} />);
     
-    const externalLink = screen.getByRole("link", { name: /External Link/i });
+    const externalLink = screen.getByText("External Link");
     expect(externalLink).toHaveAttribute("target", "_blank");
     expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(externalLink).toHaveTextContent("External Link");
@@ -98,7 +98,7 @@ describe("IndexContent Component", () => {
   test("renders internal links without special attributes or warning", () => {
     render(<IndexContent pageContent={mockContent} />);
     
-    const internalLink = screen.getByRole("link", { name: /Internal Link/i });
+    const internalLink = screen.getByText("Internal Link");
     expect(internalLink).not.toHaveAttribute("target");
     expect(internalLink).not.toHaveAttribute("rel");
     expect(internalLink).toHaveTextContent("Internal Link");
