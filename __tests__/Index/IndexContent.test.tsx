@@ -87,21 +87,22 @@ describe("IndexContent Component", () => {
   test("renders external links with correct attributes and warning", () => {
     render(<IndexContent pageContent={mockContent} />);
     
-    const externalLink = screen.getByText("External Link");
+    const externalLink = screen.getByRole("link", { name: /External Link/i });
     expect(externalLink).toHaveAttribute("target", "_blank");
     expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(externalLink.parentElement).toContainHTML('<span class="sr-only"> (opens in a new tab)</span>');
-    expect(externalLink.parentElement).toContainHTML('<span aria-hidden="true"> ↗</span>');
+    expect(externalLink).toHaveTextContent("External Link");
+    expect(externalLink.nextElementSibling).toHaveTextContent("(opens in a new tab)");
+    expect(externalLink.nextElementSibling?.nextElementSibling).toHaveTextContent("↗");
   });
 
   test("renders internal links without special attributes or warning", () => {
     render(<IndexContent pageContent={mockContent} />);
     
-    const internalLink = screen.getByText("Internal Link");
+    const internalLink = screen.getByRole("link", { name: /Internal Link/i });
     expect(internalLink).not.toHaveAttribute("target");
     expect(internalLink).not.toHaveAttribute("rel");
-    expect(internalLink.parentElement).not.toContainHTML('<span class="sr-only"> (opens in a new tab)</span>');
-    expect(internalLink.parentElement).not.toContainHTML('<span aria-hidden="true"> ↗</span>');
+    expect(internalLink).toHaveTextContent("Internal Link");
+    expect(internalLink.nextElementSibling).toBeNull();
   });
 
   test("renders error trigger buttons in development environment", () => {
