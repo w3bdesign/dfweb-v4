@@ -65,7 +65,7 @@ describe("KontaktContent", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Feil under sending av skjema")
+        screen.getByText("Feil under sending av skjema"),
       ).toBeInTheDocument();
     });
 
@@ -103,10 +103,10 @@ describe("KontaktContent", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Vennligst bruk norske bokstaver")
+        screen.getByText("Vennligst bruk norske bokstaver"),
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Vennligst oppgi et gyldig telefonnummer")
+        screen.getByText("Vennligst oppgi et gyldig telefonnummer"),
       ).toBeInTheDocument();
     });
 
