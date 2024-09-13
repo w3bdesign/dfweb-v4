@@ -4,26 +4,21 @@ on: [push, pull_request]
 jobs:
   cypress-run:
     runs-on: ubuntu-22.04
-    name: Cypress E2E on Node v22
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
+    container:
+      image: cypress/browsers:node-20.17.0-chrome-128.0.6613.119-1-ff-130.0-edge-128.0.2739.63-1
+      options: --user 1001
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Print Node and npm versions
-        run: |
-          node -v
-          npm -v
 
       - name: Install dependencies
         run: pnpm install
@@ -35,3 +30,4 @@ jobs:
           start: pnpm dev
           wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
+          browser: ${{ matrix.browser }}
