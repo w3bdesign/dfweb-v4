@@ -1,19 +1,27 @@
-name: cypress
-on: push
+name: Cypress Tests
+on: [push, pull_request]
+
 jobs:
-  cypress:
+  cypress-run:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node.js
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.16.0'
-      - name: Install pnpm
-        run: npm install -g pnpm@9
+          node-version: 20
+          cache: 'pnpm'
+
       - name: Install dependencies
-        run: pnpm i 
+        run: pnpm install
+
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
@@ -21,6 +29,3 @@ jobs:
           start: pnpm dev
           wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
-          working-directory: /home/runner/work/dfweb-v4/dfweb-v4
-          node-version: '20.16.0'
-          use-system-node: true
