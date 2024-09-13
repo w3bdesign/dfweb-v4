@@ -12,7 +12,7 @@ interface ErrorFallbackProps {
 /**
  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
  * It shows a Matrix-themed error message with the option to reload the page.
- * 
+ *
  * @param {Object} props - The component props
  * @param {Error} props.error - The error object caught by the ErrorBoundary
  * @returns {JSX.Element} A React component displaying the error message and reload option

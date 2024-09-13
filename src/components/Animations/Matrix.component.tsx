@@ -114,10 +114,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
           ctx.fillText(randomCharacter, column.x, y);
 
           // Add glow effect to the last character
-          if (
-            column.stackCounter ===
-            Math.floor(column.stackHeight) - 1
-          ) {
+          if (column.stackCounter === Math.floor(column.stackHeight) - 1) {
             ctx.save();
             ctx.shadowColor = glowColor;
             ctx.shadowBlur = 10;
