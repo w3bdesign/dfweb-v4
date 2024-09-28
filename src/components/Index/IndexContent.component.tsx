@@ -1,7 +1,27 @@
 "use client";
 
 import Section from "./Section.component";
-import { IContent } from "./types";
+
+interface IChild {
+  _key: string;
+  _type: string;
+  marks: string[];
+  text: string;
+}
+
+interface IText {
+  _key: string;
+  _type: string;
+  children: IChild[];
+  markDefs: string[];
+  style: string;
+}
+
+interface IContent {
+  id: string;
+  text: IText[];
+  title: string;
+}
 
 /**
  * IndexContent component that renders multiple content sections

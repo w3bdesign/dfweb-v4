@@ -1,13 +1,33 @@
 "use client";
 
-import Link from "next/link";
 import { PortableText } from "@portabletext/react";
-import type { PortableTextMarkComponentProps } from "@portabletext/react";
+import { useState } from "react";
+
 import BounceInScroll from "../Animations/BounceInScroll.component";
 import Button from "../UI/Button.component";
-import { useState } from "react";
-import { IContent } from "./types";
-import { myPortableTextComponents } from "../../utils/portableTextComponents";
+
+import { myPortableTextComponents } from "@/utils/portableTextComponents";
+
+interface IChild {
+  _key: string;
+  _type: string;
+  marks: string[];
+  text: string;
+}
+
+interface IText {
+  _key: string;
+  _type: string;
+  children: IChild[];
+  markDefs: string[];
+  style: string;
+}
+
+interface IContent {
+  id: string;
+  text: IText[];
+  title: string;
+}
 
 /**
  * Section component that renders a single content section
@@ -21,7 +41,7 @@ const Section = ({ text, title }: IContent) => {
 
   if (!title || !text) {
     console.error(
-      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
     );
     return null;
   }
