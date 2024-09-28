@@ -21,6 +21,12 @@ interface HeaderProps {
   navigationLinks: NavigationLink[];
 }
 
+/**
+ * Header component that renders the navigation bar
+ * @param {HeaderProps} props - The props for the Header component
+ * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
+ * @returns {JSX.Element} The rendered Header component
+ */
 const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
   const pathname = usePathname();
 
