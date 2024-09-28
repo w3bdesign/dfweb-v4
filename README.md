@@ -23,13 +23,13 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 <https://www.dfweb.no/>
 
-## Frontend
+## Frontend (Next.js)
 
 <img src="https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4" alt="Frontend Image" />
 
 * * *
 
-## Backend
+## Backend (Sanity headless CMS)
 
 <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
 
