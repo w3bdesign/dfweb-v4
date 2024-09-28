@@ -47,6 +47,13 @@ const myPortableTextComponents = {
   },
 };
 
+/**
+ * Section component that renders a single content section
+ * @param {IContent} props - The props for the Section component
+ * @param {string} props.text - The text content of the section
+ * @param {string} props.title - The title of the section
+ * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+ */
 const Section = ({ text, title }: IContent) => {
   const [shouldError, setShouldError] = useState(false);
 
@@ -95,6 +102,13 @@ const Section = ({ text, title }: IContent) => {
   );
 };
 
+/**
+ * IndexContent component that renders multiple content sections
+ * @param {Object} props - The props for the IndexContent component
+ * @param {IContent[]} props.pageContent - Array of content sections to render
+ * @returns {JSX.Element} The rendered IndexContent component
+ * @throws {Error} Throws an error if no content is available
+ */
 const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   if (!pageContent || pageContent.length === 0) {
     throw new Error("Ingen innhold tilgjengelig");
