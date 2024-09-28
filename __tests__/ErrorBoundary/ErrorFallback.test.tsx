@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import ErrorFallback from "../../src/components/ErrorBoundary/ErrorFallback.component";
 
