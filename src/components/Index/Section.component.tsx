@@ -24,7 +24,6 @@ interface IText {
 }
 
 interface IContent {
-  id: string;
   text: IText[];
   title: string;
 }
