@@ -18,6 +18,14 @@ export interface InputProps<T extends FieldValues> {
   readonly error?: string;
 }
 
+/**
+ * Creates register options for react-hook-form
+ * @template T - Type extending FieldValues
+ * @param {boolean} [isRequired] - Whether the field is required
+ * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ * @param {string} [title] - Title for the input field
+ * @returns {RegisterOptions<T, Path<T>>} Register options object
+ */
 export function createRegisterOptions<T extends FieldValues>(
   isRequired?: boolean,
   inputPattern?: RegExp,
@@ -31,6 +39,12 @@ export function createRegisterOptions<T extends FieldValues>(
   };
 }
 
+/**
+ * InputField component for rendering form inputs
+ * @template T - Type extending FieldValues
+ * @param {InputProps<T>} props - The props for the InputField component
+ * @returns {JSX.Element} The rendered InputField component
+ */
 function InputField<T extends FieldValues>({
   name,
   label,
