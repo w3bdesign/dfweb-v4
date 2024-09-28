@@ -19,12 +19,10 @@ const AnimateIcons: IAnimateIcons[] = [
 ];
 
 /**
- * Renders SVG icons that are used on the front page
+ * Icons component that renders SVG icons used on the front page
  * Uses Framer Motion for animations to show the SVGs
- * @function Icons
- * @returns {JSX.Element} - Rendered component
+ * @returns {JSX.Element} The rendered Icons component
  */
-
 const Icons = () => {
   return (
     <div

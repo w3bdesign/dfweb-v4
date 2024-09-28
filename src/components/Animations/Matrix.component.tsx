@@ -10,6 +10,11 @@ interface RGB {
   b: number;
 }
 
+/**
+ * Converts a hex color value to RGB
+ * @param {string} hexValue - The hex color value to convert
+ * @returns {RGB | null} The RGB color object or null if invalid hex value
+ */
 const hexToRgb = (hexValue: string): RGB | null => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
   return result
@@ -36,6 +41,11 @@ interface Column {
   stackCounter: number;
 }
 
+/**
+ * ReactMatrixAnimation component
+ * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ */
 const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   tileSize = 20,
   fadeFactor = 0.5,
@@ -62,12 +72,21 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     throw new Error("Invalid font color. Use a hex value e.g. #030303");
   }
 
+  /**
+   * Generates a random integer
+   * @param {number} max - The maximum value (exclusive)
+   * @returns {number} A random integer between 0 and max-1
+   */
   const getRandomInt = useCallback((max: number): number => {
     const array = new Uint32Array(1);
     window.crypto.getRandomValues(array);
     return array[0] % max;
   }, []);
 
+  /**
+   * Initializes the matrix columns
+   * @param {HTMLCanvasElement} canvas - The canvas element
+   */
   const initMatrix = useCallback(
     (canvas: HTMLCanvasElement) => {
       const columns: Column[] = [];
@@ -77,7 +96,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
         const column: Column = {
           x: i * tileSize,
           stackHeight: 10 + getRandomInt(maxStackHeight),
-          stackCounter: -getRandomInt(maxStackHeight * 2), // Start with negative counter, doubled range for more variety
+          stackCounter: -getRandomInt(maxStackHeight * 2),
         };
 
         columns.push(column);
@@ -89,6 +108,10 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     [tileSize, getRandomInt],
   );
 
+  /**
+   * Gets a random character from the tileSet or generates a random ASCII character
+   * @returns {string} A random character
+   */
   const getRandomCharacter = useCallback((): string => {
     if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
       return tileSet[getRandomInt(tileSet.length)];
@@ -96,6 +119,11 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     return String.fromCharCode(33 + getRandomInt(94));
   }, [tileSet, getRandomInt]);
 
+  /**
+   * Draws the matrix animation on the canvas
+   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context
+   * @param {HTMLCanvasElement} canvas - The canvas element
+   */
   const draw = useCallback(
     (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
       ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
@@ -143,6 +171,12 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     ],
   );
 
+  /**
+   * Animation tick function
+   * @param {number} timestamp - The current timestamp
+   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context
+   * @param {HTMLCanvasElement} canvas - The canvas element
+   */
   const tick = useCallback(
     (
       timestamp: number,
@@ -204,6 +238,12 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   );
 };
 
+/**
+ * Debounce function
+ * @param {T} func - The function to debounce
+ * @param {number} wait - The debounce wait time in milliseconds
+ * @returns {(...args: Parameters<T>) => void} The debounced function
+ */
 const debounce = <T extends (...args: unknown[]) => void>(
   func: T,
   wait: number,

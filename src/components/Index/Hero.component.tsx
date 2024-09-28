@@ -19,6 +19,12 @@ interface IContent {
   content: THero[];
 }
 
+/**
+ * Hero component for rendering the main hero section of the page
+ * @param {IContent} props - The props for the Hero component
+ * @param {THero[]} props.content - Array of text content for the hero section
+ * @returns {JSX.Element} The rendered Hero component
+ */
 const Hero = ({ content }: IContent) => (
   <article
     aria-label="Kontainer for animasjoner av introtekst"

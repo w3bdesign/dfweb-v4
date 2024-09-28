@@ -22,6 +22,11 @@ interface CVContentProps {
   cvData: CVData;
 }
 
+/**
+ * CVContent component for rendering the CV page with tabs
+ * @param {CVContentProps} props - The props for the CVContent component
+ * @returns {JSX.Element} The rendered CVContent component
+ */
 const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
   const tabs = [
     {

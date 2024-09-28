@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
 
+/**
+ * RotatingLoader component
+ * Renders a rotating loader animation with four circular elements
+ * @returns {JSX.Element} The rendered RotatingLoader component
+ */
 export default function RotatingLoader() {
   const rotateVariants = {
     rotate: {
