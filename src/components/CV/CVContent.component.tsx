@@ -1,20 +1,21 @@
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import Tabs from "@/components/UI/Tabs.component";
+import { Pagecontent } from "@/types/sanity.types";
 
-interface CVData {
+export interface CVData {
   keyQualifications: string[];
   experience: Array<{
     period: string;
     company: string;
     role: string;
-    description: string;
+    description: Pagecontent["text"];
   }>;
   education: Array<{
     period: string;
     institution: string;
     degree: string;
-    description: string;
+    description: Pagecontent["text"];
   }>;
 }
 
@@ -47,13 +48,19 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       label: "Erfaring",
       content: (
         <div className="text-gray-300">
-          {cvData.experience.map((exp) => (
-            <div key={exp.description} className="mb-6">
+          {cvData.experience.map((exp, index) => (
+            <div key={index} className="mb-6">
               <h3 className="font-semibold text-white">
                 {exp.period} - {exp.company}
               </h3>
               {exp.role && <p className="italic">{exp.role}</p>}
-              <p>{exp.description}</p>
+              {exp.description && (
+                <div>
+                  {exp.description.map((block, blockIndex) => (
+                    <p key={blockIndex}>{block.children?.[0]?.text}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -64,13 +71,19 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       label: "Utdanning",
       content: (
         <div className="text-gray-300">
-          {cvData.education.map((edu) => (
-            <div key={edu.description} className="mb-6">
+          {cvData.education.map((edu, index) => (
+            <div key={index} className="mb-6">
               <h3 className="font-semibold text-white">
                 {edu.period} - {edu.institution}
               </h3>
               {edu.degree && <p className="italic">{edu.degree}</p>}
-              <p>{edu.description}</p>
+              {edu.description && (
+                <div>
+                  {edu.description.map((block, blockIndex) => (
+                    <p key={blockIndex}>{block.children?.[0]?.text}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
