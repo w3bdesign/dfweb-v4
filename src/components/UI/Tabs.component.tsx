@@ -25,6 +25,10 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
+  /**
+   * Handles the click event on a tab.
+   * @param {string} tabId - The id of the clicked tab.
+   */
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
   };

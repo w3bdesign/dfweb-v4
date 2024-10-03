@@ -10,6 +10,18 @@ export interface IButtonProps {
   onClick?: MouseEventHandler<HTMLButtonElement>;
 }
 
+/**
+ * Button component that can be rendered as various HTML elements
+ * @param {Object} props
+ * @param {ReactNode} props.children - The content of the button
+ * @param {string} [props.href] - The URL to link to if the button is an anchor
+ * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+ * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+ * @param {boolean} [props.disabled=false] - Whether the button is disabled
+ * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+ * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+ * @returns {JSX.Element} The rendered Button component
+ */
 const Button = ({
   children,
   href,
