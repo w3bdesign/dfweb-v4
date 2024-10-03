@@ -8,6 +8,17 @@ import { urlFor } from "@/lib/sanity/helpers";
 
 import type { Project } from "@/types/sanity.types";
 
+/**
+ * ProsjektCard component that renders a card for a project
+ * @param {Object} props
+ * @param {string} props.name - The name of the project
+ * @param {string} props.description - A brief description of the project
+ * @param {string} props.subdescription - Additional description of the project
+ * @param {Object} props.projectimage - The image object for the project
+ * @param {Array} props.urlwww - Array of website URLs for the project
+ * @param {Array} props.urlgithub - Array of GitHub URLs for the project
+ * @returns {JSX.Element} The rendered ProsjektCard component
+ */
 const ProsjektCard: React.FC<Project> = ({
   name,
   description,
