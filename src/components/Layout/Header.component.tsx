@@ -82,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
                   <div className="glitch relative" data-text={link.name}>
                     {link.name}
                     <motion.span
-                      class={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                      className={`absolute bottom-0 left-0 h-0.5 bg-current ${
                         pathname === link.href ? "bg-green-400" : "bg-white"
                       }`}
                       initial={{
