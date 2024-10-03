@@ -20,7 +20,7 @@ import type { Project } from "@/types/sanity.types";
  * @returns {JSX.Element} The rendered ProsjektCard component
  */
 const ProsjektCard: React.FC<Project> = ({
-  name,
+  name = "",
   description,
   subdescription,
   projectimage,
