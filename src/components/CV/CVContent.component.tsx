@@ -1,23 +1,8 @@
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import Tabs from "@/components/UI/Tabs.component";
-import { Pagecontent } from "@/types/sanity.types";
 
-export interface CVData {
-  keyQualifications: string[];
-  experience: Array<{
-    period: string;
-    company: string;
-    role: string;
-    description: Pagecontent["text"];
-  }>;
-  education: Array<{
-    period: string;
-    institution: string;
-    degree: string;
-    description: Pagecontent["text"];
-  }>;
-}
+import { CVData } from "@/types/sanity.types";
 
 interface CVContentProps {
   cvData: CVData;
