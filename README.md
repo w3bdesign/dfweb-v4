@@ -18,6 +18,10 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
   - [Design](#design)
   - [Accessibility](#accessibility)
   - [Devops and Code quality](#devops-and-code-quality)
+  - [Advanced TypeScript Usage](#advanced-typescript-usage)
+  - [Comprehensive Testing](#comprehensive-testing)
+  - [Best Practices for Accessibility, Performance, and SEO](#best-practices-for-accessibility-performance-and-seo)
+  - [Detailed Documentation and Code Comments](#detailed-documentation-and-code-comments)
 
 ## Live URL
 
@@ -86,3 +90,27 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 99% test coverage with Jest and React testing library
+
+### Advanced TypeScript Usage
+
+- Advanced TypeScript usage to ensure type safety and reduce runtime errors
+- Comprehensive type definitions for all components and functions
+- Strict TypeScript configuration to enforce best practices
+
+### Comprehensive Testing
+
+- Comprehensive unit tests, integration tests, and E2E tests
+- High test coverage and reliability
+- Testing with Jest, React Testing Library, Cypress, and Playwright
+
+### Best Practices for Accessibility, Performance, and SEO
+
+- Follows best practices for accessibility, performance, and SEO
+- Verified by tools like Google Lighthouse
+- Ensures high accessibility standards and performance optimization
+
+### Detailed Documentation and Code Comments
+
+- Detailed documentation for all components and functions
+- Code comments to explain complex logic and improve code understanding
+- Makes it easier for other developers to understand and contribute

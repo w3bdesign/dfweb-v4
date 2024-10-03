@@ -32,6 +32,7 @@ const Hero = ({ content }: IContent) => (
     data-testid="main-hero"
     className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full"
   >
+    {/* Render the MobileBackground component for mobile devices */}
     <MobileBackground />
     <div className="hidden md:block absolute inset-0 w-full h-full">
       <Suspense
@@ -41,6 +42,7 @@ const Hero = ({ content }: IContent) => (
           </div>
         }
       >
+        {/* Render the ReactMatrixAnimation component */}
         <ReactMatrixAnimation />
       </Suspense>
     </div>
@@ -68,6 +70,7 @@ const Hero = ({ content }: IContent) => (
             >
               <p>{content.length > 0 && content[2].text}</p>
             </FadeDown>
+            {/* Render the Icons component */}
             <Icons />
           </section>
         </div>

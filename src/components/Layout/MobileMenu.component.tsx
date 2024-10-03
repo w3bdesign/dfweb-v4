@@ -21,6 +21,12 @@ interface IMobileMenuProps {
   links: ILink[];
 }
 
+/**
+ * MobileMenu component that renders a mobile navigation menu
+ * @param {IMobileMenuProps} props - The props for the MobileMenu component
+ * @param {ILink[]} props.links - Array of navigation links
+ * @returns {JSX.Element} The rendered MobileMenu component
+ */
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef(null);

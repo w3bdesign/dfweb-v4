@@ -8,7 +8,6 @@ import { BiCopyright } from "react-icons/bi";
  * @function Footer
  * @returns {JSX.Element} - Rendered Hamburger component
  */
-
 const Footer = () => (
   <footer
     className="mt-6"

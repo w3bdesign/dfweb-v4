@@ -7,6 +7,7 @@ import { useState } from "react";
 import PageHeader from "@/components/UI/PageHeader.component";
 import GenericForm from "@/components/UI/GenericForm.component";
 
+// Define the schema for the form using Zod
 const formSchema = z.object({
   navn: z
     .string()
@@ -26,7 +27,6 @@ type FormData = z.infer<typeof formSchema>;
  * @function KontaktContent
  * @returns {JSX.Element} - Rendered component
  */
-
 const KontaktContent = () => {
   const [serverResponse, setServerResponse] = useState<string>("");
 
@@ -51,6 +51,7 @@ const KontaktContent = () => {
     }
   };
 
+  // Define the form fields
   const formFields = [
     {
       name: "navn" as const,
