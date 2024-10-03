@@ -1,8 +1,9 @@
 import RootLayout from "../RootLayout";
-import CVContent, { CVData } from "@/components/CV/CVContent.component";
+import CVContent from "@/components/CV/CVContent.component";
 
 import { client } from "@/lib/sanity/client";
 import { cvQuery } from "@/lib/sanity/queries";
+import { CVData } from "@/types/sanity.types";
 
 import { Metadata } from "next/types";
 
