@@ -9,6 +9,14 @@ interface NavigationLinkProps {
   isActive: boolean;
 }
 
+/**
+ * NavigationLink component that renders a single navigation link with hover and active states
+ * @param {NavigationLinkProps} props - The props for the NavigationLink component
+ * @param {string} props.name - The text to display for the link
+ * @param {string} props.href - The URL the link should navigate to
+ * @param {boolean} props.isActive - Whether the link is currently active
+ * @returns {JSX.Element} The rendered NavigationLink component
+ */
 const NavigationLink: React.FC<NavigationLinkProps> = ({ name, href, isActive }) => (
   <MotionDiv className="relative" whileHover="hover">
     <Link
