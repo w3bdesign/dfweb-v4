@@ -1,13 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-
-import { MotionDiv, MotionLi, MotionUl } from "@/lib/framer/client";
-
+import { MotionDiv } from "@/lib/framer/client";
 import MobileMenu from "./MobileMenu.component";
+import DesktopNavigation from "./DesktopNavigation.component";
 
 interface NavigationLink {
   title: string;
@@ -28,8 +24,6 @@ interface HeaderProps {
  * @returns {JSX.Element} The rendered Header component
  */
 const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
-  const pathname = usePathname();
-
   return (
     <header className="z-[999] relative">
       <MotionDiv
@@ -46,59 +40,7 @@ const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
         }}
       />
       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-        <MotionUl
-          className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.3,
-              },
-            },
-          }}
-          initial="hidden"
-          animate="visible"
-        >
-          {navigationLinks.map((link) => (
-            <MotionLi
-              className="h-3/4 flex items-center justify-center relative"
-              key={link.name}
-              variants={{
-                hidden: { y: -20, opacity: 0 },
-                visible: { y: 0, opacity: 1 },
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <MotionDiv className="relative" whileHover="hover">
-                <Link
-                  prefetch={true}
-                  className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-                    pathname === link.href ? "text-green-400" : ""
-                  }`}
-                  href={link.href}
-                >
-                  <div className="glitch relative" data-text={link.name}>
-                    {link.name}
-                    <motion.span
-                      className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-                        pathname === link.href ? "bg-green-400" : "bg-white"
-                      }`}
-                      initial={{
-                        width: pathname === link.href ? "100%" : "0%",
-                      }}
-                      variants={{
-                        hover: { width: "100%" },
-                      }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </div>
-                </Link>
-              </MotionDiv>
-            </MotionLi>
-          ))}
-        </MotionUl>
+        <DesktopNavigation navigationLinks={navigationLinks} />
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
           <MobileMenu links={navigationLinks} />
         </div>
