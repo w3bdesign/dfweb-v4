@@ -1,7 +1,7 @@
 import React from "react";
-import { usePathname } from "next/navigation";
 import { MotionLi, MotionUl } from "@/lib/framer/client";
 import NavigationLink from "./NavigationLink.component";
+import { useNavigation } from "@/hooks/useNavigation";
 
 interface NavigationLink {
   title: string;
@@ -16,7 +16,7 @@ interface DesktopNavigationProps {
 }
 
 const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ navigationLinks }) => {
-  const pathname = usePathname();
+  const { isLinkActive } = useNavigation(navigationLinks);
 
   return (
     <MotionUl
@@ -47,7 +47,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ navigationLinks }
           <NavigationLink
             name={link.name}
             href={link.href}
-            isActive={pathname === link.href}
+            isActive={isLinkActive(link.href)}
           />
         </MotionLi>
       ))}
