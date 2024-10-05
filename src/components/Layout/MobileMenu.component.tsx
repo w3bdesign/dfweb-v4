@@ -164,7 +164,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                         </Link>
                       )}
                     </motion.li>
-                  )
+                  ),
                 )}
               </motion.ul>
             </nav>

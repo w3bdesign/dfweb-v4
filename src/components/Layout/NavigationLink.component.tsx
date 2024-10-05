@@ -17,7 +17,11 @@ interface NavigationLinkProps {
  * @param {boolean} props.isActive - Whether the link is currently active
  * @returns {JSX.Element} The rendered NavigationLink component
  */
-const NavigationLink: React.FC<NavigationLinkProps> = ({ name, href, isActive }) => (
+const NavigationLink: React.FC<NavigationLinkProps> = ({
+  name,
+  href,
+  isActive,
+}) => (
   <MotionDiv className="relative" whileHover="hover">
     <Link
       prefetch={true}
