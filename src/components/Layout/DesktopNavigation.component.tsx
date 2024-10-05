@@ -21,7 +21,9 @@ interface DesktopNavigationProps {
  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links to be rendered
  * @returns {JSX.Element} The rendered DesktopNavigation component
  */
-const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ navigationLinks }) => {
+const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
+  navigationLinks,
+}) => {
   const { isLinkActive } = useNavigation(navigationLinks);
 
   return (

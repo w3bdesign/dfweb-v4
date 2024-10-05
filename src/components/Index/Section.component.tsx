@@ -40,7 +40,7 @@ const Section = ({ text, title }: IContent) => {
 
   if (!title || !text) {
     console.error(
-      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
+      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
     );
     return null;
   }

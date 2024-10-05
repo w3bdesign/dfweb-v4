@@ -25,7 +25,7 @@ describe("ErrorFallback", () => {
     render(<ErrorFallback error={mockError} />);
 
     expect(
-      screen.getByText("Har du funnet en feil i Matrix?")
+      screen.getByText("Har du funnet en feil i Matrix?"),
     ).toBeInTheDocument();
     expect(screen.getByText("Test error message")).toBeInTheDocument();
     expect(screen.getByText("Returner til Matrix")).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("ErrorFallback", () => {
     render(<ErrorFallback error={errorWithoutMessage} />);
 
     expect(
-      screen.getByText("En uventet feil har oppstått.")
+      screen.getByText("En uventet feil har oppstått."),
     ).toBeInTheDocument();
   });
 });
