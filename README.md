@@ -53,6 +53,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Animations with Framer Motion
 - React testing library for unit testing
 - Cypress for E2E testing
+- Playwright for cross-browser E2E testing
 - Contact form with Email.js
 - Polymorphic components
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
@@ -82,7 +83,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Github action workflow for Cypress
 - Code quality analysis with Codacy, Sonarcloud and Codeclimate
 - E2E testing with Cypress integrated with Github actions
-- E2E testing with Playwright integrated with Github actions
+- E2E testing with Playwright for cross-browser compatibility, integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 99% test coverage with Jest and React testing library
