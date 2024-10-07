@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
 
 export const myPortableTextComponents = {
