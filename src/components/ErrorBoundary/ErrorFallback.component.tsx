@@ -26,7 +26,6 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error }) => {
           {error.message || "En uventet feil har oppstått."}
         </p>
         <Pill
-          href="/"
           text="Returner til Matrix"
           onClick={() => window.location.reload()}
         />

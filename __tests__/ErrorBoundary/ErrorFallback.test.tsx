@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 import ErrorFallback from "../../src/components/ErrorBoundary/ErrorFallback.component";
 
@@ -38,5 +38,14 @@ describe("ErrorFallback", () => {
     expect(
       screen.getByText("En uventet feil har oppstått."),
     ).toBeInTheDocument();
+  });
+
+  it("reloads the page when the reload button is clicked", () => {
+    render(<ErrorFallback error={mockError} />);
+    const reloadButton = screen.getByRole('button', { name: "Returner til Matrix" });
+    
+    fireEvent.click(reloadButton);
+
+    expect(window.location.reload).toHaveBeenCalledTimes(1);
   });
 });
