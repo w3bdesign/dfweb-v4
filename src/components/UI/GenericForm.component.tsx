@@ -77,7 +77,9 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
         ))}
       </fieldset>
       <div className="-mt-4">
-        <Button disabled={isSubmitting} data-testid="submit-button">{submitButtonText}</Button>
+        <Button disabled={isSubmitting} data-testid="submit-button">
+          {submitButtonText}
+        </Button>
       </div>
     </form>
   );
