@@ -6,7 +6,7 @@ test.describe("CV page", () => {
 
     // Check if 'Nøkkelkvalifikasjoner' tab is visible
     await expect(
-      page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })
+      page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
     ).toBeVisible();
   });
 
@@ -20,7 +20,7 @@ test.describe("CV page", () => {
 
     // Check if a specific experience entry is visible
     await expect(
-      page.getByRole("heading", { name: "– 2021 - NovaCare" })
+      page.getByRole("heading", { name: "– 2021 - NovaCare" }),
     ).toBeVisible();
   });
 
@@ -32,7 +32,7 @@ test.describe("CV page", () => {
 
     // Check if education information is present
     await expect(page.getByLabel("Utdanning")).toContainText(
-      "2019 – 2023 - Kompetanseheving / egenlæring frontendutvikling"
+      "2019 – 2023 - Kompetanseheving / egenlæring frontendutvikling",
     );
   });
 });
