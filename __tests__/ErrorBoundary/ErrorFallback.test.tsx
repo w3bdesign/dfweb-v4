@@ -42,8 +42,10 @@ describe("ErrorFallback", () => {
 
   it("reloads the page when the reload button is clicked", () => {
     render(<ErrorFallback error={mockError} />);
-    const reloadButton = screen.getByRole('button', { name: "Returner til Matrix" });
-    
+    const reloadButton = screen.getByRole("button", {
+      name: "Returner til Matrix",
+    });
+
     fireEvent.click(reloadButton);
 
     expect(window.location.reload).toHaveBeenCalledTimes(1);
