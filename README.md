@@ -47,7 +47,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - The application is 100% typescript
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
-- Next.js 14 with Typescript and App router
+- Next.js 15 with Typescript and App router
 - Sanity headless cms for all of the content, projects and navigation links
 - Ladle for component documentation
 - Animations with Framer Motion
