@@ -45,7 +45,7 @@ const Hero = ({ content }: IContent) => {
         <ReactMatrixAnimation />
       </div>
       <div className="relative z-10">
-        <section className="text-left md:text-center">
+        <section className="text-left md:text-center px-4 md:px-0">
           <FadeDown delay={0.5}>
             <h1 
               data-cy="hei"
