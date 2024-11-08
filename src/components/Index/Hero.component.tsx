@@ -44,35 +44,34 @@ const Hero = ({ content }: IContent) => {
       <div className="hidden md:block absolute inset-0 w-full h-full">
         <ReactMatrixAnimation />
       </div>
-      <FadeDown delay={0.1}>
-        <div className="relative z-10 mt-12 md:mb-4 p-2 md:mt-4 lg:mt-4 xl:mt-4 mb-14 md:mb-6">
-          <div className="rounded">
-            <section>
-              <FadeDown delay={0.5} cssClass="text-center">
-                <h1
-                  data-cy="hei"
-                  className="introtekst inline-block text-5xl text-slate-300"
-                >
-                  {content.length > 0 ? content[0].text : "Hei!"}
-                </h1>
-              </FadeDown>
-              <FadeUp
-                delay={0.9}
-                cssClass="mt-4 px-6 text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl text-slate-300"
-              >
-                <h2>{content.length > 0 && content[1].text}</h2>
-              </FadeUp>
-              <FadeDown
-                delay={1.4}
-                cssClass="mt-4 px-6 text-lg md:mx-auto md:p-0 md:text-center md:text-xl lg:w-2/3 lg:p-0 lg:text-center lg:text-xl xl:p-0 xl:text-center xl:text-2xl text-slate-300"
-              >
-                <p>{content.length > 0 && content[2].text}</p>
-              </FadeDown>
-              <Icons />
-            </section>
+      <div className="relative z-10">
+        <section className="text-center">
+          <FadeDown delay={0.5}>
+            <h1 
+              data-cy="hei"
+              className="text-6xl font-bold text-[#00ff62]"
+            >
+              {content.length > 0 ? content[0].text : "Hei!"}
+            </h1>
+          </FadeDown>
+          
+          <FadeUp delay={0.9} cssClass="mt-4">
+            <h2 className="text-2xl text-slate-300">
+              {content.length > 0 && content[1].text}
+            </h2>
+          </FadeUp>
+          
+          <FadeDown delay={1.4} cssClass="mt-4">
+            <p className="text-xl text-slate-300">
+              {content.length > 0 && content[2].text}
+            </p>
+          </FadeDown>
+
+          <div className="mt-4">
+            <Icons />
           </div>
-        </div>
-      </FadeDown>
+        </section>
+      </div>
     </article>
   );
 };

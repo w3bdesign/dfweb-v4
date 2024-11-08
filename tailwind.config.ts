@@ -10,31 +10,91 @@ const config: Config = {
     extend: {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors: {
-        // Primary Colors
-        background: "#e5e7eb", // Main background color
-        navbar: "#ffffff", // Navbar background color
-        matrixRain: "#000000", // Matrix rain effect background color
-        footer: "#1f2937", // Footer background color
+        // New Modern Color Scheme
+        primary: "var(--primary)",
+        secondary: "var(--secondary)",
+        accent: "var(--accent)",
+        text: "var(--text)",
+        background: "var(--background)",
 
-        // Accent Colors
-        primaryAccent: "#00ff00", // Primary accent (Matrix Green)
-        secondaryAccent: "#008000", // Secondary accent (Dark Green)
-        highlight: "#00cc00", // Highlight/Link color
+        // Semantic Colors
+        success: "#00cc4e",
+        error: "#ff4e4e",
+        warning: "#ffb74e",
+        info: "#4e9fff",
 
-        // Text Colors
-        primaryText: "#1f2937", // Primary text color
-        secondaryText: "#4b5563", // Secondary text color
-        lightText: "#ffffff", // Light text color
+        // Surface Colors
+        surface: {
+          light: "rgba(255, 255, 255, 0.05)",
+          DEFAULT: "rgba(26, 26, 26, 0.8)",
+          dark: "rgba(0, 0, 0, 0.8)",
+        },
 
-        // Button Colors
-        primaryButtonBg: "#008F11", // Primary button background color
-        primaryButtonText: "#fff", // Primary button text color
-        secondaryButtonBg: "#003B00", // Secondary button background color
-        secondaryButtonText: "#ffffff", // Secondary button text color
+        // Matrix Theme Colors
+        matrix: {
+          light: "#00ff62",
+          DEFAULT: "#00cc4e",
+          dark: "#008529",
+          glow: "rgba(0, 255, 98, 0.6)",
+        },
+      },
+      fontFamily: {
+        sans: [
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'Oxygen',
+          'Ubuntu',
+          'Cantarell',
+          'sans-serif',
+        ],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      boxShadow: {
+        glow: '0 0 15px rgba(0, 255, 98, 0.6)',
+        'glow-sm': '0 0 10px rgba(0, 255, 98, 0.4)',
+        'glow-lg': '0 0 20px rgba(0, 255, 98, 0.8)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      animation: {
+        'matrix-fade': 'matrixFade 2s ease-out',
+        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+      },
+      keyframes: {
+        matrixFade: {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 15px rgba(0, 255, 98, 0.6)' },
+          '50%': { boxShadow: '0 0 25px rgba(0, 255, 98, 0.8)' },
+        },
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: 'var(--text)',
+            a: {
+              color: 'var(--secondary)',
+              '&:hover': {
+                color: 'var(--accent)',
+              },
+            },
+            h1: {
+              color: 'var(--accent)',
+            },
+            h2: {
+              color: 'var(--secondary)',
+            },
+          },
+        },
       },
     },
   },
