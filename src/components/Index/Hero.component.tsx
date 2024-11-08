@@ -49,7 +49,7 @@ const Hero = ({ content }: IContent) => {
           <FadeDown delay={0.5}>
             <h1 
               data-cy="hei"
-              className="text-6xl font-bold text-[#00ff62]"
+              className="text-6xl font-bold text-[#00ff62] text-center  "
             >
               {content.length > 0 ? content[0].text : "Hei!"}
             </h1>
