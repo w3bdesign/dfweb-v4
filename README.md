@@ -26,7 +26,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ## Frontend (Next.js)
 
-<img src="https://github.com/user-attachments/assets/958aaa13-0f82-405d-b1d2-ff99588cf7c4" alt="Frontend Image" />
+<img src="https://private-user-images.githubusercontent.com/45217974/384268187-252c8bd3-4fee-4a56-b4be-20eedf164363.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzEwNTEzNDYsIm5iZiI6MTczMTA1MTA0NiwicGF0aCI6Ii80NTIxNzk3NC8zODQyNjgxODctMjUyYzhiZDMtNGZlZS00YTU2LWI0YmUtMjBlZWRmMTY0MzYzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDExMDglMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQxMTA4VDA3MzA0NlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTE2Yzc5MzNhNDAwMTQ0OWU3ZGMzYmI0MzA3YjI2MWMwNjdjYmRjYzAwMDllNWY2MmQwYzMxZmE4ZGU1OGI1ZDQmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.VrwiuEpF4P93eIRID5hdzczkmgFS8jBJhUsqBOr2Wms" alt="Frontend Image" />
 
 * * *
 
