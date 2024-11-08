@@ -21,7 +21,7 @@ const AnimateIcons: IAnimateIcons[] = [
   { 
     id: 1, 
     Icon: FaVuejs, 
-    iconName: "Vue",
+    iconName: "VueJS",
     color: "#4FC08D"
   },
   { 
@@ -60,8 +60,8 @@ const Icons = () => (
           <div className="relative group">
             <Icon
               data-testid={iconName}
-              aria-label={`${iconName} ikon}`}
-              title={`${iconName} ikon}`}
+              aria-label={`${iconName} ikon`}
+              title={`${iconName} ikon`}
               size="3em"
               className="transition-transform duration-300 hover:-translate-y-1 hover:text-[#00ff62]"
               style={{ color }}
