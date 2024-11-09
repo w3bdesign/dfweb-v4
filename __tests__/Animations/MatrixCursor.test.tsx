@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import MatrixCursor from '../../src/components/Animations/MatrixCursor.component';
 
 describe('MatrixCursor', () => {
