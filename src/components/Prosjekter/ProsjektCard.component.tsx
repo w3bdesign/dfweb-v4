@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 
 import Button from "@/components/UI/Button.component";
-import BounceInScroll from "../Animations/BounceInScroll.component";
+import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
 import { urlFor } from "@/lib/sanity/helpers";
 
