@@ -8,6 +8,7 @@ import FadeDown from "../Animations/FadeDown.component";
 import FadeUp from "../Animations/FadeUp.component";
 import RotatingLoader from "../Animations/RotatingLoader.component";
 import MobileBackground from "./MobileBackground.component";
+import MatrixCursor from "../Animations/MatrixCursor.component";
 
 const ReactMatrixAnimation = dynamic(
   () => import("../Animations/Matrix.component"),
@@ -40,6 +41,7 @@ const Hero = ({ content }: IContent) => {
       data-testid="main-hero"
       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full"
     >
+      <MatrixCursor />
       <MobileBackground />
       <div className="hidden md:block absolute inset-0 w-full h-full">
         <ReactMatrixAnimation />
