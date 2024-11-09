@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent, cleanup, act } from "@testing-library/react";
+import { render, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import MatrixCursor from "../../src/components/Animations/MatrixCursor.component";
@@ -15,7 +15,7 @@ describe("MatrixCursor", () => {
 
     // Mock animation event
     Element.prototype.addEventListener = jest.fn((event, callback) => {
-      if (event === 'animationend') {
+      if (event === "animationend") {
         setTimeout(() => {
           (callback as Function)();
         }, 0);
@@ -119,7 +119,9 @@ describe("MatrixCursor", () => {
     }
 
     // Should be limited to 20 elements
-    expect(document.getElementsByClassName("matrix-trail").length).toBeLessThanOrEqual(20);
+    expect(
+      document.getElementsByClassName("matrix-trail").length
+    ).toBeLessThanOrEqual(20);
 
     jest.useRealTimers();
   });
@@ -134,11 +136,13 @@ describe("MatrixCursor", () => {
       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
     }
 
-    expect(document.getElementsByClassName("matrix-trail").length).toBeGreaterThan(0);
+    expect(
+      document.getElementsByClassName("matrix-trail").length
+    ).toBeGreaterThan(0);
 
     // Leave the hero section
     fireEvent.mouseLeave(heroSection);
-    
+
     // All trail elements should be removed
     expect(document.getElementsByClassName("matrix-trail").length).toBe(0);
 
