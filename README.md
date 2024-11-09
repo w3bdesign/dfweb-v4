@@ -69,7 +69,8 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
-- Matrix-inspired animated cursor with pulsing and rotating effects in the hero section
+- Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
+ 
 
 ### Accessibility
 
