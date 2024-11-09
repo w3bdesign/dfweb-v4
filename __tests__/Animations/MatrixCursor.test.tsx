@@ -1,53 +1,56 @@
-import React from 'react';
-import { render, fireEvent, cleanup } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import MatrixCursor from '../../src/components/Animations/MatrixCursor.component';
+import React from "react";
+import { render, fireEvent, cleanup } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import MatrixCursor from "../../src/components/Animations/MatrixCursor.component";
 
-describe('MatrixCursor', () => {
+describe("MatrixCursor", () => {
   let heroSection: HTMLElement;
 
   beforeEach(() => {
     // Create and append hero section to document
-    heroSection = document.createElement('div');
-    heroSection.id = 'main-hero';
+    heroSection = document.createElement("div");
+    heroSection.id = "main-hero";
     document.body.appendChild(heroSection);
   });
 
   afterEach(() => {
     cleanup();
-    document.body.removeChild(heroSection);
+    // Only try to remove if it's still in the document
+    if (document.getElementById("main-hero")) {
+      document.body.removeChild(heroSection);
+    }
   });
 
-  it('should update cursor position on mousemove', () => {
+  test("should update cursor position on mousemove", () => {
     render(<MatrixCursor />);
     
     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 200 });
     
-    expect(heroSection.style.getPropertyValue('--cursor-x')).toBe('100px');
-    expect(heroSection.style.getPropertyValue('--cursor-y')).toBe('200px');
+    expect(heroSection.style.getPropertyValue("--cursor-x")).toEqual("100px");
+    expect(heroSection.style.getPropertyValue("--cursor-y")).toEqual("200px");
   });
 
-  it('should add matrix-cursor class on mouseenter', () => {
+  test("should add matrix-cursor class on mouseenter", () => {
     render(<MatrixCursor />);
     
     fireEvent.mouseEnter(heroSection);
     
-    expect(heroSection.classList.contains('matrix-cursor')).toBe(true);
+    expect(heroSection).toHaveClass("matrix-cursor");
   });
 
-  it('should remove matrix-cursor class on mouseleave', () => {
+  test("should remove matrix-cursor class on mouseleave", () => {
     render(<MatrixCursor />);
     
     // First add the class
     fireEvent.mouseEnter(heroSection);
-    expect(heroSection.classList.contains('matrix-cursor')).toBe(true);
+    expect(heroSection).toHaveClass("matrix-cursor");
     
     // Then remove it
     fireEvent.mouseLeave(heroSection);
-    expect(heroSection.classList.contains('matrix-cursor')).toBe(false);
+    expect(heroSection).not.toHaveClass("matrix-cursor");
   });
 
-  it('should do nothing if hero section is not found', () => {
+  test("should do nothing if hero section is not found", () => {
     // Remove hero section before test
     document.body.removeChild(heroSection);
     
@@ -57,20 +60,20 @@ describe('MatrixCursor', () => {
     expect(() => rerender(<MatrixCursor />)).not.toThrow();
   });
 
-  it('should cleanup event listeners and classes on unmount', () => {
+  test("should cleanup event listeners and classes on unmount", () => {
     const { unmount } = render(<MatrixCursor />);
     
     // Add the class first
     fireEvent.mouseEnter(heroSection);
-    expect(heroSection.classList.contains('matrix-cursor')).toBe(true);
+    expect(heroSection).toHaveClass("matrix-cursor");
     
     // Unmount and verify cleanup
     unmount();
-    expect(heroSection.classList.contains('matrix-cursor')).toBe(false);
+    expect(heroSection).not.toHaveClass("matrix-cursor");
     
     // Verify events are cleaned up by checking if they still work
     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 200 });
-    expect(heroSection.style.getPropertyValue('--cursor-x')).toBe('');
-    expect(heroSection.style.getPropertyValue('--cursor-y')).toBe('');
+    expect(heroSection.style.getPropertyValue("--cursor-x")).toEqual("");
+    expect(heroSection.style.getPropertyValue("--cursor-y")).toEqual("");
   });
 });
