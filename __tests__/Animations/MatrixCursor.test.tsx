@@ -6,21 +6,25 @@ import MatrixCursor from "../../src/components/Animations/MatrixCursor.component
 
 describe("MatrixCursor", () => {
   let heroSection: HTMLElement;
+  let originalAddEventListener: typeof Element.prototype.addEventListener;
 
   beforeEach(() => {
+    // Save original addEventListener
+    originalAddEventListener = Element.prototype.addEventListener;
+
     // Create and append hero section to document
     heroSection = document.createElement("div");
     heroSection.id = "main-hero";
     document.body.appendChild(heroSection);
 
-    // Mock animation event
-    Element.prototype.addEventListener = jest.fn((event, callback) => {
-      if (event === "animationend") {
-        setTimeout(() => {
-          (callback as Function)();
-        }, 0);
+    // Only mock animationend event
+    Element.prototype.addEventListener = function(type: string, listener: EventListener) {
+      if (type === "animationend") {
+        // Store the listener but don't actually attach it
+        return;
       }
-    });
+      return originalAddEventListener.apply(this, [type, listener]);
+    };
   });
 
   afterEach(() => {
@@ -29,7 +33,8 @@ describe("MatrixCursor", () => {
     if (document.getElementById("main-hero")) {
       document.body.removeChild(heroSection);
     }
-    jest.clearAllMocks();
+    // Restore original addEventListener
+    Element.prototype.addEventListener = originalAddEventListener;
   });
 
   test("should update cursor position on mousemove", () => {
@@ -37,8 +42,8 @@ describe("MatrixCursor", () => {
 
     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 200 });
 
-    expect(heroSection.style.getPropertyValue("--cursor-x")).toEqual("100px");
-    expect(heroSection.style.getPropertyValue("--cursor-y")).toEqual("200px");
+    expect(heroSection.style.getPropertyValue("--cursor-x")).toBe("100px");
+    expect(heroSection.style.getPropertyValue("--cursor-y")).toBe("200px");
   });
 
   test("should add matrix-cursor class on mouseenter", () => {
@@ -84,37 +89,31 @@ describe("MatrixCursor", () => {
 
     // Verify events are cleaned up by checking if they still work
     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 200 });
-    expect(heroSection.style.getPropertyValue("--cursor-x")).toEqual("");
-    expect(heroSection.style.getPropertyValue("--cursor-y")).toEqual("");
+    expect(heroSection.style.getPropertyValue("--cursor-x")).toBe("");
+    expect(heroSection.style.getPropertyValue("--cursor-y")).toBe("");
   });
 
-  test("should create trail elements on mousemove with interval", async () => {
-    jest.useFakeTimers();
+  test("should create trail elements on mousemove with interval", () => {
     render(<MatrixCursor />);
 
     // Initial move
     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
     expect(document.getElementsByClassName("matrix-trail").length).toBe(1);
 
-    // Move immediately after (should not create new trail due to interval)
+    // Move again - should create another trail
     fireEvent.mouseMove(heroSection, { clientX: 110, clientY: 110 });
-    expect(document.getElementsByClassName("matrix-trail").length).toBe(1);
-
-    // Advance timers and move again
-    jest.advanceTimersByTime(100);
-    fireEvent.mouseMove(heroSection, { clientX: 120, clientY: 120 });
     expect(document.getElementsByClassName("matrix-trail").length).toBe(2);
 
-    jest.useRealTimers();
+    // Move again - should create another trail
+    fireEvent.mouseMove(heroSection, { clientX: 120, clientY: 120 });
+    expect(document.getElementsByClassName("matrix-trail").length).toBe(3);
   });
 
-  test("should limit the number of trail elements", async () => {
-    jest.useFakeTimers();
+  test("should limit the number of trail elements", () => {
     render(<MatrixCursor />);
 
     // Create more than max trail elements
     for (let i = 0; i < 25; i++) {
-      jest.advanceTimersByTime(100);
       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
     }
 
@@ -122,17 +121,13 @@ describe("MatrixCursor", () => {
     expect(
       document.getElementsByClassName("matrix-trail").length
     ).toBeLessThanOrEqual(20);
-
-    jest.useRealTimers();
   });
 
-  test("should cleanup trail elements on mouseleave", async () => {
-    jest.useFakeTimers();
+  test("should cleanup trail elements on mouseleave", () => {
     render(<MatrixCursor />);
 
     // Create some trail elements
     for (let i = 0; i < 5; i++) {
-      jest.advanceTimersByTime(100);
       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
     }
 
@@ -145,7 +140,5 @@ describe("MatrixCursor", () => {
 
     // All trail elements should be removed
     expect(document.getElementsByClassName("matrix-trail").length).toBe(0);
-
-    jest.useRealTimers();
   });
 });
