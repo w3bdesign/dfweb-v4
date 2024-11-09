@@ -8,7 +8,7 @@ const MobileBackground = () => (
     style={{
       backgroundImage: "url('/images/mobilbg.webp')",
       top: "-0.5rem",
-      marginBottom: "2.5rem",
+      marginBottom: "2.7rem",
     }}
   />
 );
