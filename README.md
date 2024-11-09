@@ -1,4 +1,3 @@
-
 [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
@@ -70,6 +69,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - React Icons for project icons
 - Tailwind CSS for styling
 - Animated reusable input fields
+- Matrix-inspired animated cursor with pulsing and rotating effects in the hero section
 
 ### Accessibility
 
