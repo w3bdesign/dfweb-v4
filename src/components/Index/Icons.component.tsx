@@ -1,6 +1,6 @@
 import { IconType } from "react-icons";
 import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
-import { SiTypescript, SiWordpress, SiSvelte } from "react-icons/si";
+import { SiTypescript, SiWordpress } from "react-icons/si";
 
 import Grow from "../Animations/Grow.component";
 
@@ -12,41 +12,35 @@ interface IAnimateIcons {
 }
 
 const AnimateIcons: IAnimateIcons[] = [
-  { 
-    id: 0, 
-    Icon: FaReact, 
+  {
+    id: 0,
+    Icon: FaReact,
     iconName: "React",
-    color: "#61DAFB"
+    color: "#61DAFB",
   },
-  { 
-    id: 1, 
-    Icon: FaVuejs, 
+  {
+    id: 1,
+    Icon: FaVuejs,
     iconName: "VueJS",
-    color: "#4FC08D"
+    color: "#4FC08D",
   },
-  { 
-    id: 2, 
-    Icon: SiTypescript, 
+  {
+    id: 2,
+    Icon: SiTypescript,
     iconName: "TypeScript",
-    color: "#3178C6"
+    color: "#3178C6",
   },
-  { 
-    id: 3, 
-    Icon: SiWordpress, 
+  {
+    id: 3,
+    Icon: SiWordpress,
     iconName: "WordPress",
-    color: "#21759B"
+    color: "#21759B",
   },
-  { 
-    id: 4, 
-    Icon: FaPhp, 
+  {
+    id: 4,
+    Icon: FaPhp,
     iconName: "PHP",
-    color: "#777BB4"
-  },
-  { 
-    id: 5, 
-    Icon: SiSvelte, 
-    iconName: "Svelte",
-    color: "#d43008"
+    color: "#777BB4",
   },
 ];
 
