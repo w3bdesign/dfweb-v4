@@ -25,7 +25,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 
 ## Frontend (Next.js)
 
-<img src="https://cdn.sanity.io/images/your-project-id/your-dataset/your-image-id.jpg" alt="Frontend Image" />
+<img src="/public/images/frontend.png" alt="Frontend Image" />
 
 * * *
 
