@@ -1,30 +1,31 @@
 import React from "react";
 import { render, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import type { expect } from "@jest/globals";
+
+// Extend expect with jest-dom matchers
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toHaveClass(className: string): R;
+      toBe(expected: any): R;
+      toThrow(): R;
+      toBeLessThanOrEqual(expected: number): R;
+      toBeGreaterThan(expected: number): R;
+    }
+  }
+}
 
 import MatrixCursor from "../../src/components/Animations/MatrixCursor.component";
 
 describe("MatrixCursor", () => {
   let heroSection: HTMLElement;
-  let originalAddEventListener: typeof Element.prototype.addEventListener;
 
   beforeEach(() => {
-    // Save original addEventListener
-    originalAddEventListener = Element.prototype.addEventListener;
-
     // Create and append hero section to document
     heroSection = document.createElement("div");
     heroSection.id = "main-hero";
     document.body.appendChild(heroSection);
-
-    // Only mock animationend event
-    Element.prototype.addEventListener = function(type: string, listener: EventListener) {
-      if (type === "animationend") {
-        // Store the listener but don't actually attach it
-        return;
-      }
-      return originalAddEventListener.apply(this, [type, listener]);
-    };
   });
 
   afterEach(() => {
@@ -33,8 +34,6 @@ describe("MatrixCursor", () => {
     if (document.getElementById("main-hero")) {
       document.body.removeChild(heroSection);
     }
-    // Restore original addEventListener
-    Element.prototype.addEventListener = originalAddEventListener;
   });
 
   test("should update cursor position on mousemove", () => {
@@ -139,6 +138,23 @@ describe("MatrixCursor", () => {
     fireEvent.mouseLeave(heroSection);
 
     // All trail elements should be removed
+    expect(document.getElementsByClassName("matrix-trail").length).toBe(0);
+  });
+
+  test("should remove trail element when animation ends", () => {
+    render(<MatrixCursor />);
+
+    // Create a trail element
+    fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
+    
+    const trailElements = document.getElementsByClassName("matrix-trail");
+    expect(trailElements.length).toBe(1);
+    
+    // Get the trail element and trigger animationend
+    const trailElement = trailElements[0];
+    trailElement.dispatchEvent(new Event("animationend"));
+
+    // Verify the trail element was removed
     expect(document.getElementsByClassName("matrix-trail").length).toBe(0);
   });
 });
