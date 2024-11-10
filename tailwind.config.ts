@@ -66,6 +66,7 @@ const config: Config = {
       animation: {
         'matrix-fade': 'matrixFade 2s ease-out',
         'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+        'matrix-glow': 'matrixGlow 2s ease-in-out infinite',
       },
       keyframes: {
         matrixFade: {
@@ -75,6 +76,10 @@ const config: Config = {
         glowPulse: {
           '0%, 100%': { boxShadow: '0 0 15px rgba(0, 255, 98, 0.6)' },
           '50%': { boxShadow: '0 0 25px rgba(0, 255, 98, 0.8)' },
+        },
+        matrixGlow: {
+          '0%, 100%': { filter: 'drop-shadow(0 0 5px rgba(0, 255, 98, 0.6))' },
+          '50%': { filter: 'drop-shadow(0 0 15px rgba(0, 255, 98, 0.8))' },
         },
       },
       typography: {
