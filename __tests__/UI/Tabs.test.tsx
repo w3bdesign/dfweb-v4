@@ -3,11 +3,11 @@
  */
 
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Tabs from "../../src/components/UI/Tabs.component";
 
-// Mock framer-motion to avoid issues with animations in tests
-jest.mock("framer-motion", () => ({
+// Mock motion to avoid issues with animations in tests
+jest.mock("motion", () => ({
   motion: {
     div: "div",
     button: "button",
@@ -70,9 +70,9 @@ const mockTabs = [
       </div>
     ),
     expectedTexts: [
-      "2020-2022 - Example Company",
-      "Software Developer",
-      "Worked on various projects",
+      `${mockCVData.experience[0].period} - ${mockCVData.experience[0].company}`,
+      mockCVData.experience[0].role,
+      mockCVData.experience[0].description,
     ],
     unexpectedTexts: ["Qualification 1"],
   },
@@ -93,9 +93,9 @@ const mockTabs = [
       </div>
     ),
     expectedTexts: [
-      "2016-2020 - University of Example",
-      "Bachelor in Computer Science",
-      "Studied various aspects of computer science",
+      `${mockCVData.education[0].period} - ${mockCVData.education[0].institution}`,
+      mockCVData.education[0].degree,
+      mockCVData.education[0].description,
     ],
     unexpectedTexts: ["Qualification 1"],
   },
@@ -104,10 +104,14 @@ const mockTabs = [
 describe("Tabs", () => {
   const renderTabs = () => render(<Tabs tabs={mockTabs} />);
 
-  const expectTextsToBePresent = (texts: string[]) => {
-    texts.forEach((text) => {
-      expect(screen.getByText(text)).toBeInTheDocument();
-    });
+  const expectTextsToBePresent = async (texts: string[]) => {
+    await Promise.all(
+      texts.map(async (text) => {
+        await waitFor(() => {
+          expect(screen.getByText(text)).toBeInTheDocument();
+        });
+      })
+    );
   };
 
   const expectTextsNotToBePresent = (texts: string[]) => {
@@ -123,12 +127,12 @@ describe("Tabs", () => {
     });
   });
 
-  it.each(mockTabs)("renders correct content for $label tab", (tab) => {
+  it.each(mockTabs)("renders correct content for $label tab", async (tab) => {
     renderTabs();
     if (tab.id !== mockTabs[0].id) {
       fireEvent.click(screen.getByRole("tab", { name: tab.label }));
     }
-    expectTextsToBePresent(tab.expectedTexts);
+    await expectTextsToBePresent(tab.expectedTexts);
     expectTextsNotToBePresent(tab.unexpectedTexts);
   });
 

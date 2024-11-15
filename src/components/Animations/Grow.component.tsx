@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 import { IGrowProps } from "./types/Animations.types";
 
