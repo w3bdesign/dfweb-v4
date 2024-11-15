@@ -6,7 +6,7 @@
  
 # Dfweb.no Portfolio Version 4
 
-Fourth version of my personal portfolio website with Next.js, Framer Motion, Sanity.io and Typescript.
+Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
 
 ## Table of Contents
 - [Live URL](#live-url)
@@ -50,7 +50,7 @@ Fourth version of my personal portfolio website with Next.js, Framer Motion, San
 - Next.js 15 with Typescript and App router
 - Sanity headless cms for all of the content, projects and navigation links
 - Ladle for component documentation
-- Animations with Framer Motion
+- Animations with Motion
 - React testing library for unit testing
 - Cypress for E2E testing
 - Playwright for cross-browser E2E testing
