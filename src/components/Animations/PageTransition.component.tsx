@@ -1,4 +1,4 @@
-import { Variants, motion, AnimatePresence } from "framer-motion";
+import { Variants, motion, AnimatePresence } from "motion";
 
 import { IAnimateProps } from "./types/Animations.types";
 

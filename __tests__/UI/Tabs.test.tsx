@@ -6,8 +6,8 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import Tabs from "../../src/components/UI/Tabs.component";
 
-// Mock framer-motion to avoid issues with animations in tests
-jest.mock("framer-motion", () => ({
+// Mock motion to avoid issues with animations in tests
+jest.mock("motion", () => ({
   motion: {
     div: "div",
     button: "button",

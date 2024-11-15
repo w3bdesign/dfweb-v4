@@ -5,7 +5,7 @@ import { useClickAway } from "react-use";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AnimatePresence, useCycle, motion } from "framer-motion";
+import { AnimatePresence, useCycle, motion } from "motion";
 
 import Hamburger from "./Hamburger.component";
 

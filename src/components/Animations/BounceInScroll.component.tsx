@@ -1,6 +1,6 @@
 "use client";
 
-import { Variants, motion } from "framer-motion";
+import { Variants, motion } from "motion";
 
 import { IAnimateBounceProps } from "./types/Animations.types";
 

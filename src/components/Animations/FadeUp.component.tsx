@@ -1,4 +1,4 @@
-import { Variants, motion } from "framer-motion";
+import { Variants, motion } from "motion";
 
 import { IAnimateWithDelayProps } from "./types/Animations.types";
 
