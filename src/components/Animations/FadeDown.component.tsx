@@ -1,4 +1,4 @@
-import { Variants, motion } from "motion";
+import { Variants, motion } from "motion/react";
 
 import { IAnimateWithDelayProps } from "./types/Animations.types";
 

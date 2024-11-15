@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { motion } from "motion";
+import { motion } from "motion/react";
 import { MotionDiv } from "@/lib/framer/client";
 
 interface NavigationLinkProps {

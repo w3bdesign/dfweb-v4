@@ -1,4 +1,4 @@
-import { Variants, motion, AnimatePresence } from "motion";
+import { Variants, motion, AnimatePresence } from "motion/react";
 
 import { IAnimateProps } from "./types/Animations.types";
 

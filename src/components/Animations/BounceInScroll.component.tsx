@@ -1,6 +1,6 @@
 "use client";
 
-import { Variants, motion } from "motion";
+import { Variants, motion } from "motion/react";
 
 import { IAnimateBounceProps } from "./types/Animations.types";
 
