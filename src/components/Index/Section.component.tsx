@@ -76,7 +76,7 @@ const Section = ({ text, title, variant = "default" }: IContent) => {
             {title}
           </h2>
           <div className="flex justify-center">
-            <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300">
+            <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
               <PortableText
                 value={text}
                 components={myPortableTextComponents}

@@ -52,7 +52,7 @@ const AnimateIcons: IAnimateIcons[] = [
 const Icons = () => (
   <div
     data-testid="icons"
-    className="flex justify-center mt-4 p-2 text-slate-300 mb-8 md:mb-0"
+    className="flex justify-center mt-4 p-2 text-slate-300/[0.9] mb-8 md:mb-0"
   >
     {AnimateIcons.map(({ Icon, id, iconName, color }) => (
       <span className="p-2" key={id}>
