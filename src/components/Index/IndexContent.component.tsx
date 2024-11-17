@@ -24,9 +24,9 @@ interface IContent {
 }
 
 /**
- * IndexContent component that renders multiple content sections
+ * IndexContent component that renders multiple content sections with alternating visual styles
  * @param {Object} props - The props for the IndexContent component
- * @param {IContent[]} props.pageContent - Array of content sections to render
+ * @param {IContent[]} props.pageContent - Array of content sections to render. Each section alternates between default and alternate variant
  * @returns {JSX.Element} The rendered IndexContent component
  * @throws {Error} Throws an error if no content is available
  */

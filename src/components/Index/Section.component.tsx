@@ -32,6 +32,7 @@ interface IContent {
  * @param {IContent} props - The props for the Section component
  * @param {string} props.text - The text content of the section
  * @param {string} props.title - The title of the section
+ * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
 const Section = ({ text, title, variant = "default" }: IContent) => {
