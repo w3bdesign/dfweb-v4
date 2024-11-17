@@ -33,7 +33,7 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       id: "qualifications",
       label: "Nøkkelkvalifikasjoner",
       content: (
-        <ul className="list-disc pl-5 text-gray-300">
+        <ul className="list-disc pl-5 text-slate-300">
           {cvData.keyQualifications.map((qual) => (
             <li key={qual} className="mb-2">
               {qual}
@@ -46,10 +46,10 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       id: "experience",
       label: "Erfaring",
       content: (
-        <div className="text-gray-300">
+        <div className="text-slate-300">
           {cvData.experience.map((exp) => (
             <div key={exp.description} className="mb-6">
-              <h3 className="font-semibold text-white">
+              <h3 className="font-semibold text-slate-100">
                 {exp.period} - {exp.company}
               </h3>
               {exp.role && <p className="italic">{exp.role}</p>}
@@ -63,10 +63,10 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       id: "education",
       label: "Utdanning",
       content: (
-        <div className="text-gray-300">
+        <div className="text-slate-300">
           {cvData.education.map((edu) => (
             <div key={edu.description} className="mb-6">
-              <h3 className="font-semibold text-white">
+              <h3 className="font-semibold text-slate-100">
                 {edu.period} - {edu.institution}
               </h3>
               {edu.degree && <p className="italic">{edu.degree}</p>}
