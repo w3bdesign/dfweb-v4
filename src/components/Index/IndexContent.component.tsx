@@ -36,9 +36,13 @@ const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   }
 
   return (
-    <div className="md:mt-8 w-screen md:w-full overflow-hidden">
-      {pageContent.map((page) => (
-        <Section key={page.id} {...page} />
+    <div className="md:mt-4 w-screen md:w-full overflow-hidden">
+      {pageContent.map((page, index) => (
+        <Section
+          key={page.id}
+          {...page}
+          variant={index % 2 === 0 ? "default" : "alternate"}
+        />
       ))}
     </div>
   );
