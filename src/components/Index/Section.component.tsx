@@ -60,12 +60,12 @@ const Section = ({ text, title }: IContent) => {
           <h2
             data-testid="sanity-title"
             data-cy={title}
-            className="text-3xl text-center text-slate-200"
+            className="text-3xl text-center text-slate-100"
           >
             {title}
           </h2>
           <div className="flex justify-center">
-            <div className="mt-4 text-lg text-left md:max-w-3xl">
+            <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300">
               <PortableText
                 value={text}
                 components={myPortableTextComponents}

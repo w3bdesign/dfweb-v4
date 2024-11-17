@@ -50,7 +50,7 @@ const ProsjektCard: React.FC<Project> = ({
           </div>
         </div>
         <div className="md:mt-16 p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-          <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-200">
+          <h1 className="xl:mt-4 text-xl text-center font-bold py-2 text-slate-100">
             {name}
           </h1>
           <h2 className="text-md px-4 text-gray-300">{description}</h2>
@@ -74,5 +74,4 @@ const ProsjektCard: React.FC<Project> = ({
     </div>
   );
 };
-
 export default ProsjektCard;
