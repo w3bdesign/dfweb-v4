@@ -24,9 +24,9 @@ interface IContent {
 }
 
 /**
- * IndexContent component that renders multiple content sections
+ * IndexContent component that renders multiple content sections with alternating visual styles
  * @param {Object} props - The props for the IndexContent component
- * @param {IContent[]} props.pageContent - Array of content sections to render
+ * @param {IContent[]} props.pageContent - Array of content sections to render. Each section alternates between default and alternate variant
  * @returns {JSX.Element} The rendered IndexContent component
  * @throws {Error} Throws an error if no content is available
  */
@@ -36,9 +36,13 @@ const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   }
 
   return (
-    <div className="md:mt-8 w-screen md:w-full overflow-hidden">
-      {pageContent.map((page) => (
-        <Section key={page.id} {...page} />
+    <div className="md:mt-4 w-screen md:w-full overflow-hidden">
+      {pageContent.map((page, index) => (
+        <Section
+          key={page.id}
+          {...page}
+          variant={index % 2 === 0 ? "default" : "alternate"}
+        />
       ))}
     </div>
   );
