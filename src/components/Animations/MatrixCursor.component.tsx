@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+
 import "../../app/cursor.css";
 
 const MatrixCursor = () => {
@@ -16,9 +17,10 @@ const MatrixCursor = () => {
       trail.className = "matrix-trail";
       trail.style.left = `${x}px`;
       trail.style.top = `${y}px`;
-      trail.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+      trail.textContent =
+        matrixChars[Math.floor(Math.random() * matrixChars.length)];
       document.body.appendChild(trail);
-      
+
       // Remove trail element after animation
       trail.addEventListener("animationend", () => {
         trail.remove();
@@ -28,8 +30,8 @@ const MatrixCursor = () => {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      heroSection.style.setProperty('--cursor-x', `${e.clientX}px`);
-      heroSection.style.setProperty('--cursor-y', `${e.clientY}px`);
+      heroSection.style.setProperty("--cursor-x", `${e.clientX}px`);
+      heroSection.style.setProperty("--cursor-y", `${e.clientY}px`);
 
       // Create new trail element
       const trail = createTrailElement(e.clientX, e.clientY);
@@ -49,7 +51,7 @@ const MatrixCursor = () => {
     const handleMouseLeave = () => {
       heroSection.classList.remove("matrix-cursor");
       // Clean up trail elements
-      trailElements.forEach(trail => trail.remove());
+      trailElements.forEach((trail) => trail.remove());
       trailElements = [];
     };
 
@@ -63,7 +65,7 @@ const MatrixCursor = () => {
       heroSection.removeEventListener("mouseleave", handleMouseLeave);
       heroSection.classList.remove("matrix-cursor");
       // Clean up any remaining trail elements
-      trailElements.forEach(trail => trail.remove());
+      trailElements.forEach((trail) => trail.remove());
     };
   }, []);
 
