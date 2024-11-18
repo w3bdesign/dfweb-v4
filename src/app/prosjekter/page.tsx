@@ -48,7 +48,7 @@ export default async function Prosjekter() {
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
             {nonFeaturedProjects.map((project) => (
               <ProsjektCard key={project.id} {...project} />
             ))}
