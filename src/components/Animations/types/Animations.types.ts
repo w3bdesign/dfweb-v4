@@ -9,6 +9,7 @@ export interface IAnimateBounceProps {
   children: ReactNode;
   cssClass?: string;
   viewAmount?: "some" | "all" | number;
+  instant?: boolean;
 }
 
 export interface IAnimateWithDelayProps {
