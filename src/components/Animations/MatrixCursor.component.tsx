@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, RefObject } from "react";
+import { useEffect, RefObject, useState } from "react";
 
 import "../../app/cursor.css";
 
@@ -15,6 +15,9 @@ interface MatrixCursorProps {
  * @returns {null} This component doesn't render any visible elements
  */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
   useEffect(() => {
     const heroSection = heroRef.current;
     if (!heroSection) return;
@@ -40,8 +43,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      heroSection.style.setProperty("--cursor-x", `${e.clientX}px`);
-      heroSection.style.setProperty("--cursor-y", `${e.clientY}px`);
+      setCursorPosition({ x: e.clientX, y: e.clientY });
 
       // Create new trail element
       const trail = createTrailElement(e.clientX, e.clientY);
@@ -55,11 +57,11 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     };
 
     const handleMouseEnter = () => {
-      heroSection.classList.add("matrix-cursor");
+      setIsHovered(true);
     };
 
     const handleMouseLeave = () => {
-      heroSection.classList.remove("matrix-cursor");
+      setIsHovered(false);
       // Clean up trail elements
       trailElements.forEach((trail) => trail.remove());
       trailElements = [];
@@ -73,11 +75,29 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
       heroSection.removeEventListener("mousemove", handleMouseMove);
       heroSection.removeEventListener("mouseenter", handleMouseEnter);
       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-      heroSection.classList.remove("matrix-cursor");
       // Clean up any remaining trail elements
       trailElements.forEach((trail) => trail.remove());
     };
   }, [heroRef]);
+
+  // Apply cursor position using style prop
+  useEffect(() => {
+    if (heroRef.current) {
+      heroRef.current.style.setProperty("--cursor-x", `${cursorPosition.x}px`);
+      heroRef.current.style.setProperty("--cursor-y", `${cursorPosition.y}px`);
+    }
+  }, [cursorPosition, heroRef]);
+
+  // Apply matrix cursor class based on hover state
+  useEffect(() => {
+    if (heroRef.current) {
+      if (isHovered) {
+        heroRef.current.classList.add("matrix-cursor");
+      } else {
+        heroRef.current.classList.remove("matrix-cursor");
+      }
+    }
+  }, [isHovered, heroRef]);
 
   return null;
 };
