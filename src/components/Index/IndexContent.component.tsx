@@ -36,7 +36,7 @@ const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
   }
 
   return (
-    <div className="w-screen md:w-full overflow-hidden">
+    <div className="w-screen md:w-full overflow-hidden -mb-8">
       {pageContent.map((page, index) => (
         <Section
           key={page.id}
