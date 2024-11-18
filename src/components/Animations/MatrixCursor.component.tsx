@@ -32,7 +32,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   const createTrail = useCallback(
     (x: number, y: number) => {
       const newTrail: MatrixTrail = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 11),
         x,
         y,
         char: getRandomChar(),
