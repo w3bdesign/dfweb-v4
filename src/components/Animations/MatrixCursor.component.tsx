@@ -1,56 +1,82 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect, RefObject, useState, useCallback } from "react";
 import "../../app/cursor.css";
 
-const MatrixCursor = () => {
+interface MatrixCursorProps {
+  heroRef: RefObject<HTMLElement>;
+}
+
+interface CursorStyles extends React.CSSProperties {
+  "--cursor-x": string;
+  "--cursor-y": string;
+}
+
+interface MatrixTrail {
+  id: string;
+  x: number;
+  y: number;
+  char: string;
+}
+
+const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [trails, setTrails] = useState<MatrixTrail[]>([]);
+
+  const getRandomChar = useCallback(() => {
+    const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+    return matrixChars[Math.floor(Math.random() * matrixChars.length)];
+  }, []);
+
+  const createTrail = useCallback(
+    (x: number, y: number) => {
+      const newTrail: MatrixTrail = {
+        id: Math.random().toString(36).substring(2, 100),
+        x,
+        y,
+        char: getRandomChar(),
+      };
+
+      setTrails((currentTrails) => {
+        const updatedTrails = [...currentTrails, newTrail];
+        if (updatedTrails.length > 20) {
+          return updatedTrails.slice(1);
+        }
+        return updatedTrails;
+      });
+    },
+    [getRandomChar]
+  );
+
   useEffect(() => {
-    const heroSection = document.getElementById("main-hero");
+    const heroSection = heroRef.current;
     if (!heroSection) return;
 
-    const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
-    let trailElements: HTMLElement[] = [];
-
-    const createTrailElement = (x: number, y: number) => {
-      const trail = document.createElement("div");
-      trail.className = "matrix-trail";
-      trail.style.left = `${x}px`;
-      trail.style.top = `${y}px`;
-      trail.textContent = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-      document.body.appendChild(trail);
-      
-      // Remove trail element after animation
-      trail.addEventListener("animationend", () => {
-        trail.remove();
-      });
-
-      return trail;
-    };
+    // Add cursor: none to the hero section when hovered
+    if (isHovered) {
+      heroSection.style.cursor = "none";
+    } else {
+      heroSection.style.cursor = "";
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
-      heroSection.style.setProperty('--cursor-x', `${e.clientX}px`);
-      heroSection.style.setProperty('--cursor-y', `${e.clientY}px`);
+      setCursorPosition({ x: e.clientX, y: e.clientY });
 
-      // Create new trail element
-      const trail = createTrailElement(e.clientX, e.clientY);
-      trailElements.push(trail);
-
-      // Limit number of trail elements
-      if (trailElements.length > 20) {
-        const oldTrail = trailElements.shift();
-        oldTrail?.remove();
+      if (isHovered) {
+        createTrail(e.clientX, e.clientY);
       }
     };
 
     const handleMouseEnter = () => {
-      heroSection.classList.add("matrix-cursor");
+      setIsHovered(true);
+      heroSection.style.cursor = "none";
     };
 
     const handleMouseLeave = () => {
-      heroSection.classList.remove("matrix-cursor");
-      // Clean up trail elements
-      trailElements.forEach(trail => trail.remove());
-      trailElements = [];
+      setIsHovered(false);
+      heroSection.style.cursor = "";
+      setTrails([]);
     };
 
     heroSection.addEventListener("mousemove", handleMouseMove);
@@ -61,13 +87,67 @@ const MatrixCursor = () => {
       heroSection.removeEventListener("mousemove", handleMouseMove);
       heroSection.removeEventListener("mouseenter", handleMouseEnter);
       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-      heroSection.classList.remove("matrix-cursor");
-      // Clean up any remaining trail elements
-      trailElements.forEach(trail => trail.remove());
+      heroSection.style.cursor = "";
     };
+  }, [heroRef, isHovered, createTrail]);
+
+  const handleAnimationEnd = useCallback((trailId: string) => {
+    setTrails((currentTrails) =>
+      currentTrails.filter((trail) => trail.id !== trailId)
+    );
   }, []);
 
-  return null;
+  if (!heroRef.current) return null;
+
+  const cursorStyles: CursorStyles = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    pointerEvents: "none",
+    zIndex: 9999,
+    "--cursor-x": `${cursorPosition.x}px`,
+    "--cursor-y": `${cursorPosition.y}px`,
+  };
+
+  return (
+    <div
+      data-testid="matrix-cursor"
+      className={isHovered ? "matrix-cursor" : ""}
+      style={cursorStyles}
+    >
+      {trails.map((trail) => (
+        <div
+          key={trail.id}
+          className="matrix-trail"
+          style={{
+            position: "fixed",
+            left: `${trail.x}px`,
+            top: `${trail.y}px`,
+            zIndex: 10000,
+            pointerEvents: "none",
+          }}
+          onAnimationEnd={() => handleAnimationEnd(trail.id)}
+        >
+          {trail.char}
+        </div>
+      ))}
+      {isHovered && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 export default MatrixCursor;
