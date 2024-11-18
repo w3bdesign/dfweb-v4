@@ -71,7 +71,7 @@ const Section = ({ text, title, variant = "default" }: IContent) => {
           <h2
             data-testid="sanity-title"
             data-cy={title}
-            className="text-3xl text-center text-slate-100 mb-8"
+            className="text-3xl text-center text-slate-100"
           >
             {title}
           </h2>

@@ -8,7 +8,6 @@ interface IAnimateIcons {
   id: number;
   Icon: IconType;
   iconName: string;
-  color: string;
 }
 
 const AnimateIcons: IAnimateIcons[] = [
@@ -16,31 +15,26 @@ const AnimateIcons: IAnimateIcons[] = [
     id: 0,
     Icon: FaReact,
     iconName: "React",
-    color: "#61DAFB",
   },
   {
     id: 1,
     Icon: FaVuejs,
     iconName: "VueJS",
-    color: "#4FC08D",
   },
   {
     id: 2,
     Icon: SiTypescript,
     iconName: "TypeScript",
-    color: "#3178C6",
   },
   {
     id: 3,
     Icon: SiWordpress,
     iconName: "WordPress",
-    color: "#21759B",
   },
   {
     id: 4,
     Icon: FaPhp,
     iconName: "PHP",
-    color: "#777BB4",
   },
 ];
 
@@ -52,9 +46,9 @@ const AnimateIcons: IAnimateIcons[] = [
 const Icons = () => (
   <div
     data-testid="icons"
-    className="flex justify-center mt-4 p-2 text-slate-300/[0.9] mb-8 md:mb-0"
+    className="flex justify-center mt-4 p-2 text-slate-300/[0.8] mb-8 md:mb-0"
   >
-    {AnimateIcons.map(({ Icon, id, iconName, color }) => (
+    {AnimateIcons.map(({ Icon, id, iconName }) => (
       <span className="p-2" key={id}>
         <Grow delay={1.8 + id * 0.2}>
           <div className="relative group">
@@ -63,8 +57,7 @@ const Icons = () => (
               aria-label={`${iconName} ikon`}
               title={`${iconName} ikon`}
               size="3em"
-              className="transition-transform duration-300 hover:-translate-y-1 hover:text-[#00ff62]"
-              style={{ color }}
+              className="transition-transform duration-300 hover:-translate-y-1 hover:text-white"
             />
             <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
               {iconName}
