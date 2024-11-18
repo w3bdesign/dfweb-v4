@@ -19,6 +19,12 @@ interface MatrixTrail {
   char: string;
 }
 
+/**
+ * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ * @param {RefObject<HTMLElement>} props.heroRef - Reference to the hero section element
+ * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
