@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, RefObject } from "react";
 
 import "../../app/cursor.css";
 
-const MatrixCursor = () => {
+interface MatrixCursorProps {
+  heroRef: RefObject<HTMLElement>;
+}
+
+/**
+ * MatrixCursor component that creates a matrix-style cursor effect
+ * @param {MatrixCursorProps} props - The component props
+ * @param {RefObject<HTMLElement>} props.heroRef - Reference to the hero section element
+ * @returns {null} This component doesn't render any visible elements
+ */
+const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   useEffect(() => {
-    const heroSection = document.getElementById("main-hero");
+    const heroSection = heroRef.current;
     if (!heroSection) return;
 
     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
@@ -67,7 +77,7 @@ const MatrixCursor = () => {
       // Clean up any remaining trail elements
       trailElements.forEach((trail) => trail.remove());
     };
-  }, []);
+  }, [heroRef]);
 
   return null;
 };

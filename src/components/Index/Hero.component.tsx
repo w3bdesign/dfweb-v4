@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import dynamic from "next/dynamic";
 
 import Icons from "./Icons.component";
@@ -34,14 +34,17 @@ interface IContent {
  * @returns {JSX.Element} The rendered Hero component
  */
 const Hero = ({ content }: IContent) => {
+  const heroRef = useRef<HTMLElement>(null);
+
   return (
     <article
       aria-label="Kontainer for animasjoner av introtekst"
       id="main-hero"
       data-testid="main-hero"
+      ref={heroRef}
       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full"
     >
-      <MatrixCursor />
+      <MatrixCursor heroRef={heroRef} />
       <MobileBackground />
       <div className="hidden md:block absolute inset-0 w-full h-full">
         <ReactMatrixAnimation />
