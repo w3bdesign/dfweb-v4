@@ -26,6 +26,7 @@ const bounceVariants: Variants = {
  * @param {ReactNode} children - Children content to render
  * @param {string} cssClass - CSS classes to apply to component
  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
+ * @param {boolean} instant - Whether to animate instantly without scroll trigger
  * @returns {JSX.Element} - Rendered component
  */
 
@@ -33,11 +34,13 @@ const BounceInScroll = ({
   children,
   cssClass,
   viewAmount,
+  instant,
 }: IAnimateBounceProps) => (
   <motion.div
     initial="offscreen"
-    whileInView="onscreen"
-    viewport={{ once: true, amount: viewAmount ?? 0.2 }}
+    animate={instant ? "onscreen" : undefined}
+    whileInView={instant ? undefined : "onscreen"}
+    viewport={instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }}
     className={cssClass}
     data-testid="bounceinscroll"
   >

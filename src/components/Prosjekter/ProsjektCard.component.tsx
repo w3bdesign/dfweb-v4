@@ -27,13 +27,14 @@ const ProsjektCard: React.FC<Project> = ({
   projectimage,
   urlwww,
   urlgithub,
+  featured,
 }) => {
   return (
     <div
       className="bg-slate-700 shadow-md rounded overflow-hidden mx-4 md:m-0"
       data-testid="projectcard"
     >
-      <BounceInScroll viewAmount={0.3}>
+      <BounceInScroll viewAmount={0.3} instant={featured}>
         <div className="relative w-full h-48 md:h-60">
           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
