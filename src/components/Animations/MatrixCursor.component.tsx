@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, RefObject, useState, useCallback } from "react";
+
 import "../../app/cursor.css";
 
 interface MatrixCursorProps {
