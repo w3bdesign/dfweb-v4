@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, RefObject, useState, useCallback } from "react";
-
 import "../../app/cursor.css";
 
 interface MatrixCursorProps {
@@ -113,7 +112,11 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   };
 
   return (
-    <div className={isHovered ? "matrix-cursor" : ""} style={cursorStyles}>
+    <div
+      data-testid="matrix-cursor"
+      className={isHovered ? "matrix-cursor" : ""}
+      style={cursorStyles}
+    >
       {trails.map((trail) => (
         <div
           key={trail.id}
