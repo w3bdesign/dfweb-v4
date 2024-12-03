@@ -126,7 +126,7 @@ def generate_commit_message(diff):
         # Load gitmojis
         # gitmojis = load_gitmojis()
 
-        prompt = f"""As a git commit message expert, analyze the following git diff and generate a commit message following the Conventional Commits specification with gitmojis:
+        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
 
         The commit message MUST follow this format:
         <emoji> <type>[optional scope]: <description>
@@ -185,15 +185,19 @@ def generate_commit_message(diff):
         Git diff to analyze:
         {diff}
 
-        Respond ONLY with the commit message, formatted exactly as it should appear.
-        """
+        Output ONLY the commit message exactly as it should appear in git, with no additional text."""
 
         response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-        return response.choices[0].message.content
+        
+        # Get the message and clean any potential explanatory text
+        message = response.choices[0].message.content.strip()
+        if "Based on the diff" in message:
+            message = message.split("\n")[-1].strip()
+        return message
     except Exception as e:
         print(f"Error generating commit message: {e}")
         return None
