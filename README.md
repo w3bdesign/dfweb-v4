@@ -89,3 +89,4 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
+- AI-powered commit message generation following Conventional Commits with gitmojis
