@@ -124,7 +124,7 @@ def generate_commit_message(diff):
         model = os.getenv("MODEL_NAME", "claude-3.5-sonnet@anthropic")
 
         # Load gitmojis
-        gitmojis = load_gitmojis()
+        # gitmojis = load_gitmojis()
 
         prompt = f"""As a git commit message expert, analyze the following git diff and generate a commit message following the Conventional Commits specification with gitmojis:
 
