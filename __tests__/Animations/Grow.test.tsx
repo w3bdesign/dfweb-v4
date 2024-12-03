@@ -32,11 +32,7 @@ describe("Grow", () => {
 
   describe("with default props", () => {
     beforeEach(() => {
-      render(
-        <Grow>
-          Default Props Test
-        </Grow>,
-      );
+      render(<Grow>Default Props Test</Grow>);
     });
 
     test("renders with default values", () => {

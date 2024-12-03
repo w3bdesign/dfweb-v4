@@ -103,7 +103,7 @@ describe("MatrixCursor", () => {
 
     // Should be limited to 20 elements
     expect(
-      container.getElementsByClassName("matrix-trail").length
+      container.getElementsByClassName("matrix-trail").length,
     ).toBeLessThanOrEqual(20);
   });
 
@@ -120,7 +120,7 @@ describe("MatrixCursor", () => {
     }
 
     expect(
-      container.getElementsByClassName("matrix-trail").length
+      container.getElementsByClassName("matrix-trail").length,
     ).toBeGreaterThan(0);
 
     // Leave the hero section

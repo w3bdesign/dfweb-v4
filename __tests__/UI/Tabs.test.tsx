@@ -110,7 +110,7 @@ describe("Tabs", () => {
         await waitFor(() => {
           expect(screen.getByText(text)).toBeInTheDocument();
         });
-      })
+      }),
     );
   };
 

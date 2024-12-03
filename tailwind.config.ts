@@ -10,7 +10,8 @@ const config: Config = {
     extend: {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-conic":
+          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       colors: {
         // New Modern Color Scheme
@@ -43,60 +44,60 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          'Inter',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Oxygen',
-          'Ubuntu',
-          'Cantarell',
-          'sans-serif',
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Oxygen",
+          "Ubuntu",
+          "Cantarell",
+          "sans-serif",
         ],
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: ["JetBrains Mono", "monospace"],
       },
       boxShadow: {
-        glow: '0 0 15px rgba(0, 255, 98, 0.6)',
-        'glow-sm': '0 0 10px rgba(0, 255, 98, 0.4)',
-        'glow-lg': '0 0 20px rgba(0, 255, 98, 0.8)',
+        glow: "0 0 15px rgba(0, 255, 98, 0.6)",
+        "glow-sm": "0 0 10px rgba(0, 255, 98, 0.4)",
+        "glow-lg": "0 0 20px rgba(0, 255, 98, 0.8)",
       },
       backdropBlur: {
-        xs: '2px',
+        xs: "2px",
       },
       animation: {
-        'matrix-fade': 'matrixFade 2s ease-out',
-        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
-        'matrix-glow': 'matrixGlow 2s ease-in-out infinite',
+        "matrix-fade": "matrixFade 2s ease-out",
+        "glow-pulse": "glowPulse 2s ease-in-out infinite",
+        "matrix-glow": "matrixGlow 2s ease-in-out infinite",
       },
       keyframes: {
         matrixFade: {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          "0%": { opacity: "0", transform: "translateY(-10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         glowPulse: {
-          '0%, 100%': { boxShadow: '0 0 15px rgba(0, 255, 98, 0.6)' },
-          '50%': { boxShadow: '0 0 25px rgba(0, 255, 98, 0.8)' },
+          "0%, 100%": { boxShadow: "0 0 15px rgba(0, 255, 98, 0.6)" },
+          "50%": { boxShadow: "0 0 25px rgba(0, 255, 98, 0.8)" },
         },
         matrixGlow: {
-          '0%, 100%': { filter: 'drop-shadow(0 0 5px rgba(0, 255, 98, 0.6))' },
-          '50%': { filter: 'drop-shadow(0 0 15px rgba(0, 255, 98, 0.8))' },
+          "0%, 100%": { filter: "drop-shadow(0 0 5px rgba(0, 255, 98, 0.6))" },
+          "50%": { filter: "drop-shadow(0 0 15px rgba(0, 255, 98, 0.8))" },
         },
       },
       typography: {
         DEFAULT: {
           css: {
-            color: 'var(--text)',
+            color: "var(--text)",
             a: {
-              color: 'var(--secondary)',
-              '&:hover': {
-                color: 'var(--accent)',
+              color: "var(--secondary)",
+              "&:hover": {
+                color: "var(--accent)",
               },
             },
             h1: {
-              color: 'var(--accent)',
+              color: "var(--accent)",
             },
             h2: {
-              color: 'var(--secondary)',
+              color: "var(--secondary)",
             },
           },
         },
