@@ -52,7 +52,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
         return updatedTrails;
       });
     },
-    [getRandomChar]
+    [getRandomChar],
   );
 
   useEffect(() => {
@@ -99,7 +99,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
 
   const handleAnimationEnd = useCallback((trailId: string) => {
     setTrails((currentTrails) =>
-      currentTrails.filter((trail) => trail.id !== trailId)
+      currentTrails.filter((trail) => trail.id !== trailId),
     );
   }, []);
 

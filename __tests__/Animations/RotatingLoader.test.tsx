@@ -13,7 +13,9 @@ describe("RotatingLoader", () => {
 
     // Check for the main wrapper div
     const wrapperDiv = container.firstChild;
-    expect(wrapperDiv).toHaveClass("grid min-h-[140px] w-full place-items-center");
+    expect(wrapperDiv).toHaveClass(
+      "grid min-h-[140px] w-full place-items-center",
+    );
 
     // Check for the SVG element
     const svg = container.querySelector("svg");
@@ -29,7 +31,7 @@ describe("RotatingLoader", () => {
 
   it("has the correct animations", () => {
     const { container } = render(<RotatingLoader />);
-    
+
     // Check for glow animation container
     const glowContainer = container.querySelector(".animate-matrix-glow");
     expect(glowContainer).toBeInTheDocument();
