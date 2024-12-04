@@ -9,9 +9,7 @@ export default {
 } as Meta;
 
 // Default header with text
-export const Default = () => (
-  <PageHeader>Welcome to the Page</PageHeader>
-);
+export const Default = () => <PageHeader>Welcome to the Page</PageHeader>;
 
 // With HTML elements
 export const WithHtmlElements = () => (
@@ -23,41 +21,24 @@ export const WithHtmlElements = () => (
 // Long text
 export const LongText = () => (
   <PageHeader>
-    This is a very long page header text that demonstrates how the component handles longer content
+    This is a very long page header text that demonstrates how the component
+    handles longer content
   </PageHeader>
 );
 
 // Short text
-export const ShortText = () => (
-  <PageHeader>
-    Projects
-  </PageHeader>
-);
-
-// With icon
-export const WithIcon = () => (
-  <PageHeader>
-    <span className="flex items-center justify-center gap-2">
-      <span className="text-matrix-light">⚡</span>
-      Dashboard
-    </span>
-  </PageHeader>
-);
+export const ShortText = () => <PageHeader>Projects</PageHeader>;
 
 // Narrow viewport
 export const NarrowViewport = () => (
-  <div style={{ width: '320px' }}>
-    <PageHeader>
-      Mobile View Header
-    </PageHeader>
+  <div style={{ width: "320px" }}>
+    <PageHeader>Mobile View Header</PageHeader>
   </div>
 );
 
 // Wide viewport
 export const WideViewport = () => (
-  <div style={{ width: '1200px' }}>
-    <PageHeader>
-      Desktop View Header
-    </PageHeader>
+  <div style={{ width: "1200px" }}>
+    <PageHeader>Desktop View Header</PageHeader>
   </div>
 );
