@@ -1,29 +1,63 @@
 import React from "react";
-import { Meta, Story } from "@ladle/react";
-import PageHeader, { IPageHeaderProps } from "../../components/UI/PageHeader.component";
+import { Meta } from "@ladle/react";
+import PageHeader from "../../components/UI/PageHeader.component";
+import "../../app/globals.css";
 
 export default {
-  title: "PageHeader",
+  title: "UI/PageHeader",
   component: PageHeader,
 } as Meta;
 
-const Template: Story<IPageHeaderProps> = (args) => <PageHeader {...args} />;
+// Default header with text
+export const Default = () => (
+  <PageHeader>Welcome to the Page</PageHeader>
+);
 
-export const BasicText = Template.bind({});
-BasicText.args = {
-  children: "Welcome to My Page",
-};
+// With HTML elements
+export const WithHtmlElements = () => (
+  <PageHeader>
+    Welcome to <span className="text-matrix-light">Matrix</span>
+  </PageHeader>
+);
 
-export const WithHtmlElements = Template.bind({});
-WithHtmlElements.args = {
-  children: (
-    <>
-      Welcome to <span className="text-blue-400">My Page</span>
-    </>
-  ),
-};
+// Long text
+export const LongText = () => (
+  <PageHeader>
+    This is a very long page header text that demonstrates how the component handles longer content
+  </PageHeader>
+);
 
-export const LongText = Template.bind({});
-LongText.args = {
-  children: "This is a longer page header that demonstrates how the component handles more content",
-};
+// Short text
+export const ShortText = () => (
+  <PageHeader>
+    Projects
+  </PageHeader>
+);
+
+// With icon
+export const WithIcon = () => (
+  <PageHeader>
+    <span className="flex items-center justify-center gap-2">
+      <span className="text-matrix-light">⚡</span>
+      Dashboard
+    </span>
+  </PageHeader>
+);
+
+// Narrow viewport
+export const NarrowViewport = () => (
+  <div style={{ width: '320px' }}>
+    <PageHeader>
+      Mobile View Header
+    </PageHeader>
+  </div>
+);
+
+// Wide viewport
+export const WideViewport = () => (
+  <div style={{ width: '1200px' }}>
+    <PageHeader>
+      Desktop View Header
+    </PageHeader>
+  </div>
+);
