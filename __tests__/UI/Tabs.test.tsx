@@ -4,13 +4,18 @@
 
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import Tabs from "../../src/components/UI/Tabs.component";
 
-// Mock motion to avoid issues with animations in tests
 jest.mock("motion", () => ({
+  __esModule: true,
   motion: {
-    div: "div",
-    button: "button",
+    div: ({ children, ...props }: React.HTMLProps<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
+    ),
+    button: ({ children, ...props }: React.HTMLProps<HTMLButtonElement>) => (
+      <button {...props}>{children}</button>
+    ),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
@@ -37,7 +42,15 @@ const mockCVData = {
   ],
 };
 
-const mockTabs = [
+interface MockTab {
+  id: string;
+  label: string;
+  content: React.ReactNode;
+  expectedTexts: string[];
+  unexpectedTexts: string[];
+}
+
+const mockTabs: MockTab[] = [
   {
     id: "qualifications",
     label: "Nøkkelkvalifikasjoner",
@@ -102,7 +115,8 @@ const mockTabs = [
 ];
 
 describe("Tabs", () => {
-  const renderTabs = () => render(<Tabs tabs={mockTabs} />);
+  const renderTabs = (orientation?: "horizontal" | "vertical") =>
+    render(<Tabs tabs={mockTabs} orientation={orientation} />);
 
   const expectTextsToBePresent = async (texts: string[]) => {
     await Promise.all(
@@ -127,7 +141,7 @@ describe("Tabs", () => {
     });
   });
 
-  it.each(mockTabs)("renders correct content for $label tab", async (tab) => {
+  test.each(mockTabs)("renders correct content for $label tab", async (tab: MockTab) => {
     renderTabs();
     if (tab.id !== mockTabs[0].id) {
       fireEvent.click(screen.getByRole("tab", { name: tab.label }));
@@ -152,5 +166,51 @@ describe("Tabs", () => {
     renderTabs();
     const tabList = screen.getByRole("tablist");
     expect(tabList).toHaveClass("sm:flex-col");
+  });
+
+  it("renders in horizontal orientation when specified", () => {
+    renderTabs("horizontal");
+    const tabList = screen.getByRole("tablist");
+    expect(tabList).toHaveClass("flex-row");
+    expect(tabList).not.toHaveClass("sm:flex-col");
+  });
+
+  it("applies correct border styles to tabs", () => {
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+    
+    // First tab should not have top border
+    expect(tabs[0]).not.toHaveClass("border-t");
+    
+    // Second tab should have top border
+    expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+  });
+
+  it("renders tab panels with correct attributes and transitions", async () => {
+    renderTabs();
+    
+    // Check initial tab panel
+    let activePanel = screen.getByRole("tabpanel");
+    expect(activePanel).toHaveAttribute("id", "tabpanel-qualifications");
+    expect(activePanel).toHaveAttribute("aria-labelledby", "tab-qualifications");
+    expect(activePanel).toHaveClass("px-8");
+    
+    // Switch to another tab and verify panel
+    fireEvent.click(screen.getByRole("tab", { name: "Erfaring" }));
+    await waitFor(() => {
+      activePanel = screen.getByRole("tabpanel");
+      expect(activePanel).toHaveAttribute("id", "tabpanel-experience");
+      expect(activePanel).toHaveAttribute("aria-labelledby", "tab-experience");
+      expect(activePanel).toHaveClass("px-8");
+    });
+    
+    // Switch to last tab and verify panel
+    fireEvent.click(screen.getByRole("tab", { name: "Utdanning" }));
+    await waitFor(() => {
+      activePanel = screen.getByRole("tabpanel");
+      expect(activePanel).toHaveAttribute("id", "tabpanel-education");
+      expect(activePanel).toHaveAttribute("aria-labelledby", "tab-education");
+      expect(activePanel).toHaveClass("px-8");
+    });
   });
 });
