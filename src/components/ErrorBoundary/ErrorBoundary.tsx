@@ -9,6 +9,16 @@ interface ErrorBoundaryProps {
   compact?: boolean;
 }
 
+interface FallbackProps {
+  error: Error;
+  compact?: boolean;
+}
+
+// Extracted FallbackComponent to avoid nesting
+const ErrorFallbackComponent = ({ error, compact }: FallbackProps) => (
+  <ErrorFallbackWrapper error={error} compact={compact} />
+);
+
 /**
  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
  * It logs the error and displays a fallback UI instead of the component tree that crashed.
@@ -25,7 +35,7 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, compact = false
 
   return (
     <ReactErrorBoundary
-      FallbackComponent={({ error }) => <ErrorFallbackWrapper error={error} compact={compact} />}
+      FallbackComponent={(props) => <ErrorFallbackComponent {...props} compact={compact} />}
       onError={handleError}
     >
       {children}
