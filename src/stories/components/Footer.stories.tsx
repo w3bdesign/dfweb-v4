@@ -1,5 +1,5 @@
 import React from "react";
-import { Meta, Story } from "@ladle/react";
+import { Meta } from "@ladle/react";
 import Footer from "../../components/Layout/Footer.component";
 import "../../app/globals.css";
 
