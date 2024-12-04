@@ -1,6 +1,7 @@
 import React from "react";
-import { Meta } from "@ladle/react";
+import { Meta, Story } from "@ladle/react";
 import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
+import "../../app/globals.css";
 
 export default {
   title: "ErrorBoundary",
@@ -17,14 +18,14 @@ const BuggyCounter = () => {
 
   return (
     <div className="p-2 bg-surface rounded">
-      <p className="text-white text-sm">Counter: {counter}</p>
+      <p className="text-sm">Counter: {counter}</p>
       <button
         onClick={() => setCounter(c => c + 1)}
         className="mt-1 px-2 py-1 bg-matrix-light text-black rounded text-xs hover:bg-matrix-dark"
       >
         Increment
       </button>
-      <p className="text-gray-400 text-xs mt-1">Crashes at 5</p>
+      <p className="text-xs mt-1 text-gray-400">Crashes at 5</p>
     </div>
   );
 };
@@ -37,40 +38,34 @@ const ImmediateCrash = () => {
 
 // Basic error boundary example
 export const Default = () => (
-  <div className="bg-gray-800 p-2 h-48">
-    <ErrorBoundary compact>
-      <BuggyCounter />
-    </ErrorBoundary>
-  </div>
+  <ErrorBoundary>
+    <BuggyCounter />
+  </ErrorBoundary>
 );
 
-// Immediate crash example
-export const ImmediateCrashExample = () => (
-  <div className="bg-gray-800 p-2 h-48">
-    <ErrorBoundary compact>
-      <ImmediateCrash />
-    </ErrorBoundary>
-  </div>
+// Compact error boundary example
+export const CompactError = () => (
+  <ErrorBoundary compact>
+    <ImmediateCrash />
+  </ErrorBoundary>
 );
 
 // Multiple error boundaries
 export const Multiple = () => (
-  <div className="bg-gray-800 p-2 space-y-2">
+  <div className="space-y-2">
     <ErrorBoundary compact>
       <div className="p-2 bg-surface rounded">
-        <p className="text-white text-xs">Working component</p>
+        <p className="text-xs">Working component</p>
       </div>
     </ErrorBoundary>
 
-    <div className="h-48">
-      <ErrorBoundary compact>
-        <ImmediateCrash />
-      </ErrorBoundary>
-    </div>
+    <ErrorBoundary compact>
+      <ImmediateCrash />
+    </ErrorBoundary>
 
     <ErrorBoundary compact>
       <div className="p-2 bg-surface rounded">
-        <p className="text-white text-xs">Another working component</p>
+        <p className="text-xs">Another working component</p>
       </div>
     </ErrorBoundary>
   </div>
