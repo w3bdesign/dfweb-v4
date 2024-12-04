@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode } from "react";
+import React, { ReactNode, ErrorInfo } from "react";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 import ErrorFallbackWrapper from "./ErrorFallbackWrapper.component";
 
@@ -19,7 +19,7 @@ interface ErrorBoundaryProps {
  * @returns {JSX.Element} A React component that catches errors in its child components
  */
 const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, compact = false }) => {
-  const handleError = (error: Error, info: { componentStack: string }) => {
+  const handleError = (error: Error, info: ErrorInfo) => {
     console.error("Uventet feil i Matrix:", error, info);
   };
 
