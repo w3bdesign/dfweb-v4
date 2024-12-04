@@ -20,7 +20,7 @@ const BuggyCounter = () => {
     <div className="p-2 bg-surface rounded">
       <p className="text-sm">Counter: {counter}</p>
       <button
-        onClick={() => setCounter(c => c + 1)}
+        onClick={() => setCounter((c) => c + 1)}
         className="mt-1 px-2 py-1 bg-matrix-light text-black rounded text-xs hover:bg-matrix-dark"
       >
         Increment
@@ -33,7 +33,6 @@ const BuggyCounter = () => {
 // Component that throws an error immediately
 const ImmediateCrash = () => {
   throw new Error("Immediate crash!");
-  return null;
 };
 
 // Basic error boundary example
