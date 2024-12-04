@@ -1,5 +1,5 @@
 import React from "react";
-import { Meta, Story } from "@ladle/react";
+import { Meta } from "@ladle/react";
 import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
 import "../../app/globals.css";
 
