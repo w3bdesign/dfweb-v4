@@ -12,15 +12,13 @@ const DemoContainer = ({ children }: { children: React.ReactNode }) => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   return (
-    <>
-      <div
-        ref={heroRef}
-        className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
-      >
-        {children}
-        <MatrixCursor heroRef={heroRef} />
-      </div>
-    </>
+    <div
+      ref={heroRef}
+      className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
+    >
+      {children}
+      <MatrixCursor heroRef={heroRef} />
+    </div>
   );
 };
 
@@ -28,7 +26,9 @@ export const Default = () => (
   <DemoContainer>
     <div className="text-gray-300 space-y-4">
       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
-      <p>Move your mouse around this container to see the matrix cursor effect.</p>
+      <p>
+        Move your mouse around this container to see the matrix cursor effect.
+      </p>
       <p>The cursor will change and leave a trail of matrix characters.</p>
       <div className="grid grid-cols-2 gap-4 mt-8">
         <div className="bg-gray-800 p-4 rounded">
@@ -94,21 +94,28 @@ export const LargeArea = () => (
 export const WithContent = () => (
   <DemoContainer>
     <div className="text-gray-300 space-y-6">
-      <h2 className="text-2xl font-bold text-white mb-4">Content Interaction</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">
+        Content Interaction
+      </h2>
       <div className="grid grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-gray-800 p-4 rounded hover:bg-gray-700 transition-colors">
+          <div
+            key={i}
+            className="bg-gray-800 p-4 rounded hover:bg-gray-700 transition-colors"
+          >
             <h3 className="text-lg font-semibold mb-2">Card {i}</h3>
             <p className="text-sm">
-              Hover over this card to see how the matrix cursor interacts with content.
+              Hover over this card to see how the matrix cursor interacts with
+              content.
             </p>
           </div>
         ))}
       </div>
       <div className="bg-gray-800 p-6 rounded mt-8">
         <p className="text-lg">
-          The matrix cursor effect adds a unique interactive element to your content.
-          Try moving between different cards to see how the trail follows your movement.
+          The matrix cursor effect adds a unique interactive element to your
+          content. Try moving between different cards to see how the trail
+          follows your movement.
         </p>
       </div>
     </div>
