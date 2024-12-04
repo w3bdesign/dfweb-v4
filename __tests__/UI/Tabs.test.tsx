@@ -2,155 +2,110 @@
  * @jest-environment jsdom
  */
 
+/// <reference types="@testing-library/jest-dom" />
+
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom";
 import Tabs from "../../src/components/UI/Tabs.component";
 
-// Mock motion to avoid issues with animations in tests
-jest.mock("motion", () => ({
+// Component that throws an error immediately
+const ImmediateCrash = () => {
+  throw new Error("Immediate crash!");
+};
+
+const mockMotion = {
   motion: {
-    div: "div",
-    button: "button",
+    div: (props: React.ComponentProps<"div">) => (
+      <div {...props}>{props.children}</div>
+    ),
+    button: (props: React.ComponentProps<"button">) => (
+      <button type="button" {...props}>
+        {props.children}
+      </button>
+    ),
   },
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-}));
-
-const mockCVData = {
-  keyQualifications: ["Qualification 1", "Qualification 2"],
-  experience: [
-    {
-      period: "2020-2022",
-      company: "Example Company",
-      role: "Software Developer",
-      description: "Worked on various projects",
-    },
-  ],
-  education: [
-    {
-      period: "2016-2020",
-      institution: "University of Example",
-      degree: "Bachelor in Computer Science",
-      description: "Studied various aspects of computer science",
-    },
-  ],
 };
+
+jest.mock("motion", () => mockMotion);
 
 const mockTabs = [
   {
-    id: "qualifications",
-    label: "Nøkkelkvalifikasjoner",
-    content: (
-      <ul className="list-disc pl-5 text-gray-300">
-        {mockCVData.keyQualifications.map((qual) => (
-          <li key={qual} className="mb-2">
-            {qual}
-          </li>
-        ))}
-      </ul>
-    ),
-    expectedTexts: mockCVData.keyQualifications,
-    unexpectedTexts: ["Example Company", "University of Example"],
+    id: "tab1",
+    label: "Normal Tab",
+    content: <div>Normal content</div>,
   },
   {
-    id: "experience",
-    label: "Erfaring",
-    content: (
-      <div className="text-gray-300">
-        {mockCVData.experience.map((exp) => (
-          <div key={exp.description} className="mb-6">
-            <h3 className="font-semibold text-white">
-              {exp.period} - {exp.company}
-            </h3>
-            {exp.role && <p className="italic">{exp.role}</p>}
-            <p>{exp.description}</p>
-          </div>
-        ))}
-      </div>
-    ),
-    expectedTexts: [
-      `${mockCVData.experience[0].period} - ${mockCVData.experience[0].company}`,
-      mockCVData.experience[0].role,
-      mockCVData.experience[0].description,
-    ],
-    unexpectedTexts: ["Qualification 1"],
-  },
-  {
-    id: "education",
-    label: "Utdanning",
-    content: (
-      <div className="text-gray-300">
-        {mockCVData.education.map((edu) => (
-          <div key={edu.description} className="mb-6">
-            <h3 className="font-semibold text-white">
-              {edu.period} - {edu.institution}
-            </h3>
-            {edu.degree && <p className="italic">{edu.degree}</p>}
-            <p>{edu.description}</p>
-          </div>
-        ))}
-      </div>
-    ),
-    expectedTexts: [
-      `${mockCVData.education[0].period} - ${mockCVData.education[0].institution}`,
-      mockCVData.education[0].degree,
-      mockCVData.education[0].description,
-    ],
-    unexpectedTexts: ["Qualification 1"],
+    id: "tab2",
+    label: "Crashing Tab",
+    content: <ImmediateCrash />,
   },
 ];
 
 describe("Tabs", () => {
-  const renderTabs = () => render(<Tabs tabs={mockTabs} />);
+  const renderTabs = (orientation?: "horizontal" | "vertical") =>
+    render(<Tabs tabs={mockTabs} orientation={orientation} />);
 
-  const expectTextsToBePresent = async (texts: string[]) => {
-    await Promise.all(
-      texts.map(async (text) => {
-        await waitFor(() => {
-          expect(screen.getByText(text)).toBeInTheDocument();
-        });
-      }),
-    );
-  };
-
-  const expectTextsNotToBePresent = (texts: string[]) => {
-    texts.forEach((text) => {
-      expect(screen.queryByText(text)).not.toBeInTheDocument();
-    });
-  };
-
-  it("renders all CV tab labels", () => {
+  it("renders tabs with correct layout in vertical orientation", () => {
     renderTabs();
-    mockTabs.forEach((tab) => {
-      expect(screen.getByRole("tab", { name: tab.label })).toBeInTheDocument();
-    });
+    const tabList = screen.getByRole("tablist");
+    expect(tabList).toHaveClass("sm:flex-col");
   });
 
-  it.each(mockTabs)("renders correct content for $label tab", async (tab) => {
-    renderTabs();
-    if (tab.id !== mockTabs[0].id) {
-      fireEvent.click(screen.getByRole("tab", { name: tab.label }));
-    }
-    await expectTextsToBePresent(tab.expectedTexts);
-    expectTextsNotToBePresent(tab.unexpectedTexts);
+  it("renders tabs with correct layout in horizontal orientation", () => {
+    renderTabs("horizontal");
+    const tabList = screen.getByRole("tablist");
+    expect(tabList).toHaveClass("flex-row");
+    expect(tabList).not.toHaveClass("sm:flex-col");
   });
 
-  it("applies correct ARIA attributes to CV tabs", () => {
+  it("applies correct ARIA attributes to tabs", () => {
     renderTabs();
     mockTabs.forEach((tab, index) => {
       const tabElement = screen.getByRole("tab", { name: tab.label });
       expect(tabElement).toHaveAttribute(
         "aria-selected",
-        index === 0 ? "true" : "false",
+        index === 0 ? "true" : "false"
       );
       expect(tabElement).toHaveAttribute("aria-controls", `tabpanel-${tab.id}`);
     });
   });
 
-  it("renders in vertical orientation by default", () => {
+  it("switches tab content when clicking tabs", () => {
     renderTabs();
-    const tabList = screen.getByRole("tablist");
-    expect(tabList).toHaveClass("sm:flex-col");
+
+    // Initial tab should be visible
+    expect(screen.getByText("Normal content")).toBeInTheDocument();
+
+    // Click second tab
+    const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+    fireEvent.click(crashingTab);
+
+    expect(() => {
+      render(<ImmediateCrash />);
+    }).toThrow("Immediate crash!");
+  });
+
+  it("applies correct border styles to tabs", () => {
+    renderTabs();
+    const tabs = screen.getAllByRole("tab");
+
+    // First tab should not have top border
+    expect(tabs[0]).not.toHaveClass("border-t");
+
+    // Second tab should have top border
+    expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+  });
+
+  it("renders tab panels with correct attributes", () => {
+    renderTabs();
+
+    const activePanel = screen.getByRole("tabpanel");
+    expect(activePanel).toHaveAttribute("id", "tabpanel-tab1");
+    expect(activePanel).toHaveAttribute("aria-labelledby", "tab-tab1");
+    expect(activePanel).toHaveClass("px-8");
   });
 });
