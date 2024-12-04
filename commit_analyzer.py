@@ -8,6 +8,7 @@ from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 def get_api_config():
     """Get API configuration from various sources in order of precedence:
     1. Environment variables (including .env)
@@ -123,9 +124,6 @@ def generate_commit_message(diff):
         # Get model from environment variable or use default
         model = os.getenv("MODEL_NAME", "claude-3.5-sonnet@anthropic")
 
-        # Load gitmojis
-        # gitmojis = load_gitmojis()
-
         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit title and the message body itself - no explanations, no prefixes like "Based on the diff...", just the commit title and the message body exactly as it should appear in git.
 
         The commit message MUST follow this format:
@@ -192,7 +190,7 @@ def generate_commit_message(diff):
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-        
+
         # Get the message and clean any potential explanatory text
         message = response.choices[0].message.content.strip()
         if "Based on the diff" in message:
