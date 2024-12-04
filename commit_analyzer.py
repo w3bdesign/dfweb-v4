@@ -126,12 +126,12 @@ def generate_commit_message(diff):
         # Load gitmojis
         # gitmojis = load_gitmojis()
 
-        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit title and the message body itself - no explanations, no prefixes like "Based on the diff...", just the commit title and the message body exactly as it should appear in git.
 
         The commit message MUST follow this format:
         <emoji> <type>[optional scope]: <description>
 
-        [optional body]
+        [required body] (minimum length of 50 characters and a maximum of around 80 characters)
 
         [optional footer(s)]
 
