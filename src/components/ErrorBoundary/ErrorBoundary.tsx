@@ -1,23 +1,18 @@
 "use client";
 
 import React, { ReactNode, ErrorInfo } from "react";
-import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
-import ErrorFallbackWrapper from "./ErrorFallbackWrapper.component";
+import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-boundary";
+import Fallback from "./Fallback.component";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
   compact?: boolean;
 }
 
-interface FallbackProps {
-  error: Error;
-  compact?: boolean;
+// Define the fallback component outside of ErrorBoundary
+function ErrorFallback(props: FallbackProps) {
+  return <Fallback {...props} compact={false} />;
 }
-
-// Extracted FallbackComponent to avoid nesting
-const ErrorFallbackComponent = ({ error, compact }: FallbackProps) => (
-  <ErrorFallbackWrapper error={error} compact={compact} />
-);
 
 /**
  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
@@ -35,7 +30,7 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, compact = false
 
   return (
     <ReactErrorBoundary
-      FallbackComponent={(props) => <ErrorFallbackComponent {...props} compact={compact} />}
+      FallbackComponent={ErrorFallback}
       onError={handleError}
     >
       {children}
