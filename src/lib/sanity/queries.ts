@@ -39,3 +39,25 @@ export const cvQuery = groq`
     }
   }
 `;
+
+export const pageContentQuery = groq`
+  *[_type == 'page' && title match 'Hjem'][0]{
+    "id": _id, 
+    title, 
+    hero, 
+    content
+  }
+`;
+
+export const navigationQuery = groq`
+  *[_type == "navigation"][0] {
+    title,
+    links[] {
+      title,
+      name,
+      hash,
+      href,
+      externalLink
+    }
+  }
+`;

@@ -3,6 +3,7 @@ import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 
 import { client } from "@/lib/sanity/client";
+import { projectsQuery } from "@/lib/sanity/queries";
 
 import type { Project } from "@/types/sanity.types";
 import type { Metadata } from "next/types";
@@ -11,18 +12,6 @@ export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
-
-const projectsQuery = `*[_type == "project"] | order(featured desc, featureOrder asc, _createdAt desc) {
-  id,
-  name,
-  description,
-  subdescription,
-  projectimage,
-  urlwww,
-  urlgithub,
-  featured,
-  featureOrder
-}`;
 
 export default async function Prosjekter() {
   const posts: Project[] = await client.fetch(projectsQuery);
