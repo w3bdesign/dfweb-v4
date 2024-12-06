@@ -1,7 +1,7 @@
-import { groq } from "next-sanity";
 import dynamic from "next/dynamic";
 import RootLayout from "@/app/RootLayout";
 import { client } from "@/lib/sanity/client";
+import { pageContentQuery } from "@/lib/sanity/queries";
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
   loading: () => <div>Loading hero...</div>,
@@ -15,15 +15,6 @@ const DynamicIndexContent = dynamic(
 );
 
 export default async function HomePage() {
-  const pageContentQuery = groq`
-    *[_type == 'page' && title match 'Hjem'][0]{
-      "id": _id, 
-      title, 
-      hero, 
-      content
-    }
-  `;
-
   const pageContent = await client.fetch(pageContentQuery);
 
   return (
