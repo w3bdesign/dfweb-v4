@@ -2,6 +2,7 @@
 
 import React, { useRef } from "react";
 import dynamic from "next/dynamic";
+import type { Herocontent } from "@/types/sanity.types";
 
 import Icons from "./Icons.component";
 import FadeDown from "../Animations/FadeDown.component";
@@ -22,15 +23,14 @@ const ReactMatrixAnimation = dynamic(
   },
 );
 
-type THero = { text: string };
 interface IContent {
-  content: THero[];
+  content: (Herocontent & { _key: string })[];
 }
 
 /**
  * Hero component for rendering the main hero section of the page
  * @param {IContent} props - The props for the Hero component
- * @param {THero[]} props.content - Array of text content for the hero section
+ * @param {Herocontent[]} props.content - Array of text content for the hero section
  * @returns {JSX.Element} The rendered Hero component
  */
 const Hero = ({ content }: IContent) => {

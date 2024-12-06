@@ -1,7 +1,8 @@
 import { groq } from "next-sanity";
 import dynamic from "next/dynamic";
-import RootLayout from "@/app/RootLayout";
-import { client } from "@/lib/sanity/client";
+import { sanityFetch } from "@/lib/sanity/client";
+import type { Page } from "@/types/sanity.types";
+import RootLayout from "./RootLayout";
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
   loading: () => <div>Loading hero...</div>,
@@ -24,7 +25,7 @@ export default async function HomePage() {
     }
   `;
 
-  const pageContent = await client.fetch(pageContentQuery);
+  const pageContent = await sanityFetch<Page>(pageContentQuery);
 
   return (
     <RootLayout>
