@@ -6,11 +6,7 @@ import Fallback from "./Fallback.component";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-}
-
-// Define the fallback component outside of ErrorBoundary
-function ErrorFallback(props: FallbackProps) {
-  return <Fallback {...props} compact={false} />;
+  compact?: boolean;
 }
 
 /**
@@ -19,11 +15,16 @@ function ErrorFallback(props: FallbackProps) {
  *
  * @param {Object} props - The component props
  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+ * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
  * @returns {JSX.Element} A React component that catches errors in its child components
  */
-const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children }) => {
+const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, compact = false }) => {
   const handleError = (error: Error, info: ErrorInfo) => {
     console.error("Uventet feil i Matrix:", error, info);
+  };
+
+  const ErrorFallback = (props: FallbackProps) => {
+    return <Fallback {...props} compact={compact} />;
   };
 
   return (
