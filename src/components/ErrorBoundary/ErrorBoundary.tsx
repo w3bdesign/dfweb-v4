@@ -9,11 +9,6 @@ interface ErrorBoundaryProps {
   compact?: boolean;
 }
 
-// Define the fallback component outside of ErrorBoundary
-function ErrorFallback(props: FallbackProps) {
-  return <Fallback {...props} compact={false} />;
-}
-
 /**
  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
  * It logs the error and displays a fallback UI instead of the component tree that crashed.
@@ -26,6 +21,10 @@ function ErrorFallback(props: FallbackProps) {
 const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children, compact = false }) => {
   const handleError = (error: Error, info: ErrorInfo) => {
     console.error("Uventet feil i Matrix:", error, info);
+  };
+
+  const ErrorFallback = (props: FallbackProps) => {
+    return <Fallback {...props} compact={compact} />;
   };
 
   return (

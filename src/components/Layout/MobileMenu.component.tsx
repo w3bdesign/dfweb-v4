@@ -118,7 +118,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                 }}
               >
                 {links.map(
-                  ({ title, name, hash, href, externalLink }, index) => (
+                  ({ title, name, href, externalLink }, index) => (
                     <motion.li
                       key={title}
                       className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"

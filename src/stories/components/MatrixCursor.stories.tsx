@@ -58,13 +58,9 @@ export const WithInteractiveElements = () => (
         <button className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors">
           Hover Me
         </button>
-        <a
-          href="#"
-          className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition-colors text-center"
-          onClick={(e) => e.preventDefault()}
-        >
-          Link Example
-        </a>
+        <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition-colors text-center">
+          Button Example
+        </button>
       </div>
       <div className="bg-gray-800 p-6 rounded">
         <p>
