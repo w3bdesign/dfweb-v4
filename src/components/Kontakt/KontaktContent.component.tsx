@@ -33,7 +33,7 @@ const KontaktContent = () => {
       emailjs.init(EMAIL_API_KEY);
       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
       setServerResponse("Takk for din beskjed");
-    } catch (error) {
+    } catch (_error) {
       setServerResponse("Feil under sending av skjema");
     }
   };
