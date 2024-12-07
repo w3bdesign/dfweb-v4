@@ -33,29 +33,38 @@ const ListContent = () => (
   </div>
 );
 
-const FormContent = () => (
-  <div className="py-4">
-    <h2 className="text-xl text-white mb-4">Form Content</h2>
-    <form className="space-y-4">
-      <div>
-        <label className="block text-gray-300 mb-2">Name</label>
-        <input
-          type="text"
-          className="w-full p-2 rounded bg-gray-700 text-white"
-          placeholder="Enter your name"
-        />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-2">Email</label>
-        <input
-          type="email"
-          className="w-full p-2 rounded bg-gray-700 text-white"
-          placeholder="Enter your email"
-        />
-      </div>
-    </form>
-  </div>
-);
+const FormContent = () => {
+  const formId = React.useId();
+  return (
+    <div className="py-4">
+      <h2 className="text-xl text-white mb-4">Form Content</h2>
+      <form className="space-y-4">
+        <div>
+          <label htmlFor={`${formId}-name`} className="block text-gray-300 mb-2">
+            Name
+          </label>
+          <input
+            id={`${formId}-name`}
+            type="text"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            placeholder="Enter your name"
+          />
+        </div>
+        <div>
+          <label htmlFor={`${formId}-email`} className="block text-gray-300 mb-2">
+            Email
+          </label>
+          <input
+            id={`${formId}-email`}
+            type="email"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            placeholder="Enter your email"
+          />
+        </div>
+      </form>
+    </div>
+  );
+};
 
 export const VerticalTabs = Template.bind({});
 VerticalTabs.args = {
