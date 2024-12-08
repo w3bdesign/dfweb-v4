@@ -16,8 +16,12 @@ export const metadata: Metadata = {
 export default async function Prosjekter() {
   const posts: Project[] = await client.fetch(projectsQuery);
 
-  const featuredProjects = posts.filter((project) => project.featured);
-  const nonFeaturedProjects = posts.filter((project) => !project.featured);
+  // Sort by featureOrder, putting null/undefined values last
+  const sortedProjects = [...posts].sort((a, b) => {
+    if (a.featureOrder === null || a.featureOrder === undefined) return 1;
+    if (b.featureOrder === null || b.featureOrder === undefined) return -1;
+    return a.featureOrder - b.featureOrder;
+  });
 
   return (
     <RootLayout>
@@ -28,17 +32,8 @@ export default async function Prosjekter() {
       >
         <PageHeader>Prosjekter</PageHeader>
         <div className="container mx-auto">
-          {featuredProjects.length > 0 && (
-            <div className="mb-12">
-              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-                {featuredProjects.map((project) => (
-                  <ProsjektCard key={project.id} {...project} />
-                ))}
-              </div>
-            </div>
-          )}
           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-            {nonFeaturedProjects.map((project) => (
+            {sortedProjects.map((project) => (
               <ProsjektCard key={project.id} {...project} />
             ))}
           </div>
