@@ -63,7 +63,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="active-tab"
-                    className={`absolute ${isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"} bg-indigo-500`}
+                    className={`absolute ${isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"} bg-[var(--matrix-dark)]`}
                     initial={false}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
