@@ -40,7 +40,10 @@ const FormContent = () => {
       <h2 className="text-xl text-white mb-4">Form Content</h2>
       <form className="space-y-4">
         <div>
-          <label htmlFor={`${formId}-name`} className="block text-gray-300 mb-2">
+          <label
+            htmlFor={`${formId}-name`}
+            className="block text-gray-300 mb-2"
+          >
             Name
           </label>
           <input
@@ -51,7 +54,10 @@ const FormContent = () => {
           />
         </div>
         <div>
-          <label htmlFor={`${formId}-email`} className="block text-gray-300 mb-2">
+          <label
+            htmlFor={`${formId}-email`}
+            className="block text-gray-300 mb-2"
+          >
             Email
           </label>
           <input
