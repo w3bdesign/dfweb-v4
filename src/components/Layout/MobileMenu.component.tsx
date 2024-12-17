@@ -117,55 +117,53 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                   },
                 }}
               >
-                {links.map(
-                  ({ title, name, href, externalLink }, index) => (
-                    <motion.li
-                      key={title}
-                      className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-                      data-cy="mobile-menu-item"
-                      custom={index}
-                      variants={itemVariants}
-                    >
-                      {externalLink ? (
-                        <a
-                          aria-label={name}
-                          href={href}
-                          target="_blank"
-                          rel="noreferrer"
-                          data-testid={`mobil-${name}`}
-                          className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-                        >
+                {links.map(({ title, name, href, externalLink }, index) => (
+                  <motion.li
+                    key={title}
+                    className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+                    data-cy="mobile-menu-item"
+                    custom={index}
+                    variants={itemVariants}
+                  >
+                    {externalLink ? (
+                      <a
+                        aria-label={name}
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        data-testid={`mobil-${name}`}
+                        className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+                      >
+                        {name}
+                      </a>
+                    ) : (
+                      <Link
+                        href={href}
+                        data-testid={`mobil-${name}`}
+                        prefetch={true}
+                        className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+                          pathname === href ? "text-green-400" : ""
+                        }`}
+                      >
+                        <div className="glitch relative" data-text={name}>
                           {name}
-                        </a>
-                      ) : (
-                        <Link
-                          href={href}
-                          data-testid={`mobil-${name}`}
-                          prefetch={true}
-                          className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-                            pathname === href ? "text-green-400" : ""
-                          }`}
-                        >
-                          <div className="glitch relative" data-text={name}>
-                            {name}
-                            <motion.span
-                              className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-                                pathname === href ? "bg-green-400" : "bg-white"
-                              }`}
-                              initial={{
-                                width: pathname === href ? "100%" : "0%",
-                              }}
-                              animate={{
-                                width: pathname === href ? "100%" : "0%",
-                              }}
-                              transition={{ duration: 0.3 }}
-                            />
-                          </div>
-                        </Link>
-                      )}
-                    </motion.li>
-                  ),
-                )}
+                          <motion.span
+                            className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                              pathname === href ? "bg-green-400" : "bg-white"
+                            }`}
+                            initial={{
+                              width: pathname === href ? "100%" : "0%",
+                            }}
+                            animate={{
+                              width: pathname === href ? "100%" : "0%",
+                            }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        </div>
+                      </Link>
+                    )}
+                  </motion.li>
+                ))}
               </motion.ul>
             </nav>
           </motion.div>

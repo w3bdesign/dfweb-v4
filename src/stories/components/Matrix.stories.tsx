@@ -16,7 +16,8 @@ export default {
 
 // Client-side only wrapper component
 const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
-  const [Matrix, setMatrix] = useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
+  const [Matrix, setMatrix] =
+    useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
 
   useEffect(() => {
     import("../../components/Animations/Matrix.component").then((mod) => {
@@ -32,9 +33,7 @@ const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
 };
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative w-full h-[400px] bg-gray-900">
-    {children}
-  </div>
+  <div className="relative w-full h-[400px] bg-gray-900">{children}</div>
 );
 
 // Basic story with default props
