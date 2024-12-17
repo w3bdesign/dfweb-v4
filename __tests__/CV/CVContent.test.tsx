@@ -4,6 +4,7 @@
 
 import React from "react";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import CVContent from "../../src/components/CV/CVContent.component";
 
 const mockCVData = {
@@ -24,10 +25,18 @@ const mockCVData = {
       description: "Studied various aspects of computer science",
     },
   ],
+  volunteerWork: [
+    {
+      period: "2023-2024",
+      organization: "AI Community",
+      role: "Technical Lead",
+      description: "Managing AI Discord community and developing bots",
+    },
+  ],
 };
 
 describe("CVContent", () => {
-  it("CVContent renders correctly with mock data", () => {
+  it("CVContent renders correctly with mock data", async () => {
     render(<CVContent cvData={mockCVData} />);
 
     // Check if the CV header is present
@@ -44,12 +53,26 @@ describe("CVContent", () => {
     });
     const experienceTab = screen.getByRole("tab", { name: /erfaring/i });
     const educationTab = screen.getByRole("tab", { name: /utdanning/i });
+    const volunteerWorkTab = screen.getByRole("tab", { name: /frivillig arbeid/i });
     expect(qualificationsTab).toBeInTheDocument();
     expect(experienceTab).toBeInTheDocument();
     expect(educationTab).toBeInTheDocument();
+    expect(volunteerWorkTab).toBeInTheDocument();
 
     // Check if mock data is rendered (you might need to click on tabs to see this content)
     const qualification = screen.getByText(/qualification 1/i);
     expect(qualification).toBeInTheDocument();
+
+    // Set up user event
+    const user = userEvent.setup();
+
+    // Click on volunteer work tab and check its content
+    await user.click(volunteerWorkTab);
+
+    // Check volunteer work content
+    const volunteerRole = await screen.findByText(/technical lead/i);
+    expect(volunteerRole).toBeInTheDocument();
+    const volunteerOrg = await screen.findByText(/ai community/i);
+    expect(volunteerOrg).toBeInTheDocument();
   });
 });

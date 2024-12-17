@@ -16,6 +16,12 @@ interface CVData {
     degree: string;
     description: string;
   }>;
+  volunteerWork: Array<{
+    period: string;
+    organization: string;
+    role: string;
+    description: string;
+  }>;
 }
 
 interface CVContentProps {
@@ -76,6 +82,23 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
         </div>
       ),
     },
+    {
+      id: "volunteerWork",
+      label: "Frivillig arbeid",
+      content: (
+        <div className="text-slate-300/[0.9]">
+          {cvData.volunteerWork?.map((vol) => (
+            <div key={vol.description} className="mb-6">
+              <h3 className="font-semibold text-slate-100">
+                {vol.period} - {vol.organization}
+              </h3>
+              {vol.role && <p className="italic">{vol.role}</p>}
+              <p>{vol.description}</p>
+            </div>
+          ))}
+        </div>
+      ),
+    }
   ];
 
   return (
@@ -84,7 +107,7 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
         <PageHeader>CV</PageHeader>
         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
-            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[540px] min-h-[350px]">
+            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
               <div className="p-4 text-lg rounded md:w-full">
                 <div className="md:flex md:justify-center hidden">
                   <Tabs tabs={tabs} />
