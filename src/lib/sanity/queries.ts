@@ -38,6 +38,12 @@ export const cvQuery = groq`
       institution,
       degree,
       description
+    },
+    volunteerWork[] {
+      period,
+      organization,
+      role,
+      description
     }
   }
 `;
