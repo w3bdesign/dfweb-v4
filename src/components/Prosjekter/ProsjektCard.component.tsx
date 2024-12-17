@@ -39,7 +39,7 @@ const ProsjektCard: React.FC<Project> = ({
           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
               <Image
-                className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(80,255,80,0.2)]"
+                className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
                 width="600"
                 height="340"
                 quality={100}
