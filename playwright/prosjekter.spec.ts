@@ -40,7 +40,7 @@ test.describe("Prosjekter page", () => {
 
     // Check project technologies
     await expect(portfolioContent).toContainText(
-      "Typescript, Tailwind, Prisma, Clerk, tRPC, mySQL, Chart.js",
+      "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js",
     );
 
     // Check if 'Besøk' and 'GitHub' links are visible
