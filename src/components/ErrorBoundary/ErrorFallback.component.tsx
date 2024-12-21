@@ -16,7 +16,10 @@ interface ErrorFallbackProps {
  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
  * @returns {JSX.Element} A React component displaying the error message and reload option
  */
-const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, compact = false }) => {
+const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+  error,
+  compact = false,
+}) => {
   if (compact) {
     return (
       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">

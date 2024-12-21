@@ -3,7 +3,15 @@ import { Meta } from "@ladle/react";
 import "../../app/glitch.css";
 
 // Mock NavigationLink component for stories
-const NavigationLink = ({ name, href, isActive }: { name: string; href: string; isActive: boolean }) => (
+const NavigationLink = ({
+  name,
+  href,
+  isActive,
+}: {
+  name: string;
+  href: string;
+  isActive: boolean;
+}) => (
   <div className="relative">
     <a
       href={href}
@@ -20,7 +28,7 @@ const NavigationLink = ({ name, href, isActive }: { name: string; href: string; 
           }`}
           style={{
             width: isActive ? "100%" : "0%",
-            transition: "width 0.3s"
+            transition: "width 0.3s",
           }}
         />
       </div>
@@ -36,43 +44,23 @@ export default {
 // Default state
 export const Default = () => (
   <div className="bg-gray-800 p-4 w-48">
-    <NavigationLink
-      name="Home"
-      href="/"
-      isActive={false}
-    />
+    <NavigationLink name="Home" href="/" isActive={false} />
   </div>
 );
 
 // Active state
 export const Active = () => (
   <div className="bg-gray-800 p-4 w-48">
-    <NavigationLink
-      name="Home"
-      href="/"
-      isActive={true}
-    />
+    <NavigationLink name="Home" href="/" isActive={true} />
   </div>
 );
 
 // Multiple links
 export const MultipleLinks = () => (
   <div className="bg-gray-800 p-4 w-48 flex flex-col gap-2">
-    <NavigationLink
-      name="Home"
-      href="/"
-      isActive={true}
-    />
-    <NavigationLink
-      name="Projects"
-      href="/projects"
-      isActive={false}
-    />
-    <NavigationLink
-      name="Contact"
-      href="/contact"
-      isActive={false}
-    />
+    <NavigationLink name="Home" href="/" isActive={true} />
+    <NavigationLink name="Projects" href="/projects" isActive={false} />
+    <NavigationLink name="Contact" href="/contact" isActive={false} />
   </div>
 );
 
@@ -91,27 +79,15 @@ export const LongText = () => (
 export const OnDifferentBackgrounds = () => (
   <div className="space-y-4">
     <div className="bg-gray-900 p-4 w-48">
-      <NavigationLink
-        name="Dark Background"
-        href="/"
-        isActive={false}
-      />
+      <NavigationLink name="Dark Background" href="/" isActive={false} />
     </div>
-    
+
     <div className="bg-gray-800 p-4 w-48">
-      <NavigationLink
-        name="Medium Background"
-        href="/"
-        isActive={true}
-      />
+      <NavigationLink name="Medium Background" href="/" isActive={true} />
     </div>
-    
+
     <div className="bg-gray-700 p-4 w-48">
-      <NavigationLink
-        name="Light Background"
-        href="/"
-        isActive={false}
-      />
+      <NavigationLink name="Light Background" href="/" isActive={false} />
     </div>
   </div>
 );
@@ -120,21 +96,9 @@ export const OnDifferentBackgrounds = () => (
 export const HorizontalLayout = () => (
   <div className="bg-gray-800 p-4">
     <nav className="flex gap-4">
-      <NavigationLink
-        name="Home"
-        href="/"
-        isActive={true}
-      />
-      <NavigationLink
-        name="Projects"
-        href="/projects"
-        isActive={false}
-      />
-      <NavigationLink
-        name="Contact"
-        href="/contact"
-        isActive={false}
-      />
+      <NavigationLink name="Home" href="/" isActive={true} />
+      <NavigationLink name="Projects" href="/projects" isActive={false} />
+      <NavigationLink name="Contact" href="/contact" isActive={false} />
     </nav>
   </div>
 );

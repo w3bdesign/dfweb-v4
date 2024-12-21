@@ -24,13 +24,10 @@ export const XState = () => (
 // Interactive state
 export const Interactive = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="bg-gray-800 p-4">
-      <Hamburger 
-        onClick={() => setIsOpen(!isOpen)} 
-        animatetoX={isOpen}
-      />
+      <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
       <p className="text-white text-sm mt-4">
         Click the hamburger to toggle state
       </p>
@@ -41,13 +38,10 @@ export const Interactive = () => {
 // On dark background
 export const OnDarkBackground = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="bg-gray-900 p-4">
-      <Hamburger 
-        onClick={() => setIsOpen(!isOpen)} 
-        animatetoX={isOpen}
-      />
+      <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
     </div>
   );
 };
@@ -55,14 +49,11 @@ export const OnDarkBackground = () => {
 // On light background
 export const OnLightBackground = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="bg-gray-100 p-4">
       <div className="bg-gray-800 inline-block rounded">
-        <Hamburger 
-          onClick={() => setIsOpen(!isOpen)} 
-          animatetoX={isOpen}
-        />
+        <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import InputField, { InputProps } from "../../components/UI/InputField.component";
+import InputField, {
+  InputProps,
+} from "../../components/UI/InputField.component";
 import { useForm, FieldValues } from "react-hook-form";
 
 export default {
@@ -8,15 +10,26 @@ export default {
   component: InputField,
 } as Meta;
 
+// Define a type for the form values
+interface StoryFormValues extends FieldValues {
+  defaultInput?: string;
+  requiredInput?: string;
+  emailInput?: string;
+  textArea?: string;
+  errorInput?: string;
+}
+
 // Wrapper component to provide form context
-const InputFieldWrapper = <T extends FieldValues>(props: Omit<InputProps<T>, "register">) => {
+const InputFieldWrapper = <T extends FieldValues>(
+  props: Omit<InputProps<T>, "register">,
+) => {
   const { register } = useForm<T>();
   return <InputField {...props} register={register} />;
 };
 
-const Template: Story<Omit<InputProps<any>, "register">> = (args) => (
-  <InputFieldWrapper {...args} />
-);
+const Template: Story<Omit<InputProps<StoryFormValues>, "register">> = (
+  args,
+) => <InputFieldWrapper {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {

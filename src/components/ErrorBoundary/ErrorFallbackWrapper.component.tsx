@@ -13,8 +13,9 @@ interface ErrorFallbackWrapperProps {
  * @param {boolean} props.compact - Whether to show a compact version
  * @returns {JSX.Element} The wrapped ErrorFallback component
  */
-const ErrorFallbackWrapper: React.FC<ErrorFallbackWrapperProps> = ({ error, compact }) => (
-  <ErrorFallback error={error} compact={compact} />
-);
+const ErrorFallbackWrapper: React.FC<ErrorFallbackWrapperProps> = ({
+  error,
+  compact,
+}) => <ErrorFallback error={error} compact={compact} />;
 
 export default ErrorFallbackWrapper;

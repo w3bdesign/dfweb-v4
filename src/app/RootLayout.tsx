@@ -1,20 +1,7 @@
-import { groq } from "next-sanity";
 import { client } from "@/lib/sanity/client";
 import Header from "@/components/Layout/Header.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-
-const navigationQuery = groq`
-  *[_type == "navigation"][0] {
-    title,
-    links[] {
-      title,
-      name,
-      hash,
-      href,
-      externalLink
-    }
-  }
-`;
+import { navigationQuery } from "@/lib/sanity/queries";
 
 export default async function RootLayout({
   children,

@@ -26,14 +26,16 @@ const feedbackSchema = z.object({
   feedback: z.string().min(20, "Feedback must be at least 20 characters"),
 });
 
-type FormData = z.infer<typeof contactSchema> | 
-                z.infer<typeof subscribeSchema> | 
-                z.infer<typeof feedbackSchema> |
-                { email: string };
+type FormData =
+  | z.infer<typeof contactSchema>
+  | z.infer<typeof subscribeSchema>
+  | z.infer<typeof feedbackSchema>
+  | { email: string };
 
 // Example async submit handlers
 const mockSubmit = async (data: FormData) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
+  // eslint-disable-next-line no-console
   console.log("Form submitted:", data);
 };
 

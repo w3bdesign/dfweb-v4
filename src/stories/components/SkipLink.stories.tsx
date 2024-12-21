@@ -22,7 +22,9 @@ export const WithContext = () => (
     <main id="main-content" className="p-4">
       <h1>Main Content</h1>
       <p>This story demonstrates the SkipLink in context with a page layout.</p>
-      <p>Tab to focus on the SkipLink - it will appear at the top of the page.</p>
+      <p>
+        Tab to focus on the SkipLink - it will appear at the top of the page.
+      </p>
     </main>
   </div>
 );
@@ -34,8 +36,8 @@ export const Focused = () => (
       <SkipLink />
     </div>
     <p className="mt-20">
-      This story shows how the SkipLink appears when focused.
-      The skip link is permanently visible here for demonstration purposes.
+      This story shows how the SkipLink appears when focused. The skip link is
+      permanently visible here for demonstration purposes.
     </p>
   </div>
 );

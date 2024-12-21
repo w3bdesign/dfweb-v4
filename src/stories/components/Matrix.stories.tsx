@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { Meta } from "@ladle/react";
 
+interface ReactMatrixAnimationProps {
+  tileSize?: number;
+  fadeFactor?: number;
+  backgroundColor?: string;
+  fontColor?: string;
+  glowColor?: string;
+  tileSet?: string[] | null;
+}
+
 export default {
   title: "Animations/Matrix",
 } as Meta;
 
 // Client-side only wrapper component
-const ClientOnlyMatrix = (props: any) => {
-  const [Matrix, setMatrix] = useState<any>(null);
+const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
+  const [Matrix, setMatrix] =
+    useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
 
   useEffect(() => {
     import("../../components/Animations/Matrix.component").then((mod) => {
@@ -23,9 +33,7 @@ const ClientOnlyMatrix = (props: any) => {
 };
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative w-full h-[400px] bg-gray-900">
-    {children}
-  </div>
+  <div className="relative w-full h-[400px] bg-gray-900">{children}</div>
 );
 
 // Basic story with default props

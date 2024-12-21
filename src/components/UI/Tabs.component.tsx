@@ -37,7 +37,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
         className={`flex ${isVertical ? "flex-col sm:flex-row" : "flex-col"} bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
       >
         <div
-          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "max-h-[135px] " : ""}`}
+          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${isVertical ? "max-h-[181px] " : ""}`}
         >
           <div
             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
@@ -63,7 +63,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="active-tab"
-                    className={`absolute ${isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"} bg-indigo-500`}
+                    className={`absolute ${isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"} bg-[var(--matrix-dark)]`}
                     initial={false}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />

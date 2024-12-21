@@ -23,7 +23,7 @@ export const WithContent = () => (
 
 // Narrow viewport
 export const NarrowViewport = () => (
-  <div style={{ width: '320px' }}>
+  <div style={{ width: "320px" }}>
     <Footer />
   </div>
 );
