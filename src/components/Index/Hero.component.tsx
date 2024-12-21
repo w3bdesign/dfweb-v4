@@ -19,7 +19,7 @@ const ReactMatrixAnimation = dynamic(
         <RotatingLoader />
       </div>
     ),
-  },
+  }
 );
 
 type THero = { text: string };
@@ -42,7 +42,7 @@ const Hero = ({ content }: IContent) => {
       id="main-hero"
       data-testid="main-hero"
       ref={heroRef}
-      className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[28.125rem] overflow-hidden w-full"
+      className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
     >
       <MatrixCursor heroRef={heroRef} />
       <MobileBackground />

@@ -46,20 +46,22 @@ const AnimateIcons: IAnimateIcons[] = [
 const Icons = () => (
   <div
     data-testid="icons"
-    className="flex justify-center mt-4 p-2 text-slate-300/[0.8] mb-8 md:mb-0"
+    className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
   >
     {AnimateIcons.map(({ Icon, id, iconName }) => (
-      <span className="p-2" key={id}>
+      <span className="relative" key={id}>
         <Grow delay={1.8 + id * 0.2}>
           <div className="relative group">
-            <Icon
-              data-testid={iconName}
-              aria-label={`${iconName} ikon`}
-              title={`${iconName} ikon`}
-              size="3em"
-              className="transition-transform duration-300 hover:-translate-y-1 hover:text-white"
-            />
-            <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+            <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-[#00ff62]/30 group-hover:bg-slate-900/70">
+              <Icon
+                data-testid={iconName}
+                aria-label={`${iconName} ikon`}
+                title={`${iconName} ikon`}
+                size="2.5em"
+                className="transition-all duration-300 group-hover:text-[#00ff62] group-hover:scale-110"
+              />
+            </div>
+            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[#00ff62]">
               {iconName}
             </span>
           </div>
