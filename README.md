@@ -48,6 +48,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
 - Next.js 15 with Typescript and App router
+- React 19
 - Sanity headless cms for all of the content, projects and navigation links
 - Ladle for component documentation
 - Animations with Motion
