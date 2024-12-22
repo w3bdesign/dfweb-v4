@@ -1,3 +1,5 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
+
 import { client } from "@/lib/sanity/client";
 import Header from "@/components/Layout/Header.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
@@ -14,6 +16,7 @@ export default async function RootLayout({
     <ErrorBoundary>
       <Header navigationLinks={navigation.links} />
       {children}
+      <SpeedInsights />
     </ErrorBoundary>
   );
 }
