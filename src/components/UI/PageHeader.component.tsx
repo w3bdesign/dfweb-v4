@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 
 export interface IPageHeaderProps {
-  children: ReactNode | JSX.Element;
+  children: ReactNode;
 }
 
 /**
  * PageHeader component for rendering the header for each page
  * @function PageHeader
  * @param {children?} children - HTML children to render in the page header component
- * @returns {JSX.Element} - Rendered component
+ * @returns {ReactNode} - Rendered component
  */
 
 const PageHeader = ({ children }: IPageHeaderProps) => (
