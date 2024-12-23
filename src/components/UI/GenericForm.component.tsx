@@ -45,7 +45,7 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
@@ -64,13 +64,16 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
 
         const result = await handleFormSubmission(formData, formSchema);
         if (!result.success) {
-          console.error("Server validation failed:", result.errors);
+          console.error('Server validation failed:', result.errors);
         }
       } catch (error) {
-        console.error("Form submission error:", error);
+        console.error('Form submission error:', error);
       }
     });
   };
+
+  // Button should be disabled during both client-side and server-side submission
+  const isButtonDisabled = isSubmitting || isPending;
 
   return (
     <form
@@ -80,7 +83,7 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
       method="POST"
       aria-label="Contact Form"
     >
-      <fieldset>
+      <fieldset disabled={isButtonDisabled}>
         <legend className="text-center mx-auto text-xl mt-4 sr-only">
           Kontaktskjema
         </legend>
@@ -102,7 +105,7 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
         ))}
       </fieldset>
       <div className="-mt-4">
-        <Button disabled={isPending} data-testid="submit-button">
+        <Button disabled={isButtonDisabled} data-testid="submit-button">
           {submitButtonText}
         </Button>
       </div>
