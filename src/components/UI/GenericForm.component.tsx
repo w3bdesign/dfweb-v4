@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import React, { useTransition } from "react";
 import { useForm, Path, FieldValues } from "react-hook-form";
@@ -64,10 +64,10 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
 
         const result = await handleFormSubmission(formData, formSchema);
         if (!result.success) {
-          console.error('Server validation failed:', result.errors);
+          console.error("Server validation failed:", result.errors);
         }
       } catch (error) {
-        console.error('Form submission error:', error);
+        console.error("Form submission error:", error);
       }
     });
   };
