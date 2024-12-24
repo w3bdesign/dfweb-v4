@@ -48,14 +48,69 @@ def get_api_config():
     return api_key, base_url
 
 
-def get_staged_diff():
-    """Get the diff of staged changes"""
+def get_staged_files():
+    """Get list of staged files"""
     try:
-        # Get diff of staged changes
-        diff = subprocess.check_output(["git", "diff", "--cached"]).decode("utf-8")
+        files = subprocess.check_output(["git", "diff", "--cached", "--name-only"]).decode("utf-8").splitlines()
+        if not files:
+            files = subprocess.check_output(["git", "diff", "HEAD~1", "--name-only"]).decode("utf-8").splitlines()
+        return files
+    except subprocess.CalledProcessError as e:
+        print(f"Error getting staged files: {e}")
+        return []
+
+
+def should_ignore_file(file):
+    """Check if file should be ignored based on size or name"""
+    # List of files to ignore
+    ignore_files = [
+        "pnpm-lock.yaml",
+        "package-lock.json",
+        "yarn.lock",
+        ".lock",
+        ".svg",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".ico",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot"
+    ]
+    
+    # Check filename
+    if any(file.endswith(ignore) for ignore in ignore_files):
+        return True
+        
+    # Check file size (ignore files > 1MB)
+    try:
+        if os.path.exists(file):
+            size = os.path.getsize(file)
+            return size > 1024 * 1024  # 1MB
+    except:
+        pass
+        
+    return False
+
+
+def get_staged_diff():
+    """Get the diff of staged changes, excluding large files"""
+    try:
+        files = get_staged_files()
+        
+        # Filter out files to ignore
+        files = [f for f in files if not should_ignore_file(f)]
+        
+        if not files:
+            return None
+            
+        # Get diff for remaining files
+        diff = subprocess.check_output(["git", "diff", "--cached"] + files).decode("utf-8")
         if not diff:
-            # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(["git", "diff", "HEAD~1"]).decode("utf-8")
+            diff = subprocess.check_output(["git", "diff", "HEAD~1"] + files).decode("utf-8")
+            
         return diff
     except subprocess.CalledProcessError as e:
         print(f"Error getting git diff: {e}")
