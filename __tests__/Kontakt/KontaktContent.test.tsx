@@ -18,7 +18,7 @@ describe("KontaktContent", () => {
   const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    (handleContactForm as jest.MockedFunction<typeof handleContactForm>).mockClear();
   });
 
   const fillFormWithValidData = () => {
@@ -56,7 +56,7 @@ describe("KontaktContent", () => {
   });
 
   test("displays error message on form submission failure", async () => {
-    (handleContactForm as jest.Mock).mockResolvedValueOnce({ 
+    (handleContactForm as jest.MockedFunction<typeof handleContactForm>).mockResolvedValueOnce({ 
       success: false, 
       message: "Feil under sending av skjema" 
     });
