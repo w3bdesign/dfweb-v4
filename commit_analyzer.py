@@ -257,17 +257,28 @@ def generate_commit_message(diff):
 
 
 def main():
-    # Get the diff
-    diff = get_staged_diff()
-    if not diff:
+    files = get_staged_files()
+    if not files:
         print("No changes to analyze")
         sys.exit(1)
 
-    # Generate commit message
-    commit_message = generate_commit_message(diff)
-    if not commit_message:
-        print("Failed to generate commit message")
-        sys.exit(1)
+    # Check if we're ignoring any files
+    ignored_files = [f for f in files if should_ignore_file(f)]
+    if ignored_files:
+        # If we have ignored files like pnpm-lock.yaml, use a generic message
+        commit_message = "📦 deps: update dependencies\n\nUpdate dependencies to their latest versions to ensure security and performance."
+    else:
+        # Get diff for analysis
+        diff = get_staged_diff()
+        if not diff:
+            print("No changes to analyze")
+            sys.exit(1)
+
+        # Generate commit message
+        commit_message = generate_commit_message(diff)
+        if not commit_message:
+            print("Failed to generate commit message")
+            sys.exit(1)
 
     # Print the commit message
     print("\nGenerated commit message:")
