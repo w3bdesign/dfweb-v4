@@ -88,7 +88,7 @@ def should_ignore_file(file):
     try:
         if os.path.exists(file):
             size = os.path.getsize(file)
-            return size > 1024 * 1024  # 1MB
+            return size > 1024 * 1024 * 3  # 3MB
     except:
         pass
         
