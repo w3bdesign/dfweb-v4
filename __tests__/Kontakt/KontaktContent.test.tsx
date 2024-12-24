@@ -3,12 +3,12 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
-import emailjs from "@emailjs/browser";
+import "@testing-library/jest-dom";
+import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+import { handleContactForm } from "@/app/actions/contact";
 
-jest.mock("@emailjs/browser", () => ({
-  send: jest.fn(() => Promise.resolve()),
-  init: jest.fn(),
+jest.mock("@/app/actions/contact", () => ({
+  handleContactForm: jest.fn().mockResolvedValue({ success: true, message: "Takk for din beskjed" })
 }));
 
 describe("KontaktContent", () => {
@@ -52,11 +52,14 @@ describe("KontaktContent", () => {
       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
     });
 
-    expect(emailjs.send).toHaveBeenCalledTimes(1);
+    expect(handleContactForm).toHaveBeenCalledTimes(1);
   });
 
   test("displays error message on form submission failure", async () => {
-    emailjs.send.mockRejectedValueOnce(new Error("Test error"));
+    (handleContactForm as jest.Mock).mockResolvedValueOnce({ 
+      success: false, 
+      message: "Feil under sending av skjema" 
+    });
 
     render(<KontaktContent />);
 
@@ -69,7 +72,7 @@ describe("KontaktContent", () => {
       ).toBeInTheDocument();
     });
 
-    expect(emailjs.send).toHaveBeenCalledTimes(1);
+    expect(handleContactForm).toHaveBeenCalledTimes(1);
   });
 
   test("displays validation errors for empty fields", async () => {
@@ -83,7 +86,7 @@ describe("KontaktContent", () => {
       expect(screen.getByText("Beskjed er påkrevd")).toBeInTheDocument();
     });
 
-    expect(emailjs.send).not.toHaveBeenCalled();
+    expect(handleContactForm).not.toHaveBeenCalled();
   });
 
   test("displays validation errors for invalid inputs", async () => {
@@ -110,6 +113,6 @@ describe("KontaktContent", () => {
       ).toBeInTheDocument();
     });
 
-    expect(emailjs.send).not.toHaveBeenCalled();
+    expect(handleContactForm).not.toHaveBeenCalled();
   });
 });
