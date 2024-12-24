@@ -66,18 +66,7 @@ def should_ignore_file(file):
     ignore_files = [
         "pnpm-lock.yaml",
         "package-lock.json",
-        "yarn.lock",
-        ".lock",
-        ".svg",
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".gif",
-        ".ico",
-        ".woff",
-        ".woff2",
-        ".ttf",
-        ".eot"
+        "yarn.lock"
     ]
     
     # Check filename
