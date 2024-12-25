@@ -3,17 +3,17 @@ import os
 import sys
 import json
 import codecs
+import shlex  # Import shlex module for input sanitization
 
 from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
-
 def get_api_config():
     """Get API configuration from various sources in order of precedence:
-    1. Environment variables (including .env)
-    2. Local config file in user's home directory
-    """
+     1. Environment variables (including .env)
+     2. Local config file in user's home directory
+     """
     # Try loading from .env file first
     load_dotenv()
 
@@ -49,17 +49,29 @@ def get_api_config():
 
 
 def get_staged_diff():
-    """Get the diff of staged changes"""
+    """Get the diff of staged changes and list of changed files"""
     try:
-        # Get diff of staged changes
-        diff = subprocess.check_output(["git", "diff", "--cached"]).decode("utf-8")
+        # Get list of staged files
+        files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
+        staged_files = files_output.splitlines()
+        
+        # Check if any staged files are lock files
+        if any(file.endswith('.lock') for file in staged_files):
+            return None, True  # Indicate lock file presence
+            
+        # Get the actual diff
+        diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(["git", "diff", "HEAD~1"]).decode("utf-8")
-        return diff
+            diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
+            files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
+            staged_files = files_output.splitlines()
+            if any(file.endswith('.lock') for file in staged_files):
+                return None, True
+        return diff, False  # No lock files found
     except subprocess.CalledProcessError as e:
         print(f"Error getting git diff: {e}")
-        return None
+        return None, False
 
 
 def load_gitmojis():
@@ -124,7 +136,10 @@ def generate_commit_message(diff):
         # Get model from environment variable or use default
         model = os.getenv("MODEL_NAME", "claude-3.5-sonnet@anthropic")
 
-        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit title and the message body itself - no explanations, no prefixes like "Based on the diff...", just the commit title and the message body exactly as it should appear in git.
+        # Load gitmojis
+        # gitmojis = load_gitmojis()
+
+        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
 
         The commit message MUST follow this format:
         <emoji> <type>[optional scope]: <description>
@@ -190,7 +205,7 @@ def generate_commit_message(diff):
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-
+        
         # Get the message and clean any potential explanatory text
         message = response.choices[0].message.content.strip()
         if "Based on the diff" in message:
@@ -202,14 +217,18 @@ def generate_commit_message(diff):
 
 
 def main():
-    # Get the diff
-    diff = get_staged_diff()
-    if not diff:
+    # Get the diff and check for lock files
+    diff, has_lock_files = get_staged_diff()
+    
+    if has_lock_files:
+        # Use hardcoded message for lock files
+        commit_message = "📦 deps: update dependencies"
+    elif not diff:
         print("No changes to analyze")
         sys.exit(1)
-
-    # Generate commit message
-    commit_message = generate_commit_message(diff)
+    else:
+        # Generate commit message for non-lock files
+        commit_message = generate_commit_message(diff)
     if not commit_message:
         print("Failed to generate commit message")
         sys.exit(1)
