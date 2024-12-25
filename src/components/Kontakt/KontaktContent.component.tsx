@@ -1,28 +1,41 @@
 "use client";
 
+import emailjs from "@emailjs/browser";
 import { useState } from "react";
+
 import PageHeader from "@/components/UI/PageHeader.component";
 import GenericForm from "@/components/UI/GenericForm.component";
+
 import { formSchema, formFields, FormData } from "./config/formConfig";
-import { handleContactForm } from "@/app/actions/contact";
 
 /**
- * Renders contact form using server actions to handle form submission.
+ * Renders contact form. Uses EmailJS to send the emails.
  * @function KontaktContent
  * @returns {JSX.Element} - Rendered component
  */
+
 const KontaktContent = () => {
   const [serverResponse, setServerResponse] = useState<string>("");
 
   /**
-   * Handles the form submission using server actions.
+   * Handles the form submission and sends an email using the provided API keys.
    *
    * @param {FormData} data - The form data.
    * @return {Promise<void>} No return value.
    */
   const onSubmit = async (data: FormData): Promise<void> => {
-    const response = await handleContactForm(data);
-    setServerResponse(response.message);
+    const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+    const TEMPLATE_KEY =
+      process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+    const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+
+    try {
+      emailjs.init(EMAIL_API_KEY);
+      await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+      setServerResponse("Takk for din beskjed");
+    } catch {
+      setServerResponse("Feil under sending av skjema");
+    }
   };
 
   return (
