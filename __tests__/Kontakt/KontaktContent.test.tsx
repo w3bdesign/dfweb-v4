@@ -3,14 +3,12 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import KontaktContent from "@/components/Kontakt/KontaktContent.component";
-import { handleContactForm } from "@/app/actions/contact";
+import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
+import emailjs from "@emailjs/browser";
 
-jest.mock("@/app/actions/contact", () => ({
-  handleContactForm: jest
-    .fn()
-    .mockResolvedValue({ success: true, message: "Takk for din beskjed" }),
+jest.mock("@emailjs/browser", () => ({
+  send: jest.fn(() => Promise.resolve()),
+  init: jest.fn(),
 }));
 
 describe("KontaktContent", () => {
@@ -20,9 +18,7 @@ describe("KontaktContent", () => {
   const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
-    (
-      handleContactForm as jest.MockedFunction<typeof handleContactForm>
-    ).mockClear();
+    jest.clearAllMocks();
   });
 
   const fillFormWithValidData = () => {
@@ -56,16 +52,11 @@ describe("KontaktContent", () => {
       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
     });
 
-    expect(handleContactForm).toHaveBeenCalledTimes(1);
+    expect(emailjs.send).toHaveBeenCalledTimes(1);
   });
 
   test("displays error message on form submission failure", async () => {
-    (
-      handleContactForm as jest.MockedFunction<typeof handleContactForm>
-    ).mockResolvedValueOnce({
-      success: false,
-      message: "Feil under sending av skjema",
-    });
+    emailjs.send.mockRejectedValueOnce(new Error("Test error"));
 
     render(<KontaktContent />);
 
@@ -78,7 +69,7 @@ describe("KontaktContent", () => {
       ).toBeInTheDocument();
     });
 
-    expect(handleContactForm).toHaveBeenCalledTimes(1);
+    expect(emailjs.send).toHaveBeenCalledTimes(1);
   });
 
   test("displays validation errors for empty fields", async () => {
@@ -92,7 +83,7 @@ describe("KontaktContent", () => {
       expect(screen.getByText("Beskjed er påkrevd")).toBeInTheDocument();
     });
 
-    expect(handleContactForm).not.toHaveBeenCalled();
+    expect(emailjs.send).not.toHaveBeenCalled();
   });
 
   test("displays validation errors for invalid inputs", async () => {
@@ -119,6 +110,6 @@ describe("KontaktContent", () => {
       ).toBeInTheDocument();
     });
 
-    expect(handleContactForm).not.toHaveBeenCalled();
+    expect(emailjs.send).not.toHaveBeenCalled();
   });
 });
