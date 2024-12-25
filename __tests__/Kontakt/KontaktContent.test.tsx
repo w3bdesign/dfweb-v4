@@ -8,7 +8,9 @@ import KontaktContent from "@/components/Kontakt/KontaktContent.component";
 import { handleContactForm } from "@/app/actions/contact";
 
 jest.mock("@/app/actions/contact", () => ({
-  handleContactForm: jest.fn().mockResolvedValue({ success: true, message: "Takk for din beskjed" })
+  handleContactForm: jest
+    .fn()
+    .mockResolvedValue({ success: true, message: "Takk for din beskjed" }),
 }));
 
 describe("KontaktContent", () => {
@@ -18,7 +20,9 @@ describe("KontaktContent", () => {
   const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
-    (handleContactForm as jest.MockedFunction<typeof handleContactForm>).mockClear();
+    (
+      handleContactForm as jest.MockedFunction<typeof handleContactForm>
+    ).mockClear();
   });
 
   const fillFormWithValidData = () => {
@@ -56,9 +60,11 @@ describe("KontaktContent", () => {
   });
 
   test("displays error message on form submission failure", async () => {
-    (handleContactForm as jest.MockedFunction<typeof handleContactForm>).mockResolvedValueOnce({ 
-      success: false, 
-      message: "Feil under sending av skjema" 
+    (
+      handleContactForm as jest.MockedFunction<typeof handleContactForm>
+    ).mockResolvedValueOnce({
+      success: false,
+      message: "Feil under sending av skjema",
     });
 
     render(<KontaktContent />);
@@ -68,7 +74,7 @@ describe("KontaktContent", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Feil under sending av skjema"),
+        screen.getByText("Feil under sending av skjema")
       ).toBeInTheDocument();
     });
 
@@ -106,10 +112,10 @@ describe("KontaktContent", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Vennligst bruk norske bokstaver"),
+        screen.getByText("Vennligst bruk norske bokstaver")
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Vennligst oppgi et gyldig telefonnummer"),
+        screen.getByText("Vennligst oppgi et gyldig telefonnummer")
       ).toBeInTheDocument();
     });
 
