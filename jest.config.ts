@@ -13,7 +13,7 @@ const customJestConfig: Config = {
   testPathIgnorePatterns: ["<rootDir>/cypress/", "<rootDir>/playwright/"],
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
-    "@/(.*)": "<rootDir>/src/$1"
+    "@/(.*)": "<rootDir>/src/$1",
   },
   collectCoverageFrom: [
     "src/components/*.{js,jsx,ts,tsx}",

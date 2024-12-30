@@ -53,7 +53,9 @@ describe("CVContent", () => {
     });
     const experienceTab = screen.getByRole("tab", { name: /erfaring/i });
     const educationTab = screen.getByRole("tab", { name: /utdanning/i });
-    const volunteerWorkTab = screen.getByRole("tab", { name: /frivillig arbeid/i });
+    const volunteerWorkTab = screen.getByRole("tab", {
+      name: /frivillig arbeid/i,
+    });
     expect(qualificationsTab).toBeInTheDocument();
     expect(experienceTab).toBeInTheDocument();
     expect(educationTab).toBeInTheDocument();

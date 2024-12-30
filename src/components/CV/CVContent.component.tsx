@@ -98,7 +98,7 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
           ))}
         </div>
       ),
-    }
+    },
   ];
 
   return (

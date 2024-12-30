@@ -1,27 +1,27 @@
-import { getProjects } from '@/app/prosjekter/actions';
-import { client } from '@/lib/sanity/client';
-import { projectsQuery } from '@/lib/sanity/queries';
+import { getProjects } from "@/app/prosjekter/actions";
+import { client } from "@/lib/sanity/client";
+import { projectsQuery } from "@/lib/sanity/queries";
 
 // Mock the Sanity client
-jest.mock('@/lib/sanity/client', () => ({
+jest.mock("@/lib/sanity/client", () => ({
   client: {
     fetch: jest.fn(),
   },
 }));
 
-describe('getProjects', () => {
+describe("getProjects", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('fetches projects successfully', async () => {
+  it("fetches projects successfully", async () => {
     const mockProjects = [
       {
-        id: '1',
-        name: 'Test Project',
-        description: 'Test Description',
-        subdescription: 'Test Subdescription',
-        projectimage: { asset: { _ref: 'test' } },
+        id: "1",
+        name: "Test Project",
+        description: "Test Description",
+        subdescription: "Test Subdescription",
+        projectimage: { asset: { _ref: "test" } },
         urlwww: [],
         urlgithub: [],
       },
@@ -32,14 +32,20 @@ describe('getProjects', () => {
     const result = await getProjects();
 
     expect(result).toEqual(mockProjects);
-    expect(client.fetch).toHaveBeenCalledWith(projectsQuery, {}, {
-      next: { revalidate: 3600 }
-    });
+    expect(client.fetch).toHaveBeenCalledWith(
+      projectsQuery,
+      {},
+      {
+        next: { revalidate: 3600 },
+      },
+    );
   });
 
-  it('handles fetch error correctly', async () => {
-    (client.fetch as jest.Mock).mockRejectedValueOnce(new Error('Fetch failed'));
+  it("handles fetch error correctly", async () => {
+    (client.fetch as jest.Mock).mockRejectedValueOnce(
+      new Error("Fetch failed"),
+    );
 
-    await expect(getProjects()).rejects.toThrow('Failed to fetch projects');
+    await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
   });
 });
