@@ -22,9 +22,11 @@ describe("Section Component", () => {
       {
         _key: "1",
         _type: "block",
-        children: [{ _key: "2", _type: "span", text: "Test content", marks: [] }],
+        children: [
+          { _key: "2", _type: "span", text: "Test content", marks: [] },
+        ],
         markDefs: [],
-        style: "normal"
+        style: "normal",
       },
     ],
   };
@@ -39,7 +41,7 @@ describe("Section Component", () => {
     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
     expect(mockCall).toEqual({
       value: mockProps.text,
-      components: myPortableTextComponents
+      components: myPortableTextComponents,
     });
   });
 
@@ -55,7 +57,7 @@ describe("Section Component", () => {
 
   it("triggers error in development mode", () => {
     const originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    process.env.NODE_ENV = "development";
 
     render(<Section {...mockProps} />);
     const errorButton = screen.getByText("Utløs Testfeil");
@@ -70,7 +72,7 @@ describe("Section Component", () => {
 
   it("does not show error button in production mode", () => {
     const originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    process.env.NODE_ENV = "production";
 
     render(<Section {...mockProps} />);
     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();

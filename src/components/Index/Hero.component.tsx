@@ -19,7 +19,7 @@ const ReactMatrixAnimation = dynamic(
         <RotatingLoader />
       </div>
     ),
-  }
+  },
 );
 
 type THero = { text: string };
