@@ -1,12 +1,12 @@
+import { Suspense } from 'react';
+import type { Metadata } from "next/types";
+
 import RootLayout from "../RootLayout";
 import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+import RotatingLoader from "@/components/Animations/RotatingLoader.component";
 
-import { client } from "@/lib/sanity/client";
-import { projectsQuery } from "@/lib/sanity/queries";
-
-import type { Project } from "@/types/sanity.types";
-import type { Metadata } from "next/types";
+import { getProjects } from "./actions";
 
 export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Prosjekter() {
-  const posts: Project[] = await client.fetch(projectsQuery);
+  const projects = await getProjects();
 
   return (
     <RootLayout>
@@ -24,13 +24,15 @@ export default async function Prosjekter() {
         className="mt-32 bg-graybg"
       >
         <PageHeader>Prosjekter</PageHeader>
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-            {posts.map((project) => (
-              <ProsjektCard key={project.id} {...project} />
-            ))}
+        <Suspense fallback={<RotatingLoader />}>
+          <div className="container mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+              {projects.map((project) => (
+                <ProsjektCard key={project.id} {...project} />
+              ))}
+            </div>
           </div>
-        </div>
+        </Suspense>
       </main>
     </RootLayout>
   );
