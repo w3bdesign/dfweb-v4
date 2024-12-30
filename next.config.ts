@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   async headers() {
     const cspHeader = `
         default-src 'self';
-        script-src 'self' 'unsafe-eval' 'unsafe-inline';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com;
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data: https://cdn.sanity.io;
         font-src 'self';
@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
         base-uri 'self';
         form-action 'self';
         frame-ancestors 'none';
-        connect-src 'self' https://api.emailjs.com;
+        connect-src 'self' https://api.emailjs.com https://va.vercel-scripts.com;
         upgrade-insecure-requests;
       `
       .replace(/\s{2,}/g, " ")
