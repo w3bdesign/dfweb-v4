@@ -1,28 +1,28 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ProsjekterPage from '../../src/app/prosjekter/page';
-import { getProjects } from '../../src/app/prosjekter/actions';
+import ProsjekterPage from '@/app/prosjekter/page';
+import { getProjects } from '@/app/prosjekter/actions';
 
 // Mock the components and functions
-jest.mock('../../src/app/prosjekter/actions');
-jest.mock('../../src/components/UI/PageHeader.component', () => {
-  return function MockPageHeader({ children }) {
+jest.mock('@/app/prosjekter/actions');
+jest.mock('@/components/UI/PageHeader.component', () => {
+  return function MockPageHeader({ children }: { children: React.ReactNode }) {
     return <h1>{children}</h1>;
   };
 });
-jest.mock('../../src/components/Prosjekter/ProsjektCard.component', () => {
-  return function MockProsjektCard(props) {
+jest.mock('@/components/Prosjekter/ProsjektCard.component', () => {
+  return function MockProsjektCard(props: { name: string }) {
     return <div data-testid="project-card">{props.name}</div>;
   };
 });
-jest.mock('../../src/components/Animations/RotatingLoader.component', () => {
+jest.mock('@/components/Animations/RotatingLoader.component', () => {
   return function MockRotatingLoader() {
     return <div data-testid="rotating-loader">Loading...</div>;
   };
 });
-jest.mock('../../src/app/RootLayout', () => {
-  return function MockRootLayout({ children }) {
+jest.mock('@/app/RootLayout', () => {
+  return function MockRootLayout({ children }: { children: React.ReactNode }) {
     return <div>{children}</div>;
   };
 });

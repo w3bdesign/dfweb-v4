@@ -1,9 +1,9 @@
-import { getProjects } from '../../src/app/prosjekter/actions';
-import { client } from '../../src/lib/sanity/client';
-import { projectsQuery } from '../../src/lib/sanity/queries';
+import { getProjects } from '@/app/prosjekter/actions';
+import { client } from '@/lib/sanity/client';
+import { projectsQuery } from '@/lib/sanity/queries';
 
 // Mock the Sanity client
-jest.mock('../../src/lib/sanity/client', () => ({
+jest.mock('@/lib/sanity/client', () => ({
   client: {
     fetch: jest.fn(),
   },

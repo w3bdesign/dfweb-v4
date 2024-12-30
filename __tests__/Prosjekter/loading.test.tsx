@@ -1,22 +1,22 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Loading from '../../src/app/prosjekter/loading';
+import Loading from '@/app/prosjekter/loading';
 
 // Mock the components used in Loading
-jest.mock('../../src/components/UI/PageHeader.component', () => {
+jest.mock('@/components/UI/PageHeader.component', () => {
   return function MockPageHeader({ children }: { children: React.ReactNode }) {
     return <h1>{children}</h1>;
   };
 });
 
-jest.mock('../../src/components/Animations/RotatingLoader.component', () => {
+jest.mock('@/components/Animations/RotatingLoader.component', () => {
   return function MockRotatingLoader() {
     return <div data-testid="rotating-loader">Loading...</div>;
   };
 });
 
-jest.mock('../../src/app/RootLayout', () => {
+jest.mock('@/app/RootLayout', () => {
   return function MockRootLayout({ children }: { children: React.ReactNode }) {
     return <div>{children}</div>;
   };
