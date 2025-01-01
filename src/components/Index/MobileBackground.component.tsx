@@ -7,8 +7,8 @@ const MobileBackground = () => (
     className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat py-[5rem]"
     style={{
       backgroundImage: "url('/images/mobilbg.webp')",
-      top: "-0.5rem",
-      marginBottom: "0.5rem",
+      top: "-10.5rem",
+      marginBottom: "10.5rem",
     }}
   />
 );
