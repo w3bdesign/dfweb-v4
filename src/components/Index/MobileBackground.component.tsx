@@ -4,7 +4,7 @@
  */
 const MobileBackground = () => (
   <div
-    className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat pb-4"
+    className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat py-[5rem]"
     style={{
       backgroundImage: "url('/images/mobilbg.webp')",
       top: "-0.5rem",
