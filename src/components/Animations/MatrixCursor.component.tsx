@@ -4,7 +4,7 @@ import { useEffect, RefObject, useState, useCallback } from "react";
 import "../../app/cursor.css";
 
 interface MatrixCursorProps {
-  heroRef: RefObject<HTMLElement>;
+  heroRef: RefObject<HTMLElement | null>;
 }
 
 interface CursorStyles extends React.CSSProperties {
@@ -22,7 +22,7 @@ interface MatrixTrail {
 /**
  * MatrixCursor component that renders a custom cursor with a matrix trail effect
  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- * @param {RefObject<HTMLElement>} props.heroRef - Reference to the hero section element
+ * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
  */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {

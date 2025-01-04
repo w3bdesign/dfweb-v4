@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Section from "../../src/components/Index/Section.component";
 import { PortableText } from "@portabletext/react";
+import { myPortableTextComponents } from "../../src/utils/portableTextComponents";
 
 // Mock the BounceInScroll component
 jest.mock("../../src/components/Animations/BounceInScroll.component", () => {
@@ -21,7 +22,11 @@ describe("Section Component", () => {
       {
         _key: "1",
         _type: "block",
-        children: [{ _key: "2", _type: "span", text: "Test content" }],
+        children: [
+          { _key: "2", _type: "span", text: "Test content", marks: [] },
+        ],
+        markDefs: [],
+        style: "normal",
       },
     ],
   };
@@ -33,12 +38,11 @@ describe("Section Component", () => {
   it("renders with valid props", () => {
     render(<Section {...mockProps} />);
     expect(screen.getByText("Test Title")).toBeInTheDocument();
-    expect(PortableText).toHaveBeenCalledWith(
-      expect.objectContaining({
-        value: mockProps.text,
-      }),
-      expect.anything(),
-    );
+    const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
+    expect(mockCall).toEqual({
+      value: mockProps.text,
+      components: myPortableTextComponents,
+    });
   });
 
   it("returns null with invalid props", () => {
@@ -52,7 +56,7 @@ describe("Section Component", () => {
   });
 
   it("triggers error in development mode", () => {
-    const originalEnv = process.env.NODE_ENV;
+    const originalNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
 
     render(<Section {...mockProps} />);
@@ -63,16 +67,16 @@ describe("Section Component", () => {
       "En uventet feil har oppstått",
     );
 
-    process.env.NODE_ENV = originalEnv;
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   it("does not show error button in production mode", () => {
-    const originalEnv = process.env.NODE_ENV;
+    const originalNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";
 
     render(<Section {...mockProps} />);
     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    process.env.NODE_ENV = originalNodeEnv;
   });
 });
