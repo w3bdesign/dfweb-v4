@@ -2,6 +2,7 @@
 
 import { useEffect, RefObject, useState, useCallback } from "react";
 import "../../app/cursor.css";
+import { useMobile } from "../../hooks/useMobile"; // Pb51b
 
 interface MatrixCursorProps {
   heroRef: RefObject<HTMLElement | null>;
@@ -26,6 +27,7 @@ interface MatrixTrail {
  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
  */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+  const isMobile = useMobile(); // Pd528
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [trails, setTrails] = useState<MatrixTrail[]>([]);
@@ -103,7 +105,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     );
   }, []);
 
-  if (!heroRef.current) return null;
+  if (!heroRef.current || isMobile) return null; // P6ecf
 
   const cursorStyles: CursorStyles = {
     position: "fixed",

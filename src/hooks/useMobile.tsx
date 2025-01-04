@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 
+// Hook to detect if the device is mobile based on window width
 export function useMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
