@@ -3,48 +3,46 @@ import os
 import sys
 import json
 import codecs
-import shlex  # Import shlex module for input sanitization
+import shlex
 
 from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
+def read_config_file():
+    """Read configuration from local config file."""
+    config_path = os.path.join(str(Path.home()), ".ai_config.json")
+    try:
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error reading config file: {e}")
+    return {}
+
 def get_api_config():
-    """Get API configuration from various sources in order of precedence:
-     1. Environment variables (including .env)
-     2. Local config file in user's home directory
-     """
-    # Try loading from .env file first
+    """Get API configuration from environment variables or config file."""
     load_dotenv()
-
-    # Get API key
+    
+    # Try environment variables first
     api_key = os.getenv("AI_API_KEY")
-
-    # Get base URL if set (no default)
     base_url = os.getenv("AI_BASE_URL")
-
+    
+    # If no API key in env, try config file
     if not api_key:
-        # Try config file in home directory as fallback
+        config = read_config_file()
+        api_key = config.get("api_key")
+        base_url = config.get("base_url", base_url)
+    
+    if not api_key:
         config_path = os.path.join(str(Path.home()), ".ai_config.json")
-        try:
-            if os.path.exists(config_path):
-                with open(config_path, "r") as f:
-                    config = json.load(f)
-                    api_key = config.get("api_key")
-                    # Also check for base_url in config
-                    if "base_url" in config:
-                        base_url = config.get("base_url")
-        except Exception as e:
-            print(f"Error reading config file: {e}")
-
-    if not api_key:
         raise ValueError(
             "No API key found. Please either:\n"
             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
             "2. Set AI_API_KEY environment variable, or\n"
             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
         )
-
+    
     return api_key, base_url
 
 
