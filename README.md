@@ -1,4 +1,5 @@
 [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+[![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
@@ -64,6 +65,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
 - Google rich results for each individual page
 - 100% / 100% / 100% / 100% score in Google Lighthouse
+- Automated Lighthouse CI testing integrated with GitHub Actions
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
@@ -95,3 +97,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
 - AI-powered commit message generation following Conventional Commits with gitmojis
+- Automated performance monitoring with Lighthouse CI
+  - Performance, accessibility, best practices, and SEO checks on every PR
+  - Configurable thresholds for quality metrics
+  - Both desktop and performance-focused testing
