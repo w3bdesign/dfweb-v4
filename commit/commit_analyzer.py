@@ -144,7 +144,7 @@ def generate_commit_message(diff):
         The commit message MUST follow this format:
         <emoji> <type>[optional scope]: <description>
 
-        [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+        [optional body]
 
         [optional footer(s)]
 
