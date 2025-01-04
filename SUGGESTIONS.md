@@ -62,19 +62,7 @@ pnpm add -D @stryker-mutator/core @stryker-mutator/typescript-checker
 - Find edge cases
 - Strengthen test reliability
 
-### 4. Code Quality (SonarQube/SonarCloud)
-
-Implement enterprise-grade code analysis.
-
-**Benefits:**
-
-- Comprehensive code quality metrics
-- Security vulnerability detection
-- Code smell identification
-- Technical debt tracking
-- Free for open source projects
-
-### 5. Performance Monitoring (Lighthouse CI)
+### 4. Performance Monitoring (Lighthouse CI)
 
 Automate performance tracking and optimization.
 

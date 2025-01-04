@@ -54,7 +54,8 @@ def get_staged_diff():
         staged_files = files_output.splitlines()
         
         # Check if any staged files are lock files
-        if any(file.endswith('.lock') for file in staged_files):
+        lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+        if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
             return None, True  # Indicate lock file presence
             
         # Get the actual diff
@@ -64,7 +65,8 @@ def get_staged_diff():
             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
             staged_files = files_output.splitlines()
-            if any(file.endswith('.lock') for file in staged_files):
+            lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+            if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
                 return None, True
         return diff, False  # No lock files found
     except subprocess.CalledProcessError as e:
