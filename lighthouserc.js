@@ -1,16 +1,14 @@
 module.exports = {
   ci: {
     collect: {
-      // Number of runs to perform per URL
       numberOfRuns: 1,
-      // URLs to analyze
       url: [
         'http://localhost:3000/',
         'http://localhost:3000/cv',
         'http://localhost:3000/prosjekter',
         'http://localhost:3000/kontakt'
       ],
-      // URLs to analyze
+      port: 3000
     },
     upload: {
       // Upload results to temporary public storage

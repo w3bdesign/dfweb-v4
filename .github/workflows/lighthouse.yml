@@ -37,9 +37,19 @@ jobs:
       - name: Build project
         run: pnpm build
 
+      - name: Start server
+        run: |
+          pnpm start &
+          sleep 10
+
       - name: Run Lighthouse CI
         run: |
           pnpm lhci:perf
           pnpm lhci:desktop
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stop server
+        if: always()
+        run: |
+          pkill -f "next start" || true
