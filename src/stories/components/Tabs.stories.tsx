@@ -33,40 +33,41 @@ const ListContent = () => (
   </div>
 );
 
+const FormField = ({ id, label, type, placeholder }: {
+  id: string;
+  label: string;
+  type: string;
+  placeholder: string;
+}) => (
+  <div>
+    <label htmlFor={id} className="block text-gray-300 mb-2">{label}</label>
+    <input
+      id={id}
+      type={type}
+      className="w-full p-2 rounded bg-gray-700 text-white"
+      placeholder={placeholder}
+    />
+  </div>
+);
+
 const FormContent = () => {
   const formId = React.useId();
+  const fields = [
+    { label: "Name", type: "text", placeholder: "Enter your name" },
+    { label: "Email", type: "email", placeholder: "Enter your email" }
+  ];
+  
   return (
     <div className="py-4">
       <h2 className="text-xl text-white mb-4">Form Content</h2>
       <form className="space-y-4">
-        <div>
-          <label
-            htmlFor={`${formId}-name`}
-            className="block text-gray-300 mb-2"
-          >
-            Name
-          </label>
-          <input
-            id={`${formId}-name`}
-            type="text"
-            className="w-full p-2 rounded bg-gray-700 text-white"
-            placeholder="Enter your name"
+        {fields.map(field => (
+          <FormField
+            key={field.label}
+            id={`${formId}-${field.label.toLowerCase()}`}
+            {...field}
           />
-        </div>
-        <div>
-          <label
-            htmlFor={`${formId}-email`}
-            className="block text-gray-300 mb-2"
-          >
-            Email
-          </label>
-          <input
-            id={`${formId}-email`}
-            type="email"
-            className="w-full p-2 rounded bg-gray-700 text-white"
-            placeholder="Enter your email"
-          />
-        </div>
+        ))}
       </form>
     </div>
   );
