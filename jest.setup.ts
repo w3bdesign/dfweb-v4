@@ -2,7 +2,6 @@
 import "@testing-library/jest-dom";
 import "jest-extended";
 import { checkAAAPattern } from "./src/utils/test-utils";
-import path from "path";
 import fs from "fs/promises";
 
 declare global {
@@ -19,9 +18,7 @@ declare global {
   }
 }
 
-// Safely access Jest's internal state
 function getTestPath(): string | undefined {
-  // Using a type assertion since we know Jest's internal structure
   return (expect as any).getState().testPath;
 }
 
