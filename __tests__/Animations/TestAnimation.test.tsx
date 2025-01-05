@@ -38,6 +38,7 @@ function testAnimationComponent(
 
     beforeEach(() => {
       // Act - Perform the action being tested
+      let renderedComponent: ReturnType<typeof render>;
       renderedComponent = render(
         <Component delay={1}>{testContent}</Component>
       );
