@@ -1,4 +1,28 @@
-module.exports = {
+export interface RuleMeta {
+  type: string;
+  docs: {
+    description: string;
+    category: string;
+    recommended: boolean;
+  };
+}
+
+export interface Rule {
+  meta: RuleMeta;
+  create: (context: any) => any;
+}
+
+export interface ESLintCustomRules {
+  meta: {
+    name: string;
+    version: string;
+  };
+  rules: {
+    [key: string]: Rule;
+  };
+}
+
+const eslintCustomRules: ESLintCustomRules = {
   meta: {
     name: 'custom-test-rules',
     version: '1.0.0'
@@ -39,3 +63,5 @@ module.exports = {
     }
   }
 };
+
+export default eslintCustomRules;
