@@ -1,4 +1,34 @@
-module.exports = {
+interface LighthouseSettings {
+  onlyCategories: string[];
+  skipAudits: string[];
+}
+
+interface LighthouseAssertions {
+  [key: string]: [string, { minScore: number }] | string;
+}
+
+interface LighthouseCollect {
+  numberOfRuns: number;
+  url: string[];
+  port: number;
+  settings: LighthouseSettings;
+}
+
+interface LighthouseUpload {
+  target: string;
+}
+
+interface LighthouseAssert {
+  assertions: LighthouseAssertions;
+}
+
+interface LighthouseCI {
+  collect: LighthouseCollect;
+  upload: LighthouseUpload;
+  assert: LighthouseAssert;
+}
+
+const lighthouseConfig: { ci: LighthouseCI } = {
   ci: {
     collect: {
       numberOfRuns: 1,
@@ -15,11 +45,9 @@ module.exports = {
       }
     },
     upload: {
-      // Upload results to temporary public storage
       target: 'temporary-public-storage',
     },
     assert: {
-      // Performance score thresholds
       assertions: {
         'categories:performance': ['warn', { minScore: 0.6 }],
         'categories:accessibility': ['warn', { minScore: 0.9 }],
@@ -30,3 +58,5 @@ module.exports = {
     },
   },
 };
+
+export default lighthouseConfig;
