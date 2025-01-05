@@ -4,40 +4,47 @@ import "@testing-library/jest-dom";
 import RotatingLoader from "../../src/components/Animations/RotatingLoader.component";
 
 describe("RotatingLoader", () => {
-  it("renders without crashing", () => {
-    render(<RotatingLoader />);
+  describe("rendering", () => {
+    it("renders component structure with correct classes", () => {
+      // Arrange
+      const expectedClasses = {
+        wrapper: "grid min-h-[140px] w-full place-items-center",
+        svg: "animate-spin",
+        paths: ["stroke-matrix-dark", "stroke-matrix-light"]
+      };
+      
+      // Act
+      const { container } = render(<RotatingLoader />);
+      const wrapperDiv = container.firstChild;
+      const svg = container.querySelector("svg");
+      const paths = container.querySelectorAll("path");
+      
+      // Assert
+      expect(wrapperDiv).toHaveClass(expectedClasses.wrapper);
+      expect(svg).toBeInTheDocument();
+      expect(svg).toHaveClass(expectedClasses.svg);
+      expect(paths.length).toBe(2);
+      expect(paths[0]).toHaveClass(expectedClasses.paths[0]);
+      expect(paths[1]).toHaveClass(expectedClasses.paths[1]);
+    });
   });
 
-  it("has the correct structure", () => {
-    const { container } = render(<RotatingLoader />);
-
-    // Check for the main wrapper div
-    const wrapperDiv = container.firstChild;
-    expect(wrapperDiv).toHaveClass(
-      "grid min-h-[140px] w-full place-items-center",
-    );
-
-    // Check for the SVG element
-    const svg = container.querySelector("svg");
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveClass("animate-spin");
-
-    // Check for the paths with Matrix theme colors
-    const paths = container.querySelectorAll("path");
-    expect(paths.length).toBe(2);
-    expect(paths[0]).toHaveClass("stroke-matrix-dark");
-    expect(paths[1]).toHaveClass("stroke-matrix-light");
-  });
-
-  it("has the correct animations", () => {
-    const { container } = render(<RotatingLoader />);
-
-    // Check for glow animation container
-    const glowContainer = container.querySelector(".animate-matrix-glow");
-    expect(glowContainer).toBeInTheDocument();
-
-    // Check for spin animation on SVG
-    const svg = container.querySelector("svg");
-    expect(svg).toHaveClass("animate-spin");
+  describe("animations", () => {
+    it("applies correct animation classes", () => {
+      // Arrange
+      const expectedAnimations = {
+        glow: "animate-matrix-glow",
+        spin: "animate-spin"
+      };
+      
+      // Act
+      const { container } = render(<RotatingLoader />);
+      const glowContainer = container.querySelector(`.${expectedAnimations.glow}`);
+      const svg = container.querySelector("svg");
+      
+      // Assert
+      expect(glowContainer).toBeInTheDocument();
+      expect(svg).toHaveClass(expectedAnimations.spin);
+    });
   });
 });
