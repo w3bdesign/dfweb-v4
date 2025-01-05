@@ -47,36 +47,6 @@ pnpm add -D husky lint-staged
 - Run tests before commits
 - Ensure consistent code quality
 
-### 3. Mutation Testing (Stryker)
-
-Verify the effectiveness of test cases through mutation testing.
-
-```bash
-pnpm add -D @stryker-mutator/core @stryker-mutator/typescript-checker
-```
-
-**Benefits:**
-
-- Identify weak test cases
-- Improve test coverage quality
-- Find edge cases
-- Strengthen test reliability
-
-### 4. Performance Monitoring (Lighthouse CI)
-
-Automate performance tracking and optimization.
-
-```bash
-pnpm add -D @lhci/cli
-```
-
-**Benefits:**
-
-- Track Web Vitals
-- Monitor performance trends
-- Automate performance testing
-- Prevent performance regressions
-
 ## Implementation Impact
 
 Adding these tools would demonstrate:
