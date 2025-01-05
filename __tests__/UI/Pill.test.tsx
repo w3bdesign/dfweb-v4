@@ -11,74 +11,96 @@ jest.mock("next/link", () => {
 });
 
 describe("Pill Component", () => {
-  it("renders with default props", () => {
-    render(<Pill text="Test Pill" />);
-    const pill = screen.getByText("Test Pill");
-    expect(pill).toBeInTheDocument();
-    expect(pill.tagName).toBe("BUTTON");
-    expect(pill).toHaveAttribute("data-text", "Test Pill");
+  describe("rendering", () => {
+    it("renders as button with default props", () => {
+      // Arrange
+      const text = "Test Pill";
+      
+      // Act
+      render(<Pill text={text} />);
+      const pill = screen.getByText(text);
+      
+      // Assert
+      expect(pill).toBeInTheDocument();
+      expect(pill.tagName).toBe("BUTTON");
+      expect(pill).toHaveAttribute("data-text", text);
+    });
+
+    it("renders as link when href is provided", () => {
+      // Arrange
+      const props = {
+        text: "Link Pill",
+        href: "/test"
+      };
+      
+      // Act
+      render(<Pill {...props} />);
+      const pill = screen.getByText(props.text);
+      
+      // Assert
+      expect(pill).toBeInTheDocument();
+      expect(pill.tagName).toBe("A");
+      expect(pill).toHaveAttribute("href", props.href);
+      expect(pill).toHaveAttribute("data-text", props.text);
+    });
+
+    it("applies custom className alongside base classes", () => {
+      // Arrange
+      const props = {
+        text: "Custom Class",
+        className: "custom-class"
+      };
+      const baseClasses = [
+        "glitch", "text-white", "m-4", "text-xl", "p-6", "mt-4",
+        "rounded-full", "transition", "duration-300", "ease-in-out",
+        "transform", "bg-blue-600", "bg-opacity-20", "border-2",
+        "border-blue-800", "border-opacity-30", "hover:bg-blue-400",
+        "hover:bg-opacity-30", "backdrop-blur-sm"
+      ];
+      
+      // Act
+      render(<Pill {...props} />);
+      const pill = screen.getByText(props.text);
+      
+      // Assert
+      expect(pill).toHaveClass(...baseClasses, props.className);
+    });
   });
 
-  it("renders as a link when href is provided", () => {
-    render(<Pill text="Link Pill" href="/test" />);
-    const pill = screen.getByText("Link Pill");
-    expect(pill).toBeInTheDocument();
-    expect(pill.tagName).toBe("A");
-    expect(pill).toHaveAttribute("href", "/test");
-    expect(pill).toHaveAttribute("data-text", "Link Pill");
-  });
+  describe("interactions", () => {
+    it("calls onClick when clicked as button", () => {
+      // Arrange
+      const mockOnClick = jest.fn();
+      const props = {
+        text: "Clickable Pill",
+        onClick: mockOnClick
+      };
+      
+      // Act
+      render(<Pill {...props} />);
+      const pill = screen.getByText(props.text);
+      fireEvent.click(pill);
+      
+      // Assert
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
 
-  it("applies custom className", () => {
-    render(<Pill text="Custom Class" className="custom-class" />);
-    const pill = screen.getByText("Custom Class");
-    expect(pill).toHaveClass("custom-class");
-  });
-
-  it("calls onClick function when clicked", () => {
-    const mockOnClick = jest.fn();
-    render(<Pill text="Clickable Pill" onClick={mockOnClick} />);
-    const pill = screen.getByText("Clickable Pill");
-    fireEvent.click(pill);
-    expect(mockOnClick).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders with correct base classes", () => {
-    render(<Pill text="Base Classes" />);
-    const pill = screen.getByText("Base Classes");
-    expect(pill).toHaveClass(
-      "glitch",
-      "text-white",
-      "m-4",
-      "text-xl",
-      "p-6",
-      "mt-4",
-      "rounded-full",
-      "transition",
-      "duration-300",
-      "ease-in-out",
-      "transform",
-      "bg-blue-600",
-      "bg-opacity-20",
-      "border-2",
-      "border-blue-800",
-      "border-opacity-30",
-      "hover:bg-blue-400",
-      "hover:bg-opacity-30",
-      "backdrop-blur-sm",
-    );
-  });
-
-  it("renders as a button when no href is provided", () => {
-    render(<Pill text="Button Pill" onClick={() => {}} />);
-    const pill = screen.getByText("Button Pill");
-    expect(pill.tagName).toBe("BUTTON");
-  });
-
-  it("does not call onClick when rendered as a link", () => {
-    const mockOnClick = jest.fn();
-    render(<Pill text="Link Pill" href="/test" onClick={mockOnClick} />);
-    const pill = screen.getByText("Link Pill");
-    fireEvent.click(pill);
-    expect(mockOnClick).not.toHaveBeenCalled();
+    it("does not call onClick when rendered as link", () => {
+      // Arrange
+      const mockOnClick = jest.fn();
+      const props = {
+        text: "Link Pill",
+        href: "/test",
+        onClick: mockOnClick
+      };
+      
+      // Act
+      render(<Pill {...props} />);
+      const pill = screen.getByText(props.text);
+      fireEvent.click(pill);
+      
+      // Assert
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
   });
 });
