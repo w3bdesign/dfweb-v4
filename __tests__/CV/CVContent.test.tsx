@@ -36,45 +36,65 @@ const mockCVData = {
 };
 
 describe("CVContent", () => {
-  it("CVContent renders correctly with mock data", async () => {
+  it("renders CV header and PDF download button", () => {
+    // Arrange
+    const expectedElements = {
+      header: /cv/i,
+      pdfButton: /last ned pdf/i
+    };
+    
+    // Act
     render(<CVContent cvData={mockCVData} />);
+    
+    // Assert
+    expect(screen.getByRole("heading", { name: expectedElements.header })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: expectedElements.pdfButton })).toBeInTheDocument();
+  });
 
-    // Check if the CV header is present
-    const cvHeader = screen.getByRole("heading", { name: /cv/i });
-    expect(cvHeader).toBeInTheDocument();
-
-    // Check if the "Last ned PDF" button is present
-    const pdfButton = screen.getByRole("link", { name: /last ned pdf/i });
-    expect(pdfButton).toBeInTheDocument();
-
-    // Check if tabs are present
-    const qualificationsTab = screen.getByRole("tab", {
-      name: /nøkkelkvalifikasjoner/i,
+  it("renders all navigation tabs", () => {
+    // Arrange
+    const expectedTabs = [
+      /nøkkelkvalifikasjoner/i,
+      /erfaring/i,
+      /utdanning/i,
+      /frivillig arbeid/i
+    ];
+    
+    // Act
+    render(<CVContent cvData={mockCVData} />);
+    
+    // Assert
+    expectedTabs.forEach(tabName => {
+      expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
     });
-    const experienceTab = screen.getByRole("tab", { name: /erfaring/i });
-    const educationTab = screen.getByRole("tab", { name: /utdanning/i });
-    const volunteerWorkTab = screen.getByRole("tab", {
-      name: /frivillig arbeid/i,
-    });
-    expect(qualificationsTab).toBeInTheDocument();
-    expect(experienceTab).toBeInTheDocument();
-    expect(educationTab).toBeInTheDocument();
-    expect(volunteerWorkTab).toBeInTheDocument();
+  });
 
-    // Check if mock data is rendered (you might need to click on tabs to see this content)
-    const qualification = screen.getByText(/qualification 1/i);
-    expect(qualification).toBeInTheDocument();
+  it("displays qualifications in initial tab", () => {
+    // Arrange
+    const expectedQualification = /qualification 1/i;
+    
+    // Act
+    render(<CVContent cvData={mockCVData} />);
+    
+    // Assert
+    expect(screen.getByText(expectedQualification)).toBeInTheDocument();
+  });
 
-    // Set up user event
+  it("displays volunteer work content when switching tabs", async () => {
+    // Arrange
     const user = userEvent.setup();
-
-    // Click on volunteer work tab and check its content
+    render(<CVContent cvData={mockCVData} />);
+    const volunteerWorkTab = screen.getByRole("tab", { name: /frivillig arbeid/i });
+    const expectedContent = {
+      role: /technical lead/i,
+      organization: /ai community/i
+    };
+    
+    // Act
     await user.click(volunteerWorkTab);
-
-    // Check volunteer work content
-    const volunteerRole = await screen.findByText(/technical lead/i);
-    expect(volunteerRole).toBeInTheDocument();
-    const volunteerOrg = await screen.findByText(/ai community/i);
-    expect(volunteerOrg).toBeInTheDocument();
+    
+    // Assert
+    expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
+    expect(await screen.findByText(expectedContent.organization)).toBeInTheDocument();
   });
 });

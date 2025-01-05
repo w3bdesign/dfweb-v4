@@ -22,32 +22,45 @@ describe("ErrorFallback", () => {
   });
 
   it("renders error message and reload button", () => {
+    // Arrange
+    const expectedTexts = {
+      heading: "Har du funnet en feil i Matrix?",
+      error: "Test error message",
+      button: "Returner til Matrix"
+    };
+    
+    // Act
     render(<ErrorFallback error={mockError} />);
-
-    expect(
-      screen.getByText("Har du funnet en feil i Matrix?"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Test error message")).toBeInTheDocument();
-    expect(screen.getByText("Returner til Matrix")).toBeInTheDocument();
+    
+    // Assert
+    expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+    expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+    expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
   });
 
   it("displays default error message when error.message is undefined", () => {
+    // Arrange
     const errorWithoutMessage = new Error();
+    const expectedMessage = "En uventet feil har oppstått.";
+    
+    // Act
     render(<ErrorFallback error={errorWithoutMessage} />);
-
-    expect(
-      screen.getByText("En uventet feil har oppstått."),
-    ).toBeInTheDocument();
+    
+    // Assert
+    expect(screen.getByText(expectedMessage)).toBeInTheDocument();
   });
 
   it("reloads the page when the reload button is clicked", () => {
+    // Arrange
     render(<ErrorFallback error={mockError} />);
     const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
+      name: "Returner til Matrix"
     });
-
+    
+    // Act
     fireEvent.click(reloadButton);
-
+    
+    // Assert
     expect(window.location.reload).toHaveBeenCalledTimes(1);
   });
 });

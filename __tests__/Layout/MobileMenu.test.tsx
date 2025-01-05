@@ -16,73 +16,81 @@ describe("MobileMenu - elementer eksisterer", () => {
     render(<MobileMenu links={linksmock} />);
   });
 
-  it("MobileMenu laster inn og kan vises", () => {
-    // First, click the hamburger to expand the menu
+  it("renders mobile menu when hamburger is clicked", () => {
+    // Arrange
     const hamburger = screen.getByTestId("hamburger");
+    
+    // Act
     fireEvent.click(hamburger);
-
-    // Now we can look for the mobile-menu
     const mobilemenu = screen.getByTestId(testidMenu);
+    
+    // Assert
     expect(mobilemenu).toBeInTheDocument();
   });
 
-  it("Ekspanderer hamburger meny", () => {
+  it("toggles hamburger menu expansion state", () => {
+    // Arrange
     const hamburger = screen.getByTestId("hamburger");
-
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
-    ).toBeInTheDocument();
-
+    
+    // Assert - Initial state
+    expect(screen.getByRole("button", { name: /hamburger/i, expanded: false }))
+      .toBeInTheDocument();
+    
+    // Act - Open menu
     fireEvent.click(hamburger);
-
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
-    ).toBeInTheDocument();
-
+    
+    // Assert - Open state
+    expect(screen.getByRole("button", { name: /hamburger/i, expanded: true }))
+      .toBeInTheDocument();
+    
+    // Act - Close menu
     fireEvent.click(hamburger);
-
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
-    ).toBeInTheDocument();
+    
+    // Assert - Closed state
+    expect(screen.getByRole("button", { name: /hamburger/i, expanded: false }))
+      .toBeInTheDocument();
   });
 
-  it("Viser riktig antall linker", () => {
+  it("displays correct number of navigation links", () => {
+    // Arrange
     const hamburger = screen.getByTestId("hamburger");
-
+    
+    // Act
     fireEvent.click(hamburger);
-
     const menuItems = screen.getAllByRole("link");
-
+    
+    // Assert
     expect(menuItems.length).toBe(linksmock.length);
   });
 
-  it("Åpner eksterne linker i ny fane", () => {
+  it("opens external links in new tab with correct attributes", () => {
+    // Arrange
     const hamburger = screen.getByTestId("hamburger");
-
+    
+    // Act
     fireEvent.click(hamburger);
-
     const externalLink = screen.getByRole("link", { name: /github/i });
-
+    
+    // Assert
     expect(externalLink).toHaveAttribute("target", "_blank");
     expect(externalLink).toHaveAttribute("rel", "noreferrer");
   });
 
-  it("Lukker menyen", async () => {
+  it("closes menu when clicking outside", async () => {
+    // Arrange
     const user = userEvent.setup();
     const hamburger = screen.getByTestId("hamburger");
-
-    // Open the menu
+    
+    // Act - Open menu
     await user.click(hamburger);
-
+    
+    // Assert - Menu is open
     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-
-    // Click outside the menu
+    
+    // Act - Close menu
     await user.click(document.body);
-
-    // Check if the menu is closed
-    expect(screen.getByTestId("hamburger")).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    
+    // Assert - Menu is closed
+    expect(screen.getByTestId("hamburger")).toHaveAttribute("aria-expanded", "false");
   });
 });
