@@ -5,7 +5,13 @@ import { checkAAAPattern } from "./src/utils/test-utils";
 beforeEach(() => {
   const stack = new Error().stack || '';
   const testPath = expect.getState().testPath as string;
-  const testName = stack.split('\n')[2]?.match(/\s+at\s+(\S+)/)?.[1] || '';
+  
+  // Use a more specific regex pattern with limits to prevent ReDoS
+  // - ^ anchors to start of line
+  // - [^\n]{0,1000} limits line length
+  // - (?:\s{1,4}at\s) matches "at" with limited whitespace
+  // - ([^\s\n]{1,100}) captures the function name with length limit
+  const testName = stack.split('\n')[2]?.match(/^[^\n]{0,1000}(?:\s{1,4}at\s)([^\s\n]{1,100})/)?.[1] || '';
   
   // Skip this check for test-rule.test.tsx since it contains intentionally invalid tests
   if (!testPath.includes('test-rule.test.tsx') && !testName.includes('node_modules')) {
