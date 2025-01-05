@@ -4,7 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Button from "../../src/components/UI/Button.component";
+import Button from "@/components/UI/Button.component";
 
 describe("Button", () => {
   describe("Button Component", () => {
