@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -31,12 +32,25 @@ describe("Section Component", () => {
     ],
   };
 
+  const originalEnv = process.env;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   it("renders with valid props", () => {
-    render(<Section {...mockProps} />);
+    // Arrange - Set up test data and conditions
+    const props = mockProps;
+
+    // Act - Perform the action being tested
+    render(<Section {...props} />);
+
+    // Assert - Verify the results
     expect(screen.getByText("Test Title")).toBeInTheDocument();
     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
     expect(mockCall).toEqual({
@@ -46,37 +60,43 @@ describe("Section Component", () => {
   });
 
   it("returns null with invalid props", () => {
+    // Arrange - Set up test data and conditions
     const consoleErrorSpy = jest
       .spyOn(console, "error")
       .mockImplementation(() => {});
+
+    // Act - Perform the action being tested
     const { container } = render(<Section title="" text={[]} />);
+
+    // Assert - Verify the results
     expect(container.firstChild).toBeNull();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
 
   it("triggers error in development mode", () => {
-    const originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "development";
+    // Arrange - Set up test data and conditions
+    process.env = { ...originalEnv, NODE_ENV: "development" };
 
+    // Act - Perform the action being tested
     render(<Section {...mockProps} />);
     const errorButton = screen.getByText("Utløs Testfeil");
-    expect(errorButton).toBeInTheDocument();
 
+    // Assert - Verify the results
+    expect(errorButton).toBeInTheDocument();
     expect(() => fireEvent.click(errorButton)).toThrow(
       "En uventet feil har oppstått",
     );
-
-    process.env.NODE_ENV = originalNodeEnv;
   });
 
   it("does not show error button in production mode", () => {
-    const originalNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
+    // Arrange - Set up test data and conditions
+    process.env = { ...originalEnv, NODE_ENV: "production" };
 
+    // Act - Perform the action being tested
     render(<Section {...mockProps} />);
-    expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
 
-    process.env.NODE_ENV = originalNodeEnv;
+    // Assert - Verify the results
+    expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
   });
 });

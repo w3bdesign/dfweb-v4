@@ -33,17 +33,34 @@ function testAnimationComponent(
   expectedAttribute: string,
 ) {
   describe(Component.name, () => {
+    // Arrange - Set up test data and conditions
+    const testContent = Component.name;
+    let renderedComponent: ReturnType<typeof render>;
+
     beforeEach(() => {
-      render(<Component delay={1}>{Component.name}</Component>);
+      // Act - Perform the action being tested
+      renderedComponent = render(<Component delay={1}>{testContent}</Component>);
     });
 
     it(`${Component.name} loads and can be displayed`, () => {
-      const element = screen.getByTestId(testId);
+      // Arrange - Set up test data and conditions
+      const expectedTestId = testId;
+
+      // Act - Perform the action being tested
+      const element = screen.getByTestId(expectedTestId);
+
+      // Assert - Verify the results
       expect(element).toBeInTheDocument();
     });
 
     it(`Framer motion sets ${expectedAttribute}`, () => {
-      const element = screen.getByTestId(testId);
+      // Arrange - Set up test data and conditions
+      const expectedTestId = testId;
+
+      // Act - Perform the action being tested
+      const element = screen.getByTestId(expectedTestId);
+
+      // Assert - Verify the results
       expect(element).toContainHTML(expectedAttribute);
     });
   });
