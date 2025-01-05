@@ -1,6 +1,6 @@
 /// <reference types="cypress"/>
 
-import Hero from "../../src/components/Index/Hero.component";
+import Hero from "@/components/Index/Hero.component";
 
 const content = [
   {

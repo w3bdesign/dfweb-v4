@@ -4,7 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Hero from "../../src/components/Index/Hero.component";
+import Hero from "@/components/Index/Hero.component";
 import heromock from "../../__mocks__/hero.json";
 import { PortableTextBlock } from "@portabletext/types";
 

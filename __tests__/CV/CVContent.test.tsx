@@ -5,7 +5,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import CVContent from "../../src/components/CV/CVContent.component";
+import CVContent from "@/components/CV/CVContent.component";
 
 const mockCVData = {
   keyQualifications: ["Qualification 1", "Qualification 2"],

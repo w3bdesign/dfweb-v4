@@ -3,7 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import KontaktContent from "../../src/components/Kontakt/KontaktContent.component";
+import KontaktContent from "@/components/Kontakt/KontaktContent.component";
 import emailjs from "@emailjs/browser";
 
 jest.mock("@emailjs/browser", () => ({

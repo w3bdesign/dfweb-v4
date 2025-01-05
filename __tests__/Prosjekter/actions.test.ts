@@ -3,7 +3,7 @@ import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
 
 // Mock the Sanity client
-jest.mock("../../src/lib/sanity/client", () => ({
+jest.mock("@/lib/sanity/client", () => ({
   client: {
     fetch: jest.fn(),
   },

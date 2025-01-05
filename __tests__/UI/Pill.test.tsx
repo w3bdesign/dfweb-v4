@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import Pill from "../../src/components/UI/Pill.component";
+import Pill from "@/components/UI/Pill.component";
 
 // Mock Next.js Link component
 jest.mock("next/link", () => {

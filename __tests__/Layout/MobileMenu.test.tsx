@@ -5,7 +5,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import MobileMenu from "../../src/components/Layout/MobileMenu.component";
+import MobileMenu from "@/components/Layout/MobileMenu.component";
 
 import linksmock from "../../__mocks__/links.json";
 

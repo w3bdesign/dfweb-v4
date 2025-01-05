@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import SkipLink from "../../src/components/UI/SkipLink.component";
+import SkipLink from "@/components/UI/SkipLink.component";
 
 describe("SkipLink", () => {
   describe("rendering", () => {

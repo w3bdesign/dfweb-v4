@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import IndexContent from "../../src/components/Index/IndexContent.component";
+import IndexContent from "@/components/Index/IndexContent.component";
 
 // Mock the Section component
-jest.mock("../../src/components/Index/Section.component", () => {
+jest.mock("@/components/Index/Section.component", () => {
   return function MockSection({ title, text }) {
     return (
       <div data-testid="mock-section">

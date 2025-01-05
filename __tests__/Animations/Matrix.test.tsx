@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import ReactMatrixAnimation from "../../src/components/Animations/Matrix.component";
+import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 
 const mockFillRect = jest.fn();
 const mockFillText = jest.fn();

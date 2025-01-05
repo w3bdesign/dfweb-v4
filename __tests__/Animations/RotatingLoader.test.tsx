@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import RotatingLoader from "../../src/components/Animations/RotatingLoader.component";
+import RotatingLoader from "@/components/Animations/RotatingLoader.component";
 
 describe("RotatingLoader", () => {
   describe("rendering", () => {

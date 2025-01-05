@@ -3,7 +3,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import Header from "../../src/components/Layout/Header.component";
+import Header from "@/components/Layout/Header.component";
 
 // Mock the usePathname hook
 jest.mock("next/navigation", () => ({
@@ -11,7 +11,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock the MobileMenu component
-jest.mock("../../src/components/Layout/MobileMenu.component", () => {
+jest.mock("@/components/Layout/MobileMenu.component", () => {
   return function MockMobileMenu({ links }: { links: any[] }) {
     return <div data-testid="mobile-menu">Mobile Menu</div>;
   };

@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { render, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import MatrixCursor from "../../src/components/Animations/MatrixCursor.component";
+import MatrixCursor from "@/components/Animations/MatrixCursor.component";
 
 // Wrapper component to provide ref
 const TestWrapper = () => {

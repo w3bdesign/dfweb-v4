@@ -2,19 +2,19 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
-import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard.component";
+import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 
 mockIntersectionObserver();
 
 // Mock the Button component
 jest.mock(
-  "../../src/components/UI/Button.component",
+  "@/components/UI/Button.component",
   () =>
     ({ href, children }) => <a href={href}>{children}</a>,
 );
 
 // Mock the urlFor function
-jest.mock("../../src/lib/sanity/helpers", () => ({
+jest.mock("@/lib/sanity/helpers", () => ({
   urlFor: jest.fn().mockReturnValue({
     url: jest.fn().mockReturnValue("test-image.jpg"),
   }),

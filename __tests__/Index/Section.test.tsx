@@ -1,12 +1,12 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Section from "../../src/components/Index/Section.component";
+import Section from "@/components/Index/Section.component";
 import { PortableText } from "@portabletext/react";
-import { myPortableTextComponents } from "../../src/utils/portableTextComponents";
+import { myPortableTextComponents } from "@/utils/portableTextComponents";
 
 // Mock the BounceInScroll component
-jest.mock("../../src/components/Animations/BounceInScroll.component", () => {
+jest.mock("@/components/Animations/BounceInScroll.component", () => {
   return ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
 });
 

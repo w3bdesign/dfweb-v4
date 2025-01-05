@@ -4,7 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 
-import Icons from "../../src/components/Index/Icons.component";
+import Icons from "@/components/Index/Icons.component";
 
 describe("Icons", () => {
   it.each([

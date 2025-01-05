@@ -6,10 +6,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
-import PageTransition from "../../src/components/Animations/PageTransition.component";
-import FadeDown from "../../src/components/Animations/FadeDown.component";
-import FadeUp from "../../src/components/Animations/FadeUp.component";
-import BounceInScroll from "../../src/components/Animations/BounceInScroll.component";
+import PageTransition from "@/components/Animations/PageTransition.component";
+import FadeDown from "@/components/Animations/FadeDown.component";
+import FadeUp from "@/components/Animations/FadeUp.component";
+import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
 mockIntersectionObserver();
 

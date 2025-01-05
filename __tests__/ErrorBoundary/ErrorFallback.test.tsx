@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import ErrorFallback from "../../src/components/ErrorBoundary/ErrorFallback.component";
+import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
 
 // Mock the Matrix component to avoid rendering issues in tests
-jest.mock("../../src/components/Animations/Matrix.component", () => {
+jest.mock("@/components/Animations/Matrix.component", () => {
   return function DummyMatrix() {
     return <div data-testid="matrix-animation" />;
   };

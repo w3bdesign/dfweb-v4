@@ -1,41 +1,35 @@
 import os
-import re
+
+def fix_import(line):
+    if not ('from' in line or 'import' in line):
+        return line
+        
+    if '@/' in line:
+        return line.replace('@/', '@/')
+    elif '@/app/' in line:
+        return line.replace('@/app/', '@/app/')
+    elif '../../lib/' in line:
+        return line.replace('../../lib/', '@/lib/')
+    elif '../../utils/' in line:
+        return line.replace('../../utils/', '@/utils/')
+    elif 'components/' in line and not '@/components/' in line:
+        return line.replace('components/', '@/components/')
+    elif 'app/' in line and not '@/app/' in line:
+        return line.replace('app/', '@/app/')
+    elif 'lib/' in line and not '@/lib/' in line:
+        return line.replace('lib/', '@/lib/')
+    elif 'utils/' in line and not '@/utils/' in line:
+        return line.replace('utils/', '@/utils/')
+    return line
 
 def update_imports_in_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+        lines = f.readlines()
     
-    # Replace ../../src/ with @/
-    content = re.sub(r'from ["\']../../src/', 'from "@/', content)
-    content = re.sub(r'import .* from ["\']../../src/', lambda m: m.group(0).replace('../../src/', '@/'), content)
+    updated_lines = [fix_import(line) for line in lines]
     
-    # Replace ../../app/ with @/app/
-    content = re.sub(r'from ["\']../../app/', 'from "@/app/', content)
-    content = re.sub(r'import .* from ["\']../../app/', lambda m: m.group(0).replace('../../app/', '@/app/'), content)
-    
-    # Replace ../../lib/ with @/lib/
-    content = re.sub(r'from ["\']../../lib/', 'from "@/lib/', content)
-    content = re.sub(r'import .* from ["\']../../lib/', lambda m: m.group(0).replace('../../lib/', '@/lib/'), content)
-    
-    # Replace ../../utils/ with @/utils/
-    content = re.sub(r'from ["\']../../utils/', 'from "@/utils/', content)
-    content = re.sub(r'import .* from ["\']../../utils/', lambda m: m.group(0).replace('../../utils/', '@/utils/'), content)
-
-    # Replace bare imports with @/ prefix
-    content = re.sub(r'from ["\']components/', 'from "@/components/', content)
-    content = re.sub(r'import .* from ["\']components/', lambda m: m.group(0).replace('components/', '@/components/'), content)
-    
-    content = re.sub(r'from ["\']app/', 'from "@/app/', content)
-    content = re.sub(r'import .* from ["\']app/', lambda m: m.group(0).replace('app/', '@/app/'), content)
-    
-    content = re.sub(r'from ["\']lib/', 'from "@/lib/', content)
-    content = re.sub(r'import .* from ["\']lib/', lambda m: m.group(0).replace('lib/', '@/lib/'), content)
-    
-    content = re.sub(r'from ["\']utils/', 'from "@/utils/', content)
-    content = re.sub(r'import .* from ["\']utils/', lambda m: m.group(0).replace('utils/', '@/utils/'), content)
-
     with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
+        f.writelines(updated_lines)
 
 def process_directory(directory):
     for root, _, files in os.walk(directory):
@@ -43,9 +37,14 @@ def process_directory(directory):
             if file.endswith(('.ts', '.tsx')):
                 file_path = os.path.join(root, file)
                 print(f"Processing {file_path}")
-                update_imports_in_file(file_path)
+                try:
+                    update_imports_in_file(file_path)
+                    print(f"✓ Updated {file_path}")
+                except Exception as e:
+                    print(f"✗ Error processing {file_path}: {str(e)}")
 
 if __name__ == '__main__':
     tests_dir = '__tests__'
+    print(f"Starting import path updates in {tests_dir}...")
     process_directory(tests_dir)
     print("Import paths updated successfully!")

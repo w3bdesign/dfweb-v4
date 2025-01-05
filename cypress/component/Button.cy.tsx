@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import Button from "../../src/components/UI/Button.component";
+import Button from "@/components/UI/Button.component";
 
 // https://larsmagnus.co/blog/component-testing-with-cypress-in-next-js
 

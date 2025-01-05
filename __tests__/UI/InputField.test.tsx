@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 import InputField, {
   createRegisterOptions,
-} from "../../src/components/UI/InputField.component";
+} from "@/components/UI/InputField.component";
 
 interface TestFormData {
   testField: string;

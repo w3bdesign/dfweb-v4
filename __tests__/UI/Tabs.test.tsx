@@ -7,7 +7,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Tabs from "../../src/components/UI/Tabs.component";
+import Tabs from "@/components/UI/Tabs.component";
 
 // Component that throws an error immediately
 const ImmediateCrash = () => {
