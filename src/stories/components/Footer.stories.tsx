@@ -1,7 +1,7 @@
 import React from "react";
 import { Meta } from "@ladle/react";
 import Footer from "../../components/Layout/Footer.component";
-import "../../app/globals.css";
+import "@/app/globals.css";
 
 export default {
   title: "Layout/Footer",

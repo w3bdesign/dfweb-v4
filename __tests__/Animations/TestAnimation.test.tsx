@@ -6,10 +6,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
-import PageTransition from "../../src/components/Animations/PageTransition.component";
-import FadeDown from "../../src/components/Animations/FadeDown.component";
-import FadeUp from "../../src/components/Animations/FadeUp.component";
-import BounceInScroll from "../../src/components/Animations/BounceInScroll.component";
+import PageTransition from "@/components/Animations/PageTransition.component";
+import FadeDown from "@/components/Animations/FadeDown.component";
+import FadeUp from "@/components/Animations/FadeUp.component";
+import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
 mockIntersectionObserver();
 
@@ -30,20 +30,39 @@ type AnimationComponent =
 function testAnimationComponent(
   Component: AnimationComponent,
   testId: string,
-  expectedAttribute: string,
+  expectedAttribute: string
 ) {
   describe(Component.name, () => {
+    // Arrange - Set up test data and conditions
+    const testContent = Component.name;
+
     beforeEach(() => {
-      render(<Component delay={1}>{Component.name}</Component>);
+      // Act - Perform the action being tested
+      let renderedComponent: ReturnType<typeof render>;
+      renderedComponent = render(
+        <Component delay={1}>{testContent}</Component>
+      );
     });
 
     it(`${Component.name} loads and can be displayed`, () => {
-      const element = screen.getByTestId(testId);
+      // Arrange - Set up test data and conditions
+      const expectedTestId = testId;
+
+      // Act - Perform the action being tested
+      const element = screen.getByTestId(expectedTestId);
+
+      // Assert - Verify the results
       expect(element).toBeInTheDocument();
     });
 
     it(`Framer motion sets ${expectedAttribute}`, () => {
-      const element = screen.getByTestId(testId);
+      // Arrange - Set up test data and conditions
+      const expectedTestId = testId;
+
+      // Act - Perform the action being tested
+      const element = screen.getByTestId(expectedTestId);
+
+      // Assert - Verify the results
       expect(element).toContainHTML(expectedAttribute);
     });
   });

@@ -23,18 +23,29 @@ jest.mock("@/app/RootLayout", () => {
 });
 
 describe("Loading", () => {
-  it("renders loading state correctly", () => {
-    render(<Loading />);
-
-    // Check if the header is rendered
-    expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-
-    // Check if the loading spinner is rendered
-    expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-
-    // Check if the main element has correct attributes
-    const main = screen.getByRole("main");
-    expect(main).toHaveAttribute("aria-label", "Laster portefølje");
-    expect(main).toHaveClass("mt-32", "bg-graybg");
+  describe("rendering", () => {
+    it("renders loading state with correct content and attributes", () => {
+      // Arrange
+      const expected = {
+        header: "Prosjekter",
+        testId: "rotating-loader",
+        mainAttributes: {
+          ariaLabel: "Laster portefølje",
+          classes: ["mt-32", "bg-graybg"]
+        }
+      };
+      
+      // Act
+      render(<Loading />);
+      const main = screen.getByRole("main");
+      
+      // Assert
+      expect(screen.getByText(expected.header)).toBeInTheDocument();
+      expect(screen.getByTestId(expected.testId)).toBeInTheDocument();
+      expect(main).toHaveAttribute("aria-label", expected.mainAttributes.ariaLabel);
+      expected.mainAttributes.classes.forEach(className => {
+        expect(main).toHaveClass(className);
+      });
+    });
   });
 });

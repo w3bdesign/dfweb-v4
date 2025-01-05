@@ -3,7 +3,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import Header from "../../src/components/Layout/Header.component";
+import Header from "@/components/Layout/Header.component";
 
 // Mock the usePathname hook
 jest.mock("next/navigation", () => ({
@@ -11,7 +11,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock the MobileMenu component
-jest.mock("../../src/components/Layout/MobileMenu.component", () => {
+jest.mock("@/components/Layout/MobileMenu.component", () => {
   return function MockMobileMenu({ links }: { links: any[] }) {
     return <div data-testid="mobile-menu">Mobile Menu</div>;
   };
@@ -37,22 +37,41 @@ describe("Header", () => {
     },
   ];
 
-  it("renders Header with navigation links", () => {
-    render(<Header navigationLinks={mockNavigationLinks} />);
-
-    // Check if the header is in the document
-    const header = screen.getByRole("banner");
-    expect(header).toBeInTheDocument();
-
-    // Check if all navigation links are rendered
-    mockNavigationLinks.forEach((link) => {
-      const linkElement = screen.getByText(link.name);
-      expect(linkElement).toBeInTheDocument();
-      expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
+  describe("rendering", () => {
+    it("renders header container", () => {
+      // Arrange
+      const expectedRole = "banner";
+      
+      // Act
+      render(<Header navigationLinks={mockNavigationLinks} />);
+      const header = screen.getByRole(expectedRole);
+      
+      // Assert
+      expect(header).toBeInTheDocument();
     });
 
-    // Check if the mobile menu is rendered
-    const mobileMenu = screen.getByTestId("mobile-menu");
-    expect(mobileMenu).toBeInTheDocument();
+    it("renders all navigation links with correct attributes", () => {
+      // Arrange
+      render(<Header navigationLinks={mockNavigationLinks} />);
+      
+      // Act & Assert
+      mockNavigationLinks.forEach((link) => {
+        const linkElement = screen.getByText(link.name);
+        expect(linkElement).toBeInTheDocument();
+        expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
+      });
+    });
+
+    it("renders mobile menu component", () => {
+      // Arrange
+      const expectedTestId = "mobile-menu";
+      
+      // Act
+      render(<Header navigationLinks={mockNavigationLinks} />);
+      const mobileMenu = screen.getByTestId(expectedTestId);
+      
+      // Assert
+      expect(mobileMenu).toBeInTheDocument();
+    });
   });
 });

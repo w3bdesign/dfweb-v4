@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 import InputField, {
   createRegisterOptions,
-} from "../../src/components/UI/InputField.component";
+} from "@/components/UI/InputField.component";
 
 interface TestFormData {
   testField: string;
@@ -34,39 +34,76 @@ const TestComponent = ({
 };
 
 describe("InputField", () => {
-  it("renders an input field correctly", () => {
-    render(<TestComponent />);
-    expect(screen.getByLabelText("Test Field")).toBeInTheDocument();
+  describe("rendering", () => {
+    it("renders input field with label", () => {
+      // Arrange
+      const expectedLabel = "Test Field";
+      
+      // Act
+      render(<TestComponent />);
+      const input = screen.getByLabelText(expectedLabel);
+      
+      // Assert
+      expect(input).toBeInTheDocument();
+    });
+
+    it("renders textarea when specified", () => {
+      // Arrange
+      const expectedLabel = "Test Field";
+      const expectedTag = "TEXTAREA";
+      
+      // Act
+      render(<TestComponent type="textarea" />);
+      const textarea = screen.getByLabelText(expectedLabel);
+      
+      // Assert
+      expect(textarea).toBeInTheDocument();
+      expect(textarea.tagName).toBe(expectedTag);
+    });
+
+    it("displays provided error message", () => {
+      // Arrange
+      const errorMessage = "This is an error message";
+      const props = {
+        name: "testField",
+        label: "Test Field",
+        htmlFor: "testField",
+        register: jest.fn(),
+        error: errorMessage
+      };
+      
+      // Act
+      render(<InputField<TestFormData> {...props} />);
+      
+      // Assert
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
   });
 
-  it("renders a textarea correctly", () => {
-    render(<TestComponent type="textarea" />);
-    expect(screen.getByLabelText("Test Field")).toBeInTheDocument();
-    expect(screen.getByLabelText("Test Field").tagName).toBe("TEXTAREA");
-  });
+  describe("form registration", () => {
+    it("creates required validation option when isRequired is true", () => {
+      // Arrange
+      const isRequired = true;
+      const expectedMessage = "Dette feltet er påkrevd";
+      
+      // Act
+      const options = createRegisterOptions(isRequired);
+      
+      // Assert
+      expect(options.required).toBe(expectedMessage);
+    });
 
-  it("creates correct register options when isRequired is true", () => {
-    const options = createRegisterOptions(true);
-    expect(options.required).toBe("Dette feltet er påkrevd");
-  });
-
-  it("creates correct register options when inputPattern is provided", () => {
-    const pattern = /[A-Za-z]+/;
-    const options = createRegisterOptions(false, pattern);
-    expect(options.pattern).toBeDefined();
-    expect((options.pattern as { value: RegExp }).value).toEqual(pattern);
-  });
-
-  it("displays an error message when provided", () => {
-    render(
-      <InputField<TestFormData>
-        name="testField"
-        label="Test Field"
-        htmlFor="testField"
-        register={jest.fn()}
-        error="This is an error message"
-      />,
-    );
-    expect(screen.getByText("This is an error message")).toBeInTheDocument();
+    it("creates pattern validation option when pattern is provided", () => {
+      // Arrange
+      const pattern = /[A-Za-z]+/;
+      const isRequired = false;
+      
+      // Act
+      const options = createRegisterOptions(isRequired, pattern);
+      
+      // Assert
+      expect(options.pattern).toBeDefined();
+      expect((options.pattern as { value: RegExp }).value).toEqual(pattern);
+    });
   });
 });

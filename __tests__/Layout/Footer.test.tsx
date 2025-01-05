@@ -4,12 +4,18 @@
 
 import { render, screen } from "@testing-library/react";
 
-import Footer from "../../src/components/Layout/Footer.component";
+import Footer from "@/components/Layout/Footer.component";
 
 describe("Footer", () => {
-  it("Footer laster inn og kan vises", () => {
+  it("renders footer with copyright text", () => {
+    // Arrange
+    const expectedText = /copyright daniel/i;
+    
+    // Act
     render(<Footer />);
-    const footer = screen.getByText(/copyright daniel/i);
+    const footer = screen.getByText(expectedText);
+    
+    // Assert
     expect(footer).toBeInTheDocument();
   });
 });

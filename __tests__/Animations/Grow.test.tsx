@@ -4,7 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Grow from "../../src/components/Animations/Grow.component";
+import Grow from "@/components/Animations/Grow.component";
 
 describe("Grow", () => {
   describe("with provided props", () => {
@@ -16,29 +16,53 @@ describe("Grow", () => {
       );
     });
 
-    test("Kan vise komponenten", () => {
-      expect(screen.getByTestId("grow")).toBeInTheDocument();
+    it("renders component with custom animation props", () => {
+      // Arrange
+      const expectedTestId = "grow";
+      
+      // Act
+      const element = screen.getByTestId(expectedTestId);
+      
+      // Assert
+      expect(element).toBeInTheDocument();
     });
 
-    test("Legger til riktige animasjoner", () => {
+    it("applies initial scale transform animation", () => {
+      // Arrange
+      const expectedStyle = "transform: scale(0);";
+      
+      // Act
       const element = screen.getByTestId("grow");
-      expect(element).toHaveStyle("transform: scale(0);");
+      
+      // Assert
+      expect(element).toHaveStyle(expectedStyle);
     });
 
-    test("Viser children", () => {
-      expect(screen.getByText("Hello World")).toBeInTheDocument();
+    it("renders children content", () => {
+      // Arrange
+      const expectedContent = "Hello World";
+      
+      // Act
+      const content = screen.getByText(expectedContent);
+      
+      // Assert
+      expect(content).toBeInTheDocument();
     });
   });
 
   describe("with default props", () => {
-    beforeEach(() => {
-      render(<Grow>Default Props Test</Grow>);
-    });
-
-    test("renders with default values", () => {
+    it("renders component with default animation values", () => {
+      // Arrange
+      const expectedContent = "Default Props Test";
+      
+      // Act
+      render(<Grow>{expectedContent}</Grow>);
       const element = screen.getByTestId("grow");
+      const content = screen.getByText(expectedContent);
+      
+      // Assert
       expect(element).toBeInTheDocument();
-      expect(screen.getByText("Default Props Test")).toBeInTheDocument();
+      expect(content).toBeInTheDocument();
     });
   });
 });

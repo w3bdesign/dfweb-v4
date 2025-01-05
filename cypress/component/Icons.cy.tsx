@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import Icons from "../../src/components/Index/Icons.component";
+import Icons from "@/components/Index/Icons.component";
 
 const beVisible = "be.visible";
 

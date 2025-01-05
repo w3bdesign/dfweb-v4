@@ -19,6 +19,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - [Design](#design)
   - [Accessibility](#accessibility)
   - [Devops and Code quality](#devops-and-code-quality)
+  - [Testing Standards](#testing-standards)
 
 ## Live URL
 
@@ -78,7 +79,6 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
  
-
 ### Accessibility
 
 - WCAG accessibility tested
@@ -101,3 +101,20 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
   - Both desktop and performance-focused testing
+
+### Testing Standards
+
+- Enforced AAA (Arrange-Act-Assert) pattern in all test files
+  - Each test must include the following comments:
+    ```typescript
+    // Arrange - Set up test data and conditions
+    // Act - Perform the action being tested
+    // Assert - Verify the results
+    ```
+  - This pattern ensures:
+    - Clear test structure and readability
+    - Consistent test organization across the codebase
+    - Easy identification of test setup, execution, and verification
+    - Simplified test maintenance and debugging
+  - Automated validation through custom ESLint rules
+  - Tests will fail if AAA pattern is not followed

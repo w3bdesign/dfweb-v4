@@ -2,19 +2,19 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
-import ProsjektCard from "../../src/components/Prosjekter/ProsjektCard.component";
+import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 
 mockIntersectionObserver();
 
 // Mock the Button component
 jest.mock(
-  "../../src/components/UI/Button.component",
+  "@/components/UI/Button.component",
   () =>
-    ({ href, renderAs, children }) => <a href={href}>{children}</a>,
+    ({ href, children }) => <a href={href}>{children}</a>,
 );
 
 // Mock the urlFor function
-jest.mock("../../src/lib/sanity/helpers", () => ({
+jest.mock("@/lib/sanity/helpers", () => ({
   urlFor: jest.fn().mockReturnValue({
     url: jest.fn().mockReturnValue("test-image.jpg"),
   }),
@@ -35,53 +35,83 @@ const mockProjectProps = {
 };
 
 describe("ProsjektCard", () => {
-  it("renders the project details correctly", () => {
-    render(<ProsjektCard {...mockProjectProps} />);
+  describe("rendering project content", () => {
+    it("renders basic project information", () => {
+      // Arrange
+      const expectedContent = {
+        name: "Test Project",
+        description: "This is a test project",
+        subdescription: "This is a subdescription"
+      };
+      
+      // Act
+      render(<ProsjektCard {...mockProjectProps} />);
+      
+      // Assert
+      expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
+      expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
+      expect(screen.getByText(expectedContent.subdescription)).toBeInTheDocument();
+    });
 
-    // Check if the project name is rendered
-    expect(screen.getByText("Test Project")).toBeInTheDocument();
+    it("renders project image with correct attributes", () => {
+      // Arrange
+      const expectedImage = {
+        alt: "Test Project",
+        src: "test-image.jpg"
+      };
+      
+      // Act
+      render(<ProsjektCard {...mockProjectProps} />);
+      const img = screen.getByAltText(expectedImage.alt);
+      
+      // Assert
+      expect(img).toBeInTheDocument();
+      expect(img).toHaveAttribute("src", expectedImage.src);
+    });
 
-    // Check if the project description is rendered
-    expect(screen.getByText("This is a test project")).toBeInTheDocument();
-
-    // Check if the project subdescription is rendered
-    expect(screen.getByText("This is a subdescription")).toBeInTheDocument();
-
-    // Check if the project image is rendered
-    const img = screen.getByAltText("Test Project");
-    expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute("src", "test-image.jpg");
-
-    // Check if the "Besøk" button is rendered with the correct href
-    const visitButton = screen.getByText("Besøk");
-    expect(visitButton).toBeInTheDocument();
-    expect(visitButton.closest("a")).toHaveAttribute(
-      "href",
-      "https://example.com",
-    );
-
-    // Check if the "GitHub" button is rendered with the correct href
-    const githubButton = screen.getByText("GitHub");
-    expect(githubButton).toBeInTheDocument();
-    expect(githubButton.closest("a")).toHaveAttribute(
-      "href",
-      "https://github.com/example",
-    );
+    it("renders navigation buttons with correct hrefs", () => {
+      // Arrange
+      const expectedLinks = {
+        visit: {
+          text: "Besøk",
+          href: "https://example.com"
+        },
+        github: {
+          text: "GitHub",
+          href: "https://github.com/example"
+        }
+      };
+      
+      // Act
+      render(<ProsjektCard {...mockProjectProps} />);
+      const visitButton = screen.getByText(expectedLinks.visit.text);
+      const githubButton = screen.getByText(expectedLinks.github.text);
+      
+      // Assert
+      expect(visitButton).toBeInTheDocument();
+      expect(visitButton.closest("a")).toHaveAttribute("href", expectedLinks.visit.href);
+      expect(githubButton).toBeInTheDocument();
+      expect(githubButton.closest("a")).toHaveAttribute("href", expectedLinks.github.href);
+    });
   });
 
-  it("does not render buttons if urls are not provided", () => {
-    const propsWithoutUrls = {
-      ...mockProjectProps,
-      urlwww: [],
-      urlgithub: [],
-    };
-
-    render(<ProsjektCard {...propsWithoutUrls} />);
-
-    // Check that the "Besøk" button is not rendered
-    expect(screen.queryByText("Besøk")).not.toBeInTheDocument();
-
-    // Check that the "GitHub" button is not rendered
-    expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
+  describe("conditional rendering", () => {
+    it("does not render navigation buttons when urls are not provided", () => {
+      // Arrange
+      const propsWithoutUrls = {
+        ...mockProjectProps,
+        urlwww: [],
+        urlgithub: []
+      };
+      const buttonTexts = ["Besøk", "GitHub"];
+      
+      // Act
+      render(<ProsjektCard {...propsWithoutUrls} />);
+      
+      // Assert
+      buttonTexts.forEach(text => {
+        expect(screen.queryByText(text)).not.toBeInTheDocument();
+      });
+    });
   });
 });

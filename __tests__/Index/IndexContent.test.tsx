@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import IndexContent from "../../src/components/Index/IndexContent.component";
+import IndexContent from "@/components/Index/IndexContent.component";
 
 // Mock the Section component
-jest.mock("../../src/components/Index/Section.component", () => {
+jest.mock("@/components/Index/Section.component", () => {
   return function MockSection({ title, text }) {
     return (
       <div data-testid="mock-section">
@@ -58,27 +58,36 @@ const mockContent = [
 ];
 
 describe("IndexContent Component", () => {
-  test("renders IndexContent with given content", () => {
+  it("renders IndexContent with given content", () => {
+    // Arrange
+    const expected = {
+      sectionCount: 2,
+      titles: ["Test Title 1", "Test Title 2"],
+      content: ["Bold Text Normal Text", "Italic Text"]
+    };
+    
+    // Act
     render(<IndexContent pageContent={mockContent} />);
-
-    // Check if the sections are rendered
     const sections = screen.getAllByTestId("mock-section");
-    expect(sections).toHaveLength(2);
-
-    // Check if the titles are rendered
     const titles = screen.getAllByTestId("sanity-title");
-    expect(titles[0]).toHaveTextContent("Test Title 1");
-    expect(titles[1]).toHaveTextContent("Test Title 2");
-
-    // Check if the content is rendered
     const portableTexts = screen.getAllByTestId("portable-text");
-    expect(portableTexts[0]).toHaveTextContent("Bold Text Normal Text");
-    expect(portableTexts[1]).toHaveTextContent("Italic Text");
+    
+    // Assert
+    expect(sections).toHaveLength(expected.sectionCount);
+    expect(titles[0]).toHaveTextContent(expected.titles[0]);
+    expect(titles[1]).toHaveTextContent(expected.titles[1]);
+    expect(portableTexts[0]).toHaveTextContent(expected.content[0]);
+    expect(portableTexts[1]).toHaveTextContent(expected.content[1]);
   });
 
-  test("throws error when no content is provided", () => {
+  it("throws error when no content is provided", () => {
+    // Arrange
+    const emptyContent = [];
+    const expectedError = "Ingen innhold tilgjengelig";
+    
+    // Act & Assert
     expect(() => {
-      render(<IndexContent pageContent={[]} />);
-    }).toThrow("Ingen innhold tilgjengelig");
+      render(<IndexContent pageContent={emptyContent} />);
+    }).toThrow(expectedError);
   });
 });

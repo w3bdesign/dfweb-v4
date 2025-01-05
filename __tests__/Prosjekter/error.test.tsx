@@ -20,33 +20,41 @@ describe("ErrorBoundary", () => {
   });
 
   it("renders error message and retry button", () => {
+    // Arrange
+    const expectedTexts = {
+      errorMessage: "Noe gikk galt ved lasting av prosjekter",
+      buttonText: "Prøv igjen"
+    };
+    
+    // Act
     render(<ErrorBoundary {...mockProps} />);
-
-    expect(
-      screen.getByText("Noe gikk galt ved lasting av prosjekter"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Prøv igjen" }),
-    ).toBeInTheDocument();
+    
+    // Assert
+    expect(screen.getByText(expectedTexts.errorMessage)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: expectedTexts.buttonText })).toBeInTheDocument();
   });
 
   it("calls reset when retry button is clicked", () => {
+    // Arrange
     render(<ErrorBoundary {...mockProps} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Prøv igjen" }));
+    const retryButton = screen.getByRole("button", { name: "Prøv igjen" });
+    
+    // Act
+    fireEvent.click(retryButton);
+    
+    // Assert
     expect(mockReset).toHaveBeenCalledTimes(1);
   });
 
   it("calls useEffect with error logging", () => {
+    // Arrange
     render(<ErrorBoundary {...mockProps} />);
-
-    // Get the callback passed to useEffect
-    const [callback] = mockUseEffect.mock.calls[0];
-
-    // Execute the callback
-    callback();
-
-    // Verify the error was logged
+    const [effectCallback] = mockUseEffect.mock.calls[0];
+    
+    // Act
+    effectCallback();
+    
+    // Assert
     expect(mockUseEffect).toHaveBeenCalled();
   });
 });
