@@ -4,7 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import Grow from "../../src/components/Animations/Grow.component";
+import Grow from "@/components/Animations/Grow.component";
 
 describe("Grow", () => {
   describe("with provided props", () => {
