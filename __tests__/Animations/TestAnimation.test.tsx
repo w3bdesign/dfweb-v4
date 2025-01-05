@@ -30,16 +30,17 @@ type AnimationComponent =
 function testAnimationComponent(
   Component: AnimationComponent,
   testId: string,
-  expectedAttribute: string,
+  expectedAttribute: string
 ) {
   describe(Component.name, () => {
     // Arrange - Set up test data and conditions
     const testContent = Component.name;
-    let renderedComponent: ReturnType<typeof render>;
 
     beforeEach(() => {
       // Act - Perform the action being tested
-      renderedComponent = render(<Component delay={1}>{testContent}</Component>);
+      renderedComponent = render(
+        <Component delay={1}>{testContent}</Component>
+      );
     });
 
     it(`${Component.name} loads and can be displayed`, () => {
