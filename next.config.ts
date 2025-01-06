@@ -9,7 +9,7 @@ const cspDirectives = {
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
   'form-action': ["'self'"],
-  'frame-ancestors': ["'none'"],
+  'frame-ancestors': ["'self'", "https://presentasjon.dfweb.no"],
   'connect-src': ["'self'", "https://api.emailjs.com", "https://va.vercel-scripts.com"],
 };
 
@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
     return [{
       source: "/:path*",
       headers: [
-        { key: "X-Frame-Options", value: "DENY" },
+        { key: "X-Frame-Options", value: "ALLOW-FROM https://presentasjon.dfweb.no" },
         { key: "X-Content-Type-Options", value: "nosniff" },
         { key: "Content-Security-Policy", value: buildCspHeader(cspDirectives) },
       ],
