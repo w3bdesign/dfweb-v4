@@ -26,12 +26,12 @@ describe("ErrorFallback", () => {
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Test error message",
-      button: "Returner til Matrix"
+      button: "Returner til Matrix",
     };
-    
+
     // Act
     render(<ErrorFallback error={mockError} />);
-    
+
     // Assert
     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
@@ -42,10 +42,10 @@ describe("ErrorFallback", () => {
     // Arrange
     const errorWithoutMessage = new Error();
     const expectedMessage = "En uventet feil har oppstått.";
-    
+
     // Act
     render(<ErrorFallback error={errorWithoutMessage} />);
-    
+
     // Assert
     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
   });
@@ -54,12 +54,12 @@ describe("ErrorFallback", () => {
     // Arrange
     render(<ErrorFallback error={mockError} />);
     const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix"
+      name: "Returner til Matrix",
     });
-    
+
     // Act
     fireEvent.click(reloadButton);
-    
+
     // Assert
     expect(window.location.reload).toHaveBeenCalledTimes(1);
   });

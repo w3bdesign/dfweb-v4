@@ -37,16 +37,16 @@ describe("ReactMatrixAnimation", () => {
     it("renders canvas element with default props", () => {
       // Arrange
       const expectedTestId = "matrix-canvas";
-      
+
       // Act
       render(<ReactMatrixAnimation />);
       const canvas = screen.getByTestId(expectedTestId);
-      
+
       // Assert
       expect(canvas).toBeInTheDocument();
       expect(canvas).toHaveStyle({
         width: "100%",
-        height: "100%"
+        height: "100%",
       });
     });
 
@@ -57,14 +57,14 @@ describe("ReactMatrixAnimation", () => {
         fadeFactor: 0.7,
         backgroundColor: "#000000",
         fontColor: "#ffffff",
-        tileSet: ["A", "B", "C"]
+        tileSet: ["A", "B", "C"],
       };
       const expectedTestId = "matrix-canvas";
-      
+
       // Act
       render(<ReactMatrixAnimation {...customProps} />);
       const canvas = screen.getByTestId(expectedTestId);
-      
+
       // Assert
       expect(canvas).toBeInTheDocument();
     });
@@ -79,8 +79,9 @@ describe("ReactMatrixAnimation", () => {
     it("throws error for invalid background color", () => {
       // Arrange
       const invalidProps = { backgroundColor: "invalid" };
-      const expectedError = "Invalid background color. Use a hex value e.g. #030303";
-      
+      const expectedError =
+        "Invalid background color. Use a hex value e.g. #030303";
+
       // Act & Assert
       expect(() => {
         render(<ReactMatrixAnimation {...invalidProps} />);
@@ -91,7 +92,7 @@ describe("ReactMatrixAnimation", () => {
       // Arrange
       const invalidProps = { fontColor: "invalid" };
       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
-      
+
       // Act & Assert
       expect(() => {
         render(<ReactMatrixAnimation {...invalidProps} />);

@@ -38,11 +38,11 @@ describe("InputField", () => {
     it("renders input field with label", () => {
       // Arrange
       const expectedLabel = "Test Field";
-      
+
       // Act
       render(<TestComponent />);
       const input = screen.getByLabelText(expectedLabel);
-      
+
       // Assert
       expect(input).toBeInTheDocument();
     });
@@ -51,11 +51,11 @@ describe("InputField", () => {
       // Arrange
       const expectedLabel = "Test Field";
       const expectedTag = "TEXTAREA";
-      
+
       // Act
       render(<TestComponent type="textarea" />);
       const textarea = screen.getByLabelText(expectedLabel);
-      
+
       // Assert
       expect(textarea).toBeInTheDocument();
       expect(textarea.tagName).toBe(expectedTag);
@@ -69,12 +69,12 @@ describe("InputField", () => {
         label: "Test Field",
         htmlFor: "testField",
         register: jest.fn(),
-        error: errorMessage
+        error: errorMessage,
       };
-      
+
       // Act
       render(<InputField<TestFormData> {...props} />);
-      
+
       // Assert
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
@@ -85,10 +85,10 @@ describe("InputField", () => {
       // Arrange
       const isRequired = true;
       const expectedMessage = "Dette feltet er påkrevd";
-      
+
       // Act
       const options = createRegisterOptions(isRequired);
-      
+
       // Assert
       expect(options.required).toBe(expectedMessage);
     });
@@ -97,10 +97,10 @@ describe("InputField", () => {
       // Arrange
       const pattern = /[A-Za-z]+/;
       const isRequired = false;
-      
+
       // Act
       const options = createRegisterOptions(isRequired, pattern);
-      
+
       // Assert
       expect(options.pattern).toBeDefined();
       expect((options.pattern as { value: RegExp }).value).toEqual(pattern);
