@@ -41,11 +41,11 @@ describe("Header", () => {
     it("renders header container", () => {
       // Arrange
       const expectedRole = "banner";
-      
+
       // Act
       render(<Header navigationLinks={mockNavigationLinks} />);
       const header = screen.getByRole(expectedRole);
-      
+
       // Assert
       expect(header).toBeInTheDocument();
     });
@@ -53,7 +53,7 @@ describe("Header", () => {
     it("renders all navigation links with correct attributes", () => {
       // Arrange
       render(<Header navigationLinks={mockNavigationLinks} />);
-      
+
       // Act & Assert
       mockNavigationLinks.forEach((link) => {
         const linkElement = screen.getByText(link.name);
@@ -65,11 +65,11 @@ describe("Header", () => {
     it("renders mobile menu component", () => {
       // Arrange
       const expectedTestId = "mobile-menu";
-      
+
       // Act
       render(<Header navigationLinks={mockNavigationLinks} />);
       const mobileMenu = screen.getByTestId(expectedTestId);
-      
+
       // Assert
       expect(mobileMenu).toBeInTheDocument();
     });

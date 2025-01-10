@@ -63,15 +63,15 @@ describe("IndexContent Component", () => {
     const expected = {
       sectionCount: 2,
       titles: ["Test Title 1", "Test Title 2"],
-      content: ["Bold Text Normal Text", "Italic Text"]
+      content: ["Bold Text Normal Text", "Italic Text"],
     };
-    
+
     // Act
     render(<IndexContent pageContent={mockContent} />);
     const sections = screen.getAllByTestId("mock-section");
     const titles = screen.getAllByTestId("sanity-title");
     const portableTexts = screen.getAllByTestId("portable-text");
-    
+
     // Assert
     expect(sections).toHaveLength(expected.sectionCount);
     expect(titles[0]).toHaveTextContent(expected.titles[0]);
@@ -84,7 +84,7 @@ describe("IndexContent Component", () => {
     // Arrange
     const emptyContent = [];
     const expectedError = "Ingen innhold tilgjengelig";
-    
+
     // Act & Assert
     expect(() => {
       render(<IndexContent pageContent={emptyContent} />);
