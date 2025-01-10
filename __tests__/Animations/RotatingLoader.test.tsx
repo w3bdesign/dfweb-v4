@@ -10,15 +10,15 @@ describe("RotatingLoader", () => {
       const expectedClasses = {
         wrapper: "grid min-h-[140px] w-full place-items-center",
         svg: "animate-spin",
-        paths: ["stroke-matrix-dark", "stroke-matrix-light"],
+        paths: ["stroke-matrix-dark", "stroke-matrix-light"]
       };
-
+      
       // Act
       const { container } = render(<RotatingLoader />);
       const wrapperDiv = container.firstChild;
       const svg = container.querySelector("svg");
       const paths = container.querySelectorAll("path");
-
+      
       // Assert
       expect(wrapperDiv).toHaveClass(expectedClasses.wrapper);
       expect(svg).toBeInTheDocument();
@@ -34,16 +34,14 @@ describe("RotatingLoader", () => {
       // Arrange
       const expectedAnimations = {
         glow: "animate-matrix-glow",
-        spin: "animate-spin",
+        spin: "animate-spin"
       };
-
+      
       // Act
       const { container } = render(<RotatingLoader />);
-      const glowContainer = container.querySelector(
-        `.${expectedAnimations.glow}`,
-      );
+      const glowContainer = container.querySelector(`.${expectedAnimations.glow}`);
       const svg = container.querySelector("svg");
-
+      
       // Assert
       expect(glowContainer).toBeInTheDocument();
       expect(svg).toHaveClass(expectedAnimations.spin);

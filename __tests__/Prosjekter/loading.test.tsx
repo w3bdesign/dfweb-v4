@@ -31,22 +31,19 @@ describe("Loading", () => {
         testId: "rotating-loader",
         mainAttributes: {
           ariaLabel: "Laster portefølje",
-          classes: ["mt-32", "bg-graybg"],
-        },
+          classes: ["mt-32", "bg-graybg"]
+        }
       };
-
+      
       // Act
       render(<Loading />);
       const main = screen.getByRole("main");
-
+      
       // Assert
       expect(screen.getByText(expected.header)).toBeInTheDocument();
       expect(screen.getByTestId(expected.testId)).toBeInTheDocument();
-      expect(main).toHaveAttribute(
-        "aria-label",
-        expected.mainAttributes.ariaLabel,
-      );
-      expected.mainAttributes.classes.forEach((className) => {
+      expect(main).toHaveAttribute("aria-label", expected.mainAttributes.ariaLabel);
+      expected.mainAttributes.classes.forEach(className => {
         expect(main).toHaveClass(className);
       });
     });

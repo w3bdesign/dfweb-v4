@@ -33,21 +33,14 @@ const ListContent = () => (
   </div>
 );
 
-const FormField = ({
-  id,
-  label,
-  type,
-  placeholder,
-}: {
+const FormField = ({ id, label, type, placeholder }: {
   id: string;
   label: string;
   type: string;
   placeholder: string;
 }) => (
   <div>
-    <label htmlFor={id} className="block text-gray-300 mb-2">
-      {label}
-    </label>
+    <label htmlFor={id} className="block text-gray-300 mb-2">{label}</label>
     <input
       id={id}
       type={type}
@@ -61,14 +54,14 @@ const FormContent = () => {
   const formId = React.useId();
   const fields = [
     { label: "Name", type: "text", placeholder: "Enter your name" },
-    { label: "Email", type: "email", placeholder: "Enter your email" },
+    { label: "Email", type: "email", placeholder: "Enter your email" }
   ];
-
+  
   return (
     <div className="py-4">
       <h2 className="text-xl text-white mb-4">Form Content</h2>
       <form className="space-y-4">
-        {fields.map((field) => (
+        {fields.map(field => (
           <FormField
             key={field.label}
             id={`${formId}-${field.label.toLowerCase()}`}

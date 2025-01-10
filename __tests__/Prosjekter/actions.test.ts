@@ -31,16 +31,16 @@ describe("getProjects", () => {
       next: { revalidate: 3600 },
     };
     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-
+    
     // Act
     const result = await getProjects();
-
+    
     // Assert
     expect(result).toEqual(mockProjects);
     expect(client.fetch).toHaveBeenCalledWith(
       projectsQuery,
       {},
-      expectedFetchOptions,
+      expectedFetchOptions
     );
   });
 
@@ -48,7 +48,7 @@ describe("getProjects", () => {
     // Arrange
     const expectedError = new Error("Fetch failed");
     (client.fetch as jest.Mock).mockRejectedValueOnce(expectedError);
-
+    
     // Act & Assert
     await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
   });

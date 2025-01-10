@@ -15,11 +15,11 @@ describe("Pill Component", () => {
     it("renders as button with default props", () => {
       // Arrange
       const text = "Test Pill";
-
+      
       // Act
       render(<Pill text={text} />);
       const pill = screen.getByText(text);
-
+      
       // Assert
       expect(pill).toBeInTheDocument();
       expect(pill.tagName).toBe("BUTTON");
@@ -30,13 +30,13 @@ describe("Pill Component", () => {
       // Arrange
       const props = {
         text: "Link Pill",
-        href: "/test",
+        href: "/test"
       };
-
+      
       // Act
       render(<Pill {...props} />);
       const pill = screen.getByText(props.text);
-
+      
       // Assert
       expect(pill).toBeInTheDocument();
       expect(pill.tagName).toBe("A");
@@ -48,34 +48,20 @@ describe("Pill Component", () => {
       // Arrange
       const props = {
         text: "Custom Class",
-        className: "custom-class",
+        className: "custom-class"
       };
       const baseClasses = [
-        "glitch",
-        "text-white",
-        "m-4",
-        "text-xl",
-        "p-6",
-        "mt-4",
-        "rounded-full",
-        "transition",
-        "duration-300",
-        "ease-in-out",
-        "transform",
-        "bg-blue-600",
-        "bg-opacity-20",
-        "border-2",
-        "border-blue-800",
-        "border-opacity-30",
-        "hover:bg-blue-400",
-        "hover:bg-opacity-30",
-        "backdrop-blur-sm",
+        "glitch", "text-white", "m-4", "text-xl", "p-6", "mt-4",
+        "rounded-full", "transition", "duration-300", "ease-in-out",
+        "transform", "bg-blue-600", "bg-opacity-20", "border-2",
+        "border-blue-800", "border-opacity-30", "hover:bg-blue-400",
+        "hover:bg-opacity-30", "backdrop-blur-sm"
       ];
-
+      
       // Act
       render(<Pill {...props} />);
       const pill = screen.getByText(props.text);
-
+      
       // Assert
       expect(pill).toHaveClass(...baseClasses, props.className);
     });
@@ -87,14 +73,14 @@ describe("Pill Component", () => {
       const mockOnClick = jest.fn();
       const props = {
         text: "Clickable Pill",
-        onClick: mockOnClick,
+        onClick: mockOnClick
       };
-
+      
       // Act
       render(<Pill {...props} />);
       const pill = screen.getByText(props.text);
       fireEvent.click(pill);
-
+      
       // Assert
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -105,14 +91,14 @@ describe("Pill Component", () => {
       const props = {
         text: "Link Pill",
         href: "/test",
-        onClick: mockOnClick,
+        onClick: mockOnClick
       };
-
+      
       // Act
       render(<Pill {...props} />);
       const pill = screen.getByText(props.text);
       fireEvent.click(pill);
-
+      
       // Assert
       expect(mockOnClick).not.toHaveBeenCalled();
     });

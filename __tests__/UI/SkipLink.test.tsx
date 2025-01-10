@@ -8,11 +8,11 @@ describe("SkipLink", () => {
     it("renders skip link with correct text", () => {
       // Arrange
       const expectedText = "Hopp til hovedinnhold";
-
+      
       // Act
       render(<SkipLink />);
       const skipLink = screen.getByText(expectedText);
-
+      
       // Assert
       expect(skipLink).toBeInTheDocument();
     });
@@ -21,13 +21,13 @@ describe("SkipLink", () => {
       // Arrange
       const expectedProps = {
         text: "Hopp til hovedinnhold",
-        href: "#main-content",
+        href: "#main-content"
       };
-
+      
       // Act
       render(<SkipLink />);
       const button = screen.getByRole("link", { name: expectedProps.text });
-
+      
       // Assert
       expect(button).toHaveAttribute("href", expectedProps.href);
     });
@@ -42,15 +42,15 @@ describe("SkipLink", () => {
         "focus-within:absolute",
         "focus-within:top-4",
         "focus-within:left-4",
-        "focus-within:z-50",
+        "focus-within:z-50"
       ];
-
+      
       // Act
       render(<SkipLink />);
       const skipLink = screen.getByText("Hopp til hovedinnhold").closest("div");
-
+      
       // Assert
-      expectedClasses.forEach((className) => {
+      expectedClasses.forEach(className => {
         expect(skipLink).toHaveClass(className);
       });
     });

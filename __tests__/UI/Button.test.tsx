@@ -12,12 +12,12 @@ describe("Button", () => {
       // Arrange
       const handleClick = jest.fn();
       const buttonText = "Click Me";
-
+      
       // Act
       render(<Button onClick={handleClick}>{buttonText}</Button>);
       const button = screen.getByRole("button", { name: buttonText });
       await userEvent.click(button);
-
+      
       // Assert
       expect(button).toBeInTheDocument();
       expect(handleClick).toHaveBeenCalledTimes(1);
@@ -25,42 +25,35 @@ describe("Button", () => {
     });
 
     it.each`
-      children    | ariaLabel
-      ${"Save"}   | ${"Save changes"}
-      ${"Delete"} | ${"Delete item"}
-      ${"Edit"}   | ${"Edit profile"}
-    `(
-      "renders button with '$children' text and '$ariaLabel' aria-label",
-      ({ children, ariaLabel }: { children: string; ariaLabel: string }) => {
-        // Arrange
-        const props = {
-          onClick: jest.fn(),
-          "aria-label": ariaLabel,
-        };
-
-        // Act
-        render(<Button {...props}>{children}</Button>);
-        const button = screen.getByRole("button", { name: ariaLabel });
-
-        // Assert
-        expect(button).toBeInTheDocument();
-        expect(button).toHaveAttribute("aria-label", ariaLabel);
-        expect(button).toHaveTextContent(children);
-      },
-    );
+      children        | ariaLabel
+      ${"Save"}      | ${"Save changes"}
+      ${"Delete"}    | ${"Delete item"}
+      ${"Edit"}      | ${"Edit profile"}
+    `("renders button with '$children' text and '$ariaLabel' aria-label", ({ children, ariaLabel }: { children: string; ariaLabel: string }) => {
+      // Arrange
+      const props = {
+        onClick: jest.fn(),
+        "aria-label": ariaLabel
+      };
+      
+      // Act
+      render(<Button {...props}>{children}</Button>);
+      const button = screen.getByRole("button", { name: ariaLabel });
+      
+      // Assert
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveAttribute("aria-label", ariaLabel);
+      expect(button).toHaveTextContent(children);
+    });
 
     it("is disabled when disabled prop is true", () => {
       // Arrange
       const handleClick = jest.fn();
-
+      
       // Act
-      render(
-        <Button onClick={handleClick} disabled>
-          Disabled Button
-        </Button>,
-      );
+      render(<Button onClick={handleClick} disabled>Disabled Button</Button>);
       const button = screen.getByRole("button");
-
+      
       // Assert
       expect(button).toBeDisabled();
       expect(button).not.toBeEnabled();

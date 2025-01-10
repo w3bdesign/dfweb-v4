@@ -12,11 +12,11 @@ describe("Hero", () => {
   it("Hero loads and displays content from mock", () => {
     // Arrange
     const mockContent = heromock.content;
-
+    
     // Act
     render(<Hero content={mockContent} />);
     const hero = screen.getByText(/hei!/i);
-
+    
     // Assert
     expect(hero).toBeInTheDocument();
   });
@@ -25,11 +25,11 @@ describe("Hero", () => {
     // Arrange
     const emptyContent: PortableTextBlock[] = [];
     const expectedText = "Hei!";
-
+    
     // Act
     render(<Hero content={emptyContent} />);
     const hero = screen.getByText(expectedText);
-
+    
     // Assert
     expect(hero).toBeInTheDocument();
   });

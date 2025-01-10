@@ -19,14 +19,14 @@ describe("ErrorBoundary", () => {
   it("should render children when there is no error", () => {
     // Arrange
     const testContent = "Test Innhold";
-
+    
     // Act
     const { getByText } = render(
       <ErrorBoundary>
         <div>{testContent}</div>
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
-
+    
     // Assert
     expect(getByText(testContent)).toBeInTheDocument();
   });
@@ -39,16 +39,16 @@ describe("ErrorBoundary", () => {
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Dette er en testfeil",
-      button: "Returner til Matrix",
+      button: "Returner til Matrix"
     };
-
+    
     // Act
     const { getByText } = render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
-
+    
     // Assert
     expect(getByText(expectedTexts.heading)).toBeInTheDocument();
     expect(getByText(expectedTexts.error)).toBeInTheDocument();
@@ -63,16 +63,16 @@ describe("ErrorBoundary", () => {
     const expectedErrorArgs = [
       "Uventet feil i Matrix:",
       errorMock,
-      expect.any(Object),
+      expect.any(Object)
     ];
-
+    
     // Act
     render(
       <ErrorBoundary>
         <ErrorComponent />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
-
+    
     // Assert
     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
   });
