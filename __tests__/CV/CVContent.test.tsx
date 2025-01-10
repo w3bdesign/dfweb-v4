@@ -40,15 +40,19 @@ describe("CVContent", () => {
     // Arrange
     const expectedElements = {
       header: /cv/i,
-      pdfButton: /last ned pdf/i
+      pdfButton: /last ned pdf/i,
     };
-    
+
     // Act
     render(<CVContent cvData={mockCVData} />);
-    
+
     // Assert
-    expect(screen.getByRole("heading", { name: expectedElements.header })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: expectedElements.pdfButton })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: expectedElements.header }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: expectedElements.pdfButton }),
+    ).toBeInTheDocument();
   });
 
   it("renders all navigation tabs", () => {
@@ -57,14 +61,14 @@ describe("CVContent", () => {
       /nøkkelkvalifikasjoner/i,
       /erfaring/i,
       /utdanning/i,
-      /frivillig arbeid/i
+      /frivillig arbeid/i,
     ];
-    
+
     // Act
     render(<CVContent cvData={mockCVData} />);
-    
+
     // Assert
-    expectedTabs.forEach(tabName => {
+    expectedTabs.forEach((tabName) => {
       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
     });
   });
@@ -72,10 +76,10 @@ describe("CVContent", () => {
   it("displays qualifications in initial tab", () => {
     // Arrange
     const expectedQualification = /qualification 1/i;
-    
+
     // Act
     render(<CVContent cvData={mockCVData} />);
-    
+
     // Assert
     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
   });
@@ -84,17 +88,21 @@ describe("CVContent", () => {
     // Arrange
     const user = userEvent.setup();
     render(<CVContent cvData={mockCVData} />);
-    const volunteerWorkTab = screen.getByRole("tab", { name: /frivillig arbeid/i });
+    const volunteerWorkTab = screen.getByRole("tab", {
+      name: /frivillig arbeid/i,
+    });
     const expectedContent = {
       role: /technical lead/i,
-      organization: /ai community/i
+      organization: /ai community/i,
     };
-    
+
     // Act
     await user.click(volunteerWorkTab);
-    
+
     // Assert
     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
-    expect(await screen.findByText(expectedContent.organization)).toBeInTheDocument();
+    expect(
+      await screen.findByText(expectedContent.organization),
+    ).toBeInTheDocument();
   });
 });

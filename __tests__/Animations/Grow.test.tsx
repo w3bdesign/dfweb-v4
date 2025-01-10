@@ -19,10 +19,10 @@ describe("Grow", () => {
     it("renders component with custom animation props", () => {
       // Arrange
       const expectedTestId = "grow";
-      
+
       // Act
       const element = screen.getByTestId(expectedTestId);
-      
+
       // Assert
       expect(element).toBeInTheDocument();
     });
@@ -30,10 +30,10 @@ describe("Grow", () => {
     it("applies initial scale transform animation", () => {
       // Arrange
       const expectedStyle = "transform: scale(0);";
-      
+
       // Act
       const element = screen.getByTestId("grow");
-      
+
       // Assert
       expect(element).toHaveStyle(expectedStyle);
     });
@@ -41,10 +41,10 @@ describe("Grow", () => {
     it("renders children content", () => {
       // Arrange
       const expectedContent = "Hello World";
-      
+
       // Act
       const content = screen.getByText(expectedContent);
-      
+
       // Assert
       expect(content).toBeInTheDocument();
     });
@@ -54,12 +54,12 @@ describe("Grow", () => {
     it("renders component with default animation values", () => {
       // Arrange
       const expectedContent = "Default Props Test";
-      
+
       // Act
       render(<Grow>{expectedContent}</Grow>);
       const element = screen.getByTestId("grow");
       const content = screen.getByText(expectedContent);
-      
+
       // Assert
       expect(element).toBeInTheDocument();
       expect(content).toBeInTheDocument();
