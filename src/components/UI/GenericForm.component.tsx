@@ -1,7 +1,8 @@
 import React from "react";
 import { useForm, Path, FieldValues } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import Button from "./Button.component";
 import InputField from "./InputField.component";
 
