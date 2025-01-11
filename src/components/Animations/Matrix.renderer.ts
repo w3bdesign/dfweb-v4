@@ -15,17 +15,17 @@ interface MatrixRendererProps {
 }
 
 export class MatrixRenderer {
-  private ctx: CanvasRenderingContext2D;
-  private canvas: HTMLCanvasElement;
-  private columns: Column[];
-  private maxStackHeight: number;
-  private tileSize: number;
-  private fadeFactor: number;
-  private rgbBackground: RGB;
-  private rgbFont: RGB;
-  private glowColor: string;
-  private tileSet: string[] | null;
-  private getRandomInt: (max: number) => number;
+  private readonly ctx: CanvasRenderingContext2D;
+  private readonly canvas: HTMLCanvasElement;
+  private readonly columns: Column[];
+  private readonly maxStackHeight: number;
+  private readonly tileSize: number;
+  private readonly fadeFactor: number;
+  private readonly rgbBackground: RGB;
+  private readonly rgbFont: RGB;
+  private readonly glowColor: string;
+  private readonly tileSet: string[] | null;
+  private readonly getRandomInt: (max: number) => number;
 
   constructor({
     ctx,
