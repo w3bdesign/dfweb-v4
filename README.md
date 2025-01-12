@@ -91,8 +91,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
 - Github action workflow for Cypress
 - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-- E2E testing with Cypress integrated with Github actions
-- E2E testing with Playwright for cross-browser compatibility, integrated with Github actions
+- E2E testing with Cypress and Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
