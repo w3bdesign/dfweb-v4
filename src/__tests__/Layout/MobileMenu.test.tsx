@@ -2,18 +2,31 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { usePathname } from "next/navigation";
 
 import MobileMenu from "@/components/Layout/MobileMenu.component";
-
 import linksmock from "../../__mocks__/links.json";
+
+// Mock next/navigation
+jest.mock("next/navigation", () => ({
+  usePathname: jest.fn(),
+}));
+
+const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
 
 describe("MobileMenu - elementer eksisterer", () => {
   const testidMenu = "mobile-menu";
 
   beforeEach(() => {
+    // Default to home page
+    mockUsePathname.mockReturnValue("/");
     render(<MobileMenu links={linksmock} />);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it("renders mobile menu when hamburger is clicked", () => {
@@ -64,6 +77,52 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert
     expect(menuItems.length).toBe(linksmock.length);
+  });
+
+  it("renders internal links with correct active state", () => {
+    // Arrange
+    cleanup(); // Clean up previous renders
+    const currentPath = "/prosjekter";
+    mockUsePathname.mockReturnValue(currentPath);
+    const { getByTestId } = render(<MobileMenu links={linksmock} />);
+    const hamburger = getByTestId("hamburger");
+
+    // Act
+    fireEvent.click(hamburger);
+
+    // Assert
+    linksmock.forEach(link => {
+      if (!link.externalLink) {
+        const linkElement = screen.getByTestId(`mobil-${link.name}`);
+        if (link.href === currentPath) {
+          expect(linkElement).toHaveClass("text-green-400");
+          const underline = linkElement.querySelector("span");
+          expect(underline).toHaveClass("bg-green-400");
+        } else {
+          expect(linkElement).not.toHaveClass("text-green-400");
+          const underline = linkElement.querySelector("span");
+          expect(underline).toHaveClass("bg-white");
+        }
+      }
+    });
+  });
+
+  it("renders internal links with glitch effect", () => {
+    // Arrange
+    const hamburger = screen.getByTestId("hamburger");
+
+    // Act
+    fireEvent.click(hamburger);
+
+    // Assert
+    linksmock.forEach(link => {
+      if (!link.externalLink) {
+        const linkElement = screen.getByTestId(`mobil-${link.name}`);
+        const glitchElement = linkElement.querySelector(".glitch");
+        expect(glitchElement).toBeInTheDocument();
+        expect(glitchElement).toHaveAttribute("data-text", link.name);
+      }
+    });
   });
 
   it("opens external links in new tab with correct attributes", () => {
