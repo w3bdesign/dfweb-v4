@@ -18,6 +18,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - [Design](#design)
   - [Accessibility](#accessibility)
   - [Devops and Code quality](#devops-and-code-quality)
+  - [Environment Variables](#environment-variables)
   - [Testing Standards](#testing-standards)
 
 ## Live URL
@@ -100,6 +101,28 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
   - Both desktop and performance-focused testing
+
+### Environment Variables
+
+- Type-safe environment variable validation with envalid
+  - Runtime validation of required environment variables
+  - Clear error messages with examples for missing variables
+  - Separate handling of client-side and server-side variables
+  - Default values where appropriate
+  - Required variables:
+    ```env
+    # Email Configuration (client-side)
+    NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+    NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+    NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+
+    # AI Configuration (server-side)
+    AI_API_KEY=xxx                            # AI service API key
+    AI_BASE_URL=https://xxx                   # AI service base URL
+    MODEL_NAME=claude-3.5-sonnet@anthropic    # Optional, has default value
+    ```
+  - Validation prevents application startup if required variables are missing
+  - TypeScript integration for type-safe access to environment variables
 
 ### Testing Standards
 
