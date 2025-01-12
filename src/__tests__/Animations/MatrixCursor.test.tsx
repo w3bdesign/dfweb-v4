@@ -31,6 +31,21 @@ describe("MatrixCursor", () => {
     jest.clearAllMocks();
   });
 
+  test("should not render when heroRef is null", () => {
+    // Arrange
+    const NullRefWrapper = () => {
+      const heroRef = useRef<HTMLDivElement>(null);
+      // Don't render the div, so heroRef.current will be null
+      return <MatrixCursor heroRef={heroRef} />;
+    };
+
+    // Act
+    const { queryByTestId } = render(<NullRefWrapper />);
+
+    // Assert
+    expect(queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+  });
+
   test("should not render on mobile devices", () => {
     // Arrange
     mockUseMobile.mockReturnValue(true);
