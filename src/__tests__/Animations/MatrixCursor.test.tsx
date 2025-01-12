@@ -3,6 +3,11 @@ import { render, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+import { useMobile } from "@/hooks/useMobile";
+
+// Mock useMobile hook
+jest.mock("@/hooks/useMobile");
+const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
 
 // Wrapper component to provide ref
 const TestWrapper = () => {
@@ -16,7 +21,26 @@ const TestWrapper = () => {
 };
 
 describe("MatrixCursor", () => {
-  afterEach(cleanup);
+  beforeEach(() => {
+    // Default to desktop view
+    mockUseMobile.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    cleanup();
+    jest.clearAllMocks();
+  });
+
+  test("should not render on mobile devices", () => {
+    // Arrange
+    mockUseMobile.mockReturnValue(true);
+
+    // Act
+    const { queryByTestId } = render(<TestWrapper />);
+
+    // Assert
+    expect(queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+  });
 
   test("should update cursor position and styles on mousemove", () => {
     // Arrange
