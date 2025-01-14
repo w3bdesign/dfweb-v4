@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 
-// Hook to detect if the device is mobile based on window width
+/**
+ * A React hook that returns a boolean indicating if the user is on a mobile device.
+ * The determination uses window.innerWidth < 640 as a threshold.
+ *
+ * @returns true if the device width is under 640px, else false.
+ */
 export function useMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
