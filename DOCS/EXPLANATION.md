@@ -281,11 +281,52 @@
 
 ### 6. Challenges and Solutions
 
-"One interesting challenge was the Matrix animation system:
-- Needed to balance visual effects with performance
-- Implemented efficient rendering techniques
-- Used requestAnimationFrame for smooth animations
-- Added fallbacks for lower-end devices"
+"The project presented several interesting technical challenges:
+
+1. Matrix Animation Performance
+   - Challenge: Creating smooth animations while maintaining site performance
+   - Solution: 
+     * Used Canvas for efficient rendering
+     * Implemented requestAnimationFrame for smooth animations
+     * Added device-specific optimizations
+     * Created accessibility fallbacks
+     * Managed memory usage carefully
+
+2. Type Safety with CMS
+   - Challenge: Ensuring type safety between Sanity CMS and frontend
+   - Solution:
+     * Generated TypeScript types from Sanity schemas
+     * Implemented Zod validation for runtime safety
+     * Created type-safe GROQ queries
+     * Added error boundaries for content failures
+     * Built reusable typed components
+
+3. Testing Complex Animations
+   - Challenge: Reliable testing of Canvas animations
+   - Solution:
+     * Created custom test utilities for Canvas
+     * Implemented visual regression testing
+     * Added performance benchmarks
+     * Created mock Canvas contexts
+     * Separated logic from rendering
+
+4. Performance Optimization
+   - Challenge: Maintaining 100/100 Lighthouse scores
+   - Solution:
+     * Strategic use of Server Components
+     * Implemented efficient image loading
+     * Optimized third-party scripts
+     * Added intelligent caching
+     * Monitored Core Web Vitals
+
+5. Accessibility with Animations
+   - Challenge: Making complex animations accessible
+   - Solution:
+     * Added reduced motion alternatives
+     * Implemented keyboard controls
+     * Enhanced screen reader support
+     * Created static fallbacks
+     * Added ARIA descriptions"
 
 ### 7. Learning Outcomes
 
