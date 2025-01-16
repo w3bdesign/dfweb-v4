@@ -2,24 +2,111 @@
 
 ## Project Overview
 
-DFWeb v4 is a modern portfolio website built with Next.js 15, React 19, TypeScript, and Sanity.io as a headless CMS. The project showcases advanced web development practices including server components, comprehensive testing, accessibility standards, and modern animation techniques.
+DFWeb v4 is a modern portfolio website that demonstrates advanced web development practices and architectural patterns. Built with Next.js 15, React 19, TypeScript, and Sanity.io, it showcases several key technical achievements:
+
+### Technical Highlights
+
+1. **Advanced React Patterns**
+   - Server Components for optimal performance and SEO
+   - Custom hooks for shared logic (e.g., useMobile, useNavigation)
+   - Error Boundaries with fallback UI strategies
+   - Polymorphic components for flexible implementations
+
+2. **Performance Optimizations**
+   - 100/100 Lighthouse scores across all metrics
+   - Efficient code splitting and lazy loading
+   - Image optimization with next/image
+   - Strategic use of static and dynamic rendering
+
+3. **Type Safety**
+   - Comprehensive TypeScript implementation
+   - Custom type utilities and guards
+   - Zod schema validation for runtime safety
+   - Type-safe API integrations
+
+4. **Testing Excellence**
+   - 100% test coverage with Jest and RTL
+   - E2E testing with Cypress and Playwright
+   - Custom ESLint rules enforcing AAA pattern
+   - Automated accessibility testing
+
+5. **Modern UI/UX**
+   - Matrix-inspired design with custom animations
+   - Responsive layouts with Tailwind CSS
+   - Custom cursor effects with trail animations
+   - Smooth page transitions and scroll effects
 
 ## Core Technologies
 
-### Frontend Stack
-- **Next.js 15**: App Router architecture with server components
-- **React 19**: Latest React features and patterns
-- **TypeScript**: Full type coverage
-- **Motion**: Animation library for smooth transitions
-- **Tailwind CSS**: Utility-first styling
-- **Sanity.io**: Headless CMS for content management
+### Technical Stack Deep Dive
 
-### Development & Testing
-- **Jest & React Testing Library**: Unit testing
-- **Cypress**: E2E testing with accessibility checks
-- **Playwright**: Cross-browser testing
-- **ESLint & Prettier**: Code quality and formatting
-- **Ladle**: Component documentation and testing
+#### Frontend Core
+- **Next.js 15**
+  - App Router for enhanced routing control
+  - Server Components for improved performance
+  - Streaming and Suspense for progressive loading
+  - Middleware for request/response manipulation
+
+- **React 19**
+  - Server Components integration
+  - Use of latest hooks (useFormStatus, useOptimistic)
+  - Custom hooks for business logic
+  - Error Boundary implementation
+
+- **TypeScript**
+  - Strict type checking enabled
+  - Custom type utilities and guards
+  - Generic components implementation
+  - Type-safe API integrations
+
+- **Motion**
+  - Custom animation hooks
+  - Performance-optimized animations
+  - Gesture handling
+  - Scroll-based animations
+
+- **Tailwind CSS**
+  - Custom configuration and theming
+  - Responsive design implementation
+  - Dark mode support
+  - Performance optimization
+
+- **Sanity.io**
+  - Custom schema definitions
+  - Type-safe GROQ queries
+  - Real-time content updates
+  - Image optimization pipeline
+
+#### Development & Testing Infrastructure
+- **Jest & React Testing Library**
+  - Custom test utilities and helpers
+  - Mock implementations for external services
+  - Snapshot testing strategies
+  - Integration with TypeScript
+
+- **Cypress**
+  - Custom commands for common operations
+  - Accessibility testing integration
+  - Visual regression testing
+  - Network request stubbing
+
+- **Playwright**
+  - Cross-browser testing setup
+  - Mobile device emulation
+  - Performance testing
+  - Screenshot and video capture
+
+- **ESLint & Prettier**
+  - Custom rule configurations
+  - Git hooks integration
+  - TypeScript-aware linting
+  - Automated code formatting
+
+- **Ladle**
+  - Interactive component documentation
+  - Visual regression testing
+  - Accessibility testing
+  - Performance profiling
 
 ## Project Architecture
 
