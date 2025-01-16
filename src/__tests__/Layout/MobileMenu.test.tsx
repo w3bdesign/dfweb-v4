@@ -91,7 +91,7 @@ describe("MobileMenu - elementer eksisterer", () => {
     fireEvent.click(hamburger);
 
     // Assert
-    linksmock.forEach(link => {
+    linksmock.forEach((link) => {
       if (!link.externalLink) {
         const linkElement = screen.getByTestId(`mobil-${link.name}`);
         if (link.href === currentPath) {
@@ -115,7 +115,7 @@ describe("MobileMenu - elementer eksisterer", () => {
     fireEvent.click(hamburger);
 
     // Assert
-    linksmock.forEach(link => {
+    linksmock.forEach((link) => {
       if (!link.externalLink) {
         const linkElement = screen.getByTestId(`mobil-${link.name}`);
         const glitchElement = linkElement.querySelector(".glitch");

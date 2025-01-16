@@ -81,10 +81,10 @@ describe("MatrixRenderer", () => {
   it("updates column counters", () => {
     // Arrange
     const originalStackCounter = columns[0].stackCounter;
-    
+
     // Act
     renderer.draw();
-    
+
     // Assert
     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
   });
@@ -93,10 +93,10 @@ describe("MatrixRenderer", () => {
     // Arrange
     columns[0].stackCounter = columns[0].stackHeight - 1;
     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
-    
+
     // Act
     renderer.draw();
-    
+
     // Assert
     expect(columns[0].stackCounter).toBe(0);
     expect(columns[0].stackHeight).toBe(expectedNewStackHeight);
