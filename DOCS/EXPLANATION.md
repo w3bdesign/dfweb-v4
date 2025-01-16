@@ -341,11 +341,39 @@
 
 ### "What's the most interesting technical challenge you faced?"
 
-"The Matrix animation system was particularly challenging. I needed to create smooth, performant animations that wouldn't impact the site's performance. This involved:
-- Optimizing canvas operations
-- Managing memory usage
-- Handling different screen sizes
-- Providing fallbacks for accessibility"
+"The Matrix animation system was particularly challenging, as evidenced by multiple iterations and improvements throughout the project:
+
+1. Initial Implementation Challenges
+   - Creating smooth canvas animations without impacting performance
+   - Implementing efficient rendering techniques (commit bcc379b)
+   - Managing memory usage for long-running animations
+   - Ensuring consistent frame rates across devices
+
+2. Mobile Optimization
+   - Adding device-specific optimizations (commit 0812552)
+   - Implementing responsive canvas sizing
+   - Optimizing for touch devices
+   - Managing battery life impact
+
+3. Accessibility Considerations
+   - Creating reduced motion alternatives
+   - Ensuring keyboard navigation support
+   - Providing screen reader descriptions
+   - Implementing fallback content
+
+4. Performance Optimization
+   - Refactoring for better modularity (commit ac87f0a)
+   - Optimizing render cycles
+   - Implementing efficient state management
+   - Adding performance monitoring
+
+5. Testing Challenges
+   - Creating reliable canvas tests (commit cc7c821)
+   - Implementing visual regression testing
+   - Testing across different devices
+   - Validating accessibility features
+
+This challenge taught me valuable lessons about balancing visual appeal with performance and accessibility, while maintaining clean, testable code."
 
 ### "How did you approach performance optimization?"
 
