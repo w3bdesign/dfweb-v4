@@ -58,7 +58,7 @@ const Icons = () => (
                 aria-label={`${iconName} ikon`}
                 title={`${iconName} ikon`}
                 size="2.5em"
-                className="transition-all duration-300 group-hover:text-[#00ff62] group-hover:scale-110"
+                className="transition-all duration-300 group-hover:text-[#00ff62]"
               />
             </div>
             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[#00ff62]">
