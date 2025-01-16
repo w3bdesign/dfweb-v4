@@ -263,12 +263,42 @@
 
 ### 4. Performance Focus
 
-"Performance was a key priority:
-- Server-side rendering for fast initial loads
-- Image optimization for quick visual content
-- Code splitting to reduce bundle size
-- Caching strategies for static content
-- 100/100 Lighthouse scores"
+"Performance was a key priority throughout development, with several major improvements:
+
+1. Automated Performance Monitoring
+   - Implemented Lighthouse CI for continuous monitoring (commit 4a79a89)
+   - Added performance budgets and thresholds
+   - Set up Vercel Speed Insights for real user monitoring
+   - Integrated with GitHub Actions for automated checks
+   - Achieved and maintained 100/100 Lighthouse scores
+
+2. Server-Side Optimization
+   - Implemented Server Components for data-heavy pages (commit 4fa7629)
+   - Added intelligent caching strategies
+   - Optimized API response times
+   - Improved GROQ query performance
+   - Enhanced static generation with revalidation
+
+3. Frontend Optimization
+   - Optimized Matrix animation rendering (commit bcc379b)
+   - Implemented efficient code splitting
+   - Added responsive image optimization
+   - Reduced JavaScript bundle size
+   - Optimized critical rendering path
+
+4. Mobile Performance
+   - Added device-specific optimizations (commit 0812552)
+   - Implemented responsive loading strategies
+   - Optimized animations for mobile devices
+   - Reduced battery impact
+   - Enhanced touch response times
+
+5. Monitoring & Maintenance
+   - Regular performance regression testing
+   - Continuous Core Web Vitals monitoring
+   - Automated performance budgets
+   - Regular dependency updates
+   - Performance-focused code reviews"
 
 ### 5. Testing Strategy
 
@@ -341,11 +371,39 @@
 
 ### "What's the most interesting technical challenge you faced?"
 
-"The Matrix animation system was particularly challenging. I needed to create smooth, performant animations that wouldn't impact the site's performance. This involved:
-- Optimizing canvas operations
-- Managing memory usage
-- Handling different screen sizes
-- Providing fallbacks for accessibility"
+"The Matrix animation system was particularly challenging, as evidenced by multiple iterations and improvements throughout the project:
+
+1. Initial Implementation Challenges
+   - Creating smooth canvas animations without impacting performance
+   - Implementing efficient rendering techniques (commit bcc379b)
+   - Managing memory usage for long-running animations
+   - Ensuring consistent frame rates across devices
+
+2. Mobile Optimization
+   - Adding device-specific optimizations (commit 0812552)
+   - Implementing responsive canvas sizing
+   - Optimizing for touch devices
+   - Managing battery life impact
+
+3. Accessibility Considerations
+   - Creating reduced motion alternatives
+   - Ensuring keyboard navigation support
+   - Providing screen reader descriptions
+   - Implementing fallback content
+
+4. Performance Optimization
+   - Refactoring for better modularity (commit ac87f0a)
+   - Optimizing render cycles
+   - Implementing efficient state management
+   - Adding performance monitoring
+
+5. Testing Challenges
+   - Creating reliable canvas tests (commit cc7c821)
+   - Implementing visual regression testing
+   - Testing across different devices
+   - Validating accessibility features
+
+This challenge taught me valuable lessons about balancing visual appeal with performance and accessibility, while maintaining clean, testable code."
 
 ### "How did you approach performance optimization?"
 
@@ -358,42 +416,42 @@
 
 ### "What would you do differently next time?"
 
-"Looking at how the project evolved, there are several things I'd do differently from the start:
+"Based on the project's actual evolution, here are the key things I'd implement differently from the start:
 
-1. Testing Infrastructure
-   - Implement the AAA pattern from day one instead of adding it later
-   - Set up Lighthouse CI earlier in the development cycle
-   - Add visual regression testing from the beginning
-   - Implement comprehensive error boundary testing earlier
-   - Start with mobile device testing
+1. Testing Strategy
+   - Implement AAA pattern testing from the beginning (added in commit c48c612)
+   - Set up Lighthouse CI monitoring earlier (added in commit 4a79a89)
+   - Add comprehensive error boundary testing sooner (added in commit 75bc7b7)
+   - Include mobile device testing from start (added in commit 0812552)
+   - Implement visual regression testing earlier
 
-2. Code Organization
-   - Begin with the standardized import paths we eventually implemented
-   - Structure components more modularly from the start
-   - Better separation of animation logic from components
-   - More consistent component story organization
-   - Earlier implementation of TypeScript strict mode
+2. Architecture & Organization
+   - Start with modular Matrix component structure (refactored in commit bcc379b)
+   - Use standardized import paths from beginning (added in commit 4ab1ee3)
+   - Implement Server Components earlier (added in commit 4fa7629)
+   - Better separation of animation logic (improved over multiple commits)
+   - More consistent component organization
 
-3. Performance Monitoring
-   - Set up performance monitoring from the beginning
-   - Implement Lighthouse CI checks earlier
-   - Add performance budgets from day one
-   - Better initial planning for code splitting
-   - Earlier focus on Core Web Vitals
+3. Type Safety & Validation
+   - Start with stricter TypeScript configuration (gradually improved)
+   - Implement environment validation earlier (added in commit 91bfe1f)
+   - Add Zod validation from beginning
+   - Use type-safe GROQ queries from start
+   - Better error boundary typing (improved in commit 3452cce)
 
-4. Environment Management
-   - Start with proper environment validation using envalid
-   - Better separation of client/server environment variables
-   - More robust error handling for configuration
-   - Clearer documentation of required variables
-   - Stricter validation rules from the start
+4. Performance & Monitoring
+   - Set up Lighthouse CI at project start (added in commit 60ae483)
+   - Implement performance budgets earlier
+   - Add Vercel Speed Insights from beginning
+   - Better initial code splitting strategy
+   - Earlier Core Web Vitals monitoring
 
-5. Documentation
-   - Document technical decisions as they're made
-   - Better component documentation from the beginning
-   - More comprehensive JSDoc comments
-   - Earlier setup of component stories
-   - Better tracking of architectural decisions"
+5. Documentation & Development
+   - Document technical decisions as they happen
+   - Set up component stories earlier (added later in multiple commits)
+   - Add JSDoc comments from start (added in commit db21a6a)
+   - Better tracking of architectural changes
+   - Earlier implementation of development tools"
 
 ### "How do you handle state management?"
 
