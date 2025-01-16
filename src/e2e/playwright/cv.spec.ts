@@ -32,7 +32,7 @@ test.describe("CV page", () => {
 
     // Check if education information is present
     await expect(page.getByLabel("Utdanning")).toContainText(
-      "2019 – 2024 - Kompetanseheving / egenlæring frontendutvikling",
+      "2019 – 2025 - Kompetanseheving / egenlæring frontendutvikling",
     );
   });
 });
