@@ -23,7 +23,7 @@ describe("BounceInScroll", () => {
     render(
       <BounceInScroll>
         <div>{testContent}</div>
-      </BounceInScroll>
+      </BounceInScroll>,
     );
 
     // Assert
@@ -38,7 +38,7 @@ describe("BounceInScroll", () => {
     render(
       <BounceInScroll cssClass={testClass}>
         <div>Test content</div>
-      </BounceInScroll>
+      </BounceInScroll>,
     );
 
     // Assert
@@ -53,7 +53,7 @@ describe("BounceInScroll", () => {
     render(
       <BounceInScroll>
         <div>{testContent}</div>
-      </BounceInScroll>
+      </BounceInScroll>,
     );
 
     // Assert
@@ -71,7 +71,7 @@ describe("BounceInScroll", () => {
     render(
       <BounceInScroll viewAmount={viewAmount}>
         <div>{testContent}</div>
-      </BounceInScroll>
+      </BounceInScroll>,
     );
 
     // Assert
@@ -88,7 +88,7 @@ describe("BounceInScroll", () => {
     render(
       <BounceInScroll instant={true}>
         <div>{testContent}</div>
-      </BounceInScroll>
+      </BounceInScroll>,
     );
 
     // Assert
@@ -107,7 +107,7 @@ describe("BounceInScroll", () => {
       const { unmount } = render(
         <BounceInScroll viewAmount={amount}>
           <div>{testContent}</div>
-        </BounceInScroll>
+        </BounceInScroll>,
       );
 
       // Assert

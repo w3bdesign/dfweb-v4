@@ -1,4 +1,9 @@
-import { hexToRgb, getRandomInt, getRandomCharacter, debounce } from "@/components/Animations/Matrix.utils";
+import {
+  hexToRgb,
+  getRandomInt,
+  getRandomCharacter,
+  debounce,
+} from "@/components/Animations/Matrix.utils";
 
 describe("Matrix Utils", () => {
   describe("hexToRgb", () => {
@@ -9,7 +14,7 @@ describe("Matrix Utils", () => {
         { r: 255, g: 0, b: 0 },
         { r: 0, g: 255, b: 0 },
         { r: 0, g: 0, b: 255 },
-        { r: 255, g: 255, b: 255 }
+        { r: 255, g: 255, b: 255 },
       ];
 
       // Act & Assert
@@ -23,7 +28,7 @@ describe("Matrix Utils", () => {
       const invalidHexColors = ["invalid", "#12", "#1234", "#12345"];
 
       // Act & Assert
-      invalidHexColors.forEach(hex => {
+      invalidHexColors.forEach((hex) => {
         expect(hexToRgb(hex)).toBeNull();
       });
     });
@@ -33,7 +38,8 @@ describe("Matrix Utils", () => {
     it("returns a random integer within the range", () => {
       // Arrange
       const max = 10;
-      const mockGetRandomValues = jest.spyOn(window.crypto, 'getRandomValues')
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
         .mockImplementation((array: Uint32Array) => {
           array[0] = 123456789;
           return array;
@@ -56,7 +62,7 @@ describe("Matrix Utils", () => {
       // Arrange
       const tileSet = ["A", "B", "C"];
       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
-      
+
       // Act
       const result = getRandomCharacter(tileSet);
 
@@ -68,7 +74,7 @@ describe("Matrix Utils", () => {
     it("returns a random ASCII character when tileSet is null", () => {
       // Arrange
       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
-      
+
       // Act
       const result = getRandomCharacter(null);
 
@@ -80,7 +86,7 @@ describe("Matrix Utils", () => {
     it("returns a random ASCII character when tileSet is empty", () => {
       // Arrange
       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
-      
+
       // Act
       const result = getRandomCharacter([]);
 
