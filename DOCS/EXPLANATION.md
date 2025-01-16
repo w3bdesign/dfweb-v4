@@ -358,12 +358,42 @@
 
 ### "What would you do differently next time?"
 
-"Some areas I'd approach differently:
-- Start with a more feature-based folder structure
-- Implement stricter performance budgets earlier
-- Add visual regression testing from the start
-- More aggressive code splitting
-- Better documentation practices"
+"Looking at how the project evolved, there are several things I'd do differently from the start:
+
+1. Testing Infrastructure
+   - Implement the AAA pattern from day one instead of adding it later
+   - Set up Lighthouse CI earlier in the development cycle
+   - Add visual regression testing from the beginning
+   - Implement comprehensive error boundary testing earlier
+   - Start with mobile device testing
+
+2. Code Organization
+   - Begin with the standardized import paths we eventually implemented
+   - Structure components more modularly from the start
+   - Better separation of animation logic from components
+   - More consistent component story organization
+   - Earlier implementation of TypeScript strict mode
+
+3. Performance Monitoring
+   - Set up performance monitoring from the beginning
+   - Implement Lighthouse CI checks earlier
+   - Add performance budgets from day one
+   - Better initial planning for code splitting
+   - Earlier focus on Core Web Vitals
+
+4. Environment Management
+   - Start with proper environment validation using envalid
+   - Better separation of client/server environment variables
+   - More robust error handling for configuration
+   - Clearer documentation of required variables
+   - Stricter validation rules from the start
+
+5. Documentation
+   - Document technical decisions as they're made
+   - Better component documentation from the beginning
+   - More comprehensive JSDoc comments
+   - Earlier setup of component stories
+   - Better tracking of architectural decisions"
 
 ### "How do you handle state management?"
 
