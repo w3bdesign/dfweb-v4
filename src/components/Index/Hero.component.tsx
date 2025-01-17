@@ -42,7 +42,7 @@ const Hero = ({ content }: IContent) => {
       id="main-hero"
       data-testid="main-hero"
       ref={heroRef}
-      className="relative flex flex-col justify-center text-lg h-[31.5rem] md:h-[30rem] overflow-hidden w-full"
+      className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full"
     >
       <MatrixCursor heroRef={heroRef} />
       <MobileBackground />

@@ -112,8 +112,8 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
                 <div className="md:flex md:justify-center hidden">
                   <Tabs tabs={tabs} />
                 </div>
-                <div className="mx-auto text-center md:mt-8">
-                  <Button href="./cv.pdf" renderAs="a" type="button">
+                <div className="mx-auto text-center md:mt-8 md:hidden">
+                  <Button href="./cv2.pdf" renderAs="a" type="button">
                     Last ned PDF
                   </Button>
                 </div>

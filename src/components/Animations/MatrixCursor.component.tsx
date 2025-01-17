@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, RefObject, useState, useCallback } from "react";
-import "../../app/cursor.css";
+import "@/app/cursor.css";
 import { useMobile } from "../../hooks/useMobile"; // Pb51b
 
 interface MatrixCursorProps {

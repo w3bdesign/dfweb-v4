@@ -10,7 +10,7 @@ const createJestConfig = nextJest({
 const customJestConfig: Config = {
   preset: "ts-jest/presets/js-with-babel-esm",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
-  testPathIgnorePatterns: ["<rootDir>/cypress/", "<rootDir>/playwright/"],
+  testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
     "@/(.*)": "<rootDir>/src/$1",

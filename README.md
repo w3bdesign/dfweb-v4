@@ -3,7 +3,6 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=w3bdesign_dfweb-v4&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=w3bdesign_dfweb-v4)
  
 # Dfweb.no Portfolio Version 4
 
@@ -19,6 +18,8 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - [Design](#design)
   - [Accessibility](#accessibility)
   - [Devops and Code quality](#devops-and-code-quality)
+  - [Environment Variables](#environment-variables)
+  - [Testing Standards](#testing-standards)
 
 ## Live URL
 
@@ -69,6 +70,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
+- AI-friendly repository documentation with automated updates
 
 ### Design
 
@@ -78,7 +80,6 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
  
-
 ### Accessibility
 
 - WCAG accessibility tested
@@ -91,8 +92,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
 - Github action workflow for Cypress
 - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-- E2E testing with Cypress integrated with Github actions
-- E2E testing with Playwright for cross-browser compatibility, integrated with Github actions
+- E2E testing with Cypress and Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
@@ -101,3 +101,48 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
   - Both desktop and performance-focused testing
+- Automated repository documentation with Repomix
+  - AI-friendly documentation generation on every push to main
+  - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+  - Automated PR analysis with repository structure insights
+  - Security-focused documentation with sensitive information filtering
+  - Markdown formatting for improved readability
+
+### Environment Variables
+
+- Type-safe environment variable validation with envalid
+  - Runtime validation of required environment variables
+  - Clear error messages with examples for missing variables
+  - Separate handling of client-side and server-side variables
+  - Default values where appropriate
+  - Required variables:
+    ```env
+    # Email Configuration (client-side)
+    NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+    NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+    NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+
+    # AI Configuration (server-side)
+    AI_API_KEY=xxx                            # AI service API key
+    AI_BASE_URL=https://xxx                   # AI service base URL
+    MODEL_NAME=claude-3.5-sonnet@anthropic    # Optional, has default value
+    ```
+  - Validation prevents application startup if required variables are missing
+  - TypeScript integration for type-safe access to environment variables
+
+### Testing Standards
+
+- Enforced AAA (Arrange-Act-Assert) pattern in all test files
+  - Each test must include the following comments:
+    ```typescript
+    // Arrange - Set up test data and conditions
+    // Act - Perform the action being tested
+    // Assert - Verify the results
+    ```
+  - This pattern ensures:
+    - Clear test structure and readability
+    - Consistent test organization across the codebase
+    - Easy identification of test setup, execution, and verification
+    - Simplified test maintenance and debugging
+  - Automated validation through custom ESLint rules
+  - Tests will fail if AAA pattern is not followed

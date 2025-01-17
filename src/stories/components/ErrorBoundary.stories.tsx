@@ -1,7 +1,7 @@
 import React from "react";
 import { Meta } from "@ladle/react";
 import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
-import "../../app/globals.css";
+import "@/app/globals.css";
 
 export default {
   title: "ErrorBoundary",
