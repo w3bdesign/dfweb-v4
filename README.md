@@ -107,7 +107,6 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
-  - Automated comments on PRs with codebase context
 
 ### Environment Variables
 
