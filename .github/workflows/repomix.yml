@@ -40,18 +40,27 @@ jobs:
             const fs = require('fs');
             const repoContext = fs.readFileSync('DOCS/repository_context.txt', 'utf8');
             
+            // Extract file summary section
+            const summaryMatch = repoContext.match(/# File Summary([\s\S]*?)(?=# |$)/);
+            const fileSummary = summaryMatch ? summaryMatch[1].trim() : '';
+            
             // Create a summary of the changes
             const summary = `## 🔍 Repository Context Analysis
             
             This PR has been analyzed with Repomix to provide context about how it fits into the overall repository structure.
             
-            <details>
-            <summary>Click to view full repository context</summary>
+            ### Summary
+            ${fileSummary}
             
-            \`\`\`markdown
-            ${repoContext}
+            <details>
+            <summary>View Repository Structure</summary>
+            
+            \`\`\`
+            ${repoContext.match(/# Repository Structure([\s\S]*?)(?=# |$)/)?.[1]?.trim() || ''}
             \`\`\`
             </details>
+            
+            > Full context is available in \`DOCS/repository_context.txt\`
             `;
             
             // Find existing bot comment
