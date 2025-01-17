@@ -103,7 +103,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Both desktop and performance-focused testing
 - Automated repository documentation with Repomix
   - AI-friendly documentation generation on every push to main
-  - Comprehensive repository context maintained in DOCS/repository_context.txt
+  - Comprehensive repository context maintained in `DOCS/repository_context.txt`
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
