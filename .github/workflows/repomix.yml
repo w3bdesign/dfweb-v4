@@ -125,9 +125,8 @@ jobs:
               });
             }
 
-      # Update Documentation (only on push to main)
+      # Update Documentation
       - name: Commit and Push Changes
-        if: github.event_name == 'push'
         run: |
           echo "Configuring git..."
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -148,10 +147,18 @@ jobs:
               exit 1
             fi
             
-            echo "Pushing changes..."
-            if ! git push; then
-              echo "Error: Failed to push changes"
-              exit 1
+            if [ "${{ github.event_name }}" == "pull_request" ]; then
+              echo "Pushing to PR branch..."
+              if ! git push origin HEAD:${{ github.head_ref }}; then
+                echo "Error: Failed to push to PR branch"
+                exit 1
+              fi
+            else
+              echo "Pushing to main branch..."
+              if ! git push; then
+                echo "Error: Failed to push changes"
+                exit 1
+              fi
             fi
             
             echo "Successfully updated repository context"
