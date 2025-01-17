@@ -32,23 +32,36 @@ jobs:
 
       - name: Generate Repository Documentation
         run: |
+          echo "Creating DOCS directory..."
           mkdir -p DOCS
-          repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines
           
-          # Verify the file was created
-          if [ ! -f "DOCS/repository_context.txt" ]; then
-            echo "Error: repository_context.txt was not created"
+          echo "Running Repomix..."
+          if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+            echo "Error: Repomix command failed"
+            # Print directory contents for debugging
+            echo "DOCS directory contents:"
+            ls -la DOCS/
             exit 1
           fi
           
-          # Verify the file is not empty
+          echo "Verifying output file..."
+          if [ ! -f "DOCS/repository_context.txt" ]; then
+            echo "Error: repository_context.txt was not created"
+            # Print directory contents for debugging
+            echo "DOCS directory contents:"
+            ls -la DOCS/
+            exit 1
+          fi
+          
           if [ ! -s "DOCS/repository_context.txt" ]; then
             echo "Error: repository_context.txt is empty"
             exit 1
           fi
           
           echo "Repository context file generated successfully"
-          echo "File size: $(stat -f%z "DOCS/repository_context.txt") bytes"
+          echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+          echo "First few lines of the file:"
+          head -n 5 "DOCS/repository_context.txt"
 
       # Handle Pull Request
       - name: Comment on PR
@@ -116,12 +129,32 @@ jobs:
       - name: Commit and Push Changes
         if: github.event_name == 'push'
         run: |
+          echo "Configuring git..."
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # Only commit if there are changes
+          echo "Checking for changes..."
           if [[ -n "$(git status --porcelain)" ]]; then
-            git add DOCS/repository_context.txt
-            git commit -m "docs: update repository context via Repomix [skip ci]"
-            git push
+            echo "Changes detected, committing..."
+            
+            # Stage only repository_context.txt to avoid unintended changes
+            if ! git add DOCS/repository_context.txt; then
+              echo "Error: Failed to stage repository_context.txt"
+              exit 1
+            fi
+            
+            if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+              echo "Error: Failed to create commit"
+              exit 1
+            fi
+            
+            echo "Pushing changes..."
+            if ! git push; then
+              echo "Error: Failed to push changes"
+              exit 1
+            fi
+            
+            echo "Successfully updated repository context"
+          else
+            echo "No changes detected in repository_context.txt"
           fi
