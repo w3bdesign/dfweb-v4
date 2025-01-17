@@ -1,0 +1,99 @@
+name: Repository Documentation
+
+on:
+  push:
+    branches:
+      - main # or your default branch name
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: # allows manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all history for better context
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate Repository Documentation
+        run: |
+          npx repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines
+
+      # Handle Pull Request
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const repoContext = fs.readFileSync('DOCS/repository_context.txt', 'utf8');
+            
+            // Create a summary of the changes
+            const summary = `## 🔍 Repository Context Analysis
+            
+            This PR has been analyzed with Repomix to provide context about how it fits into the overall repository structure.
+            
+            <details>
+            <summary>Click to view full repository context</summary>
+            
+            \`\`\`markdown
+            ${repoContext}
+            \`\`\`
+            </details>
+            `;
+            
+            // Find existing bot comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.login === 'github-actions[bot]' && 
+              comment.body.includes('Repository Context Analysis')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+            }
+
+      # Update Documentation (only on push to main)
+      - name: Commit and Push Changes
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Only commit if there are changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add DOCS/repository_context.txt
+            git commit -m "docs: update repository context via Repomix [skip ci]"
+            git push
+          fi
