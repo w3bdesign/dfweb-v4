@@ -70,6 +70,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
+- AI-friendly repository documentation with automated updates
 
 ### Design
 
@@ -100,6 +101,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
   - Both desktop and performance-focused testing
+- Automated repository documentation with Repomix
+  - AI-friendly documentation generation on every push to main
+  - Comprehensive repository context maintained in DOCS/repository_context.txt
+  - Automated PR analysis with repository structure insights
+  - Security-focused documentation with sensitive information filtering
+  - Markdown formatting for improved readability
+  - Automated comments on PRs with codebase context
 
 ### Environment Variables
 
