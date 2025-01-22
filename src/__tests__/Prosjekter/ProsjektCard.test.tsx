@@ -14,7 +14,7 @@ jest.mock("@/components/UI/Button.component", () => ({ href, children }) => (
 // Mock the urlFor function
 jest.mock("@/lib/sanity/helpers", () => ({
   urlFor: jest.fn().mockReturnValue({
-    url: jest.fn().mockReturnValue("test-image.jpg"),
+    url: jest.fn().mockReturnValue("/test-image.jpg"),
   }),
 }));
 
@@ -57,7 +57,7 @@ describe("ProsjektCard", () => {
       // Arrange
       const expectedImage = {
         alt: "Test Project",
-        src: "test-image.jpg",
+        src: "/test-image.jpg",
       };
 
       // Act
@@ -66,7 +66,7 @@ describe("ProsjektCard", () => {
 
       // Assert
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", expectedImage.src);
+      expect(img.getAttribute("src")).toContain(encodeURIComponent(expectedImage.src));
     });
 
     it("renders navigation buttons with correct hrefs", () => {
