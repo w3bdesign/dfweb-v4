@@ -48,7 +48,6 @@ const ProsjektCard: React.FC<Project> = ({
                 src={urlFor(projectimage).url() as string}
                 alt={name}
                 priority
-                sizes="(max-width: 768px) 100vw, 50vw"
               />
             )}
           </div>
