@@ -42,10 +42,10 @@ const ProsjektCard: React.FC<Project> = ({
             {projectimage && (
               <Image
                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
-                width={600}
-                height={340}
+                width="600"
+                height="340"
                 quality={90}
-                src={urlFor(projectimage).url()}
+                src={urlFor(projectimage).url() as string}
                 alt={name}
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
