@@ -34,7 +34,7 @@ export const hexToRgb = (hexValue: string): RGB | null => {
 export const getRandomInt = (max: number): number => {
   const array = new Uint32Array(1);
   window.crypto.getRandomValues(array);
-  return array?.[0] ?? 0 % max;
+  return (array?.[0] ?? 0) % max;
 };
 
 /**
@@ -46,7 +46,8 @@ export const getRandomCharacter = (tileSet: string[] | null): string => {
   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? '';
   }
-  return String.fromCharCode(33 + getRandomInt(94));
+    // Generate ASCII printable characters (33-126)
+    return String.fromCharCode(33 + (getRandomInt(94) % 94));
 };
 
 /**
