@@ -58,12 +58,12 @@ const ProsjektCard: React.FC<Project> = ({
           </p>
           <div className="flex justify-center mt-4">
             {urlwww && urlwww.length > 0 && (
-              <Button href={urlwww[0].url} renderAs="a">
+              <Button href={urlwww?.[0]?.url} renderAs="a">
                 Besøk
               </Button>
             )}
             {urlgithub && urlgithub.length > 0 && (
-              <Button href={urlgithub[0].url} renderAs="a">
+              <Button href={urlgithub?.[0]?.url} renderAs="a">
                 GitHub
               </Button>
             )}

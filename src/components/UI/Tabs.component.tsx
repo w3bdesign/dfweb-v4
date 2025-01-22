@@ -23,7 +23,7 @@ interface TabsProps {
  * @return {JSX.Element} The rendered Tabs component.
  */
 const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-  const [activeTab, setActiveTab] = useState(tabs[0].id);
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
