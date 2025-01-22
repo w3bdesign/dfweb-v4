@@ -34,7 +34,8 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
 
   const getRandomChar = useCallback(() => {
     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
-    return matrixChars[Math.floor(Math.random() * matrixChars.length)];
+    const index = Math.floor(Math.random() * matrixChars.length);
+    return matrixChars[index] ?? matrixChars[0] ?? 'X';
   }, []);
 
   const createTrail = useCallback(
