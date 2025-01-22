@@ -48,7 +48,6 @@ const ProsjektCard: React.FC<Project> = ({
                 src={urlFor(projectimage).url() as string}
                 alt={name}
                 priority
-                unoptimized
               />
             )}
           </div>
