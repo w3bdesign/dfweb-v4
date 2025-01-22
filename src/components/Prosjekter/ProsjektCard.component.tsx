@@ -45,11 +45,12 @@ const ProsjektCard: React.FC<Project> = ({
                 width={600}
                 height={340}
                 quality={90}
-                src={urlFor(projectimage)
-                  .width(800)
-                  .quality(70)
-                  .format('webp')
-                  .url() as string}
+                src={
+                  urlFor(projectimage)
+                    .quality(70)
+                    .format("webp")
+                    .url() as string
+                }
                 alt={name}
                 priority
                 sizes="(max-width: 768px) 100vw, 50vw"
