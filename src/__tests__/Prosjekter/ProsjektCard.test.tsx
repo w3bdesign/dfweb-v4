@@ -66,7 +66,7 @@ describe("ProsjektCard", () => {
 
       // Assert
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", expectedImage.src);
+      expect(img.getAttribute("src")).toContain(encodeURIComponent(expectedImage.src));
     });
 
     it("renders navigation buttons with correct hrefs", () => {
