@@ -3,13 +3,21 @@ import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+import type { Project } from "@/types/sanity.types";
 
 mockIntersectionObserver();
 
+interface ButtonProps {
+  href: string;
+  children: React.ReactNode;
+}
+
 // Mock the Button component
-jest.mock("@/components/UI/Button.component", () => ({ href, children }) => (
-  <a href={href}>{children}</a>
-));
+jest.mock("@/components/UI/Button.component", () => {
+  return function MockButton({ href, children }: ButtonProps) {
+    return <a href={href}>{children}</a>;
+  };
+});
 
 // Mock the urlFor function
 jest.mock("@/lib/sanity/helpers", () => ({
@@ -18,18 +26,19 @@ jest.mock("@/lib/sanity/helpers", () => ({
   }),
 }));
 
-const mockProjectProps = {
-  id: "1",
+const mockProjectProps: Project = {
+  _id: "1",
+  _type: "project",
+  _createdAt: "2024-01-23",
+  _updatedAt: "2024-01-23",
+  _rev: "rev1",
+  id: 1,
   name: "Test Project",
   description: "This is a test project",
   subdescription: "This is a subdescription",
-  projectimage: {
-    asset: {
-      _ref: "image-Tb9Ew8CXIwaY6R1kjMvI0uRR-2000x3000-jpg",
-    },
-  },
-  urlwww: [{ url: "https://example.com", _key: "1" }],
-  urlgithub: [{ url: "https://github.com/example", _key: "1" }],
+  projectimage: "/test-image.jpg",
+  urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
+  urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
 };
 
 describe("ProsjektCard", () => {
@@ -104,7 +113,7 @@ describe("ProsjektCard", () => {
   describe("conditional rendering", () => {
     it("does not render navigation buttons when urls are not provided", () => {
       // Arrange
-      const propsWithoutUrls = {
+      const propsWithoutUrls: Project = {
         ...mockProjectProps,
         urlwww: [],
         urlgithub: [],
