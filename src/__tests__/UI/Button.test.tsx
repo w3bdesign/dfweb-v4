@@ -24,14 +24,14 @@ describe("Button", () => {
       expect(button).toHaveTextContent(buttonText);
     });
 
-    it.each`
-      children    | ariaLabel
-      ${"Save"}   | ${"Save changes"}
-      ${"Delete"} | ${"Delete item"}
-      ${"Edit"}   | ${"Edit profile"}
-    `(
-      "renders button with '$children' text and '$ariaLabel' aria-label",
-      ({ children, ariaLabel }: { children: string; ariaLabel: string }) => {
+    const testCases = [
+      { children: "Save", ariaLabel: "Save changes" },
+      { children: "Delete", ariaLabel: "Delete item" },
+      { children: "Edit", ariaLabel: "Edit profile" },
+    ];
+
+    testCases.forEach(({ children, ariaLabel }) => {
+      it(`renders button with '${children}' text and '${ariaLabel}' aria-label`, () => {
         // Arrange
         const props = {
           onClick: jest.fn(),
@@ -46,8 +46,8 @@ describe("Button", () => {
         expect(button).toBeInTheDocument();
         expect(button).toHaveAttribute("aria-label", ariaLabel);
         expect(button).toHaveTextContent(children);
-      },
-    );
+      });
+    });
 
     it("is disabled when disabled prop is true", () => {
       // Arrange
