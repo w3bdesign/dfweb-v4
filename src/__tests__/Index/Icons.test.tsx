@@ -6,8 +6,13 @@ import { render, screen } from "@testing-library/react";
 
 import Icons from "@/components/Index/Icons.component";
 
+interface IconTest {
+  name: string;
+  selector: () => HTMLElement;
+}
+
 describe("Icons", () => {
-  it.each([
+  const testCases: IconTest[] = [
     { name: "React", selector: () => screen.getByLabelText(/react ikon/i) },
     { name: "Vue", selector: () => screen.getByLabelText(/vuejs/i) },
     {
@@ -19,15 +24,19 @@ describe("Icons", () => {
       selector: () => screen.getByRole("img", { name: /wordpress ikon/i }),
     },
     { name: "PHP", selector: () => screen.getByLabelText(/php ikon/i) },
-  ])("renders $name icon correctly", ({ selector }) => {
-    // Arrange
-    const expectedIcon = selector;
+  ];
 
-    // Act
-    render(<Icons />);
-    const icon = expectedIcon();
+  testCases.forEach(({ name, selector }) => {
+    it(`renders ${name} icon correctly`, () => {
+      // Arrange
+      const expectedIcon = selector;
 
-    // Assert
-    expect(icon).toBeInTheDocument();
+      // Act
+      render(<Icons />);
+      const icon = expectedIcon();
+
+      // Assert
+      expect(icon).toBeInTheDocument();
+    });
   });
 });

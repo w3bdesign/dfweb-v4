@@ -3,9 +3,14 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 import Pill from "@/components/UI/Pill.component";
 
+interface LinkProps {
+  children: React.ReactNode;
+  href: string;
+}
+
 // Mock Next.js Link component
 jest.mock("next/link", () => {
-  return ({ children, href }) => {
+  return function MockLink({ children, href }: LinkProps) {
     return <a href={href}>{children}</a>;
   };
 });

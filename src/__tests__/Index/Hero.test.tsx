@@ -6,7 +6,10 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Hero from "@/components/Index/Hero.component";
 import heromock from "../../__mocks__/hero.json";
-import { PortableTextBlock } from "@portabletext/types";
+
+interface THero {
+  text: string;
+}
 
 describe("Hero", () => {
   it("Hero loads and displays content from mock", () => {
@@ -23,7 +26,7 @@ describe("Hero", () => {
 
   it("renders default text when content array is empty", () => {
     // Arrange
-    const emptyContent: PortableTextBlock[] = [];
+    const emptyContent: THero[] = [];
     const expectedText = "Hei!";
 
     // Act
