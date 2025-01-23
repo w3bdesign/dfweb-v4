@@ -7,13 +7,41 @@ import fs from "fs/promises";
 declare global {
   namespace jest {
     interface Matchers<R> {
+      // Testing Library matchers
       toBeInTheDocument(): R;
       toHaveTextContent(text: string): R;
       toBeVisible(): R;
       toBeDisabled(): R;
       toBeEnabled(): R;
       toHaveAttribute(attr: string, value?: string): R;
+      toHaveClass(...classNames: string[]): R;
+      toHaveStyle(css: Record<string, unknown>): R;
+      toContainElement(element: Element | null): R;
+      toContainHTML(html: string): R;
+      toHaveLength(length: number): R;
+
+      // Jest matchers
+      toBe(expected: any): R;
+      toEqual(expected: any): R;
+      toBeNull(): R;
+      toBeDefined(): R;
+      toBeUndefined(): R;
+      toBeTruthy(): R;
+      toBeFalsy(): R;
+      toBeGreaterThan(number: number): R;
+      toBeLessThan(number: number): R;
+      toBeLessThanOrEqual(number: number): R;
+      toBeGreaterThanOrEqual(number: number): R;
+      toContain(item: any): R;
+      toHaveBeenCalled(): R;
+      toHaveBeenCalledTimes(number: number): R;
+      toHaveBeenCalledWith(...args: any[]): R;
       toHaveBeenCalledExactly(times: number): R;
+      toThrow(error?: string | Error | RegExp): R;
+      toMatch(regexpOrString: string | RegExp): R;
+      rejects: {
+        toThrow(error?: string | Error | RegExp): Promise<R>;
+      };
     }
   }
 }
