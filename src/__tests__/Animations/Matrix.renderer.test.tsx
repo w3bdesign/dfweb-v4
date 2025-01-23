@@ -1,6 +1,8 @@
 import { MatrixRenderer } from "@/components/Animations/Matrix.renderer";
 import { RGB, Column } from "@/components/Animations/Matrix.utils";
 
+import "@testing-library/jest-dom";
+
 describe("MatrixRenderer", () => {
   let mockCtx: CanvasRenderingContext2D;
   let mockCanvas: HTMLCanvasElement;
