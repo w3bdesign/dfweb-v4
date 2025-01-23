@@ -11,7 +11,7 @@ declare namespace jest {
     toBeEnabled(): R;
     toHaveAttribute(attr: string, value?: string): R;
     toHaveClass(className: string): R;
-    toHaveStyle(css: Record<string, any>): R;
+    toHaveStyle(css: React.CSSProperties): R;
   }
 }
 
@@ -26,36 +26,36 @@ declare global {
       toBeEnabled(): Assertion;
       toHaveAttribute(attr: string, value?: string): Assertion;
       toHaveClass(...classNames: string[]): Assertion;
-      toHaveStyle(css: Record<string, any>): Assertion;
-      toHaveBeenCalled(): any;
-      toHaveBeenCalledWith(...args: any[]): any;
-      toHaveBeenCalledTimes(n: number): any;
-      toBe(expected: any): any;
-      toEqual(expected: any): any;
-      toBeNull(): any;
-      toBeDefined(): any;
-      toBeGreaterThan(n: number): any;
-      toBeLessThanOrEqual(n: number): any;
-      toMatch(pattern: RegExp | string): any;
-      toThrow(error?: string | Error | RegExp): any;
-      toContain(item: any): any;
-      toContainElement(element: any): any;
-      toContainHTML(html: string): any;
-      toHaveLength(length: number): any;
+      toHaveStyle(css: React.CSSProperties): Assertion;
+      toHaveBeenCalled(): Assertion;
+      toHaveBeenCalledWith(...args: unknown[]): Assertion;
+      toHaveBeenCalledTimes(n: number): Assertion;
+      toBe(expected: unknown): Assertion;
+      toEqual(expected: unknown): Assertion;
+      toBeNull(): Assertion;
+      toBeDefined(): Assertion;
+      toBeGreaterThan(n: number): Assertion;
+      toBeLessThanOrEqual(n: number): Assertion;
+      toMatch(pattern: RegExp | string): Assertion;
+      toThrow(error?: string | Error | RegExp): Assertion;
+      toContain(item: unknown): Assertion;
+      toContainElement(element: HTMLElement): Assertion;
+      toContainHTML(html: string): Assertion;
+      toHaveLength(length: number): Assertion;
 
       rejects: {
-        toThrow(error?: string | Error | RegExp): Promise<any>;
+        toThrow(error?: string | Error | RegExp): Promise<void>;
       };
     }
 
     interface ExpectStatic {
-      any(constructor: any): any;
+      any(constructor: Function): unknown;
     }
   }
 
   // Add canvas mocking support
   interface HTMLCanvasElement {
-    getContext(contextId: "2d"): any;
+    getContext(contextId: "2d"): CanvasRenderingContext2D | null;
   }
 }
 
