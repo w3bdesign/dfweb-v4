@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import { expect } from "@jest/globals";
 import "@testing-library/jest-dom";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
@@ -28,7 +27,7 @@ describe("BounceInScroll", () => {
     );
 
     // Assert
-    expect(screen.getByText(testContent)).toBeTruthy();
+    expect(screen.getByText(testContent)).toBeInTheDocument();
   });
 
   it("applies custom CSS class", () => {
@@ -43,9 +42,7 @@ describe("BounceInScroll", () => {
     );
 
     // Assert
-    expect(
-      screen.getByTestId("bounceinscroll").classList.contains(testClass)
-    ).toBeTruthy();
+    expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
   });
 
   it("configures viewport with default amount when viewAmount not provided", () => {
@@ -61,8 +58,8 @@ describe("BounceInScroll", () => {
 
     // Assert
     const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeTruthy();
-    expect(screen.getByText(testContent)).toBeTruthy();
+    expect(element).toBeInTheDocument();
+    expect(screen.getByText(testContent)).toBeInTheDocument();
   });
 
   it("configures viewport with custom amount when viewAmount provided", () => {
@@ -79,8 +76,8 @@ describe("BounceInScroll", () => {
 
     // Assert
     const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeTruthy();
-    expect(screen.getByText(testContent)).toBeTruthy();
+    expect(element).toBeInTheDocument();
+    expect(screen.getByText(testContent)).toBeInTheDocument();
   });
 
   it("configures for instant animation when instant prop is true", () => {
@@ -96,8 +93,8 @@ describe("BounceInScroll", () => {
 
     // Assert
     const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeTruthy();
-    expect(screen.getByText(testContent)).toBeTruthy();
+    expect(element).toBeInTheDocument();
+    expect(screen.getByText(testContent)).toBeInTheDocument();
   });
 
   it("handles all viewport amount types", () => {
@@ -115,8 +112,8 @@ describe("BounceInScroll", () => {
 
       // Assert
       const element = screen.getByTestId("bounceinscroll");
-      expect(element).toBeTruthy();
-      expect(screen.getByText(testContent)).toBeTruthy();
+      expect(element).toBeInTheDocument();
+      expect(screen.getByText(testContent)).toBeInTheDocument();
 
       // Cleanup
       unmount();
