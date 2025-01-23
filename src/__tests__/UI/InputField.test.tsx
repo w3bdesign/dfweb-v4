@@ -64,11 +64,12 @@ describe("InputField", () => {
     it("displays provided error message", () => {
       // Arrange
       const errorMessage = "This is an error message";
+      const { register } = useForm<TestFormData>();
       const props = {
-        name: "testField",
+        name: "testField" as const,
         label: "Test Field",
         htmlFor: "testField",
-        register: jest.fn(),
+        register,
         error: errorMessage,
       };
 
