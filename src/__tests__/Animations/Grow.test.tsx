@@ -29,7 +29,7 @@ describe("Grow", () => {
 
     it("applies initial scale transform animation", () => {
       // Arrange
-      const expectedStyle = "transform: scale(0);";
+      const expectedStyle = { transform: "scale(0)" };
 
       // Act
       const element = screen.getByTestId("grow");
