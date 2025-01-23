@@ -4,8 +4,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import KontaktContent from "@/components/Kontakt/KontaktContent.component";
-import emailjs from "@emailjs/browser";
-import { EmailJSResponseStatus } from "@emailjs/browser";
+import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
 
 type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
 
