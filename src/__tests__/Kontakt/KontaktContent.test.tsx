@@ -5,9 +5,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import KontaktContent from "@/components/Kontakt/KontaktContent.component";
 import emailjs from "@emailjs/browser";
+import { EmailJSResponseStatus } from "@emailjs/browser";
+
+type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
 
 jest.mock("@emailjs/browser", () => ({
-  send: jest.fn(() => Promise.resolve()),
+  send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
   init: jest.fn(),
 }));
 
@@ -65,7 +68,7 @@ describe("KontaktContent", () => {
 
   it("displays error message on form submission failure", async () => {
     // Arrange
-    emailjs.send.mockRejectedValueOnce(new Error("Test error"));
+    (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
     render(<KontaktContent />);
 
     // Act
