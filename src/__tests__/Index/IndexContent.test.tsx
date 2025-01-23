@@ -3,9 +3,25 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
 
+interface SectionProps {
+  title: string;
+  text: Array<{
+    _key: string;
+    _type: string;
+    children: Array<{
+      _key: string;
+      _type: string;
+      marks: string[];
+      text: string;
+    }>;
+    markDefs: any[];
+    style: string;
+  }>;
+}
+
 // Mock the Section component
 jest.mock("@/components/Index/Section.component", () => {
-  return function MockSection({ title, text }) {
+  return function MockSection({ title, text }: SectionProps) {
     return (
       <div data-testid="mock-section">
         <h2 data-testid="sanity-title">{title}</h2>
@@ -82,7 +98,7 @@ describe("IndexContent Component", () => {
 
   it("throws error when no content is provided", () => {
     // Arrange
-    const emptyContent = [];
+    const emptyContent: typeof mockContent = [];
     const expectedError = "Ingen innhold tilgjengelig";
 
     // Act & Assert
