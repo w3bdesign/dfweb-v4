@@ -2,6 +2,7 @@
 [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+[![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
  
 # Dfweb.no Portfolio Version 4
@@ -83,7 +84,11 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### Accessibility
 
 - WCAG accessibility tested
-- Accessibility testing with Cypress Axe
+- Accessibility testing with Cypress Axe and Pa11y
+- Automated Pa11y accessibility testing on every PR and push to main
+  - Tests all main pages against WCAG2AA standards
+  - Captures screenshots for visual reference
+  - Detailed reports available as GitHub Actions artifacts
 - Builds will fail if any a11y errors are found
 
 ### Devops and Code quality
