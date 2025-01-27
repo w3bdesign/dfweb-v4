@@ -51,16 +51,21 @@ jobs:
           pnpm start & 
           sleep 10 # Wait for the app to be ready
 
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: stable
+
       - name: Run pa11y
         run: |
           # Create a directory for the reports
           mkdir -p pa11y-reports
 
-          # Run pa11y on main pages and save reports
-          pnpm exec pa11y http://localhost:3000 > pa11y-reports/home.txt
-          pnpm exec pa11y http://localhost:3000/cv > pa11y-reports/cv.txt
-          pnpm exec pa11y http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt
-          pnpm exec pa11y http://localhost:3000/kontakt > pa11y-reports/kontakt.txt
+          # Run pa11y on main pages with no-sandbox flag
+          pnpm exec pa11y --chrome-launcher-args="--no-sandbox,--disable-setuid-sandbox" http://localhost:3000 > pa11y-reports/home.txt
+          pnpm exec pa11y --chrome-launcher-args="--no-sandbox,--disable-setuid-sandbox" http://localhost:3000/cv > pa11y-reports/cv.txt
+          pnpm exec pa11y --chrome-launcher-args="--no-sandbox,--disable-setuid-sandbox" http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt
+          pnpm exec pa11y --chrome-launcher-args="--no-sandbox,--disable-setuid-sandbox" http://localhost:3000/kontakt > pa11y-reports/kontakt.txt
 
       - name: Upload pa11y results
         if: always()
