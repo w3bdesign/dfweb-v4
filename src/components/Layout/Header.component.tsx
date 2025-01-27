@@ -49,10 +49,6 @@ const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
           <MobileMenu links={navigationLinks} />
         </div>
       </nav>
-      {/* Test element with poor contrast for pa11y testing */}
-      <div className="fixed top-24 left-1/2 -translate-x-1/2 bg-white p-4 rounded shadow-md">
-        <p className="text-white">This text has poor contrast for testing pa11y</p>
-      </div>
     </header>
   );
 };
