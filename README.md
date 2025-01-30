@@ -56,7 +56,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Automatic static optimization with revalidation
   - Server-side data fetching with proper error handling
 - React 19
-- Sanity headless cms for all of the content, projects and navigation links
+- Sanity headless CMS for all of the content, projects and navigation links
 - Ladle for component documentation
 - Animations with Motion
 - React testing library for unit testing
@@ -71,7 +71,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
-- AI-friendly repository documentation with automated updates
+- AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
 
 ### Design
 
