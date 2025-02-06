@@ -19,6 +19,12 @@ jobs:
         cache: 'pnpm'
     - name: Install dependencies
       run: pnpm install
+    - name: Ensure Docker is available
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+        sudo systemctl start docker
+        sudo systemctl enable docker
     - name: Install Playwright Browsers
       run: pnpm exec playwright install --with-deps chromium firefox
     - name: Build the project
@@ -30,6 +36,8 @@ jobs:
         npx wait-on http://localhost:3000
     - name: Run Playwright tests
       run: pnpm exec playwright test
+    - name: Run Testcontainers Tests
+      run: pnpm test:testcontainers
     - uses: actions/upload-artifact@v4
       if: always()
       with:

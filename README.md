@@ -21,6 +21,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - [Devops and Code quality](#devops-and-code-quality)
   - [Environment Variables](#environment-variables)
   - [Testing Standards](#testing-standards)
+  - [Testcontainers](#testcontainers)
 
 ## Live URL
 
@@ -151,3 +152,75 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
     - Simplified test maintenance and debugging
   - Automated validation through custom ESLint rules
   - Tests will fail if AAA pattern is not followed
+
+### Testcontainers
+
+Testcontainers is a NodeJS library that supports tests, providing lightweight, throwaway instances of common databases, Selenium web browsers, or anything else that can run in a Docker container.
+
+#### Usage Examples
+
+1. **Basic Example**:
+    ```javascript
+    const { GenericContainer } = require("testcontainers");
+
+    (async () => {
+      const container = await new GenericContainer("redis")
+        .withExposedPorts(6379)
+        .start();
+
+      const redisUrl = `redis://${container.getHost()}:${container.getMappedPort(6379)}`;
+      console.log(`Redis is running on ${redisUrl}`);
+
+      // Your test logic here
+
+      await container.stop();
+    })();
+    ```
+
+2. **Using with Jest**:
+    ```javascript
+    const { GenericContainer } = require("testcontainers");
+
+    let container;
+    let redisUrl;
+
+    beforeAll(async () => {
+      container = await new GenericContainer("redis")
+        .withExposedPorts(6379)
+        .start();
+
+      redisUrl = `redis://${container.getHost()}:${container.getMappedPort(6379)}`;
+    });
+
+    afterAll(async () => {
+      await container.stop();
+    });
+
+    test("should connect to redis", async () => {
+      // Your test logic here using redisUrl
+    });
+    ```
+
+3. **Using with TypeScript**:
+    ```typescript
+    import { GenericContainer } from "testcontainers";
+
+    let container: any;
+    let redisUrl: string;
+
+    beforeAll(async () => {
+      container = await new GenericContainer("redis")
+        .withExposedPorts(6379)
+        .start();
+
+      redisUrl = `redis://${container.getHost()}:${container.getMappedPort(6379)}`;
+    });
+
+    afterAll(async () => {
+      await container.stop();
+    });
+
+    test("should connect to redis", async () => {
+      // Your test logic here using redisUrl
+    });
+    ```

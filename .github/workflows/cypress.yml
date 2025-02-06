@@ -23,6 +23,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Ensure Docker is available
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
@@ -31,3 +38,6 @@ jobs:
           wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
           browser: ${{ matrix.browser }}
+
+      - name: Run Testcontainers Tests
+        run: pnpm test:testcontainers
