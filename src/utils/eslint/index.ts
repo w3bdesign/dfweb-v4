@@ -1,12 +1,12 @@
-import { ESLintUtils, TSESTree, TSESLint } from '@typescript-eslint/utils';
+import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
 
-type MessageIds = 'missingAAAPattern';
+type MessageIds = "missingAAAPattern";
 type Options = [];
 
 const isTestFunction = (node: TSESTree.CallExpression): boolean => {
-  const testNames = ['it', 'test'];
+  const testNames = ["it", "test"];
   return (
-    node.callee.type === TSESTree.AST_NODE_TYPES.Identifier && 
+    node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
     testNames.includes(node.callee.name)
   );
 };
@@ -22,61 +22,67 @@ const hasAAAComments = (
   testFn: TSESTree.ArrowFunctionExpression
 ): boolean => {
   const comments = context.getSourceCode().getCommentsBefore(testFn.body);
-  const patterns = ['Arrange', 'Act', 'Assert'];
-  
-  return comments.some((comment: TSESTree.Comment) => 
-    patterns.some(pattern => comment.value.includes(pattern))
+  const patterns = ["Arrange", "Act", "Assert"];
+
+  return comments.some((comment: TSESTree.Comment) =>
+    patterns.some((pattern) => comment.value.includes(pattern))
   );
 };
 
 const createRule = ESLintUtils.RuleCreator(
-  name => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`
+  (name) =>
+    `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`
 );
 
 const rule = createRule<Options, MessageIds>({
-  name: 'arrange-act-assert',
+  name: "arrange-act-assert",
   meta: {
-    type: 'suggestion',
+    type: "suggestion",
     docs: {
-      description: 'enforce AAA pattern in tests'
+      description: "enforce AAA pattern in tests",
     },
     messages: {
-      missingAAAPattern: 'Test should follow AAA pattern with comments'
+      missingAAAPattern: "Test should follow AAA pattern with comments",
     },
-    schema: []
+    schema: [],
   },
 
   defaultOptions: [],
 
   create(context) {
-    return {
-      CallExpression(node: TSESTree.CallExpression) {
-        if (!isTestFunction(node)) return;
-
-        const testFn = node.arguments[1];
-        if (!isArrowFunction(testFn)) return;
-
-        if (!hasAAAComments(context, testFn)) {
-          context.report({
-            node,
-            messageId: 'missingAAAPattern'
-          });
-        }
+    const validateAAAPattern = (node: TSESTree.CallExpression) => {
+      const testFn = node.arguments[1];
+      if (!isArrowFunction(testFn)) return;
+      
+      if (!hasAAAComments(context, testFn)) {
+        context.report({
+          node,
+          messageId: "missingAAAPattern",
+        });
       }
     };
-  }
+
+    const validateTestCase = (node: TSESTree.CallExpression) => {
+      if (!isTestFunction(node)) return;
+      validateAAAPattern(node);
+    };
+
+    return {
+      CallExpression: validateTestCase
+    };
+  },
 });
 
 export default {
   configs: {
     recommended: {
-      plugins: ['test-rules'],
+      plugins: ["test-rules"],
       rules: {
-        'test-rules/arrange-act-assert': 'error'
-      }
-    }
+        "test-rules/arrange-act-assert": "error",
+      },
+    },
   },
   rules: {
-    'arrange-act-assert': rule
-  }
+    "arrange-act-assert": rule,
+  },
 };
