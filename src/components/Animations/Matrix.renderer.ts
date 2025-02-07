@@ -18,19 +18,15 @@ interface MatrixRenderer {
   draw: () => void;
 }
 
-export const createMatrixRenderer = ({
-  ctx,
-  canvas,
-  columns,
-  maxStackHeight,
-  tileSize,
-  fadeFactor,
-  rgbBackground,
-  rgbFont,
-  glowColor,
-  tileSet,
-  getRandomInt,
-}: MatrixRendererProps): MatrixRenderer => {
+const createDrawFunctions = (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  rgbBackground: RGB,
+  rgbFont: RGB,
+  fadeFactor: number,
+  tileSize: number,
+  glowColor: string
+) => {
   const drawBackground = () => {
     ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -51,6 +47,14 @@ export const createMatrixRenderer = ({
     ctx.restore();
   };
 
+  return { drawBackground, drawCharacter, drawGlowEffect };
+};
+
+const createColumnHandlers = (
+  tileSize: number,
+  maxStackHeight: number,
+  getRandomInt: (max: number) => number
+) => {
   const updateColumnState = (column: Column) => {
     column.stackCounter++;
 
@@ -60,31 +64,62 @@ export const createMatrixRenderer = ({
     }
   };
 
+  const getCharacterPosition = (column: Column) => ({
+    y: column.stackCounter * tileSize + tileSize,
+    isLastCharacter: column.stackCounter === Math.floor(column.stackHeight) - 1
+  });
+
+  return { updateColumnState, getCharacterPosition };
+};
+
+export const createMatrixRenderer = ({
+  ctx,
+  canvas,
+  columns,
+  maxStackHeight,
+  tileSize,
+  fadeFactor,
+  rgbBackground,
+  rgbFont,
+  glowColor,
+  tileSet,
+  getRandomInt,
+}: MatrixRendererProps): MatrixRenderer => {
+  const { drawBackground, drawCharacter, drawGlowEffect } = createDrawFunctions(
+    ctx,
+    canvas,
+    rgbBackground,
+    rgbFont,
+    fadeFactor,
+    tileSize,
+    glowColor
+  );
+
+  const { updateColumnState, getCharacterPosition } = createColumnHandlers(
+    tileSize,
+    maxStackHeight,
+    getRandomInt
+  );
+
   const drawColumn = (column: Column) => {
     if (column.stackCounter < 0) return;
 
     const randomCharacter = getRandomCharacter(tileSet);
-    const y = column.stackCounter * tileSize + tileSize;
+    const { y, isLastCharacter } = getCharacterPosition(column);
 
     drawCharacter(randomCharacter, column.x, y);
-
-    // Add glow effect to the last character
-    if (column.stackCounter === Math.floor(column.stackHeight) - 1) {
+    if (isLastCharacter) {
       drawGlowEffect(randomCharacter, column.x, y);
     }
-  };
-
-  const drawColumns = () => {
-    columns.forEach(column => {
-      drawColumn(column);
-      updateColumnState(column);
-    });
   };
 
   return {
     draw: () => {
       drawBackground();
-      drawColumns();
+      columns.forEach(column => {
+        drawColumn(column);
+        updateColumnState(column);
+      });
     }
   };
 };
