@@ -108,10 +108,7 @@ describe("getProjects", () => {
       },
       {
         name: "handles network timeouts",
-        error: {
-          name: "TimeoutError",
-          message: "Network timeout"
-        },
+        error: Object.assign(new Error("Network timeout"), { name: "TimeoutError" }),
         expectedErrorMessage: "Request timed out"
       },
       {
