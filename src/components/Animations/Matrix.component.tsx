@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useCallback } from "react";
-import { MatrixRenderer } from "./Matrix.renderer";
+import { createMatrixRenderer } from "./Matrix.renderer";
 import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
 
 export interface ReactMatrixAnimationProps {
@@ -84,7 +84,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       const delta = timestamp - lastFrameTimeRef.current;
 
       if (delta > frameInterval) {
-        const renderer = new MatrixRenderer({
+        const renderer = createMatrixRenderer({
           ctx,
           canvas,
           columns: columnsRef.current,
