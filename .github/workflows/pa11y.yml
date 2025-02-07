@@ -1,0 +1,81 @@
+name: A11y 
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pa11y:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install dependencies and pa11y
+        run: |
+          pnpm add -D pa11y wait-on
+          # Create pa11y config file
+          echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+
+      - name: Build Next.js app
+        run: pnpm build
+
+      - name: Start Next.js app
+        run: pnpm start &
+
+      - name: Wait for the application to be ready
+        run: pnpm exec wait-on http://localhost:3000
+
+      - name: Run pa11y
+        run: |
+          # Create a directory for the reports
+          mkdir -p pa11y-reports
+
+          # Run pa11y on main pages with config
+          pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+          pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+          pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+          pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+
+      - name: Upload pa11y results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pa11y-reports
+          path: pa11y-reports/
+
+      - name: Check for accessibility issues
+        run: |
+          if grep -q "Error:" pa11y-reports/*.txt; then
+            echo "Accessibility issues found. Check the uploaded artifacts for details."
+            exit 1
+          fi
