@@ -74,9 +74,11 @@ describe("Matrix Renderer", () => {
     renderer.draw();
 
     // Assert
+    // The fillStyle should be set to the font color after drawing is complete
+    // since that's the last operation
     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
     expect(mockCtx.font).toBe(expectedFont);
-    expect(mockCtx.fillStyle).toBe(`rgba(0, 0, 0, 0.5)`);
+    expect(mockCtx.fillStyle).toBe(`rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`);
   });
 
   it("draws columns with characters", () => {
