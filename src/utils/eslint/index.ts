@@ -17,6 +17,29 @@ const isArrowFunction = (
   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
 };
 
+const validateAAAPattern = (
+  context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+  node: TSESTree.CallExpression
+) => {
+  const testFn = node.arguments[1];
+  if (!isArrowFunction(testFn)) return;
+  
+  if (!hasAAAComments(context, testFn)) {
+    context.report({
+      node,
+      messageId: "missingAAAPattern",
+    });
+  }
+};
+
+const validateTestCase = (
+  context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+  node: TSESTree.CallExpression
+) => {
+  if (!isTestFunction(node)) return;
+  validateAAAPattern(context, node);
+};
+
 const hasAAAComments = (
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
   testFn: TSESTree.ArrowFunctionExpression
@@ -50,25 +73,8 @@ const rule = createRule<Options, MessageIds>({
   defaultOptions: [],
 
   create(context) {
-    const validateAAAPattern = (node: TSESTree.CallExpression) => {
-      const testFn = node.arguments[1];
-      if (!isArrowFunction(testFn)) return;
-      
-      if (!hasAAAComments(context, testFn)) {
-        context.report({
-          node,
-          messageId: "missingAAAPattern",
-        });
-      }
-    };
-
-    const validateTestCase = (node: TSESTree.CallExpression) => {
-      if (!isTestFunction(node)) return;
-      validateAAAPattern(node);
-    };
-
     return {
-      CallExpression: validateTestCase
+      CallExpression: (node: TSESTree.CallExpression) => validateTestCase(context, node)
     };
   },
 });
