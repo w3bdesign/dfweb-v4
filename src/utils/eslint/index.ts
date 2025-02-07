@@ -50,20 +50,25 @@ const rule = createRule<Options, MessageIds>({
   defaultOptions: [],
 
   create(context) {
+    const validateAAAPattern = (node: TSESTree.CallExpression) => {
+      const testFn = node.arguments[1];
+      if (!isArrowFunction(testFn)) return;
+      
+      if (!hasAAAComments(context, testFn)) {
+        context.report({
+          node,
+          messageId: "missingAAAPattern",
+        });
+      }
+    };
+
+    const validateTestCase = (node: TSESTree.CallExpression) => {
+      if (!isTestFunction(node)) return;
+      validateAAAPattern(node);
+    };
+
     return {
-      CallExpression(node: TSESTree.CallExpression) {
-        if (!isTestFunction(node)) return;
-
-        const testFn = node.arguments[1];
-        if (!isArrowFunction(testFn)) return;
-
-        if (!hasAAAComments(context, testFn)) {
-          context.report({
-            node,
-            messageId: "missingAAAPattern",
-          });
-        }
-      },
+      CallExpression: validateTestCase
     };
   },
 });
