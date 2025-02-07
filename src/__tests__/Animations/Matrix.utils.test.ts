@@ -40,9 +40,11 @@ describe("Matrix Utils", () => {
       const max = 10;
       const mockGetRandomValues = jest
         .spyOn(window.crypto, "getRandomValues")
-        .mockImplementation((array: Uint32Array) => {
-          array[0] = 123456789;
-          return array;
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 123456789;
+          }
+          return array as Uint32Array;
         });
 
       // Act

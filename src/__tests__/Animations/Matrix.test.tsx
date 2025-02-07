@@ -6,17 +6,40 @@ import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 const mockFillRect = jest.fn();
 const mockFillText = jest.fn();
 
-HTMLCanvasElement.prototype.getContext = () => ({
+const mock2DContext = {
   fillRect: mockFillRect,
   fillText: mockFillText,
-});
+  canvas: document.createElement('canvas'),
+  getContextAttributes: () => ({}),
+  globalAlpha: 1,
+  globalCompositeOperation: 'source-over',
+  save: jest.fn(),
+  restore: jest.fn(),
+  font: "",
+  fillStyle: "",
+  shadowColor: "",
+  shadowBlur: 0,
+} as unknown as CanvasRenderingContext2D;
 
-const mockContext = {
-  fillRect: jest.fn(),
-  fillText: jest.fn(),
-};
+const mockBitmapContext = {
+  canvas: document.createElement('canvas'),
+  transferFromImageBitmap: jest.fn(),
+} as unknown as ImageBitmapRenderingContext;
 
-HTMLCanvasElement.prototype.getContext = jest.fn(() => mockContext);
+// Use a single mock implementation that handles different context types
+HTMLCanvasElement.prototype.getContext = function(contextId: string, options?: any) {
+  switch (contextId) {
+    case '2d':
+      return mock2DContext;
+    case 'bitmaprenderer':
+      return mockBitmapContext;
+    case 'webgl':
+    case 'webgl2':
+      return null;
+    default:
+      return null;
+  }
+} as any;
 
 global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
 

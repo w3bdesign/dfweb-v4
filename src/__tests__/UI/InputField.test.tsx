@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { useForm } from "react-hook-form";
+import "@testing-library/jest-dom";
+import { UseFormRegister } from "react-hook-form";
 import InputField, {
   createRegisterOptions,
 } from "@/components/UI/InputField.component";
@@ -8,6 +9,13 @@ import InputField, {
 interface TestFormData {
   testField: string;
 }
+
+const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
+  onChange: jest.fn(),
+  onBlur: jest.fn(),
+  ref: jest.fn(),
+  name,
+}));
 
 const TestComponent = ({
   type = "input",
@@ -18,8 +26,6 @@ const TestComponent = ({
   isRequired?: boolean;
   inputPattern?: RegExp;
 }) => {
-  const { register } = useForm<TestFormData>();
-
   return (
     <InputField<TestFormData>
       name="testField"
@@ -28,7 +34,7 @@ const TestComponent = ({
       type={type}
       isRequired={isRequired}
       inputPattern={inputPattern}
-      register={register}
+      register={mockRegister}
     />
   );
 };
@@ -65,10 +71,10 @@ describe("InputField", () => {
       // Arrange
       const errorMessage = "This is an error message";
       const props = {
-        name: "testField",
+        name: "testField" as const,
         label: "Test Field",
         htmlFor: "testField",
-        register: jest.fn(),
+        register: mockRegister,
         error: errorMessage,
       };
 

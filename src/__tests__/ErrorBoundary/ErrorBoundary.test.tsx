@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 
 describe("ErrorBoundary", () => {
-  let consoleErrorSpy;
+  let consoleErrorSpy: jest.SpyInstance;
   const errorMock = new Error("Dette er en testfeil");
 
   beforeAll(() => {
@@ -63,7 +63,7 @@ describe("ErrorBoundary", () => {
     const expectedErrorArgs = [
       "Uventet feil i Matrix:",
       errorMock,
-      expect.any(Object),
+      { componentStack: expect.any(String) },
     ];
 
     // Act
