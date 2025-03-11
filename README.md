@@ -148,11 +148,9 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
     - Clear test structure and readability
     - Consistent test organization across the codebase
     - Easy identification of test setup, execution, and verification
-    - Simplified test maintenance and debugging
+  - Simplified test maintenance and debugging
   - Automated validation through custom ESLint rules
   - Tests will fail if AAA pattern is not followed
-
-<!-- Backdated commit: 2024-12-13 12:00:00 -->
 
 
 ## Contributing
