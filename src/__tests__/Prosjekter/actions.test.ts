@@ -2,6 +2,20 @@ import { getProjects } from "@/app/prosjekter/actions";
 import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
 
+interface ErrorTestCase {
+  name: string;
+  error: {
+    statusCode?: number;
+    message: string;
+    details?: {
+      type: string;
+      description: string;
+    };
+    name?: string;
+  };
+  expectedErrorMessage: string;
+}
+
 // Mock the Sanity client
 jest.mock("@/lib/sanity/client", () => ({
   client: {
@@ -45,76 +59,68 @@ describe("getProjects", () => {
   });
 
   describe("error handling", () => {
-    it("handles authentication errors (401)", async () => {
-      // Arrange
-      const authError = {
-        statusCode: 401,
-        message: "Invalid token",
-        details: { type: "credentials", description: "Invalid token provided" }
-      };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(authError);
+    const testErrorHandling = async ({ name, error, expectedErrorMessage }: ErrorTestCase) => {
+      it(name, async () => {
+        // Arrange
+        (client.fetch as jest.Mock).mockRejectedValueOnce(error);
 
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Authentication failed");
-    });
+        // Act & Assert
+        await expect(getProjects()).rejects.toThrow(expectedErrorMessage);
+      });
+    };
 
-    it("handles permission errors (403)", async () => {
-      // Arrange
-      const permError = {
-        statusCode: 403,
-        message: "Insufficient permissions",
-        details: { type: "authorization", description: "Missing read access" }
-      };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(permError);
+    const errorCases: ErrorTestCase[] = [
+      {
+        name: "handles authentication errors (401)",
+        error: {
+          statusCode: 401,
+          message: "Invalid token",
+          details: { type: "credentials", description: "Invalid token provided" }
+        },
+        expectedErrorMessage: "Authentication failed"
+      },
+      {
+        name: "handles permission errors (403)",
+        error: {
+          statusCode: 403,
+          message: "Insufficient permissions",
+          details: { type: "authorization", description: "Missing read access" }
+        },
+        expectedErrorMessage: "Insufficient permissions"
+      },
+      {
+        name: "handles rate limiting (429)",
+        error: {
+          statusCode: 429,
+          message: "Too Many Requests",
+          details: { type: "rate_limit", description: "Rate limit exceeded" }
+        },
+        expectedErrorMessage: "Rate limit exceeded"
+      },
+      {
+        name: "handles malformed GROQ queries (400)",
+        error: {
+          statusCode: 400,
+          message: "Invalid GROQ query",
+          details: { type: "query_error", description: "Syntax error in GROQ query" }
+        },
+        expectedErrorMessage: "Sanity API error: Invalid GROQ query"
+      },
+      {
+        name: "handles network timeouts",
+        error: Object.assign(new Error("Network timeout"), { name: "TimeoutError" }),
+        expectedErrorMessage: "Request timed out"
+      },
+      {
+        name: "handles generic fetch errors",
+        error: {
+          message: "Fetch failed"
+        },
+        expectedErrorMessage: "Failed to fetch projects"
+      }
+    ];
 
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Insufficient permissions");
-    });
-
-    it("handles rate limiting (429)", async () => {
-      // Arrange
-      const rateError = {
-        statusCode: 429,
-        message: "Too Many Requests",
-        details: { type: "rate_limit", description: "Rate limit exceeded" }
-      };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
-
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-    });
-
-    it("handles malformed GROQ queries (400)", async () => {
-      // Arrange
-      const queryError = {
-        statusCode: 400,
-        message: "Invalid GROQ query",
-        details: { type: "query_error", description: "Syntax error in GROQ query" }
-      };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(queryError);
-
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Sanity API error: Invalid GROQ query");
-    });
-
-    it("handles network timeouts", async () => {
-      // Arrange
-      const timeoutError = new Error("Network timeout");
-      timeoutError.name = "TimeoutError";
-      (client.fetch as jest.Mock).mockRejectedValueOnce(timeoutError);
-
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Request timed out");
-    });
-
-    it("handles generic fetch errors", async () => {
-      // Arrange
-      const expectedError = new Error("Fetch failed");
-      (client.fetch as jest.Mock).mockRejectedValueOnce(expectedError);
-
-      // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-    });
+    errorCases.forEach(testErrorHandling);
 
     it("recovers after temporary errors", async () => {
       // Arrange

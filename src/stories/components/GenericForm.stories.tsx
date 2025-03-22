@@ -35,7 +35,6 @@ type FormData =
 // Example async submit handlers
 const mockSubmit = async (data: FormData) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  // eslint-disable-next-line no-console
   console.log("Form submitted:", data);
 };
 
