@@ -235,7 +235,7 @@ NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx
 # AI Configuration (server-side)
 AI_API_KEY=xxx
 AI_BASE_URL=xxx
-MODEL_NAME=claude-3.5-sonnet@anthropic
+MODEL_NAME=claude-3.7-sonnet@anthropic
 ```
 
 ## Getting Started

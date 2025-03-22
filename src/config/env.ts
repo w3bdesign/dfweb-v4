@@ -10,7 +10,7 @@ export const serverEnv = cleanEnv(process.env, {
   }),
   MODEL_NAME: str({
     desc: "AI model identifier",
-    default: "claude-3.5-sonnet@anthropic",
+    default: "claude-3.7-sonnet@anthropic",
   }),
 });
 
