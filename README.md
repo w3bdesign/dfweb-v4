@@ -4,12 +4,13 @@
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
- 
+
 # Dfweb.no Portfolio Version 4
 
 Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
 
 ## Table of Contents
+
 - [Live URL](#live-url)
 - [Frontend](#frontend)
 - [Backend](#backend)
@@ -30,13 +31,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 <img src="/public/images/frontend.png" alt="Frontend Image" />
 
-* * *
+---
 
 ## Backend (Sanity headless CMS)
 
 <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
 
-* * *
+---
 
 ## Google Lighthouse
 
@@ -80,7 +81,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Tailwind CSS for styling
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
- 
+
 ### Accessibility
 
 - WCAG accessibility tested
@@ -116,11 +117,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### Environment Variables
 
 - Type-safe environment variable validation with envalid
+
   - Runtime validation of required environment variables
   - Clear error messages with examples for missing variables
   - Separate handling of client-side and server-side variables
   - Default values where appropriate
   - Required variables:
+
     ```env
     # Email Configuration (client-side)
     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
@@ -132,6 +135,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
     AI_BASE_URL=https://xxx                   # AI service base URL
     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
     ```
+
   - Validation prevents application startup if required variables are missing
   - TypeScript integration for type-safe access to environment variables
 
@@ -151,8 +155,3 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Simplified test maintenance and debugging
   - Automated validation through custom ESLint rules
   - Tests will fail if AAA pattern is not followed
-
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
