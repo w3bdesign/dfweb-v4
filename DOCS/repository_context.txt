@@ -4900,6 +4900,51 @@ tsconfig.json
 14: }
 ````
 
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { client } from "@/lib/sanity/client";
+ 2: import { projectsQuery } from "@/lib/sanity/queries";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: import { isSanityApiError } from "@/types/sanity-errors";
+ 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 6:   return client.fetch(
+ 7:     projectsQuery,
+ 8:     {},
+ 9:     {
+10:       next: { revalidate: 3600 },
+11:     },
+12:   );
+13: }
+14: function handleError(error: unknown): never {
+15:   console.error("Error fetching projects:", error);
+16:   if (isSanityApiError(error)) {
+17:     switch (error.statusCode) {
+18:       case 401:
+19:         throw new Error("Authentication failed");
+20:       case 403:
+21:         throw new Error("Insufficient permissions");
+22:       case 429:
+23:         throw new Error("Rate limit exceeded");
+24:       default:
+25:         throw new Error(`Sanity API error: ${error.message}`);
+26:     }
+27:   }
+28:   if (error instanceof Error && error.name === "TimeoutError") {
+29:     throw new Error("Request timed out");
+30:   }
+31:   throw new Error("Failed to fetch projects");
+32: }
+33: export async function getProjects(): Promise<Project[]> {
+34:   try {
+35:     // Add a small delay to demonstrate loading state
+36:     await new Promise((resolve) => setTimeout(resolve, 1000));
+37:     return await fetchProjectsFromSanity();
+38:   } catch (error) {
+39:     handleError(error);
+40:   }
+41: }
+````
+
 ## File: src/app/prosjekter/error.tsx
 ````typescript
  1: "use client";
@@ -14503,49 +14548,27 @@ tsconfig.json
 82:           fi
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     },
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     // Add a small delay to demonstrate loading state
-36:     await new Promise((resolve) => setTimeout(resolve, 1000));
-37:     return await fetchProjectsFromSanity();
-38:   } catch (error) {
-39:     handleError(error);
-40:   }
-41: }
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "index.js",
+ 6:   "scripts": {
+ 7:     "test": "echo \"Error: no test specified\" && exit 1"
+ 8:   },
+ 9:   "keywords": [
+10:     "eslint",
+11:     "eslintplugin",
+12:     "eslint-plugin"
+13:   ],
+14:   "author": "",
+15:   "license": "ISC",
+16:   "peerDependencies": {
+17:     "eslint": ">=9.23.0"
+18:   }
+19: }
 ````
 
 ## File: .eslintrc.json
@@ -14747,29 +14770,6 @@ tsconfig.json
 31: // Example use:
 32: // cy.mount(<MyComponent />)
 33: export {};
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "index.js",
- 6:   "scripts": {
- 7:     "test": "echo \"Error: no test specified\" && exit 1"
- 8:   },
- 9:   "keywords": [
-10:     "eslint",
-11:     "eslintplugin",
-12:     "eslint-plugin"
-13:   ],
-14:   "author": "",
-15:   "license": "ISC",
-16:   "peerDependencies": {
-17:     "eslint": ">=9.23.0"
-18:   }
-19: }
 ````
 
 ## File: README.md
@@ -15001,57 +15001,57 @@ tsconfig.json
 24:   },
 25:   "dependencies": {
 26:     "@emailjs/browser": "^4.4.1",
-27:     "@hookform/resolvers": "^3.10.0",
+27:     "@hookform/resolvers": "^4.1.3",
 28:     "@portabletext/react": "^3.2.1",
-29:     "@sanity/client": "^6.27.2",
+29:     "@sanity/client": "^6.28.3",
 30:     "@sanity/image-url": "^1.1.0",
-31:     "@vercel/speed-insights": "^1.1.0",
-32:     "autoprefixer": "^10.4.20",
+31:     "@vercel/speed-insights": "^1.2.0",
+32:     "autoprefixer": "^10.4.21",
 33:     "clsx": "^2.1.1",
 34:     "cookie": ">=1.0.2",
 35:     "envalid": "^8.0.0",
 36:     "jest": "^29.7.0",
-37:     "motion": "^12.4.0",
+37:     "motion": "^12.5.0",
 38:     "next": "15.2.3",
-39:     "next-sanity": "^9.8.51",
+39:     "next-sanity": "^9.9.5",
 40:     "path-to-regexp": "^8.2.0",
 41:     "react": "^19.0.0",
 42:     "react-dom": "^19.0.0",
 43:     "react-error-boundary": "^5.0.0",
 44:     "react-hook-form": "^7.54.2",
-45:     "react-icons": "^5.4.0",
+45:     "react-icons": "^5.5.0",
 46:     "react-use": "^17.6.0",
-47:     "sanity": "^3.74.1",
+47:     "sanity": "^3.80.1",
 48:     "sitemap": "^8.0.0",
 49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.24.1"
+50:     "zod": "^3.24.2"
 51:   },
 52:   "devDependencies": {
 53:     "@jest/expect": "^29.7.0",
 54:     "@jest/globals": "^29.7.0",
-55:     "@ladle/react": "^5.0.1",
+55:     "@ladle/react": "^5.0.2",
 56:     "@lhci/cli": "^0.14.0",
-57:     "@playwright/test": "^1.50.1",
+57:     "@playwright/test": "^1.51.1",
 58:     "@portabletext/types": "^2.0.13",
 59:     "@testing-library/cypress": "^10.0.3",
 60:     "@testing-library/jest-dom": "^6.6.3",
 61:     "@testing-library/react": "^16.2.0",
 62:     "@testing-library/user-event": "^14.6.1",
 63:     "@types/jest": "^29.5.14",
-64:     "@types/node": "^22.13.1",
-65:     "@types/react": "^19.0.8",
-66:     "@types/react-dom": "^19.0.3",
+64:     "@types/node": "^22.13.11",
+65:     "@types/react": "^19.0.12",
+66:     "@types/react-dom": "^19.0.4",
 67:     "@typescript-eslint/eslint-plugin": "^8.23.0",
 68:     "@typescript-eslint/parser": "^8.23.0",
 69:     "axe-core": "^4.10.2",
-70:     "cypress": "14.0.2",
+70:     "cypress": "14.2.0",
 71:     "cypress-axe": "^1.6.0",
 72:     "eslint": "9.19.0",
 73:     "eslint-config-next": "15.1.6",
 74:     "eslint-plugin-jest": "^28.11.0",
 75:     "eslint-plugin-jsx-a11y": "^6.10.2",
 76:     "eslint-plugin-react": "^7.37.4",
-77:     "eslint-plugin-react-hooks": "^5.1.0",
+77:     "eslint-plugin-react-hooks": "^5.2.0",
 78:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
 79:     "eslint-plugin-testing-library": "^7.1.1",
 80:     "expect": "^29.7.0",
@@ -15059,7 +15059,7 @@ tsconfig.json
 82:     "jest-extended": "^4.0.2",
 83:     "jsdom-testing-mocks": "^1.13.1",
 84:     "postcss": "^8.5.1",
-85:     "prettier": "3.4.2",
+85:     "prettier": "3.5.3",
 86:     "tailwindcss": "^3.4.17",
 87:     "ts-jest": "^29.2.5",
 88:     "typescript": "^5.8.2",
