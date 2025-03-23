@@ -438,6 +438,129 @@ tsconfig.json
 29:           browser: ${{ matrix.browser }}
 ````
 
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v4
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v4
+10:         with:
+11:           node-version: '22'
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@v2
+14:         with:
+15:           version: 8
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI
+42:         run: |
+43:           pnpm lhci:perf
+44:           pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y 
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v4
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v4
+14:         with:
+15:           node-version: "22"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@v2
+18:         with:
+19:           version: 8
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install
+34:       - name: Install dependencies and pa11y
+35:         run: |
+36:           pnpm add -D pa11y wait-on
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v4
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
 ## File: .github/workflows/playwright.yml
 ````yaml
  1: name: Playwright Tests
@@ -478,6 +601,92 @@ tsconfig.json
 36:         name: playwright-report
 37:         path: playwright-report/
 38:         retention-days: 30
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - name: Checkout repository
+15:         uses: actions/checkout@v4
+16:         with:
+17:           fetch-depth: 0 # fetch all history for better context
+18:       - name: Wait for other checks
+19:         run: |
+20:           echo "Waiting for 5 minutes to allow other checks to complete..."
+21:           sleep 300
+22:       - name: Setup Node.js
+23:         uses: actions/setup-node@v4
+24:         with:
+25:           node-version: "22"
+26:       - name: Install Repomix
+27:         run: npm install -g repomix
+28:       - name: Generate Repository Documentation
+29:         run: |
+30:           echo "Creating DOCS directory..."
+31:           mkdir -p DOCS
+32:           echo "Running Repomix..."
+33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+34:             echo "Error: Repomix command failed"
+35:             # Print directory contents for debugging
+36:             echo "DOCS directory contents:"
+37:             ls -la DOCS/
+38:             exit 1
+39:           fi
+40:           echo "Verifying output file..."
+41:           if [ ! -f "DOCS/repository_context.txt" ]; then
+42:             echo "Error: repository_context.txt was not created"
+43:             # Print directory contents for debugging
+44:             echo "DOCS directory contents:"
+45:             ls -la DOCS/
+46:             exit 1
+47:           fi
+48:           if [ ! -s "DOCS/repository_context.txt" ]; then
+49:             echo "Error: repository_context.txt is empty"
+50:             exit 1
+51:           fi
+52:           echo "Repository context file generated successfully"
+53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+54:           echo "First few lines of the file:"
+55:           head -n 5 "DOCS/repository_context.txt"
+56:       # Update Documentation
+57:       - name: Commit and Push Changes
+58:         run: |
+59:           echo "Configuring git..."
+60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+61:           git config --local user.name "github-actions[bot]"
+62:           echo "Checking for changes..."
+63:           if [[ -n "$(git status --porcelain)" ]]; then
+64:             echo "Changes detected, committing..."
+65:             # Stage only repository_context.txt to avoid unintended changes
+66:             if ! git add DOCS/repository_context.txt; then
+67:               echo "Error: Failed to stage repository_context.txt"
+68:               exit 1
+69:             fi
+70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+71:               echo "Error: Failed to create commit"
+72:               exit 1
+73:             fi
+74:             echo "Pushing to main branch..."
+75:             if ! git push; then
+76:               echo "Error: Failed to push changes"
+77:               exit 1
+78:             fi
+79:             echo "Successfully updated repository context"
+80:           else
+81:             echo "No changes detected in repository_context.txt"
+82:           fi
 ````
 
 ## File: .github/copilot-instructions.md
@@ -14339,213 +14548,86 @@ tsconfig.json
 35: }
 ````
 
-## File: .github/workflows/lighthouse.yml
+## File: .circleci/config.yml
 ````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v4
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v4
-10:         with:
-11:           node-version: '22'
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@v2
-14:         with:
-15:           version: 8
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI
-42:         run: |
-43:           pnpm lhci:perf
-44:           pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y 
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v4
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v4
-14:         with:
-15:           node-version: "22"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@v2
-18:         with:
-19:           version: 8
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install
-34:       - name: Install dependencies and pa11y
-35:         run: |
-36:           pnpm add -D pa11y wait-on
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v4
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - name: Checkout repository
-15:         uses: actions/checkout@v4
-16:         with:
-17:           fetch-depth: 0 # fetch all history for better context
-18:       - name: Wait for other checks
-19:         run: |
-20:           echo "Waiting for 5 minutes to allow other checks to complete..."
-21:           sleep 300
-22:       - name: Setup Node.js
-23:         uses: actions/setup-node@v4
-24:         with:
-25:           node-version: "22"
-26:       - name: Install Repomix
-27:         run: npm install -g repomix
-28:       - name: Generate Repository Documentation
-29:         run: |
-30:           echo "Creating DOCS directory..."
-31:           mkdir -p DOCS
-32:           echo "Running Repomix..."
-33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-34:             echo "Error: Repomix command failed"
-35:             # Print directory contents for debugging
-36:             echo "DOCS directory contents:"
-37:             ls -la DOCS/
-38:             exit 1
-39:           fi
-40:           echo "Verifying output file..."
-41:           if [ ! -f "DOCS/repository_context.txt" ]; then
-42:             echo "Error: repository_context.txt was not created"
-43:             # Print directory contents for debugging
-44:             echo "DOCS directory contents:"
-45:             ls -la DOCS/
-46:             exit 1
-47:           fi
-48:           if [ ! -s "DOCS/repository_context.txt" ]; then
-49:             echo "Error: repository_context.txt is empty"
-50:             exit 1
-51:           fi
-52:           echo "Repository context file generated successfully"
-53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-54:           echo "First few lines of the file:"
-55:           head -n 5 "DOCS/repository_context.txt"
-56:       # Update Documentation
-57:       - name: Commit and Push Changes
-58:         run: |
-59:           echo "Configuring git..."
-60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-61:           git config --local user.name "github-actions[bot]"
-62:           echo "Checking for changes..."
-63:           if [[ -n "$(git status --porcelain)" ]]; then
-64:             echo "Changes detected, committing..."
-65:             # Stage only repository_context.txt to avoid unintended changes
-66:             if ! git add DOCS/repository_context.txt; then
-67:               echo "Error: Failed to stage repository_context.txt"
-68:               exit 1
-69:             fi
-70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-71:               echo "Error: Failed to create commit"
-72:               exit 1
-73:             fi
-74:             echo "Pushing to main branch..."
-75:             if ! git push; then
-76:               echo "Error: Failed to push changes"
-77:               exit 1
-78:             fi
-79:             echo "Successfully updated repository context"
-80:           else
-81:             echo "No changes detected in repository_context.txt"
-82:           fi
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@3.4.3
+ 4:   codecov: codecov/codecov@5.3.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.10.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.10.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
 ````
 
 ## File: src/utils/eslint/package.json
@@ -14814,88 +14896,6 @@ tsconfig.json
 157:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@3.4.3
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.10.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.10.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: src/e2e/cypress/support/component.ts
 ````typescript
  1: // ***********************************************************
@@ -15047,7 +15047,7 @@ tsconfig.json
 70:     "cypress": "14.2.0",
 71:     "cypress-axe": "^1.6.0",
 72:     "eslint": "9.23.0",
-73:     "eslint-config-next": "15.1.6",
+73:     "eslint-config-next": "15.2.3",
 74:     "eslint-plugin-jest": "^28.11.0",
 75:     "eslint-plugin-jsx-a11y": "^6.10.2",
 76:     "eslint-plugin-react": "^7.37.4",
