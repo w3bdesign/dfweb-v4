@@ -14653,125 +14653,6 @@ tsconfig.json
 78: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@3.4.3
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.10.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.10.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
-## File: src/e2e/cypress/support/component.ts
-````typescript
- 1: // ***********************************************************
- 2: // This example support/component.ts is processed and
- 3: // loaded automatically before your test files.
- 4: //
- 5: // This is a great place to put global configuration and
- 6: // behavior that modifies Cypress.
- 7: //
- 8: // You can change the location of this file or turn off
- 9: // automatically serving support files with the
-10: // 'supportFile' configuration option.
-11: //
-12: // You can read more here:
-13: // https://on.cypress.io/configuration
-14: // ***********************************************************
-15: // Import commands.js using ES2015 syntax:
-16: import "./commands";
-17: import "@/styles/globals.css";
-18: import { mount } from "cypress/react";
-19: // Augment the Cypress namespace to include type definitions for
-20: // your custom command.
-21: // Alternatively, can be defined in cypress/support/component.d.ts
-22: // with a <reference path="./component" /> at the top of your spec.
-23: declare global {
-24:   namespace Cypress {
-25:     interface Chainable {
-26:       mount: typeof mount;
-27:     }
-28:   }
-29: }
-30: Cypress.Commands.add("mount", mount);
-31: // Example use:
-32: // cy.mount(<MyComponent />)
-33: export {};
-````
-
 ## File: README.md
 ````markdown
   1: [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
@@ -14933,6 +14814,125 @@ tsconfig.json
 157:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@3.4.3
+ 4:   codecov: codecov/codecov@5.3.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.10.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.10.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
+````
+
+## File: src/e2e/cypress/support/component.ts
+````typescript
+ 1: // ***********************************************************
+ 2: // This example support/component.ts is processed and
+ 3: // loaded automatically before your test files.
+ 4: //
+ 5: // This is a great place to put global configuration and
+ 6: // behavior that modifies Cypress.
+ 7: //
+ 8: // You can change the location of this file or turn off
+ 9: // automatically serving support files with the
+10: // 'supportFile' configuration option.
+11: //
+12: // You can read more here:
+13: // https://on.cypress.io/configuration
+14: // ***********************************************************
+15: // Import commands.js using ES2015 syntax:
+16: import "./commands";
+17: import "@/styles/globals.css";
+18: import { mount } from "cypress/react";
+19: // Augment the Cypress namespace to include type definitions for
+20: // your custom command.
+21: // Alternatively, can be defined in cypress/support/component.d.ts
+22: // with a <reference path="./component" /> at the top of your spec.
+23: declare global {
+24:   namespace Cypress {
+25:     interface Chainable {
+26:       mount: typeof mount;
+27:     }
+28:   }
+29: }
+30: Cypress.Commands.add("mount", mount);
+31: // Example use:
+32: // cy.mount(<MyComponent />)
+33: export {};
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -15061,9 +15061,9 @@ tsconfig.json
 84:     "postcss": "^8.5.3",
 85:     "prettier": "3.5.3",
 86:     "tailwindcss": "^3.4.17",
-87:     "ts-jest": "^29.2.5",
+87:     "ts-jest": "^29.2.6",
 88:     "typescript": "^5.8.2",
-89:     "wait-on": "^8.0.2"
+89:     "wait-on": "^8.0.3"
 90:   }
 91: }
 ````
