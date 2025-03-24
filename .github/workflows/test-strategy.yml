@@ -34,7 +34,25 @@ jobs:
           version: 9
 
       - name: Install dependencies
-        run: pnpm install
+        run: |
+          pnpm install
+          pnpm add -D tsx @types/node typescript
+
+      - name: Install test tools
+        run: |
+          pnpm playwright install --with-deps
+          pnpm exec playwright install chromium
+          pnpm add -D wait-on
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Start development server
+        run: |
+          pnpm dev &
+          echo "Waiting for server to be ready..."
+          pnpm exec wait-on --timeout 60000 http://localhost:3000
+          echo "Server is ready"
 
       - name: Run tests and generate reports
         run: |
@@ -46,21 +64,25 @@ jobs:
           
           echo "Running Cypress tests..."
           pnpm cypress:headless || true
-          pnpm tsx ci/test-strategy/extract-cypress-results.ts > test-reports/cypress-summary.json
+          pnpm exec tsx ci/test-strategy/extract-cypress-results.ts > test-reports/cypress-summary.json
           
           echo "Running Playwright tests..."
           pnpm playwright test || true
-          pnpm tsx ci/test-strategy/extract-playwright-results.ts > test-reports/playwright-summary.json
+          pnpm exec tsx ci/test-strategy/extract-playwright-results.ts > test-reports/playwright-summary.json
           
           echo "Running accessibility tests..."
           pnpm exec pa11y-ci || true
-          pnpm tsx ci/test-strategy/extract-pa11y-results.ts > test-reports/pa11y-summary.json
+          pnpm exec tsx ci/test-strategy/extract-pa11y-results.ts > test-reports/pa11y-summary.json
           
           echo "Running performance tests..."
           pnpm lhci || true
-          pnpm tsx ci/test-strategy/extract-lighthouse-results.ts > test-reports/lighthouse-summary.json
+          pnpm exec tsx ci/test-strategy/extract-lighthouse-results.ts > test-reports/lighthouse-summary.json
           
           echo "All test suites completed."
+
+      - name: Stop development server
+        if: always()
+        run: pkill -f "next dev" || true
 
       - name: Generate Test Strategy Report
         id: report
