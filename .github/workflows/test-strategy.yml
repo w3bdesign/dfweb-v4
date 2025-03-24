@@ -40,8 +40,13 @@ jobs:
 
       - name: Install test tools
         run: |
-          pnpm playwright install --with-deps
-          pnpm exec playwright install chromium
+          # Install browsers without trying to use root
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm add -D @playwright/test
+          
+          # Install browsers using the container's browser installation
+          echo "Using pre-installed browsers from Cypress container"
+          
+          # Install wait-on for server checks
           pnpm add -D wait-on
 
       - name: Build project
@@ -67,7 +72,7 @@ jobs:
           pnpm exec tsx ci/test-strategy/extract-cypress-results.ts > test-reports/cypress-summary.json
           
           echo "Running Playwright tests..."
-          pnpm playwright test || true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm playwright test --browser=chromium || true
           pnpm exec tsx ci/test-strategy/extract-playwright-results.ts > test-reports/playwright-summary.json
           
           echo "Running accessibility tests..."
