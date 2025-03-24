@@ -304,6 +304,88 @@ tsconfig.json
 
 # Files
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@3.4.3
+ 4:   codecov: codecov/codecov@5.3.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.10.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.10.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
+````
+
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -14389,88 +14471,6 @@ tsconfig.json
 35: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@3.4.3
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.10.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.10.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: DOCS/TEST_STRATEGY.md
 ````markdown
   1: # dfweb-v4 Test Strategy Document
@@ -15248,46 +15248,47 @@ tsconfig.json
 47:     "sanity": "^3.80.1",
 48:     "sitemap": "^8.0.0",
 49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.24.2"
-51:   },
-52:   "devDependencies": {
-53:     "@jest/expect": "^29.7.0",
-54:     "@jest/globals": "^29.7.0",
-55:     "@ladle/react": "^5.0.2",
-56:     "@lhci/cli": "^0.14.0",
-57:     "@playwright/test": "^1.51.1",
-58:     "@portabletext/types": "^2.0.13",
-59:     "@testing-library/cypress": "^10.0.3",
-60:     "@testing-library/jest-dom": "^6.6.3",
-61:     "@testing-library/react": "^16.2.0",
-62:     "@testing-library/user-event": "^14.6.1",
-63:     "@types/jest": "^29.5.14",
-64:     "@types/node": "^22.13.11",
-65:     "@types/react": "^19.0.12",
-66:     "@types/react-dom": "^19.0.4",
-67:     "@typescript-eslint/eslint-plugin": "^8.27.0",
-68:     "@typescript-eslint/parser": "^8.27.0",
-69:     "axe-core": "^4.10.3",
-70:     "cypress": "14.2.0",
-71:     "cypress-axe": "^1.6.0",
-72:     "eslint": "9.23.0",
-73:     "eslint-config-next": "15.2.3",
-74:     "eslint-plugin-jest": "^28.11.0",
-75:     "eslint-plugin-jsx-a11y": "^6.10.2",
-76:     "eslint-plugin-react": "^7.37.4",
-77:     "eslint-plugin-react-hooks": "^5.2.0",
-78:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
-79:     "eslint-plugin-testing-library": "^7.1.1",
-80:     "expect": "^29.7.0",
-81:     "jest-environment-jsdom": "^29.7.0",
-82:     "jest-extended": "^4.0.2",
-83:     "jsdom-testing-mocks": "^1.13.1",
-84:     "postcss": "^8.5.3",
-85:     "prettier": "3.5.3",
-86:     "tailwindcss": "^3.4.17",
-87:     "ts-jest": "^29.2.6",
-88:     "typescript": "^5.8.2",
-89:     "wait-on": "^8.0.3"
-90:   }
-91: }
+50:     "zod": "^3.24.2",
+51:     "@babel/helpers": ">=7.26.10"
+52:   },
+53:   "devDependencies": {
+54:     "@jest/expect": "^29.7.0",
+55:     "@jest/globals": "^29.7.0",
+56:     "@ladle/react": "^5.0.2",
+57:     "@lhci/cli": "^0.14.0",
+58:     "@playwright/test": "^1.51.1",
+59:     "@portabletext/types": "^2.0.13",
+60:     "@testing-library/cypress": "^10.0.3",
+61:     "@testing-library/jest-dom": "^6.6.3",
+62:     "@testing-library/react": "^16.2.0",
+63:     "@testing-library/user-event": "^14.6.1",
+64:     "@types/jest": "^29.5.14",
+65:     "@types/node": "^22.13.11",
+66:     "@types/react": "^19.0.12",
+67:     "@types/react-dom": "^19.0.4",
+68:     "@typescript-eslint/eslint-plugin": "^8.27.0",
+69:     "@typescript-eslint/parser": "^8.27.0",
+70:     "axe-core": "^4.10.3",
+71:     "cypress": "14.2.0",
+72:     "cypress-axe": "^1.6.0",
+73:     "eslint": "9.23.0",
+74:     "eslint-config-next": "15.2.3",
+75:     "eslint-plugin-jest": "^28.11.0",
+76:     "eslint-plugin-jsx-a11y": "^6.10.2",
+77:     "eslint-plugin-react": "^7.37.4",
+78:     "eslint-plugin-react-hooks": "^5.2.0",
+79:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
+80:     "eslint-plugin-testing-library": "^7.1.1",
+81:     "expect": "^29.7.0",
+82:     "jest-environment-jsdom": "^29.7.0",
+83:     "jest-extended": "^4.0.2",
+84:     "jsdom-testing-mocks": "^1.13.1",
+85:     "postcss": "^8.5.3",
+86:     "prettier": "3.5.3",
+87:     "tailwindcss": "^3.4.17",
+88:     "ts-jest": "^29.2.6",
+89:     "typescript": "^5.8.2",
+90:     "wait-on": "^8.0.3"
+91:   }
+92: }
 ````
