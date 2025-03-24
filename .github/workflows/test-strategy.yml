@@ -1,0 +1,134 @@
+name: Test Strategy Enforcement
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'cypress/**'
+      - 'playwright/**'
+      - '.pa11yci'
+      - 'lighthouserc.json'
+      - 'jest.config.*'
+      - 'cypress.config.*'
+      - 'playwright.config.*'
+
+jobs:
+  test-strategy:
+    name: Test Strategy Compliance
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests and generate reports
+        run: |
+          mkdir -p test-reports
+          echo "Running all test suites..."
+          
+          echo "Running Jest tests..."
+          pnpm test || true
+          
+          echo "Running Cypress tests..."
+          pnpm cypress:headless || true
+          pnpm tsx ci/test-strategy/extract-cypress-results.ts > test-reports/cypress-summary.json
+          
+          echo "Running Playwright tests..."
+          pnpm playwright test || true
+          pnpm tsx ci/test-strategy/extract-playwright-results.ts > test-reports/playwright-summary.json
+          
+          echo "Running accessibility tests..."
+          pnpm exec pa11y-ci || true
+          pnpm tsx ci/test-strategy/extract-pa11y-results.ts > test-reports/pa11y-summary.json
+          
+          echo "Running performance tests..."
+          pnpm lhci || true
+          pnpm tsx ci/test-strategy/extract-lighthouse-results.ts > test-reports/lighthouse-summary.json
+          
+          echo "All test suites completed."
+
+      - name: Generate Test Strategy Report
+        id: report
+        run: |
+          # Compile TypeScript files
+          pnpm tsc ci/test-strategy/*.ts --outDir ci/test-strategy/dist
+          
+          # Generate the report
+          node -e "
+          const aggregateResults = require('./ci/test-strategy/dist/aggregate-results.js').default;
+          const generateComment = require('./ci/test-strategy/dist/generate-comment.js').default;
+          
+          (async () => {
+            const results = await aggregateResults();
+            const comment = generateComment(results);
+            const compliance = Math.round(
+              Object.values(results)
+                .filter(r => r.coverage || r.requirementsMet)
+                .reduce((acc, r) => acc + (r.coverage || (r.requirementsMet / r.requirementsTotal * 100)), 0) /
+              Object.values(results).filter(r => r.coverage || r.requirementsMet).length
+            );
+            
+            console.log('::set-output name=compliance::' + compliance);
+            require('fs').writeFileSync('test-reports/comment.md', comment);
+          })();
+          "
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('test-reports/comment.md', 'utf8');
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Test Strategy Compliance')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Check Compliance
+        if: steps.report.outputs.compliance < 80
+        run: |
+          echo "Test strategy compliance is below 80%"
+          exit 1
