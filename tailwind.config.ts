@@ -22,10 +22,10 @@ const config: Config = {
         background: "var(--background)",
 
         // Semantic Colors
-        success: "#00cc4e",
-        error: "#ff4e4e",
-        warning: "#ffb74e",
-        info: "#4e9fff",
+        success: "var(--success)",
+        error: "var(--error)",
+        warning: "var(--warning)",
+        info: "var(--info)",
 
         // Surface Colors
         surface: {
@@ -36,10 +36,10 @@ const config: Config = {
 
         // Matrix Theme Colors
         matrix: {
-          light: "#00ff62",
-          DEFAULT: "#00cc4e",
-          dark: "#008529",
-          glow: "rgba(0, 255, 98, 0.6)",
+          light: "var(--matrix-light)",
+          DEFAULT: "var(--matrix)",
+          dark: "var(--matrix-dark)",
+          glow: "var(--matrix-glow)",
         },
       },
       fontFamily: {
