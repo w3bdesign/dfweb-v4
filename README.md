@@ -141,6 +141,14 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ### Testing Standards
 
+- ISTQB-aligned comprehensive test strategy
+  - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+  - Multi-level test approach (Unit, Component, E2E)
+  - Risk-based testing methodology
+  - Defined test metrics and reporting
+  - Clear roles and responsibilities
+  - Structured defect management process
+
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
   - Each test must include the following comments:
     ```typescript
@@ -155,3 +163,12 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Simplified test maintenance and debugging
   - Automated validation through custom ESLint rules
   - Tests will fail if AAA pattern is not followed
+
+- Comprehensive Test Coverage
+  - Unit testing with Jest and React Testing Library
+  - Component testing with Cypress
+  - E2E testing with Cypress and Playwright
+  - Performance testing with Lighthouse CI
+  - Accessibility testing with Pa11y and axe-core
+  - Minimum 80% code coverage requirement
+  - Automated test execution in CI/CD pipeline
