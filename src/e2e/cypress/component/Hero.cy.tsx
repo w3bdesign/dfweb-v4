@@ -14,7 +14,7 @@ const content = [
   },
 ];
 
-it("Viser Hero komponentt", () => {
+it("Viser Hero komponent", () => {
   cy.mount(<Hero content={content} />);
   cy.contains("Hei!").should("be.visible");
 });
