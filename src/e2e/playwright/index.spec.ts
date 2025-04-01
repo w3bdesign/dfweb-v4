@@ -17,7 +17,7 @@ test.describe("Home page", () => {
     ).toBeVisible();
 
     // Check skills text
-    await expect(page.getByText("Jeg kan PHP, Wordpress,")).toBeVisible();
+    await expect(page.getByText("Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.")).toBeVisible();
 
     // Check if icons are visible
     await expect(page.getByTestId("icons")).toBeVisible();
