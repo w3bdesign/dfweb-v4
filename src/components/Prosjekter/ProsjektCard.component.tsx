@@ -9,15 +9,18 @@ import { urlFor } from "@/lib/sanity/helpers";
 import type { Project } from "@/types/sanity.types";
 
 /**
- * ProsjektCard component that renders a card for a project
- * @param {Object} props
- * @param {string} props.name - The name of the project
- * @param {string} props.description - A brief description of the project
- * @param {string} props.subdescription - Additional description of the project
- * @param {Object} props.projectimage - The image object for the project
- * @param {Array} props.urlwww - Array of website URLs for the project
- * @param {Array} props.urlgithub - Array of GitHub URLs for the project
- * @returns {JSX.Element} The rendered ProsjektCard component
+ * Renders a card displaying information about a single project.
+ * Uses the Project type definition from Sanity types.
+ *
+ * @param {Project} props - The project data object conforming to the Sanity Project type.
+ * @param {string} props.name - The name of the project.
+ * @param {string} [props.description] - A brief description of the project (optional).
+ * @param {string} [props.subdescription] - Additional description of the project (optional).
+ * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+ * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+ * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+ * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+ * @returns {JSX.Element} The rendered ProsjektCard component.
  */
 
 const ProsjektCard: React.FC<Project> = ({
