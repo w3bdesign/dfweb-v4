@@ -10,7 +10,7 @@ const content = [
     text: "Jeg heter Daniel Fjeldstad og er en webutvikler.",
   },
   {
-    text: "Jeg kan PHP, Wordpress, Javascript, Typescript, React, Vue, Docker, Photoshop og mye mer.",
+    text: "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
   },
 ];
 
