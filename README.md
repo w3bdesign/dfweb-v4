@@ -141,6 +141,14 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ### Testing Standards
 
+- ISTQB-aligned comprehensive test strategy
+  - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+  - Multi-level test approach (Unit, Component, E2E)
+  - Risk-based testing methodology
+  - Defined test metrics and reporting
+  - Clear roles and responsibilities
+  - Structured defect management process
+
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
   - Each test must include the following comments:
     ```typescript
