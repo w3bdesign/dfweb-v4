@@ -439,6 +439,171 @@ tsconfig.json
 29:           browser: ${{ matrix.browser }}
 ````
 
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v4
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v4
+10:         with:
+11:           node-version: '22'
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@v4
+14:         with:
+15:           version: 8
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI
+42:         run: |
+43:           pnpm lhci:perf
+44:           pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y 
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v4
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v4
+14:         with:
+15:           node-version: "22"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@v4
+18:         with:
+19:           version: 8
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install
+34:       - name: Install dependencies and pa11y
+35:         run: |
+36:           pnpm add -D pa11y wait-on
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v4
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [ main, master ]
+ 5:   pull_request:
+ 6:     branches: [ main, master ]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:     - uses: actions/checkout@v4
+13:     - uses: pnpm/action-setup@v4
+14:       with:
+15:         version: 9
+16:     - uses: actions/setup-node@v4
+17:       with:
+18:         node-version: 20
+19:         cache: 'pnpm'
+20:     - name: Install dependencies
+21:       run: pnpm install
+22:     - name: Install Playwright Browsers
+23:       run: pnpm exec playwright install --with-deps chromium firefox
+24:     - name: Build the project
+25:       run: pnpm build
+26:     - name: Start the application
+27:       run: pnpm start &
+28:     - name: Wait for the application to be ready
+29:       run: |
+30:         npx wait-on http://localhost:3000
+31:     - name: Run Playwright tests
+32:       run: pnpm exec playwright test
+33:     - uses: actions/upload-artifact@v4
+34:       if: always()
+35:       with:
+36:         name: playwright-report
+37:         path: playwright-report/
+38:         retention-days: 30
+````
+
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -1799,6 +1964,207 @@ tsconfig.json
 340: - [Sanity.io Documentation](https://www.sanity.io/docs)
 341: - [Motion Documentation](https://motion.dev/docs)
 342: - [Testing Library Documentation](https://testing-library.com/docs/)
+````
+
+## File: DOCS/TEST_STRATEGY.md
+````markdown
+  1: # dfweb-v4 Test Strategy Document
+  2: 
+  3: ## 1. Introduction
+  4: 
+  5: This Test Strategy document outlines the testing approach for the dfweb-v4 project. It defines testing objectives, methodology, scope, and resources required to effectively validate the application quality and ensure alignment with ISTQB best practices.
+  6: 
+  7: ## 2. Test Objectives
+  8: 
+  9: - Ensure all functional requirements are validated across multiple test levels
+ 10: - Verify the application's performance meets established standards
+ 11: - Ensure accessibility compliance (WCAG standards)
+ 12: - Validate cross-browser and responsive design compatibility
+ 13: - Identify and mitigate potential risks early in development
+ 14: - Support continuous integration/continuous delivery processes
+ 15: 
+ 16: ## 3. Testing Scope
+ 17: 
+ 18: ### 3.1 In Scope
+ 19: - Unit testing of React components
+ 20: - Integration testing of component interactions
+ 21: - E2E testing of critical user flows
+ 22: - Performance validation
+ 23: - Accessibility compliance
+ 24: - Browser compatibility
+ 25: - Responsive design verification
+ 26: 
+ 27: ### 3.2 Out of Scope
+ 28: - Security penetration testing (to be handled by a specialized team)
+ 29: - Stress testing beyond established performance thresholds
+ 30: - Compatibility with unsupported browsers/versions
+ 31: 
+ 32: ## 4. Test Approach
+ 33: 
+ 34: ### 4.1 Test Levels
+ 35: 
+ 36: #### 4.1.1 Unit Testing
+ 37: - **Technology**: Jest with React Testing Library
+ 38: - **Responsible**: Development team
+ 39: - **Frequency**: On every code change
+ 40: - **Coverage Target**: Minimum 80% code coverage for components
+ 41: - **Focus**: Individual component functionality and rendering
+ 42: 
+ 43: #### 4.1.2 Component Testing
+ 44: - **Technology**: Cypress Component Testing
+ 45: - **Responsible**: Development team
+ 46: - **Frequency**: For complex components and interactions
+ 47: - **Focus**: Component behavior in isolation with all dependencies
+ 48: 
+ 49: #### 4.1.3 End-to-End Testing
+ 50: - **Technology**: Cypress and Playwright
+ 51: - **Responsible**: QA team and developers
+ 52: - **Frequency**: On feature completion and prior to release
+ 53: - **Focus**: Critical user flows and interactions
+ 54: 
+ 55: ### 4.2 Non-Functional Testing
+ 56: 
+ 57: #### 4.2.1 Performance Testing
+ 58: - **Technology**: Lighthouse CI
+ 59: - **Responsible**: QA team
+ 60: - **Frequency**: Weekly and before releases
+ 61: - **Metrics**: Performance score > 90, FCP < 1.8s, TTI < 3.8s
+ 62: 
+ 63: #### 4.2.2 Accessibility Testing
+ 64: - **Technology**: pa11y, axe-core
+ 65: - **Responsible**: Development and QA teams
+ 66: - **Standards**: WCAG 2.1 AA compliance
+ 67: - **Frequency**: On component development and before releases
+ 68: 
+ 69: ## 5. Test Environment
+ 70: 
+ 71: - Development: Local environment with Next.js development server
+ 72: - Testing: Dedicated test environment with mock data
+ 73: - Staging: Production-like environment with sanitized production data
+ 74: - Production: Live environment
+ 75: 
+ 76: ## 6. Test Automation Strategy
+ 77: 
+ 78: ### 6.1 Automation Framework
+ 79: - Unit/Component: Jest, React Testing Library, Cypress Component Testing
+ 80: - E2E: Cypress, Playwright
+ 81: - CI Integration: GitHub Actions/Vercel
+ 82: 
+ 83: ### 6.2 Automation Guidelines
+ 84: - Tests should be independent and isolated
+ 85: - Follow AAA pattern (Arrange-Act-Assert)
+ 86: - Implement proper data setup and teardown
+ 87: - Avoid UI testing for business logic validation
+ 88: - Prioritize stable selectors (data-testid) over CSS/XPath
+ 89: 
+ 90: ## 7. Test Data Management
+ 91: 
+ 92: ### 7.1 Test Data Sources
+ 93: - Mock data for unit/component tests
+ 94: - Dynamic data generation for E2E tests
+ 95: - Sanitized production data for staging environment
+ 96: 
+ 97: ### 7.2 Data Maintenance
+ 98: - Version control for mock data
+ 99: - Automated data reset between test runs
+100: - Data isolation between test suites
+101: 
+102: ## 8. Risk-Based Testing
+103: 
+104: ### 8.1 Risk Assessment
+105: - Critical user flows (highest priority)
+106: - Components with complex state management
+107: - Third-party integrations
+108: - Browser-specific rendering issues
+109: - Performance bottlenecks
+110: 
+111: ### 8.2 Risk Mitigation
+112: - Increased test coverage for high-risk areas
+113: - Exploratory testing for complex interactions
+114: - Cross-browser testing for UI components
+115: - Performance monitoring in the CI pipeline
+116: 
+117: ## 9. Roles and Responsibilities
+118: 
+119: ### 9.1 Development Team
+120: - Implement unit and component tests
+121: - Fix defects identified during testing
+122: - Collaborate on test automation framework development
+123: 
+124: ### 9.2 QA Team
+125: - Design and execute test cases
+126: - Develop and maintain E2E test suites
+127: - Perform exploratory testing
+128: - Report and track defects
+129: 
+130: ### 9.3 DevOps
+131: - Maintain test environments
+132: - Configure and maintain CI/CD pipeline
+133: - Monitor test execution and reporting
+134: 
+135: ## 10. Test Deliverables
+136: 
+137: - Test plan for major features
+138: - Automated test scripts
+139: - Test execution reports
+140: - Defect reports and tracking
+141: - Test metrics and dashboards
+142: - Performance test results
+143: 
+144: ## 11. Test Metrics and Reporting
+145: 
+146: ### 11.1 Key Metrics
+147: - Test case pass/fail ratio
+148: - Code coverage percentage
+149: - Defect density
+150: - Defect leakage to production
+151: - Test execution time
+152: 
+153: ### 11.2 Reporting
+154: - Automated test reports after each build
+155: - Weekly test status report
+156: - Performance testing results
+157: - Accessibility compliance report
+158: 
+159: ## 12. Defect Management
+160: 
+161: ### 12.1 Defect Lifecycle
+162: - Identification → Documentation → Assignment → Resolution → Verification → Closure
+163: 
+164: ### 12.2 Defect Prioritization
+165: - Critical: Blocks functionality, no workaround, affects all users
+166: - High: Major functionality issue, workaround exists, affects most users
+167: - Medium: Minor functionality issue, affects some users
+168: - Low: Cosmetic or enhancement, minimal impact
+169: 
+170: ## 13. Timeline and Milestones
+171: 
+172: - Test planning: Complete before sprint planning
+173: - Test case design: Concurrent with development
+174: - Test execution: Daily as part of CI/CD pipeline
+175: - Regression testing: Before each release
+176: - Performance testing: Weekly and pre-release
+177: - Accessibility audits: Bi-weekly
+178: 
+179: ## 14. Appendices
+180: 
+181: ### 14.1 Test Tools
+182: - Jest and React Testing Library
+183: - Cypress
+184: - Playwright
+185: - Lighthouse CI
+186: - pa11y and axe-core
+187: - GitHub Actions/Vercel deployment
+188: 
+189: ### 14.2 Reference Documents
+190: - Project requirements
+191: - Design specifications
+192: - Coding standards
+193: - WCAG 2.1 guidelines
+194: 
+195: ---
+196: 
+197: *This test strategy is a living document and should be updated as project requirements evolve.*
 ````
 
 ## File: public/animated-header.svg
@@ -5329,6 +5695,71 @@ tsconfig.json
 155: }
 ````
 
+## File: src/app/globals.css
+````css
+ 1: @tailwind base;
+ 2: @tailwind components;
+ 3: @tailwind utilities;
+ 4: :root {
+ 5:   /* Modern Color Scheme */
+ 6:   --primary: #00ff62;
+ 7:   --secondary: #00cc4e;
+ 8:   --accent: #008529;
+ 9:   --text: #e1e1e1;
+10:   --background: #0a0a0a;
+11:   /* Semantic Colors */
+12:   --success: #00cc4e;
+13:   --error: #ff4e4e;
+14:   --warning: #ffb74e;
+15:   --info: #4e9fff;
+16:   /* Matrix Theme Colors */
+17:   --matrix-light: #00ff62;
+18:   --matrix: #00cc4e;
+19:   --matrix-dark: #008529;
+20:   --matrix-glow: rgba(0, 255, 98, 0.6);
+21: }
+22: body {
+23:   background-color: var(--background);
+24:   color: var(--text);
+25:   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+26: }
+27: /* Matrix canvas - refined opacity for better readability */
+28: #matrixCanvas {
+29:   opacity: 0.7;
+30: }
+31: /* Selection */
+32: ::selection {
+33:   background-color: var(--matrix-dark);
+34:   color: #ffffff;
+35: }
+36: /* Scrollbar */
+37: * {
+38:   scrollbar-width: thin;
+39:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+40: }
+41: ::-webkit-scrollbar {
+42:   width: 6px;
+43: }
+44: ::-webkit-scrollbar-track {
+45:   background: #1a1a1a;
+46: }
+47: ::-webkit-scrollbar-thumb {
+48:   background: var(--matrix-dark);
+49:   border-radius: 3px;
+50: }
+51: ::-webkit-scrollbar-thumb:hover {
+52:   background: var(--matrix-light);
+53: }
+54: /* Remove focus outline */
+55: :focus {
+56:   outline: none;
+57: }
+58: /* Remove focus visible outline */
+59: :focus-visible {
+60:   outline: none;
+61: }
+````
+
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -7270,63 +7701,6 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10: }
-11: /**
-12:  * Button component that can be rendered as various HTML elements
-13:  * @param {Object} props
-14:  * @param {ReactNode} props.children - The content of the button
-15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-21:  * @returns {JSX.Element} The rendered Button component
-22:  */
-23: const Button = ({
-24:   children,
-25:   href,
-26:   renderAs,
-27:   type = "submit",
-28:   disabled = false,
-29:   download,
-30:   onClick,
-31:   ...props
-32: }: IButtonProps) => {
-33:   const Component = renderAs ?? "button";
-34:   const isLink = renderAs === "a";
-35:   const targetLink = isLink ? "_blank" : undefined;
-36:   return (
-37:     <Component
-38:       type={isLink ? undefined : type}
-39:       data-cy="submit"
-40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
-41:       href={href}
-42:       target={targetLink}
-43:       disabled={disabled}
-44:       data-text={children}
-45:       download={download}
-46:       onClick={onClick}
-47:       {...props}
-48:     >
-49:       {children}
-50:     </Component>
-51:   );
-52: };
-53: export default Button;
 ````
 
 ## File: src/components/UI/GenericForm.component.tsx
@@ -9934,29 +10308,6 @@ tsconfig.json
 79:     "arrange-act-assert": rule,
 80:   },
 81: };
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "index.js",
- 6:   "scripts": {
- 7:     "test": "echo \"Error: no test specified\" && exit 1"
- 8:   },
- 9:   "keywords": [
-10:     "eslint",
-11:     "eslintplugin",
-12:     "eslint-plugin"
-13:   ],
-14:   "author": "",
-15:   "license": "ISC",
-16:   "peerDependencies": {
-17:     "eslint": ">=9.23.0"
-18:   }
-19: }
 ````
 
 ## File: src/utils/portableTextComponents.tsx
@@ -13817,6 +14168,175 @@ tsconfig.json
 9: export default config;
 ````
 
+## File: README.md
+````markdown
+  1: [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+  2: [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
+  3: [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+  4: [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+  5: [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
+  6: [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
+  7: 
+  8: # Dfweb.no Portfolio Version 4
+  9: 
+ 10: Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
+ 11: 
+ 12: ## Table of Contents
+ 13: 
+ 14: - [Live URL](#live-url)
+ 15: - [Frontend](#frontend)
+ 16: - [Backend](#backend)
+ 17: - [Google Lighthouse](#google-lighthouse)
+ 18: - [Features](#features)
+ 19:   - [General](#general)
+ 20:   - [Design](#design)
+ 21:   - [Accessibility](#accessibility)
+ 22:   - [Devops and Code quality](#devops-and-code-quality)
+ 23:   - [Environment Variables](#environment-variables)
+ 24:   - [Testing Standards](#testing-standards)
+ 25: 
+ 26: ## Live URL
+ 27: 
+ 28: <https://www.dfweb.no/>
+ 29: 
+ 30: ## Frontend (Next.js)
+ 31: 
+ 32: <img src="/public/images/frontend.png" alt="Frontend Image" />
+ 33: 
+ 34: ---
+ 35: 
+ 36: ## Backend (Sanity headless CMS)
+ 37: 
+ 38: <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+ 39: 
+ 40: ---
+ 41: 
+ 42: ## Google Lighthouse
+ 43: 
+ 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 45: 
+ 46: ## Features
+ 47: 
+ 48: ### General
+ 49: 
+ 50: - Clean, modern, responsive and Matrix-inspired design
+ 51: - The application is 100% typescript
+ 52: - Matrix canvas rain effect on front page
+ 53: - Custom 404 page with Matrix rain effect
+ 54: - Next.js 15 with Typescript and App router
+ 55:   - Server Components implementation for improved performance
+ 56:   - Streaming with Suspense boundaries
+ 57:   - Automatic static optimization with revalidation
+ 58:   - Server-side data fetching with proper error handling
+ 59: - React 19
+ 60: - Sanity headless CMS for all of the content, projects and navigation links
+ 61: - Ladle for component documentation
+ 62: - Animations with Motion
+ 63: - React testing library for unit testing
+ 64: - Cypress for E2E testing
+ 65: - Playwright for cross-browser E2E testing
+ 66: - Contact form with Email.js
+ 67: - Polymorphic components
+ 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 69: - Google rich results for each individual page
+ 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 71: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 73: - Reusable GenericForm component for easy form creation and management
+ 74: - Error handling with react-error-boundary for improved user experience and easier debugging
+ 75: - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+ 76: 
+ 77: ### Design
+ 78: 
+ 79: - Fully responsive design tested on all devices
+ 80: - React Icons for project icons
+ 81: - Tailwind CSS for styling
+ 82: - Animated reusable input fields
+ 83: - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
+ 84: 
+ 85: ### Accessibility
+ 86: 
+ 87: - WCAG accessibility tested
+ 88: - Accessibility testing with Cypress Axe and Pa11y
+ 89: - Automated Pa11y accessibility testing on every PR and push to main
+ 90:   - Tests all main pages against WCAG2AA standards
+ 91:   - Captures screenshots for visual reference
+ 92:   - Detailed reports available as GitHub Actions artifacts
+ 93: - Builds will fail if any a11y errors are found
+ 94: 
+ 95: ### Devops and Code quality
+ 96: 
+ 97: - Continuous Integration with CircleCI
+ 98: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+ 99: - Github action workflow for Cypress
+100: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+101: - E2E testing with Cypress and Playwright integrated with Github actions
+102: - Unit testing with Jest and React Testing Library integrated with CircleCI
+103: - Test coverage setup with Codecov
+104: - 100% test coverage with Jest and React testing library
+105: - AI-powered commit message generation following Conventional Commits with gitmojis
+106: - Automated performance monitoring with Lighthouse CI
+107:   - Performance, accessibility, best practices, and SEO checks on every PR
+108:   - Configurable thresholds for quality metrics
+109:   - Both desktop and performance-focused testing
+110: - Automated repository documentation with Repomix
+111:   - AI-friendly documentation generation on every push to main
+112:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+113:   - Automated PR analysis with repository structure insights
+114:   - Security-focused documentation with sensitive information filtering
+115:   - Markdown formatting for improved readability
+116: 
+117: ### Environment Variables
+118: 
+119: - Type-safe environment variable validation with envalid
+120: 
+121:   - Runtime validation of required environment variables
+122:   - Clear error messages with examples for missing variables
+123:   - Separate handling of client-side and server-side variables
+124:   - Default values where appropriate
+125:   - Required variables:
+126: 
+127:     ```env
+128:     # Email Configuration (client-side)
+129:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+130:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+131:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+132: 
+133:     # AI Configuration (server-side)
+134:     AI_API_KEY=xxx                            # AI service API key
+135:     AI_BASE_URL=https://xxx                   # AI service base URL
+136:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
+137:     ```
+138: 
+139:   - Validation prevents application startup if required variables are missing
+140:   - TypeScript integration for type-safe access to environment variables
+141: 
+142: ### Testing Standards
+143: 
+144: - ISTQB-aligned comprehensive test strategy
+145:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+146:   - Multi-level test approach (Unit, Component, E2E)
+147:   - Risk-based testing methodology
+148:   - Defined test metrics and reporting
+149:   - Clear roles and responsibilities
+150:   - Structured defect management process
+151: 
+152: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+153:   - Each test must include the following comments:
+154:     ```typescript
+155:     // Arrange - Set up test data and conditions
+156:     // Act - Perform the action being tested
+157:     // Assert - Verify the results
+158:     ```
+159:   - This pattern ensures:
+160:     - Clear test structure and readability
+161:     - Consistent test organization across the codebase
+162:     - Easy identification of test setup, execution, and verification
+163:   - Simplified test maintenance and debugging
+164:   - Automated validation through custom ESLint rules
+165:   - Tests will fail if AAA pattern is not followed
+````
+
 ## File: renovate.json
 ````json
  1: {
@@ -13901,6 +14421,115 @@ tsconfig.json
 5:     dataset: "production",
 6:   },
 7: });
+````
+
+## File: tailwind.config.ts
+````typescript
+  1: import type { Config } from "tailwindcss";
+  2: const config: Config = {
+  3:   content: [
+  4:     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+  5:     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+  6:     "./src/**/*.{js,ts,jsx,tsx,mdx}",
+  7:   ],
+  8:   theme: {
+  9:     extend: {
+ 10:       backgroundImage: {
+ 11:         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+ 12:         "gradient-conic":
+ 13:           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+ 14:       },
+ 15:       colors: {
+ 16:         // New Modern Color Scheme
+ 17:         primary: "var(--primary)",
+ 18:         secondary: "var(--secondary)",
+ 19:         accent: "var(--accent)",
+ 20:         text: "var(--text)",
+ 21:         background: "var(--background)",
+ 22:         // Semantic Colors
+ 23:         success: "var(--success)",
+ 24:         error: "var(--error)",
+ 25:         warning: "var(--warning)",
+ 26:         info: "var(--info)",
+ 27:         // Surface Colors
+ 28:         surface: {
+ 29:           light: "rgba(255, 255, 255, 0.05)",
+ 30:           DEFAULT: "rgba(26, 26, 26, 0.8)",
+ 31:           dark: "rgba(0, 0, 0, 0.8)",
+ 32:         },
+ 33:         // Matrix Theme Colors
+ 34:         matrix: {
+ 35:           light: "var(--matrix-light)",
+ 36:           DEFAULT: "var(--matrix)",
+ 37:           dark: "var(--matrix-dark)",
+ 38:           glow: "var(--matrix-glow)",
+ 39:         },
+ 40:       },
+ 41:       fontFamily: {
+ 42:         sans: [
+ 43:           "Inter",
+ 44:           "-apple-system",
+ 45:           "BlinkMacSystemFont",
+ 46:           "Segoe UI",
+ 47:           "Roboto",
+ 48:           "Oxygen",
+ 49:           "Ubuntu",
+ 50:           "Cantarell",
+ 51:           "sans-serif",
+ 52:         ],
+ 53:         mono: ["JetBrains Mono", "monospace"],
+ 54:       },
+ 55:       boxShadow: {
+ 56:         glow: "0 0 15px rgba(0, 255, 98, 0.6)",
+ 57:         "glow-sm": "0 0 10px rgba(0, 255, 98, 0.4)",
+ 58:         "glow-lg": "0 0 20px rgba(0, 255, 98, 0.8)",
+ 59:       },
+ 60:       backdropBlur: {
+ 61:         xs: "2px",
+ 62:       },
+ 63:       animation: {
+ 64:         "matrix-fade": "matrixFade 2s ease-out",
+ 65:         "glow-pulse": "glowPulse 2s ease-in-out infinite",
+ 66:         "matrix-glow": "matrixGlow 2s ease-in-out infinite",
+ 67:       },
+ 68:       keyframes: {
+ 69:         matrixFade: {
+ 70:           "0%": { opacity: "0", transform: "translateY(-10px)" },
+ 71:           "100%": { opacity: "1", transform: "translateY(0)" },
+ 72:         },
+ 73:         glowPulse: {
+ 74:           "0%, 100%": { boxShadow: "0 0 15px rgba(0, 255, 98, 0.6)" },
+ 75:           "50%": { boxShadow: "0 0 25px rgba(0, 255, 98, 0.8)" },
+ 76:         },
+ 77:         matrixGlow: {
+ 78:           "0%, 100%": { filter: "drop-shadow(0 0 5px rgba(0, 255, 98, 0.6))" },
+ 79:           "50%": { filter: "drop-shadow(0 0 15px rgba(0, 255, 98, 0.8))" },
+ 80:         },
+ 81:       },
+ 82:       typography: {
+ 83:         DEFAULT: {
+ 84:           css: {
+ 85:             color: "var(--text)",
+ 86:             a: {
+ 87:               color: "var(--secondary)",
+ 88:               "&:hover": {
+ 89:                 color: "var(--accent)",
+ 90:               },
+ 91:             },
+ 92:             h1: {
+ 93:               color: "var(--accent)",
+ 94:             },
+ 95:             h2: {
+ 96:               color: "var(--secondary)",
+ 97:             },
+ 98:           },
+ 99:         },
+100:       },
+101:     },
+102:   },
+103:   plugins: [],
+104: };
+105: export default config;
 ````
 
 ## File: TODO.md
@@ -14262,372 +14891,6 @@ tsconfig.json
 78:           name: Build Next.js project
 ````
 
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v4
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v4
-10:         with:
-11:           node-version: '22'
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@v4
-14:         with:
-15:           version: 8
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI
-42:         run: |
-43:           pnpm lhci:perf
-44:           pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y 
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v4
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v4
-14:         with:
-15:           node-version: "22"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@v4
-18:         with:
-19:           version: 8
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install
-34:       - name: Install dependencies and pa11y
-35:         run: |
-36:           pnpm add -D pa11y wait-on
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v4
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [ main, master ]
- 5:   pull_request:
- 6:     branches: [ main, master ]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:     - uses: actions/checkout@v4
-13:     - uses: pnpm/action-setup@v4
-14:       with:
-15:         version: 9
-16:     - uses: actions/setup-node@v4
-17:       with:
-18:         node-version: 20
-19:         cache: 'pnpm'
-20:     - name: Install dependencies
-21:       run: pnpm install
-22:     - name: Install Playwright Browsers
-23:       run: pnpm exec playwright install --with-deps chromium firefox
-24:     - name: Build the project
-25:       run: pnpm build
-26:     - name: Start the application
-27:       run: pnpm start &
-28:     - name: Wait for the application to be ready
-29:       run: |
-30:         npx wait-on http://localhost:3000
-31:     - name: Run Playwright tests
-32:       run: pnpm exec playwright test
-33:     - uses: actions/upload-artifact@v4
-34:       if: always()
-35:       with:
-36:         name: playwright-report
-37:         path: playwright-report/
-38:         retention-days: 30
-````
-
-## File: DOCS/TEST_STRATEGY.md
-````markdown
-  1: # dfweb-v4 Test Strategy Document
-  2: 
-  3: ## 1. Introduction
-  4: 
-  5: This Test Strategy document outlines the testing approach for the dfweb-v4 project. It defines testing objectives, methodology, scope, and resources required to effectively validate the application quality and ensure alignment with ISTQB best practices.
-  6: 
-  7: ## 2. Test Objectives
-  8: 
-  9: - Ensure all functional requirements are validated across multiple test levels
- 10: - Verify the application's performance meets established standards
- 11: - Ensure accessibility compliance (WCAG standards)
- 12: - Validate cross-browser and responsive design compatibility
- 13: - Identify and mitigate potential risks early in development
- 14: - Support continuous integration/continuous delivery processes
- 15: 
- 16: ## 3. Testing Scope
- 17: 
- 18: ### 3.1 In Scope
- 19: - Unit testing of React components
- 20: - Integration testing of component interactions
- 21: - E2E testing of critical user flows
- 22: - Performance validation
- 23: - Accessibility compliance
- 24: - Browser compatibility
- 25: - Responsive design verification
- 26: 
- 27: ### 3.2 Out of Scope
- 28: - Security penetration testing (to be handled by a specialized team)
- 29: - Stress testing beyond established performance thresholds
- 30: - Compatibility with unsupported browsers/versions
- 31: 
- 32: ## 4. Test Approach
- 33: 
- 34: ### 4.1 Test Levels
- 35: 
- 36: #### 4.1.1 Unit Testing
- 37: - **Technology**: Jest with React Testing Library
- 38: - **Responsible**: Development team
- 39: - **Frequency**: On every code change
- 40: - **Coverage Target**: Minimum 80% code coverage for components
- 41: - **Focus**: Individual component functionality and rendering
- 42: 
- 43: #### 4.1.2 Component Testing
- 44: - **Technology**: Cypress Component Testing
- 45: - **Responsible**: Development team
- 46: - **Frequency**: For complex components and interactions
- 47: - **Focus**: Component behavior in isolation with all dependencies
- 48: 
- 49: #### 4.1.3 End-to-End Testing
- 50: - **Technology**: Cypress and Playwright
- 51: - **Responsible**: QA team and developers
- 52: - **Frequency**: On feature completion and prior to release
- 53: - **Focus**: Critical user flows and interactions
- 54: 
- 55: ### 4.2 Non-Functional Testing
- 56: 
- 57: #### 4.2.1 Performance Testing
- 58: - **Technology**: Lighthouse CI
- 59: - **Responsible**: QA team
- 60: - **Frequency**: Weekly and before releases
- 61: - **Metrics**: Performance score > 90, FCP < 1.8s, TTI < 3.8s
- 62: 
- 63: #### 4.2.2 Accessibility Testing
- 64: - **Technology**: pa11y, axe-core
- 65: - **Responsible**: Development and QA teams
- 66: - **Standards**: WCAG 2.1 AA compliance
- 67: - **Frequency**: On component development and before releases
- 68: 
- 69: ## 5. Test Environment
- 70: 
- 71: - Development: Local environment with Next.js development server
- 72: - Testing: Dedicated test environment with mock data
- 73: - Staging: Production-like environment with sanitized production data
- 74: - Production: Live environment
- 75: 
- 76: ## 6. Test Automation Strategy
- 77: 
- 78: ### 6.1 Automation Framework
- 79: - Unit/Component: Jest, React Testing Library, Cypress Component Testing
- 80: - E2E: Cypress, Playwright
- 81: - CI Integration: GitHub Actions/Vercel
- 82: 
- 83: ### 6.2 Automation Guidelines
- 84: - Tests should be independent and isolated
- 85: - Follow AAA pattern (Arrange-Act-Assert)
- 86: - Implement proper data setup and teardown
- 87: - Avoid UI testing for business logic validation
- 88: - Prioritize stable selectors (data-testid) over CSS/XPath
- 89: 
- 90: ## 7. Test Data Management
- 91: 
- 92: ### 7.1 Test Data Sources
- 93: - Mock data for unit/component tests
- 94: - Dynamic data generation for E2E tests
- 95: - Sanitized production data for staging environment
- 96: 
- 97: ### 7.2 Data Maintenance
- 98: - Version control for mock data
- 99: - Automated data reset between test runs
-100: - Data isolation between test suites
-101: 
-102: ## 8. Risk-Based Testing
-103: 
-104: ### 8.1 Risk Assessment
-105: - Critical user flows (highest priority)
-106: - Components with complex state management
-107: - Third-party integrations
-108: - Browser-specific rendering issues
-109: - Performance bottlenecks
-110: 
-111: ### 8.2 Risk Mitigation
-112: - Increased test coverage for high-risk areas
-113: - Exploratory testing for complex interactions
-114: - Cross-browser testing for UI components
-115: - Performance monitoring in the CI pipeline
-116: 
-117: ## 9. Roles and Responsibilities
-118: 
-119: ### 9.1 Development Team
-120: - Implement unit and component tests
-121: - Fix defects identified during testing
-122: - Collaborate on test automation framework development
-123: 
-124: ### 9.2 QA Team
-125: - Design and execute test cases
-126: - Develop and maintain E2E test suites
-127: - Perform exploratory testing
-128: - Report and track defects
-129: 
-130: ### 9.3 DevOps
-131: - Maintain test environments
-132: - Configure and maintain CI/CD pipeline
-133: - Monitor test execution and reporting
-134: 
-135: ## 10. Test Deliverables
-136: 
-137: - Test plan for major features
-138: - Automated test scripts
-139: - Test execution reports
-140: - Defect reports and tracking
-141: - Test metrics and dashboards
-142: - Performance test results
-143: 
-144: ## 11. Test Metrics and Reporting
-145: 
-146: ### 11.1 Key Metrics
-147: - Test case pass/fail ratio
-148: - Code coverage percentage
-149: - Defect density
-150: - Defect leakage to production
-151: - Test execution time
-152: 
-153: ### 11.2 Reporting
-154: - Automated test reports after each build
-155: - Weekly test status report
-156: - Performance testing results
-157: - Accessibility compliance report
-158: 
-159: ## 12. Defect Management
-160: 
-161: ### 12.1 Defect Lifecycle
-162: - Identification → Documentation → Assignment → Resolution → Verification → Closure
-163: 
-164: ### 12.2 Defect Prioritization
-165: - Critical: Blocks functionality, no workaround, affects all users
-166: - High: Major functionality issue, workaround exists, affects most users
-167: - Medium: Minor functionality issue, affects some users
-168: - Low: Cosmetic or enhancement, minimal impact
-169: 
-170: ## 13. Timeline and Milestones
-171: 
-172: - Test planning: Complete before sprint planning
-173: - Test case design: Concurrent with development
-174: - Test execution: Daily as part of CI/CD pipeline
-175: - Regression testing: Before each release
-176: - Performance testing: Weekly and pre-release
-177: - Accessibility audits: Bi-weekly
-178: 
-179: ## 14. Appendices
-180: 
-181: ### 14.1 Test Tools
-182: - Jest and React Testing Library
-183: - Cypress
-184: - Playwright
-185: - Lighthouse CI
-186: - pa11y and axe-core
-187: - GitHub Actions/Vercel deployment
-188: 
-189: ### 14.2 Reference Documents
-190: - Project requirements
-191: - Design specifications
-192: - Coding standards
-193: - WCAG 2.1 guidelines
-194: 
-195: ---
-196: 
-197: *This test strategy is a living document and should be updated as project requirements evolve.*
-````
-
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -14706,178 +14969,84 @@ tsconfig.json
 74: export default ProsjektCard;
 ````
 
-## File: tailwind.config.ts
-````typescript
-  1: import type { Config } from "tailwindcss";
-  2: const config: Config = {
-  3:   content: [
-  4:     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-  5:     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-  6:     "./src/**/*.{js,ts,jsx,tsx,mdx}",
-  7:   ],
-  8:   theme: {
-  9:     extend: {
- 10:       backgroundImage: {
- 11:         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
- 12:         "gradient-conic":
- 13:           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
- 14:       },
- 15:       colors: {
- 16:         // New Modern Color Scheme
- 17:         primary: "var(--primary)",
- 18:         secondary: "var(--secondary)",
- 19:         accent: "var(--accent)",
- 20:         text: "var(--text)",
- 21:         background: "var(--background)",
- 22:         // Semantic Colors
- 23:         success: "var(--success)",
- 24:         error: "var(--error)",
- 25:         warning: "var(--warning)",
- 26:         info: "var(--info)",
- 27:         // Surface Colors
- 28:         surface: {
- 29:           light: "rgba(255, 255, 255, 0.05)",
- 30:           DEFAULT: "rgba(26, 26, 26, 0.8)",
- 31:           dark: "rgba(0, 0, 0, 0.8)",
- 32:         },
- 33:         // Matrix Theme Colors
- 34:         matrix: {
- 35:           light: "var(--matrix-light)",
- 36:           DEFAULT: "var(--matrix)",
- 37:           dark: "var(--matrix-dark)",
- 38:           glow: "var(--matrix-glow)",
- 39:         },
- 40:       },
- 41:       fontFamily: {
- 42:         sans: [
- 43:           "Inter",
- 44:           "-apple-system",
- 45:           "BlinkMacSystemFont",
- 46:           "Segoe UI",
- 47:           "Roboto",
- 48:           "Oxygen",
- 49:           "Ubuntu",
- 50:           "Cantarell",
- 51:           "sans-serif",
- 52:         ],
- 53:         mono: ["JetBrains Mono", "monospace"],
- 54:       },
- 55:       boxShadow: {
- 56:         glow: "0 0 15px rgba(0, 255, 98, 0.6)",
- 57:         "glow-sm": "0 0 10px rgba(0, 255, 98, 0.4)",
- 58:         "glow-lg": "0 0 20px rgba(0, 255, 98, 0.8)",
- 59:       },
- 60:       backdropBlur: {
- 61:         xs: "2px",
- 62:       },
- 63:       animation: {
- 64:         "matrix-fade": "matrixFade 2s ease-out",
- 65:         "glow-pulse": "glowPulse 2s ease-in-out infinite",
- 66:         "matrix-glow": "matrixGlow 2s ease-in-out infinite",
- 67:       },
- 68:       keyframes: {
- 69:         matrixFade: {
- 70:           "0%": { opacity: "0", transform: "translateY(-10px)" },
- 71:           "100%": { opacity: "1", transform: "translateY(0)" },
- 72:         },
- 73:         glowPulse: {
- 74:           "0%, 100%": { boxShadow: "0 0 15px rgba(0, 255, 98, 0.6)" },
- 75:           "50%": { boxShadow: "0 0 25px rgba(0, 255, 98, 0.8)" },
- 76:         },
- 77:         matrixGlow: {
- 78:           "0%, 100%": { filter: "drop-shadow(0 0 5px rgba(0, 255, 98, 0.6))" },
- 79:           "50%": { filter: "drop-shadow(0 0 15px rgba(0, 255, 98, 0.8))" },
- 80:         },
- 81:       },
- 82:       typography: {
- 83:         DEFAULT: {
- 84:           css: {
- 85:             color: "var(--text)",
- 86:             a: {
- 87:               color: "var(--secondary)",
- 88:               "&:hover": {
- 89:                 color: "var(--accent)",
- 90:               },
- 91:             },
- 92:             h1: {
- 93:               color: "var(--accent)",
- 94:             },
- 95:             h2: {
- 96:               color: "var(--secondary)",
- 97:             },
- 98:           },
- 99:         },
-100:       },
-101:     },
-102:   },
-103:   plugins: [],
-104: };
-105: export default config;
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "index.js",
+ 6:   "scripts": {
+ 7:     "test": "echo \"Error: no test specified\" && exit 1"
+ 8:   },
+ 9:   "keywords": [
+10:     "eslint",
+11:     "eslintplugin",
+12:     "eslint-plugin"
+13:   ],
+14:   "author": "",
+15:   "license": "ISC",
+16:   "peerDependencies": {
+17:     "eslint": ">=9.24.0"
+18:   }
+19: }
 ````
 
-## File: src/app/globals.css
-````css
- 1: @tailwind base;
- 2: @tailwind components;
- 3: @tailwind utilities;
- 4: :root {
- 5:   /* Modern Color Scheme */
- 6:   --primary: #00ff62;
- 7:   --secondary: #00cc4e;
- 8:   --accent: #008529;
- 9:   --text: #e1e1e1;
-10:   --background: #0a0a0a;
-11:   /* Semantic Colors */
-12:   --success: #00cc4e;
-13:   --error: #ff4e4e;
-14:   --warning: #ffb74e;
-15:   --info: #4e9fff;
-16:   /* Matrix Theme Colors */
-17:   --matrix-light: #00ff62;
-18:   --matrix: #00cc4e;
-19:   --matrix-dark: #008529;
-20:   --matrix-glow: rgba(0, 255, 98, 0.6);
-21: }
-22: body {
-23:   background-color: var(--background);
-24:   color: var(--text);
-25:   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-26: }
-27: /* Matrix canvas - refined opacity for better readability */
-28: #matrixCanvas {
-29:   opacity: 0.7;
-30: }
-31: /* Selection */
-32: ::selection {
-33:   background-color: var(--matrix-dark);
-34:   color: #ffffff;
-35: }
-36: /* Scrollbar */
-37: * {
-38:   scrollbar-width: thin;
-39:   scrollbar-color: var(--matrix-dark) #1a1a1a;
-40: }
-41: ::-webkit-scrollbar {
-42:   width: 6px;
-43: }
-44: ::-webkit-scrollbar-track {
-45:   background: #1a1a1a;
-46: }
-47: ::-webkit-scrollbar-thumb {
-48:   background: var(--matrix-dark);
-49:   border-radius: 3px;
-50: }
-51: ::-webkit-scrollbar-thumb:hover {
-52:   background: var(--matrix-light);
-53: }
-54: /* Remove focus outline */
-55: :focus {
-56:   outline: none;
-57: }
-58: /* Remove focus visible outline */
-59: :focus-visible {
-60:   outline: none;
-61: }
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10: }
+11: /**
+12:  * Button component that can be rendered as various HTML elements
+13:  * @param {Object} props
+14:  * @param {ReactNode} props.children - The content of the button
+15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+21:  * @returns {JSX.Element} The rendered Button component
+22:  */
+23: const Button = ({
+24:   children,
+25:   href,
+26:   renderAs,
+27:   type = "submit",
+28:   disabled = false,
+29:   download,
+30:   onClick,
+31:   ...props
+32: }: IButtonProps) => {
+33:   const Component = renderAs ?? "button";
+34:   const isLink = renderAs === "a";
+35:   const targetLink = isLink ? "_blank" : undefined;
+36:   return (
+37:     <Component
+38:       type={isLink ? undefined : type}
+39:       data-cy="submit"
+40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
+41:       href={href}
+42:       target={targetLink}
+43:       disabled={disabled}
+44:       data-text={children}
+45:       download={download}
+46:       onClick={onClick}
+47:       {...props}
+48:     >
+49:       {children}
+50:     </Component>
+51:   );
+52: };
+53: export default Button;
 ````
 
 ## File: src/e2e/cypress/component/Hero.cy.tsx
@@ -14991,175 +15160,6 @@ tsconfig.json
 34: });
 ````
 
-## File: README.md
-````markdown
-  1: [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
-  2: [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
-  3: [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-  4: [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
-  5: [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-  6: [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
-  7: 
-  8: # Dfweb.no Portfolio Version 4
-  9: 
- 10: Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
- 11: 
- 12: ## Table of Contents
- 13: 
- 14: - [Live URL](#live-url)
- 15: - [Frontend](#frontend)
- 16: - [Backend](#backend)
- 17: - [Google Lighthouse](#google-lighthouse)
- 18: - [Features](#features)
- 19:   - [General](#general)
- 20:   - [Design](#design)
- 21:   - [Accessibility](#accessibility)
- 22:   - [Devops and Code quality](#devops-and-code-quality)
- 23:   - [Environment Variables](#environment-variables)
- 24:   - [Testing Standards](#testing-standards)
- 25: 
- 26: ## Live URL
- 27: 
- 28: <https://www.dfweb.no/>
- 29: 
- 30: ## Frontend (Next.js)
- 31: 
- 32: <img src="/public/images/frontend.png" alt="Frontend Image" />
- 33: 
- 34: ---
- 35: 
- 36: ## Backend (Sanity headless CMS)
- 37: 
- 38: <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
- 39: 
- 40: ---
- 41: 
- 42: ## Google Lighthouse
- 43: 
- 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 45: 
- 46: ## Features
- 47: 
- 48: ### General
- 49: 
- 50: - Clean, modern, responsive and Matrix-inspired design
- 51: - The application is 100% typescript
- 52: - Matrix canvas rain effect on front page
- 53: - Custom 404 page with Matrix rain effect
- 54: - Next.js 15 with Typescript and App router
- 55:   - Server Components implementation for improved performance
- 56:   - Streaming with Suspense boundaries
- 57:   - Automatic static optimization with revalidation
- 58:   - Server-side data fetching with proper error handling
- 59: - React 19
- 60: - Sanity headless CMS for all of the content, projects and navigation links
- 61: - Ladle for component documentation
- 62: - Animations with Motion
- 63: - React testing library for unit testing
- 64: - Cypress for E2E testing
- 65: - Playwright for cross-browser E2E testing
- 66: - Contact form with Email.js
- 67: - Polymorphic components
- 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 69: - Google rich results for each individual page
- 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 71: - Automated Lighthouse CI testing integrated with GitHub Actions
- 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 73: - Reusable GenericForm component for easy form creation and management
- 74: - Error handling with react-error-boundary for improved user experience and easier debugging
- 75: - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
- 76: 
- 77: ### Design
- 78: 
- 79: - Fully responsive design tested on all devices
- 80: - React Icons for project icons
- 81: - Tailwind CSS for styling
- 82: - Animated reusable input fields
- 83: - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
- 84: 
- 85: ### Accessibility
- 86: 
- 87: - WCAG accessibility tested
- 88: - Accessibility testing with Cypress Axe and Pa11y
- 89: - Automated Pa11y accessibility testing on every PR and push to main
- 90:   - Tests all main pages against WCAG2AA standards
- 91:   - Captures screenshots for visual reference
- 92:   - Detailed reports available as GitHub Actions artifacts
- 93: - Builds will fail if any a11y errors are found
- 94: 
- 95: ### Devops and Code quality
- 96: 
- 97: - Continuous Integration with CircleCI
- 98: - CircleCI will warn before deploy if tests fail (setup for React testing library)
- 99: - Github action workflow for Cypress
-100: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-101: - E2E testing with Cypress and Playwright integrated with Github actions
-102: - Unit testing with Jest and React Testing Library integrated with CircleCI
-103: - Test coverage setup with Codecov
-104: - 100% test coverage with Jest and React testing library
-105: - AI-powered commit message generation following Conventional Commits with gitmojis
-106: - Automated performance monitoring with Lighthouse CI
-107:   - Performance, accessibility, best practices, and SEO checks on every PR
-108:   - Configurable thresholds for quality metrics
-109:   - Both desktop and performance-focused testing
-110: - Automated repository documentation with Repomix
-111:   - AI-friendly documentation generation on every push to main
-112:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-113:   - Automated PR analysis with repository structure insights
-114:   - Security-focused documentation with sensitive information filtering
-115:   - Markdown formatting for improved readability
-116: 
-117: ### Environment Variables
-118: 
-119: - Type-safe environment variable validation with envalid
-120: 
-121:   - Runtime validation of required environment variables
-122:   - Clear error messages with examples for missing variables
-123:   - Separate handling of client-side and server-side variables
-124:   - Default values where appropriate
-125:   - Required variables:
-126: 
-127:     ```env
-128:     # Email Configuration (client-side)
-129:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-130:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-131:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-132: 
-133:     # AI Configuration (server-side)
-134:     AI_API_KEY=xxx                            # AI service API key
-135:     AI_BASE_URL=https://xxx                   # AI service base URL
-136:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
-137:     ```
-138: 
-139:   - Validation prevents application startup if required variables are missing
-140:   - TypeScript integration for type-safe access to environment variables
-141: 
-142: ### Testing Standards
-143: 
-144: - ISTQB-aligned comprehensive test strategy
-145:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-146:   - Multi-level test approach (Unit, Component, E2E)
-147:   - Risk-based testing methodology
-148:   - Defined test metrics and reporting
-149:   - Clear roles and responsibilities
-150:   - Structured defect management process
-151: 
-152: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-153:   - Each test must include the following comments:
-154:     ```typescript
-155:     // Arrange - Set up test data and conditions
-156:     // Act - Perform the action being tested
-157:     // Assert - Verify the results
-158:     ```
-159:   - This pattern ensures:
-160:     - Clear test structure and readability
-161:     - Consistent test organization across the codebase
-162:     - Easy identification of test setup, execution, and verification
-163:   - Simplified test maintenance and debugging
-164:   - Automated validation through custom ESLint rules
-165:   - Tests will fail if AAA pattern is not followed
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -15181,15 +15181,15 @@ tsconfig.json
 17:     "react": "^19.1.0",
 18:     "react-dom": "^19.1.0",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^3.82.0",
+20:     "sanity": "^3.83.0",
 21:     "styled-components": "^6.1.17"
 22:   },
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
 25:     "@types/react": "^19.1.0",
-26:     "eslint": "^9.23.0",
+26:     "eslint": "^9.24.0",
 27:     "prettier": "^3.5.3",
-28:     "typescript": "^5.8.2"
+28:     "typescript": "^5.8.3"
 29:   },
 30:   "prettier": {
 31:     "semi": false,
@@ -15240,7 +15240,7 @@ tsconfig.json
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
 38:     "motion": "^12.6.3",
-39:     "next": "15.2.4",
+39:     "next": "15.3.0",
 40:     "next-sanity": "^9.9.9",
 41:     "path-to-regexp": "^8.2.0",
 42:     "react": "^19.1.0",
@@ -15249,7 +15249,7 @@ tsconfig.json
 45:     "react-hook-form": "^7.55.0",
 46:     "react-icons": "^5.5.0",
 47:     "react-use": "^17.6.0",
-48:     "sanity": "^3.82.0",
+48:     "sanity": "^3.83.0",
 49:     "sitemap": "^8.0.0",
 50:     "ts-node": "^10.9.2",
 51:     "zod": "^3.24.2",
@@ -15269,14 +15269,14 @@ tsconfig.json
 65:     "@types/jest": "^29.5.14",
 66:     "@types/node": "^22.14.0",
 67:     "@types/react": "^19.1.0",
-68:     "@types/react-dom": "^19.1.1",
-69:     "@typescript-eslint/eslint-plugin": "^8.29.0",
-70:     "@typescript-eslint/parser": "^8.29.0",
+68:     "@types/react-dom": "^19.1.2",
+69:     "@typescript-eslint/eslint-plugin": "^8.29.1",
+70:     "@typescript-eslint/parser": "^8.29.1",
 71:     "axe-core": "^4.10.3",
-72:     "cypress": "14.2.1",
+72:     "cypress": "14.3.0",
 73:     "cypress-axe": "^1.6.0",
-74:     "eslint": "9.23.0",
-75:     "eslint-config-next": "15.2.4",
+74:     "eslint": "9.24.0",
+75:     "eslint-config-next": "15.3.0",
 76:     "eslint-plugin-jest": "^28.11.0",
 77:     "eslint-plugin-jsx-a11y": "^6.10.2",
 78:     "eslint-plugin-react": "^7.37.5",
@@ -15291,7 +15291,7 @@ tsconfig.json
 87:     "prettier": "3.5.3",
 88:     "tailwindcss": "^3.4.17",
 89:     "ts-jest": "^29.3.1",
-90:     "typescript": "^5.8.2",
+90:     "typescript": "^5.8.3",
 91:     "wait-on": "^8.0.3"
 92:   }
 93: }
