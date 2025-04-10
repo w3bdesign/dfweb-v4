@@ -14480,173 +14480,6 @@ tsconfig.json
 141: export default MatrixCursor;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import { useRef } from "react";
-  3: import Link from "next/link";
-  4: import useClickOutside from "@/hooks/useClickOutside";
-  5: import { usePathname } from "next/navigation";
-  6: import { AnimatePresence, useCycle, motion } from "motion/react";
-  7: import Hamburger from "./Hamburger.component";
-  8: interface ILink {
-  9:   title: string;
- 10:   name: string;
- 11:   hash: string;
- 12:   href: string;
- 13:   externalLink: boolean;
- 14: }
- 15: interface IMobileMenuProps {
- 16:   links: ILink[];
- 17: }
- 18: /**
- 19:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 20:  * @param {Object} props
- 21:  * @param {ILink[]} props.links - Array of navigation link objects
- 22:  * @returns {JSX.Element} The rendered MobileMenu component
- 23:  */
- 24: const MobileMenu = ({ links }: IMobileMenuProps) => {
- 25:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
- 26:   const ref = useRef<HTMLDivElement>(null);
- 27:   const pathname = usePathname();
- 28:   const handleClickOutside = () => {
- 29:     setisExpanded(0);
- 30:   };
- 31:   useClickOutside(ref, handleClickOutside);
- 32:   const menuVariants = {
- 33:     closed: {
- 34:       x: "125%",
- 35:       transition: {
- 36:         type: "spring",
- 37:         stiffness: 60,
- 38:         damping: 10,
- 39:         delay: 0.3,
- 40:       },
- 41:     },
- 42:     open: {
- 43:       x: 0,
- 44:       transition: {
- 45:         type: "spring",
- 46:         stiffness: 60,
- 47:         damping: 10,
- 48:       },
- 49:     },
- 50:   };
- 51:   const itemVariants = {
- 52:     closed: (i: number) => ({
- 53:       x: i % 2 === 0 ? "-50%" : "50%",
- 54:       opacity: 0,
- 55:       transition: {
- 56:         type: "spring",
- 57:         stiffness: 120,
- 58:         damping: 12,
- 59:         duration: 0.25,
- 60:       },
- 61:     }),
- 62:     open: (i: number) => ({
- 63:       x: 0,
- 64:       opacity: 1,
- 65:       transition: {
- 66:         type: "spring",
- 67:         stiffness: 120,
- 68:         damping: 12,
- 69:         delay: i * 0.25,
- 70:       },
- 71:     }),
- 72:   };
- 73:   return (
- 74:     <div
- 75:       ref={ref}
- 76:       className="z-50 md:hidden lg:hidden xl:hidden"
- 77:       data-testid="mobilemenu"
- 78:     >
- 79:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
- 80:       <AnimatePresence>
- 81:         {isExpanded && (
- 82:           <motion.div
- 83:             id="mobile-menu"
- 84:             data-testid="mobile-menu"
- 85:             data-cy="mobile-menu"
- 86:             aria-hidden={!isExpanded}
- 87:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center -z-10 -mt-4"
- 88:             initial="closed"
- 89:             animate="open"
- 90:             exit="closed"
- 91:             variants={menuVariants}
- 92:           >
- 93:             <nav aria-label="Navigasjon" className="w-full">
- 94:               <motion.ul
- 95:                 className="w-full"
- 96:                 initial="closed"
- 97:                 animate="open"
- 98:                 exit="closed"
- 99:                 variants={{
-100:                   open: {
-101:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
-102:                   },
-103:                   closed: {
-104:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
-105:                   },
-106:                 }}
-107:               >
-108:                 {links.map(({ title, name, href, externalLink }, index) => (
-109:                   <motion.li
-110:                     key={title}
-111:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-112:                     data-cy="mobile-menu-item"
-113:                     custom={index}
-114:                     variants={itemVariants}
-115:                   >
-116:                     {externalLink ? (
-117:                       <a
-118:                         aria-label={name}
-119:                         href={href}
-120:                         target="_blank"
-121:                         rel="noreferrer"
-122:                         data-testid={`mobil-${name}`}
-123:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-124:                       >
-125:                         {name}
-126:                       </a>
-127:                     ) : (
-128:                       <Link
-129:                         href={href}
-130:                         data-testid={`mobil-${name}`}
-131:                         prefetch={true}
-132:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-133:                           pathname === href ? "text-green-400" : ""
-134:                         }`}
-135:                       >
-136:                         <div className="glitch relative" data-text={name}>
-137:                           {name}
-138:                           <motion.span
-139:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-140:                               pathname === href ? "bg-green-400" : "bg-white"
-141:                             }`}
-142:                             initial={{
-143:                               width: pathname === href ? "100%" : "0%",
-144:                             }}
-145:                             animate={{
-146:                               width: pathname === href ? "100%" : "0%",
-147:                             }}
-148:                             transition={{ duration: 0.3 }}
-149:                           />
-150:                         </div>
-151:                       </Link>
-152:                     )}
-153:                   </motion.li>
-154:                 ))}
-155:               </motion.ul>
-156:             </nav>
-157:           </motion.div>
-158:         )}
-159:       </AnimatePresence>
-160:     </div>
-161:   );
-162: };
-163: export default MobileMenu;
-````
-
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -15031,6 +14864,173 @@ tsconfig.json
 31:     }
 32:   ]
 33: }
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import { useRef } from "react";
+  3: import Link from "next/link";
+  4: import { usePathname } from "next/navigation";
+  5: import { AnimatePresence, useCycle, motion } from "motion/react";
+  6: import Hamburger from "./Hamburger.component";
+  7: import useClickOutside from "@/hooks/useClickOutside";
+  8: interface ILink {
+  9:   title: string;
+ 10:   name: string;
+ 11:   hash: string;
+ 12:   href: string;
+ 13:   externalLink: boolean;
+ 14: }
+ 15: interface IMobileMenuProps {
+ 16:   links: ILink[];
+ 17: }
+ 18: /**
+ 19:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 20:  * @param {Object} props
+ 21:  * @param {ILink[]} props.links - Array of navigation link objects
+ 22:  * @returns {JSX.Element} The rendered MobileMenu component
+ 23:  */
+ 24: const MobileMenu = ({ links }: IMobileMenuProps) => {
+ 25:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
+ 26:   const ref = useRef<HTMLDivElement>(null);
+ 27:   const pathname = usePathname();
+ 28:   const handleClickOutside = () => {
+ 29:     setisExpanded(0);
+ 30:   };
+ 31:   useClickOutside(ref, handleClickOutside);
+ 32:   const menuVariants = {
+ 33:     closed: {
+ 34:       x: "125%",
+ 35:       transition: {
+ 36:         type: "spring",
+ 37:         stiffness: 60,
+ 38:         damping: 10,
+ 39:         delay: 0.3,
+ 40:       },
+ 41:     },
+ 42:     open: {
+ 43:       x: 0,
+ 44:       transition: {
+ 45:         type: "spring",
+ 46:         stiffness: 60,
+ 47:         damping: 10,
+ 48:       },
+ 49:     },
+ 50:   };
+ 51:   const itemVariants = {
+ 52:     closed: (i: number) => ({
+ 53:       x: i % 2 === 0 ? "-50%" : "50%",
+ 54:       opacity: 0,
+ 55:       transition: {
+ 56:         type: "spring",
+ 57:         stiffness: 120,
+ 58:         damping: 12,
+ 59:         duration: 0.25,
+ 60:       },
+ 61:     }),
+ 62:     open: (i: number) => ({
+ 63:       x: 0,
+ 64:       opacity: 1,
+ 65:       transition: {
+ 66:         type: "spring",
+ 67:         stiffness: 120,
+ 68:         damping: 12,
+ 69:         delay: i * 0.25,
+ 70:       },
+ 71:     }),
+ 72:   };
+ 73:   return (
+ 74:     <div
+ 75:       ref={ref}
+ 76:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 77:       data-testid="mobilemenu"
+ 78:     >
+ 79:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
+ 80:       <AnimatePresence>
+ 81:         {isExpanded && (
+ 82:           <motion.div
+ 83:             id="mobile-menu"
+ 84:             data-testid="mobile-menu"
+ 85:             data-cy="mobile-menu"
+ 86:             aria-hidden={!isExpanded}
+ 87:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center -z-10 -mt-4"
+ 88:             initial="closed"
+ 89:             animate="open"
+ 90:             exit="closed"
+ 91:             variants={menuVariants}
+ 92:           >
+ 93:             <nav aria-label="Navigasjon" className="w-full">
+ 94:               <motion.ul
+ 95:                 className="w-full"
+ 96:                 initial="closed"
+ 97:                 animate="open"
+ 98:                 exit="closed"
+ 99:                 variants={{
+100:                   open: {
+101:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+102:                   },
+103:                   closed: {
+104:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+105:                   },
+106:                 }}
+107:               >
+108:                 {links.map(({ title, name, href, externalLink }, index) => (
+109:                   <motion.li
+110:                     key={title}
+111:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+112:                     data-cy="mobile-menu-item"
+113:                     custom={index}
+114:                     variants={itemVariants}
+115:                   >
+116:                     {externalLink ? (
+117:                       <a
+118:                         aria-label={name}
+119:                         href={href}
+120:                         target="_blank"
+121:                         rel="noreferrer"
+122:                         data-testid={`mobil-${name}`}
+123:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+124:                       >
+125:                         {name}
+126:                       </a>
+127:                     ) : (
+128:                       <Link
+129:                         href={href}
+130:                         data-testid={`mobil-${name}`}
+131:                         prefetch={true}
+132:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+133:                           pathname === href ? "text-green-400" : ""
+134:                         }`}
+135:                       >
+136:                         <div className="glitch relative" data-text={name}>
+137:                           {name}
+138:                           <motion.span
+139:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+140:                               pathname === href ? "bg-green-400" : "bg-white"
+141:                             }`}
+142:                             initial={{
+143:                               width: pathname === href ? "100%" : "0%",
+144:                             }}
+145:                             animate={{
+146:                               width: pathname === href ? "100%" : "0%",
+147:                             }}
+148:                             transition={{ duration: 0.3 }}
+149:                           />
+150:                         </div>
+151:                       </Link>
+152:                     )}
+153:                   </motion.li>
+154:                 ))}
+155:               </motion.ul>
+156:             </nav>
+157:           </motion.div>
+158:         )}
+159:       </AnimatePresence>
+160:     </div>
+161:   );
+162: };
+163: export default MobileMenu;
 ````
 
 ## File: src/components/UI/Button.component.tsx
