@@ -2,12 +2,12 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import useClickOutside from "@/hooks/useClickOutside";
 import { usePathname } from "next/navigation";
-
 import { AnimatePresence, useCycle, motion } from "motion/react";
 
 import Hamburger from "./Hamburger.component";
+
+import useClickOutside from "@/hooks/useClickOutside";
 
 interface ILink {
   title: string;
