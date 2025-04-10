@@ -2600,112 +2600,6 @@ tsconfig.json
 7: };
 ````
 
-## File: src/__tests__/Animations/BounceInScroll.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import "@testing-library/jest-dom";
-  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-  4: // Mock framer-motion
-  5: jest.mock("motion/react", () => ({
-  6:   motion: {
-  7:     div: ({ children, className, "data-testid": testId }: any) => (
-  8:       <div className={className} data-testid={testId}>
-  9:         {children}
- 10:       </div>
- 11:     ),
- 12:   },
- 13:   Variants: {},
- 14: }));
- 15: describe("BounceInScroll", () => {
- 16:   it("renders children content", () => {
- 17:     // Arrange
- 18:     const testContent = "Test content";
- 19:     // Act
- 20:     render(
- 21:       <BounceInScroll>
- 22:         <div>{testContent}</div>
- 23:       </BounceInScroll>
- 24:     );
- 25:     // Assert
- 26:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 27:   });
- 28:   it("applies custom CSS class", () => {
- 29:     // Arrange
- 30:     const testClass = "test-class";
- 31:     // Act
- 32:     render(
- 33:       <BounceInScroll cssClass={testClass}>
- 34:         <div>Test content</div>
- 35:       </BounceInScroll>
- 36:     );
- 37:     // Assert
- 38:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
- 39:   });
- 40:   it("configures viewport with default amount when viewAmount not provided", () => {
- 41:     // Arrange
- 42:     const testContent = "Test content";
- 43:     // Act
- 44:     render(
- 45:       <BounceInScroll>
- 46:         <div>{testContent}</div>
- 47:       </BounceInScroll>
- 48:     );
- 49:     // Assert
- 50:     const element = screen.getByTestId("bounceinscroll");
- 51:     expect(element).toBeInTheDocument();
- 52:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 53:   });
- 54:   it("configures viewport with custom amount when viewAmount provided", () => {
- 55:     // Arrange
- 56:     const testContent = "Test content";
- 57:     const viewAmount = 0.5;
- 58:     // Act
- 59:     render(
- 60:       <BounceInScroll viewAmount={viewAmount}>
- 61:         <div>{testContent}</div>
- 62:       </BounceInScroll>
- 63:     );
- 64:     // Assert
- 65:     const element = screen.getByTestId("bounceinscroll");
- 66:     expect(element).toBeInTheDocument();
- 67:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 68:   });
- 69:   it("configures for instant animation when instant prop is true", () => {
- 70:     // Arrange
- 71:     const testContent = "Test content";
- 72:     // Act
- 73:     render(
- 74:       <BounceInScroll instant={true}>
- 75:         <div>{testContent}</div>
- 76:       </BounceInScroll>
- 77:     );
- 78:     // Assert
- 79:     const element = screen.getByTestId("bounceinscroll");
- 80:     expect(element).toBeInTheDocument();
- 81:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 82:   });
- 83:   it("handles all viewport amount types", () => {
- 84:     // Arrange
- 85:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
- 86:     const testContent = "Test content";
- 87:     amounts.forEach((amount) => {
- 88:       // Act
- 89:       const { unmount } = render(
- 90:         <BounceInScroll viewAmount={amount}>
- 91:           <div>{testContent}</div>
- 92:         </BounceInScroll>
- 93:       );
- 94:       // Assert
- 95:       const element = screen.getByTestId("bounceinscroll");
- 96:       expect(element).toBeInTheDocument();
- 97:       expect(screen.getByText(testContent)).toBeInTheDocument();
- 98:       // Cleanup
- 99:       unmount();
-100:     });
-101:   });
-102: });
-````
-
 ## File: src/__tests__/Animations/Grow.test.tsx
 ````typescript
  1: /**
@@ -2762,273 +2656,6 @@ tsconfig.json
 52:     });
 53:   });
 54: });
-````
-
-## File: src/__tests__/Animations/Matrix.renderer.test.tsx
-````typescript
-  1: import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
-  2: import { RGB, Column } from "@/components/Animations/Matrix.utils";
-  3: import "@testing-library/jest-dom";
-  4: describe("Matrix Renderer", () => {
-  5:   let mockCtx: CanvasRenderingContext2D;
-  6:   let mockCanvas: HTMLCanvasElement;
-  7:   let columns: Column[];
-  8:   const rgbBackground: RGB = { r: 0, g: 0, b: 0 };
-  9:   const rgbFont: RGB = { r: 0, g: 255, b: 0 };
- 10:   const defaultConfig = {
- 11:     maxStackHeight: 20,
- 12:     tileSize: 10,
- 13:     fadeFactor: 0.5,
- 14:     rgbBackground,
- 15:     rgbFont,
- 16:     glowColor: "#00ff00",
- 17:     tileSet: ["A", "B", "C"],
- 18:     getRandomInt: (max: number) => 123456789 % max,
- 19:   };
- 20:   beforeEach(() => {
- 21:     mockCtx = {
- 22:       fillStyle: "",
- 23:       fillRect: jest.fn(),
- 24:       fillText: jest.fn(),
- 25:       font: "",
- 26:       save: jest.fn(),
- 27:       restore: jest.fn(),
- 28:       shadowColor: "",
- 29:       shadowBlur: 0,
- 30:     } as unknown as CanvasRenderingContext2D;
- 31:     mockCanvas = {
- 32:       width: 100,
- 33:       height: 100,
- 34:     } as unknown as HTMLCanvasElement;
- 35:     columns = [
- 36:       {
- 37:         x: 0,
- 38:         stackHeight: 10,
- 39:         stackCounter: 5,
- 40:       },
- 41:     ];
- 42:   });
- 43:   it("creates a renderer with the provided configuration", () => {
- 44:     // Act
- 45:     const renderer = createMatrixRenderer({
- 46:       ctx: mockCtx,
- 47:       canvas: mockCanvas,
- 48:       columns,
- 49:       ...defaultConfig,
- 50:     });
- 51:     // Assert
- 52:     expect(typeof renderer.draw).toBe("function");
- 53:   });
- 54:   it("draws background with correct settings", () => {
- 55:     // Arrange
- 56:     const renderer = createMatrixRenderer({
- 57:       ctx: mockCtx,
- 58:       canvas: mockCanvas,
- 59:       columns,
- 60:       ...defaultConfig,
- 61:     });
- 62:     const expectedFont = "8px monospace";
- 63:     // Act
- 64:     renderer.draw();
- 65:     // Assert
- 66:     // The fillStyle should be set to the font color after drawing is complete
- 67:     // since that's the last operation
- 68:     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
- 69:     expect(mockCtx.font).toBe(expectedFont);
- 70:     expect(mockCtx.fillStyle).toBe(`rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`);
- 71:   });
- 72:   it("draws columns with characters", () => {
- 73:     // Arrange
- 74:     const renderer = createMatrixRenderer({
- 75:       ctx: mockCtx,
- 76:       canvas: mockCanvas,
- 77:       columns,
- 78:       ...defaultConfig,
- 79:     });
- 80:     const mockStackCounter = columns[0].stackCounter;
- 81:     const mockStackHeight = columns[0].stackHeight;
- 82:     // Act
- 83:     renderer.draw();
- 84:     // Assert
- 85:     expect(mockCtx.fillText).toHaveBeenCalled();
- 86:     if (mockStackCounter === Math.floor(mockStackHeight) - 1) {
- 87:       expect(mockCtx.save).toHaveBeenCalled();
- 88:       expect(mockCtx.restore).toHaveBeenCalled();
- 89:     }
- 90:   });
- 91:   it("updates column state correctly", () => {
- 92:     // Arrange
- 93:     const renderer = createMatrixRenderer({
- 94:       ctx: mockCtx,
- 95:       canvas: mockCanvas,
- 96:       columns,
- 97:       ...defaultConfig,
- 98:     });
- 99:     const originalStackCounter = columns[0].stackCounter;
-100:     // Act
-101:     renderer.draw();
-102:     // Assert
-103:     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
-104:   });
-105:   it("resets column when reaching stack height", () => {
-106:     // Arrange
-107:     columns[0].stackCounter = columns[0].stackHeight - 1;
-108:     const renderer = createMatrixRenderer({
-109:       ctx: mockCtx,
-110:       canvas: mockCanvas,
-111:       columns,
-112:       ...defaultConfig,
-113:     });
-114:     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
-115:     // Act
-116:     renderer.draw();
-117:     // Assert
-118:     expect(columns[0].stackCounter).toBe(0);
-119:     expect(columns[0].stackHeight).toBe(expectedNewStackHeight);
-120:   });
-121:   it("applies glow effect to the last character", () => {
-122:     // Arrange
-123:     columns[0].stackCounter = columns[0].stackHeight - 1;
-124:     const renderer = createMatrixRenderer({
-125:       ctx: mockCtx,
-126:       canvas: mockCanvas,
-127:       columns,
-128:       ...defaultConfig,
-129:     });
-130:     // Act
-131:     renderer.draw();
-132:     // Assert
-133:     expect(mockCtx.save).toHaveBeenCalled();
-134:     expect(mockCtx.shadowColor).toBe("#00ff00");
-135:     expect(mockCtx.shadowBlur).toBe(10);
-136:     expect(mockCtx.restore).toHaveBeenCalled();
-137:   });
-138:   it("skips drawing for columns with negative stack counter", () => {
-139:     // Arrange
-140:     columns[0].stackCounter = -1;
-141:     const renderer = createMatrixRenderer({
-142:       ctx: mockCtx,
-143:       canvas: mockCanvas,
-144:       columns,
-145:       ...defaultConfig,
-146:     });
-147:     // Act
-148:     renderer.draw();
-149:     // Assert
-150:     expect(mockCtx.fillText).not.toHaveBeenCalled();
-151:   });
-152: });
-````
-
-## File: src/__tests__/Animations/Matrix.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
-  5: const mockFillRect = jest.fn();
-  6: const mockFillText = jest.fn();
-  7: const mock2DContext = {
-  8:   fillRect: mockFillRect,
-  9:   fillText: mockFillText,
- 10:   canvas: document.createElement('canvas'),
- 11:   getContextAttributes: () => ({}),
- 12:   globalAlpha: 1,
- 13:   globalCompositeOperation: 'source-over',
- 14:   save: jest.fn(),
- 15:   restore: jest.fn(),
- 16:   font: "",
- 17:   fillStyle: "",
- 18:   shadowColor: "",
- 19:   shadowBlur: 0,
- 20: } as unknown as CanvasRenderingContext2D;
- 21: const mockBitmapContext = {
- 22:   canvas: document.createElement('canvas'),
- 23:   transferFromImageBitmap: jest.fn(),
- 24: } as unknown as ImageBitmapRenderingContext;
- 25: // Use a single mock implementation that handles different context types
- 26: HTMLCanvasElement.prototype.getContext = function(contextId: string, options?: any) {
- 27:   switch (contextId) {
- 28:     case '2d':
- 29:       return mock2DContext;
- 30:     case 'bitmaprenderer':
- 31:       return mockBitmapContext;
- 32:     case 'webgl':
- 33:     case 'webgl2':
- 34:       return null;
- 35:     default:
- 36:       return null;
- 37:   }
- 38: } as any;
- 39: global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
- 40: describe("ReactMatrixAnimation", () => {
- 41:   beforeEach(() => {
- 42:     jest.useFakeTimers();
- 43:     jest
- 44:       .spyOn(window, "requestAnimationFrame")
- 45:       .mockImplementation((cb) => setTimeout(cb, 0));
- 46:   });
- 47:   afterEach(() => {
- 48:     jest.useRealTimers();
- 49:     jest.restoreAllMocks();
- 50:   });
- 51:   describe("rendering", () => {
- 52:     it("renders canvas element with default props", () => {
- 53:       // Arrange
- 54:       const expectedTestId = "matrix-canvas";
- 55:       // Act
- 56:       render(<ReactMatrixAnimation />);
- 57:       const canvas = screen.getByTestId(expectedTestId);
- 58:       // Assert
- 59:       expect(canvas).toBeInTheDocument();
- 60:       expect(canvas).toHaveStyle({
- 61:         width: "100%",
- 62:         height: "100%",
- 63:       });
- 64:     });
- 65:     it("renders canvas element with custom props", () => {
- 66:       // Arrange
- 67:       const customProps = {
- 68:         tileSize: 30,
- 69:         fadeFactor: 0.7,
- 70:         backgroundColor: "#000000",
- 71:         fontColor: "#ffffff",
- 72:         tileSet: ["A", "B", "C"],
- 73:       };
- 74:       const expectedTestId = "matrix-canvas";
- 75:       // Act
- 76:       render(<ReactMatrixAnimation {...customProps} />);
- 77:       const canvas = screen.getByTestId(expectedTestId);
- 78:       // Assert
- 79:       expect(canvas).toBeInTheDocument();
- 80:     });
- 81:   });
- 82:   describe("validation", () => {
- 83:     beforeEach(() => {
- 84:       // Arrange - Suppress console.error for validation tests
- 85:       console.error = jest.fn();
- 86:     });
- 87:     it("throws error for invalid background color", () => {
- 88:       // Arrange
- 89:       const invalidProps = { backgroundColor: "invalid" };
- 90:       const expectedError =
- 91:         "Invalid background color. Use a hex value e.g. #030303";
- 92:       // Act & Assert
- 93:       expect(() => {
- 94:         render(<ReactMatrixAnimation {...invalidProps} />);
- 95:       }).toThrow(expectedError);
- 96:     });
- 97:     it("throws error for invalid font color", () => {
- 98:       // Arrange
- 99:       const invalidProps = { fontColor: "invalid" };
-100:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
-101:       // Act & Assert
-102:       expect(() => {
-103:         render(<ReactMatrixAnimation {...invalidProps} />);
-104:       }).toThrow(expectedError);
-105:     });
-106:   });
-107: });
 ````
 
 ## File: src/__tests__/Animations/Matrix.utils.test.ts
@@ -3378,67 +3005,6 @@ tsconfig.json
 44:     });
 45:   });
 46: });
-````
-
-## File: src/__tests__/Animations/TestAnimation.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import React from "react";
- 5: import { render, screen } from "@testing-library/react";
- 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
- 7: import PageTransition from "@/components/Animations/PageTransition.component";
- 8: import FadeDown from "@/components/Animations/FadeDown.component";
- 9: import FadeUp from "@/components/Animations/FadeUp.component";
-10: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-11: mockIntersectionObserver();
-12: type AnimationComponent =
-13:   | typeof PageTransition
-14:   | typeof FadeDown
-15:   | typeof FadeUp
-16:   | typeof BounceInScroll;
-17: /**
-18:  * Reusable tests for animation components.
-19:  *
-20:  * @param {AnimationComponent} Component - The animation component to test.
-21:  * @param {string} testId - The test ID for the component.
-22:  * @param {string} expectedAttribute - The expected attribute value for the component.
-23:  * @return {void} This function does not return anything.
-24:  */
-25: function testAnimationComponent(
-26:   Component: AnimationComponent,
-27:   testId: string,
-28:   expectedAttribute: string
-29: ) {
-30:   describe(Component.name, () => {
-31:     // Arrange - Set up test data and conditions
-32:     const testContent = Component.name;
-33:     beforeEach(() => {
-34:       // Act - Perform the action being tested
-35:       render(<Component delay={1}>{testContent}</Component>);
-36:     });
-37:     it(`${Component.name} loads and can be displayed`, () => {
-38:       // Arrange - Set up test data and conditions
-39:       const expectedTestId = testId;
-40:       // Act - Perform the action being tested
-41:       const element = screen.getByTestId(expectedTestId);
-42:       expect(element).toBeInTheDocument();
-43:     });
-44:     it(`Framer motion sets ${expectedAttribute}`, () => {
-45:       // Arrange - Set up test data and conditions
-46:       const expectedTestId = testId;
-47:       // Act - Perform the action being tested
-48:       const element = screen.getByTestId(expectedTestId);
-49:       // Assert - Verify the results
-50:       expect(element).toContainHTML(expectedAttribute);
-51:     });
-52:   });
-53: }
-54: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
-55: testAnimationComponent(FadeDown, "fadedown", "translateY");
-56: testAnimationComponent(FadeUp, "fadeup", "translateY");
-57: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
 ## File: src/__tests__/CV/CVContent.test.tsx
@@ -4336,151 +3902,6 @@ tsconfig.json
 128: });
 ````
 
-## File: src/__tests__/Prosjekter/actions.test.ts
-````typescript
-  1: import { getProjects } from "@/app/prosjekter/actions";
-  2: import { client } from "@/lib/sanity/client";
-  3: import { projectsQuery } from "@/lib/sanity/queries";
-  4: interface ErrorTestCase {
-  5:   name: string;
-  6:   error: {
-  7:     statusCode?: number;
-  8:     message: string;
-  9:     details?: {
- 10:       type: string;
- 11:       description: string;
- 12:     };
- 13:     name?: string;
- 14:   };
- 15:   expectedErrorMessage: string;
- 16: }
- 17: // Mock the Sanity client
- 18: jest.mock("@/lib/sanity/client", () => ({
- 19:   client: {
- 20:     fetch: jest.fn(),
- 21:   },
- 22: }));
- 23: describe("getProjects", () => {
- 24:   beforeEach(() => {
- 25:     jest.clearAllMocks();
- 26:   });
- 27:   it("fetches projects successfully", async () => {
- 28:     // Arrange
- 29:     const mockProjects = [
- 30:       {
- 31:         id: "1",
- 32:         name: "Test Project",
- 33:         description: "Test Description",
- 34:         subdescription: "Test Subdescription",
- 35:         projectimage: { asset: { _ref: "test" } },
- 36:         urlwww: [],
- 37:         urlgithub: [],
- 38:       },
- 39:     ];
- 40:     const expectedFetchOptions = {
- 41:       next: { revalidate: 3600 },
- 42:     };
- 43:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 44:     // Act
- 45:     const result = await getProjects();
- 46:     // Assert
- 47:     expect(result).toEqual(mockProjects);
- 48:     expect(client.fetch).toHaveBeenCalledWith(
- 49:       projectsQuery,
- 50:       {},
- 51:       expectedFetchOptions,
- 52:     );
- 53:   });
- 54:   describe("error handling", () => {
- 55:     const testErrorHandling = async ({ name, error, expectedErrorMessage }: ErrorTestCase) => {
- 56:       it(name, async () => {
- 57:         // Arrange
- 58:         (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 59:         // Act & Assert
- 60:         await expect(getProjects()).rejects.toThrow(expectedErrorMessage);
- 61:       });
- 62:     };
- 63:     const errorCases: ErrorTestCase[] = [
- 64:       {
- 65:         name: "handles authentication errors (401)",
- 66:         error: {
- 67:           statusCode: 401,
- 68:           message: "Invalid token",
- 69:           details: { type: "credentials", description: "Invalid token provided" }
- 70:         },
- 71:         expectedErrorMessage: "Authentication failed"
- 72:       },
- 73:       {
- 74:         name: "handles permission errors (403)",
- 75:         error: {
- 76:           statusCode: 403,
- 77:           message: "Insufficient permissions",
- 78:           details: { type: "authorization", description: "Missing read access" }
- 79:         },
- 80:         expectedErrorMessage: "Insufficient permissions"
- 81:       },
- 82:       {
- 83:         name: "handles rate limiting (429)",
- 84:         error: {
- 85:           statusCode: 429,
- 86:           message: "Too Many Requests",
- 87:           details: { type: "rate_limit", description: "Rate limit exceeded" }
- 88:         },
- 89:         expectedErrorMessage: "Rate limit exceeded"
- 90:       },
- 91:       {
- 92:         name: "handles malformed GROQ queries (400)",
- 93:         error: {
- 94:           statusCode: 400,
- 95:           message: "Invalid GROQ query",
- 96:           details: { type: "query_error", description: "Syntax error in GROQ query" }
- 97:         },
- 98:         expectedErrorMessage: "Sanity API error: Invalid GROQ query"
- 99:       },
-100:       {
-101:         name: "handles network timeouts",
-102:         error: Object.assign(new Error("Network timeout"), { name: "TimeoutError" }),
-103:         expectedErrorMessage: "Request timed out"
-104:       },
-105:       {
-106:         name: "handles generic fetch errors",
-107:         error: {
-108:           message: "Fetch failed"
-109:         },
-110:         expectedErrorMessage: "Failed to fetch projects"
-111:       }
-112:     ];
-113:     errorCases.forEach(testErrorHandling);
-114:     it("recovers after temporary errors", async () => {
-115:       // Arrange
-116:       const rateError = {
-117:         statusCode: 429,
-118:         message: "Too Many Requests",
-119:         details: { type: "rate_limit", description: "Rate limit exceeded" }
-120:       };
-121:       const mockProjects = [{
-122:         id: "1",
-123:         name: "Test Project",
-124:         description: "Test Description",
-125:         subdescription: "Test Subdescription",
-126:         projectimage: { asset: { _ref: "test" } },
-127:         urlwww: [],
-128:         urlgithub: []
-129:       }];
-130:       // First call fails with rate limit
-131:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
-132:       // Second call succeeds
-133:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-134:       // First call should fail
-135:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-136:       // Second call should succeed
-137:       const result = await getProjects();
-138:       expect(result).toEqual(mockProjects);
-139:     });
-140:   });
-141: });
-````
-
 ## File: src/__tests__/Prosjekter/error.test.tsx
 ````typescript
  1: import React from "react";
@@ -5309,51 +4730,6 @@ tsconfig.json
 12:     </RootLayout>
 13:   );
 14: }
-````
-
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     },
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     // Add a small delay to demonstrate loading state
-36:     await new Promise((resolve) => setTimeout(resolve, 1000));
-37:     return await fetchProjectsFromSanity();
-38:   } catch (error) {
-39:     handleError(error);
-40:   }
-41: }
 ````
 
 ## File: src/app/prosjekter/error.tsx
@@ -6192,333 +5568,6 @@ tsconfig.json
 122:   );
 123: };
 124: export default ReactMatrixAnimation;
-````
-
-## File: src/components/Animations/Matrix.renderer.ts
-````typescript
-  1: import { RGB, Column, getRandomCharacter } from "./Matrix.utils";
-  2: interface MatrixRendererProps {
-  3:   ctx: CanvasRenderingContext2D;
-  4:   canvas: HTMLCanvasElement;
-  5:   columns: Column[];
-  6:   maxStackHeight: number;
-  7:   tileSize: number;
-  8:   fadeFactor: number;
-  9:   rgbBackground: RGB;
- 10:   rgbFont: RGB;
- 11:   glowColor: string;
- 12:   tileSet: string[] | null;
- 13:   getRandomInt: (max: number) => number;
- 14: }
- 15: interface MatrixRenderer {
- 16:   draw: () => void;
- 17: }
- 18: const createDrawFunctions = (
- 19:   ctx: CanvasRenderingContext2D,
- 20:   canvas: HTMLCanvasElement,
- 21:   rgbBackground: RGB,
- 22:   rgbFont: RGB,
- 23:   fadeFactor: number,
- 24:   tileSize: number,
- 25:   glowColor: string
- 26: ) => {
- 27:   const drawBackground = () => {
- 28:     ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
- 29:     ctx.fillRect(0, 0, canvas.width, canvas.height);
- 30:     ctx.font = `${tileSize - 2}px monospace`;
- 31:   };
- 32:   const drawCharacter = (character: string, x: number, y: number) => {
- 33:     ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
- 34:     ctx.fillText(character, x, y);
- 35:   };
- 36:   const drawGlowEffect = (character: string, x: number, y: number) => {
- 37:     ctx.save();
- 38:     ctx.shadowColor = glowColor;
- 39:     ctx.shadowBlur = 10;
- 40:     ctx.fillStyle = glowColor;
- 41:     ctx.fillText(character, x, y);
- 42:     ctx.restore();
- 43:   };
- 44:   return { drawBackground, drawCharacter, drawGlowEffect };
- 45: };
- 46: const createColumnHandlers = (
- 47:   tileSize: number,
- 48:   maxStackHeight: number,
- 49:   getRandomInt: (max: number) => number
- 50: ) => {
- 51:   const updateColumnState = (column: Column) => {
- 52:     column.stackCounter++;
- 53:     if (column.stackCounter >= column.stackHeight) {
- 54:       column.stackHeight = 10 + getRandomInt(maxStackHeight);
- 55:       column.stackCounter = 0;
- 56:     }
- 57:   };
- 58:   const getCharacterPosition = (column: Column) => ({
- 59:     y: column.stackCounter * tileSize + tileSize,
- 60:     isLastCharacter: column.stackCounter === Math.floor(column.stackHeight) - 1
- 61:   });
- 62:   return { updateColumnState, getCharacterPosition };
- 63: };
- 64: export const createMatrixRenderer = ({
- 65:   ctx,
- 66:   canvas,
- 67:   columns,
- 68:   maxStackHeight,
- 69:   tileSize,
- 70:   fadeFactor,
- 71:   rgbBackground,
- 72:   rgbFont,
- 73:   glowColor,
- 74:   tileSet,
- 75:   getRandomInt,
- 76: }: MatrixRendererProps): MatrixRenderer => {
- 77:   const { drawBackground, drawCharacter, drawGlowEffect } = createDrawFunctions(
- 78:     ctx,
- 79:     canvas,
- 80:     rgbBackground,
- 81:     rgbFont,
- 82:     fadeFactor,
- 83:     tileSize,
- 84:     glowColor
- 85:   );
- 86:   const { updateColumnState, getCharacterPosition } = createColumnHandlers(
- 87:     tileSize,
- 88:     maxStackHeight,
- 89:     getRandomInt
- 90:   );
- 91:   const drawColumn = (column: Column) => {
- 92:     if (column.stackCounter < 0) return;
- 93:     const randomCharacter = getRandomCharacter(tileSet);
- 94:     const { y, isLastCharacter } = getCharacterPosition(column);
- 95:     drawCharacter(randomCharacter, column.x, y);
- 96:     if (isLastCharacter) {
- 97:       drawGlowEffect(randomCharacter, column.x, y);
- 98:     }
- 99:   };
-100:   return {
-101:     draw: () => {
-102:       drawBackground();
-103:       columns.forEach(column => {
-104:         drawColumn(column);
-105:         updateColumnState(column);
-106:       });
-107:     }
-108:   };
-109: };
-````
-
-## File: src/components/Animations/Matrix.utils.ts
-````typescript
- 1: export interface RGB {
- 2:   r: number;
- 3:   g: number;
- 4:   b: number;
- 5: }
- 6: export interface Column {
- 7:   x: number;
- 8:   stackHeight: number;
- 9:   stackCounter: number;
-10: }
-11: /**
-12:  * Converts a hex color value to RGB
-13:  * @param {string} hexValue - The hex color value to convert
-14:  * @returns {RGB | null} The RGB color object or null if invalid hex value
-15:  */
-16: export const hexToRgb = (hexValue: string): RGB | null => {
-17:   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
-18:   return result
-19:     ? {
-20:         r: parseInt(result?.[1] ?? '0', 16),
-21:         g: parseInt(result?.[2] ?? '0', 16),
-22:         b: parseInt(result?.[3] ?? '0', 16),
-23:       }
-24:     : null;
-25: };
-26: /**
-27:  * Generates a random integer
-28:  * @param {number} max - The maximum value (exclusive)
-29:  * @returns {number} A random integer between 0 and max-1
-30:  */
-31: export const getRandomInt = (max: number): number => {
-32:   const array = new Uint32Array(1);
-33:   window.crypto.getRandomValues(array);
-34:   return (array?.[0] ?? 0) % max;
-35: };
-36: /**
-37:  * Gets a random character from the tileSet or generates a random ASCII character
-38:  * @param {string[] | null} tileSet - Optional set of characters to choose from
-39:  * @returns {string} A random character
-40:  */
-41: export const getRandomCharacter = (tileSet: string[] | null): string => {
-42:   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
-43:     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? '';
-44:   }
-45:     // Generate ASCII printable characters (33-126)
-46:     return String.fromCharCode(33 + (getRandomInt(94) % 94));
-47: };
-48: /**
-49:  * Debounce function
-50:  * @param {T} func - The function to debounce
-51:  * @param {number} wait - The debounce wait time in milliseconds
-52:  * @returns {(...args: Parameters<T>) => void} The debounced function
-53:  */
-54: export const debounce = <T extends (...args: unknown[]) => void>(
-55:   func: T,
-56:   wait: number,
-57: ): ((...args: Parameters<T>) => void) => {
-58:   let timeout: ReturnType<typeof setTimeout> | null = null;
-59:   return (...args: Parameters<T>) => {
-60:     if (timeout !== null) {
-61:       clearTimeout(timeout);
-62:     }
-63:     timeout = setTimeout(() => func(...args), wait);
-64:   };
-65: };
-````
-
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, RefObject, useState, useCallback } from "react";
-  3: import "@/app/cursor.css";
-  4: import { useMobile } from "../../hooks/useMobile"; // Pb51b
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: /**
- 19:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 20:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 21:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 22:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 23:  */
- 24: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 25:   const isMobile = useMobile(); // Pd528
- 26:   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
- 27:   const [isHovered, setIsHovered] = useState(false);
- 28:   const [trails, setTrails] = useState<MatrixTrail[]>([]);
- 29:   const getRandomChar = useCallback(() => {
- 30:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 31:     const index = Math.floor(Math.random() * matrixChars.length);
- 32:     return matrixChars[index] ?? matrixChars[0] ?? 'X';
- 33:   }, []);
- 34:   const createTrail = useCallback(
- 35:     (x: number, y: number) => {
- 36:       const newTrail: MatrixTrail = {
- 37:         id: Math.random().toString(36).substring(2, 100),
- 38:         x,
- 39:         y,
- 40:         char: getRandomChar(),
- 41:       };
- 42:       setTrails((currentTrails) => {
- 43:         const updatedTrails = [...currentTrails, newTrail];
- 44:         if (updatedTrails.length > 20) {
- 45:           return updatedTrails.slice(1);
- 46:         }
- 47:         return updatedTrails;
- 48:       });
- 49:     },
- 50:     [getRandomChar],
- 51:   );
- 52:   useEffect(() => {
- 53:     const heroSection = heroRef.current;
- 54:     if (!heroSection) return;
- 55:     // Add cursor: none to the hero section when hovered
- 56:     if (isHovered) {
- 57:       heroSection.style.cursor = "none";
- 58:     } else {
- 59:       heroSection.style.cursor = "";
- 60:     }
- 61:     const handleMouseMove = (e: MouseEvent) => {
- 62:       setCursorPosition({ x: e.clientX, y: e.clientY });
- 63:       if (isHovered) {
- 64:         createTrail(e.clientX, e.clientY);
- 65:       }
- 66:     };
- 67:     const handleMouseEnter = () => {
- 68:       setIsHovered(true);
- 69:       heroSection.style.cursor = "none";
- 70:     };
- 71:     const handleMouseLeave = () => {
- 72:       setIsHovered(false);
- 73:       heroSection.style.cursor = "";
- 74:       setTrails([]);
- 75:     };
- 76:     heroSection.addEventListener("mousemove", handleMouseMove);
- 77:     heroSection.addEventListener("mouseenter", handleMouseEnter);
- 78:     heroSection.addEventListener("mouseleave", handleMouseLeave);
- 79:     return () => {
- 80:       heroSection.removeEventListener("mousemove", handleMouseMove);
- 81:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
- 82:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
- 83:       heroSection.style.cursor = "";
- 84:     };
- 85:   }, [heroRef, isHovered, createTrail]);
- 86:   const handleAnimationEnd = useCallback((trailId: string) => {
- 87:     setTrails((currentTrails) =>
- 88:       currentTrails.filter((trail) => trail.id !== trailId),
- 89:     );
- 90:   }, []);
- 91:   if (!heroRef.current || isMobile) return null; // P6ecf
- 92:   const cursorStyles: CursorStyles = {
- 93:     position: "fixed",
- 94:     top: 0,
- 95:     left: 0,
- 96:     width: "100%",
- 97:     height: "100%",
- 98:     pointerEvents: "none",
- 99:     zIndex: 9999,
-100:     "--cursor-x": `${cursorPosition.x}px`,
-101:     "--cursor-y": `${cursorPosition.y}px`,
-102:   };
-103:   return (
-104:     <div
-105:       data-testid="matrix-cursor"
-106:       className={isHovered ? "matrix-cursor" : ""}
-107:       style={cursorStyles}
-108:     >
-109:       {trails.map((trail) => (
-110:         <div
-111:           key={trail.id}
-112:           className="matrix-trail"
-113:           style={{
-114:             position: "fixed",
-115:             left: `${trail.x}px`,
-116:             top: `${trail.y}px`,
-117:             zIndex: 10000,
-118:             pointerEvents: "none",
-119:           }}
-120:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-121:         >
-122:           {trail.char}
-123:         </div>
-124:       ))}
-125:       {isHovered && (
-126:         <div
-127:           style={{
-128:             position: "fixed",
-129:             top: 0,
-130:             left: 0,
-131:             width: "100%",
-132:             height: "100%",
-133:             pointerEvents: "none",
-134:             zIndex: 9999,
-135:           }}
-136:         />
-137:       )}
-138:     </div>
-139:   );
-140: };
-141: export default MatrixCursor;
 ````
 
 ## File: src/components/Animations/PageTransition.component.tsx
@@ -7969,149 +7018,6 @@ tsconfig.json
 10:   );
 11: };
 12: export default SkipLink;
-````
-
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { motion, AnimatePresence } from "motion/react";
-  4: interface Tab {
-  5:   id: string;
-  6:   label: string;
-  7:   content: React.ReactNode;
-  8: }
-  9: interface TabsProps {
- 10:   tabs: Tab[];
- 11:   orientation?: "horizontal" | "vertical";
- 12: }
- 13: interface TabButtonProps {
- 14:   tab: Tab;
- 15:   isActive: boolean;
- 16:   isVertical: boolean;
- 17:   index: number;
- 18:   totalTabs: number;
- 19:   onClick: () => void;
- 20: }
- 21: const getTabButtonClassName = (
- 22:   isActive: boolean,
- 23:   isVertical: boolean,
- 24:   index: number,
- 25:   totalTabs: number
- 26: ) => {
- 27:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
- 28:   const activeClasses = isActive ? "text-white" : "text-gray-300 hover:text-white";
- 29:   const orientationClasses = isVertical ? "w-full text-left" : "flex-grow text-center";
- 30:   const borderClasses = [
- 31:     index !== 0 ? "border-t border-gray-600" : "",
- 32:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
- 33:   ].join(" ");
- 34:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 35: };
- 36: const TabButton: React.FC<TabButtonProps> = ({
- 37:   tab,
- 38:   isActive,
- 39:   isVertical,
- 40:   index,
- 41:   totalTabs,
- 42:   onClick,
- 43: }) => (
- 44:   <motion.button
- 45:     key={tab.id}
- 46:     onClick={onClick}
- 47:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 48:     role="tab"
- 49:     aria-selected={isActive}
- 50:     aria-controls={`tabpanel-${tab.id}`}
- 51:     id={`tab-${tab.id}`}
- 52:   >
- 53:     {isActive && (
- 54:       <motion.div
- 55:         layoutId="active-tab"
- 56:         className={`absolute ${
- 57:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 58:         } bg-[var(--matrix-dark)]`}
- 59:         initial={false}
- 60:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 61:       />
- 62:     )}
- 63:     <span className="relative z-10">{tab.label}</span>
- 64:   </motion.button>
- 65: );
- 66: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({ tab, isActive }) => {
- 67:   if (!isActive) return null;
- 68:   return (
- 69:     <motion.div
- 70:       key={tab.id}
- 71:       role="tabpanel"
- 72:       id={`tabpanel-${tab.id}`}
- 73:       aria-labelledby={`tab-${tab.id}`}
- 74:       className="px-8"
- 75:       initial={{ opacity: 0, y: 20 }}
- 76:       animate={{ opacity: 1, y: 0 }}
- 77:       exit={{ opacity: 0, y: -20 }}
- 78:       transition={{ duration: 0.3 }}
- 79:     >
- 80:       {tab.content}
- 81:     </motion.div>
- 82:   );
- 83: };
- 84: /**
- 85:  * Renders a set of tabs with content.
- 86:  *
- 87:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 88:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 89:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 90:  * @return {JSX.Element} The rendered Tabs component.
- 91:  */
- 92: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
- 93:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? '');
- 94:   const isVertical = orientation === "vertical";
- 95:   return (
- 96:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
- 97:       <div
- 98:         className={`flex ${
- 99:           isVertical ? "flex-col sm:flex-row" : "flex-col"
-100:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
-101:       >
-102:         <div
-103:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-104:             isVertical ? "max-h-[181px] " : ""
-105:           }`}
-106:         >
-107:           <div
-108:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-109:             role="tablist"
-110:           >
-111:             {tabs.map((tab, index) => (
-112:               <TabButton
-113:                 key={tab.id}
-114:                 tab={tab}
-115:                 isActive={activeTab === tab.id}
-116:                 isVertical={isVertical}
-117:                 index={index}
-118:                 totalTabs={tabs.length}
-119:                 onClick={() => setActiveTab(tab.id)}
-120:               />
-121:             ))}
-122:           </div>
-123:         </div>
-124:         <div
-125:           className={`${
-126:             isVertical ? "sm:w-3/4 w-full" : "w-full"
-127:           } bg-gray-800 overflow-y-auto`}
-128:         >
-129:           <AnimatePresence mode="wait">
-130:             {tabs.map((tab) => (
-131:               <TabPanel key={tab.id} tab={tab} isActive={activeTab === tab.id} />
-132:             ))}
-133:           </AnimatePresence>
-134:         </div>
-135:       </div>
-136:     </div>
-137:   );
-138: };
-139: export default Tabs;
 ````
 
 ## File: src/config/env.ts
@@ -10223,91 +9129,6 @@ tsconfig.json
 54:   }
 55: }
 56: export {};
-````
-
-## File: src/utils/eslint/index.ts
-````typescript
- 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
- 2: type MessageIds = "missingAAAPattern";
- 3: type Options = [];
- 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
- 5:   const testNames = ["it", "test"];
- 6:   return (
- 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
- 8:     testNames.includes(node.callee.name)
- 9:   );
-10: };
-11: const isArrowFunction = (
-12:   node: TSESTree.Node
-13: ): node is TSESTree.ArrowFunctionExpression => {
-14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
-15: };
-16: const validateAAAPattern = (
-17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-18:   node: TSESTree.CallExpression
-19: ) => {
-20:   const testFn = node.arguments[1];
-21:   if (!isArrowFunction(testFn)) return;
-22:   if (!hasAAAComments(context, testFn)) {
-23:     context.report({
-24:       node,
-25:       messageId: "missingAAAPattern",
-26:     });
-27:   }
-28: };
-29: const validateTestCase = (
-30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-31:   node: TSESTree.CallExpression
-32: ) => {
-33:   if (!isTestFunction(node)) return;
-34:   validateAAAPattern(context, node);
-35: };
-36: const hasAAAComments = (
-37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-38:   testFn: TSESTree.ArrowFunctionExpression
-39: ): boolean => {
-40:   const comments = context.getSourceCode().getCommentsBefore(testFn.body);
-41:   const patterns = ["Arrange", "Act", "Assert"];
-42:   return comments.some((comment: TSESTree.Comment) =>
-43:     patterns.some((pattern) => comment.value.includes(pattern))
-44:   );
-45: };
-46: const createRule = ESLintUtils.RuleCreator(
-47:   (name) =>
-48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`
-49: );
-50: const rule = createRule<Options, MessageIds>({
-51:   name: "arrange-act-assert",
-52:   meta: {
-53:     type: "suggestion",
-54:     docs: {
-55:       description: "enforce AAA pattern in tests",
-56:     },
-57:     messages: {
-58:       missingAAAPattern: "Test should follow AAA pattern with comments",
-59:     },
-60:     schema: [],
-61:   },
-62:   defaultOptions: [],
-63:   create(context) {
-64:     return {
-65:       CallExpression: (node: TSESTree.CallExpression) => validateTestCase(context, node)
-66:     };
-67:   },
-68: });
-69: export default {
-70:   configs: {
-71:     recommended: {
-72:       plugins: ["test-rules"],
-73:       rules: {
-74:         "test-rules/arrange-act-assert": "error",
-75:       },
-76:     },
-77:   },
-78:   rules: {
-79:     "arrange-act-assert": rule,
-80:   },
-81: };
 ````
 
 ## File: src/utils/portableTextComponents.tsx
@@ -13166,45 +11987,6 @@ tsconfig.json
 67: DOCS/git_history.txt
 ````
 
-## File: .pa11yci.json
-````json
- 1: {
- 2:   "defaults": {
- 3:     "standard": "WCAG2AA",
- 4:     "timeout": 30000,
- 5:     "wait": 1000,
- 6:     "viewport": {
- 7:       "width": 1280,
- 8:       "height": 800
- 9:     },
-10:     "ignore": [
-11:       "WCAG2AA.Principle1.Guideline1_4.1_4_3.G18.Fail"
-12:     ],
-13:     "chromeLaunchConfig": {
-14:       "args": ["--no-sandbox"]
-15:     }
-16:   },
-17:   "urls": [
-18:     {
-19:       "url": "http://localhost:3000",
-20:       "screenCapture": "pa11y-reports/home.png"
-21:     },
-22:     {
-23:       "url": "http://localhost:3000/cv",
-24:       "screenCapture": "pa11y-reports/cv.png"
-25:     },
-26:     {
-27:       "url": "http://localhost:3000/prosjekter",
-28:       "screenCapture": "pa11y-reports/prosjekter.png"
-29:     },
-30:     {
-31:       "url": "http://localhost:3000/kontakt",
-32:       "screenCapture": "pa11y-reports/kontakt.png"
-33:     }
-34:   ]
-35: }
-````
-
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -14891,6 +13673,979 @@ tsconfig.json
 78:           name: Build Next.js project
 ````
 
+## File: src/__tests__/Animations/BounceInScroll.test.tsx
+````typescript
+  1: import { render, screen } from "@testing-library/react";
+  2: import "@testing-library/jest-dom";
+  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+  4: // Mock framer-motion
+  5: jest.mock("motion/react", () => ({
+  6:   motion: {
+  7:     div: ({ children, className, "data-testid": testId }: any) => (
+  8:       <div className={className} data-testid={testId}>
+  9:         {children}
+ 10:       </div>
+ 11:     ),
+ 12:   },
+ 13:   Variants: {},
+ 14: }));
+ 15: describe("BounceInScroll", () => {
+ 16:   it("renders children content", () => {
+ 17:     // Arrange
+ 18:     const testContent = "Test content";
+ 19:     // Act
+ 20:     render(
+ 21:       <BounceInScroll>
+ 22:         <div>{testContent}</div>
+ 23:       </BounceInScroll>,
+ 24:     );
+ 25:     // Assert
+ 26:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 27:   });
+ 28:   it("applies custom CSS class", () => {
+ 29:     // Arrange
+ 30:     const testClass = "test-class";
+ 31:     // Act
+ 32:     render(
+ 33:       <BounceInScroll cssClass={testClass}>
+ 34:         <div>Test content</div>
+ 35:       </BounceInScroll>,
+ 36:     );
+ 37:     // Assert
+ 38:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
+ 39:   });
+ 40:   it("configures viewport with default amount when viewAmount not provided", () => {
+ 41:     // Arrange
+ 42:     const testContent = "Test content";
+ 43:     // Act
+ 44:     render(
+ 45:       <BounceInScroll>
+ 46:         <div>{testContent}</div>
+ 47:       </BounceInScroll>,
+ 48:     );
+ 49:     // Assert
+ 50:     const element = screen.getByTestId("bounceinscroll");
+ 51:     expect(element).toBeInTheDocument();
+ 52:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 53:   });
+ 54:   it("configures viewport with custom amount when viewAmount provided", () => {
+ 55:     // Arrange
+ 56:     const testContent = "Test content";
+ 57:     const viewAmount = 0.5;
+ 58:     // Act
+ 59:     render(
+ 60:       <BounceInScroll viewAmount={viewAmount}>
+ 61:         <div>{testContent}</div>
+ 62:       </BounceInScroll>,
+ 63:     );
+ 64:     // Assert
+ 65:     const element = screen.getByTestId("bounceinscroll");
+ 66:     expect(element).toBeInTheDocument();
+ 67:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 68:   });
+ 69:   it("configures for instant animation when instant prop is true", () => {
+ 70:     // Arrange
+ 71:     const testContent = "Test content";
+ 72:     // Act
+ 73:     render(
+ 74:       <BounceInScroll instant={true}>
+ 75:         <div>{testContent}</div>
+ 76:       </BounceInScroll>,
+ 77:     );
+ 78:     // Assert
+ 79:     const element = screen.getByTestId("bounceinscroll");
+ 80:     expect(element).toBeInTheDocument();
+ 81:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 82:   });
+ 83:   it("handles all viewport amount types", () => {
+ 84:     // Arrange
+ 85:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
+ 86:     const testContent = "Test content";
+ 87:     amounts.forEach((amount) => {
+ 88:       // Act
+ 89:       const { unmount } = render(
+ 90:         <BounceInScroll viewAmount={amount}>
+ 91:           <div>{testContent}</div>
+ 92:         </BounceInScroll>,
+ 93:       );
+ 94:       // Assert
+ 95:       const element = screen.getByTestId("bounceinscroll");
+ 96:       expect(element).toBeInTheDocument();
+ 97:       expect(screen.getByText(testContent)).toBeInTheDocument();
+ 98:       // Cleanup
+ 99:       unmount();
+100:     });
+101:   });
+102: });
+````
+
+## File: src/__tests__/Animations/Matrix.renderer.test.tsx
+````typescript
+  1: import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
+  2: import { RGB, Column } from "@/components/Animations/Matrix.utils";
+  3: import "@testing-library/jest-dom";
+  4: describe("Matrix Renderer", () => {
+  5:   let mockCtx: CanvasRenderingContext2D;
+  6:   let mockCanvas: HTMLCanvasElement;
+  7:   let columns: Column[];
+  8:   const rgbBackground: RGB = { r: 0, g: 0, b: 0 };
+  9:   const rgbFont: RGB = { r: 0, g: 255, b: 0 };
+ 10:   const defaultConfig = {
+ 11:     maxStackHeight: 20,
+ 12:     tileSize: 10,
+ 13:     fadeFactor: 0.5,
+ 14:     rgbBackground,
+ 15:     rgbFont,
+ 16:     glowColor: "#00ff00",
+ 17:     tileSet: ["A", "B", "C"],
+ 18:     getRandomInt: (max: number) => 123456789 % max,
+ 19:   };
+ 20:   beforeEach(() => {
+ 21:     mockCtx = {
+ 22:       fillStyle: "",
+ 23:       fillRect: jest.fn(),
+ 24:       fillText: jest.fn(),
+ 25:       font: "",
+ 26:       save: jest.fn(),
+ 27:       restore: jest.fn(),
+ 28:       shadowColor: "",
+ 29:       shadowBlur: 0,
+ 30:     } as unknown as CanvasRenderingContext2D;
+ 31:     mockCanvas = {
+ 32:       width: 100,
+ 33:       height: 100,
+ 34:     } as unknown as HTMLCanvasElement;
+ 35:     columns = [
+ 36:       {
+ 37:         x: 0,
+ 38:         stackHeight: 10,
+ 39:         stackCounter: 5,
+ 40:       },
+ 41:     ];
+ 42:   });
+ 43:   it("creates a renderer with the provided configuration", () => {
+ 44:     // Act
+ 45:     const renderer = createMatrixRenderer({
+ 46:       ctx: mockCtx,
+ 47:       canvas: mockCanvas,
+ 48:       columns,
+ 49:       ...defaultConfig,
+ 50:     });
+ 51:     // Assert
+ 52:     expect(typeof renderer.draw).toBe("function");
+ 53:   });
+ 54:   it("draws background with correct settings", () => {
+ 55:     // Arrange
+ 56:     const renderer = createMatrixRenderer({
+ 57:       ctx: mockCtx,
+ 58:       canvas: mockCanvas,
+ 59:       columns,
+ 60:       ...defaultConfig,
+ 61:     });
+ 62:     const expectedFont = "8px monospace";
+ 63:     // Act
+ 64:     renderer.draw();
+ 65:     // Assert
+ 66:     // The fillStyle should be set to the font color after drawing is complete
+ 67:     // since that's the last operation
+ 68:     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
+ 69:     expect(mockCtx.font).toBe(expectedFont);
+ 70:     expect(mockCtx.fillStyle).toBe(
+ 71:       `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`,
+ 72:     );
+ 73:   });
+ 74:   it("draws columns with characters", () => {
+ 75:     // Arrange
+ 76:     const renderer = createMatrixRenderer({
+ 77:       ctx: mockCtx,
+ 78:       canvas: mockCanvas,
+ 79:       columns,
+ 80:       ...defaultConfig,
+ 81:     });
+ 82:     const mockStackCounter = columns[0].stackCounter;
+ 83:     const mockStackHeight = columns[0].stackHeight;
+ 84:     // Act
+ 85:     renderer.draw();
+ 86:     // Assert
+ 87:     expect(mockCtx.fillText).toHaveBeenCalled();
+ 88:     if (mockStackCounter === Math.floor(mockStackHeight) - 1) {
+ 89:       expect(mockCtx.save).toHaveBeenCalled();
+ 90:       expect(mockCtx.restore).toHaveBeenCalled();
+ 91:     }
+ 92:   });
+ 93:   it("updates column state correctly", () => {
+ 94:     // Arrange
+ 95:     const renderer = createMatrixRenderer({
+ 96:       ctx: mockCtx,
+ 97:       canvas: mockCanvas,
+ 98:       columns,
+ 99:       ...defaultConfig,
+100:     });
+101:     const originalStackCounter = columns[0].stackCounter;
+102:     // Act
+103:     renderer.draw();
+104:     // Assert
+105:     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
+106:   });
+107:   it("resets column when reaching stack height", () => {
+108:     // Arrange
+109:     columns[0].stackCounter = columns[0].stackHeight - 1;
+110:     const renderer = createMatrixRenderer({
+111:       ctx: mockCtx,
+112:       canvas: mockCanvas,
+113:       columns,
+114:       ...defaultConfig,
+115:     });
+116:     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
+117:     // Act
+118:     renderer.draw();
+119:     // Assert
+120:     expect(columns[0].stackCounter).toBe(0);
+121:     expect(columns[0].stackHeight).toBe(expectedNewStackHeight);
+122:   });
+123:   it("applies glow effect to the last character", () => {
+124:     // Arrange
+125:     columns[0].stackCounter = columns[0].stackHeight - 1;
+126:     const renderer = createMatrixRenderer({
+127:       ctx: mockCtx,
+128:       canvas: mockCanvas,
+129:       columns,
+130:       ...defaultConfig,
+131:     });
+132:     // Act
+133:     renderer.draw();
+134:     // Assert
+135:     expect(mockCtx.save).toHaveBeenCalled();
+136:     expect(mockCtx.shadowColor).toBe("#00ff00");
+137:     expect(mockCtx.shadowBlur).toBe(10);
+138:     expect(mockCtx.restore).toHaveBeenCalled();
+139:   });
+140:   it("skips drawing for columns with negative stack counter", () => {
+141:     // Arrange
+142:     columns[0].stackCounter = -1;
+143:     const renderer = createMatrixRenderer({
+144:       ctx: mockCtx,
+145:       canvas: mockCanvas,
+146:       columns,
+147:       ...defaultConfig,
+148:     });
+149:     // Act
+150:     renderer.draw();
+151:     // Assert
+152:     expect(mockCtx.fillText).not.toHaveBeenCalled();
+153:   });
+154: });
+````
+
+## File: src/__tests__/Animations/Matrix.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+  5: const mockFillRect = jest.fn();
+  6: const mockFillText = jest.fn();
+  7: const mock2DContext = {
+  8:   fillRect: mockFillRect,
+  9:   fillText: mockFillText,
+ 10:   canvas: document.createElement("canvas"),
+ 11:   getContextAttributes: () => ({}),
+ 12:   globalAlpha: 1,
+ 13:   globalCompositeOperation: "source-over",
+ 14:   save: jest.fn(),
+ 15:   restore: jest.fn(),
+ 16:   font: "",
+ 17:   fillStyle: "",
+ 18:   shadowColor: "",
+ 19:   shadowBlur: 0,
+ 20: } as unknown as CanvasRenderingContext2D;
+ 21: const mockBitmapContext = {
+ 22:   canvas: document.createElement("canvas"),
+ 23:   transferFromImageBitmap: jest.fn(),
+ 24: } as unknown as ImageBitmapRenderingContext;
+ 25: // Use a single mock implementation that handles different context types
+ 26: HTMLCanvasElement.prototype.getContext = function (
+ 27:   contextId: string,
+ 28:   options?: any,
+ 29: ) {
+ 30:   switch (contextId) {
+ 31:     case "2d":
+ 32:       return mock2DContext;
+ 33:     case "bitmaprenderer":
+ 34:       return mockBitmapContext;
+ 35:     case "webgl":
+ 36:     case "webgl2":
+ 37:       return null;
+ 38:     default:
+ 39:       return null;
+ 40:   }
+ 41: } as any;
+ 42: global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
+ 43: describe("ReactMatrixAnimation", () => {
+ 44:   beforeEach(() => {
+ 45:     jest.useFakeTimers();
+ 46:     jest
+ 47:       .spyOn(window, "requestAnimationFrame")
+ 48:       .mockImplementation((cb) => setTimeout(cb, 0));
+ 49:   });
+ 50:   afterEach(() => {
+ 51:     jest.useRealTimers();
+ 52:     jest.restoreAllMocks();
+ 53:   });
+ 54:   describe("rendering", () => {
+ 55:     it("renders canvas element with default props", () => {
+ 56:       // Arrange
+ 57:       const expectedTestId = "matrix-canvas";
+ 58:       // Act
+ 59:       render(<ReactMatrixAnimation />);
+ 60:       const canvas = screen.getByTestId(expectedTestId);
+ 61:       // Assert
+ 62:       expect(canvas).toBeInTheDocument();
+ 63:       expect(canvas).toHaveStyle({
+ 64:         width: "100%",
+ 65:         height: "100%",
+ 66:       });
+ 67:     });
+ 68:     it("renders canvas element with custom props", () => {
+ 69:       // Arrange
+ 70:       const customProps = {
+ 71:         tileSize: 30,
+ 72:         fadeFactor: 0.7,
+ 73:         backgroundColor: "#000000",
+ 74:         fontColor: "#ffffff",
+ 75:         tileSet: ["A", "B", "C"],
+ 76:       };
+ 77:       const expectedTestId = "matrix-canvas";
+ 78:       // Act
+ 79:       render(<ReactMatrixAnimation {...customProps} />);
+ 80:       const canvas = screen.getByTestId(expectedTestId);
+ 81:       // Assert
+ 82:       expect(canvas).toBeInTheDocument();
+ 83:     });
+ 84:   });
+ 85:   describe("validation", () => {
+ 86:     beforeEach(() => {
+ 87:       // Arrange - Suppress console.error for validation tests
+ 88:       console.error = jest.fn();
+ 89:     });
+ 90:     it("throws error for invalid background color", () => {
+ 91:       // Arrange
+ 92:       const invalidProps = { backgroundColor: "invalid" };
+ 93:       const expectedError =
+ 94:         "Invalid background color. Use a hex value e.g. #030303";
+ 95:       // Act & Assert
+ 96:       expect(() => {
+ 97:         render(<ReactMatrixAnimation {...invalidProps} />);
+ 98:       }).toThrow(expectedError);
+ 99:     });
+100:     it("throws error for invalid font color", () => {
+101:       // Arrange
+102:       const invalidProps = { fontColor: "invalid" };
+103:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
+104:       // Act & Assert
+105:       expect(() => {
+106:         render(<ReactMatrixAnimation {...invalidProps} />);
+107:       }).toThrow(expectedError);
+108:     });
+109:   });
+110: });
+````
+
+## File: src/__tests__/Animations/TestAnimation.test.tsx
+````typescript
+ 1: /**
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import React from "react";
+ 5: import { render, screen } from "@testing-library/react";
+ 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
+ 7: import PageTransition from "@/components/Animations/PageTransition.component";
+ 8: import FadeDown from "@/components/Animations/FadeDown.component";
+ 9: import FadeUp from "@/components/Animations/FadeUp.component";
+10: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+11: mockIntersectionObserver();
+12: type AnimationComponent =
+13:   | typeof PageTransition
+14:   | typeof FadeDown
+15:   | typeof FadeUp
+16:   | typeof BounceInScroll;
+17: /**
+18:  * Reusable tests for animation components.
+19:  *
+20:  * @param {AnimationComponent} Component - The animation component to test.
+21:  * @param {string} testId - The test ID for the component.
+22:  * @param {string} expectedAttribute - The expected attribute value for the component.
+23:  * @return {void} This function does not return anything.
+24:  */
+25: function testAnimationComponent(
+26:   Component: AnimationComponent,
+27:   testId: string,
+28:   expectedAttribute: string,
+29: ) {
+30:   describe(Component.name, () => {
+31:     // Arrange - Set up test data and conditions
+32:     const testContent = Component.name;
+33:     beforeEach(() => {
+34:       // Act - Perform the action being tested
+35:       render(<Component delay={1}>{testContent}</Component>);
+36:     });
+37:     it(`${Component.name} loads and can be displayed`, () => {
+38:       // Arrange - Set up test data and conditions
+39:       const expectedTestId = testId;
+40:       // Act - Perform the action being tested
+41:       const element = screen.getByTestId(expectedTestId);
+42:       expect(element).toBeInTheDocument();
+43:     });
+44:     it(`Framer motion sets ${expectedAttribute}`, () => {
+45:       // Arrange - Set up test data and conditions
+46:       const expectedTestId = testId;
+47:       // Act - Perform the action being tested
+48:       const element = screen.getByTestId(expectedTestId);
+49:       // Assert - Verify the results
+50:       expect(element).toContainHTML(expectedAttribute);
+51:     });
+52:   });
+53: }
+54: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
+55: testAnimationComponent(FadeDown, "fadedown", "translateY");
+56: testAnimationComponent(FadeUp, "fadeup", "translateY");
+57: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
+````
+
+## File: src/__tests__/Prosjekter/actions.test.ts
+````typescript
+  1: import { getProjects } from "@/app/prosjekter/actions";
+  2: import { client } from "@/lib/sanity/client";
+  3: import { projectsQuery } from "@/lib/sanity/queries";
+  4: interface ErrorTestCase {
+  5:   name: string;
+  6:   error: {
+  7:     statusCode?: number;
+  8:     message: string;
+  9:     details?: {
+ 10:       type: string;
+ 11:       description: string;
+ 12:     };
+ 13:     name?: string;
+ 14:   };
+ 15:   expectedErrorMessage: string;
+ 16: }
+ 17: // Mock the Sanity client
+ 18: jest.mock("@/lib/sanity/client", () => ({
+ 19:   client: {
+ 20:     fetch: jest.fn(),
+ 21:   },
+ 22: }));
+ 23: describe("getProjects", () => {
+ 24:   beforeEach(() => {
+ 25:     jest.clearAllMocks();
+ 26:   });
+ 27:   it("fetches projects successfully", async () => {
+ 28:     // Arrange
+ 29:     const mockProjects = [
+ 30:       {
+ 31:         id: "1",
+ 32:         name: "Test Project",
+ 33:         description: "Test Description",
+ 34:         subdescription: "Test Subdescription",
+ 35:         projectimage: { asset: { _ref: "test" } },
+ 36:         urlwww: [],
+ 37:         urlgithub: [],
+ 38:       },
+ 39:     ];
+ 40:     const expectedFetchOptions = {
+ 41:       next: { revalidate: 3600 },
+ 42:     };
+ 43:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 44:     // Act
+ 45:     const result = await getProjects();
+ 46:     // Assert
+ 47:     expect(result).toEqual(mockProjects);
+ 48:     expect(client.fetch).toHaveBeenCalledWith(
+ 49:       projectsQuery,
+ 50:       {},
+ 51:       expectedFetchOptions,
+ 52:     );
+ 53:   });
+ 54:   describe("error handling", () => {
+ 55:     const testErrorHandling = async ({
+ 56:       name,
+ 57:       error,
+ 58:       expectedErrorMessage,
+ 59:     }: ErrorTestCase) => {
+ 60:       it(name, async () => {
+ 61:         // Arrange
+ 62:         (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 63:         // Act & Assert
+ 64:         await expect(getProjects()).rejects.toThrow(expectedErrorMessage);
+ 65:       });
+ 66:     };
+ 67:     const errorCases: ErrorTestCase[] = [
+ 68:       {
+ 69:         name: "handles authentication errors (401)",
+ 70:         error: {
+ 71:           statusCode: 401,
+ 72:           message: "Invalid token",
+ 73:           details: {
+ 74:             type: "credentials",
+ 75:             description: "Invalid token provided",
+ 76:           },
+ 77:         },
+ 78:         expectedErrorMessage: "Authentication failed",
+ 79:       },
+ 80:       {
+ 81:         name: "handles permission errors (403)",
+ 82:         error: {
+ 83:           statusCode: 403,
+ 84:           message: "Insufficient permissions",
+ 85:           details: {
+ 86:             type: "authorization",
+ 87:             description: "Missing read access",
+ 88:           },
+ 89:         },
+ 90:         expectedErrorMessage: "Insufficient permissions",
+ 91:       },
+ 92:       {
+ 93:         name: "handles rate limiting (429)",
+ 94:         error: {
+ 95:           statusCode: 429,
+ 96:           message: "Too Many Requests",
+ 97:           details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 98:         },
+ 99:         expectedErrorMessage: "Rate limit exceeded",
+100:       },
+101:       {
+102:         name: "handles malformed GROQ queries (400)",
+103:         error: {
+104:           statusCode: 400,
+105:           message: "Invalid GROQ query",
+106:           details: {
+107:             type: "query_error",
+108:             description: "Syntax error in GROQ query",
+109:           },
+110:         },
+111:         expectedErrorMessage: "Sanity API error: Invalid GROQ query",
+112:       },
+113:       {
+114:         name: "handles network timeouts",
+115:         error: Object.assign(new Error("Network timeout"), {
+116:           name: "TimeoutError",
+117:         }),
+118:         expectedErrorMessage: "Request timed out",
+119:       },
+120:       {
+121:         name: "handles generic fetch errors",
+122:         error: {
+123:           message: "Fetch failed",
+124:         },
+125:         expectedErrorMessage: "Failed to fetch projects",
+126:       },
+127:     ];
+128:     errorCases.forEach(testErrorHandling);
+129:     it("recovers after temporary errors", async () => {
+130:       // Arrange
+131:       const rateError = {
+132:         statusCode: 429,
+133:         message: "Too Many Requests",
+134:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+135:       };
+136:       const mockProjects = [
+137:         {
+138:           id: "1",
+139:           name: "Test Project",
+140:           description: "Test Description",
+141:           subdescription: "Test Subdescription",
+142:           projectimage: { asset: { _ref: "test" } },
+143:           urlwww: [],
+144:           urlgithub: [],
+145:         },
+146:       ];
+147:       // First call fails with rate limit
+148:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
+149:       // Second call succeeds
+150:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+151:       // First call should fail
+152:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+153:       // Second call should succeed
+154:       const result = await getProjects();
+155:       expect(result).toEqual(mockProjects);
+156:     });
+157:   });
+158: });
+````
+
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { client } from "@/lib/sanity/client";
+ 2: import { projectsQuery } from "@/lib/sanity/queries";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: import { isSanityApiError } from "@/types/sanity-errors";
+ 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 6:   return client.fetch(
+ 7:     projectsQuery,
+ 8:     {},
+ 9:     {
+10:       next: { revalidate: 3600 },
+11:     },
+12:   );
+13: }
+14: function handleError(error: unknown): never {
+15:   console.error("Error fetching projects:", error);
+16:   if (isSanityApiError(error)) {
+17:     switch (error.statusCode) {
+18:       case 401:
+19:         throw new Error("Authentication failed");
+20:       case 403:
+21:         throw new Error("Insufficient permissions");
+22:       case 429:
+23:         throw new Error("Rate limit exceeded");
+24:       default:
+25:         throw new Error(`Sanity API error: ${error.message}`);
+26:     }
+27:   }
+28:   if (error instanceof Error && error.name === "TimeoutError") {
+29:     throw new Error("Request timed out");
+30:   }
+31:   throw new Error("Failed to fetch projects");
+32: }
+33: export async function getProjects(): Promise<Project[]> {
+34:   try {
+35:     // Add a small delay to demonstrate loading state
+36:     await new Promise((resolve) => setTimeout(resolve, 1000));
+37:     return await fetchProjectsFromSanity();
+38:   } catch (error) {
+39:     handleError(error);
+40:   }
+41: }
+````
+
+## File: src/components/Animations/Matrix.renderer.ts
+````typescript
+  1: import { RGB, Column, getRandomCharacter } from "./Matrix.utils";
+  2: interface MatrixRendererProps {
+  3:   ctx: CanvasRenderingContext2D;
+  4:   canvas: HTMLCanvasElement;
+  5:   columns: Column[];
+  6:   maxStackHeight: number;
+  7:   tileSize: number;
+  8:   fadeFactor: number;
+  9:   rgbBackground: RGB;
+ 10:   rgbFont: RGB;
+ 11:   glowColor: string;
+ 12:   tileSet: string[] | null;
+ 13:   getRandomInt: (max: number) => number;
+ 14: }
+ 15: interface MatrixRenderer {
+ 16:   draw: () => void;
+ 17: }
+ 18: const createDrawFunctions = (
+ 19:   ctx: CanvasRenderingContext2D,
+ 20:   canvas: HTMLCanvasElement,
+ 21:   rgbBackground: RGB,
+ 22:   rgbFont: RGB,
+ 23:   fadeFactor: number,
+ 24:   tileSize: number,
+ 25:   glowColor: string,
+ 26: ) => {
+ 27:   const drawBackground = () => {
+ 28:     ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
+ 29:     ctx.fillRect(0, 0, canvas.width, canvas.height);
+ 30:     ctx.font = `${tileSize - 2}px monospace`;
+ 31:   };
+ 32:   const drawCharacter = (character: string, x: number, y: number) => {
+ 33:     ctx.fillStyle = `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`;
+ 34:     ctx.fillText(character, x, y);
+ 35:   };
+ 36:   const drawGlowEffect = (character: string, x: number, y: number) => {
+ 37:     ctx.save();
+ 38:     ctx.shadowColor = glowColor;
+ 39:     ctx.shadowBlur = 10;
+ 40:     ctx.fillStyle = glowColor;
+ 41:     ctx.fillText(character, x, y);
+ 42:     ctx.restore();
+ 43:   };
+ 44:   return { drawBackground, drawCharacter, drawGlowEffect };
+ 45: };
+ 46: const createColumnHandlers = (
+ 47:   tileSize: number,
+ 48:   maxStackHeight: number,
+ 49:   getRandomInt: (max: number) => number,
+ 50: ) => {
+ 51:   const updateColumnState = (column: Column) => {
+ 52:     column.stackCounter++;
+ 53:     if (column.stackCounter >= column.stackHeight) {
+ 54:       column.stackHeight = 10 + getRandomInt(maxStackHeight);
+ 55:       column.stackCounter = 0;
+ 56:     }
+ 57:   };
+ 58:   const getCharacterPosition = (column: Column) => ({
+ 59:     y: column.stackCounter * tileSize + tileSize,
+ 60:     isLastCharacter: column.stackCounter === Math.floor(column.stackHeight) - 1,
+ 61:   });
+ 62:   return { updateColumnState, getCharacterPosition };
+ 63: };
+ 64: export const createMatrixRenderer = ({
+ 65:   ctx,
+ 66:   canvas,
+ 67:   columns,
+ 68:   maxStackHeight,
+ 69:   tileSize,
+ 70:   fadeFactor,
+ 71:   rgbBackground,
+ 72:   rgbFont,
+ 73:   glowColor,
+ 74:   tileSet,
+ 75:   getRandomInt,
+ 76: }: MatrixRendererProps): MatrixRenderer => {
+ 77:   const { drawBackground, drawCharacter, drawGlowEffect } = createDrawFunctions(
+ 78:     ctx,
+ 79:     canvas,
+ 80:     rgbBackground,
+ 81:     rgbFont,
+ 82:     fadeFactor,
+ 83:     tileSize,
+ 84:     glowColor,
+ 85:   );
+ 86:   const { updateColumnState, getCharacterPosition } = createColumnHandlers(
+ 87:     tileSize,
+ 88:     maxStackHeight,
+ 89:     getRandomInt,
+ 90:   );
+ 91:   const drawColumn = (column: Column) => {
+ 92:     if (column.stackCounter < 0) return;
+ 93:     const randomCharacter = getRandomCharacter(tileSet);
+ 94:     const { y, isLastCharacter } = getCharacterPosition(column);
+ 95:     drawCharacter(randomCharacter, column.x, y);
+ 96:     if (isLastCharacter) {
+ 97:       drawGlowEffect(randomCharacter, column.x, y);
+ 98:     }
+ 99:   };
+100:   return {
+101:     draw: () => {
+102:       drawBackground();
+103:       columns.forEach((column) => {
+104:         drawColumn(column);
+105:         updateColumnState(column);
+106:       });
+107:     },
+108:   };
+109: };
+````
+
+## File: src/components/Animations/Matrix.utils.ts
+````typescript
+ 1: export interface RGB {
+ 2:   r: number;
+ 3:   g: number;
+ 4:   b: number;
+ 5: }
+ 6: export interface Column {
+ 7:   x: number;
+ 8:   stackHeight: number;
+ 9:   stackCounter: number;
+10: }
+11: /**
+12:  * Converts a hex color value to RGB
+13:  * @param {string} hexValue - The hex color value to convert
+14:  * @returns {RGB | null} The RGB color object or null if invalid hex value
+15:  */
+16: export const hexToRgb = (hexValue: string): RGB | null => {
+17:   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
+18:   return result
+19:     ? {
+20:         r: parseInt(result?.[1] ?? "0", 16),
+21:         g: parseInt(result?.[2] ?? "0", 16),
+22:         b: parseInt(result?.[3] ?? "0", 16),
+23:       }
+24:     : null;
+25: };
+26: /**
+27:  * Generates a random integer
+28:  * @param {number} max - The maximum value (exclusive)
+29:  * @returns {number} A random integer between 0 and max-1
+30:  */
+31: export const getRandomInt = (max: number): number => {
+32:   const array = new Uint32Array(1);
+33:   window.crypto.getRandomValues(array);
+34:   return (array?.[0] ?? 0) % max;
+35: };
+36: /**
+37:  * Gets a random character from the tileSet or generates a random ASCII character
+38:  * @param {string[] | null} tileSet - Optional set of characters to choose from
+39:  * @returns {string} A random character
+40:  */
+41: export const getRandomCharacter = (tileSet: string[] | null): string => {
+42:   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
+43:     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? "";
+44:   }
+45:   // Generate ASCII printable characters (33-126)
+46:   return String.fromCharCode(33 + (getRandomInt(94) % 94));
+47: };
+48: /**
+49:  * Debounce function
+50:  * @param {T} func - The function to debounce
+51:  * @param {number} wait - The debounce wait time in milliseconds
+52:  * @returns {(...args: Parameters<T>) => void} The debounced function
+53:  */
+54: export const debounce = <T extends (...args: unknown[]) => void>(
+55:   func: T,
+56:   wait: number,
+57: ): ((...args: Parameters<T>) => void) => {
+58:   let timeout: ReturnType<typeof setTimeout> | null = null;
+59:   return (...args: Parameters<T>) => {
+60:     if (timeout !== null) {
+61:       clearTimeout(timeout);
+62:     }
+63:     timeout = setTimeout(() => func(...args), wait);
+64:   };
+65: };
+````
+
+## File: src/components/Animations/MatrixCursor.component.tsx
+````typescript
+  1: "use client";
+  2: import { useEffect, RefObject, useState, useCallback } from "react";
+  3: import "@/app/cursor.css";
+  4: import { useMobile } from "../../hooks/useMobile"; // Pb51b
+  5: interface MatrixCursorProps {
+  6:   heroRef: RefObject<HTMLElement | null>;
+  7: }
+  8: interface CursorStyles extends React.CSSProperties {
+  9:   "--cursor-x": string;
+ 10:   "--cursor-y": string;
+ 11: }
+ 12: interface MatrixTrail {
+ 13:   id: string;
+ 14:   x: number;
+ 15:   y: number;
+ 16:   char: string;
+ 17: }
+ 18: /**
+ 19:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 20:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 21:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 22:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 23:  */
+ 24: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 25:   const isMobile = useMobile(); // Pd528
+ 26:   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+ 27:   const [isHovered, setIsHovered] = useState(false);
+ 28:   const [trails, setTrails] = useState<MatrixTrail[]>([]);
+ 29:   const getRandomChar = useCallback(() => {
+ 30:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 31:     const index = Math.floor(Math.random() * matrixChars.length);
+ 32:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 33:   }, []);
+ 34:   const createTrail = useCallback(
+ 35:     (x: number, y: number) => {
+ 36:       const newTrail: MatrixTrail = {
+ 37:         id: Math.random().toString(36).substring(2, 100),
+ 38:         x,
+ 39:         y,
+ 40:         char: getRandomChar(),
+ 41:       };
+ 42:       setTrails((currentTrails) => {
+ 43:         const updatedTrails = [...currentTrails, newTrail];
+ 44:         if (updatedTrails.length > 20) {
+ 45:           return updatedTrails.slice(1);
+ 46:         }
+ 47:         return updatedTrails;
+ 48:       });
+ 49:     },
+ 50:     [getRandomChar],
+ 51:   );
+ 52:   useEffect(() => {
+ 53:     const heroSection = heroRef.current;
+ 54:     if (!heroSection) return;
+ 55:     // Add cursor: none to the hero section when hovered
+ 56:     if (isHovered) {
+ 57:       heroSection.style.cursor = "none";
+ 58:     } else {
+ 59:       heroSection.style.cursor = "";
+ 60:     }
+ 61:     const handleMouseMove = (e: MouseEvent) => {
+ 62:       setCursorPosition({ x: e.clientX, y: e.clientY });
+ 63:       if (isHovered) {
+ 64:         createTrail(e.clientX, e.clientY);
+ 65:       }
+ 66:     };
+ 67:     const handleMouseEnter = () => {
+ 68:       setIsHovered(true);
+ 69:       heroSection.style.cursor = "none";
+ 70:     };
+ 71:     const handleMouseLeave = () => {
+ 72:       setIsHovered(false);
+ 73:       heroSection.style.cursor = "";
+ 74:       setTrails([]);
+ 75:     };
+ 76:     heroSection.addEventListener("mousemove", handleMouseMove);
+ 77:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+ 78:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+ 79:     return () => {
+ 80:       heroSection.removeEventListener("mousemove", handleMouseMove);
+ 81:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+ 82:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+ 83:       heroSection.style.cursor = "";
+ 84:     };
+ 85:   }, [heroRef, isHovered, createTrail]);
+ 86:   const handleAnimationEnd = useCallback((trailId: string) => {
+ 87:     setTrails((currentTrails) =>
+ 88:       currentTrails.filter((trail) => trail.id !== trailId),
+ 89:     );
+ 90:   }, []);
+ 91:   if (!heroRef.current || isMobile) return null; // P6ecf
+ 92:   const cursorStyles: CursorStyles = {
+ 93:     position: "fixed",
+ 94:     top: 0,
+ 95:     left: 0,
+ 96:     width: "100%",
+ 97:     height: "100%",
+ 98:     pointerEvents: "none",
+ 99:     zIndex: 9999,
+100:     "--cursor-x": `${cursorPosition.x}px`,
+101:     "--cursor-y": `${cursorPosition.y}px`,
+102:   };
+103:   return (
+104:     <div
+105:       data-testid="matrix-cursor"
+106:       className={isHovered ? "matrix-cursor" : ""}
+107:       style={cursorStyles}
+108:     >
+109:       {trails.map((trail) => (
+110:         <div
+111:           key={trail.id}
+112:           className="matrix-trail"
+113:           style={{
+114:             position: "fixed",
+115:             left: `${trail.x}px`,
+116:             top: `${trail.y}px`,
+117:             zIndex: 10000,
+118:             pointerEvents: "none",
+119:           }}
+120:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+121:         >
+122:           {trail.char}
+123:         </div>
+124:       ))}
+125:       {isHovered && (
+126:         <div
+127:           style={{
+128:             position: "fixed",
+129:             top: 0,
+130:             left: 0,
+131:             width: "100%",
+132:             height: "100%",
+133:             pointerEvents: "none",
+134:             zIndex: 9999,
+135:           }}
+136:         />
+137:       )}
+138:     </div>
+139:   );
+140: };
+141: export default MatrixCursor;
+````
+
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -14969,6 +14724,246 @@ tsconfig.json
 74: export default ProsjektCard;
 ````
 
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { motion, AnimatePresence } from "motion/react";
+  4: interface Tab {
+  5:   id: string;
+  6:   label: string;
+  7:   content: React.ReactNode;
+  8: }
+  9: interface TabsProps {
+ 10:   tabs: Tab[];
+ 11:   orientation?: "horizontal" | "vertical";
+ 12: }
+ 13: interface TabButtonProps {
+ 14:   tab: Tab;
+ 15:   isActive: boolean;
+ 16:   isVertical: boolean;
+ 17:   index: number;
+ 18:   totalTabs: number;
+ 19:   onClick: () => void;
+ 20: }
+ 21: const getTabButtonClassName = (
+ 22:   isActive: boolean,
+ 23:   isVertical: boolean,
+ 24:   index: number,
+ 25:   totalTabs: number,
+ 26: ) => {
+ 27:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
+ 28:   const activeClasses = isActive
+ 29:     ? "text-white"
+ 30:     : "text-gray-300 hover:text-white";
+ 31:   const orientationClasses = isVertical
+ 32:     ? "w-full text-left"
+ 33:     : "flex-grow text-center";
+ 34:   const borderClasses = [
+ 35:     index !== 0 ? "border-t border-gray-600" : "",
+ 36:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
+ 37:   ].join(" ");
+ 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 39: };
+ 40: const TabButton: React.FC<TabButtonProps> = ({
+ 41:   tab,
+ 42:   isActive,
+ 43:   isVertical,
+ 44:   index,
+ 45:   totalTabs,
+ 46:   onClick,
+ 47: }) => (
+ 48:   <motion.button
+ 49:     key={tab.id}
+ 50:     onClick={onClick}
+ 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 52:     role="tab"
+ 53:     aria-selected={isActive}
+ 54:     aria-controls={`tabpanel-${tab.id}`}
+ 55:     id={`tab-${tab.id}`}
+ 56:   >
+ 57:     {isActive && (
+ 58:       <motion.div
+ 59:         layoutId="active-tab"
+ 60:         className={`absolute ${
+ 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 62:         } bg-[var(--matrix-dark)]`}
+ 63:         initial={false}
+ 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 65:       />
+ 66:     )}
+ 67:     <span className="relative z-10">{tab.label}</span>
+ 68:   </motion.button>
+ 69: );
+ 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 71:   tab,
+ 72:   isActive,
+ 73: }) => {
+ 74:   if (!isActive) return null;
+ 75:   return (
+ 76:     <motion.div
+ 77:       key={tab.id}
+ 78:       role="tabpanel"
+ 79:       id={`tabpanel-${tab.id}`}
+ 80:       aria-labelledby={`tab-${tab.id}`}
+ 81:       className="px-8"
+ 82:       initial={{ opacity: 0, y: 20 }}
+ 83:       animate={{ opacity: 1, y: 0 }}
+ 84:       exit={{ opacity: 0, y: -20 }}
+ 85:       transition={{ duration: 0.3 }}
+ 86:     >
+ 87:       {tab.content}
+ 88:     </motion.div>
+ 89:   );
+ 90: };
+ 91: /**
+ 92:  * Renders a set of tabs with content.
+ 93:  *
+ 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 97:  * @return {JSX.Element} The rendered Tabs component.
+ 98:  */
+ 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+101:   const isVertical = orientation === "vertical";
+102:   return (
+103:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
+104:       <div
+105:         className={`flex ${
+106:           isVertical ? "flex-col sm:flex-row" : "flex-col"
+107:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
+108:       >
+109:         <div
+110:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+111:             isVertical ? "max-h-[181px] " : ""
+112:           }`}
+113:         >
+114:           <div
+115:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+116:             role="tablist"
+117:           >
+118:             {tabs.map((tab, index) => (
+119:               <TabButton
+120:                 key={tab.id}
+121:                 tab={tab}
+122:                 isActive={activeTab === tab.id}
+123:                 isVertical={isVertical}
+124:                 index={index}
+125:                 totalTabs={tabs.length}
+126:                 onClick={() => setActiveTab(tab.id)}
+127:               />
+128:             ))}
+129:           </div>
+130:         </div>
+131:         <div
+132:           className={`${
+133:             isVertical ? "sm:w-3/4 w-full" : "w-full"
+134:           } bg-gray-800 overflow-y-auto`}
+135:         >
+136:           <AnimatePresence mode="wait">
+137:             {tabs.map((tab) => (
+138:               <TabPanel
+139:                 key={tab.id}
+140:                 tab={tab}
+141:                 isActive={activeTab === tab.id}
+142:               />
+143:             ))}
+144:           </AnimatePresence>
+145:         </div>
+146:       </div>
+147:     </div>
+148:   );
+149: };
+150: export default Tabs;
+````
+
+## File: src/utils/eslint/index.ts
+````typescript
+ 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
+ 2: type MessageIds = "missingAAAPattern";
+ 3: type Options = [];
+ 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
+ 5:   const testNames = ["it", "test"];
+ 6:   return (
+ 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
+ 8:     testNames.includes(node.callee.name)
+ 9:   );
+10: };
+11: const isArrowFunction = (
+12:   node: TSESTree.Node,
+13: ): node is TSESTree.ArrowFunctionExpression => {
+14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+15: };
+16: const validateAAAPattern = (
+17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+18:   node: TSESTree.CallExpression,
+19: ) => {
+20:   const testFn = node.arguments[1];
+21:   if (!isArrowFunction(testFn)) return;
+22:   if (!hasAAAComments(context, testFn)) {
+23:     context.report({
+24:       node,
+25:       messageId: "missingAAAPattern",
+26:     });
+27:   }
+28: };
+29: const validateTestCase = (
+30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+31:   node: TSESTree.CallExpression,
+32: ) => {
+33:   if (!isTestFunction(node)) return;
+34:   validateAAAPattern(context, node);
+35: };
+36: const hasAAAComments = (
+37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+38:   testFn: TSESTree.ArrowFunctionExpression,
+39: ): boolean => {
+40:   const comments = context.getSourceCode().getCommentsBefore(testFn.body);
+41:   const patterns = ["Arrange", "Act", "Assert"];
+42:   return comments.some((comment: TSESTree.Comment) =>
+43:     patterns.some((pattern) => comment.value.includes(pattern)),
+44:   );
+45: };
+46: const createRule = ESLintUtils.RuleCreator(
+47:   (name) =>
+48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
+49: );
+50: const rule = createRule<Options, MessageIds>({
+51:   name: "arrange-act-assert",
+52:   meta: {
+53:     type: "suggestion",
+54:     docs: {
+55:       description: "enforce AAA pattern in tests",
+56:     },
+57:     messages: {
+58:       missingAAAPattern: "Test should follow AAA pattern with comments",
+59:     },
+60:     schema: [],
+61:   },
+62:   defaultOptions: [],
+63:   create(context) {
+64:     return {
+65:       CallExpression: (node: TSESTree.CallExpression) =>
+66:         validateTestCase(context, node),
+67:     };
+68:   },
+69: });
+70: export default {
+71:   configs: {
+72:     recommended: {
+73:       plugins: ["test-rules"],
+74:       rules: {
+75:         "test-rules/arrange-act-assert": "error",
+76:       },
+77:     },
+78:   },
+79:   rules: {
+80:     "arrange-act-assert": rule,
+81:   },
+82: };
+````
+
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -14990,6 +14985,43 @@ tsconfig.json
 17:     "eslint": ">=9.24.0"
 18:   }
 19: }
+````
+
+## File: .pa11yci.json
+````json
+ 1: {
+ 2:   "defaults": {
+ 3:     "standard": "WCAG2AA",
+ 4:     "timeout": 30000,
+ 5:     "wait": 1000,
+ 6:     "viewport": {
+ 7:       "width": 1280,
+ 8:       "height": 800
+ 9:     },
+10:     "ignore": ["WCAG2AA.Principle1.Guideline1_4.1_4_3.G18.Fail"],
+11:     "chromeLaunchConfig": {
+12:       "args": ["--no-sandbox"]
+13:     }
+14:   },
+15:   "urls": [
+16:     {
+17:       "url": "http://localhost:3000",
+18:       "screenCapture": "pa11y-reports/home.png"
+19:     },
+20:     {
+21:       "url": "http://localhost:3000/cv",
+22:       "screenCapture": "pa11y-reports/cv.png"
+23:     },
+24:     {
+25:       "url": "http://localhost:3000/prosjekter",
+26:       "screenCapture": "pa11y-reports/prosjekter.png"
+27:     },
+28:     {
+29:       "url": "http://localhost:3000/kontakt",
+30:       "screenCapture": "pa11y-reports/kontakt.png"
+31:     }
+32:   ]
+33: }
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -15085,16 +15117,16 @@ tsconfig.json
  7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible();
  8:     // Check subheading
  9:     await expect(page.getByTestId("fadeup").getByRole("heading")).toContainText(
-10:       "Jeg heter Daniel Fjeldstad og er en webutvikler."
+10:       "Jeg heter Daniel Fjeldstad og er en webutvikler.",
 11:     );
 12:     await expect(
-13:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" })
+13:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
 14:     ).toBeVisible();
 15:     // Check skills text
 16:     await expect(
 17:       page.getByText(
-18:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer."
-19:       )
+18:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+19:       ),
 20:     ).toBeVisible();
 21:     // Check if icons are visible
 22:     await expect(page.getByTestId("icons")).toBeVisible();
@@ -15104,11 +15136,11 @@ tsconfig.json
 26:     const omMegSection = page.getByLabel("Om Meg");
 27:     // Check section title
 28:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-29:       "Om Meg"
+29:       "Om Meg",
 30:     );
 31:     // Check section content
 32:     await expect(omMegSection.getByTestId("bounceinscroll")).toContainText(
-33:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap."
+33:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
 34:     );
 35:   });
 36:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
@@ -15116,7 +15148,7 @@ tsconfig.json
 38:     const prosjekterSection = page.getByLabel("Prosjekter");
 39:     // Check section content
 40:     await expect(prosjekterSection.getByTestId("bounceinscroll")).toContainText(
-41:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB."
+41:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
 42:     );
 43:   });
 44: });
@@ -15130,11 +15162,11 @@ tsconfig.json
  4:     await page.goto("/prosjekter");
  5:     // Check main heading
  6:     await expect(
- 7:       page.getByRole("heading", { name: "Prosjekter" })
+ 7:       page.getByRole("heading", { name: "Prosjekter" }),
  8:     ).toBeVisible();
  9:     // Check if 'Dfweb versjon' heading is visible
 10:     await expect(
-11:       page.getByRole("heading", { name: "Dfweb versjon" })
+11:       page.getByRole("heading", { name: "Dfweb versjon" }),
 12:     ).toBeVisible();
 13:   });
 14:   test("displays project images correctly", async ({ page }) => {
@@ -15142,7 +15174,7 @@ tsconfig.json
 16:     // Check if project images are visible
 17:     await expect(page.getByRole("img", { name: "Earth Doom" })).toBeVisible();
 18:     await expect(
-19:       page.getByRole("img", { name: "NextJS WooCommerce" })
+19:       page.getByRole("img", { name: "NextJS WooCommerce" }),
 20:     ).toBeVisible();
 21:   });
 22:   test("displays project details correctly", async ({ page }) => {
@@ -15152,7 +15184,7 @@ tsconfig.json
 26:     await expect(portfolioContent).toContainText("Earth Doom");
 27:     // Check project technologies
 28:     await expect(portfolioContent).toContainText(
-29:       "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js"
+29:       "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js",
 30:     );
 31:     // Check if 'Besøk' and 'GitHub' links are visible
 32:     await expect(page.getByText("BesøkGitHub").first()).toBeVisible();
