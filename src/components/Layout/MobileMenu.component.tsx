@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { useClickAway } from "react-use";
 import Link from "next/link";
+import useClickOutside from "@/hooks/useClickOutside";
 import { usePathname } from "next/navigation";
 
 import { AnimatePresence, useCycle, motion } from "motion/react";
@@ -30,14 +30,14 @@ interface IMobileMenuProps {
 
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   const handleClickOutside = () => {
     setisExpanded(0);
   };
 
-  useClickAway(ref, handleClickOutside);
+  useClickOutside(ref, handleClickOutside);
 
   const menuVariants = {
     closed: {
