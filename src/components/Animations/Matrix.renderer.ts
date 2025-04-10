@@ -25,7 +25,7 @@ const createDrawFunctions = (
   rgbFont: RGB,
   fadeFactor: number,
   tileSize: number,
-  glowColor: string
+  glowColor: string,
 ) => {
   const drawBackground = () => {
     ctx.fillStyle = `rgba(${rgbBackground.r}, ${rgbBackground.g}, ${rgbBackground.b}, ${fadeFactor})`;
@@ -53,7 +53,7 @@ const createDrawFunctions = (
 const createColumnHandlers = (
   tileSize: number,
   maxStackHeight: number,
-  getRandomInt: (max: number) => number
+  getRandomInt: (max: number) => number,
 ) => {
   const updateColumnState = (column: Column) => {
     column.stackCounter++;
@@ -66,7 +66,7 @@ const createColumnHandlers = (
 
   const getCharacterPosition = (column: Column) => ({
     y: column.stackCounter * tileSize + tileSize,
-    isLastCharacter: column.stackCounter === Math.floor(column.stackHeight) - 1
+    isLastCharacter: column.stackCounter === Math.floor(column.stackHeight) - 1,
   });
 
   return { updateColumnState, getCharacterPosition };
@@ -92,13 +92,13 @@ export const createMatrixRenderer = ({
     rgbFont,
     fadeFactor,
     tileSize,
-    glowColor
+    glowColor,
   );
 
   const { updateColumnState, getCharacterPosition } = createColumnHandlers(
     tileSize,
     maxStackHeight,
-    getRandomInt
+    getRandomInt,
   );
 
   const drawColumn = (column: Column) => {
@@ -116,10 +116,10 @@ export const createMatrixRenderer = ({
   return {
     draw: () => {
       drawBackground();
-      columns.forEach(column => {
+      columns.forEach((column) => {
         drawColumn(column);
         updateColumnState(column);
       });
-    }
+    },
   };
 };

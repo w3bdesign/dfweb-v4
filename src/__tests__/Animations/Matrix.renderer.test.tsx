@@ -78,7 +78,9 @@ describe("Matrix Renderer", () => {
     // since that's the last operation
     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
     expect(mockCtx.font).toBe(expectedFont);
-    expect(mockCtx.fillStyle).toBe(`rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`);
+    expect(mockCtx.fillStyle).toBe(
+      `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`,
+    );
   });
 
   it("draws columns with characters", () => {
