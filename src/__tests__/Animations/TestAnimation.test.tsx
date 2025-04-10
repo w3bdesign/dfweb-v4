@@ -30,7 +30,7 @@ type AnimationComponent =
 function testAnimationComponent(
   Component: AnimationComponent,
   testId: string,
-  expectedAttribute: string
+  expectedAttribute: string,
 ) {
   describe(Component.name, () => {
     // Arrange - Set up test data and conditions
@@ -47,7 +47,6 @@ function testAnimationComponent(
 
       // Act - Perform the action being tested
       const element = screen.getByTestId(expectedTestId);
-
 
       expect(element).toBeInTheDocument();
     });

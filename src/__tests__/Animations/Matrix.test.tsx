@@ -9,10 +9,10 @@ const mockFillText = jest.fn();
 const mock2DContext = {
   fillRect: mockFillRect,
   fillText: mockFillText,
-  canvas: document.createElement('canvas'),
+  canvas: document.createElement("canvas"),
   getContextAttributes: () => ({}),
   globalAlpha: 1,
-  globalCompositeOperation: 'source-over',
+  globalCompositeOperation: "source-over",
   save: jest.fn(),
   restore: jest.fn(),
   font: "",
@@ -22,19 +22,22 @@ const mock2DContext = {
 } as unknown as CanvasRenderingContext2D;
 
 const mockBitmapContext = {
-  canvas: document.createElement('canvas'),
+  canvas: document.createElement("canvas"),
   transferFromImageBitmap: jest.fn(),
 } as unknown as ImageBitmapRenderingContext;
 
 // Use a single mock implementation that handles different context types
-HTMLCanvasElement.prototype.getContext = function(contextId: string, options?: any) {
+HTMLCanvasElement.prototype.getContext = function (
+  contextId: string,
+  options?: any,
+) {
   switch (contextId) {
-    case '2d':
+    case "2d":
       return mock2DContext;
-    case 'bitmaprenderer':
+    case "bitmaprenderer":
       return mockBitmapContext;
-    case 'webgl':
-    case 'webgl2':
+    case "webgl":
+    case "webgl2":
       return null;
     default:
       return null;

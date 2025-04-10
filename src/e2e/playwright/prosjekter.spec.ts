@@ -6,12 +6,12 @@ test.describe("Prosjekter page", () => {
 
     // Check main heading
     await expect(
-      page.getByRole("heading", { name: "Prosjekter" })
+      page.getByRole("heading", { name: "Prosjekter" }),
     ).toBeVisible();
 
     // Check if 'Dfweb versjon' heading is visible
     await expect(
-      page.getByRole("heading", { name: "Dfweb versjon" })
+      page.getByRole("heading", { name: "Dfweb versjon" }),
     ).toBeVisible();
   });
 
@@ -21,7 +21,7 @@ test.describe("Prosjekter page", () => {
     // Check if project images are visible
     await expect(page.getByRole("img", { name: "Earth Doom" })).toBeVisible();
     await expect(
-      page.getByRole("img", { name: "NextJS WooCommerce" })
+      page.getByRole("img", { name: "NextJS WooCommerce" }),
     ).toBeVisible();
   });
 
@@ -35,7 +35,7 @@ test.describe("Prosjekter page", () => {
 
     // Check project technologies
     await expect(portfolioContent).toContainText(
-      "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js"
+      "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js",
     );
 
     // Check if 'Besøk' and 'GitHub' links are visible

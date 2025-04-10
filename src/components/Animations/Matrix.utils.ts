@@ -19,9 +19,9 @@ export const hexToRgb = (hexValue: string): RGB | null => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
   return result
     ? {
-        r: parseInt(result?.[1] ?? '0', 16),
-        g: parseInt(result?.[2] ?? '0', 16),
-        b: parseInt(result?.[3] ?? '0', 16),
+        r: parseInt(result?.[1] ?? "0", 16),
+        g: parseInt(result?.[2] ?? "0", 16),
+        b: parseInt(result?.[3] ?? "0", 16),
       }
     : null;
 };
@@ -44,10 +44,10 @@ export const getRandomInt = (max: number): number => {
  */
 export const getRandomCharacter = (tileSet: string[] | null): string => {
   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
-    return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? '';
+    return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? "";
   }
-    // Generate ASCII printable characters (33-126)
-    return String.fromCharCode(33 + (getRandomInt(94) % 94));
+  // Generate ASCII printable characters (33-126)
+  return String.fromCharCode(33 + (getRandomInt(94) % 94));
 };
 
 /**

@@ -59,7 +59,11 @@ describe("getProjects", () => {
   });
 
   describe("error handling", () => {
-    const testErrorHandling = async ({ name, error, expectedErrorMessage }: ErrorTestCase) => {
+    const testErrorHandling = async ({
+      name,
+      error,
+      expectedErrorMessage,
+    }: ErrorTestCase) => {
       it(name, async () => {
         // Arrange
         (client.fetch as jest.Mock).mockRejectedValueOnce(error);
@@ -75,49 +79,60 @@ describe("getProjects", () => {
         error: {
           statusCode: 401,
           message: "Invalid token",
-          details: { type: "credentials", description: "Invalid token provided" }
+          details: {
+            type: "credentials",
+            description: "Invalid token provided",
+          },
         },
-        expectedErrorMessage: "Authentication failed"
+        expectedErrorMessage: "Authentication failed",
       },
       {
         name: "handles permission errors (403)",
         error: {
           statusCode: 403,
           message: "Insufficient permissions",
-          details: { type: "authorization", description: "Missing read access" }
+          details: {
+            type: "authorization",
+            description: "Missing read access",
+          },
         },
-        expectedErrorMessage: "Insufficient permissions"
+        expectedErrorMessage: "Insufficient permissions",
       },
       {
         name: "handles rate limiting (429)",
         error: {
           statusCode: 429,
           message: "Too Many Requests",
-          details: { type: "rate_limit", description: "Rate limit exceeded" }
+          details: { type: "rate_limit", description: "Rate limit exceeded" },
         },
-        expectedErrorMessage: "Rate limit exceeded"
+        expectedErrorMessage: "Rate limit exceeded",
       },
       {
         name: "handles malformed GROQ queries (400)",
         error: {
           statusCode: 400,
           message: "Invalid GROQ query",
-          details: { type: "query_error", description: "Syntax error in GROQ query" }
+          details: {
+            type: "query_error",
+            description: "Syntax error in GROQ query",
+          },
         },
-        expectedErrorMessage: "Sanity API error: Invalid GROQ query"
+        expectedErrorMessage: "Sanity API error: Invalid GROQ query",
       },
       {
         name: "handles network timeouts",
-        error: Object.assign(new Error("Network timeout"), { name: "TimeoutError" }),
-        expectedErrorMessage: "Request timed out"
+        error: Object.assign(new Error("Network timeout"), {
+          name: "TimeoutError",
+        }),
+        expectedErrorMessage: "Request timed out",
       },
       {
         name: "handles generic fetch errors",
         error: {
-          message: "Fetch failed"
+          message: "Fetch failed",
         },
-        expectedErrorMessage: "Failed to fetch projects"
-      }
+        expectedErrorMessage: "Failed to fetch projects",
+      },
     ];
 
     errorCases.forEach(testErrorHandling);
@@ -127,17 +142,19 @@ describe("getProjects", () => {
       const rateError = {
         statusCode: 429,
         message: "Too Many Requests",
-        details: { type: "rate_limit", description: "Rate limit exceeded" }
+        details: { type: "rate_limit", description: "Rate limit exceeded" },
       };
-      const mockProjects = [{
-        id: "1",
-        name: "Test Project",
-        description: "Test Description",
-        subdescription: "Test Subdescription",
-        projectimage: { asset: { _ref: "test" } },
-        urlwww: [],
-        urlgithub: []
-      }];
+      const mockProjects = [
+        {
+          id: "1",
+          name: "Test Project",
+          description: "Test Description",
+          subdescription: "Test Subdescription",
+          projectimage: { asset: { _ref: "test" } },
+          urlwww: [],
+          urlgithub: [],
+        },
+      ];
 
       // First call fails with rate limit
       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);

@@ -27,11 +27,15 @@ const getTabButtonClassName = (
   isActive: boolean,
   isVertical: boolean,
   index: number,
-  totalTabs: number
+  totalTabs: number,
 ) => {
   const baseClasses = "px-4 py-3 text-sm font-medium relative";
-  const activeClasses = isActive ? "text-white" : "text-gray-300 hover:text-white";
-  const orientationClasses = isVertical ? "w-full text-left" : "flex-grow text-center";
+  const activeClasses = isActive
+    ? "text-white"
+    : "text-gray-300 hover:text-white";
+  const orientationClasses = isVertical
+    ? "w-full text-left"
+    : "flex-grow text-center";
   const borderClasses = [
     index !== 0 ? "border-t border-gray-600" : "",
     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
@@ -71,7 +75,10 @@ const TabButton: React.FC<TabButtonProps> = ({
   </motion.button>
 );
 
-const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({ tab, isActive }) => {
+const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+  tab,
+  isActive,
+}) => {
   if (!isActive) return null;
 
   return (
@@ -100,7 +107,7 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({ tab, isActive }) 
  * @return {JSX.Element} The rendered Tabs component.
  */
 const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-  const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? '');
+  const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
   const isVertical = orientation === "vertical";
 
   return (
@@ -139,7 +146,11 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
         >
           <AnimatePresence mode="wait">
             {tabs.map((tab) => (
-              <TabPanel key={tab.id} tab={tab} isActive={activeTab === tab.id} />
+              <TabPanel
+                key={tab.id}
+                tab={tab}
+                isActive={activeTab === tab.id}
+              />
             ))}
           </AnimatePresence>
         </div>

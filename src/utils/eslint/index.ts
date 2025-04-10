@@ -12,18 +12,18 @@ const isTestFunction = (node: TSESTree.CallExpression): boolean => {
 };
 
 const isArrowFunction = (
-  node: TSESTree.Node
+  node: TSESTree.Node,
 ): node is TSESTree.ArrowFunctionExpression => {
   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
 };
 
 const validateAAAPattern = (
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-  node: TSESTree.CallExpression
+  node: TSESTree.CallExpression,
 ) => {
   const testFn = node.arguments[1];
   if (!isArrowFunction(testFn)) return;
-  
+
   if (!hasAAAComments(context, testFn)) {
     context.report({
       node,
@@ -34,7 +34,7 @@ const validateAAAPattern = (
 
 const validateTestCase = (
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-  node: TSESTree.CallExpression
+  node: TSESTree.CallExpression,
 ) => {
   if (!isTestFunction(node)) return;
   validateAAAPattern(context, node);
@@ -42,19 +42,19 @@ const validateTestCase = (
 
 const hasAAAComments = (
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-  testFn: TSESTree.ArrowFunctionExpression
+  testFn: TSESTree.ArrowFunctionExpression,
 ): boolean => {
   const comments = context.getSourceCode().getCommentsBefore(testFn.body);
   const patterns = ["Arrange", "Act", "Assert"];
 
   return comments.some((comment: TSESTree.Comment) =>
-    patterns.some((pattern) => comment.value.includes(pattern))
+    patterns.some((pattern) => comment.value.includes(pattern)),
   );
 };
 
 const createRule = ESLintUtils.RuleCreator(
   (name) =>
-    `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`
+    `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
 );
 
 const rule = createRule<Options, MessageIds>({
@@ -74,7 +74,8 @@ const rule = createRule<Options, MessageIds>({
 
   create(context) {
     return {
-      CallExpression: (node: TSESTree.CallExpression) => validateTestCase(context, node)
+      CallExpression: (node: TSESTree.CallExpression) =>
+        validateTestCase(context, node),
     };
   },
 });
