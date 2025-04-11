@@ -84,7 +84,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   return (
     <div
-      ref={ref}
+      // ref removed from here
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
@@ -92,11 +92,13 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
       <AnimatePresence>
         {isExpanded && (
           <motion.div
+            ref={ref} // ref added here
             id="mobile-menu"
             data-testid="mobile-menu"
             data-cy="mobile-menu"
             aria-hidden={!isExpanded}
-            className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center -z-10 -mt-4"
+            // z-index changed from -z-10 to z-40
+            className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
             initial="closed"
             animate="open"
             exit="closed"
