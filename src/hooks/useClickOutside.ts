@@ -18,12 +18,12 @@ const useClickOutside = (
 
     // Add event listeners
     document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick);
+    document.addEventListener('touchend', handleClick); // Use touchend for better mobile compatibility
 
     // Cleanup function
     return () => {
       document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
+      document.removeEventListener('touchend', handleClick);
     };
   }, [ref, callback]); // Re-run effect if ref or callback changes
 };
