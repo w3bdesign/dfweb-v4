@@ -5717,72 +5717,6 @@ tsconfig.json
 37: export default ErrorBoundary;
 ````
 
-## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
- 3: import Pill from "../../components/UI/Pill.component";
- 4: interface ErrorFallbackProps {
- 5:   error: Error;
- 6:   compact?: boolean;
- 7: }
- 8: /**
- 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
-10:  * It shows a Matrix-themed error message with the option to reload the page.
-11:  *
-12:  * @param {Object} props - The component props
-13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
-14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
-15:  * @returns {JSX.Element} A React component displaying the error message and reload option
-16:  */
-17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-18:   error,
-19:   compact = false,
-20: }) => {
-21:   if (compact) {
-22:     return (
-23:       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">
-24:         <div className="absolute inset-0 opacity-30">
-25:           <ReactMatrixAnimation />
-26:         </div>
-27:         <div className="relative z-10 flex flex-col items-center text-center">
-28:           <h2 className="text-white text-lg mb-2">
-29:             Har du funnet en feil i Matrix?
-30:           </h2>
-31:           <p className="text-white text-sm mb-3">
-32:             {error.message || "En uventet feil har oppstått."}
-33:           </p>
-34:           <button
-35:             onClick={() => window.location.reload()}
-36:             className="px-3 py-1 bg-matrix-light text-black rounded text-sm hover:bg-matrix-dark"
-37:           >
-38:             Returner til Matrix
-39:           </button>
-40:         </div>
-41:       </div>
-42:     );
-43:   }
-44:   return (
-45:     <div className="absolute w-full h-full">
-46:       <ReactMatrixAnimation />
-47:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-48:         <h1 className="text-white text-5xl m-6">
-49:           Har du funnet en feil i Matrix?
-50:         </h1>
-51:         <p className="text-white text-xl mb-6">
-52:           {error.message || "En uventet feil har oppstått."}
-53:         </p>
-54:         <Pill
-55:           text="Returner til Matrix"
-56:           onClick={() => window.location.reload()}
-57:         />
-58:       </div>
-59:     </div>
-60:   );
-61: };
-62: export default ErrorFallback;
-````
-
 ## File: src/components/ErrorBoundary/ErrorFallbackWrapper.component.tsx
 ````typescript
  1: import React from "react";
@@ -5803,20 +5737,6 @@ tsconfig.json
 16:   compact,
 17: }) => <ErrorFallback error={error} compact={compact} />;
 18: export default ErrorFallbackWrapper;
-````
-
-## File: src/components/ErrorBoundary/Fallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import { FallbackProps } from "react-error-boundary";
- 3: import ErrorFallbackWrapper from "./ErrorFallbackWrapper.component";
- 4: interface FallbackComponentProps extends FallbackProps {
- 5:   compact: boolean;
- 6: }
- 7: const Fallback: React.FC<FallbackComponentProps> = ({ error, compact }) => {
- 8:   return <ErrorFallbackWrapper error={error} compact={compact} />;
- 9: };
-10: export default Fallback;
 ````
 
 ## File: src/components/Index/Hero.component.tsx
@@ -6164,73 +6084,6 @@ tsconfig.json
 32: ] as const;
 ````
 
-## File: src/components/Kontakt/KontaktContent.component.tsx
-````typescript
- 1: "use client";
- 2: import emailjs from "@emailjs/browser";
- 3: import { useState } from "react";
- 4: import PageHeader from "@/components/UI/PageHeader.component";
- 5: import GenericForm from "@/components/UI/GenericForm.component";
- 6: import { formSchema, formFields, FormData } from "./config/formConfig";
- 7: /**
- 8:  * Renders contact form. Uses EmailJS to send the emails.
- 9:  * @function KontaktContent
-10:  * @returns {JSX.Element} - Rendered component
-11:  */
-12: const KontaktContent = () => {
-13:   const [serverResponse, setServerResponse] = useState<string>("");
-14:   /**
-15:    * Handles the form submission and sends an email using the provided API keys.
-16:    *
-17:    * @param {FormData} data - The form data.
-18:    * @return {Promise<void>} No return value.
-19:    */
-20:   const onSubmit = async (data: FormData): Promise<void> => {
-21:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-22:     const TEMPLATE_KEY =
-23:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
-24:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
-25:     try {
-26:       emailjs.init(EMAIL_API_KEY);
-27:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
-28:       setServerResponse("Takk for din beskjed");
-29:     } catch {
-30:       setServerResponse("Feil under sending av skjema");
-31:     }
-32:   };
-33:   return (
-34:     <main data-testid="kontaktcontent" id="maincontent">
-35:       <div className="mt-32 bg-graybg">
-36:         <PageHeader>Kontakt</PageHeader>
-37:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-38:           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
-39:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
-40:               <div className="p-2 md:p-6 pt-8">
-41:                 {serverResponse ? (
-42:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
-43:                     {serverResponse}
-44:                   </h3>
-45:                 ) : (
-46:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
-47:                     <GenericForm<typeof formSchema>
-48:                       formSchema={formSchema}
-49:                       onSubmit={onSubmit}
-50:                       fields={formFields}
-51:                       submitButtonText="Send skjema"
-52:                     />
-53:                   </div>
-54:                 )}
-55:               </div>
-56:             </div>
-57:           </div>
-58:         </div>
-59:       </div>
-60:     </main>
-61:   );
-62: };
-63: export default KontaktContent;
-````
-
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -6378,114 +6231,6 @@ tsconfig.json
 46:   );
 47: };
 48: export default Hamburger;
-````
-
-## File: src/components/Layout/Header.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import { MotionDiv } from "@/lib/framer/client";
- 4: import MobileMenu from "./MobileMenu.component";
- 5: import DesktopNavigation from "./DesktopNavigation.component";
- 6: interface NavigationLink {
- 7:   title: string;
- 8:   name: string;
- 9:   hash: string;
-10:   href: string;
-11:   externalLink: boolean;
-12: }
-13: interface HeaderProps {
-14:   navigationLinks: NavigationLink[];
-15: }
-16: /**
-17:  * Header component that renders the navigation bar
-18:  * @param {HeaderProps} props - The props for the Header component
-19:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
-20:  * @returns {JSX.Element} The rendered Header component
-21:  */
-22: const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
-23:   return (
-24:     <header className="z-[999] relative">
-25:       <div
-26:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-27:         style={{ transform: "translateX(-50%)" }}
-28:       />
-29:       <MotionDiv
-30:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-31:         initial={{ y: -100, x: "-50%", opacity: 0 }}
-32:         animate={{
-33:           y: 0,
-34:           x: "-51%",
-35:           opacity: 1,
-36:           transition: {
-37:             y: { duration: 0.6, ease: "easeOut" },
-38:             opacity: { duration: 0.6, ease: "easeOut" },
-39:           },
-40:         }}
-41:       />
-42:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-43:         <DesktopNavigation navigationLinks={navigationLinks} />
-44:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-45:           <MobileMenu links={navigationLinks} />
-46:         </div>
-47:       </nav>
-48:     </header>
-49:   );
-50: };
-51: export default Header;
-````
-
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import { motion } from "motion/react";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-green-400" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <motion.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-green-400" : "bg-white"
-36:           }`}
-37:           initial={{
-38:             width: isActive ? "100%" : "0%",
-39:           }}
-40:           variants={{
-41:             hover: { width: "100%" },
-42:           }}
-43:           transition={{ duration: 0.3 }}
-44:         />
-45:       </div>
-46:     </Link>
-47:   </MotionDiv>
-48: );
-49: export default NavigationLink;
 ````
 
 ## File: src/components/UI/GenericForm.component.tsx
@@ -14382,6 +14127,262 @@ tsconfig.json
 141: export default MatrixCursor;
 ````
 
+## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
+ 3: import Pill from "../../components/UI/Pill.component";
+ 4: interface ErrorFallbackProps {
+ 5:   error: Error;
+ 6:   compact?: boolean;
+ 7: }
+ 8: /**
+ 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
+10:  * It shows a Matrix-themed error message with the option to reload the page.
+11:  *
+12:  * @param {Object} props - The component props
+13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
+14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
+15:  * @returns {JSX.Element} A React component displaying the error message and reload option
+16:  */
+17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+18:   error,
+19:   compact = false,
+20: }) => {
+21:   if (compact) {
+22:     return (
+23:       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">
+24:         <div className="absolute inset-0 opacity-30">
+25:           <ReactMatrixAnimation />
+26:         </div>
+27:         <div className="relative z-10 flex flex-col items-center text-center">
+28:           <h2 className="text-white text-lg mb-2">
+29:             Har du funnet en feil i Matrix?
+30:           </h2>
+31:           <p className="text-white text-sm mb-3">
+32:             {error.message || "En uventet feil har oppstått."}
+33:           </p>
+34:           <button
+35:             onClick={() => window.location.reload()}
+36:             className="px-3 py-1 bg-matrix-light text-black rounded text-sm hover:bg-matrix-dark"
+37:           >
+38:             Returner til Matrix
+39:           </button>
+40:         </div>
+41:       </div>
+42:     );
+43:   }
+44:   return (
+45:     <div className="absolute w-full h-full">
+46:       <ReactMatrixAnimation />
+47:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+48:         <h1 className="text-white text-5xl m-6">
+49:           Har du funnet en feil i Matrix?
+50:         </h1>
+51:         <p className="text-white text-xl mb-6">
+52:           {error.message || "En uventet feil har oppstått."}
+53:         </p>
+54:         <Pill
+55:           text="Returner til Matrix"
+56:           onClick={() => window.location.reload()}
+57:         />
+58:       </div>
+59:     </div>
+60:   );
+61: };
+62: export default ErrorFallback;
+````
+
+## File: src/components/ErrorBoundary/Fallback.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { FallbackProps } from "react-error-boundary";
+ 3: import ErrorFallbackWrapper from "./ErrorFallbackWrapper.component";
+ 4: interface FallbackComponentProps extends FallbackProps {
+ 5:   compact: boolean;
+ 6: }
+ 7: const Fallback: React.FC<FallbackComponentProps> = ({ error, compact }) => {
+ 8:   return <ErrorFallbackWrapper error={error} compact={compact} />;
+ 9: };
+10: export default Fallback;
+````
+
+## File: src/components/Kontakt/KontaktContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import emailjs from "@emailjs/browser";
+ 3: import { useState } from "react";
+ 4: import PageHeader from "@/components/UI/PageHeader.component";
+ 5: import GenericForm from "@/components/UI/GenericForm.component";
+ 6: import { formSchema, formFields, FormData } from "./config/formConfig";
+ 7: /**
+ 8:  * Renders the contact form. 
+ 9:  * Uses EmailJS to send the emails.
+10:  * @function KontaktContent
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const KontaktContent = () => {
+14:   const [serverResponse, setServerResponse] = useState<string>("");
+15:   /**
+16:    * Handles the form submission and sends an email using the provided API keys.
+17:    *
+18:    * @param {FormData} data - The form data.
+19:    * @return {Promise<void>} No return value.
+20:    */
+21:   const onSubmit = async (data: FormData): Promise<void> => {
+22:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+23:     const TEMPLATE_KEY =
+24:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+25:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+26:     try {
+27:       emailjs.init(EMAIL_API_KEY);
+28:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+29:       setServerResponse("Takk for din beskjed");
+30:     } catch {
+31:       setServerResponse("Feil under sending av skjema");
+32:     }
+33:   };
+34:   return (
+35:     <main data-testid="kontaktcontent" id="maincontent">
+36:       <div className="mt-32 bg-graybg">
+37:         <PageHeader>Kontakt</PageHeader>
+38:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+39:           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
+40:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+41:               <div className="p-2 md:p-6 pt-8">
+42:                 {serverResponse ? (
+43:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+44:                     {serverResponse}
+45:                   </h3>
+46:                 ) : (
+47:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+48:                     <GenericForm<typeof formSchema>
+49:                       formSchema={formSchema}
+50:                       onSubmit={onSubmit}
+51:                       fields={formFields}
+52:                       submitButtonText="Send skjema"
+53:                     />
+54:                   </div>
+55:                 )}
+56:               </div>
+57:             </div>
+58:           </div>
+59:         </div>
+60:       </div>
+61:     </main>
+62:   );
+63: };
+64: export default KontaktContent;
+````
+
+## File: src/components/Layout/Header.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import { MotionDiv } from "@/lib/framer/client";
+ 4: import MobileMenu from "./MobileMenu.component";
+ 5: import DesktopNavigation from "./DesktopNavigation.component";
+ 6: interface NavigationLink {
+ 7:   title: string;
+ 8:   name: string;
+ 9:   hash: string;
+10:   href: string;
+11:   externalLink: boolean;
+12: }
+13: interface HeaderProps {
+14:   navigationLinks: NavigationLink[];
+15: }
+16: /**
+17:  * Header component that renders the navigation bar
+18:  * @param {HeaderProps} props - The props for the Header component
+19:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
+20:  * @returns {JSX.Element} The rendered Header component
+21:  */
+22: const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
+23:   return (
+24:     <header className="z-[999] relative">
+25:       <div
+26:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+27:         style={{ transform: "translateX(-50%)" }}
+28:       />
+29:       <MotionDiv
+30:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+31:         initial={{ y: -100, x: "-50%", opacity: 0 }}
+32:         animate={{
+33:           y: 0,
+34:           x: "-51%",
+35:           opacity: 1,
+36:           transition: {
+37:             y: { duration: 0.6, ease: "easeOut" },
+38:             opacity: { duration: 0.6, ease: "easeOut" },
+39:           },
+40:         }}
+41:       />
+42:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
+43:         <DesktopNavigation navigationLinks={navigationLinks} />
+44:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+45:           <MobileMenu links={navigationLinks} />
+46:         </div>
+47:       </nav>
+48:     </header>
+49:   );
+50: };
+51: export default Header;
+````
+
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import { motion } from "motion/react";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-green-400" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <motion.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-green-400" : "bg-white"
+36:           }`}
+37:           initial={{
+38:             width: isActive ? "100%" : "0%",
+39:           }}
+40:           variants={{
+41:             hover: { width: "100%" },
+42:           }}
+43:           transition={{ duration: 0.3 }}
+44:         />
+45:       </div>
+46:     </Link>
+47:   </MotionDiv>
+48: );
+49: export default NavigationLink;
+````
+
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -14612,6 +14613,79 @@ tsconfig.json
 148:   );
 149: };
 150: export default Tabs;
+````
+
+## File: src/e2e/cypress/component/Hero.cy.tsx
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: import Hero from "@/components/Index/Hero.component";
+ 3: const content = [
+ 4:   {
+ 5:     text: "Hei!",
+ 6:   },
+ 7:   {
+ 8:     text: "Jeg heter Daniel Fjeldstad og er en webutvikler.",
+ 9:   },
+10:   {
+11:     text: "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+12:   },
+13: ];
+14: it("Viser Hero komponent", () => {
+15:   cy.mount(<Hero content={content} />);
+16:   cy.contains("Hei!").should("be.visible");
+17: });
+18: it("Viser PHP tekst", () => {
+19:   cy.mount(<Hero content={content} />);
+20:   cy.contains("PHP").should("be.visible");
+21: });
+````
+
+## File: src/e2e/playwright/index.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("Home page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/");
+ 5:     // Check main heading
+ 6:     await expect(page.locator("h1")).toContainText("Hei!");
+ 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible();
+ 8:     // Check subheading
+ 9:     await expect(page.getByTestId("fadeup").getByRole("heading")).toContainText(
+10:       "Jeg heter Daniel Fjeldstad og er en webutvikler.",
+11:     );
+12:     await expect(
+13:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
+14:     ).toBeVisible();
+15:     // Check skills text
+16:     await expect(
+17:       page.getByText(
+18:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+19:       ),
+20:     ).toBeVisible();
+21:     // Check if icons are visible
+22:     await expect(page.getByTestId("icons")).toBeVisible();
+23:   });
+24:   test("displays 'Om Meg' section correctly", async ({ page }) => {
+25:     await page.goto("/");
+26:     const omMegSection = page.getByLabel("Om Meg");
+27:     // Check section title
+28:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
+29:       "Om Meg",
+30:     );
+31:     // Check section content
+32:     await expect(omMegSection.getByTestId("bounceinscroll")).toContainText(
+33:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
+34:     );
+35:   });
+36:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
+37:     await page.goto("/");
+38:     const prosjekterSection = page.getByLabel("Prosjekter");
+39:     // Check section content
+40:     await expect(prosjekterSection.getByTestId("bounceinscroll")).toContainText(
+41:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
+42:     );
+43:   });
+44: });
 ````
 
 ## File: src/hooks/useClickOutside.ts
@@ -14992,31 +15066,6 @@ tsconfig.json
 53: export default Button;
 ````
 
-## File: src/e2e/cypress/component/Hero.cy.tsx
-````typescript
- 1: /// <reference types="cypress"/>
- 2: import Hero from "@/components/Index/Hero.component";
- 3: const content = [
- 4:   {
- 5:     text: "Hei!",
- 6:   },
- 7:   {
- 8:     text: "Jeg heter Daniel Fjeldstad og er en webutvikler.",
- 9:   },
-10:   {
-11:     text: "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-12:   },
-13: ];
-14: it("Viser Hero komponent", () => {
-15:   cy.mount(<Hero content={content} />);
-16:   cy.contains("Hei!").should("be.visible");
-17: });
-18: it("Viser PHP tekst", () => {
-19:   cy.mount(<Hero content={content} />);
-20:   cy.contains("PHP").should("be.visible");
-21: });
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -15038,54 +15087,6 @@ tsconfig.json
 17:     "eslint": ">=9.24.0"
 18:   }
 19: }
-````
-
-## File: src/e2e/playwright/index.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("Home page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/");
- 5:     // Check main heading
- 6:     await expect(page.locator("h1")).toContainText("Hei!");
- 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible();
- 8:     // Check subheading
- 9:     await expect(page.getByTestId("fadeup").getByRole("heading")).toContainText(
-10:       "Jeg heter Daniel Fjeldstad og er en webutvikler.",
-11:     );
-12:     await expect(
-13:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
-14:     ).toBeVisible();
-15:     // Check skills text
-16:     await expect(
-17:       page.getByText(
-18:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-19:       ),
-20:     ).toBeVisible();
-21:     // Check if icons are visible
-22:     await expect(page.getByTestId("icons")).toBeVisible();
-23:   });
-24:   test("displays 'Om Meg' section correctly", async ({ page }) => {
-25:     await page.goto("/");
-26:     const omMegSection = page.getByLabel("Om Meg");
-27:     // Check section title
-28:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-29:       "Om Meg",
-30:     );
-31:     // Check section content
-32:     await expect(omMegSection.getByTestId("bounceinscroll")).toContainText(
-33:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
-34:     );
-35:   });
-36:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
-37:     await page.goto("/");
-38:     const prosjekterSection = page.getByLabel("Prosjekter");
-39:     // Check section content
-40:     await expect(prosjekterSection.getByTestId("bounceinscroll")).toContainText(
-41:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
-42:     );
-43:   });
-44: });
 ````
 
 ## File: src/e2e/playwright/prosjekter.spec.ts
