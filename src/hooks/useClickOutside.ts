@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from 'react';
+import { useEffect, RefObject } from "react";
 
 /**
  * Hook that handles clicks outside of the passed ref element
@@ -17,13 +17,13 @@ const useClickOutside = (
     };
 
     // Add event listeners
-    document.addEventListener('mousedown', handleClick);
-    document.addEventListener('touchstart', handleClick);
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchend", handleClick);
 
     // Cleanup function
     return () => {
-      document.removeEventListener('mousedown', handleClick);
-      document.removeEventListener('touchstart', handleClick);
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchend", handleClick);
     };
   }, [ref, callback]); // Re-run effect if ref or callback changes
 };
