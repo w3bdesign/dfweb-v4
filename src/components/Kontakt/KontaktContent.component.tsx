@@ -9,7 +9,8 @@ import GenericForm from "@/components/UI/GenericForm.component";
 import { formSchema, formFields, FormData } from "./config/formConfig";
 
 /**
- * Renders contact form. Uses EmailJS to send the emails.
+ * Renders the contact form. 
+ * Uses EmailJS to send the emails.
  * @function KontaktContent
  * @returns {JSX.Element} - Rendered component
  */
