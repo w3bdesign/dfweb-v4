@@ -1,7 +1,9 @@
 "use client";
 
 import React from "react";
+
 import { MotionDiv } from "@/lib/framer/client";
+
 import MobileMenu from "./MobileMenu.component";
 import DesktopNavigation from "./DesktopNavigation.component";
 
