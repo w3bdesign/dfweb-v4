@@ -195,6 +195,7 @@ src/
         cv.cy.ts
         index.cy.ts
         kontakt.cy.ts
+        layout.cy.ts
         prosjekter.cy.ts
       support/
         commands.ts
@@ -14640,6 +14641,32 @@ tsconfig.json
 150: export default Tabs;
 ````
 
+## File: src/e2e/cypress/e2e/layout.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: describe("Layout", () => {
+ 3:   beforeEach(() => {
+ 4:     cy.viewport('iphone-x'); // Set mobile viewport
+ 5:     cy.visit("http://localhost:3000");
+ 6:   });
+ 7:   describe("Mobile Menu", () => {
+ 8:     it("should close when clicking outside the nav element", () => {
+ 9:       // Open the mobile menu
+10:       cy.get('[data-testid="mobilemenu"]').click();
+11:       // Verify menu is visible
+12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
+13:       // Click on the menu background (outside nav but inside motion.div)
+14:       // This should fail with ref on motion.div, but pass when ref is on nav
+15:       cy.get('[data-testid="mobile-menu"]').click('topRight', { force: true });
+16:       // Menu should NOT be visible (passing test)
+17:       // because clicking outside the nav should close the menu
+18:       cy.get('[data-testid="mobile-menu"]').should('not.be.visible');
+19:     });
+20:   });
+21: });
+22: export {};
+````
+
 ## File: src/e2e/playwright/index.spec.ts
 ````typescript
  1: import { test, expect } from "@playwright/test";
@@ -14868,29 +14895,6 @@ tsconfig.json
 53: export default Button;
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "index.js",
- 6:   "scripts": {
- 7:     "test": "echo \"Error: no test specified\" && exit 1"
- 8:   },
- 9:   "keywords": [
-10:     "eslint",
-11:     "eslintplugin",
-12:     "eslint-plugin"
-13:   ],
-14:   "author": "",
-15:   "license": "ISC",
-16:   "peerDependencies": {
-17:     "eslint": ">=9.24.0"
-18:   }
-19: }
-````
-
 ## File: src/e2e/playwright/prosjekter.spec.ts
 ````typescript
  1: import { test, expect } from "@playwright/test";
@@ -14927,6 +14931,29 @@ tsconfig.json
 32:     await expect(page.getByText("BesøkGitHub").first()).toBeVisible();
 33:   });
 34: });
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "index.js",
+ 6:   "scripts": {
+ 7:     "test": "echo \"Error: no test specified\" && exit 1"
+ 8:   },
+ 9:   "keywords": [
+10:     "eslint",
+11:     "eslintplugin",
+12:     "eslint-plugin"
+13:   ],
+14:   "author": "",
+15:   "license": "ISC",
+16:   "peerDependencies": {
+17:     "eslint": ">=9.24.0"
+18:   }
+19: }
 ````
 
 ## File: src/hooks/useClickOutside.ts
@@ -15036,95 +15063,94 @@ tsconfig.json
  72:   };
  73:   return (
  74:     <div
- 75:       // ref removed from here
- 76:       className="z-50 md:hidden lg:hidden xl:hidden"
- 77:       data-testid="mobilemenu"
- 78:     >
- 79:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
- 80:       <AnimatePresence>
- 81:         {isExpanded && (
- 82:           <motion.div
- 83:             id="mobile-menu"
- 84:             data-testid="mobile-menu"
- 85:             data-cy="mobile-menu"
- 86:             aria-hidden={!isExpanded}
- 87:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 88:             initial="closed"
- 89:             animate="open"
- 90:             exit="closed"
- 91:             variants={menuVariants}
- 92:           >
- 93:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
- 94:               <motion.ul
- 95:                 className="w-full"
- 96:                 initial="closed"
- 97:                 animate="open"
- 98:                 exit="closed"
- 99:                 variants={{
-100:                   open: {
-101:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
-102:                   },
-103:                   closed: {
-104:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
-105:                   },
-106:                 }}
-107:               >
-108:                 {links.map(({ title, name, href, externalLink }, index) => (
-109:                   <motion.li
-110:                     key={title}
-111:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-112:                     data-cy="mobile-menu-item"
-113:                     custom={index}
-114:                     variants={itemVariants}
-115:                   >
-116:                     {externalLink ? (
-117:                       <a
-118:                         aria-label={name}
-119:                         href={href}
-120:                         target="_blank"
-121:                         rel="noreferrer"
-122:                         data-testid={`mobil-${name}`}
-123:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-124:                       >
-125:                         {name}
-126:                       </a>
-127:                     ) : (
-128:                       <Link
-129:                         href={href}
-130:                         data-testid={`mobil-${name}`}
-131:                         prefetch={true}
-132:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-133:                           pathname === href ? "text-green-400" : ""
-134:                         }`}
-135:                       >
-136:                         <div className="glitch relative" data-text={name}>
-137:                           {name}
-138:                           <motion.span
-139:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-140:                               pathname === href ? "bg-green-400" : "bg-white"
-141:                             }`}
-142:                             initial={{
-143:                               width: pathname === href ? "100%" : "0%",
-144:                             }}
-145:                             animate={{
-146:                               width: pathname === href ? "100%" : "0%",
-147:                             }}
-148:                             transition={{ duration: 0.3 }}
-149:                           />
-150:                         </div>
-151:                       </Link>
-152:                     )}
-153:                   </motion.li>
-154:                 ))}
-155:               </motion.ul>
-156:             </nav>
-157:           </motion.div>
-158:         )}
-159:       </AnimatePresence>
-160:     </div>
-161:   );
-162: };
-163: export default MobileMenu;
+ 75:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 76:       data-testid="mobilemenu"
+ 77:     >
+ 78:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
+ 79:       <AnimatePresence>
+ 80:         {isExpanded && (
+ 81:           <motion.div
+ 82:             id="mobile-menu"
+ 83:             data-testid="mobile-menu"
+ 84:             data-cy="mobile-menu"
+ 85:             aria-hidden={!isExpanded}
+ 86:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 87:             initial="closed"
+ 88:             animate="open"
+ 89:             exit="closed"
+ 90:             variants={menuVariants}
+ 91:           >
+ 92:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
+ 93:               <motion.ul
+ 94:                 className="w-full"
+ 95:                 initial="closed"
+ 96:                 animate="open"
+ 97:                 exit="closed"
+ 98:                 variants={{
+ 99:                   open: {
+100:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+101:                   },
+102:                   closed: {
+103:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+104:                   },
+105:                 }}
+106:               >
+107:                 {links.map(({ title, name, href, externalLink }, index) => (
+108:                   <motion.li
+109:                     key={title}
+110:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+111:                     data-cy="mobile-menu-item"
+112:                     custom={index}
+113:                     variants={itemVariants}
+114:                   >
+115:                     {externalLink ? (
+116:                       <a
+117:                         aria-label={name}
+118:                         href={href}
+119:                         target="_blank"
+120:                         rel="noreferrer"
+121:                         data-testid={`mobil-${name}`}
+122:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+123:                       >
+124:                         {name}
+125:                       </a>
+126:                     ) : (
+127:                       <Link
+128:                         href={href}
+129:                         data-testid={`mobil-${name}`}
+130:                         prefetch={true}
+131:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+132:                           pathname === href ? "text-green-400" : ""
+133:                         }`}
+134:                       >
+135:                         <div className="glitch relative" data-text={name}>
+136:                           {name}
+137:                           <motion.span
+138:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+139:                               pathname === href ? "bg-green-400" : "bg-white"
+140:                             }`}
+141:                             initial={{
+142:                               width: pathname === href ? "100%" : "0%",
+143:                             }}
+144:                             animate={{
+145:                               width: pathname === href ? "100%" : "0%",
+146:                             }}
+147:                             transition={{ duration: 0.3 }}
+148:                           />
+149:                         </div>
+150:                       </Link>
+151:                     )}
+152:                   </motion.li>
+153:                 ))}
+154:               </motion.ul>
+155:             </nav>
+156:           </motion.div>
+157:         )}
+158:       </AnimatePresence>
+159:     </div>
+160:   );
+161: };
+162: export default MobileMenu;
 ````
 
 ## File: studio/package.json
