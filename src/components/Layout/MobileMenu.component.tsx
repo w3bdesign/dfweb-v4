@@ -84,7 +84,6 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   return (
     <div
-      // ref removed from here
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
