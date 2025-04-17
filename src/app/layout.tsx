@@ -39,6 +39,7 @@ export default function RootLayout({
 
         <meta property="og:url" content="https://www.dfweb.no/" />
         <meta property="og:site_name" content="dfweb.no" />
+        <meta name="theme-color" content="#00cc4e" />
       </head>
 
       <body
