@@ -57,6 +57,9 @@ jobs:
       - run:
           name: Chrome package download
           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+      - run:
+          name: Install Codecov CLI
+          command: pip install codecov-cli
       - save_cache:
           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
           paths:
@@ -66,10 +69,16 @@ jobs:
       - run:
           name: Run Jest Tests
           command: pnpm test
-      - run: 
+          when: always
+      - run:
           name: Make sure ~/.gnupg directory exists
           command: mkdir -p ~/.gnupg
-      - codecov/upload      
+      - run:
+          name: Upload Test Results to Codecov
+          command: codecovcli do-upload --report-type test_results --file ./test-results/junit.xml
+          when: always
+      - codecov/upload:
+          when: always
     parallelism: 6
 workflows:
   chromatic-deploy:

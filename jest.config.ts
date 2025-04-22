@@ -1,4 +1,3 @@
-import type { Config } from "jest";
 import nextJest from "next/jest";
 
 const createJestConfig = nextJest({
@@ -7,7 +6,8 @@ const createJestConfig = nextJest({
 });
 
 // Add any custom config to be passed to Jest
-const customJestConfig: Config = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const customJestConfig = {
   preset: "ts-jest/presets/js-with-babel-esm",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
@@ -20,6 +20,16 @@ const customJestConfig: Config = {
     "!src/lib/**/*.*",
     "!src/pages/**/*.*",
     "!src/utils/**/*.*",
+  ],
+  reporters: [
+    "default",
+    [
+      "jest-junit",
+      {
+        outputDirectory: "./test-results",
+        outputName: "junit.xml",
+      },
+    ],
   ],
 };
 
