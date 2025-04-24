@@ -4,7 +4,7 @@ import React from "react";
 import Button from "@/components/UI/Button.component";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
-import { urlFor } from "@/lib/sanity/helpers";
+import { urlFor } from "@/lib/sanity/client";
 
 import type { Project } from "@/types/sanity.types";
 
@@ -43,9 +43,12 @@ const ProsjektCard: React.FC<Project> = ({
             {projectimage && (
               <img
                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
-                width="600"
-                height="340"
-                src={urlFor(projectimage).url() as string}
+                width={600}
+                src={urlFor(projectimage)
+                  .width(600)
+                  .fit("max")
+                  .auto("format")
+                  .url()}
                 alt={name}
               />
             )}
