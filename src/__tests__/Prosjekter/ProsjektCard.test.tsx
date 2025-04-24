@@ -12,16 +12,13 @@ interface ButtonProps {
   children: React.ReactNode;
 }
 
-// Mock the Button component
 jest.mock("@/components/UI/Button.component", () => {
   return function MockButton({ href, children }: ButtonProps) {
     return <a href={href}>{children}</a>;
   };
 });
 
-// Mock the urlFor function from the correct client path
 jest.mock("@/lib/sanity/client", () => ({
-  // Keep the mock simple for now, just returning the expected URL structure
   urlFor: jest.fn().mockReturnValue({
     width: jest.fn().mockReturnThis(),
     height: jest.fn().mockReturnThis(),
@@ -44,11 +41,11 @@ const mockProjectProps: Project = {
   subdescription: "This is a subdescription",
   // Use a valid Sanity image object structure
   projectimage: {
-    _type: 'image',
+    _type: "image",
     asset: {
-      _ref: 'image-abcde12345-100x100-jpg', // Placeholder valid ID format
-      _type: 'reference'
-    }
+      _ref: "image-abcde12345-100x100-jpg",
+      _type: "reference",
+    },
   },
   urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
   urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
@@ -71,7 +68,7 @@ describe("ProsjektCard", () => {
       expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
       expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
       expect(
-        screen.getByText(expectedContent.subdescription),
+        screen.getByText(expectedContent.subdescription)
       ).toBeInTheDocument();
     });
 
@@ -113,12 +110,12 @@ describe("ProsjektCard", () => {
       expect(visitButton).toBeInTheDocument();
       expect(visitButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.visit.href,
+        expectedLinks.visit.href
       );
       expect(githubButton).toBeInTheDocument();
       expect(githubButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.github.href,
+        expectedLinks.github.href
       );
     });
   });
