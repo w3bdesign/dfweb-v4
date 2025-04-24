@@ -48,7 +48,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### General
 
 - Clean, modern, responsive and Matrix-inspired design
-- The application is 100% typescript
+- The application is 100% typescript (the types are generated from Sanity typegen)
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
 - Next.js 15 with Typescript and App router
