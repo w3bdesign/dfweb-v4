@@ -25,7 +25,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ## Live URL
 
-<https://www.dfweb.no/>
+<https://www.dfweb.no>
 
 ## Frontend (Next.js)
 
