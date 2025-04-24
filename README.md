@@ -73,6 +73,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
 - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+- Sanity image URL generation with automatic resizing via `@sanity/image-url`.
 
 ### Design
 
