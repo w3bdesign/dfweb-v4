@@ -19,10 +19,16 @@ jest.mock("@/components/UI/Button.component", () => {
   };
 });
 
-// Mock the urlFor function
-jest.mock("@/lib/sanity/helpers", () => ({
+// Mock the urlFor function from the correct client path
+jest.mock("@/lib/sanity/client", () => ({
+  // Keep the mock simple for now, just returning the expected URL structure
   urlFor: jest.fn().mockReturnValue({
-    url: jest.fn().mockReturnValue("/test-image.jpg"),
+    width: jest.fn().mockReturnThis(),
+    height: jest.fn().mockReturnThis(),
+    fit: jest.fn().mockReturnThis(),
+    quality: jest.fn().mockReturnThis(),
+    auto: jest.fn().mockReturnThis(),
+    url: jest.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
   }),
 }));
 
@@ -36,7 +42,14 @@ const mockProjectProps: Project = {
   name: "Test Project",
   description: "This is a test project",
   subdescription: "This is a subdescription",
-  projectimage: "/test-image.jpg",
+  // Use a valid Sanity image object structure
+  projectimage: {
+    _type: 'image',
+    asset: {
+      _ref: 'image-abcde12345-100x100-jpg', // Placeholder valid ID format
+      _type: 'reference'
+    }
+  },
   urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
   urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
 };
