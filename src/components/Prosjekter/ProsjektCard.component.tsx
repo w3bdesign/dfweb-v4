@@ -38,7 +38,7 @@ const ProsjektCard: React.FC<Project> = ({
       data-testid="projectcard"
     >
       <BounceInScroll viewAmount={0.3} instant={featured}>
-        <div className="relative w-full h-48 md:h-60">
+        <div className="relative w-full md:h-60">
           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
               <img
