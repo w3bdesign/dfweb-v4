@@ -47,6 +47,7 @@ const ProsjektCard: React.FC<Project> = ({
                 src={urlFor(projectimage)
                   .width(600)
                   .fit("max")
+                  .quality(100)
                   .auto("format")
                   .url()}
                 alt={name}
