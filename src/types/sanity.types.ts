@@ -68,6 +68,12 @@ export type Geopoint = {
   alt?: number;
 };
 
+export type Slug = {
+  _type: "slug";
+  current?: string;
+  source?: string;
+};
+
 export type Herocontent = {
   _type: "herocontent";
   text?: string;
@@ -106,23 +112,50 @@ export type Link = {
 
 export type Navigation = {
   _id: string;
-  _type: "Navigation";
+  _type: "navigation";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
   title?: string;
-  slug?: Slug;
-  navigation?: Array<
-    {
-      _key: string;
-    } & Link
-  >;
+  links?: Array<{
+    title?: string;
+    name?: string;
+    hash?: string;
+    href?: string;
+    externalLink?: boolean;
+    icon?: "RiHome4Line" | "RiProjectorLine" | "RiFileList3Line" | "RiGithubLine" | "RiMailLine";
+    _key: string;
+  }>;
 };
 
-export type Slug = {
-  _type: "slug";
-  current?: string;
-  source?: string;
+export type Cv = {
+  _id: string;
+  _type: "cv";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  keyQualifications?: Array<string>;
+  experience?: Array<{
+    period?: string;
+    company?: string;
+    role?: string;
+    description?: string;
+    _key: string;
+  }>;
+  education?: Array<{
+    period?: string;
+    institution?: string;
+    degree?: string;
+    description?: string;
+    _key: string;
+  }>;
+  volunteerWork?: Array<{
+    period?: string;
+    organization?: string;
+    role?: string;
+    description?: string;
+    _key: string;
+  }>;
 };
 
 export type Page = {
@@ -133,16 +166,12 @@ export type Page = {
   _rev: string;
   title?: string;
   header?: string;
-  hero?: Array<
-    {
-      _key: string;
-    } & Herocontent
-  >;
-  content?: Array<
-    {
-      _key: string;
-    } & Pagecontent
-  >;
+  hero?: Array<{
+    _key: string;
+  } & Herocontent>;
+  content?: Array<{
+    _key: string;
+  } & Pagecontent>;
 };
 
 export type Project = {
@@ -152,7 +181,7 @@ export type Project = {
   _updatedAt: string;
   _rev: string;
   id?: number;
-  name: string;
+  name?: string;
   description?: string;
   subdescription?: string;
   projectcategory?: {
@@ -161,17 +190,23 @@ export type Project = {
     _weak?: boolean;
     [internalGroqTypeReferenceTo]?: "category";
   };
-  urlwww?: Array<
-    {
-      _key: string;
-    } & Link
-  >;
-  urlgithub?: Array<
-    {
-      _key: string;
-    } & Link
-  >;
-  projectimage: string;
+  urlwww?: Array<{
+    _key: string;
+  } & Link>;
+  urlgithub?: Array<{
+    _key: string;
+  } & Link>;
+  projectimage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
   featured?: boolean;
   featureOrder?: number;
 };
@@ -243,23 +278,103 @@ export type Category = {
   name?: string;
 };
 
-export type AllSanitySchemaTypes =
-  | SanityImagePaletteSwatch
-  | SanityImagePalette
-  | SanityImageDimensions
-  | SanityFileAsset
-  | Geopoint
-  | Herocontent
-  | Pagecontent
-  | Link
-  | Navigation
-  | Slug
-  | Page
-  | Project
-  | SanityImageCrop
-  | SanityImageHotspot
-  | SanityImageAsset
-  | SanityAssetSourceData
-  | SanityImageMetadata
-  | Category;
+export type AllSanitySchemaTypes = SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityFileAsset | Geopoint | Slug | Herocontent | Pagecontent | Link | Navigation | Cv | Page | Project | SanityImageCrop | SanityImageHotspot | SanityImageAsset | SanityAssetSourceData | SanityImageMetadata | Category;
 export declare const internalGroqTypeReferenceTo: unique symbol;
+// Source: ./src/lib/sanity/queries.ts
+// Variable: projectsQuery
+// Query: *[_type == "project"] | order(featureOrder asc) {    id,    name,    description,    subdescription,    projectcategory->{      _id,      title    },    urlwww[]{      ...,      _key,    },    urlgithub[]{      ...,      _key,    },    projectimage,    featured,    featureOrder  }
+export type ProjectsQueryResult = Array<{
+  id: number | null;
+  name: string | null;
+  description: string | null;
+  subdescription: string | null;
+  projectcategory: {
+    _id: string;
+    title: null;
+  } | null;
+  urlwww: Array<{
+    _key: string;
+    _type: "link";
+    title?: string;
+    url?: string;
+    external?: boolean;
+  }> | null;
+  urlgithub: Array<{
+    _key: string;
+    _type: "link";
+    title?: string;
+    url?: string;
+    external?: boolean;
+  }> | null;
+  projectimage: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  } | null;
+  featured: boolean | null;
+  featureOrder: number | null;
+}>;
+// Variable: cvQuery
+// Query: *[_type == "cv"][0] {    keyQualifications,    experience[] {      period,      company,      role,      description    },    education[] {      period,      institution,      degree,      description    },    volunteerWork[] {      period,      organization,      role,      description    }  }
+export type CvQueryResult = {
+  keyQualifications: Array<string> | null;
+  experience: Array<{
+    period: string | null;
+    company: string | null;
+    role: string | null;
+    description: string | null;
+  }> | null;
+  education: Array<{
+    period: string | null;
+    institution: string | null;
+    degree: string | null;
+    description: string | null;
+  }> | null;
+  volunteerWork: Array<{
+    period: string | null;
+    organization: string | null;
+    role: string | null;
+    description: string | null;
+  }> | null;
+} | null;
+// Variable: pageContentQuery
+// Query: *[_type == 'page' && title match 'Hjem'][0]{    "id": _id,     title,     hero,     content  }
+export type PageContentQueryResult = {
+  id: string;
+  title: string | null;
+  hero: Array<{
+    _key: string;
+  } & Herocontent> | null;
+  content: Array<{
+    _key: string;
+  } & Pagecontent> | null;
+} | null;
+// Variable: navigationQuery
+// Query: *[_type == "navigation"][0] {    title,    links[] {      title,      name,      hash,      href,      externalLink    }  }
+export type NavigationQueryResult = {
+  title: string | null;
+  links: Array<{
+    title: string | null;
+    name: string | null;
+    hash: string | null;
+    href: string | null;
+    externalLink: boolean | null;
+  }> | null;
+} | null;
+
+// Query TypeMap
+import "@sanity/client";
+declare module "@sanity/client" {
+  interface SanityQueries {
+    "\n  *[_type == \"project\"] | order(featureOrder asc) {\n    id,\n    name,\n    description,\n    subdescription,\n    projectcategory->{\n      _id,\n      title\n    },\n    urlwww[]{\n      ...,\n      _key,\n    },\n    urlgithub[]{\n      ...,\n      _key,\n    },\n    projectimage,\n    featured,\n    featureOrder\n  }\n": ProjectsQueryResult;
+    "\n  *[_type == \"cv\"][0] {\n    keyQualifications,\n    experience[] {\n      period,\n      company,\n      role,\n      description\n    },\n    education[] {\n      period,\n      institution,\n      degree,\n      description\n    },\n    volunteerWork[] {\n      period,\n      organization,\n      role,\n      description\n    }\n  }\n": CvQueryResult;
+    "\n  *[_type == 'page' && title match 'Hjem'][0]{\n    \"id\": _id, \n    title, \n    hero, \n    content\n  }\n": PageContentQueryResult;
+    "\n  *[_type == \"navigation\"][0] {\n    title,\n    links[] {\n      title,\n      name,\n      hash,\n      href,\n      externalLink\n    }\n  }\n": NavigationQueryResult;
+  }
+}

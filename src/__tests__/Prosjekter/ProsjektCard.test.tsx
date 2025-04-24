@@ -12,17 +12,20 @@ interface ButtonProps {
   children: React.ReactNode;
 }
 
-// Mock the Button component
 jest.mock("@/components/UI/Button.component", () => {
   return function MockButton({ href, children }: ButtonProps) {
     return <a href={href}>{children}</a>;
   };
 });
 
-// Mock the urlFor function
-jest.mock("@/lib/sanity/helpers", () => ({
+jest.mock("@/lib/sanity/client", () => ({
   urlFor: jest.fn().mockReturnValue({
-    url: jest.fn().mockReturnValue("/test-image.jpg"),
+    width: jest.fn().mockReturnThis(),
+    height: jest.fn().mockReturnThis(),
+    fit: jest.fn().mockReturnThis(),
+    quality: jest.fn().mockReturnThis(),
+    auto: jest.fn().mockReturnThis(),
+    url: jest.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
   }),
 }));
 
@@ -36,7 +39,14 @@ const mockProjectProps: Project = {
   name: "Test Project",
   description: "This is a test project",
   subdescription: "This is a subdescription",
-  projectimage: "/test-image.jpg",
+  // Use a valid Sanity image object structure
+  projectimage: {
+    _type: "image",
+    asset: {
+      _ref: "image-abcde12345-100x100-jpg",
+      _type: "reference",
+    },
+  },
   urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
   urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
 };
@@ -58,7 +68,7 @@ describe("ProsjektCard", () => {
       expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
       expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
       expect(
-        screen.getByText(expectedContent.subdescription),
+        screen.getByText(expectedContent.subdescription)
       ).toBeInTheDocument();
     });
 
@@ -100,12 +110,12 @@ describe("ProsjektCard", () => {
       expect(visitButton).toBeInTheDocument();
       expect(visitButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.visit.href,
+        expectedLinks.visit.href
       );
       expect(githubButton).toBeInTheDocument();
       expect(githubButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.github.href,
+        expectedLinks.github.href
       );
     });
   });
