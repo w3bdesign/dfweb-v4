@@ -38,8 +38,6 @@ function handleError(error: unknown): never {
 
 export async function getProjects(): Promise<Project[]> {
   try {
-    // Add a small delay to demonstrate loading state
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     return await fetchProjectsFromSanity();
   } catch (error) {
     handleError(error);
