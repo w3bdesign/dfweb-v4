@@ -1,5 +1,6 @@
 import React from "react";
 import { FallbackProps } from "react-error-boundary";
+
 import ErrorFallbackWrapper from "./ErrorFallbackWrapper.component";
 
 interface FallbackComponentProps extends FallbackProps {

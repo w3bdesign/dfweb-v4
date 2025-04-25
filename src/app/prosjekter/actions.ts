@@ -15,7 +15,7 @@ async function fetchProjectsFromSanity(): Promise<Project[]> {
 
 function handleError(error: unknown): never {
   console.error("Error fetching projects:", error);
-    
+
   if (isSanityApiError(error)) {
     switch (error.statusCode) {
       case 401:
@@ -32,7 +32,7 @@ function handleError(error: unknown): never {
   if (error instanceof Error && error.name === "TimeoutError") {
     throw new Error("Request timed out");
   }
-    
+
   throw new Error("Failed to fetch projects");
 }
 

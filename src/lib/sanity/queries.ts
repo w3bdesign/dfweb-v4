@@ -18,7 +18,7 @@ export const projectsQuery = groq`
       ...,
       _key,
     },
-    "projectimage": projectimage.asset->url,
+    projectimage,
     featured,
     featureOrder
   }

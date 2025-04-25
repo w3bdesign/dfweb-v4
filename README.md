@@ -25,7 +25,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ## Live URL
 
-<https://www.dfweb.no/>
+<https://www.dfweb.no>
 
 ## Frontend (Next.js)
 
@@ -48,7 +48,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### General
 
 - Clean, modern, responsive and Matrix-inspired design
-- The application is 100% typescript
+- The application is 100% typescript (the types are generated from Sanity typegen)
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
 - Next.js 15 with Typescript and App router
@@ -73,12 +73,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and easier debugging
 - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+- Sanity image URL generation with automatic resizing via `@sanity/image-url`.
 
 ### Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind CSS for styling
+- Tailwind 14 for styling
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
 

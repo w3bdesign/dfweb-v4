@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef } from "react";
-import { useClickAway } from "react-use";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
 import { AnimatePresence, useCycle, motion } from "motion/react";
 
 import Hamburger from "./Hamburger.component";
+
+import useClickOutside from "@/hooks/useClickOutside";
 
 interface ILink {
   title: string;
@@ -30,14 +30,14 @@ interface IMobileMenuProps {
 
 const MobileMenu = ({ links }: IMobileMenuProps) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   const handleClickOutside = () => {
     setisExpanded(0);
   };
 
-  useClickAway(ref, handleClickOutside);
+  useClickOutside(ref, handleClickOutside);
 
   const menuVariants = {
     closed: {
@@ -84,7 +84,6 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
 
   return (
     <div
-      ref={ref}
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
@@ -96,13 +95,13 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
             data-testid="mobile-menu"
             data-cy="mobile-menu"
             aria-hidden={!isExpanded}
-            className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center -z-10 -mt-4"
+            className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
             initial="closed"
             animate="open"
             exit="closed"
             variants={menuVariants}
           >
-            <nav aria-label="Navigasjon" className="w-full">
+            <nav ref={ref} aria-label="Navigasjon" className="w-full">
               <motion.ul
                 className="w-full"
                 initial="closed"
@@ -120,7 +119,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                 {links.map(({ title, name, href, externalLink }, index) => (
                   <motion.li
                     key={title}
-                    className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
+                    className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
                     data-cy="mobile-menu-item"
                     custom={index}
                     variants={itemVariants}

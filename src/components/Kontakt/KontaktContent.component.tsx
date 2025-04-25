@@ -9,7 +9,8 @@ import GenericForm from "@/components/UI/GenericForm.component";
 import { formSchema, formFields, FormData } from "./config/formConfig";
 
 /**
- * Renders contact form. Uses EmailJS to send the emails.
+ * Renders the contact form. 
+ * Uses EmailJS to send the emails.
  * @function KontaktContent
  * @returns {JSX.Element} - Rendered component
  */
@@ -43,7 +44,7 @@ const KontaktContent = () => {
       <div className="mt-32 bg-graybg">
         <PageHeader>Kontakt</PageHeader>
         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-          <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
+          <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
               <div className="p-2 md:p-6 pt-8">
                 {serverResponse ? (

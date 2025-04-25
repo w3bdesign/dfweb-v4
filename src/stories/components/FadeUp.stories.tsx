@@ -13,20 +13,20 @@ const Template: Story<IAnimateWithDelayProps> = (args) => <FadeUp {...args} />;
 export const Default = Template.bind({});
 Default.args = {
   children: "Fade Up Animation",
-  cssClass: "p-4 bg-gray-100 border border-gray-300 rounded",
+  cssClass: "p-4 bg-gray-100 border border-gray-300 rounded-sm",
   delay: 0,
 };
 
 export const WithDelay = Template.bind({});
 WithDelay.args = {
   children: "Fade Up with Delay",
-  cssClass: "p-4 bg-blue-100 border border-blue-300 rounded",
+  cssClass: "p-4 bg-blue-100 border border-blue-300 rounded-sm",
   delay: 1,
 };
 
 export const CustomStyles = Template.bind({});
 CustomStyles.args = {
   children: "Fade Up with Custom Styles",
-  cssClass: "p-4 bg-green-100 border border-green-300 rounded shadow-lg",
+  cssClass: "p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg",
   delay: 0.5,
 };

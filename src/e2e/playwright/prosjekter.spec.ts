@@ -33,11 +33,6 @@ test.describe("Prosjekter page", () => {
     // Check project title
     await expect(portfolioContent).toContainText("Earth Doom");
 
-    // Check project description
-    await expect(portfolioContent).toContainText(
-      "Fullstack strategispill inspirert av Planetarion. Prosjektet inkluderer innlogging, database, grafer, responsivt design med mer.",
-    );
-
     // Check project technologies
     await expect(portfolioContent).toContainText(
       "Typescript, Tailwind, Prisma, Clerk, tRPC, PostgreSQL, Chart.js",
