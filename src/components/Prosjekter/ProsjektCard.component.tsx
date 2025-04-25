@@ -34,7 +34,7 @@ const ProsjektCard: React.FC<Project> = ({
 }) => {
   return (
     <div
-      className="bg-slate-700 shadow-md rounded overflow-hidden mx-4 md:m-0"
+      className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
       data-testid="projectcard"
     >
       <BounceInScroll viewAmount={0.3} instant={featured}>

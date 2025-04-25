@@ -304,88 +304,6 @@ tsconfig.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@3.4.3
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -3541,124 +3459,6 @@ tsconfig.json
 66: });
 ````
 
-## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
-  5: // Mock the Matrix component to avoid rendering issues in tests
-  6: jest.mock("@/components/Animations/Matrix.component", () => {
-  7:   return function DummyMatrix() {
-  8:     return <div data-testid="matrix-animation" />;
-  9:   };
- 10: });
- 11: describe("ErrorFallback", () => {
- 12:   const mockError = new Error("Test error message");
- 13:   beforeEach(() => {
- 14:     // Mock window.location.reload
- 15:     Object.defineProperty(window, "location", {
- 16:       configurable: true,
- 17:       value: { reload: jest.fn() },
- 18:     });
- 19:   });
- 20:   it("renders error message and reload button", () => {
- 21:     // Arrange
- 22:     const expectedTexts = {
- 23:       heading: "Har du funnet en feil i Matrix?",
- 24:       error: "Test error message",
- 25:       button: "Returner til Matrix",
- 26:     };
- 27:     // Act
- 28:     render(<ErrorFallback error={mockError} />);
- 29:     // Assert
- 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
- 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
- 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
- 33:   });
- 34:   it("displays default error message when error.message is undefined in full version", () => {
- 35:     // Arrange
- 36:     const errorWithoutMessage = new Error();
- 37:     const expectedMessage = "En uventet feil har oppstått.";
- 38:     // Act
- 39:     render(<ErrorFallback error={errorWithoutMessage} />);
- 40:     // Assert
- 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 42:   });
- 43:   it("displays default error message when error.message is undefined in compact version", () => {
- 44:     // Arrange
- 45:     const errorWithoutMessage = new Error();
- 46:     const expectedMessage = "En uventet feil har oppstått.";
- 47:     // Act
- 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
- 49:     // Assert
- 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 51:   });
- 52:   it("renders compact version with correct styling", () => {
- 53:     // Arrange
- 54:     const expectedTexts = {
- 55:       heading: "Har du funnet en feil i Matrix?",
- 56:       error: "Test error message",
- 57:       button: "Returner til Matrix",
- 58:     };
- 59:     // Act
- 60:     render(<ErrorFallback error={mockError} compact={true} />);
- 61:     // Assert
- 62:     const container = screen
- 63:       .getByTestId("matrix-animation")
- 64:       .closest(".bg-gray-900");
- 65:     expect(container).toHaveClass("bg-gray-900");
- 66:     expect(container).toHaveClass("p-4");
- 67:     expect(container).toHaveClass("rounded-lg");
- 68:     expect(container).toHaveClass("overflow-hidden");
- 69:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
- 70:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
- 71:     const button = screen.getByRole("button");
- 72:     expect(button).toHaveClass("bg-matrix-light");
- 73:     expect(button).toHaveClass("text-black");
- 74:     expect(button).toHaveClass("rounded");
- 75:     expect(button).toHaveClass("text-sm");
- 76:   });
- 77:   it("renders full version with correct styling", () => {
- 78:     // Arrange
- 79:     const expectedTexts = {
- 80:       heading: "Har du funnet en feil i Matrix?",
- 81:       error: "Test error message",
- 82:       button: "Returner til Matrix",
- 83:     };
- 84:     // Act
- 85:     render(<ErrorFallback error={mockError} compact={false} />);
- 86:     // Assert
- 87:     const container = screen.getByTestId("matrix-animation").parentElement;
- 88:     expect(container).toHaveClass("absolute", "w-full", "h-full");
- 89:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
- 90:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
- 91:   });
- 92:   it("reloads the page when reload button is clicked in compact mode", () => {
- 93:     // Arrange
- 94:     render(<ErrorFallback error={mockError} compact={true} />);
- 95:     const reloadButton = screen.getByRole("button", {
- 96:       name: "Returner til Matrix",
- 97:     });
- 98:     // Act
- 99:     fireEvent.click(reloadButton);
-100:     // Assert
-101:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-102:   });
-103:   it("reloads the page when reload button is clicked in full mode", () => {
-104:     // Arrange
-105:     render(<ErrorFallback error={mockError} compact={false} />);
-106:     const reloadButton = screen.getByRole("button", {
-107:       name: "Returner til Matrix",
-108:     });
-109:     // Act
-110:     fireEvent.click(reloadButton);
-111:     // Assert
-112:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-113:   });
-114: });
-````
-
 ## File: src/__tests__/Index/Hero.test.tsx
 ````typescript
  1: /**
@@ -5187,34 +4987,6 @@ tsconfig.json
 41: }
 ````
 
-## File: src/app/prosjekter/error.tsx
-````typescript
- 1: "use client";
- 2: import { useEffect } from "react";
- 3: type ErrorBoundaryProps = Readonly<{
- 4:   error: Error & { digest?: string };
- 5:   reset: () => void;
- 6: }>;
- 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
- 8:   useEffect(() => {
- 9:     console.error(error);
-10:   }, [error]);
-11:   return (
-12:     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-13:       <h2 className="text-2xl font-bold text-matrix-light mb-4">
-14:         Noe gikk galt ved lasting av prosjekter
-15:       </h2>
-16:       <button
-17:         onClick={reset}
-18:         className="px-4 py-2 bg-matrix-dark hover:bg-matrix-light text-white rounded transition-colors"
-19:       >
-20:         Prøv igjen
-21:       </button>
-22:     </div>
-23:   );
-24: }
-````
-
 ## File: src/app/prosjekter/loading.tsx
 ````typescript
  1: import RootLayout from "../RootLayout";
@@ -5526,58 +5298,6 @@ tsconfig.json
 155: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import "./globals.css";
- 4: import "./glitch.css";
- 5: import Footer from "@/components/Layout/Footer.component";
- 6: import SkipLink from "@/components/UI/SkipLink.component";
- 7: const inter = Inter({ subsets: ["latin"] });
- 8: export const metadata: Metadata = {
- 9:   title: "Forside - Dfweb",
-10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-11: };
-12: export default function RootLayout({
-13:   children,
-14: }: Readonly<{
-15:   children: React.ReactNode;
-16: }>) {
-17:   return (
-18:     <html lang="en">
-19:       <head>
-20:         <link rel="icon" href="/favicon.ico" />
-21:         <link rel="apple-touch-icon" href="/logo.png" />
-22:         <meta property="og:title" content="Daniel Fjeldstad" />
-23:         <meta name="author" content="Daniel Fjeldstad" />
-24:         <meta property="og:locale" content="nb_NO" />
-25:         <meta
-26:           name="description"
-27:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-28:         />
-29:         <meta
-30:           property="og:description"
-31:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-32:         />
-33:         <meta property="og:url" content="https://www.dfweb.no/" />
-34:         <meta property="og:site_name" content="dfweb.no" />
-35:         <meta name="theme-color" content="#004014" />
-36:       </head>
-37:       <body
-38:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-39:       >
-40:         <SkipLink />
-41:         <div id="main-content" className="flex-grow">
-42:           {children}
-43:         </div>
-44:         <Footer />
-45:       </body>
-46:     </html>
-47:   );
-48: }
-````
-
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -5831,134 +5551,6 @@ tsconfig.json
 23:   );
 24: };
 25: export default Grow;
-````
-
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: export interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrixCanvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#111111",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = null,
- 26: }) => {
- 27:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 28:   const columnsRef = useRef<Column[]>([]);
- 29:   const maxStackHeightRef = useRef<number>(0);
- 30:   const lastFrameTimeRef = useRef<number>(0);
- 31:   const isInitializedRef = useRef<boolean>(false);
- 32:   const fps = 10;
- 33:   const frameInterval = 1000 / fps;
- 34:   const rgbBackground = hexToRgb(backgroundColor);
- 35:   if (!rgbBackground) {
- 36:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 37:   }
- 38:   const rgbFont = hexToRgb(fontColor);
- 39:   if (!rgbFont) {
- 40:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 41:   }
- 42:   /**
- 43:    * Initializes the matrix columns
- 44:    * @param {HTMLCanvasElement} canvas - The canvas element
- 45:    */
- 46:   const initMatrix = useCallback(
- 47:     (canvas: HTMLCanvasElement) => {
- 48:       const columns: Column[] = [];
- 49:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 50:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 51:         const column: Column = {
- 52:           x: i * tileSize,
- 53:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 54:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 55:         };
- 56:         columns.push(column);
- 57:       }
- 58:       columnsRef.current = columns;
- 59:       maxStackHeightRef.current = maxStackHeight;
- 60:     },
- 61:     [tileSize],
- 62:   );
- 63:   const tick = useCallback(
- 64:     (
- 65:       timestamp: number,
- 66:       ctx: CanvasRenderingContext2D,
- 67:       canvas: HTMLCanvasElement,
- 68:     ) => {
- 69:       if (!lastFrameTimeRef.current) {
- 70:         lastFrameTimeRef.current = timestamp;
- 71:       }
- 72:       const delta = timestamp - lastFrameTimeRef.current;
- 73:       if (delta > frameInterval) {
- 74:         const renderer = createMatrixRenderer({
- 75:           ctx,
- 76:           canvas,
- 77:           columns: columnsRef.current,
- 78:           maxStackHeight: maxStackHeightRef.current,
- 79:           tileSize,
- 80:           fadeFactor,
- 81:           rgbBackground,
- 82:           rgbFont,
- 83:           glowColor,
- 84:           tileSet,
- 85:           getRandomInt,
- 86:         });
- 87:         renderer.draw();
- 88:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 89:       }
- 90:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 91:     },
- 92:     [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet],
- 93:   );
- 94:   useEffect(() => {
- 95:     const canvas = canvasRef.current;
- 96:     if (!canvas) return;
- 97:     const ctx = canvas.getContext("2d");
- 98:     if (!ctx) return;
- 99:     const handleResize = () => {
-100:       const boundingClientRect = canvas.getBoundingClientRect();
-101:       canvas.width = boundingClientRect.width;
-102:       canvas.height = boundingClientRect.height;
-103:       initMatrix(canvas);
-104:       isInitializedRef.current = true;
-105:     };
-106:     const debouncedResize = debounce(handleResize, 100);
-107:     window.addEventListener("resize", debouncedResize);
-108:     handleResize();
-109:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-110:     return () => {
-111:       window.removeEventListener("resize", debouncedResize);
-112:     };
-113:   }, [initMatrix, tick]);
-114:   return (
-115:     <canvas
-116:       ref={canvasRef}
-117:       id={CANVAS_ID}
-118:       style={{ width: "100%", height: "100%" }}
-119:       data-testid="matrix-canvas"
-120:       className="absolute inset-0"
-121:     />
-122:   );
-123: };
-124: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/Animations/Matrix.renderer.ts
@@ -6363,134 +5955,6 @@ tsconfig.json
 36: }
 ````
 
-## File: src/components/CV/CVContent.component.tsx
-````typescript
-  1: import PageHeader from "@/components/UI/PageHeader.component";
-  2: import Button from "@/components/UI/Button.component";
-  3: import Tabs from "@/components/UI/Tabs.component";
-  4: interface CVData {
-  5:   keyQualifications: string[];
-  6:   experience: Array<{
-  7:     period: string;
-  8:     company: string;
-  9:     role: string;
- 10:     description: string;
- 11:   }>;
- 12:   education: Array<{
- 13:     period: string;
- 14:     institution: string;
- 15:     degree: string;
- 16:     description: string;
- 17:   }>;
- 18:   volunteerWork: Array<{
- 19:     period: string;
- 20:     organization: string;
- 21:     role: string;
- 22:     description: string;
- 23:   }>;
- 24: }
- 25: interface CVContentProps {
- 26:   cvData: CVData;
- 27: }
- 28: /**
- 29:  * CVContent component for rendering the CV page with tabs
- 30:  * @param {CVContentProps} props - The props for the CVContent component
- 31:  * @returns {JSX.Element} The rendered CVContent component
- 32:  */
- 33: const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
- 34:   const tabs = [
- 35:     {
- 36:       id: "qualifications",
- 37:       label: "Nøkkelkvalifikasjoner",
- 38:       content: (
- 39:         <ul className="list-disc pl-5 text-slate-300/[0.9]">
- 40:           {cvData.keyQualifications.map((qual) => (
- 41:             <li key={qual} className="mb-2">
- 42:               {qual}
- 43:             </li>
- 44:           ))}
- 45:         </ul>
- 46:       ),
- 47:     },
- 48:     {
- 49:       id: "experience",
- 50:       label: "Erfaring",
- 51:       content: (
- 52:         <div className="text-slate-300/[0.9]">
- 53:           {cvData.experience.map((exp) => (
- 54:             <div key={exp.description} className="mb-6">
- 55:               <h3 className="font-semibold text-slate-100">
- 56:                 {exp.period} - {exp.company}
- 57:               </h3>
- 58:               {exp.role && <p className="italic">{exp.role}</p>}
- 59:               <p>{exp.description}</p>
- 60:             </div>
- 61:           ))}
- 62:         </div>
- 63:       ),
- 64:     },
- 65:     {
- 66:       id: "education",
- 67:       label: "Utdanning",
- 68:       content: (
- 69:         <div className="text-slate-300/[0.9]">
- 70:           {cvData.education.map((edu) => (
- 71:             <div key={edu.description} className="mb-6">
- 72:               <h3 className="font-semibold text-slate-100">
- 73:                 {edu.period} - {edu.institution}
- 74:               </h3>
- 75:               {edu.degree && <p className="italic">{edu.degree}</p>}
- 76:               <p>{edu.description}</p>
- 77:             </div>
- 78:           ))}
- 79:         </div>
- 80:       ),
- 81:     },
- 82:     {
- 83:       id: "volunteerWork",
- 84:       label: "Frivillig arbeid",
- 85:       content: (
- 86:         <div className="text-slate-300/[0.9]">
- 87:           {cvData.volunteerWork?.map((vol) => (
- 88:             <div key={vol.description} className="mb-6">
- 89:               <h3 className="font-semibold text-slate-100">
- 90:                 {vol.period} - {vol.organization}
- 91:               </h3>
- 92:               {vol.role && <p className="italic">{vol.role}</p>}
- 93:               <p>{vol.description}</p>
- 94:             </div>
- 95:           ))}
- 96:         </div>
- 97:       ),
- 98:     },
- 99:   ];
-100:   return (
-101:     <main id="maincontent">
-102:       <div className="mt-32 bg-graybg">
-103:         <PageHeader>CV</PageHeader>
-104:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-105:           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
-106:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
-107:               <div className="p-4 text-lg rounded md:w-full">
-108:                 <div className="md:flex md:justify-center hidden">
-109:                   <Tabs tabs={tabs} />
-110:                 </div>
-111:                 <div className="mx-auto text-center md:mt-8 md:hidden">
-112:                   <Button href="./cv2.pdf" renderAs="a" type="button">
-113:                     Last ned PDF
-114:                   </Button>
-115:                 </div>
-116:               </div>
-117:             </div>
-118:           </div>
-119:         </div>
-120:       </div>
-121:     </main>
-122:   );
-123: };
-124: export default CVContent;
-````
-
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
 ````typescript
  1: "use client";
@@ -6530,72 +5994,6 @@ tsconfig.json
 35:   );
 36: };
 37: export default ErrorBoundary;
-````
-
-## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
- 3: import Pill from "../../components/UI/Pill.component";
- 4: interface ErrorFallbackProps {
- 5:   error: Error;
- 6:   compact?: boolean;
- 7: }
- 8: /**
- 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
-10:  * It shows a Matrix-themed error message with the option to reload the page.
-11:  *
-12:  * @param {Object} props - The component props
-13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
-14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
-15:  * @returns {JSX.Element} A React component displaying the error message and reload option
-16:  */
-17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-18:   error,
-19:   compact = false,
-20: }) => {
-21:   if (compact) {
-22:     return (
-23:       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">
-24:         <div className="absolute inset-0 opacity-30">
-25:           <ReactMatrixAnimation />
-26:         </div>
-27:         <div className="relative z-10 flex flex-col items-center text-center">
-28:           <h2 className="text-white text-lg mb-2">
-29:             Har du funnet en feil i Matrix?
-30:           </h2>
-31:           <p className="text-white text-sm mb-3">
-32:             {error.message || "En uventet feil har oppstått."}
-33:           </p>
-34:           <button
-35:             onClick={() => window.location.reload()}
-36:             className="px-3 py-1 bg-matrix-light text-black rounded text-sm hover:bg-matrix-dark"
-37:           >
-38:             Returner til Matrix
-39:           </button>
-40:         </div>
-41:       </div>
-42:     );
-43:   }
-44:   return (
-45:     <div className="absolute w-full h-full">
-46:       <ReactMatrixAnimation />
-47:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-48:         <h1 className="text-white text-5xl m-6">
-49:           Har du funnet en feil i Matrix?
-50:         </h1>
-51:         <p className="text-white text-xl mb-6">
-52:           {error.message || "En uventet feil har oppstått."}
-53:         </p>
-54:         <Pill
-55:           text="Returner til Matrix"
-56:           onClick={() => window.location.reload()}
-57:         />
-58:       </div>
-59:     </div>
-60:   );
-61: };
-62: export default ErrorFallback;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorFallbackWrapper.component.tsx
@@ -6960,74 +6358,6 @@ tsconfig.json
 32: ] as const;
 ````
 
-## File: src/components/Kontakt/KontaktContent.component.tsx
-````typescript
- 1: "use client";
- 2: import emailjs from "@emailjs/browser";
- 3: import { useState } from "react";
- 4: import PageHeader from "@/components/UI/PageHeader.component";
- 5: import GenericForm from "@/components/UI/GenericForm.component";
- 6: import { formSchema, formFields, FormData } from "./config/formConfig";
- 7: /**
- 8:  * Renders the contact form. 
- 9:  * Uses EmailJS to send the emails.
-10:  * @function KontaktContent
-11:  * @returns {JSX.Element} - Rendered component
-12:  */
-13: const KontaktContent = () => {
-14:   const [serverResponse, setServerResponse] = useState<string>("");
-15:   /**
-16:    * Handles the form submission and sends an email using the provided API keys.
-17:    *
-18:    * @param {FormData} data - The form data.
-19:    * @return {Promise<void>} No return value.
-20:    */
-21:   const onSubmit = async (data: FormData): Promise<void> => {
-22:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-23:     const TEMPLATE_KEY =
-24:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
-25:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
-26:     try {
-27:       emailjs.init(EMAIL_API_KEY);
-28:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
-29:       setServerResponse("Takk for din beskjed");
-30:     } catch {
-31:       setServerResponse("Feil under sending av skjema");
-32:     }
-33:   };
-34:   return (
-35:     <main data-testid="kontaktcontent" id="maincontent">
-36:       <div className="mt-32 bg-graybg">
-37:         <PageHeader>Kontakt</PageHeader>
-38:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-39:           <div className="container mx-auto bg-slate-700 rounded shadow sm:mb-4">
-40:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
-41:               <div className="p-2 md:p-6 pt-8">
-42:                 {serverResponse ? (
-43:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
-44:                     {serverResponse}
-45:                   </h3>
-46:                 ) : (
-47:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
-48:                     <GenericForm<typeof formSchema>
-49:                       formSchema={formSchema}
-50:                       onSubmit={onSubmit}
-51:                       fields={formFields}
-52:                       submitButtonText="Send skjema"
-53:                     />
-54:                   </div>
-55:                 )}
-56:               </div>
-57:             </div>
-58:           </div>
-59:         </div>
-60:       </div>
-61:     </main>
-62:   );
-63: };
-64: export default KontaktContent;
-````
-
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -7093,311 +6423,6 @@ tsconfig.json
 61: export default DesktopNavigation;
 ````
 
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: /**
- 5:  * Renders the footer for the application
- 6:  * @function Footer
- 7:  * @returns {JSX.Element} - Rendered Hamburger component
- 8:  */
- 9: const Footer = () => (
-10:   <footer
-11:     className="mt-8"
-12:     aria-label="Innholdet for bunnteksten med copyright"
-13:     data-testid="footer"
-14:   >
-15:     <div className="bg-slate-800 shadow min-h-[50px]">
-16:       <div className="w-full mx-auto p-6 text-center font-semibold">
-17:         <div className="flex justify-center items-center space-x-2">
-18:           <span>Copyright Daniel Fjeldstad</span>
-19:           <IconContext.Provider value={{ className: "inline-block" }}>
-20:             <BiCopyright size="1.2em" />
-21:           </IconContext.Provider>
-22:           <span>{new Date().getFullYear()}</span>
-23:         </div>
-24:       </div>
-25:     </div>
-26:   </footer>
-27: );
-28: export default Footer;
-````
-
-## File: src/components/Layout/Hamburger.component.tsx
-````typescript
- 1: "use client";
- 2: export interface IHamburgerProps {
- 3:   onClick: () => void;
- 4:   animatetoX: boolean;
- 5: }
- 6: /**
- 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
- 8:  * @function Hamburger
- 9:  * @param {() => void} onClick - onClick handler to respond to clicks
-10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
-11:  * @returns {JSX.Element} - Rendered component
-12:  */
-13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
-14:   const hamburgerLine =
-15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
-16:   const opacityFull = "opacity-100 group-hover:opacity-100";
-17:   return (
-18:     <button
-19:       className="flex flex-col w-16 rounded justify-center items-center group z-50 pr-6"
-20:       data-cy="hamburger"
-21:       data-testid="hamburger"
-22:       onClick={onClick}
-23:       aria-expanded={animatetoX}
-24:       type="button"
-25:     >
-26:       <span className="sr-only text-white text-2xl">Hamburger</span>
-27:       <span
-28:         data-testid="hamburgerline"
-29:         className={`${hamburgerLine} ${
-30:           animatetoX
-31:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
-32:             : opacityFull
-33:         }`}
-34:       />
-35:       <span
-36:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
-37:       />
-38:       <span
-39:         className={`${hamburgerLine} ${
-40:           animatetoX
-41:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
-42:             : opacityFull
-43:         }`}
-44:       />
-45:     </button>
-46:   );
-47: };
-48: export default Hamburger;
-````
-
-## File: src/components/Layout/Header.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import { MotionDiv } from "@/lib/framer/client";
- 4: import MobileMenu from "./MobileMenu.component";
- 5: import DesktopNavigation from "./DesktopNavigation.component";
- 6: interface NavigationLink {
- 7:   title: string;
- 8:   name: string;
- 9:   hash: string;
-10:   href: string;
-11:   externalLink: boolean;
-12: }
-13: interface HeaderProps {
-14:   navigationLinks: NavigationLink[];
-15: }
-16: /**
-17:  * Header component that renders the navigation bar
-18:  * @param {HeaderProps} props - The props for the Header component
-19:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
-20:  * @returns {JSX.Element} The rendered Header component
-21:  */
-22: const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
-23:   return (
-24:     <header className="z-[999] relative">
-25:       <div
-26:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-27:         style={{ transform: "translateX(-50%)" }}
-28:       />
-29:       <MotionDiv
-30:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-31:         initial={{ y: -100, x: "-50%", opacity: 0 }}
-32:         animate={{
-33:           y: 0,
-34:           x: "-51%",
-35:           opacity: 1,
-36:           transition: {
-37:             y: { duration: 0.6, ease: "easeOut" },
-38:             opacity: { duration: 0.6, ease: "easeOut" },
-39:           },
-40:         }}
-41:       />
-42:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-43:         <DesktopNavigation navigationLinks={navigationLinks} />
-44:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-45:           <MobileMenu links={navigationLinks} />
-46:         </div>
-47:       </nav>
-48:     </header>
-49:   );
-50: };
-51: export default Header;
-````
-
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import { useRef } from "react";
-  3: import Link from "next/link";
-  4: import { usePathname } from "next/navigation";
-  5: import { AnimatePresence, useCycle, motion } from "motion/react";
-  6: import Hamburger from "./Hamburger.component";
-  7: import useClickOutside from "@/hooks/useClickOutside";
-  8: interface ILink {
-  9:   title: string;
- 10:   name: string;
- 11:   hash: string;
- 12:   href: string;
- 13:   externalLink: boolean;
- 14: }
- 15: interface IMobileMenuProps {
- 16:   links: ILink[];
- 17: }
- 18: /**
- 19:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 20:  * @param {Object} props
- 21:  * @param {ILink[]} props.links - Array of navigation link objects
- 22:  * @returns {JSX.Element} The rendered MobileMenu component
- 23:  */
- 24: const MobileMenu = ({ links }: IMobileMenuProps) => {
- 25:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
- 26:   const ref = useRef<HTMLDivElement>(null);
- 27:   const pathname = usePathname();
- 28:   const handleClickOutside = () => {
- 29:     setisExpanded(0);
- 30:   };
- 31:   useClickOutside(ref, handleClickOutside);
- 32:   const menuVariants = {
- 33:     closed: {
- 34:       x: "125%",
- 35:       transition: {
- 36:         type: "spring",
- 37:         stiffness: 60,
- 38:         damping: 10,
- 39:         delay: 0.3,
- 40:       },
- 41:     },
- 42:     open: {
- 43:       x: 0,
- 44:       transition: {
- 45:         type: "spring",
- 46:         stiffness: 60,
- 47:         damping: 10,
- 48:       },
- 49:     },
- 50:   };
- 51:   const itemVariants = {
- 52:     closed: (i: number) => ({
- 53:       x: i % 2 === 0 ? "-50%" : "50%",
- 54:       opacity: 0,
- 55:       transition: {
- 56:         type: "spring",
- 57:         stiffness: 120,
- 58:         damping: 12,
- 59:         duration: 0.25,
- 60:       },
- 61:     }),
- 62:     open: (i: number) => ({
- 63:       x: 0,
- 64:       opacity: 1,
- 65:       transition: {
- 66:         type: "spring",
- 67:         stiffness: 120,
- 68:         damping: 12,
- 69:         delay: i * 0.25,
- 70:       },
- 71:     }),
- 72:   };
- 73:   return (
- 74:     <div
- 75:       className="z-50 md:hidden lg:hidden xl:hidden"
- 76:       data-testid="mobilemenu"
- 77:     >
- 78:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
- 79:       <AnimatePresence>
- 80:         {isExpanded && (
- 81:           <motion.div
- 82:             id="mobile-menu"
- 83:             data-testid="mobile-menu"
- 84:             data-cy="mobile-menu"
- 85:             aria-hidden={!isExpanded}
- 86:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 87:             initial="closed"
- 88:             animate="open"
- 89:             exit="closed"
- 90:             variants={menuVariants}
- 91:           >
- 92:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
- 93:               <motion.ul
- 94:                 className="w-full"
- 95:                 initial="closed"
- 96:                 animate="open"
- 97:                 exit="closed"
- 98:                 variants={{
- 99:                   open: {
-100:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
-101:                   },
-102:                   closed: {
-103:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
-104:                   },
-105:                 }}
-106:               >
-107:                 {links.map(({ title, name, href, externalLink }, index) => (
-108:                   <motion.li
-109:                     key={title}
-110:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow"
-111:                     data-cy="mobile-menu-item"
-112:                     custom={index}
-113:                     variants={itemVariants}
-114:                   >
-115:                     {externalLink ? (
-116:                       <a
-117:                         aria-label={name}
-118:                         href={href}
-119:                         target="_blank"
-120:                         rel="noreferrer"
-121:                         data-testid={`mobil-${name}`}
-122:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-123:                       >
-124:                         {name}
-125:                       </a>
-126:                     ) : (
-127:                       <Link
-128:                         href={href}
-129:                         data-testid={`mobil-${name}`}
-130:                         prefetch={true}
-131:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-132:                           pathname === href ? "text-green-400" : ""
-133:                         }`}
-134:                       >
-135:                         <div className="glitch relative" data-text={name}>
-136:                           {name}
-137:                           <motion.span
-138:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-139:                               pathname === href ? "bg-green-400" : "bg-white"
-140:                             }`}
-141:                             initial={{
-142:                               width: pathname === href ? "100%" : "0%",
-143:                             }}
-144:                             animate={{
-145:                               width: pathname === href ? "100%" : "0%",
-146:                             }}
-147:                             transition={{ duration: 0.3 }}
-148:                           />
-149:                         </div>
-150:                       </Link>
-151:                     )}
-152:                   </motion.li>
-153:                 ))}
-154:               </motion.ul>
-155:             </nav>
-156:           </motion.div>
-157:         )}
-158:       </AnimatePresence>
-159:     </div>
-160:   );
-161: };
-162: export default MobileMenu;
-````
-
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -7449,63 +6474,6 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10: }
-11: /**
-12:  * Button component that can be rendered as various HTML elements
-13:  * @param {Object} props
-14:  * @param {ReactNode} props.children - The content of the button
-15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-21:  * @returns {JSX.Element} The rendered Button component
-22:  */
-23: const Button = ({
-24:   children,
-25:   href,
-26:   renderAs,
-27:   type = "submit",
-28:   disabled = false,
-29:   download,
-30:   onClick,
-31:   ...props
-32: }: IButtonProps) => {
-33:   const Component = renderAs ?? "button";
-34:   const isLink = renderAs === "a";
-35:   const targetLink = isLink ? "_blank" : undefined;
-36:   return (
-37:     <Component
-38:       type={isLink ? undefined : type}
-39:       data-cy="submit"
-40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
-41:       href={href}
-42:       target={targetLink}
-43:       disabled={disabled}
-44:       data-text={children}
-45:       download={download}
-46:       onClick={onClick}
-47:       {...props}
-48:     >
-49:       {children}
-50:     </Component>
-51:   );
-52: };
-53: export default Button;
 ````
 
 ## File: src/components/UI/GenericForm.component.tsx
@@ -7593,132 +6561,6 @@ tsconfig.json
 81: export default GenericForm;
 ````
 
-## File: src/components/UI/InputField.component.tsx
-````typescript
- 1: import React from "react";
- 2: import {
- 3:   UseFormRegister,
- 4:   FieldValues,
- 5:   RegisterOptions,
- 6:   Path,
- 7: } from "react-hook-form";
- 8: export interface InputProps<T extends FieldValues> {
- 9:   readonly name: Path<T>;
-10:   readonly label: string;
-11:   readonly htmlFor: string;
-12:   readonly isRequired?: boolean;
-13:   readonly inputPattern?: RegExp;
-14:   readonly title?: string;
-15:   readonly type?: "input" | "textarea";
-16:   readonly register: UseFormRegister<T>;
-17:   readonly error?: string;
-18: }
-19: /**
-20:  * Creates register options for react-hook-form
-21:  * @template T - Type extending FieldValues
-22:  * @param {boolean} [isRequired] - Whether the field is required
-23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
-24:  * @param {string} [title] - Title for the input field
-25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
-26:  */
-27: export function createRegisterOptions<T extends FieldValues>(
-28:   isRequired?: boolean,
-29:   inputPattern?: RegExp,
-30:   title?: string,
-31: ): RegisterOptions<T, Path<T>> {
-32:   return {
-33:     required: isRequired ? "Dette feltet er påkrevd" : false,
-34:     ...(inputPattern
-35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
-36:       : {}),
-37:   };
-38: }
-39: /**
-40:  * InputField component for rendering form inputs
-41:  * @template T - Type extending FieldValues
-42:  * @param {InputProps<T>} props - The props for the InputField component
-43:  * @returns {JSX.Element} The rendered InputField component
-44:  */
-45: function InputField<T extends FieldValues>({
-46:   name,
-47:   label,
-48:   inputPattern,
-49:   isRequired,
-50:   htmlFor,
-51:   title,
-52:   type = "input",
-53:   register,
-54:   error,
-55:   ...props
-56: }: InputProps<T>) {
-57:   const sharedClasses =
-58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500 border rounded border-opacity-50 outline-none focus:border-slate-200 placeholder-gray-300 placeholder-opacity-0 transition duration-200";
-59:   const registerOptions = createRegisterOptions<T>(
-60:     isRequired,
-61:     inputPattern,
-62:     title,
-63:   );
-64:   return (
-65:     <div className="relative my-2 flex flex-col items-center">
-66:       <div className="relative">
-67:         {type === "input" ? (
-68:           <input
-69:             id={htmlFor}
-70:             type="text"
-71:             placeholder={label}
-72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-73:             {...register(name, registerOptions)}
-74:             {...props}
-75:           />
-76:         ) : (
-77:           <textarea
-78:             id={htmlFor}
-79:             placeholder={label}
-80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-81:             {...register(name, registerOptions)}
-82:             {...props}
-83:           ></textarea>
-84:         )}
-85:         <label
-86:           htmlFor={htmlFor}
-87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary-600 peer-focus:bg-gray-800 ${
-88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
-89:           }`}
-90:         >
-91:           {label}
-92:         </label>
-93:       </div>
-94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-95:     </div>
-96:   );
-97: }
-98: export default InputField;
-````
-
-## File: src/components/UI/PageHeader.component.tsx
-````typescript
- 1: import type { ReactNode } from "react";
- 2: export interface IPageHeaderProps {
- 3:   children: ReactNode;
- 4: }
- 5: /**
- 6:  * PageHeader component for rendering the header for each page
- 7:  * @function PageHeader
- 8:  * @param {children?} children - HTML children to render in the page header component
- 9:  * @returns {ReactNode} - Rendered component
-10:  */
-11: const PageHeader = ({ children }: IPageHeaderProps) => (
-12:   <div className="px-4 p lg:px-0 xl:px-0 md:px-0">
-13:     <div className="container bg-slate-700 shadow rounded h-16 p-4 m-4 mx-auto">
-14:       <h1 className="text-2xl text-center font-bold text-slate-100">
-15:         {children}
-16:       </h1>
-17:     </div>
-18:   </div>
-19: );
-20: export default PageHeader;
-````
-
 ## File: src/components/UI/Pill.component.tsx
 ````typescript
  1: import React from "react";
@@ -7774,160 +6616,6 @@ tsconfig.json
 10:   );
 11: };
 12: export default SkipLink;
-````
-
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { motion, AnimatePresence } from "motion/react";
-  4: interface Tab {
-  5:   id: string;
-  6:   label: string;
-  7:   content: React.ReactNode;
-  8: }
-  9: interface TabsProps {
- 10:   tabs: Tab[];
- 11:   orientation?: "horizontal" | "vertical";
- 12: }
- 13: interface TabButtonProps {
- 14:   tab: Tab;
- 15:   isActive: boolean;
- 16:   isVertical: boolean;
- 17:   index: number;
- 18:   totalTabs: number;
- 19:   onClick: () => void;
- 20: }
- 21: const getTabButtonClassName = (
- 22:   isActive: boolean,
- 23:   isVertical: boolean,
- 24:   index: number,
- 25:   totalTabs: number,
- 26: ) => {
- 27:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
- 28:   const activeClasses = isActive
- 29:     ? "text-white"
- 30:     : "text-gray-300 hover:text-white";
- 31:   const orientationClasses = isVertical
- 32:     ? "w-full text-left"
- 33:     : "flex-grow text-center";
- 34:   const borderClasses = [
- 35:     index !== 0 ? "border-t border-gray-600" : "",
- 36:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
- 37:   ].join(" ");
- 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 39: };
- 40: const TabButton: React.FC<TabButtonProps> = ({
- 41:   tab,
- 42:   isActive,
- 43:   isVertical,
- 44:   index,
- 45:   totalTabs,
- 46:   onClick,
- 47: }) => (
- 48:   <motion.button
- 49:     key={tab.id}
- 50:     onClick={onClick}
- 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 52:     role="tab"
- 53:     aria-selected={isActive}
- 54:     aria-controls={`tabpanel-${tab.id}`}
- 55:     id={`tab-${tab.id}`}
- 56:   >
- 57:     {isActive && (
- 58:       <motion.div
- 59:         layoutId="active-tab"
- 60:         className={`absolute ${
- 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 62:         } bg-[var(--matrix-dark)]`}
- 63:         initial={false}
- 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 65:       />
- 66:     )}
- 67:     <span className="relative z-10">{tab.label}</span>
- 68:   </motion.button>
- 69: );
- 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 71:   tab,
- 72:   isActive,
- 73: }) => {
- 74:   if (!isActive) return null;
- 75:   return (
- 76:     <motion.div
- 77:       key={tab.id}
- 78:       role="tabpanel"
- 79:       id={`tabpanel-${tab.id}`}
- 80:       aria-labelledby={`tab-${tab.id}`}
- 81:       className="px-8"
- 82:       initial={{ opacity: 0, y: 20 }}
- 83:       animate={{ opacity: 1, y: 0 }}
- 84:       exit={{ opacity: 0, y: -20 }}
- 85:       transition={{ duration: 0.3 }}
- 86:     >
- 87:       {tab.content}
- 88:     </motion.div>
- 89:   );
- 90: };
- 91: /**
- 92:  * Renders a set of tabs with content.
- 93:  *
- 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 97:  * @return {JSX.Element} The rendered Tabs component.
- 98:  */
- 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-101:   const isVertical = orientation === "vertical";
-102:   return (
-103:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
-104:       <div
-105:         className={`flex ${
-106:           isVertical ? "flex-col sm:flex-row" : "flex-col"
-107:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
-108:       >
-109:         <div
-110:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-111:             isVertical ? "max-h-[181px] " : ""
-112:           }`}
-113:         >
-114:           <div
-115:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-116:             role="tablist"
-117:           >
-118:             {tabs.map((tab, index) => (
-119:               <TabButton
-120:                 key={tab.id}
-121:                 tab={tab}
-122:                 isActive={activeTab === tab.id}
-123:                 isVertical={isVertical}
-124:                 index={index}
-125:                 totalTabs={tabs.length}
-126:                 onClick={() => setActiveTab(tab.id)}
-127:               />
-128:             ))}
-129:           </div>
-130:         </div>
-131:         <div
-132:           className={`${
-133:             isVertical ? "sm:w-3/4 w-full" : "w-full"
-134:           } bg-gray-800 overflow-y-auto`}
-135:         >
-136:           <AnimatePresence mode="wait">
-137:             {tabs.map((tab) => (
-138:               <TabPanel
-139:                 key={tab.id}
-140:                 tab={tab}
-141:                 isActive={activeTab === tab.id}
-142:               />
-143:             ))}
-144:           </AnimatePresence>
-145:         </div>
-146:       </div>
-147:     </div>
-148:   );
-149: };
-150: export default Tabs;
 ````
 
 ## File: src/config/env.ts
@@ -8622,6 +7310,77 @@ tsconfig.json
 6: };
 ````
 
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: import { groq } from "next-sanity";
+ 2: export const projectsQuery = groq`
+ 3:   *[_type == "project"] | order(featureOrder asc) {
+ 4:     id,
+ 5:     name,
+ 6:     description,
+ 7:     subdescription,
+ 8:     projectcategory->{
+ 9:       _id,
+10:       title
+11:     },
+12:     urlwww[]{
+13:       ...,
+14:       _key,
+15:     },
+16:     urlgithub[]{
+17:       ...,
+18:       _key,
+19:     },
+20:     projectimage,
+21:     featured,
+22:     featureOrder
+23:   }
+24: `;
+25: export const cvQuery = groq`
+26:   *[_type == "cv"][0] {
+27:     keyQualifications,
+28:     experience[] {
+29:       period,
+30:       company,
+31:       role,
+32:       description
+33:     },
+34:     education[] {
+35:       period,
+36:       institution,
+37:       degree,
+38:       description
+39:     },
+40:     volunteerWork[] {
+41:       period,
+42:       organization,
+43:       role,
+44:       description
+45:     }
+46:   }
+47: `;
+48: export const pageContentQuery = groq`
+49:   *[_type == 'page' && title match 'Hjem'][0]{
+50:     "id": _id, 
+51:     title, 
+52:     hero, 
+53:     content
+54:   }
+55: `;
+56: export const navigationQuery = groq`
+57:   *[_type == "navigation"][0] {
+58:     title,
+59:     links[] {
+60:       title,
+61:       name,
+62:       hash,
+63:       href,
+64:       externalLink
+65:     }
+66:   }
+67: `;
+````
+
 ## File: src/stories/components/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -8741,135 +7500,6 @@ tsconfig.json
 36:   children: "Custom Element Button",
 37:   renderAs: "div",
 38: };
-````
-
-## File: src/stories/components/ErrorBoundary.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "ErrorBoundary",
- 7:   component: ErrorBoundary,
- 8: } as Meta;
- 9: // Component that throws an error
-10: const BuggyCounter = () => {
-11:   const [counter, setCounter] = React.useState(0);
-12:   if (counter === 5) {
-13:     throw new Error("Counter reached 5!");
-14:   }
-15:   return (
-16:     <div className="p-2 bg-surface rounded">
-17:       <p className="text-sm">Counter: {counter}</p>
-18:       <button
-19:         onClick={() => setCounter((c) => c + 1)}
-20:         className="mt-1 px-2 py-1 bg-matrix-light text-black rounded text-xs hover:bg-matrix-dark"
-21:       >
-22:         Increment
-23:       </button>
-24:       <p className="text-xs mt-1 text-gray-400">Crashes at 5</p>
-25:     </div>
-26:   );
-27: };
-28: // Component that throws an error immediately
-29: const ImmediateCrash = () => {
-30:   throw new Error("Immediate crash!");
-31: };
-32: // Basic error boundary example
-33: export const Default = () => (
-34:   <ErrorBoundary>
-35:     <BuggyCounter />
-36:   </ErrorBoundary>
-37: );
-38: // Compact error boundary example
-39: export const CompactError = () => (
-40:   <ErrorBoundary compact>
-41:     <ImmediateCrash />
-42:   </ErrorBoundary>
-43: );
-44: // Multiple error boundaries
-45: export const Multiple = () => (
-46:   <div className="space-y-2">
-47:     <ErrorBoundary compact>
-48:       <div className="p-2 bg-surface rounded">
-49:         <p className="text-xs">Working component</p>
-50:       </div>
-51:     </ErrorBoundary>
-52:     <ErrorBoundary compact>
-53:       <ImmediateCrash />
-54:     </ErrorBoundary>
-55:     <ErrorBoundary compact>
-56:       <div className="p-2 bg-surface rounded">
-57:         <p className="text-xs">Another working component</p>
-58:       </div>
-59:     </ErrorBoundary>
-60:   </div>
-61: );
-````
-
-## File: src/stories/components/FadeDown.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta, Story } from "@ladle/react";
- 3: import FadeDown from "../../components/Animations/FadeDown.component";
- 4: import { IAnimateWithDelayProps } from "../../components/Animations/types/Animations.types";
- 5: export default {
- 6:   title: "FadeDown",
- 7:   component: FadeDown,
- 8: } as Meta;
- 9: const Template: Story<IAnimateWithDelayProps> = (args) => (
-10:   <FadeDown {...args} />
-11: );
-12: export const Default = Template.bind({});
-13: Default.args = {
-14:   children: "Fade Down Animation",
-15:   cssClass: "p-4 bg-gray-100 border border-gray-300 rounded",
-16:   delay: 0,
-17: };
-18: export const WithDelay = Template.bind({});
-19: WithDelay.args = {
-20:   children: "Fade Down with Delay",
-21:   cssClass: "p-4 bg-blue-100 border border-blue-300 rounded",
-22:   delay: 1,
-23: };
-24: export const CustomStyles = Template.bind({});
-25: CustomStyles.args = {
-26:   children: "Fade Down with Custom Styles",
-27:   cssClass: "p-4 bg-green-100 border border-green-300 rounded shadow-lg",
-28:   delay: 0.5,
-29: };
-````
-
-## File: src/stories/components/FadeUp.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta, Story } from "@ladle/react";
- 3: import FadeUp from "../../components/Animations/FadeUp.component";
- 4: import { IAnimateWithDelayProps } from "../../components/Animations/types/Animations.types";
- 5: export default {
- 6:   title: "FadeUp",
- 7:   component: FadeUp,
- 8: } as Meta;
- 9: const Template: Story<IAnimateWithDelayProps> = (args) => <FadeUp {...args} />;
-10: export const Default = Template.bind({});
-11: Default.args = {
-12:   children: "Fade Up Animation",
-13:   cssClass: "p-4 bg-gray-100 border border-gray-300 rounded",
-14:   delay: 0,
-15: };
-16: export const WithDelay = Template.bind({});
-17: WithDelay.args = {
-18:   children: "Fade Up with Delay",
-19:   cssClass: "p-4 bg-blue-100 border border-blue-300 rounded",
-20:   delay: 1,
-21: };
-22: export const CustomStyles = Template.bind({});
-23: CustomStyles.args = {
-24:   children: "Fade Up with Custom Styles",
-25:   cssClass: "p-4 bg-green-100 border border-green-300 rounded shadow-lg",
-26:   delay: 0.5,
-27: };
 ````
 
 ## File: src/stories/components/Footer.stories.tsx
@@ -9097,61 +7727,6 @@ tsconfig.json
 37: };
 ````
 
-## File: src/stories/components/Hamburger.stories.tsx
-````typescript
- 1: import React, { useState } from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import Hamburger from "../../components/Layout/Hamburger.component";
- 4: export default {
- 5:   title: "Layout/Hamburger",
- 6:   component: Hamburger,
- 7: } as Meta;
- 8: // Default hamburger state
- 9: export const Default = () => (
-10:   <div className="bg-gray-800 p-4">
-11:     <Hamburger onClick={() => {}} animatetoX={false} />
-12:   </div>
-13: );
-14: // X state
-15: export const XState = () => (
-16:   <div className="bg-gray-800 p-4">
-17:     <Hamburger onClick={() => {}} animatetoX={true} />
-18:   </div>
-19: );
-20: // Interactive state
-21: export const Interactive = () => {
-22:   const [isOpen, setIsOpen] = useState(false);
-23:   return (
-24:     <div className="bg-gray-800 p-4">
-25:       <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
-26:       <p className="text-white text-sm mt-4">
-27:         Click the hamburger to toggle state
-28:       </p>
-29:     </div>
-30:   );
-31: };
-32: // On dark background
-33: export const OnDarkBackground = () => {
-34:   const [isOpen, setIsOpen] = useState(false);
-35:   return (
-36:     <div className="bg-gray-900 p-4">
-37:       <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
-38:     </div>
-39:   );
-40: };
-41: // On light background
-42: export const OnLightBackground = () => {
-43:   const [isOpen, setIsOpen] = useState(false);
-44:   return (
-45:     <div className="bg-gray-100 p-4">
-46:       <div className="bg-gray-800 inline-block rounded">
-47:         <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
-48:       </div>
-49:     </div>
-50:   );
-51: };
-````
-
 ## File: src/stories/components/InputField.stories.tsx
 ````typescript
  1: import React from "react";
@@ -9334,122 +7909,6 @@ tsconfig.json
 111:     />
 112:   </Container>
 113: );
-````
-
-## File: src/stories/components/MatrixCursor.stories.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import MatrixCursor from "../../components/Animations/MatrixCursor.component";
-  4: import "@/app/cursor.css";
-  5: export default {
-  6:   title: "Animations/MatrixCursor",
-  7:   component: MatrixCursor,
-  8: } as Meta;
-  9: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
- 10:   const heroRef = useRef<HTMLDivElement>(null);
- 11:   return (
- 12:     <div
- 13:       ref={heroRef}
- 14:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
- 15:     >
- 16:       {children}
- 17:       <MatrixCursor heroRef={heroRef} />
- 18:     </div>
- 19:   );
- 20: };
- 21: export const Default = () => (
- 22:   <DemoContainer>
- 23:     <div className="text-gray-300 space-y-4">
- 24:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
- 25:       <p>
- 26:         Move your mouse around this container to see the matrix cursor effect.
- 27:       </p>
- 28:       <p>The cursor will change and leave a trail of matrix characters.</p>
- 29:       <div className="grid grid-cols-2 gap-4 mt-8">
- 30:         <div className="bg-gray-800 p-4 rounded">
- 31:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
- 32:           <p className="text-sm">
- 33:             Move your cursor here to see the effect in action
- 34:           </p>
- 35:         </div>
- 36:         <div className="bg-gray-800 p-4 rounded">
- 37:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
- 38:           <p className="text-sm">
- 39:             Try moving between different areas to see the trail
- 40:           </p>
- 41:         </div>
- 42:       </div>
- 43:     </div>
- 44:   </DemoContainer>
- 45: );
- 46: export const WithInteractiveElements = () => (
- 47:   <DemoContainer>
- 48:     <div className="text-gray-300 space-y-6">
- 49:       <h2 className="text-2xl font-bold text-white mb-4">
- 50:         Interactive Elements Demo
- 51:       </h2>
- 52:       <div className="grid grid-cols-2 gap-4">
- 53:         <button className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors">
- 54:           Hover Me
- 55:         </button>
- 56:         <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition-colors text-center">
- 57:           Button Example
- 58:         </button>
- 59:       </div>
- 60:       <div className="bg-gray-800 p-6 rounded">
- 61:         <p>
- 62:           The matrix cursor effect works seamlessly with interactive elements.
- 63:           Try hovering over the buttons above.
- 64:         </p>
- 65:       </div>
- 66:     </div>
- 67:   </DemoContainer>
- 68: );
- 69: export const LargeArea = () => (
- 70:   <DemoContainer>
- 71:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
- 72:       <div className="text-center space-y-4">
- 73:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
- 74:         <p>
- 75:           This demo shows how the matrix cursor effect works in a larger area.
- 76:           <br />
- 77:           Move your cursor around to create longer trails.
- 78:         </p>
- 79:       </div>
- 80:     </div>
- 81:   </DemoContainer>
- 82: );
- 83: export const WithContent = () => (
- 84:   <DemoContainer>
- 85:     <div className="text-gray-300 space-y-6">
- 86:       <h2 className="text-2xl font-bold text-white mb-4">
- 87:         Content Interaction
- 88:       </h2>
- 89:       <div className="grid grid-cols-3 gap-4">
- 90:         {[1, 2, 3].map((i) => (
- 91:           <div
- 92:             key={i}
- 93:             className="bg-gray-800 p-4 rounded hover:bg-gray-700 transition-colors"
- 94:           >
- 95:             <h3 className="text-lg font-semibold mb-2">Card {i}</h3>
- 96:             <p className="text-sm">
- 97:               Hover over this card to see how the matrix cursor interacts with
- 98:               content.
- 99:             </p>
-100:           </div>
-101:         ))}
-102:       </div>
-103:       <div className="bg-gray-800 p-6 rounded mt-8">
-104:         <p className="text-lg">
-105:           The matrix cursor effect adds a unique interactive element to your
-106:           content. Try moving between different cards to see how the trail
-107:           follows your movement.
-108:         </p>
-109:       </div>
-110:     </div>
-111:   </DemoContainer>
-112: );
 ````
 
 ## File: src/stories/components/NavigationLink.stories.tsx
@@ -9679,119 +8138,6 @@ tsconfig.json
 38: );
 ````
 
-## File: src/stories/components/Tabs.stories.tsx
-````typescript
-  1: import React from "react";
-  2: import { Meta, Story } from "@ladle/react";
-  3: import Tabs from "../../components/UI/Tabs.component";
-  4: export default {
-  5:   title: "Tabs",
-  6:   component: Tabs,
-  7: } as Meta;
-  8: const Template: Story<React.ComponentProps<typeof Tabs>> = (args) => (
-  9:   <Tabs {...args} />
- 10: );
- 11: // Sample content components
- 12: const TextContent = () => (
- 13:   <div className="py-4">
- 14:     <h2 className="text-xl text-white mb-4">Text Content</h2>
- 15:     <p className="text-gray-300">
- 16:       This is a sample text content for the tab panel. It demonstrates how text
- 17:       content is displayed within the tabs component.
- 18:     </p>
- 19:   </div>
- 20: );
- 21: const ListContent = () => (
- 22:   <div className="py-4">
- 23:     <h2 className="text-xl text-white mb-4">List Content</h2>
- 24:     <ul className="list-disc list-inside text-gray-300">
- 25:       <li>First item in the list</li>
- 26:       <li>Second item in the list</li>
- 27:       <li>Third item in the list</li>
- 28:     </ul>
- 29:   </div>
- 30: );
- 31: const FormField = ({
- 32:   id,
- 33:   label,
- 34:   type,
- 35:   placeholder,
- 36: }: {
- 37:   id: string;
- 38:   label: string;
- 39:   type: string;
- 40:   placeholder: string;
- 41: }) => (
- 42:   <div>
- 43:     <label htmlFor={id} className="block text-gray-300 mb-2">
- 44:       {label}
- 45:     </label>
- 46:     <input
- 47:       id={id}
- 48:       type={type}
- 49:       className="w-full p-2 rounded bg-gray-700 text-white"
- 50:       placeholder={placeholder}
- 51:     />
- 52:   </div>
- 53: );
- 54: const FormContent = () => {
- 55:   const formId = React.useId();
- 56:   const fields = [
- 57:     { label: "Name", type: "text", placeholder: "Enter your name" },
- 58:     { label: "Email", type: "email", placeholder: "Enter your email" },
- 59:   ];
- 60:   return (
- 61:     <div className="py-4">
- 62:       <h2 className="text-xl text-white mb-4">Form Content</h2>
- 63:       <form className="space-y-4">
- 64:         {fields.map((field) => (
- 65:           <FormField
- 66:             key={field.label}
- 67:             id={`${formId}-${field.label.toLowerCase()}`}
- 68:             {...field}
- 69:           />
- 70:         ))}
- 71:       </form>
- 72:     </div>
- 73:   );
- 74: };
- 75: export const VerticalTabs = Template.bind({});
- 76: VerticalTabs.args = {
- 77:   orientation: "vertical",
- 78:   tabs: [
- 79:     { id: "tab1", label: "Text", content: <TextContent /> },
- 80:     { id: "tab2", label: "List", content: <ListContent /> },
- 81:     { id: "tab3", label: "Form", content: <FormContent /> },
- 82:   ],
- 83: };
- 84: export const HorizontalTabs = Template.bind({});
- 85: HorizontalTabs.args = {
- 86:   orientation: "horizontal",
- 87:   tabs: [
- 88:     { id: "tab1", label: "Text", content: <TextContent /> },
- 89:     { id: "tab2", label: "List", content: <ListContent /> },
- 90:     { id: "tab3", label: "Form", content: <FormContent /> },
- 91:   ],
- 92: };
- 93: export const ManyTabs = Template.bind({});
- 94: ManyTabs.args = {
- 95:   tabs: [
- 96:     { id: "tab1", label: "Tab 1", content: <TextContent /> },
- 97:     { id: "tab2", label: "Tab 2", content: <ListContent /> },
- 98:     { id: "tab3", label: "Tab 3", content: <FormContent /> },
- 99:     { id: "tab4", label: "Tab 4", content: <TextContent /> },
-100:     { id: "tab5", label: "Tab 5", content: <ListContent /> },
-101:   ],
-102: };
-103: export const TwoTabs = Template.bind({});
-104: TwoTabs.args = {
-105:   tabs: [
-106:     { id: "tab1", label: "First Tab", content: <TextContent /> },
-107:     { id: "tab2", label: "Second Tab", content: <ListContent /> },
-108:   ],
-109: };
-````
-
 ## File: src/types/sanity-errors.ts
 ````typescript
  1: export interface SanityApiError {
@@ -9958,6 +8304,29 @@ tsconfig.json
 80:     "arrange-act-assert": rule,
 81:   },
 82: };
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "index.js",
+ 6:   "scripts": {
+ 7:     "test": "echo \"Error: no test specified\" && exit 1"
+ 8:   },
+ 9:   "keywords": [
+10:     "eslint",
+11:     "eslintplugin",
+12:     "eslint-plugin"
+13:   ],
+14:   "author": "",
+15:   "license": "ISC",
+16:   "peerDependencies": {
+17:     "eslint": ">=9.25.1"
+18:   }
+19: }
 ````
 
 ## File: src/utils/portableTextComponents.tsx
@@ -10550,6 +8919,46 @@ tsconfig.json
 27: 
 28: # Dotenv and similar local-only files
 29: *.local
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.1.0",
+18:     "react-dom": "^19.1.0",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^3.86.1",
+21:     "styled-components": "^6.1.17"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.1.2",
+26:     "eslint": "^9.25.1",
+27:     "prettier": "^3.5.3",
+28:     "typescript": "^5.8.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
 ````
 
 ## File: studio/README.md
@@ -13471,19 +11880,6 @@ tsconfig.json
 62: });
 ````
 
-## File: postcss.config.mjs
-````
-1: /** @type {import('postcss-load-config').Config} */
-2: const config = {
-3:   plugins: {
-4:     tailwindcss: {},
-5:     autoprefixer: {},
-6:   },
-7: };
-8: 
-9: export default config;
-````
-
 ## File: renovate.json
 ````json
  1: {
@@ -13716,6 +12112,88 @@ tsconfig.json
 33:   ],
 34:   "exclude": ["node_modules"]
 35: }
+````
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@4.0.0
+ 4:   codecov: codecov/codecov@5.3.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.11.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.11.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
 ````
 
 ## File: .github/workflows/lighthouse.yml
@@ -14018,148 +12496,1545 @@ tsconfig.json
 234: This TODO list serves as a comprehensive guide for implementing Next.js 15 features in our project. Each section should be reviewed and adjusted as needed during implementation.
 ````
 
-## File: src/app/globals.css
-````css
- 1: @tailwind base;
- 2: @tailwind components;
- 3: @tailwind utilities;
- 4: :root {
- 5:   /* Modern Color Scheme */
- 6:   --primary: #00ff62;
- 7:   --secondary: #00cc4e;
- 8:   --accent: #008529;
- 9:   --text: #e1e1e1;
-10:   --background: #0a0a0a;
-11:   /* Semantic Colors */
-12:   --success: #00cc4e;
-13:   --error: #ff4e4e;
-14:   --warning: #ffb74e;
-15:   --info: #4e9fff;
-16:   /* Matrix Theme Colors */
-17:   --matrix-light: #00ff62;
-18:   --matrix: #00cc4e;
-19:   --matrix-dark: #008529;
-20:   --matrix-glow: rgba(0, 255, 98, 0.6);
-21: }
-22: body {
-23:   background-color: var(--background);
-24:   color: var(--text);
-25:   font-family:
-26:     "Inter",
-27:     -apple-system,
-28:     BlinkMacSystemFont,
-29:     "Segoe UI",
-30:     Roboto,
-31:     Oxygen,
-32:     Ubuntu,
-33:     Cantarell,
-34:     sans-serif;
-35: }
-36: #matrixCanvas {
-37:   opacity: 0.7;
-38: }
-39: /* Selection */
-40: ::selection {
-41:   background-color: var(--matrix-dark);
-42:   color: #ffffff;
-43: }
-44: /* Scrollbar */
-45: * {
-46:   scrollbar-width: thin;
-47:   scrollbar-color: var(--matrix-dark) #1a1a1a;
-48: }
-49: ::-webkit-scrollbar {
-50:   width: 6px;
-51: }
-52: ::-webkit-scrollbar-track {
-53:   background: #1a1a1a;
-54: }
-55: ::-webkit-scrollbar-thumb {
-56:   background: var(--matrix-dark);
-57:   border-radius: 3px;
-58: }
-59: ::-webkit-scrollbar-thumb:hover {
-60:   background: var(--matrix-light);
-61: }
-62: /* Remove focus outline */
-63: :focus {
-64:   outline: none;
-65: }
-66: /* Remove focus visible outline */
-67: :focus-visible {
-68:   outline: none;
-69: }
+## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
+  5: // Mock the Matrix component to avoid rendering issues in tests
+  6: jest.mock("@/components/Animations/Matrix.component", () => {
+  7:   return function DummyMatrix() {
+  8:     return <div data-testid="matrix-animation" />;
+  9:   };
+ 10: });
+ 11: describe("ErrorFallback", () => {
+ 12:   const mockError = new Error("Test error message");
+ 13:   beforeEach(() => {
+ 14:     // Mock window.location.reload
+ 15:     Object.defineProperty(window, "location", {
+ 16:       configurable: true,
+ 17:       value: { reload: jest.fn() },
+ 18:     });
+ 19:   });
+ 20:   it("renders error message and reload button", () => {
+ 21:     // Arrange
+ 22:     const expectedTexts = {
+ 23:       heading: "Har du funnet en feil i Matrix?",
+ 24:       error: "Test error message",
+ 25:       button: "Returner til Matrix",
+ 26:     };
+ 27:     // Act
+ 28:     render(<ErrorFallback error={mockError} />);
+ 29:     // Assert
+ 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+ 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+ 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
+ 33:   });
+ 34:   it("displays default error message when error.message is undefined in full version", () => {
+ 35:     // Arrange
+ 36:     const errorWithoutMessage = new Error();
+ 37:     const expectedMessage = "En uventet feil har oppstått.";
+ 38:     // Act
+ 39:     render(<ErrorFallback error={errorWithoutMessage} />);
+ 40:     // Assert
+ 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 42:   });
+ 43:   it("displays default error message when error.message is undefined in compact version", () => {
+ 44:     // Arrange
+ 45:     const errorWithoutMessage = new Error();
+ 46:     const expectedMessage = "En uventet feil har oppstått.";
+ 47:     // Act
+ 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
+ 49:     // Assert
+ 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 51:   });
+ 52:   it("renders compact version with correct styling", () => {
+ 53:     // Arrange
+ 54:     const expectedTexts = {
+ 55:       heading: "Har du funnet en feil i Matrix?",
+ 56:       error: "Test error message",
+ 57:       button: "Returner til Matrix",
+ 58:     };
+ 59:     // Act
+ 60:     render(<ErrorFallback error={mockError} compact={true} />);
+ 61:     // Assert
+ 62:     const container = screen
+ 63:       .getByTestId("matrix-animation")
+ 64:       .closest(".bg-gray-900");
+ 65:     expect(container).toHaveClass("bg-gray-900");
+ 66:     expect(container).toHaveClass("p-4");
+ 67:     expect(container).toHaveClass("rounded-lg");
+ 68:     expect(container).toHaveClass("overflow-hidden");
+ 69:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
+ 70:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
+ 71:     const button = screen.getByRole("button");
+ 72:     expect(button).toHaveClass("bg-matrix-light");
+ 73:     expect(button).toHaveClass("text-black");
+ 74:     expect(button).toHaveClass("rounded-sm");
+ 75:     expect(button).toHaveClass("text-sm");
+ 76:   });
+ 77:   it("renders full version with correct styling", () => {
+ 78:     // Arrange
+ 79:     const expectedTexts = {
+ 80:       heading: "Har du funnet en feil i Matrix?",
+ 81:       error: "Test error message",
+ 82:       button: "Returner til Matrix",
+ 83:     };
+ 84:     // Act
+ 85:     render(<ErrorFallback error={mockError} compact={false} />);
+ 86:     // Assert
+ 87:     const container = screen.getByTestId("matrix-animation").parentElement;
+ 88:     expect(container).toHaveClass("absolute", "w-full", "h-full");
+ 89:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
+ 90:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
+ 91:   });
+ 92:   it("reloads the page when reload button is clicked in compact mode", () => {
+ 93:     // Arrange
+ 94:     render(<ErrorFallback error={mockError} compact={true} />);
+ 95:     const reloadButton = screen.getByRole("button", {
+ 96:       name: "Returner til Matrix",
+ 97:     });
+ 98:     // Act
+ 99:     fireEvent.click(reloadButton);
+100:     // Assert
+101:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+102:   });
+103:   it("reloads the page when reload button is clicked in full mode", () => {
+104:     // Arrange
+105:     render(<ErrorFallback error={mockError} compact={false} />);
+106:     const reloadButton = screen.getByRole("button", {
+107:       name: "Returner til Matrix",
+108:     });
+109:     // Act
+110:     fireEvent.click(reloadButton);
+111:     // Assert
+112:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+113:   });
+114: });
 ````
 
-## File: src/lib/sanity/queries.ts
+## File: src/app/prosjekter/error.tsx
 ````typescript
- 1: import { groq } from "next-sanity";
- 2: export const projectsQuery = groq`
- 3:   *[_type == "project"] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `;
-25: export const cvQuery = groq`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `;
-48: export const pageContentQuery = groq`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id, 
-51:     title, 
-52:     hero, 
-53:     content
-54:   }
-55: `;
-56: export const navigationQuery = groq`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `;
+ 1: "use client";
+ 2: import { useEffect } from "react";
+ 3: type ErrorBoundaryProps = Readonly<{
+ 4:   error: Error & { digest?: string };
+ 5:   reset: () => void;
+ 6: }>;
+ 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+ 8:   useEffect(() => {
+ 9:     console.error(error);
+10:   }, [error]);
+11:   return (
+12:     <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
+13:       <h2 className="text-2xl font-bold text-matrix-light mb-4">
+14:         Noe gikk galt ved lasting av prosjekter
+15:       </h2>
+16:       <button
+17:         onClick={reset}
+18:         className="px-4 py-2 bg-matrix-dark hover:bg-matrix-light text-white rounded-sm transition-colors"
+19:       >
+20:         Prøv igjen
+21:       </button>
+22:     </div>
+23:   );
+24: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import "./globals.css";
+ 4: import "./glitch.css";
+ 5: import Footer from "@/components/Layout/Footer.component";
+ 6: import SkipLink from "@/components/UI/SkipLink.component";
+ 7: const inter = Inter({ subsets: ["latin"] });
+ 8: export const metadata: Metadata = {
+ 9:   title: "Forside - Dfweb",
+10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+11: };
+12: export default function RootLayout({
+13:   children,
+14: }: Readonly<{
+15:   children: React.ReactNode;
+16: }>) {
+17:   return (
+18:     <html lang="en">
+19:       <head>
+20:         <link rel="icon" href="/favicon.ico" />
+21:         <link rel="apple-touch-icon" href="/logo.png" />
+22:         <meta property="og:title" content="Daniel Fjeldstad" />
+23:         <meta name="author" content="Daniel Fjeldstad" />
+24:         <meta property="og:locale" content="nb_NO" />
+25:         <meta
+26:           name="description"
+27:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+28:         />
+29:         <meta
+30:           property="og:description"
+31:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+32:         />
+33:         <meta property="og:url" content="https://www.dfweb.no/" />
+34:         <meta property="og:site_name" content="dfweb.no" />
+35:         <meta name="theme-color" content="#004014" />
+36:       </head>
+37:       <body
+38:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+39:       >
+40:         <SkipLink />
+41:         <div id="main-content" className="grow">
+42:           {children}
+43:         </div>
+44:         <Footer />
+45:       </body>
+46:     </html>
+47:   );
+48: }
+````
+
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: export interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrixCanvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = null,
+ 26: }) => {
+ 27:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 28:   const columnsRef = useRef<Column[]>([]);
+ 29:   const maxStackHeightRef = useRef<number>(0);
+ 30:   const lastFrameTimeRef = useRef<number>(0);
+ 31:   const isInitializedRef = useRef<boolean>(false);
+ 32:   const fps = 10;
+ 33:   const frameInterval = 1000 / fps;
+ 34:   const rgbBackground = hexToRgb(backgroundColor);
+ 35:   if (!rgbBackground) {
+ 36:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 37:   }
+ 38:   const rgbFont = hexToRgb(fontColor);
+ 39:   if (!rgbFont) {
+ 40:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 41:   }
+ 42:   /**
+ 43:    * Initializes the matrix columns
+ 44:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 45:    */
+ 46:   const initMatrix = useCallback(
+ 47:     (canvas: HTMLCanvasElement) => {
+ 48:       const columns: Column[] = [];
+ 49:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 50:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 51:         const column: Column = {
+ 52:           x: i * tileSize,
+ 53:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 54:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 55:         };
+ 56:         columns.push(column);
+ 57:       }
+ 58:       columnsRef.current = columns;
+ 59:       maxStackHeightRef.current = maxStackHeight;
+ 60:     },
+ 61:     [tileSize]
+ 62:   );
+ 63:   const tick = useCallback(
+ 64:     (
+ 65:       timestamp: number,
+ 66:       ctx: CanvasRenderingContext2D,
+ 67:       canvas: HTMLCanvasElement
+ 68:     ) => {
+ 69:       if (!lastFrameTimeRef.current) {
+ 70:         lastFrameTimeRef.current = timestamp;
+ 71:       }
+ 72:       const delta = timestamp - lastFrameTimeRef.current;
+ 73:       if (delta > frameInterval) {
+ 74:         const renderer = createMatrixRenderer({
+ 75:           ctx,
+ 76:           canvas,
+ 77:           columns: columnsRef.current,
+ 78:           maxStackHeight: maxStackHeightRef.current,
+ 79:           tileSize,
+ 80:           fadeFactor,
+ 81:           rgbBackground,
+ 82:           rgbFont,
+ 83:           glowColor,
+ 84:           tileSet,
+ 85:           getRandomInt,
+ 86:         });
+ 87:         renderer.draw();
+ 88:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 89:       }
+ 90:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 91:     },
+ 92:     [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet]
+ 93:   );
+ 94:   useEffect(() => {
+ 95:     const canvas = canvasRef.current;
+ 96:     if (!canvas) return;
+ 97:     const ctx = canvas.getContext("2d");
+ 98:     if (!ctx) return;
+ 99:     const handleResize = () => {
+100:       const boundingClientRect = canvas.getBoundingClientRect();
+101:       canvas.width = boundingClientRect.width;
+102:       canvas.height = boundingClientRect.height;
+103:       initMatrix(canvas);
+104:       isInitializedRef.current = true;
+105:     };
+106:     const debouncedResize = debounce(handleResize, 100);
+107:     window.addEventListener("resize", debouncedResize);
+108:     handleResize();
+109:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+110:     return () => {
+111:       window.removeEventListener("resize", debouncedResize);
+112:     };
+113:   }, [initMatrix, tick]);
+114:   return (
+115:     <canvas
+116:       ref={canvasRef}
+117:       id={CANVAS_ID}
+118:       style={{ width: "100%", height: "100%" }}
+119:       data-testid="matrix-canvas"
+120:       className="absolute inset-0"
+121:     />
+122:   );
+123: };
+124: export default ReactMatrixAnimation;
+````
+
+## File: src/components/CV/CVContent.component.tsx
+````typescript
+  1: import PageHeader from "@/components/UI/PageHeader.component";
+  2: import Button from "@/components/UI/Button.component";
+  3: import Tabs from "@/components/UI/Tabs.component";
+  4: interface CVData {
+  5:   keyQualifications: string[];
+  6:   experience: Array<{
+  7:     period: string;
+  8:     company: string;
+  9:     role: string;
+ 10:     description: string;
+ 11:   }>;
+ 12:   education: Array<{
+ 13:     period: string;
+ 14:     institution: string;
+ 15:     degree: string;
+ 16:     description: string;
+ 17:   }>;
+ 18:   volunteerWork: Array<{
+ 19:     period: string;
+ 20:     organization: string;
+ 21:     role: string;
+ 22:     description: string;
+ 23:   }>;
+ 24: }
+ 25: interface CVContentProps {
+ 26:   cvData: CVData;
+ 27: }
+ 28: /**
+ 29:  * CVContent component for rendering the CV page with tabs
+ 30:  * @param {CVContentProps} props - The props for the CVContent component
+ 31:  * @returns {JSX.Element} The rendered CVContent component
+ 32:  */
+ 33: const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
+ 34:   const tabs = [
+ 35:     {
+ 36:       id: "qualifications",
+ 37:       label: "Nøkkelkvalifikasjoner",
+ 38:       content: (
+ 39:         <ul className="list-disc pl-5 text-slate-300/[0.9]">
+ 40:           {cvData.keyQualifications.map((qual) => (
+ 41:             <li key={qual} className="mb-2">
+ 42:               {qual}
+ 43:             </li>
+ 44:           ))}
+ 45:         </ul>
+ 46:       ),
+ 47:     },
+ 48:     {
+ 49:       id: "experience",
+ 50:       label: "Erfaring",
+ 51:       content: (
+ 52:         <div className="text-slate-300/[0.9]">
+ 53:           {cvData.experience.map((exp) => (
+ 54:             <div key={exp.description} className="mb-6">
+ 55:               <h3 className="font-semibold text-slate-100">
+ 56:                 {exp.period} - {exp.company}
+ 57:               </h3>
+ 58:               {exp.role && <p className="italic">{exp.role}</p>}
+ 59:               <p>{exp.description}</p>
+ 60:             </div>
+ 61:           ))}
+ 62:         </div>
+ 63:       ),
+ 64:     },
+ 65:     {
+ 66:       id: "education",
+ 67:       label: "Utdanning",
+ 68:       content: (
+ 69:         <div className="text-slate-300/[0.9]">
+ 70:           {cvData.education.map((edu) => (
+ 71:             <div key={edu.description} className="mb-6">
+ 72:               <h3 className="font-semibold text-slate-100">
+ 73:                 {edu.period} - {edu.institution}
+ 74:               </h3>
+ 75:               {edu.degree && <p className="italic">{edu.degree}</p>}
+ 76:               <p>{edu.description}</p>
+ 77:             </div>
+ 78:           ))}
+ 79:         </div>
+ 80:       ),
+ 81:     },
+ 82:     {
+ 83:       id: "volunteerWork",
+ 84:       label: "Frivillig arbeid",
+ 85:       content: (
+ 86:         <div className="text-slate-300/[0.9]">
+ 87:           {cvData.volunteerWork?.map((vol) => (
+ 88:             <div key={vol.description} className="mb-6">
+ 89:               <h3 className="font-semibold text-slate-100">
+ 90:                 {vol.period} - {vol.organization}
+ 91:               </h3>
+ 92:               {vol.role && <p className="italic">{vol.role}</p>}
+ 93:               <p>{vol.description}</p>
+ 94:             </div>
+ 95:           ))}
+ 96:         </div>
+ 97:       ),
+ 98:     },
+ 99:   ];
+100:   return (
+101:     <main id="maincontent">
+102:       <div className="mt-32 bg-graybg">
+103:         <PageHeader>CV</PageHeader>
+104:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+105:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+106:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
+107:               <div className="p-4 text-lg rounded-sm md:w-full">
+108:                 <div className="md:flex md:justify-center hidden">
+109:                   <Tabs tabs={tabs} />
+110:                 </div>
+111:                 <div className="mx-auto text-center md:mt-8 md:hidden">
+112:                   <Button href="./cv2.pdf" renderAs="a" type="button">
+113:                     Last ned PDF
+114:                   </Button>
+115:                 </div>
+116:               </div>
+117:             </div>
+118:           </div>
+119:         </div>
+120:       </div>
+121:     </main>
+122:   );
+123: };
+124: export default CVContent;
+````
+
+## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
+ 3: import Pill from "../../components/UI/Pill.component";
+ 4: interface ErrorFallbackProps {
+ 5:   error: Error;
+ 6:   compact?: boolean;
+ 7: }
+ 8: /**
+ 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
+10:  * It shows a Matrix-themed error message with the option to reload the page.
+11:  *
+12:  * @param {Object} props - The component props
+13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
+14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
+15:  * @returns {JSX.Element} A React component displaying the error message and reload option
+16:  */
+17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+18:   error,
+19:   compact = false,
+20: }) => {
+21:   if (compact) {
+22:     return (
+23:       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">
+24:         <div className="absolute inset-0 opacity-30">
+25:           <ReactMatrixAnimation />
+26:         </div>
+27:         <div className="relative z-10 flex flex-col items-center text-center">
+28:           <h2 className="text-white text-lg mb-2">
+29:             Har du funnet en feil i Matrix?
+30:           </h2>
+31:           <p className="text-white text-sm mb-3">
+32:             {error.message || "En uventet feil har oppstått."}
+33:           </p>
+34:           <button
+35:             onClick={() => window.location.reload()}
+36:             className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
+37:           >
+38:             Returner til Matrix
+39:           </button>
+40:         </div>
+41:       </div>
+42:     );
+43:   }
+44:   return (
+45:     <div className="absolute w-full h-full">
+46:       <ReactMatrixAnimation />
+47:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+48:         <h1 className="text-white text-5xl m-6">
+49:           Har du funnet en feil i Matrix?
+50:         </h1>
+51:         <p className="text-white text-xl mb-6">
+52:           {error.message || "En uventet feil har oppstått."}
+53:         </p>
+54:         <Pill
+55:           text="Returner til Matrix"
+56:           onClick={() => window.location.reload()}
+57:         />
+58:       </div>
+59:     </div>
+60:   );
+61: };
+62: export default ErrorFallback;
+````
+
+## File: src/components/Kontakt/KontaktContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import emailjs from "@emailjs/browser";
+ 3: import { useState } from "react";
+ 4: import PageHeader from "@/components/UI/PageHeader.component";
+ 5: import GenericForm from "@/components/UI/GenericForm.component";
+ 6: import { formSchema, formFields, FormData } from "./config/formConfig";
+ 7: /**
+ 8:  * Renders the contact form. 
+ 9:  * Uses EmailJS to send the emails.
+10:  * @function KontaktContent
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const KontaktContent = () => {
+14:   const [serverResponse, setServerResponse] = useState<string>("");
+15:   /**
+16:    * Handles the form submission and sends an email using the provided API keys.
+17:    *
+18:    * @param {FormData} data - The form data.
+19:    * @return {Promise<void>} No return value.
+20:    */
+21:   const onSubmit = async (data: FormData): Promise<void> => {
+22:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+23:     const TEMPLATE_KEY =
+24:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+25:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+26:     try {
+27:       emailjs.init(EMAIL_API_KEY);
+28:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+29:       setServerResponse("Takk for din beskjed");
+30:     } catch {
+31:       setServerResponse("Feil under sending av skjema");
+32:     }
+33:   };
+34:   return (
+35:     <main data-testid="kontaktcontent" id="maincontent">
+36:       <div className="mt-32 bg-graybg">
+37:         <PageHeader>Kontakt</PageHeader>
+38:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+39:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+40:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+41:               <div className="p-2 md:p-6 pt-8">
+42:                 {serverResponse ? (
+43:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+44:                     {serverResponse}
+45:                   </h3>
+46:                 ) : (
+47:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+48:                     <GenericForm<typeof formSchema>
+49:                       formSchema={formSchema}
+50:                       onSubmit={onSubmit}
+51:                       fields={formFields}
+52:                       submitButtonText="Send skjema"
+53:                     />
+54:                   </div>
+55:                 )}
+56:               </div>
+57:             </div>
+58:           </div>
+59:         </div>
+60:       </div>
+61:     </main>
+62:   );
+63: };
+64: export default KontaktContent;
+````
+
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: /**
+ 5:  * Renders the footer for the application
+ 6:  * @function Footer
+ 7:  * @returns {JSX.Element} - Rendered Hamburger component
+ 8:  */
+ 9: const Footer = () => (
+10:   <footer
+11:     className="mt-8"
+12:     aria-label="Innholdet for bunnteksten med copyright"
+13:     data-testid="footer"
+14:   >
+15:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
+16:       <div className="w-full mx-auto p-6 text-center font-semibold">
+17:         <div className="flex justify-center items-center space-x-2">
+18:           <span>Copyright Daniel Fjeldstad</span>
+19:           <IconContext.Provider value={{ className: "inline-block" }}>
+20:             <BiCopyright size="1.2em" />
+21:           </IconContext.Provider>
+22:           <span>{new Date().getFullYear()}</span>
+23:         </div>
+24:       </div>
+25:     </div>
+26:   </footer>
+27: );
+28: export default Footer;
+````
+
+## File: src/components/Layout/Hamburger.component.tsx
+````typescript
+ 1: "use client";
+ 2: export interface IHamburgerProps {
+ 3:   onClick: () => void;
+ 4:   animatetoX: boolean;
+ 5: }
+ 6: /**
+ 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
+ 8:  * @function Hamburger
+ 9:  * @param {() => void} onClick - onClick handler to respond to clicks
+10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
+14:   const hamburgerLine =
+15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
+16:   const opacityFull = "opacity-100 group-hover:opacity-100";
+17:   return (
+18:     <button
+19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6"
+20:       data-cy="hamburger"
+21:       data-testid="hamburger"
+22:       onClick={onClick}
+23:       aria-expanded={animatetoX}
+24:       type="button"
+25:     >
+26:       <span className="sr-only text-white text-2xl">Hamburger</span>
+27:       <span
+28:         data-testid="hamburgerline"
+29:         className={`${hamburgerLine} ${
+30:           animatetoX
+31:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
+32:             : opacityFull
+33:         }`}
+34:       />
+35:       <span
+36:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
+37:       />
+38:       <span
+39:         className={`${hamburgerLine} ${
+40:           animatetoX
+41:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
+42:             : opacityFull
+43:         }`}
+44:       />
+45:     </button>
+46:   );
+47: };
+48: export default Hamburger;
+````
+
+## File: src/components/Layout/Header.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import { MotionDiv } from "@/lib/framer/client";
+ 4: import MobileMenu from "./MobileMenu.component";
+ 5: import DesktopNavigation from "./DesktopNavigation.component";
+ 6: interface NavigationLink {
+ 7:   title: string;
+ 8:   name: string;
+ 9:   hash: string;
+10:   href: string;
+11:   externalLink: boolean;
+12: }
+13: interface HeaderProps {
+14:   navigationLinks: NavigationLink[];
+15: }
+16: /**
+17:  * Header component that renders the navigation bar
+18:  * @param {HeaderProps} props - The props for the Header component
+19:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
+20:  * @returns {JSX.Element} The rendered Header component
+21:  */
+22: const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
+23:   return (
+24:     <header className="z-999 relative">
+25:       <div
+26:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+27:         style={{ transform: "translateX(-50%)" }}
+28:       />
+29:       <MotionDiv
+30:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+31:         initial={{ y: -100, x: "-50%", opacity: 0 }}
+32:         animate={{
+33:           y: 0,
+34:           x: "-51%",
+35:           opacity: 1,
+36:           transition: {
+37:             y: { duration: 0.6, ease: "easeOut" },
+38:             opacity: { duration: 0.6, ease: "easeOut" },
+39:           },
+40:         }}
+41:       />
+42:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
+43:         <DesktopNavigation navigationLinks={navigationLinks} />
+44:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+45:           <MobileMenu links={navigationLinks} />
+46:         </div>
+47:       </nav>
+48:     </header>
+49:   );
+50: };
+51: export default Header;
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import { useRef } from "react";
+  3: import Link from "next/link";
+  4: import { usePathname } from "next/navigation";
+  5: import { AnimatePresence, useCycle, motion } from "motion/react";
+  6: import Hamburger from "./Hamburger.component";
+  7: import useClickOutside from "@/hooks/useClickOutside";
+  8: interface ILink {
+  9:   title: string;
+ 10:   name: string;
+ 11:   hash: string;
+ 12:   href: string;
+ 13:   externalLink: boolean;
+ 14: }
+ 15: interface IMobileMenuProps {
+ 16:   links: ILink[];
+ 17: }
+ 18: /**
+ 19:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 20:  * @param {Object} props
+ 21:  * @param {ILink[]} props.links - Array of navigation link objects
+ 22:  * @returns {JSX.Element} The rendered MobileMenu component
+ 23:  */
+ 24: const MobileMenu = ({ links }: IMobileMenuProps) => {
+ 25:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
+ 26:   const ref = useRef<HTMLDivElement>(null);
+ 27:   const pathname = usePathname();
+ 28:   const handleClickOutside = () => {
+ 29:     setisExpanded(0);
+ 30:   };
+ 31:   useClickOutside(ref, handleClickOutside);
+ 32:   const menuVariants = {
+ 33:     closed: {
+ 34:       x: "125%",
+ 35:       transition: {
+ 36:         type: "spring",
+ 37:         stiffness: 60,
+ 38:         damping: 10,
+ 39:         delay: 0.3,
+ 40:       },
+ 41:     },
+ 42:     open: {
+ 43:       x: 0,
+ 44:       transition: {
+ 45:         type: "spring",
+ 46:         stiffness: 60,
+ 47:         damping: 10,
+ 48:       },
+ 49:     },
+ 50:   };
+ 51:   const itemVariants = {
+ 52:     closed: (i: number) => ({
+ 53:       x: i % 2 === 0 ? "-50%" : "50%",
+ 54:       opacity: 0,
+ 55:       transition: {
+ 56:         type: "spring",
+ 57:         stiffness: 120,
+ 58:         damping: 12,
+ 59:         duration: 0.25,
+ 60:       },
+ 61:     }),
+ 62:     open: (i: number) => ({
+ 63:       x: 0,
+ 64:       opacity: 1,
+ 65:       transition: {
+ 66:         type: "spring",
+ 67:         stiffness: 120,
+ 68:         damping: 12,
+ 69:         delay: i * 0.25,
+ 70:       },
+ 71:     }),
+ 72:   };
+ 73:   return (
+ 74:     <div
+ 75:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 76:       data-testid="mobilemenu"
+ 77:     >
+ 78:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
+ 79:       <AnimatePresence>
+ 80:         {isExpanded && (
+ 81:           <motion.div
+ 82:             id="mobile-menu"
+ 83:             data-testid="mobile-menu"
+ 84:             data-cy="mobile-menu"
+ 85:             aria-hidden={!isExpanded}
+ 86:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 87:             initial="closed"
+ 88:             animate="open"
+ 89:             exit="closed"
+ 90:             variants={menuVariants}
+ 91:           >
+ 92:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
+ 93:               <motion.ul
+ 94:                 className="w-full"
+ 95:                 initial="closed"
+ 96:                 animate="open"
+ 97:                 exit="closed"
+ 98:                 variants={{
+ 99:                   open: {
+100:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+101:                   },
+102:                   closed: {
+103:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+104:                   },
+105:                 }}
+106:               >
+107:                 {links.map(({ title, name, href, externalLink }, index) => (
+108:                   <motion.li
+109:                     key={title}
+110:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+111:                     data-cy="mobile-menu-item"
+112:                     custom={index}
+113:                     variants={itemVariants}
+114:                   >
+115:                     {externalLink ? (
+116:                       <a
+117:                         aria-label={name}
+118:                         href={href}
+119:                         target="_blank"
+120:                         rel="noreferrer"
+121:                         data-testid={`mobil-${name}`}
+122:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+123:                       >
+124:                         {name}
+125:                       </a>
+126:                     ) : (
+127:                       <Link
+128:                         href={href}
+129:                         data-testid={`mobil-${name}`}
+130:                         prefetch={true}
+131:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+132:                           pathname === href ? "text-green-400" : ""
+133:                         }`}
+134:                       >
+135:                         <div className="glitch relative" data-text={name}>
+136:                           {name}
+137:                           <motion.span
+138:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+139:                               pathname === href ? "bg-green-400" : "bg-white"
+140:                             }`}
+141:                             initial={{
+142:                               width: pathname === href ? "100%" : "0%",
+143:                             }}
+144:                             animate={{
+145:                               width: pathname === href ? "100%" : "0%",
+146:                             }}
+147:                             transition={{ duration: 0.3 }}
+148:                           />
+149:                         </div>
+150:                       </Link>
+151:                     )}
+152:                   </motion.li>
+153:                 ))}
+154:               </motion.ul>
+155:             </nav>
+156:           </motion.div>
+157:         )}
+158:       </AnimatePresence>
+159:     </div>
+160:   );
+161: };
+162: export default MobileMenu;
+````
+
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10: }
+11: /**
+12:  * Button component that can be rendered as various HTML elements
+13:  * @param {Object} props
+14:  * @param {ReactNode} props.children - The content of the button
+15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+21:  * @returns {JSX.Element} The rendered Button component
+22:  */
+23: const Button = ({
+24:   children,
+25:   href,
+26:   renderAs,
+27:   type = "submit",
+28:   disabled = false,
+29:   download,
+30:   onClick,
+31:   ...props
+32: }: IButtonProps) => {
+33:   const Component = renderAs ?? "button";
+34:   const isLink = renderAs === "a";
+35:   const targetLink = isLink ? "_blank" : undefined;
+36:   return (
+37:     <Component
+38:       type={isLink ? undefined : type}
+39:       data-cy="submit"
+40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
+41:       href={href}
+42:       target={targetLink}
+43:       disabled={disabled}
+44:       data-text={children}
+45:       download={download}
+46:       onClick={onClick}
+47:       {...props}
+48:     >
+49:       {children}
+50:     </Component>
+51:   );
+52: };
+53: export default Button;
+````
+
+## File: src/components/UI/PageHeader.component.tsx
+````typescript
+ 1: import type { ReactNode } from "react";
+ 2: export interface IPageHeaderProps {
+ 3:   children: ReactNode;
+ 4: }
+ 5: /**
+ 6:  * PageHeader component for rendering the header for each page
+ 7:  * @function PageHeader
+ 8:  * @param {children?} children - HTML children to render in the page header component
+ 9:  * @returns {ReactNode} - Rendered component
+10:  */
+11: const PageHeader = ({ children }: IPageHeaderProps) => (
+12:   <div className="px-4 p lg:px-0 xl:px-0 md:px-0">
+13:     <div className="container bg-slate-700 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
+14:       <h1 className="text-2xl text-center font-bold text-slate-100">
+15:         {children}
+16:       </h1>
+17:     </div>
+18:   </div>
+19: );
+20: export default PageHeader;
+````
+
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { motion, AnimatePresence } from "motion/react";
+  4: interface Tab {
+  5:   id: string;
+  6:   label: string;
+  7:   content: React.ReactNode;
+  8: }
+  9: interface TabsProps {
+ 10:   tabs: Tab[];
+ 11:   orientation?: "horizontal" | "vertical";
+ 12: }
+ 13: interface TabButtonProps {
+ 14:   tab: Tab;
+ 15:   isActive: boolean;
+ 16:   isVertical: boolean;
+ 17:   index: number;
+ 18:   totalTabs: number;
+ 19:   onClick: () => void;
+ 20: }
+ 21: const getTabButtonClassName = (
+ 22:   isActive: boolean,
+ 23:   isVertical: boolean,
+ 24:   index: number,
+ 25:   totalTabs: number,
+ 26: ) => {
+ 27:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
+ 28:   const activeClasses = isActive
+ 29:     ? "text-white"
+ 30:     : "text-gray-300 hover:text-white";
+ 31:   const orientationClasses = isVertical
+ 32:     ? "w-full text-left"
+ 33:     : "grow text-center";
+ 34:   const borderClasses = [
+ 35:     index !== 0 ? "border-t border-gray-600" : "",
+ 36:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
+ 37:   ].join(" ");
+ 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 39: };
+ 40: const TabButton: React.FC<TabButtonProps> = ({
+ 41:   tab,
+ 42:   isActive,
+ 43:   isVertical,
+ 44:   index,
+ 45:   totalTabs,
+ 46:   onClick,
+ 47: }) => (
+ 48:   <motion.button
+ 49:     key={tab.id}
+ 50:     onClick={onClick}
+ 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 52:     role="tab"
+ 53:     aria-selected={isActive}
+ 54:     aria-controls={`tabpanel-${tab.id}`}
+ 55:     id={`tab-${tab.id}`}
+ 56:   >
+ 57:     {isActive && (
+ 58:       <motion.div
+ 59:         layoutId="active-tab"
+ 60:         className={`absolute ${
+ 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 62:         } bg-[var(--matrix-dark)]`}
+ 63:         initial={false}
+ 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 65:       />
+ 66:     )}
+ 67:     <span className="relative z-10">{tab.label}</span>
+ 68:   </motion.button>
+ 69: );
+ 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 71:   tab,
+ 72:   isActive,
+ 73: }) => {
+ 74:   if (!isActive) return null;
+ 75:   return (
+ 76:     <motion.div
+ 77:       key={tab.id}
+ 78:       role="tabpanel"
+ 79:       id={`tabpanel-${tab.id}`}
+ 80:       aria-labelledby={`tab-${tab.id}`}
+ 81:       className="px-8"
+ 82:       initial={{ opacity: 0, y: 20 }}
+ 83:       animate={{ opacity: 1, y: 0 }}
+ 84:       exit={{ opacity: 0, y: -20 }}
+ 85:       transition={{ duration: 0.3 }}
+ 86:     >
+ 87:       {tab.content}
+ 88:     </motion.div>
+ 89:   );
+ 90: };
+ 91: /**
+ 92:  * Renders a set of tabs with content.
+ 93:  *
+ 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 97:  * @return {JSX.Element} The rendered Tabs component.
+ 98:  */
+ 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+101:   const isVertical = orientation === "vertical";
+102:   return (
+103:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
+104:       <div
+105:         className={`flex ${
+106:           isVertical ? "flex-col sm:flex-row" : "flex-col"
+107:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
+108:       >
+109:         <div
+110:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+111:             isVertical ? "max-h-[181px] " : ""
+112:           }`}
+113:         >
+114:           <div
+115:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+116:             role="tablist"
+117:           >
+118:             {tabs.map((tab, index) => (
+119:               <TabButton
+120:                 key={tab.id}
+121:                 tab={tab}
+122:                 isActive={activeTab === tab.id}
+123:                 isVertical={isVertical}
+124:                 index={index}
+125:                 totalTabs={tabs.length}
+126:                 onClick={() => setActiveTab(tab.id)}
+127:               />
+128:             ))}
+129:           </div>
+130:         </div>
+131:         <div
+132:           className={`${
+133:             isVertical ? "sm:w-3/4 w-full" : "w-full"
+134:           } bg-gray-800 overflow-y-auto`}
+135:         >
+136:           <AnimatePresence mode="wait">
+137:             {tabs.map((tab) => (
+138:               <TabPanel
+139:                 key={tab.id}
+140:                 tab={tab}
+141:                 isActive={activeTab === tab.id}
+142:               />
+143:             ))}
+144:           </AnimatePresence>
+145:         </div>
+146:       </div>
+147:     </div>
+148:   );
+149: };
+150: export default Tabs;
+````
+
+## File: src/stories/components/ErrorBoundary.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "ErrorBoundary",
+ 7:   component: ErrorBoundary,
+ 8: } as Meta;
+ 9: // Component that throws an error
+10: const BuggyCounter = () => {
+11:   const [counter, setCounter] = React.useState(0);
+12:   if (counter === 5) {
+13:     throw new Error("Counter reached 5!");
+14:   }
+15:   return (
+16:     <div className="p-2 bg-surface rounded-sm">
+17:       <p className="text-sm">Counter: {counter}</p>
+18:       <button
+19:         onClick={() => setCounter((c) => c + 1)}
+20:         className="mt-1 px-2 py-1 bg-matrix-light text-black rounded-sm text-xs hover:bg-matrix-dark"
+21:       >
+22:         Increment
+23:       </button>
+24:       <p className="text-xs mt-1 text-gray-400">Crashes at 5</p>
+25:     </div>
+26:   );
+27: };
+28: // Component that throws an error immediately
+29: const ImmediateCrash = () => {
+30:   throw new Error("Immediate crash!");
+31: };
+32: // Basic error boundary example
+33: export const Default = () => (
+34:   <ErrorBoundary>
+35:     <BuggyCounter />
+36:   </ErrorBoundary>
+37: );
+38: // Compact error boundary example
+39: export const CompactError = () => (
+40:   <ErrorBoundary compact>
+41:     <ImmediateCrash />
+42:   </ErrorBoundary>
+43: );
+44: // Multiple error boundaries
+45: export const Multiple = () => (
+46:   <div className="space-y-2">
+47:     <ErrorBoundary compact>
+48:       <div className="p-2 bg-surface rounded-sm">
+49:         <p className="text-xs">Working component</p>
+50:       </div>
+51:     </ErrorBoundary>
+52:     <ErrorBoundary compact>
+53:       <ImmediateCrash />
+54:     </ErrorBoundary>
+55:     <ErrorBoundary compact>
+56:       <div className="p-2 bg-surface rounded-sm">
+57:         <p className="text-xs">Another working component</p>
+58:       </div>
+59:     </ErrorBoundary>
+60:   </div>
+61: );
+````
+
+## File: src/stories/components/FadeDown.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta, Story } from "@ladle/react";
+ 3: import FadeDown from "../../components/Animations/FadeDown.component";
+ 4: import { IAnimateWithDelayProps } from "../../components/Animations/types/Animations.types";
+ 5: export default {
+ 6:   title: "FadeDown",
+ 7:   component: FadeDown,
+ 8: } as Meta;
+ 9: const Template: Story<IAnimateWithDelayProps> = (args) => (
+10:   <FadeDown {...args} />
+11: );
+12: export const Default = Template.bind({});
+13: Default.args = {
+14:   children: "Fade Down Animation",
+15:   cssClass: "p-4 bg-gray-100 border border-gray-300 rounded-sm",
+16:   delay: 0,
+17: };
+18: export const WithDelay = Template.bind({});
+19: WithDelay.args = {
+20:   children: "Fade Down with Delay",
+21:   cssClass: "p-4 bg-blue-100 border border-blue-300 rounded-sm",
+22:   delay: 1,
+23: };
+24: export const CustomStyles = Template.bind({});
+25: CustomStyles.args = {
+26:   children: "Fade Down with Custom Styles",
+27:   cssClass: "p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg",
+28:   delay: 0.5,
+29: };
+````
+
+## File: src/stories/components/FadeUp.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta, Story } from "@ladle/react";
+ 3: import FadeUp from "../../components/Animations/FadeUp.component";
+ 4: import { IAnimateWithDelayProps } from "../../components/Animations/types/Animations.types";
+ 5: export default {
+ 6:   title: "FadeUp",
+ 7:   component: FadeUp,
+ 8: } as Meta;
+ 9: const Template: Story<IAnimateWithDelayProps> = (args) => <FadeUp {...args} />;
+10: export const Default = Template.bind({});
+11: Default.args = {
+12:   children: "Fade Up Animation",
+13:   cssClass: "p-4 bg-gray-100 border border-gray-300 rounded-sm",
+14:   delay: 0,
+15: };
+16: export const WithDelay = Template.bind({});
+17: WithDelay.args = {
+18:   children: "Fade Up with Delay",
+19:   cssClass: "p-4 bg-blue-100 border border-blue-300 rounded-sm",
+20:   delay: 1,
+21: };
+22: export const CustomStyles = Template.bind({});
+23: CustomStyles.args = {
+24:   children: "Fade Up with Custom Styles",
+25:   cssClass: "p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg",
+26:   delay: 0.5,
+27: };
+````
+
+## File: src/stories/components/Hamburger.stories.tsx
+````typescript
+ 1: import React, { useState } from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import Hamburger from "../../components/Layout/Hamburger.component";
+ 4: export default {
+ 5:   title: "Layout/Hamburger",
+ 6:   component: Hamburger,
+ 7: } as Meta;
+ 8: // Default hamburger state
+ 9: export const Default = () => (
+10:   <div className="bg-gray-800 p-4">
+11:     <Hamburger onClick={() => {}} animatetoX={false} />
+12:   </div>
+13: );
+14: // X state
+15: export const XState = () => (
+16:   <div className="bg-gray-800 p-4">
+17:     <Hamburger onClick={() => {}} animatetoX={true} />
+18:   </div>
+19: );
+20: // Interactive state
+21: export const Interactive = () => {
+22:   const [isOpen, setIsOpen] = useState(false);
+23:   return (
+24:     <div className="bg-gray-800 p-4">
+25:       <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
+26:       <p className="text-white text-sm mt-4">
+27:         Click the hamburger to toggle state
+28:       </p>
+29:     </div>
+30:   );
+31: };
+32: // On dark background
+33: export const OnDarkBackground = () => {
+34:   const [isOpen, setIsOpen] = useState(false);
+35:   return (
+36:     <div className="bg-gray-900 p-4">
+37:       <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
+38:     </div>
+39:   );
+40: };
+41: // On light background
+42: export const OnLightBackground = () => {
+43:   const [isOpen, setIsOpen] = useState(false);
+44:   return (
+45:     <div className="bg-gray-100 p-4">
+46:       <div className="bg-gray-800 inline-block rounded-sm">
+47:         <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
+48:       </div>
+49:     </div>
+50:   );
+51: };
+````
+
+## File: src/stories/components/MatrixCursor.stories.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import MatrixCursor from "../../components/Animations/MatrixCursor.component";
+  4: import "@/app/cursor.css";
+  5: export default {
+  6:   title: "Animations/MatrixCursor",
+  7:   component: MatrixCursor,
+  8: } as Meta;
+  9: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
+ 10:   const heroRef = useRef<HTMLDivElement>(null);
+ 11:   return (
+ 12:     <div
+ 13:       ref={heroRef}
+ 14:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
+ 15:     >
+ 16:       {children}
+ 17:       <MatrixCursor heroRef={heroRef} />
+ 18:     </div>
+ 19:   );
+ 20: };
+ 21: export const Default = () => (
+ 22:   <DemoContainer>
+ 23:     <div className="text-gray-300 space-y-4">
+ 24:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
+ 25:       <p>
+ 26:         Move your mouse around this container to see the matrix cursor effect.
+ 27:       </p>
+ 28:       <p>The cursor will change and leave a trail of matrix characters.</p>
+ 29:       <div className="grid grid-cols-2 gap-4 mt-8">
+ 30:         <div className="bg-gray-800 p-4 rounded-sm">
+ 31:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
+ 32:           <p className="text-sm">
+ 33:             Move your cursor here to see the effect in action
+ 34:           </p>
+ 35:         </div>
+ 36:         <div className="bg-gray-800 p-4 rounded-sm">
+ 37:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
+ 38:           <p className="text-sm">
+ 39:             Try moving between different areas to see the trail
+ 40:           </p>
+ 41:         </div>
+ 42:       </div>
+ 43:     </div>
+ 44:   </DemoContainer>
+ 45: );
+ 46: export const WithInteractiveElements = () => (
+ 47:   <DemoContainer>
+ 48:     <div className="text-gray-300 space-y-6">
+ 49:       <h2 className="text-2xl font-bold text-white mb-4">
+ 50:         Interactive Elements Demo
+ 51:       </h2>
+ 52:       <div className="grid grid-cols-2 gap-4">
+ 53:         <button className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
+ 54:           Hover Me
+ 55:         </button>
+ 56:         <button className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
+ 57:           Button Example
+ 58:         </button>
+ 59:       </div>
+ 60:       <div className="bg-gray-800 p-6 rounded-sm">
+ 61:         <p>
+ 62:           The matrix cursor effect works seamlessly with interactive elements.
+ 63:           Try hovering over the buttons above.
+ 64:         </p>
+ 65:       </div>
+ 66:     </div>
+ 67:   </DemoContainer>
+ 68: );
+ 69: export const LargeArea = () => (
+ 70:   <DemoContainer>
+ 71:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
+ 72:       <div className="text-center space-y-4">
+ 73:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
+ 74:         <p>
+ 75:           This demo shows how the matrix cursor effect works in a larger area.
+ 76:           <br />
+ 77:           Move your cursor around to create longer trails.
+ 78:         </p>
+ 79:       </div>
+ 80:     </div>
+ 81:   </DemoContainer>
+ 82: );
+ 83: export const WithContent = () => (
+ 84:   <DemoContainer>
+ 85:     <div className="text-gray-300 space-y-6">
+ 86:       <h2 className="text-2xl font-bold text-white mb-4">
+ 87:         Content Interaction
+ 88:       </h2>
+ 89:       <div className="grid grid-cols-3 gap-4">
+ 90:         {[1, 2, 3].map((i) => (
+ 91:           <div
+ 92:             key={i}
+ 93:             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
+ 94:           >
+ 95:             <h3 className="text-lg font-semibold mb-2">Card {i}</h3>
+ 96:             <p className="text-sm">
+ 97:               Hover over this card to see how the matrix cursor interacts with
+ 98:               content.
+ 99:             </p>
+100:           </div>
+101:         ))}
+102:       </div>
+103:       <div className="bg-gray-800 p-6 rounded-sm mt-8">
+104:         <p className="text-lg">
+105:           The matrix cursor effect adds a unique interactive element to your
+106:           content. Try moving between different cards to see how the trail
+107:           follows your movement.
+108:         </p>
+109:       </div>
+110:     </div>
+111:   </DemoContainer>
+112: );
+````
+
+## File: src/stories/components/Tabs.stories.tsx
+````typescript
+  1: import React from "react";
+  2: import { Meta, Story } from "@ladle/react";
+  3: import Tabs from "../../components/UI/Tabs.component";
+  4: export default {
+  5:   title: "Tabs",
+  6:   component: Tabs,
+  7: } as Meta;
+  8: const Template: Story<React.ComponentProps<typeof Tabs>> = (args) => (
+  9:   <Tabs {...args} />
+ 10: );
+ 11: // Sample content components
+ 12: const TextContent = () => (
+ 13:   <div className="py-4">
+ 14:     <h2 className="text-xl text-white mb-4">Text Content</h2>
+ 15:     <p className="text-gray-300">
+ 16:       This is a sample text content for the tab panel. It demonstrates how text
+ 17:       content is displayed within the tabs component.
+ 18:     </p>
+ 19:   </div>
+ 20: );
+ 21: const ListContent = () => (
+ 22:   <div className="py-4">
+ 23:     <h2 className="text-xl text-white mb-4">List Content</h2>
+ 24:     <ul className="list-disc list-inside text-gray-300">
+ 25:       <li>First item in the list</li>
+ 26:       <li>Second item in the list</li>
+ 27:       <li>Third item in the list</li>
+ 28:     </ul>
+ 29:   </div>
+ 30: );
+ 31: const FormField = ({
+ 32:   id,
+ 33:   label,
+ 34:   type,
+ 35:   placeholder,
+ 36: }: {
+ 37:   id: string;
+ 38:   label: string;
+ 39:   type: string;
+ 40:   placeholder: string;
+ 41: }) => (
+ 42:   <div>
+ 43:     <label htmlFor={id} className="block text-gray-300 mb-2">
+ 44:       {label}
+ 45:     </label>
+ 46:     <input
+ 47:       id={id}
+ 48:       type={type}
+ 49:       className="w-full p-2 rounded-sm bg-gray-700 text-white"
+ 50:       placeholder={placeholder}
+ 51:     />
+ 52:   </div>
+ 53: );
+ 54: const FormContent = () => {
+ 55:   const formId = React.useId();
+ 56:   const fields = [
+ 57:     { label: "Name", type: "text", placeholder: "Enter your name" },
+ 58:     { label: "Email", type: "email", placeholder: "Enter your email" },
+ 59:   ];
+ 60:   return (
+ 61:     <div className="py-4">
+ 62:       <h2 className="text-xl text-white mb-4">Form Content</h2>
+ 63:       <form className="space-y-4">
+ 64:         {fields.map((field) => (
+ 65:           <FormField
+ 66:             key={field.label}
+ 67:             id={`${formId}-${field.label.toLowerCase()}`}
+ 68:             {...field}
+ 69:           />
+ 70:         ))}
+ 71:       </form>
+ 72:     </div>
+ 73:   );
+ 74: };
+ 75: export const VerticalTabs = Template.bind({});
+ 76: VerticalTabs.args = {
+ 77:   orientation: "vertical",
+ 78:   tabs: [
+ 79:     { id: "tab1", label: "Text", content: <TextContent /> },
+ 80:     { id: "tab2", label: "List", content: <ListContent /> },
+ 81:     { id: "tab3", label: "Form", content: <FormContent /> },
+ 82:   ],
+ 83: };
+ 84: export const HorizontalTabs = Template.bind({});
+ 85: HorizontalTabs.args = {
+ 86:   orientation: "horizontal",
+ 87:   tabs: [
+ 88:     { id: "tab1", label: "Text", content: <TextContent /> },
+ 89:     { id: "tab2", label: "List", content: <ListContent /> },
+ 90:     { id: "tab3", label: "Form", content: <FormContent /> },
+ 91:   ],
+ 92: };
+ 93: export const ManyTabs = Template.bind({});
+ 94: ManyTabs.args = {
+ 95:   tabs: [
+ 96:     { id: "tab1", label: "Tab 1", content: <TextContent /> },
+ 97:     { id: "tab2", label: "Tab 2", content: <ListContent /> },
+ 98:     { id: "tab3", label: "Tab 3", content: <FormContent /> },
+ 99:     { id: "tab4", label: "Tab 4", content: <TextContent /> },
+100:     { id: "tab5", label: "Tab 5", content: <ListContent /> },
+101:   ],
+102: };
+103: export const TwoTabs = Template.bind({});
+104: TwoTabs.args = {
+105:   tabs: [
+106:     { id: "tab1", label: "First Tab", content: <TextContent /> },
+107:     { id: "tab2", label: "Second Tab", content: <ListContent /> },
+108:   ],
+109: };
 ````
 
 ## File: src/types/sanity.types.ts
@@ -14525,6 +14400,18 @@ tsconfig.json
 359: }
 ````
 
+## File: postcss.config.mjs
+````
+1: /** @type {import('postcss-load-config').Config} */
+2: const config = {
+3:   plugins: {
+4:     '@tailwindcss/postcss': {},
+5:   },
+6: };
+7: 
+8: export default config;
+````
+
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
 ````typescript
   1: import React from "react";
@@ -14653,29 +14540,6 @@ tsconfig.json
 124: });
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "index.js",
- 6:   "scripts": {
- 7:     "test": "echo \"Error: no test specified\" && exit 1"
- 8:   },
- 9:   "keywords": [
-10:     "eslint",
-11:     "eslintplugin",
-12:     "eslint-plugin"
-13:   ],
-14:   "author": "",
-15:   "license": "ISC",
-16:   "peerDependencies": {
-17:     "eslint": ">=9.25.1"
-18:   }
-19: }
-````
-
 ## File: src/lib/sanity/client.ts
 ````typescript
  1: import imageUrlBuilder from "@sanity/image-url";
@@ -14694,6 +14558,196 @@ tsconfig.json
 14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
 15:   return builder.image(source);
 16: }
+````
+
+## File: src/app/globals.css
+````css
+ 1: @import "tailwindcss";
+ 2: @config '../../tailwind.config.ts';
+ 3: /*
+ 4:   The default border color has changed to `currentcolor` in Tailwind CSS v4,
+ 5:   so we've added these compatibility styles to make sure everything still
+ 6:   looks the same as it did with Tailwind CSS v3.
+ 7:   If we ever want to remove these styles, we need to add an explicit border
+ 8:   color utility to any element that depends on these defaults.
+ 9: */
+10: @layer base {
+11:   *,
+12:   ::after,
+13:   ::before,
+14:   ::backdrop,
+15:   ::file-selector-button {
+16:     border-color: var(--color-gray-200, currentcolor);
+17:   }
+18: }
+19: :root {
+20:   /* Modern Color Scheme */
+21:   --primary: #00ff62;
+22:   --secondary: #00cc4e;
+23:   --accent: #008529;
+24:   --text: #e1e1e1;
+25:   --background: var(--color-slate-900, #0f172a);
+26:   /* Semantic Colors */
+27:   --success: #00cc4e;
+28:   --error: #ff4e4e;
+29:   --warning: #ffb74e;
+30:   --info: #4e9fff;
+31:   /* Matrix Theme Colors */
+32:   --matrix-light: #00ff62;
+33:   --matrix: #00cc4e;
+34:   --matrix-dark: #008529;
+35:   --matrix-glow: rgba(0, 255, 98, 0.6);
+36: }
+37: body {
+38:   background-color: var(--background);
+39:   color: var(--text);
+40:   font-family:
+41:     "Inter",
+42:     -apple-system,
+43:     BlinkMacSystemFont,
+44:     "Segoe UI",
+45:     Roboto,
+46:     Oxygen,
+47:     Ubuntu,
+48:     Cantarell,
+49:     sans-serif;
+50: }
+51: #matrixCanvas {
+52:   opacity: 0.7;
+53: }
+54: /* Selection */
+55: ::selection {
+56:   background-color: var(--matrix-dark);
+57:   color: #ffffff;
+58: }
+59: /* Scrollbar */
+60: * {
+61:   scrollbar-width: thin;
+62:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+63: }
+64: ::-webkit-scrollbar {
+65:   width: 6px;
+66: }
+67: ::-webkit-scrollbar-track {
+68:   background: #1a1a1a;
+69: }
+70: ::-webkit-scrollbar-thumb {
+71:   background: var(--matrix-dark);
+72:   border-radius: 3px;
+73: }
+74: ::-webkit-scrollbar-thumb:hover {
+75:   background: var(--matrix-light);
+76: }
+77: /* Remove focus outline */
+78: :focus {
+79:   outline: none;
+80: }
+81: /* Remove focus visible outline */
+82: :focus-visible {
+83:   outline: none;
+84: }
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import {
+ 3:   UseFormRegister,
+ 4:   FieldValues,
+ 5:   RegisterOptions,
+ 6:   Path,
+ 7: } from "react-hook-form";
+ 8: export interface InputProps<T extends FieldValues> {
+ 9:   readonly name: Path<T>;
+10:   readonly label: string;
+11:   readonly htmlFor: string;
+12:   readonly isRequired?: boolean;
+13:   readonly inputPattern?: RegExp;
+14:   readonly title?: string;
+15:   readonly type?: "input" | "textarea";
+16:   readonly register: UseFormRegister<T>;
+17:   readonly error?: string;
+18: }
+19: /**
+20:  * Creates register options for react-hook-form
+21:  * @template T - Type extending FieldValues
+22:  * @param {boolean} [isRequired] - Whether the field is required
+23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+24:  * @param {string} [title] - Title for the input field
+25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+26:  */
+27: export function createRegisterOptions<T extends FieldValues>(
+28:   isRequired?: boolean,
+29:   inputPattern?: RegExp,
+30:   title?: string
+31: ): RegisterOptions<T, Path<T>> {
+32:   return {
+33:     required: isRequired ? "Dette feltet er påkrevd" : false,
+34:     ...(inputPattern
+35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+36:       : {}),
+37:   };
+38: }
+39: /**
+40:  * InputField component for rendering form inputs
+41:  * @template T - Type extending FieldValues
+42:  * @param {InputProps<T>} props - The props for the InputField component
+43:  * @returns {JSX.Element} The rendered InputField component
+44:  */
+45: function InputField<T extends FieldValues>({
+46:   name,
+47:   label,
+48:   inputPattern,
+49:   isRequired,
+50:   htmlFor,
+51:   title,
+52:   type = "input",
+53:   register,
+54:   error,
+55:   ...props
+56: }: InputProps<T>) {
+57:   const sharedClasses =
+58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
+59:   const registerOptions = createRegisterOptions<T>(
+60:     isRequired,
+61:     inputPattern,
+62:     title
+63:   );
+64:   return (
+65:     <div className="relative my-2 flex flex-col items-center">
+66:       <div className="relative">
+67:         {type === "input" ? (
+68:           <input
+69:             id={htmlFor}
+70:             type="text"
+71:             placeholder={label}
+72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+73:             {...register(name, registerOptions)}
+74:             {...props}
+75:           />
+76:         ) : (
+77:           <textarea
+78:             id={htmlFor}
+79:             placeholder={label}
+80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+81:             {...register(name, registerOptions)}
+82:             {...props}
+83:           ></textarea>
+84:         )}
+85:         <label
+86:           htmlFor={htmlFor}
+87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
+88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
+89:           }`}
+90:         >
+91:           {label}
+92:         </label>
+93:       </div>
+94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+95:     </div>
+96:   );
+97: }
+98: export default InputField;
 ````
 
 ## File: README.md
@@ -14779,7 +14833,7 @@ tsconfig.json
  79: 
  80: - Fully responsive design tested on all devices
  81: - React Icons for project icons
- 82: - Tailwind CSS for styling
+ 82: - Tailwind 14 for styling
  83: - Animated reusable input fields
  84: - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
  85: 
@@ -14864,46 +14918,6 @@ tsconfig.json
 164:   - Simplified test maintenance and debugging
 165:   - Automated validation through custom ESLint rules
 166:   - Tests will fail if AAA pattern is not followed
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.1.0",
-18:     "react-dom": "^19.1.0",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^3.86.1",
-21:     "styled-components": "^6.1.17"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.2",
-26:     "eslint": "^9.25.1",
-27:     "prettier": "^3.5.3",
-28:     "typescript": "^5.8.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: src/components/Index/MobileBackground.component.tsx
@@ -14998,7 +15012,7 @@ tsconfig.json
 29: }) => {
 30:   return (
 31:     <div
-32:       className="bg-slate-700 shadow-md rounded overflow-hidden mx-4 md:m-0"
+32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
 33:       data-testid="projectcard"
 34:     >
 35:       <BounceInScroll viewAmount={0.3} instant={featured}>
@@ -15075,18 +15089,18 @@ tsconfig.json
 24:     "typegen": "npx sanity typegen generate"
 25:   },
 26:   "dependencies": {
-27:     "@emailjs/browser": "^4.4.1",
-28:     "@hookform/resolvers": "^5.0.1",
-29:     "@portabletext/react": "^3.2.1",
-30:     "@sanity/client": "^6.29.1",
-31:     "@sanity/image-url": "^1.1.0",
-32:     "@vercel/speed-insights": "^1.2.0",
-33:     "autoprefixer": "^10.4.21",
+27:     "@babel/helpers": ">=7.27.0",
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.0.1",
+30:     "@portabletext/react": "^3.2.1",
+31:     "@sanity/client": "^6.29.1",
+32:     "@sanity/image-url": "^1.1.0",
+33:     "@vercel/speed-insights": "^1.2.0",
 34:     "clsx": "^2.1.1",
 35:     "cookie": ">=1.0.2",
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
-38:     "motion": "^12.9.1",
+38:     "motion": "^12.9.2",
 39:     "next": "15.3.1",
 40:     "next-sanity": "^9.10.2",
 41:     "path-to-regexp": "^8.2.0",
@@ -15098,22 +15112,22 @@ tsconfig.json
 47:     "sanity": "^3.86.1",
 48:     "sitemap": "^8.0.0",
 49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.24.3",
-51:     "@babel/helpers": ">=7.27.0"
-52:   },
-53:   "devDependencies": {
-54:     "@jest/expect": "^29.7.0",
-55:     "@jest/globals": "^29.7.0",
-56:     "@ladle/react": "^5.0.2",
-57:     "@lhci/cli": "^0.14.0",
-58:     "@playwright/test": "^1.52.0",
-59:     "@portabletext/types": "^2.0.13",
+50:     "zod": "^3.24.3"
+51:   },
+52:   "devDependencies": {
+53:     "@jest/expect": "^29.7.0",
+54:     "@jest/globals": "^29.7.0",
+55:     "@ladle/react": "^5.0.2",
+56:     "@lhci/cli": "^0.14.0",
+57:     "@playwright/test": "^1.52.0",
+58:     "@portabletext/types": "^2.0.13",
+59:     "@tailwindcss/postcss": "^4.1.4",
 60:     "@testing-library/cypress": "^10.0.3",
 61:     "@testing-library/jest-dom": "^6.6.3",
 62:     "@testing-library/react": "^16.3.0",
 63:     "@testing-library/user-event": "^14.6.1",
 64:     "@types/jest": "^29.5.14",
-65:     "@types/node": "^22.15.0",
+65:     "@types/node": "^22.15.2",
 66:     "@types/react": "^19.1.2",
 67:     "@types/react-dom": "^19.1.2",
 68:     "@typescript-eslint/eslint-plugin": "^8.31.0",
@@ -15135,7 +15149,7 @@ tsconfig.json
 84:     "jsdom-testing-mocks": "^1.13.1",
 85:     "postcss": "^8.5.3",
 86:     "prettier": "3.5.3",
-87:     "tailwindcss": "^3.4.17",
+87:     "tailwindcss": "^4.1.4",
 88:     "ts-jest": "^29.3.2",
 89:     "typescript": "^5.8.3",
 90:     "wait-on": "^8.0.3"

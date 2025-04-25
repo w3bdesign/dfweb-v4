@@ -87,7 +87,7 @@ describe("ErrorFallback", () => {
     const button = screen.getByRole("button");
     expect(button).toHaveClass("bg-matrix-light");
     expect(button).toHaveClass("text-black");
-    expect(button).toHaveClass("rounded");
+    expect(button).toHaveClass("rounded-sm");
     expect(button).toHaveClass("text-sm");
   });
 

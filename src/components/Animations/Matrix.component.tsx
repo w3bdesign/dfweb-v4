@@ -23,7 +23,7 @@ const CANVAS_ID = "matrixCanvas";
 const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   tileSize = 20,
   fadeFactor = 0.5,
-  backgroundColor = "#111111",
+  backgroundColor = "#0a0a0a",
   fontColor = "#008529",
   glowColor = "#00FF00",
   tileSet = null,
@@ -68,14 +68,14 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize],
+    [tileSize]
   );
 
   const tick = useCallback(
     (
       timestamp: number,
       ctx: CanvasRenderingContext2D,
-      canvas: HTMLCanvasElement,
+      canvas: HTMLCanvasElement
     ) => {
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = timestamp;
@@ -103,7 +103,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet],
+    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet]
   );
 
   useEffect(() => {

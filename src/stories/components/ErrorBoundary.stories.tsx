@@ -17,11 +17,11 @@ const BuggyCounter = () => {
   }
 
   return (
-    <div className="p-2 bg-surface rounded">
+    <div className="p-2 bg-surface rounded-sm">
       <p className="text-sm">Counter: {counter}</p>
       <button
         onClick={() => setCounter((c) => c + 1)}
-        className="mt-1 px-2 py-1 bg-matrix-light text-black rounded text-xs hover:bg-matrix-dark"
+        className="mt-1 px-2 py-1 bg-matrix-light text-black rounded-sm text-xs hover:bg-matrix-dark"
       >
         Increment
       </button>
@@ -53,7 +53,7 @@ export const CompactError = () => (
 export const Multiple = () => (
   <div className="space-y-2">
     <ErrorBoundary compact>
-      <div className="p-2 bg-surface rounded">
+      <div className="p-2 bg-surface rounded-sm">
         <p className="text-xs">Working component</p>
       </div>
     </ErrorBoundary>
@@ -63,7 +63,7 @@ export const Multiple = () => (
     </ErrorBoundary>
 
     <ErrorBoundary compact>
-      <div className="p-2 bg-surface rounded">
+      <div className="p-2 bg-surface rounded-sm">
         <p className="text-xs">Another working component</p>
       </div>
     </ErrorBoundary>

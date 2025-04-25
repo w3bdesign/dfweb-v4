@@ -35,7 +35,7 @@ const getTabButtonClassName = (
     : "text-gray-300 hover:text-white";
   const orientationClasses = isVertical
     ? "w-full text-left"
-    : "flex-grow text-center";
+    : "grow text-center";
   const borderClasses = [
     index !== 0 ? "border-t border-gray-600" : "",
     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",

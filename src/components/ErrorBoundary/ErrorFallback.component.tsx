@@ -36,7 +36,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-3 py-1 bg-matrix-light text-black rounded text-sm hover:bg-matrix-dark"
+            className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
           >
             Returner til Matrix
           </button>
