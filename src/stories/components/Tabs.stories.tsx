@@ -51,7 +51,7 @@ const FormField = ({
     <input
       id={id}
       type={type}
-      className="w-full p-2 rounded bg-gray-700 text-white"
+      className="w-full p-2 rounded-sm bg-gray-700 text-white"
       placeholder={placeholder}
     />
   </div>

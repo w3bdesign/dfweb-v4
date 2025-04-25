@@ -31,13 +31,13 @@ export const Default = () => (
       </p>
       <p>The cursor will change and leave a trail of matrix characters.</p>
       <div className="grid grid-cols-2 gap-4 mt-8">
-        <div className="bg-gray-800 p-4 rounded">
+        <div className="bg-gray-800 p-4 rounded-sm">
           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
           <p className="text-sm">
             Move your cursor here to see the effect in action
           </p>
         </div>
-        <div className="bg-gray-800 p-4 rounded">
+        <div className="bg-gray-800 p-4 rounded-sm">
           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
           <p className="text-sm">
             Try moving between different areas to see the trail
@@ -55,14 +55,14 @@ export const WithInteractiveElements = () => (
         Interactive Elements Demo
       </h2>
       <div className="grid grid-cols-2 gap-4">
-        <button className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors">
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
           Hover Me
         </button>
-        <button className="bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition-colors text-center">
+        <button className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
           Button Example
         </button>
       </div>
-      <div className="bg-gray-800 p-6 rounded">
+      <div className="bg-gray-800 p-6 rounded-sm">
         <p>
           The matrix cursor effect works seamlessly with interactive elements.
           Try hovering over the buttons above.
@@ -97,7 +97,7 @@ export const WithContent = () => (
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-gray-800 p-4 rounded hover:bg-gray-700 transition-colors"
+            className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
           >
             <h3 className="text-lg font-semibold mb-2">Card {i}</h3>
             <p className="text-sm">
@@ -107,7 +107,7 @@ export const WithContent = () => (
           </div>
         ))}
       </div>
-      <div className="bg-gray-800 p-6 rounded mt-8">
+      <div className="bg-gray-800 p-6 rounded-sm mt-8">
         <p className="text-lg">
           The matrix cursor effect adds a unique interactive element to your
           content. Try moving between different cards to see how the trail
