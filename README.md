@@ -79,7 +79,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind CSS for styling
+- Tailwind 14 for styling
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
 

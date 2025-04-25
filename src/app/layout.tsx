@@ -46,7 +46,7 @@ export default function RootLayout({
         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
       >
         <SkipLink />
-        <div id="main-content" className="flex-grow">
+        <div id="main-content" className="grow">
           {children}
         </div>
         <Footer />

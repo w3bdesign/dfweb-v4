@@ -52,7 +52,7 @@ export const OnLightBackground = () => {
 
   return (
     <div className="bg-gray-100 p-4">
-      <div className="bg-gray-800 inline-block rounded">
+      <div className="bg-gray-800 inline-block rounded-sm">
         <Hamburger onClick={() => setIsOpen(!isOpen)} animatetoX={isOpen} />
       </div>
     </div>
