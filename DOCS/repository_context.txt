@@ -2108,6 +2108,244 @@ tsconfig.json
 197: *This test strategy is a living document and should be updated as project requirements evolve.*
 ````
 
+## File: DOCS/TODO.md
+````markdown
+  1: # Next.js 15 Implementation TODO
+  2: 
+  3: This document outlines suggestions for improvements for implementing Next.js 15 features in our project.
+  4: 
+  5: ## 1. Project Structure Reorganization
+  6: 
+  7: ### Current Structure
+  8: 
+  9: Currently, our project has a flat structure in src/components with separate folders for different component types. While organized, we can improve the structure using Next.js 15's recommended patterns.
+ 10: 
+ 11: ### Implementation Plan
+ 12: 
+ 13: 1. **Create Three Main Zones**
+ 14: 
+ 15:    ```
+ 16:    src/
+ 17:    ├── shared/           # Green Zone - Shared code
+ 18:    │   ├── components/   # Reusable UI components
+ 19:    │   ├── constants/    # Global constants
+ 20:    │   ├── types/       # TypeScript types/interfaces
+ 21:    │   └── utils/       # Utility functions
+ 22:    │
+ 23:    ├── navigation/      # Red Zone - Navigation & Data
+ 24:    │   ├── routes/      # Route configurations
+ 25:    │   └── data/        # Data fetching functions
+ 26:    │
+ 27:    └── features/        # Blue Zone - Feature modules
+ 28:        ├── cv/
+ 29:        ├── projects/
+ 30:        ├── contact/
+ 31:        └── home/
+ 32:    ```
+ 33: 
+ 34: 2. **Migration Steps**
+ 35: 
+ 36:    - Create the new directory structure
+ 37:    - Move common components (Button, InputField, etc.) to shared/components
+ 38:    - Organize feature-specific components into respective feature folders
+ 39:    - Update import paths throughout the project
+ 40:    - Ensure no circular dependencies between zones
+ 41: 
+ 42: 3. **Rules to Follow**
+ 43:    - Shared (Green) zone: No imports from other zones
+ 44:    - Navigation (Red) zone: Can import from shared
+ 45:    - Features (Blue) zone: Can import from shared and navigation
+ 46:    - No imports between feature modules
+ 47: 
+ 48: ## 3. Enhanced Caching Strategy
+ 49: 
+ 50: ### Current Caching
+ 51: 
+ 52: We currently rely on Next.js's default caching behavior. We can improve performance with explicit cache controls.
+ 53: 
+ 54: ### Implementation Plan
+ 55: 
+ 56: 1. **Define Cache Profiles**
+ 57: 
+ 58:    ```typescript
+ 59:    // src/shared/cache/profiles.ts
+ 60:    export const cacheProfiles = {
+ 61:      static: {
+ 62:        revalidate: false,
+ 63:        tags: ["static"],
+ 64:      },
+ 65:      dynamic: {
+ 66:        revalidate: 3600, // 1 hour
+ 67:        tags: ["dynamic"],
+ 68:      },
+ 69:    };
+ 70:    ```
+ 71: 
+ 72: 2. **Implement Cache Controls**
+ 73: 
+ 74:    ```typescript
+ 75:    // src/features/projects/data.ts
+ 76:    import { cache } from "react";
+ 77: 
+ 78:    export const getProjects = cache(async () => {
+ 79:      // Fetch projects with caching
+ 80:      const response = await fetch("/api/projects", {
+ 81:        next: cacheProfiles.dynamic,
+ 82:      });
+ 83:      return response.json();
+ 84:    });
+ 85:    ```
+ 86: 
+ 87: 3. **Cache Invalidation Strategy**
+ 88:    - Implement revalidation endpoints
+ 89:    - Set up cache tags for granular invalidation
+ 90:    - Configure cache headers properly
+ 91: 
+ 92: ## 4. Feature-based Organization
+ 93: 
+ 94: ### Current Component Structure
+ 95: 
+ 96: Components are currently organized by type (UI, Animations, etc.). We'll reorganize by feature for better modularity.
+ 97: 
+ 98: ### Implementation Steps
+ 99: 
+100: 1. **Feature Module Structure**
+101: 
+102:    ```
+103:    src/features/
+104:    ├── cv/
+105:    │   ├── components/
+106:    │   ├── hooks/
+107:    │   ├── utils/
+108:    │   └── types.ts
+109:    ├── projects/
+110:    │   ├── components/
+111:    │   ├── hooks/
+112:    │   ├── utils/
+113:    │   └── types.ts
+114:    ```
+115: 
+116: 2. **Migration Process**
+117: 
+118:    - Create feature directories
+119:    - Move related components, hooks, and utilities
+120:    - Update imports and dependencies
+121:    - Ensure feature isolation
+122:    - Update test file locations
+123: 
+124: 3. **Feature Module Rules**
+125:    - Each feature should be self-contained
+126:    - Shared functionality goes in shared/
+127:    - Feature-specific types in feature/types.ts
+128:    - Feature-specific hooks in feature/hooks/
+129: 
+130: ## 5. Turbopack Integration
+131: 
+132: ### Current Build Setup
+133: 
+134: We use the default webpack configuration. Turbopack can significantly improve build times.
+135: 
+136: ### Implementation Steps
+137: 
+138: 1. **Enable Turbopack**
+139: 
+140:    ```typescript
+141:    // next.config.ts
+142:    const config: NextConfig = {
+143:      experimental: {
+144:        turbo: {
+145:          loaders: {
+146:            // Configure loaders
+147:            ".svg": ["@svgr/webpack"],
+148:          },
+149:        },
+150:      },
+151:    };
+152:    ```
+153: 
+154: 2. **Performance Monitoring**
+155: 
+156:    - Measure build times before and after
+157:    - Monitor hot reload performance
+158:    - Check for compatibility issues
+159:    - Document any workarounds needed
+160: 
+161: 3. **Fallback Strategy**
+162:    - Maintain webpack configuration as fallback
+163:    - Document any Turbopack-specific issues
+164:    - Create scripts for both build systems
+165: 
+166: ## Additional Considerations
+167: 
+168: ### Testing Strategy
+169: 
+170: - Update test file locations to match new structure
+171: - Ensure all server actions are properly tested
+172: - Add integration tests for new caching behavior
+173: - Maintain current test coverage
+174: 
+175: ### Documentation
+176: 
+177: - Update component documentation
+178: - Document new folder structure
+179: - Create migration guide for team
+180: - Update README.md with new architecture
+181: 
+182: ### Performance Monitoring
+183: 
+184: - Set up metrics for before/after comparison
+185: - Monitor cache hit rates
+186: - Track build times
+187: - Measure Time to First Byte (TTFB)
+188: 
+189: ## Migration Timeline
+190: 
+191: 1. **Phase 1: Project Structure (Week 1-2)**
+192: 
+193:    - Set up new directory structure
+194:    - Move files to new locations
+195:    - Update import paths
+196:    - Verify all tests pass
+197: 
+198: 2. **Phase 2: Server Actions (Week 3)**
+199: 
+200:    - Implement server actions
+201:    - Update form handling
+202:    - Add validation
+203:    - Test new functionality
+204: 
+205: 3. **Phase 3: Caching (Week 4)**
+206: 
+207:    - Implement cache profiles
+208:    - Update data fetching
+209:    - Set up revalidation
+210:    - Monitor performance
+211: 
+212: 4. **Phase 4: Feature Organization (Week 5)**
+213: 
+214:    - Organize by feature
+215:    - Update documentation
+216:    - Verify functionality
+217:    - Run performance tests
+218: 
+219: 5. **Phase 5: Turbopack (Week 6)**
+220:    - Enable Turbopack
+221:    - Monitor performance
+222:    - Fix any issues
+223:    - Document findings
+224: 
+225: ## Success Metrics
+226: 
+227: - Build time reduction of 40%+
+228: - Improved lighthouse scores
+229: - Reduced TTFB
+230: - Maintained or improved test coverage
+231: - Successful integration of all Next.js 15 features
+232: - Positive developer feedback on new structure
+233: 
+234: This TODO list serves as a comprehensive guide for implementing Next.js 15 features in our project. Each section should be reviewed and adjusted as needed during implementation.
+````
+
 ## File: public/favicon.svg
 ````
 1: <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" version="1.1" viewBox="0 0 160 145" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421"><path d="M11.142,45.302l45.301,-45.302c14.82,14.819 14.82,38.846 0,53.665l-45.301,45.303c-14.82,-14.82 -14.82,-38.847 0,-53.666l0,0Z" style="fill:#095684;fill-rule:nonzero"/><path d="M56.411,90.635l-14.562,-14.562l-30.74,-30.739c-10.09,10.091 -13.303,24.446 -9.654,37.261c1.712,6.006 4.923,11.676 9.654,16.405l45.302,45.301c14.819,-14.818 14.819,-38.846 0,-53.666l0,0Z" style="fill:#23b99a;fill-rule:nonzero"/><path d="M147.903,45.302l-45.301,-45.302c-14.819,14.819 -14.819,38.846 0,53.665l45.301,45.303c14.82,-14.82 14.82,-38.847 0,-53.666l0,0Z" style="fill:#23b99a;fill-rule:nonzero"/><path d="M102.635,90.635l14.562,-14.562l30.74,-30.739c10.089,10.091 13.302,24.446 9.653,37.261c-1.711,6.006 -4.924,11.676 -9.653,16.405l-45.302,45.301c-14.82,-14.818 -14.82,-38.846 0,-53.666l0,0Z" style="fill:#095684;fill-rule:nonzero"/><path d="M11.141,45.302l45.302,-45.302c14.82,14.819 14.82,38.846 0,53.665l-45.302,45.303c-14.819,-14.82 -14.819,-38.847 0,-53.666l0,0Z" style="fill:#095684;fill-rule:nonzero"/><path d="M56.411,90.635l-14.563,-14.562l-30.739,-30.739c-10.09,10.091 -13.303,24.446 -9.654,37.261c1.712,6.006 4.923,11.676 9.654,16.405l45.302,45.301c14.819,-14.818 14.819,-38.846 -0.001,-53.666l0,0Z" style="fill:#23b99a;fill-rule:nonzero"/><path d="M147.903,45.302l-45.301,-45.302c-14.82,14.819 -14.82,38.846 0,53.665l45.301,45.303c14.82,-14.82 14.82,-38.847 0,-53.666l0,0Z" style="fill:#23b99a;fill-rule:nonzero"/><path d="M102.635,90.635l14.561,-14.562l30.741,-30.739c10.089,10.091 13.302,24.446 9.652,37.261c-1.71,6.006 -4.923,11.676 -9.652,16.405l-45.303,45.301c-14.82,-14.818 -14.82,-38.846 0,-53.666l0,0Z" style="fill:#095684;fill-rule:nonzero"/></svg>
@@ -3867,75 +4105,6 @@ tsconfig.json
 16: });
 ````
 
-## File: src/__tests__/Layout/Header.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import { render, screen } from "@testing-library/react";
- 5: import Header from "@/components/Layout/Header.component";
- 6: // Mock the usePathname hook
- 7: jest.mock("next/navigation", () => ({
- 8:   usePathname: () => "/",
- 9: }));
-10: // Mock the MobileMenu component
-11: jest.mock("@/components/Layout/MobileMenu.component", () => {
-12:   return function MockMobileMenu({ links }: { links: any[] }) {
-13:     return <div data-testid="mobile-menu">Mobile Menu</div>;
-14:   };
-15: });
-16: describe("Header", () => {
-17:   const mockNavigationLinks = [
-18:     { name: "Hjem", href: "/", title: "Hjem", hash: "", externalLink: false },
-19:     {
-20:       name: "Prosjekter",
-21:       href: "/prosjekter",
-22:       title: "Prosjekter",
-23:       hash: "",
-24:       externalLink: false,
-25:     },
-26:     { name: "CV", href: "/cv", title: "CV", hash: "", externalLink: false },
-27:     {
-28:       name: "Kontakt",
-29:       href: "/kontakt",
-30:       title: "Kontakt",
-31:       hash: "",
-32:       externalLink: false,
-33:     },
-34:   ];
-35:   describe("rendering", () => {
-36:     it("renders header container", () => {
-37:       // Arrange
-38:       const expectedRole = "banner";
-39:       // Act
-40:       render(<Header navigationLinks={mockNavigationLinks} />);
-41:       const header = screen.getByRole(expectedRole);
-42:       // Assert
-43:       expect(header).toBeInTheDocument();
-44:     });
-45:     it("renders all navigation links with correct attributes", () => {
-46:       // Arrange
-47:       render(<Header navigationLinks={mockNavigationLinks} />);
-48:       // Act & Assert
-49:       mockNavigationLinks.forEach((link) => {
-50:         const linkElement = screen.getByText(link.name);
-51:         expect(linkElement).toBeInTheDocument();
-52:         expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
-53:       });
-54:     });
-55:     it("renders mobile menu component", () => {
-56:       // Arrange
-57:       const expectedTestId = "mobile-menu";
-58:       // Act
-59:       render(<Header navigationLinks={mockNavigationLinks} />);
-60:       const mobileMenu = screen.getByTestId(expectedTestId);
-61:       // Assert
-62:       expect(mobileMenu).toBeInTheDocument();
-63:     });
-64:   });
-65: });
-````
-
 ## File: src/__tests__/Layout/MobileMenu.test.tsx
 ````typescript
   1: /**
@@ -5398,61 +5567,6 @@ tsconfig.json
 13: }
 ````
 
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import RootLayout from "@/app/RootLayout";
- 3: import { client } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 6:   loading: () => <div>Loading hero...</div>,
- 7: });
- 8: const DynamicIndexContent = dynamic(
- 9:   () => import("@/components/Index/IndexContent.component"),
-10:   {
-11:     loading: () => <div>Loading content...</div>,
-12:   },
-13: );
-14: export default async function HomePage() {
-15:   const pageContent = await client.fetch(pageContentQuery);
-16:   return (
-17:     <RootLayout>
-18:       <main>
-19:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-20:           {pageContent.hero && <DynamicHero content={pageContent.hero} />}
-21:         </div>
-22:         {pageContent.content && (
-23:           <DynamicIndexContent pageContent={pageContent.content} />
-24:         )}
-25:       </main>
-26:     </RootLayout>
-27:   );
-28: }
-````
-
-## File: src/app/RootLayout.tsx
-````typescript
- 1: import { SpeedInsights } from "@vercel/speed-insights/next";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { navigationQuery } from "@/lib/sanity/queries";
- 4: import Header from "@/components/Layout/Header.component";
- 5: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 6: export default async function RootLayout({
- 7:   children,
- 8: }: Readonly<{
- 9:   children: React.ReactNode;
-10: }>) {
-11:   const navigation = await client.fetch(navigationQuery);
-12:   return (
-13:     <ErrorBoundary>
-14:       <Header navigationLinks={navigation.links} />
-15:       <SpeedInsights />
-16:       {children}
-17:     </ErrorBoundary>
-18:   );
-19: }
-````
-
 ## File: src/components/Animations/types/Animations.types.ts
 ````typescript
  1: import { ReactNode } from "react";
@@ -6441,124 +6555,6 @@ tsconfig.json
 32: ] as const;
 ````
 
-## File: src/components/Layout/DesktopNavigation.component.tsx
-````typescript
- 1: import React from "react";
- 2: import { MotionLi, MotionUl } from "@/lib/framer/client";
- 3: import NavigationLink from "./NavigationLink.component";
- 4: import { useNavigation } from "@/hooks/useNavigation";
- 5: interface NavigationLink {
- 6:   title: string;
- 7:   name: string;
- 8:   hash: string;
- 9:   href: string;
-10:   externalLink: boolean;
-11: }
-12: interface DesktopNavigationProps {
-13:   navigationLinks: NavigationLink[];
-14: }
-15: /**
-16:  * DesktopNavigation component that renders the navigation menu for desktop view
-17:  * @param {DesktopNavigationProps} props - The props for the DesktopNavigation component
-18:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links to be rendered
-19:  * @returns {JSX.Element} The rendered DesktopNavigation component
-20:  */
-21: const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
-22:   navigationLinks,
-23: }) => {
-24:   const { isLinkActive } = useNavigation(navigationLinks);
-25:   return (
-26:     <MotionUl
-27:       className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5"
-28:       variants={{
-29:         hidden: { opacity: 0 },
-30:         visible: {
-31:           opacity: 1,
-32:           transition: {
-33:             staggerChildren: 0.1,
-34:             delayChildren: 0.3,
-35:           },
-36:         },
-37:       }}
-38:       initial="hidden"
-39:       animate="visible"
-40:     >
-41:       {navigationLinks.map((link) => (
-42:         <MotionLi
-43:           className="h-3/4 flex items-center justify-center relative"
-44:           key={link.name}
-45:           variants={{
-46:             hidden: { y: -20, opacity: 0 },
-47:             visible: { y: 0, opacity: 1 },
-48:           }}
-49:           transition={{ duration: 0.3 }}
-50:         >
-51:           <NavigationLink
-52:             name={link.name}
-53:             href={link.href}
-54:             isActive={isLinkActive(link.href)}
-55:           />
-56:         </MotionLi>
-57:       ))}
-58:     </MotionUl>
-59:   );
-60: };
-61: export default DesktopNavigation;
-````
-
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import { motion } from "motion/react";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-green-400" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <motion.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-green-400" : "bg-white"
-36:           }`}
-37:           initial={{
-38:             width: isActive ? "100%" : "0%",
-39:           }}
-40:           variants={{
-41:             hover: { width: "100%" },
-42:           }}
-43:           transition={{ duration: 0.3 }}
-44:         />
-45:       </div>
-46:     </Link>
-47:   </MotionDiv>
-48: );
-49: export default NavigationLink;
-````
-
 ## File: src/components/UI/GenericForm.component.tsx
 ````typescript
  1: import React from "react";
@@ -7347,33 +7343,6 @@ tsconfig.json
 19: }
 ````
 
-## File: src/hooks/useNavigation.ts
-````typescript
- 1: import { usePathname } from "next/navigation";
- 2: interface NavigationLink {
- 3:   title: string;
- 4:   name: string;
- 5:   hash: string;
- 6:   href: string;
- 7:   externalLink: boolean;
- 8: }
- 9: /**
-10:  * Custom hook for managing navigation state and logic
-11:  * @param {NavigationLink[]} navigationLinks - Array of navigation links
-12:  * @returns {Object} An object containing navigation-related data and functions
-13:  * @property {NavigationLink[]} navigationLinks - The array of navigation links passed to the hook
-14:  * @property {function} isLinkActive - A function that checks if a given link is currently active
-15:  */
-16: export function useNavigation(navigationLinks: NavigationLink[]) {
-17:   const pathname = usePathname();
-18:   const isLinkActive = (href: string) => pathname === href;
-19:   return {
-20:     navigationLinks,
-21:     isLinkActive,
-22:   };
-23: }
-````
-
 ## File: src/lib/framer/client.ts
 ````typescript
 1: "use client";
@@ -7381,6 +7350,26 @@ tsconfig.json
 3: export const MotionDiv = motion.div;
 4: export const MotionLi = motion.li;
 5: export const MotionUl = motion.ul;
+````
+
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import imageUrlBuilder from "@sanity/image-url";
+ 2: import { createClient } from "next-sanity";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2023-05-03";
+ 7: export const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: const builder = imageUrlBuilder(client);
+14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+15:   return builder.image(source);
+16: }
 ````
 
 ## File: src/lib/sanity/helpers.ts
@@ -8611,99 +8600,6 @@ tsconfig.json
 100:     },
 101:   ],
 102: }
-````
-
-## File: studio/schemaTypes/documents/navigation.ts
-````typescript
- 1: import {
- 2:   RiNavigationLine,
- 3:   RiHome4Line,
- 4:   RiProjectorLine,
- 5:   RiFileList3Line,
- 6:   RiGithubLine,
- 7:   RiMailLine,
- 8: } from 'react-icons/ri'
- 9: import {defineField, defineType} from 'sanity'
-10: const iconMap = {
-11:   RiHome4Line,
-12:   RiProjectorLine,
-13:   RiFileList3Line,
-14:   RiGithubLine,
-15:   RiMailLine,
-16: }
-17: export default defineType({
-18:   name: 'navigation',
-19:   title: 'Navigation',
-20:   type: 'document',
-21:   icon: RiNavigationLine,
-22:   fields: [
-23:     defineField({
-24:       title: 'Title',
-25:       name: 'title',
-26:       type: 'string',
-27:       validation: (Rule) => Rule.required(),
-28:     }),
-29:     defineField({
-30:       name: 'links',
-31:       title: 'Navigation Links',
-32:       type: 'array',
-33:       of: [
-34:         {
-35:           type: 'object',
-36:           fields: [
-37:             defineField({name: 'title', type: 'string', title: 'Title'}),
-38:             defineField({name: 'name', type: 'string', title: 'Name'}),
-39:             defineField({name: 'hash', type: 'string', title: 'Hash'}),
-40:             defineField({name: 'href', type: 'string', title: 'Href'}),
-41:             defineField({name: 'externalLink', type: 'boolean', title: 'External Link'}),
-42:             defineField({
-43:               name: 'icon',
-44:               title: 'Icon',
-45:               type: 'string',
-46:               options: {
-47:                 list: [
-48:                   {title: 'Home', value: 'RiHome4Line'},
-49:                   {title: 'Projects', value: 'RiProjectorLine'},
-50:                   {title: 'CV', value: 'RiFileList3Line'},
-51:                   {title: 'GitHub', value: 'RiGithubLine'},
-52:                   {title: 'Contact', value: 'RiMailLine'},
-53:                 ],
-54:               },
-55:             }),
-56:           ],
-57:           preview: {
-58:             select: {
-59:               title: 'title',
-60:               icon: 'icon',
-61:             },
-62:             prepare(selection) {
-63:               const {title, icon} = selection
-64:               return {
-65:                 title,
-66:                 media:
-67:                   icon && icon in iconMap
-68:                     ? iconMap[icon as keyof typeof iconMap]
-69:                     : RiNavigationLine,
-70:               }
-71:             },
-72:           },
-73:         },
-74:       ],
-75:     }),
-76:   ],
-77:   preview: {
-78:     select: {
-79:       title: 'title',
-80:     },
-81:     prepare(selection) {
-82:       const {title} = selection
-83:       return {
-84:         title,
-85:         media: RiNavigationLine,
-86:       }
-87:     },
-88:   },
-89: })
 ````
 
 ## File: studio/schemaTypes/documents/page.ts
@@ -12341,244 +12237,6 @@ tsconfig.json
 2: import "tailwindcss/tailwind.css";
 ````
 
-## File: DOCS/TODO.md
-````markdown
-  1: # Next.js 15 Implementation TODO
-  2: 
-  3: This document outlines suggestions for improvements for implementing Next.js 15 features in our project.
-  4: 
-  5: ## 1. Project Structure Reorganization
-  6: 
-  7: ### Current Structure
-  8: 
-  9: Currently, our project has a flat structure in src/components with separate folders for different component types. While organized, we can improve the structure using Next.js 15's recommended patterns.
- 10: 
- 11: ### Implementation Plan
- 12: 
- 13: 1. **Create Three Main Zones**
- 14: 
- 15:    ```
- 16:    src/
- 17:    ├── shared/           # Green Zone - Shared code
- 18:    │   ├── components/   # Reusable UI components
- 19:    │   ├── constants/    # Global constants
- 20:    │   ├── types/       # TypeScript types/interfaces
- 21:    │   └── utils/       # Utility functions
- 22:    │
- 23:    ├── navigation/      # Red Zone - Navigation & Data
- 24:    │   ├── routes/      # Route configurations
- 25:    │   └── data/        # Data fetching functions
- 26:    │
- 27:    └── features/        # Blue Zone - Feature modules
- 28:        ├── cv/
- 29:        ├── projects/
- 30:        ├── contact/
- 31:        └── home/
- 32:    ```
- 33: 
- 34: 2. **Migration Steps**
- 35: 
- 36:    - Create the new directory structure
- 37:    - Move common components (Button, InputField, etc.) to shared/components
- 38:    - Organize feature-specific components into respective feature folders
- 39:    - Update import paths throughout the project
- 40:    - Ensure no circular dependencies between zones
- 41: 
- 42: 3. **Rules to Follow**
- 43:    - Shared (Green) zone: No imports from other zones
- 44:    - Navigation (Red) zone: Can import from shared
- 45:    - Features (Blue) zone: Can import from shared and navigation
- 46:    - No imports between feature modules
- 47: 
- 48: ## 3. Enhanced Caching Strategy
- 49: 
- 50: ### Current Caching
- 51: 
- 52: We currently rely on Next.js's default caching behavior. We can improve performance with explicit cache controls.
- 53: 
- 54: ### Implementation Plan
- 55: 
- 56: 1. **Define Cache Profiles**
- 57: 
- 58:    ```typescript
- 59:    // src/shared/cache/profiles.ts
- 60:    export const cacheProfiles = {
- 61:      static: {
- 62:        revalidate: false,
- 63:        tags: ["static"],
- 64:      },
- 65:      dynamic: {
- 66:        revalidate: 3600, // 1 hour
- 67:        tags: ["dynamic"],
- 68:      },
- 69:    };
- 70:    ```
- 71: 
- 72: 2. **Implement Cache Controls**
- 73: 
- 74:    ```typescript
- 75:    // src/features/projects/data.ts
- 76:    import { cache } from "react";
- 77: 
- 78:    export const getProjects = cache(async () => {
- 79:      // Fetch projects with caching
- 80:      const response = await fetch("/api/projects", {
- 81:        next: cacheProfiles.dynamic,
- 82:      });
- 83:      return response.json();
- 84:    });
- 85:    ```
- 86: 
- 87: 3. **Cache Invalidation Strategy**
- 88:    - Implement revalidation endpoints
- 89:    - Set up cache tags for granular invalidation
- 90:    - Configure cache headers properly
- 91: 
- 92: ## 4. Feature-based Organization
- 93: 
- 94: ### Current Component Structure
- 95: 
- 96: Components are currently organized by type (UI, Animations, etc.). We'll reorganize by feature for better modularity.
- 97: 
- 98: ### Implementation Steps
- 99: 
-100: 1. **Feature Module Structure**
-101: 
-102:    ```
-103:    src/features/
-104:    ├── cv/
-105:    │   ├── components/
-106:    │   ├── hooks/
-107:    │   ├── utils/
-108:    │   └── types.ts
-109:    ├── projects/
-110:    │   ├── components/
-111:    │   ├── hooks/
-112:    │   ├── utils/
-113:    │   └── types.ts
-114:    ```
-115: 
-116: 2. **Migration Process**
-117: 
-118:    - Create feature directories
-119:    - Move related components, hooks, and utilities
-120:    - Update imports and dependencies
-121:    - Ensure feature isolation
-122:    - Update test file locations
-123: 
-124: 3. **Feature Module Rules**
-125:    - Each feature should be self-contained
-126:    - Shared functionality goes in shared/
-127:    - Feature-specific types in feature/types.ts
-128:    - Feature-specific hooks in feature/hooks/
-129: 
-130: ## 5. Turbopack Integration
-131: 
-132: ### Current Build Setup
-133: 
-134: We use the default webpack configuration. Turbopack can significantly improve build times.
-135: 
-136: ### Implementation Steps
-137: 
-138: 1. **Enable Turbopack**
-139: 
-140:    ```typescript
-141:    // next.config.ts
-142:    const config: NextConfig = {
-143:      experimental: {
-144:        turbo: {
-145:          loaders: {
-146:            // Configure loaders
-147:            ".svg": ["@svgr/webpack"],
-148:          },
-149:        },
-150:      },
-151:    };
-152:    ```
-153: 
-154: 2. **Performance Monitoring**
-155: 
-156:    - Measure build times before and after
-157:    - Monitor hot reload performance
-158:    - Check for compatibility issues
-159:    - Document any workarounds needed
-160: 
-161: 3. **Fallback Strategy**
-162:    - Maintain webpack configuration as fallback
-163:    - Document any Turbopack-specific issues
-164:    - Create scripts for both build systems
-165: 
-166: ## Additional Considerations
-167: 
-168: ### Testing Strategy
-169: 
-170: - Update test file locations to match new structure
-171: - Ensure all server actions are properly tested
-172: - Add integration tests for new caching behavior
-173: - Maintain current test coverage
-174: 
-175: ### Documentation
-176: 
-177: - Update component documentation
-178: - Document new folder structure
-179: - Create migration guide for team
-180: - Update README.md with new architecture
-181: 
-182: ### Performance Monitoring
-183: 
-184: - Set up metrics for before/after comparison
-185: - Monitor cache hit rates
-186: - Track build times
-187: - Measure Time to First Byte (TTFB)
-188: 
-189: ## Migration Timeline
-190: 
-191: 1. **Phase 1: Project Structure (Week 1-2)**
-192: 
-193:    - Set up new directory structure
-194:    - Move files to new locations
-195:    - Update import paths
-196:    - Verify all tests pass
-197: 
-198: 2. **Phase 2: Server Actions (Week 3)**
-199: 
-200:    - Implement server actions
-201:    - Update form handling
-202:    - Add validation
-203:    - Test new functionality
-204: 
-205: 3. **Phase 3: Caching (Week 4)**
-206: 
-207:    - Implement cache profiles
-208:    - Update data fetching
-209:    - Set up revalidation
-210:    - Monitor performance
-211: 
-212: 4. **Phase 4: Feature Organization (Week 5)**
-213: 
-214:    - Organize by feature
-215:    - Update documentation
-216:    - Verify functionality
-217:    - Run performance tests
-218: 
-219: 5. **Phase 5: Turbopack (Week 6)**
-220:    - Enable Turbopack
-221:    - Monitor performance
-222:    - Fix any issues
-223:    - Document findings
-224: 
-225: ## Success Metrics
-226: 
-227: - Build time reduction of 40%+
-228: - Improved lighthouse scores
-229: - Reduced TTFB
-230: - Maintained or improved test coverage
-231: - Successful integration of all Next.js 15 features
-232: - Positive developer feedback on new structure
-233: 
-234: This TODO list serves as a comprehensive guide for implementing Next.js 15 features in our project. Each section should be reviewed and adjusted as needed during implementation.
-````
-
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
 ````typescript
   1: import React from "react";
@@ -12697,49 +12355,6 @@ tsconfig.json
 114: });
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     },
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     return await fetchProjectsFromSanity();
-36:   } catch (error) {
-37:     handleError(error);
-38:   }
-39: }
-````
-
 ## File: src/app/prosjekter/error.tsx
 ````typescript
  1: "use client";
@@ -12818,6 +12433,61 @@ tsconfig.json
 46:     </html>
 47:   );
 48: }
+````
+
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import RootLayout from "@/app/RootLayout";
+ 3: import { client } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 6:   loading: () => <div>Loading hero...</div>,
+ 7: });
+ 8: const DynamicIndexContent = dynamic(
+ 9:   () => import("@/components/Index/IndexContent.component"),
+10:   {
+11:     loading: () => <div>Loading content...</div>,
+12:   }
+13: );
+14: export default async function HomePage() {
+15:   const pageContent = await client.fetch(pageContentQuery);
+16:   return (
+17:     <RootLayout>
+18:       <main>
+19:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+20:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+21:         </div>
+22:         {pageContent?.content && (
+23:           <DynamicIndexContent pageContent={pageContent.content} />
+24:         )}
+25:       </main>
+26:     </RootLayout>
+27:   );
+28: }
+````
+
+## File: src/app/RootLayout.tsx
+````typescript
+ 1: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 2: import { client } from "@/lib/sanity/client";
+ 3: import { navigationQuery } from "@/lib/sanity/queries";
+ 4: import Header from "@/components/Layout/Header.component";
+ 5: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 6: export default async function RootLayout({
+ 7:   children,
+ 8: }: Readonly<{
+ 9:   children: React.ReactNode;
+10: }>) {
+11:   const navigation = await client.fetch(navigationQuery);
+12:   return (
+13:     <ErrorBoundary>
+14:       <Header navigation={navigation} />
+15:       <SpeedInsights />
+16:       {children}
+17:     </ErrorBoundary>
+18:   );
+19: }
 ````
 
 ## File: src/components/Animations/Matrix.component.tsx
@@ -13294,225 +12964,139 @@ tsconfig.json
 48: export default Hamburger;
 ````
 
-## File: src/components/Layout/Header.component.tsx
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import { motion } from "motion/react";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: export interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-green-400" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <motion.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-green-400" : "bg-white"
+36:           }`}
+37:           initial={{
+38:             width: isActive ? "100%" : "0%",
+39:           }}
+40:           variants={{
+41:             hover: { width: "100%" },
+42:           }}
+43:           transition={{ duration: 0.3 }}
+44:         />
+45:       </div>
+46:     </Link>
+47:   </MotionDiv>
+48: );
+49: export default NavigationLink;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
  2: import React from "react";
- 3: import { MotionDiv } from "@/lib/framer/client";
- 4: import MobileMenu from "./MobileMenu.component";
- 5: import DesktopNavigation from "./DesktopNavigation.component";
- 6: interface NavigationLink {
- 7:   title: string;
- 8:   name: string;
- 9:   hash: string;
-10:   href: string;
-11:   externalLink: boolean;
-12: }
-13: interface HeaderProps {
-14:   navigationLinks: NavigationLink[];
-15: }
-16: /**
-17:  * Header component that renders the navigation bar
-18:  * @param {HeaderProps} props - The props for the Header component
-19:  * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
-20:  * @returns {JSX.Element} The rendered Header component
-21:  */
-22: const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
-23:   return (
-24:     <header className="z-999 relative">
-25:       <div
-26:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-27:         style={{ transform: "translateX(-50%)" }}
-28:       />
-29:       <MotionDiv
-30:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-31:         initial={{ y: -100, x: "-50%", opacity: 0 }}
-32:         animate={{
-33:           y: 0,
-34:           x: "-51%",
-35:           opacity: 1,
-36:           transition: {
-37:             y: { duration: 0.6, ease: "easeOut" },
-38:             opacity: { duration: 0.6, ease: "easeOut" },
-39:           },
-40:         }}
-41:       />
-42:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-43:         <DesktopNavigation navigationLinks={navigationLinks} />
-44:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-45:           <MobileMenu links={navigationLinks} />
-46:         </div>
-47:       </nav>
-48:     </header>
-49:   );
-50: };
-51: export default Header;
-````
-
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import { useRef } from "react";
-  3: import Link from "next/link";
-  4: import { usePathname } from "next/navigation";
-  5: import { AnimatePresence, useCycle, motion } from "motion/react";
-  6: import Hamburger from "./Hamburger.component";
-  7: import useClickOutside from "@/hooks/useClickOutside";
-  8: interface ILink {
-  9:   title: string;
- 10:   name: string;
- 11:   hash: string;
- 12:   href: string;
- 13:   externalLink: boolean;
- 14: }
- 15: interface IMobileMenuProps {
- 16:   links: ILink[];
- 17: }
- 18: /**
- 19:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 20:  * @param {Object} props
- 21:  * @param {ILink[]} props.links - Array of navigation link objects
- 22:  * @returns {JSX.Element} The rendered MobileMenu component
- 23:  */
- 24: const MobileMenu = ({ links }: IMobileMenuProps) => {
- 25:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
- 26:   const ref = useRef<HTMLDivElement>(null);
- 27:   const pathname = usePathname();
- 28:   const handleClickOutside = () => {
- 29:     setisExpanded(0);
- 30:   };
- 31:   useClickOutside(ref, handleClickOutside);
- 32:   const menuVariants = {
- 33:     closed: {
- 34:       x: "125%",
- 35:       transition: {
- 36:         type: "spring",
- 37:         stiffness: 60,
- 38:         damping: 10,
- 39:         delay: 0.3,
- 40:       },
- 41:     },
- 42:     open: {
- 43:       x: 0,
- 44:       transition: {
- 45:         type: "spring",
- 46:         stiffness: 60,
- 47:         damping: 10,
- 48:       },
- 49:     },
- 50:   };
- 51:   const itemVariants = {
- 52:     closed: (i: number) => ({
- 53:       x: i % 2 === 0 ? "-50%" : "50%",
- 54:       opacity: 0,
- 55:       transition: {
- 56:         type: "spring",
- 57:         stiffness: 120,
- 58:         damping: 12,
- 59:         duration: 0.25,
- 60:       },
- 61:     }),
- 62:     open: (i: number) => ({
- 63:       x: 0,
- 64:       opacity: 1,
- 65:       transition: {
- 66:         type: "spring",
- 67:         stiffness: 120,
- 68:         damping: 12,
- 69:         delay: i * 0.25,
- 70:       },
- 71:     }),
- 72:   };
- 73:   return (
- 74:     <div
- 75:       className="z-50 md:hidden lg:hidden xl:hidden"
- 76:       data-testid="mobilemenu"
- 77:     >
- 78:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
- 79:       <AnimatePresence>
- 80:         {isExpanded && (
- 81:           <motion.div
- 82:             id="mobile-menu"
- 83:             data-testid="mobile-menu"
- 84:             data-cy="mobile-menu"
- 85:             aria-hidden={!isExpanded}
- 86:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 87:             initial="closed"
- 88:             animate="open"
- 89:             exit="closed"
- 90:             variants={menuVariants}
- 91:           >
- 92:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
- 93:               <motion.ul
- 94:                 className="w-full"
- 95:                 initial="closed"
- 96:                 animate="open"
- 97:                 exit="closed"
- 98:                 variants={{
- 99:                   open: {
-100:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
-101:                   },
-102:                   closed: {
-103:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
-104:                   },
-105:                 }}
-106:               >
-107:                 {links.map(({ title, name, href, externalLink }, index) => (
-108:                   <motion.li
-109:                     key={title}
-110:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-111:                     data-cy="mobile-menu-item"
-112:                     custom={index}
-113:                     variants={itemVariants}
-114:                   >
-115:                     {externalLink ? (
-116:                       <a
-117:                         aria-label={name}
-118:                         href={href}
-119:                         target="_blank"
-120:                         rel="noreferrer"
-121:                         data-testid={`mobil-${name}`}
-122:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-123:                       >
-124:                         {name}
-125:                       </a>
-126:                     ) : (
-127:                       <Link
-128:                         href={href}
-129:                         data-testid={`mobil-${name}`}
-130:                         prefetch={true}
-131:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-132:                           pathname === href ? "text-green-400" : ""
-133:                         }`}
-134:                       >
-135:                         <div className="glitch relative" data-text={name}>
-136:                           {name}
-137:                           <motion.span
-138:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-139:                               pathname === href ? "bg-green-400" : "bg-white"
-140:                             }`}
-141:                             initial={{
-142:                               width: pathname === href ? "100%" : "0%",
-143:                             }}
-144:                             animate={{
-145:                               width: pathname === href ? "100%" : "0%",
-146:                             }}
-147:                             transition={{ duration: 0.3 }}
-148:                           />
-149:                         </div>
-150:                       </Link>
-151:                     )}
-152:                   </motion.li>
-153:                 ))}
-154:               </motion.ul>
-155:             </nav>
-156:           </motion.div>
-157:         )}
-158:       </AnimatePresence>
-159:     </div>
-160:   );
-161: };
-162: export default MobileMenu;
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Renders a card displaying information about a single project.
+ 9:  * Uses the Project type definition from Sanity types.
+10:  *
+11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
+12:  * @param {string} props.name - The name of the project.
+13:  * @param {string} [props.description] - A brief description of the project (optional).
+14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+19:  * @returns {JSX.Element} The rendered ProsjektCard component.
+20:  */
+21: const ProsjektCard: React.FC<Project> = ({
+22:   name,
+23:   description,
+24:   subdescription,
+25:   projectimage,
+26:   urlwww,
+27:   urlgithub,
+28:   featured,
+29: }) => {
+30:   return (
+31:     <div
+32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
+33:       data-testid="projectcard"
+34:     >
+35:       <BounceInScroll viewAmount={0.3} instant={featured}>
+36:         <div className="relative w-full md:h-60">
+37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+38:             {projectimage && (
+39:               <img
+40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
+41:                 width={600}
+42:                 src={urlFor(projectimage)
+43:                   .width(600)
+44:                   .fit("max")
+45:                   .quality(100)
+46:                   .auto("format")
+47:                   .url()}
+48:                 alt={name}
+49:               />
+50:             )}
+51:           </div>
+52:         </div>
+53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+55:             {name}
+56:           </h1>
+57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
+58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+59:             {subdescription}
+60:           </p>
+61:           <div className="flex justify-center mt-4">
+62:             {urlwww && urlwww.length > 0 && (
+63:               <Button href={urlwww?.[0]?.url} renderAs="a">
+64:                 Besøk
+65:               </Button>
+66:             )}
+67:             {urlgithub && urlgithub.length > 0 && (
+68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+69:                 GitHub
+70:               </Button>
+71:             )}
+72:           </div>
+73:         </div>
+74:       </BounceInScroll>
+75:     </div>
+76:   );
+77: };
+78: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -13748,26 +13332,6 @@ tsconfig.json
 148:   );
 149: };
 150: export default Tabs;
-````
-
-## File: src/lib/sanity/client.ts
-````typescript
- 1: import imageUrlBuilder from "@sanity/image-url";
- 2: import { createClient } from "next-sanity";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2023-05-03";
- 7: export const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: const builder = imageUrlBuilder(client);
-14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-15:   return builder.image(source);
-16: }
 ````
 
 ## File: src/stories/components/ErrorBoundary.stories.tsx
@@ -14200,350 +13764,280 @@ tsconfig.json
  13:  */
  14: // Source: schema.json
  15: export type SanityImagePaletteSwatch = {
- 16:   _type: "sanity.imagePaletteSwatch";
- 17:   background?: string;
- 18:   foreground?: string;
- 19:   population?: number;
- 20:   title?: string;
- 21: };
+ 16:   _type: 'sanity.imagePaletteSwatch'
+ 17:   background?: string
+ 18:   foreground?: string
+ 19:   population?: number
+ 20:   title?: string
+ 21: }
  22: export type SanityImagePalette = {
- 23:   _type: "sanity.imagePalette";
- 24:   darkMuted?: SanityImagePaletteSwatch;
- 25:   lightVibrant?: SanityImagePaletteSwatch;
- 26:   darkVibrant?: SanityImagePaletteSwatch;
- 27:   vibrant?: SanityImagePaletteSwatch;
- 28:   dominant?: SanityImagePaletteSwatch;
- 29:   lightMuted?: SanityImagePaletteSwatch;
- 30:   muted?: SanityImagePaletteSwatch;
- 31: };
+ 23:   _type: 'sanity.imagePalette'
+ 24:   darkMuted?: SanityImagePaletteSwatch
+ 25:   lightVibrant?: SanityImagePaletteSwatch
+ 26:   darkVibrant?: SanityImagePaletteSwatch
+ 27:   vibrant?: SanityImagePaletteSwatch
+ 28:   dominant?: SanityImagePaletteSwatch
+ 29:   lightMuted?: SanityImagePaletteSwatch
+ 30:   muted?: SanityImagePaletteSwatch
+ 31: }
  32: export type SanityImageDimensions = {
- 33:   _type: "sanity.imageDimensions";
- 34:   height?: number;
- 35:   width?: number;
- 36:   aspectRatio?: number;
- 37: };
+ 33:   _type: 'sanity.imageDimensions'
+ 34:   height?: number
+ 35:   width?: number
+ 36:   aspectRatio?: number
+ 37: }
  38: export type SanityFileAsset = {
- 39:   _id: string;
- 40:   _type: "sanity.fileAsset";
- 41:   _createdAt: string;
- 42:   _updatedAt: string;
- 43:   _rev: string;
- 44:   originalFilename?: string;
- 45:   label?: string;
- 46:   title?: string;
- 47:   description?: string;
- 48:   altText?: string;
- 49:   sha1hash?: string;
- 50:   extension?: string;
- 51:   mimeType?: string;
- 52:   size?: number;
- 53:   assetId?: string;
- 54:   uploadId?: string;
- 55:   path?: string;
- 56:   url?: string;
- 57:   source?: SanityAssetSourceData;
- 58: };
+ 39:   _id: string
+ 40:   _type: 'sanity.fileAsset'
+ 41:   _createdAt: string
+ 42:   _updatedAt: string
+ 43:   _rev: string
+ 44:   originalFilename?: string
+ 45:   label?: string
+ 46:   title?: string
+ 47:   description?: string
+ 48:   altText?: string
+ 49:   sha1hash?: string
+ 50:   extension?: string
+ 51:   mimeType?: string
+ 52:   size?: number
+ 53:   assetId?: string
+ 54:   uploadId?: string
+ 55:   path?: string
+ 56:   url?: string
+ 57:   source?: SanityAssetSourceData
+ 58: }
  59: export type Geopoint = {
- 60:   _type: "geopoint";
- 61:   lat?: number;
- 62:   lng?: number;
- 63:   alt?: number;
- 64: };
+ 60:   _type: 'geopoint'
+ 61:   lat?: number
+ 62:   lng?: number
+ 63:   alt?: number
+ 64: }
  65: export type Slug = {
- 66:   _type: "slug";
- 67:   current?: string;
- 68:   source?: string;
- 69: };
+ 66:   _type: 'slug'
+ 67:   current?: string
+ 68:   source?: string
+ 69: }
  70: export type Herocontent = {
- 71:   _type: "herocontent";
- 72:   text?: string;
- 73: };
+ 71:   _type: 'herocontent'
+ 72:   text?: string
+ 73: }
  74: export type Pagecontent = {
- 75:   _type: "pagecontent";
- 76:   id?: number;
- 77:   title?: string;
+ 75:   _type: 'pagecontent'
+ 76:   id?: number
+ 77:   title?: string
  78:   text?: Array<{
  79:     children?: Array<{
- 80:       marks?: Array<string>;
- 81:       text?: string;
- 82:       _type: "span";
- 83:       _key: string;
- 84:     }>;
- 85:     style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
- 86:     listItem?: "bullet" | "number";
+ 80:       marks?: Array<string>
+ 81:       text?: string
+ 82:       _type: 'span'
+ 83:       _key: string
+ 84:     }>
+ 85:     style?: 'normal' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'blockquote'
+ 86:     listItem?: 'bullet' | 'number'
  87:     markDefs?: Array<{
- 88:       href?: string;
- 89:       _type: "link";
- 90:       _key: string;
- 91:     }>;
- 92:     level?: number;
- 93:     _type: "block";
- 94:     _key: string;
- 95:   }>;
- 96: };
+ 88:       href?: string
+ 89:       _type: 'link'
+ 90:       _key: string
+ 91:     }>
+ 92:     level?: number
+ 93:     _type: 'block'
+ 94:     _key: string
+ 95:   }>
+ 96: }
  97: export type Link = {
- 98:   _type: "link";
- 99:   title?: string;
-100:   url?: string;
-101:   external?: boolean;
-102: };
+ 98:   _type: 'link'
+ 99:   title?: string
+100:   url?: string
+101:   external?: boolean
+102: }
 103: export type Navigation = {
-104:   _id: string;
-105:   _type: "navigation";
-106:   _createdAt: string;
-107:   _updatedAt: string;
-108:   _rev: string;
-109:   title?: string;
+104:   _id: string
+105:   _type: 'navigation'
+106:   _createdAt: string
+107:   _updatedAt: string
+108:   _rev: string
+109:   title?: string
 110:   links?: Array<{
-111:     title?: string;
-112:     name?: string;
-113:     hash?: string;
-114:     href?: string;
-115:     externalLink?: boolean;
-116:     icon?: "RiHome4Line" | "RiProjectorLine" | "RiFileList3Line" | "RiGithubLine" | "RiMailLine";
-117:     _key: string;
-118:   }>;
-119: };
+111:     title?: string
+112:     name?: string
+113:     hash?: string
+114:     href?: string
+115:     externalLink?: boolean
+116:     icon?: 'RiHome4Line' | 'RiProjectorLine' | 'RiFileList3Line' | 'RiGithubLine' | 'RiMailLine'
+117:     _key: string
+118:   }>
+119: }
 120: export type Cv = {
-121:   _id: string;
-122:   _type: "cv";
-123:   _createdAt: string;
-124:   _updatedAt: string;
-125:   _rev: string;
-126:   keyQualifications?: Array<string>;
+121:   _id: string
+122:   _type: 'cv'
+123:   _createdAt: string
+124:   _updatedAt: string
+125:   _rev: string
+126:   keyQualifications?: Array<string>
 127:   experience?: Array<{
-128:     period?: string;
-129:     company?: string;
-130:     role?: string;
-131:     description?: string;
-132:     _key: string;
-133:   }>;
+128:     period?: string
+129:     company?: string
+130:     role?: string
+131:     description?: string
+132:     _key: string
+133:   }>
 134:   education?: Array<{
-135:     period?: string;
-136:     institution?: string;
-137:     degree?: string;
-138:     description?: string;
-139:     _key: string;
-140:   }>;
+135:     period?: string
+136:     institution?: string
+137:     degree?: string
+138:     description?: string
+139:     _key: string
+140:   }>
 141:   volunteerWork?: Array<{
-142:     period?: string;
-143:     organization?: string;
-144:     role?: string;
-145:     description?: string;
-146:     _key: string;
-147:   }>;
-148: };
+142:     period?: string
+143:     organization?: string
+144:     role?: string
+145:     description?: string
+146:     _key: string
+147:   }>
+148: }
 149: export type Page = {
-150:   _id: string;
-151:   _type: "page";
-152:   _createdAt: string;
-153:   _updatedAt: string;
-154:   _rev: string;
-155:   title?: string;
-156:   header?: string;
-157:   hero?: Array<{
-158:     _key: string;
-159:   } & Herocontent>;
-160:   content?: Array<{
-161:     _key: string;
-162:   } & Pagecontent>;
-163: };
-164: export type Project = {
-165:   _id: string;
-166:   _type: "project";
-167:   _createdAt: string;
-168:   _updatedAt: string;
-169:   _rev: string;
-170:   id?: number;
-171:   name?: string;
-172:   description?: string;
-173:   subdescription?: string;
-174:   projectcategory?: {
-175:     _ref: string;
-176:     _type: "reference";
-177:     _weak?: boolean;
-178:     [internalGroqTypeReferenceTo]?: "category";
-179:   };
-180:   urlwww?: Array<{
-181:     _key: string;
-182:   } & Link>;
-183:   urlgithub?: Array<{
-184:     _key: string;
-185:   } & Link>;
-186:   projectimage?: {
-187:     asset?: {
-188:       _ref: string;
-189:       _type: "reference";
-190:       _weak?: boolean;
-191:       [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-192:     };
-193:     hotspot?: SanityImageHotspot;
-194:     crop?: SanityImageCrop;
-195:     _type: "image";
-196:   };
-197:   featured?: boolean;
-198:   featureOrder?: number;
-199: };
-200: export type SanityImageCrop = {
-201:   _type: "sanity.imageCrop";
-202:   top?: number;
-203:   bottom?: number;
-204:   left?: number;
-205:   right?: number;
-206: };
-207: export type SanityImageHotspot = {
-208:   _type: "sanity.imageHotspot";
-209:   x?: number;
-210:   y?: number;
-211:   height?: number;
-212:   width?: number;
-213: };
-214: export type SanityImageAsset = {
-215:   _id: string;
-216:   _type: "sanity.imageAsset";
-217:   _createdAt: string;
-218:   _updatedAt: string;
-219:   _rev: string;
-220:   originalFilename?: string;
-221:   label?: string;
-222:   title?: string;
-223:   description?: string;
-224:   altText?: string;
-225:   sha1hash?: string;
-226:   extension?: string;
-227:   mimeType?: string;
-228:   size?: number;
-229:   assetId?: string;
-230:   uploadId?: string;
-231:   path?: string;
-232:   url?: string;
-233:   metadata?: SanityImageMetadata;
-234:   source?: SanityAssetSourceData;
-235: };
-236: export type SanityAssetSourceData = {
-237:   _type: "sanity.assetSourceData";
-238:   name?: string;
-239:   id?: string;
-240:   url?: string;
-241: };
-242: export type SanityImageMetadata = {
-243:   _type: "sanity.imageMetadata";
-244:   location?: Geopoint;
-245:   dimensions?: SanityImageDimensions;
-246:   palette?: SanityImagePalette;
-247:   lqip?: string;
-248:   blurHash?: string;
-249:   hasAlpha?: boolean;
-250:   isOpaque?: boolean;
-251: };
-252: export type Category = {
-253:   _id: string;
-254:   _type: "category";
-255:   _createdAt: string;
-256:   _updatedAt: string;
-257:   _rev: string;
-258:   id?: number;
-259:   name?: string;
-260: };
-261: export type AllSanitySchemaTypes = SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityFileAsset | Geopoint | Slug | Herocontent | Pagecontent | Link | Navigation | Cv | Page | Project | SanityImageCrop | SanityImageHotspot | SanityImageAsset | SanityAssetSourceData | SanityImageMetadata | Category;
-262: export declare const internalGroqTypeReferenceTo: unique symbol;
-263: // Source: ./src/lib/sanity/queries.ts
-264: // Variable: projectsQuery
-265: // Query: *[_type == "project"] | order(featureOrder asc) {    id,    name,    description,    subdescription,    projectcategory->{      _id,      title    },    urlwww[]{      ...,      _key,    },    urlgithub[]{      ...,      _key,    },    projectimage,    featured,    featureOrder  }
-266: export type ProjectsQueryResult = Array<{
-267:   id: number | null;
-268:   name: string | null;
-269:   description: string | null;
-270:   subdescription: string | null;
-271:   projectcategory: {
-272:     _id: string;
-273:     title: null;
-274:   } | null;
-275:   urlwww: Array<{
-276:     _key: string;
-277:     _type: "link";
-278:     title?: string;
-279:     url?: string;
-280:     external?: boolean;
-281:   }> | null;
-282:   urlgithub: Array<{
-283:     _key: string;
-284:     _type: "link";
-285:     title?: string;
-286:     url?: string;
-287:     external?: boolean;
-288:   }> | null;
-289:   projectimage: {
-290:     asset?: {
-291:       _ref: string;
-292:       _type: "reference";
-293:       _weak?: boolean;
-294:       [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-295:     };
-296:     hotspot?: SanityImageHotspot;
-297:     crop?: SanityImageCrop;
-298:     _type: "image";
-299:   } | null;
-300:   featured: boolean | null;
-301:   featureOrder: number | null;
-302: }>;
-303: // Variable: cvQuery
-304: // Query: *[_type == "cv"][0] {    keyQualifications,    experience[] {      period,      company,      role,      description    },    education[] {      period,      institution,      degree,      description    },    volunteerWork[] {      period,      organization,      role,      description    }  }
-305: export type CvQueryResult = {
-306:   keyQualifications: Array<string> | null;
-307:   experience: Array<{
-308:     period: string | null;
-309:     company: string | null;
-310:     role: string | null;
-311:     description: string | null;
-312:   }> | null;
-313:   education: Array<{
-314:     period: string | null;
-315:     institution: string | null;
-316:     degree: string | null;
-317:     description: string | null;
-318:   }> | null;
-319:   volunteerWork: Array<{
-320:     period: string | null;
-321:     organization: string | null;
-322:     role: string | null;
-323:     description: string | null;
-324:   }> | null;
-325: } | null;
-326: // Variable: pageContentQuery
-327: // Query: *[_type == 'page' && title match 'Hjem'][0]{    "id": _id,     title,     hero,     content  }
-328: export type PageContentQueryResult = {
-329:   id: string;
-330:   title: string | null;
-331:   hero: Array<{
-332:     _key: string;
-333:   } & Herocontent> | null;
-334:   content: Array<{
-335:     _key: string;
-336:   } & Pagecontent> | null;
-337: } | null;
-338: // Variable: navigationQuery
-339: // Query: *[_type == "navigation"][0] {    title,    links[] {      title,      name,      hash,      href,      externalLink    }  }
-340: export type NavigationQueryResult = {
-341:   title: string | null;
-342:   links: Array<{
-343:     title: string | null;
-344:     name: string | null;
-345:     hash: string | null;
-346:     href: string | null;
-347:     externalLink: boolean | null;
-348:   }> | null;
-349: } | null;
-350: // Query TypeMap
-351: import "@sanity/client";
-352: declare module "@sanity/client" {
-353:   interface SanityQueries {
-354:     "\n  *[_type == \"project\"] | order(featureOrder asc) {\n    id,\n    name,\n    description,\n    subdescription,\n    projectcategory->{\n      _id,\n      title\n    },\n    urlwww[]{\n      ...,\n      _key,\n    },\n    urlgithub[]{\n      ...,\n      _key,\n    },\n    projectimage,\n    featured,\n    featureOrder\n  }\n": ProjectsQueryResult;
-355:     "\n  *[_type == \"cv\"][0] {\n    keyQualifications,\n    experience[] {\n      period,\n      company,\n      role,\n      description\n    },\n    education[] {\n      period,\n      institution,\n      degree,\n      description\n    },\n    volunteerWork[] {\n      period,\n      organization,\n      role,\n      description\n    }\n  }\n": CvQueryResult;
-356:     "\n  *[_type == 'page' && title match 'Hjem'][0]{\n    \"id\": _id, \n    title, \n    hero, \n    content\n  }\n": PageContentQueryResult;
-357:     "\n  *[_type == \"navigation\"][0] {\n    title,\n    links[] {\n      title,\n      name,\n      hash,\n      href,\n      externalLink\n    }\n  }\n": NavigationQueryResult;
-358:   }
-359: }
+150:   _id: string
+151:   _type: 'page'
+152:   _createdAt: string
+153:   _updatedAt: string
+154:   _rev: string
+155:   title?: string
+156:   header?: string
+157:   hero?: Array<
+158:     {
+159:       _key: string
+160:     } & Herocontent
+161:   >
+162:   content?: Array<
+163:     {
+164:       _key: string
+165:     } & Pagecontent
+166:   >
+167: }
+168: export type Project = {
+169:   _id: string
+170:   _type: 'project'
+171:   _createdAt: string
+172:   _updatedAt: string
+173:   _rev: string
+174:   id?: number
+175:   name?: string
+176:   description?: string
+177:   subdescription?: string
+178:   projectcategory?: {
+179:     _ref: string
+180:     _type: 'reference'
+181:     _weak?: boolean
+182:     [internalGroqTypeReferenceTo]?: 'category'
+183:   }
+184:   urlwww?: Array<
+185:     {
+186:       _key: string
+187:     } & Link
+188:   >
+189:   urlgithub?: Array<
+190:     {
+191:       _key: string
+192:     } & Link
+193:   >
+194:   projectimage?: {
+195:     asset?: {
+196:       _ref: string
+197:       _type: 'reference'
+198:       _weak?: boolean
+199:       [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
+200:     }
+201:     hotspot?: SanityImageHotspot
+202:     crop?: SanityImageCrop
+203:     _type: 'image'
+204:   }
+205:   featured?: boolean
+206:   featureOrder?: number
+207: }
+208: export type SanityImageCrop = {
+209:   _type: 'sanity.imageCrop'
+210:   top?: number
+211:   bottom?: number
+212:   left?: number
+213:   right?: number
+214: }
+215: export type SanityImageHotspot = {
+216:   _type: 'sanity.imageHotspot'
+217:   x?: number
+218:   y?: number
+219:   height?: number
+220:   width?: number
+221: }
+222: export type SanityImageAsset = {
+223:   _id: string
+224:   _type: 'sanity.imageAsset'
+225:   _createdAt: string
+226:   _updatedAt: string
+227:   _rev: string
+228:   originalFilename?: string
+229:   label?: string
+230:   title?: string
+231:   description?: string
+232:   altText?: string
+233:   sha1hash?: string
+234:   extension?: string
+235:   mimeType?: string
+236:   size?: number
+237:   assetId?: string
+238:   uploadId?: string
+239:   path?: string
+240:   url?: string
+241:   metadata?: SanityImageMetadata
+242:   source?: SanityAssetSourceData
+243: }
+244: export type SanityAssetSourceData = {
+245:   _type: 'sanity.assetSourceData'
+246:   name?: string
+247:   id?: string
+248:   url?: string
+249: }
+250: export type SanityImageMetadata = {
+251:   _type: 'sanity.imageMetadata'
+252:   location?: Geopoint
+253:   dimensions?: SanityImageDimensions
+254:   palette?: SanityImagePalette
+255:   lqip?: string
+256:   blurHash?: string
+257:   hasAlpha?: boolean
+258:   isOpaque?: boolean
+259: }
+260: export type Category = {
+261:   _id: string
+262:   _type: 'category'
+263:   _createdAt: string
+264:   _updatedAt: string
+265:   _rev: string
+266:   id?: number
+267:   name?: string
+268: }
+269: export type AllSanitySchemaTypes =
+270:   | SanityImagePaletteSwatch
+271:   | SanityImagePalette
+272:   | SanityImageDimensions
+273:   | SanityFileAsset
+274:   | Geopoint
+275:   | Slug
+276:   | Herocontent
+277:   | Pagecontent
+278:   | Link
+279:   | Navigation
+280:   | Cv
+281:   | Page
+282:   | Project
+283:   | SanityImageCrop
+284:   | SanityImageHotspot
+285:   | SanityImageAsset
+286:   | SanityAssetSourceData
+287:   | SanityImageMetadata
+288:   | Category
+289: export declare const internalGroqTypeReferenceTo: unique symbol
 ````
 
 ## File: postcss.config.mjs
@@ -14556,196 +14050,6 @@ tsconfig.json
 6: };
 7: 
 8: export default config;
-````
-
-## File: src/app/globals.css
-````css
- 1: @import "tailwindcss";
- 2: @config '../../tailwind.config.ts';
- 3: /*
- 4:   The default border color has changed to `currentcolor` in Tailwind CSS v4,
- 5:   so we've added these compatibility styles to make sure everything still
- 6:   looks the same as it did with Tailwind CSS v3.
- 7:   If we ever want to remove these styles, we need to add an explicit border
- 8:   color utility to any element that depends on these defaults.
- 9: */
-10: @layer base {
-11:   *,
-12:   ::after,
-13:   ::before,
-14:   ::backdrop,
-15:   ::file-selector-button {
-16:     border-color: var(--color-gray-200, currentcolor);
-17:   }
-18: }
-19: :root {
-20:   /* Modern Color Scheme */
-21:   --primary: #00ff62;
-22:   --secondary: #00cc4e;
-23:   --accent: #008529;
-24:   --text: #e1e1e1;
-25:   --background: var(--color-slate-900, #0f172a);
-26:   /* Semantic Colors */
-27:   --success: #00cc4e;
-28:   --error: #ff4e4e;
-29:   --warning: #ffb74e;
-30:   --info: #4e9fff;
-31:   /* Matrix Theme Colors */
-32:   --matrix-light: #00ff62;
-33:   --matrix: #00cc4e;
-34:   --matrix-dark: #008529;
-35:   --matrix-glow: rgba(0, 255, 98, 0.6);
-36: }
-37: body {
-38:   background-color: var(--background);
-39:   color: var(--text);
-40:   font-family:
-41:     "Inter",
-42:     -apple-system,
-43:     BlinkMacSystemFont,
-44:     "Segoe UI",
-45:     Roboto,
-46:     Oxygen,
-47:     Ubuntu,
-48:     Cantarell,
-49:     sans-serif;
-50: }
-51: #matrixCanvas {
-52:   opacity: 0.7;
-53: }
-54: /* Selection */
-55: ::selection {
-56:   background-color: var(--matrix-dark);
-57:   color: #ffffff;
-58: }
-59: /* Scrollbar */
-60: * {
-61:   scrollbar-width: thin;
-62:   scrollbar-color: var(--matrix-dark) #1a1a1a;
-63: }
-64: ::-webkit-scrollbar {
-65:   width: 6px;
-66: }
-67: ::-webkit-scrollbar-track {
-68:   background: #1a1a1a;
-69: }
-70: ::-webkit-scrollbar-thumb {
-71:   background: var(--matrix-dark);
-72:   border-radius: 3px;
-73: }
-74: ::-webkit-scrollbar-thumb:hover {
-75:   background: var(--matrix-light);
-76: }
-77: /* Remove focus outline */
-78: :focus {
-79:   outline: none;
-80: }
-81: /* Remove focus visible outline */
-82: :focus-visible {
-83:   outline: none;
-84: }
-````
-
-## File: src/components/UI/InputField.component.tsx
-````typescript
- 1: import React from "react";
- 2: import {
- 3:   UseFormRegister,
- 4:   FieldValues,
- 5:   RegisterOptions,
- 6:   Path,
- 7: } from "react-hook-form";
- 8: export interface InputProps<T extends FieldValues> {
- 9:   readonly name: Path<T>;
-10:   readonly label: string;
-11:   readonly htmlFor: string;
-12:   readonly isRequired?: boolean;
-13:   readonly inputPattern?: RegExp;
-14:   readonly title?: string;
-15:   readonly type?: "input" | "textarea";
-16:   readonly register: UseFormRegister<T>;
-17:   readonly error?: string;
-18: }
-19: /**
-20:  * Creates register options for react-hook-form
-21:  * @template T - Type extending FieldValues
-22:  * @param {boolean} [isRequired] - Whether the field is required
-23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
-24:  * @param {string} [title] - Title for the input field
-25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
-26:  */
-27: export function createRegisterOptions<T extends FieldValues>(
-28:   isRequired?: boolean,
-29:   inputPattern?: RegExp,
-30:   title?: string
-31: ): RegisterOptions<T, Path<T>> {
-32:   return {
-33:     required: isRequired ? "Dette feltet er påkrevd" : false,
-34:     ...(inputPattern
-35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
-36:       : {}),
-37:   };
-38: }
-39: /**
-40:  * InputField component for rendering form inputs
-41:  * @template T - Type extending FieldValues
-42:  * @param {InputProps<T>} props - The props for the InputField component
-43:  * @returns {JSX.Element} The rendered InputField component
-44:  */
-45: function InputField<T extends FieldValues>({
-46:   name,
-47:   label,
-48:   inputPattern,
-49:   isRequired,
-50:   htmlFor,
-51:   title,
-52:   type = "input",
-53:   register,
-54:   error,
-55:   ...props
-56: }: InputProps<T>) {
-57:   const sharedClasses =
-58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
-59:   const registerOptions = createRegisterOptions<T>(
-60:     isRequired,
-61:     inputPattern,
-62:     title
-63:   );
-64:   return (
-65:     <div className="relative my-2 flex flex-col items-center">
-66:       <div className="relative">
-67:         {type === "input" ? (
-68:           <input
-69:             id={htmlFor}
-70:             type="text"
-71:             placeholder={label}
-72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-73:             {...register(name, registerOptions)}
-74:             {...props}
-75:           />
-76:         ) : (
-77:           <textarea
-78:             id={htmlFor}
-79:             placeholder={label}
-80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-81:             {...register(name, registerOptions)}
-82:             {...props}
-83:           ></textarea>
-84:         )}
-85:         <label
-86:           htmlFor={htmlFor}
-87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
-88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
-89:           }`}
-90:         >
-91:           {label}
-92:         </label>
-93:       </div>
-94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-95:     </div>
-96:   );
-97: }
-98: export default InputField;
 ````
 
 ## File: README.md
@@ -14918,105 +14222,289 @@ tsconfig.json
 166:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/components/Index/MobileBackground.component.tsx
+## File: src/__tests__/Layout/Header.test.tsx
 ````typescript
  1: /**
- 2:  * MobileBackground component that renders a background image for mobile devices
- 3:  * @returns {JSX.Element} The rendered MobileBackground component
- 4:  */
- 5: const MobileBackground = () => (
- 6:   <div
- 7:     className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat pb-4"
- 8:     style={{
- 9:       backgroundImage: "url('/images/mobilbg.webp')",
-10:       top: "-0.5rem",
-11:       marginBottom: "0.5rem",
-12:     }}
-13:   />
-14: );
-15: export default MobileBackground;
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import { render, screen } from "@testing-library/react";
+ 5: import Header from "@/components/Layout/Header.component";
+ 6: // Mock the usePathname hook
+ 7: jest.mock("next/navigation", () => ({
+ 8:   usePathname: () => "/",
+ 9: }));
+10: // Mock the MobileMenu component
+11: jest.mock("@/components/Layout/MobileMenu.component", () => {
+12:   return function MockMobileMenu() {
+13:     return <div data-testid="mobile-menu">Mobile Menu</div>;
+14:   };
+15: });
+16: describe("Header", () => {
+17:   const mockNavigationLinks = [
+18:     { _key: "home", name: "Hjem", href: "/", title: "Hjem", hash: "", externalLink: false },
+19:     {
+20:       _key: "projects",
+21:       name: "Prosjekter",
+22:       href: "/prosjekter",
+23:       title: "Prosjekter",
+24:       hash: "",
+25:       externalLink: false,
+26:     },
+27:     { _key: "cv", name: "CV", href: "/cv", title: "CV", hash: "", externalLink: false },
+28:     {
+29:       _key: "contact",
+30:       name: "Kontakt",
+31:       href: "/kontakt",
+32:       title: "Kontakt",
+33:       hash: "",
+34:       externalLink: false,
+35:     },
+36:   ];
+37:   describe("rendering", () => {
+38:     it("renders header container", () => {
+39:       // Arrange
+40:       const expectedRole = "banner";
+41:       // Act
+42:       render(<Header navigation={{
+43:         _id: "mock-nav",
+44:         _type: "navigation",
+45:         _createdAt: "2024-01-01",
+46:         _updatedAt: "2024-01-01",
+47:         _rev: "mock-rev",
+48:         links: mockNavigationLinks
+49:       }} />);
+50:       const header = screen.getByRole(expectedRole);
+51:       // Assert
+52:       expect(header).toBeInTheDocument();
+53:     });
+54:     it("renders all navigation links with correct attributes", () => {
+55:       // Arrange
+56:       render(<Header navigation={{
+57:         _id: "mock-nav",
+58:         _type: "navigation",
+59:         _createdAt: "2024-01-01",
+60:         _updatedAt: "2024-01-01",
+61:         _rev: "mock-rev",
+62:         links: mockNavigationLinks
+63:       }} />);
+64:       // Act & Assert
+65:       mockNavigationLinks.forEach((link) => {
+66:         const linkElement = screen.getByText(link.name);
+67:         expect(linkElement).toBeInTheDocument();
+68:         expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
+69:       });
+70:     });
+71:     it("renders mobile menu component", () => {
+72:       // Arrange
+73:       const expectedTestId = "mobile-menu";
+74:       // Act
+75:       render(<Header navigation={{
+76:         _id: "mock-nav",
+77:         _type: "navigation",
+78:         _createdAt: "2024-01-01",
+79:         _updatedAt: "2024-01-01",
+80:         _rev: "mock-rev",
+81:         links: mockNavigationLinks
+82:       }} />);
+83:       const mobileMenu = screen.getByTestId(expectedTestId);
+84:       // Assert
+85:       expect(mobileMenu).toBeInTheDocument();
+86:     });
+87:   });
+88: });
 ````
 
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
+## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: /**
- 8:  * Renders a card displaying information about a single project.
- 9:  * Uses the Project type definition from Sanity types.
-10:  *
-11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
-12:  * @param {string} props.name - The name of the project.
-13:  * @param {string} [props.description] - A brief description of the project (optional).
-14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
-19:  * @returns {JSX.Element} The rendered ProsjektCard component.
-20:  */
-21: const ProsjektCard: React.FC<Project> = ({
-22:   name,
-23:   description,
-24:   subdescription,
-25:   projectimage,
-26:   urlwww,
-27:   urlgithub,
-28:   featured,
-29: }) => {
-30:   return (
-31:     <div
-32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
-33:       data-testid="projectcard"
-34:     >
-35:       <BounceInScroll viewAmount={0.3} instant={featured}>
-36:         <div className="relative w-full md:h-60">
-37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-38:             {projectimage && (
-39:               <img
-40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
-41:                 width={600}
-42:                 src={urlFor(projectimage)
-43:                   .width(600)
-44:                   .fit("max")
-45:                   .quality(100)
-46:                   .auto("format")
-47:                   .url()}
-48:                 alt={name}
-49:               />
-50:             )}
-51:           </div>
-52:         </div>
-53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-55:             {name}
-56:           </h1>
-57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
-58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-59:             {subdescription}
-60:           </p>
-61:           <div className="flex justify-center mt-4">
-62:             {urlwww && urlwww.length > 0 && (
-63:               <Button href={urlwww?.[0]?.url} renderAs="a">
-64:                 Besøk
-65:               </Button>
-66:             )}
-67:             {urlgithub && urlgithub.length > 0 && (
-68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-69:                 GitHub
-70:               </Button>
-71:             )}
-72:           </div>
-73:         </div>
-74:       </BounceInScroll>
-75:     </div>
-76:   );
-77: };
-78: export default ProsjektCard;
+ 1: import React from "react";
+ 2: import { usePathname } from "next/navigation";
+ 3: import { MotionLi, MotionUl } from "@/lib/framer/client";
+ 4: import NavigationLinkComponent from "./NavigationLink.component";
+ 5: import type { Navigation } from "@/types/sanity.types";
+ 6: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+ 7: const DesktopNavigation: React.FC<{
+ 8:   navigationLinks: NavigationLinksArray;
+ 9: }> = ({ navigationLinks }) => {
+10:   const pathname = usePathname();
+11:   const isLinkActive = (href: string) => pathname === href;
+12:   return (
+13:     <MotionUl
+14:       className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5"
+15:       variants={{
+16:         hidden: { opacity: 0 },
+17:         visible: {
+18:           opacity: 1,
+19:           transition: {
+20:             staggerChildren: 0.1,
+21:             delayChildren: 0.3,
+22:           },
+23:         },
+24:       }}
+25:       initial="hidden"
+26:       animate="visible"
+27:     >
+28:       {navigationLinks.map((link) => (
+29:         <MotionLi
+30:           className="h-3/4 flex items-center justify-center relative"
+31:           key={link._key ?? link.title}
+32:           variants={{
+33:             hidden: { y: -20, opacity: 0 },
+34:             visible: { y: 0, opacity: 1 },
+35:           }}
+36:           transition={{ duration: 0.3 }}
+37:         >
+38:           <NavigationLinkComponent
+39:             name={link.title ?? ""}
+40:             href={link.href ?? ""}
+41:             isActive={isLinkActive(link.href ?? "")}
+42:           />
+43:         </MotionLi>
+44:       ))}
+45:     </MotionUl>
+46:   );
+47: };
+48: export default DesktopNavigation;
+````
+
+## File: src/hooks/useNavigation.ts
+````typescript
+ 1: import { usePathname } from "next/navigation";
+ 2: import type { Navigation } from "@/types/sanity.types";
+ 3: /**
+ 4:  * Custom hook for managing navigation state and logic
+ 5:  * @param {NavigationLink[]} navigationLinks - Array of navigation links (using the imported type)
+ 6:  * @returns {Object} An object containing navigation-related data and functions
+ 7:  * @property {NavigationLink[]} navigationLinks - The array of navigation links passed to the hook
+ 8:  * @property {function} isLinkActive - A function that checks if a given link is currently active
+ 9:  */
+10: export function useNavigation(navigationLinks: Navigation[]) {
+11:   const pathname = usePathname();
+12:   const isLinkActive = (href: string) => pathname === href;
+13:   return {
+14:     navigationLinks,
+15:     isLinkActive,
+16:   };
+17: }
+````
+
+## File: studio/schemaTypes/documents/navigation.ts
+````typescript
+  1: import {
+  2:   RiNavigationLine,
+  3:   RiHome4Line,
+  4:   RiProjectorLine,
+  5:   RiFileList3Line,
+  6:   RiGithubLine,
+  7:   RiMailLine,
+  8: } from 'react-icons/ri'
+  9: import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
+ 10: const iconMap = {
+ 11:   RiHome4Line,
+ 12:   RiProjectorLine,
+ 13:   RiFileList3Line,
+ 14:   RiGithubLine,
+ 15:   RiMailLine,
+ 16: }
+ 17: const requiredString = (rule: StringRule) => rule.required()
+ 18: const requiredBoolean = (rule: BooleanRule) => rule.required()
+ 19: export default defineType({
+ 20:   name: 'navigation',
+ 21:   title: 'Navigation',
+ 22:   type: 'document',
+ 23:   icon: RiNavigationLine,
+ 24:   fields: [
+ 25:     defineField({
+ 26:       title: 'Title',
+ 27:       name: 'title',
+ 28:       type: 'string',
+ 29:       validation: requiredString,
+ 30:     }),
+ 31:     defineField({
+ 32:       name: 'links',
+ 33:       title: 'Navigation Links',
+ 34:       type: 'array',
+ 35:       of: [
+ 36:         {
+ 37:           type: 'object',
+ 38:           fields: [
+ 39:             defineField({
+ 40:               name: 'title',
+ 41:               type: 'string',
+ 42:               title: 'Title',
+ 43:               validation: requiredString,
+ 44:             }),
+ 45:             defineField({
+ 46:               name: 'name',
+ 47:               type: 'string',
+ 48:               title: 'Name',
+ 49:               validation: requiredString,
+ 50:             }),
+ 51:             defineField({
+ 52:               name: 'hash',
+ 53:               type: 'string',
+ 54:               title: 'Hash',
+ 55:               validation: requiredString,
+ 56:             }),
+ 57:             defineField({
+ 58:               name: 'href',
+ 59:               type: 'string',
+ 60:               title: 'Href',
+ 61:               validation: requiredString,
+ 62:             }),
+ 63:             defineField({
+ 64:               name: 'externalLink',
+ 65:               type: 'boolean',
+ 66:               title: 'External Link',
+ 67:               validation: requiredBoolean,
+ 68:             }),
+ 69:             defineField({
+ 70:               name: 'icon',
+ 71:               title: 'Icon',
+ 72:               type: 'string',
+ 73:               options: {
+ 74:                 list: [
+ 75:                   {title: 'Home', value: 'RiHome4Line'},
+ 76:                   {title: 'Projects', value: 'RiProjectorLine'},
+ 77:                   {title: 'CV', value: 'RiFileList3Line'},
+ 78:                   {title: 'GitHub', value: 'RiGithubLine'},
+ 79:                   {title: 'Contact', value: 'RiMailLine'},
+ 80:                 ],
+ 81:               },
+ 82:             }),
+ 83:           ],
+ 84:           preview: {
+ 85:             select: {
+ 86:               title: 'title',
+ 87:               icon: 'icon',
+ 88:             },
+ 89:             prepare(selection) {
+ 90:               const {title, icon} = selection
+ 91:               return {
+ 92:                 title,
+ 93:                 media:
+ 94:                   icon && icon in iconMap
+ 95:                     ? iconMap[icon as keyof typeof iconMap]
+ 96:                     : RiNavigationLine,
+ 97:               }
+ 98:             },
+ 99:           },
+100:         },
+101:       ],
+102:     }),
+103:   ],
+104:   preview: {
+105:     select: {
+106:       title: 'title',
+107:     },
+108:     prepare(selection) {
+109:       const {title} = selection
+110:       return {
+111:         title,
+112:         media: RiNavigationLine,
+113:       }
+114:     },
+115:   },
+116: })
 ````
 
 ## File: lighthouserc.json
@@ -15057,6 +14545,464 @@ tsconfig.json
 34:     }
 35:   }
 36: }
+````
+
+## File: src/app/globals.css
+````css
+ 1: @import "tailwindcss";
+ 2: @config '../../tailwind.config.ts';
+ 3: /*
+ 4:   The default border color has changed to `currentcolor` in Tailwind CSS v4,
+ 5:   so we've added these compatibility styles to make sure everything still
+ 6:   looks the same as it did with Tailwind CSS v3.
+ 7:   If we ever want to remove these styles, we need to add an explicit border
+ 8:   color utility to any element that depends on these defaults.
+ 9: */
+10: @layer base {
+11:   *,
+12:   ::after,
+13:   ::before,
+14:   ::backdrop,
+15:   ::file-selector-button {
+16:     border-color: var(--color-gray-200, currentcolor);
+17:   }
+18: }
+19: :root {
+20:   /* Modern Color Scheme */
+21:   --primary: #00ff62;
+22:   --secondary: #00cc4e;
+23:   --accent: #008529;
+24:   --text: #e1e1e1;
+25:   --background: var(--color-slate-900, #0f172a);
+26:   /* Semantic Colors */
+27:   --success: #00cc4e;
+28:   --error: #ff4e4e;
+29:   --warning: #ffb74e;
+30:   --info: #4e9fff;
+31:   /* Matrix Theme Colors */
+32:   --matrix-light: #00ff62;
+33:   --matrix: #00cc4e;
+34:   --matrix-dark: #008529;
+35:   --matrix-glow: rgba(0, 255, 98, 0.6);
+36: }
+37: body {
+38:   background-color: var(--background);
+39:   color: var(--text);
+40:   font-family:
+41:     "Inter",
+42:     -apple-system,
+43:     BlinkMacSystemFont,
+44:     "Segoe UI",
+45:     Roboto,
+46:     Oxygen,
+47:     Ubuntu,
+48:     Cantarell,
+49:     sans-serif;
+50: }
+51: #matrixCanvas {
+52:   opacity: 0.7;
+53: }
+54: /* Selection */
+55: ::selection {
+56:   background-color: var(--matrix-dark);
+57:   color: #ffffff;
+58: }
+59: /* Scrollbar */
+60: * {
+61:   scrollbar-width: thin;
+62:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+63: }
+64: ::-webkit-scrollbar {
+65:   width: 6px;
+66: }
+67: ::-webkit-scrollbar-track {
+68:   background: #1a1a1a;
+69: }
+70: ::-webkit-scrollbar-thumb {
+71:   background: var(--matrix-dark);
+72:   border-radius: 3px;
+73: }
+74: ::-webkit-scrollbar-thumb:hover {
+75:   background: var(--matrix-light);
+76: }
+77: /* Remove focus outline */
+78: :focus {
+79:   outline: none;
+80: }
+81: /* Remove focus visible outline */
+82: :focus-visible {
+83:   outline: none;
+84: }
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import { useRef } from "react";
+  3: import Link from "next/link";
+  4: import { usePathname } from "next/navigation";
+  5: import { AnimatePresence, useCycle, motion } from "motion/react";
+  6: import Hamburger from "./Hamburger.component";
+  7: import useClickOutside from "@/hooks/useClickOutside";
+  8: import type { Navigation } from "@/types/sanity.types";
+  9: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+ 10: /**
+ 11:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 12:  * @param {Object} props
+ 13:  * @param {ILink[]} props.links - Array of navigation link objects
+ 14:  * @returns {JSX.Element} The rendered MobileMenu component
+ 15:  */
+ 16: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 17:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
+ 18:   const ref = useRef<HTMLDivElement>(null);
+ 19:   const pathname = usePathname();
+ 20:   const handleClickOutside = () => {
+ 21:     setisExpanded(0);
+ 22:   };
+ 23:   useClickOutside(ref, handleClickOutside);
+ 24:   const menuVariants = {
+ 25:     closed: {
+ 26:       x: "125%",
+ 27:       transition: {
+ 28:         type: "spring",
+ 29:         stiffness: 60,
+ 30:         damping: 10,
+ 31:         delay: 0.3,
+ 32:       },
+ 33:     },
+ 34:     open: {
+ 35:       x: 0,
+ 36:       transition: {
+ 37:         type: "spring",
+ 38:         stiffness: 60,
+ 39:         damping: 10,
+ 40:       },
+ 41:     },
+ 42:   };
+ 43:   const itemVariants = {
+ 44:     closed: (i: number) => ({
+ 45:       x: i % 2 === 0 ? "-50%" : "50%",
+ 46:       opacity: 0,
+ 47:       transition: {
+ 48:         type: "spring",
+ 49:         stiffness: 120,
+ 50:         damping: 12,
+ 51:         duration: 0.25,
+ 52:       },
+ 53:     }),
+ 54:     open: (i: number) => ({
+ 55:       x: 0,
+ 56:       opacity: 1,
+ 57:       transition: {
+ 58:         type: "spring",
+ 59:         stiffness: 120,
+ 60:         damping: 12,
+ 61:         delay: i * 0.25,
+ 62:       },
+ 63:     }),
+ 64:   };
+ 65:   return (
+ 66:     <div
+ 67:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 68:       data-testid="mobilemenu"
+ 69:     >
+ 70:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
+ 71:       <AnimatePresence>
+ 72:         {isExpanded && (
+ 73:           <motion.div
+ 74:             id="mobile-menu"
+ 75:             data-testid="mobile-menu"
+ 76:             data-cy="mobile-menu"
+ 77:             aria-hidden={!isExpanded}
+ 78:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 79:             initial="closed"
+ 80:             animate="open"
+ 81:             exit="closed"
+ 82:             variants={menuVariants}
+ 83:           >
+ 84:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
+ 85:               <motion.ul
+ 86:                 className="w-full"
+ 87:                 initial="closed"
+ 88:                 animate="open"
+ 89:                 exit="closed"
+ 90:                 variants={{
+ 91:                   open: {
+ 92:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 93:                   },
+ 94:                   closed: {
+ 95:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 96:                   },
+ 97:                 }}
+ 98:               >
+ 99:                 {links?.map(({ title, name, href, externalLink }, index) => (
+100:                   <motion.li
+101:                     key={title}
+102:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+103:                     data-cy="mobile-menu-item"
+104:                     custom={index}
+105:                     variants={itemVariants}
+106:                   >
+107:                     {externalLink ? (
+108:                       <a
+109:                         aria-label={name}
+110:                         href={href}
+111:                         target="_blank"
+112:                         rel="noreferrer"
+113:                         data-testid={`mobil-${name}`}
+114:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+115:                       >
+116:                         {name}
+117:                       </a>
+118:                     ) : (
+119:                       <Link
+120:                         href={href ?? ""}
+121:                         data-testid={`mobil-${name}`}
+122:                         prefetch={true}
+123:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+124:                           pathname === href ? "text-green-400" : ""
+125:                         }`}
+126:                       >
+127:                         <div className="glitch relative" data-text={name}>
+128:                           {name}
+129:                           <motion.span
+130:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+131:                               pathname === href ? "bg-green-400" : "bg-white"
+132:                             }`}
+133:                             initial={{
+134:                               width: pathname === href ? "100%" : "0%",
+135:                             }}
+136:                             animate={{
+137:                               width: pathname === href ? "100%" : "0%",
+138:                             }}
+139:                             transition={{ duration: 0.3 }}
+140:                           />
+141:                         </div>
+142:                       </Link>
+143:                     )}
+144:                   </motion.li>
+145:                 ))}
+146:               </motion.ul>
+147:             </nav>
+148:           </motion.div>
+149:         )}
+150:       </AnimatePresence>
+151:     </div>
+152:   );
+153: };
+154: export default MobileMenu;
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import {
+ 3:   UseFormRegister,
+ 4:   FieldValues,
+ 5:   RegisterOptions,
+ 6:   Path,
+ 7: } from "react-hook-form";
+ 8: export interface InputProps<T extends FieldValues> {
+ 9:   readonly name: Path<T>;
+10:   readonly label: string;
+11:   readonly htmlFor: string;
+12:   readonly isRequired?: boolean;
+13:   readonly inputPattern?: RegExp;
+14:   readonly title?: string;
+15:   readonly type?: "input" | "textarea";
+16:   readonly register: UseFormRegister<T>;
+17:   readonly error?: string;
+18: }
+19: /**
+20:  * Creates register options for react-hook-form
+21:  * @template T - Type extending FieldValues
+22:  * @param {boolean} [isRequired] - Whether the field is required
+23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+24:  * @param {string} [title] - Title for the input field
+25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+26:  */
+27: export function createRegisterOptions<T extends FieldValues>(
+28:   isRequired?: boolean,
+29:   inputPattern?: RegExp,
+30:   title?: string
+31: ): RegisterOptions<T, Path<T>> {
+32:   return {
+33:     required: isRequired ? "Dette feltet er påkrevd" : false,
+34:     ...(inputPattern
+35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+36:       : {}),
+37:   };
+38: }
+39: /**
+40:  * InputField component for rendering form inputs
+41:  * @template T - Type extending FieldValues
+42:  * @param {InputProps<T>} props - The props for the InputField component
+43:  * @returns {JSX.Element} The rendered InputField component
+44:  */
+45: function InputField<T extends FieldValues>({
+46:   name,
+47:   label,
+48:   inputPattern,
+49:   isRequired,
+50:   htmlFor,
+51:   title,
+52:   type = "input",
+53:   register,
+54:   error,
+55:   ...props
+56: }: InputProps<T>) {
+57:   const sharedClasses =
+58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
+59:   const registerOptions = createRegisterOptions<T>(
+60:     isRequired,
+61:     inputPattern,
+62:     title
+63:   );
+64:   return (
+65:     <div className="relative my-2 flex flex-col items-center">
+66:       <div className="relative">
+67:         {type === "input" ? (
+68:           <input
+69:             id={htmlFor}
+70:             type="text"
+71:             placeholder={label}
+72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+73:             {...register(name, registerOptions)}
+74:             {...props}
+75:           />
+76:         ) : (
+77:           <textarea
+78:             id={htmlFor}
+79:             placeholder={label}
+80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+81:             {...register(name, registerOptions)}
+82:             {...props}
+83:           ></textarea>
+84:         )}
+85:         <label
+86:           htmlFor={htmlFor}
+87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
+88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
+89:           }`}
+90:         >
+91:           {label}
+92:         </label>
+93:       </div>
+94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+95:     </div>
+96:   );
+97: }
+98: export default InputField;
+````
+
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { client } from "@/lib/sanity/client";
+ 2: import { projectsQuery } from "@/lib/sanity/queries";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: import { isSanityApiError } from "@/types/sanity-errors";
+ 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 6:   return client.fetch(
+ 7:     projectsQuery,
+ 8:     {},
+ 9:     {
+10:       next: { revalidate: 3600 },
+11:     }
+12:   );
+13: }
+14: function handleError(error: unknown): never {
+15:   console.error("Error fetching projects:", error);
+16:   if (isSanityApiError(error)) {
+17:     switch (error.statusCode) {
+18:       case 401:
+19:         throw new Error("Authentication failed");
+20:       case 403:
+21:         throw new Error("Insufficient permissions");
+22:       case 429:
+23:         throw new Error("Rate limit exceeded");
+24:       default:
+25:         throw new Error(`Sanity API error: ${error.message}`);
+26:     }
+27:   }
+28:   if (error instanceof Error && error.name === "TimeoutError") {
+29:     throw new Error("Request timed out");
+30:   }
+31:   throw new Error("Failed to fetch projects");
+32: }
+33: export async function getProjects(): Promise<Project[]> {
+34:   try {
+35:     return await fetchProjectsFromSanity();
+36:   } catch (error) {
+37:     handleError(error);
+38:   }
+39: }
+````
+
+## File: src/components/Index/MobileBackground.component.tsx
+````typescript
+ 1: /**
+ 2:  * MobileBackground component that renders a background image for mobile devices
+ 3:  * @returns {JSX.Element} The rendered MobileBackground component
+ 4:  */
+ 5: const MobileBackground = () => (
+ 6:   <div
+ 7:     className="absolute inset-0 md:hidden bg-cover bg-center bg-no-repeat pb-4"
+ 8:     style={{
+ 9:       backgroundImage: "url('/images/mobilbg.webp')",
+10:       top: "-0.5rem",
+11:       marginBottom: "0.5rem",
+12:     }}
+13:   />
+14: );
+15: export default MobileBackground;
+````
+
+## File: src/components/Layout/Header.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import { MotionDiv } from "@/lib/framer/client";
+ 4: import MobileMenu from "./MobileMenu.component";
+ 5: import DesktopNavigation from "./DesktopNavigation.component";
+ 6: import type { Navigation } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Header component that renders the navigation bar using links from Sanity CMS.
+ 9:  * Provides both desktop and mobile navigation with animated transitions.
+10:  * @param {Navigation} props - The navigation data object from Sanity containing menu links.
+11:  * @returns {JSX.Element} The rendered Header component with responsive navigation.
+12:  */
+13: const Header: React.FC<{ navigation: Navigation }> = ({
+14:   navigation: { links },
+15: }) => {
+16:   return (
+17:     <header className="z-999 relative">
+18:       <div
+19:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+20:         style={{ transform: "translateX(-50%)" }}
+21:       />
+22:       <MotionDiv
+23:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+24:         initial={{ y: -100, x: "-50%", opacity: 0 }}
+25:         animate={{
+26:           y: 0,
+27:           x: "-51%",
+28:           opacity: 1,
+29:           transition: {
+30:             y: { duration: 0.6, ease: "easeOut" },
+31:             opacity: { duration: 0.6, ease: "easeOut" },
+32:           },
+33:         }}
+34:       />
+35:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
+36:         <DesktopNavigation navigationLinks={links ?? []} />
+37:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+38:           <MobileMenu links={links ?? []} />
+39:         </div>
+40:       </nav>
+41:     </header>
+42:   );
+43: };
+44: export default Header;
 ````
 
 ## File: package.json
