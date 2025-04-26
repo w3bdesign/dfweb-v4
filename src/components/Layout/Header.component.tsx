@@ -10,11 +10,14 @@ import DesktopNavigation from "./DesktopNavigation.component";
 import type { Navigation } from "@/types/sanity.types";
 
 /**
- * Header component that renders the navigation bar using links from Sanity.
- * @param {Navigation} props - The navigation data object from Sanity.
- * @returns {JSX.Element} The rendered Header component.
+ * Header component that renders the navigation bar using links from Sanity CMS.
+ * Provides both desktop and mobile navigation with animated transitions.
+ * @param {Navigation} props - The navigation data object from Sanity containing menu links.
+ * @returns {JSX.Element} The rendered Header component with responsive navigation.
  */
-const Header: React.FC<Navigation> = ({ links }): JSX.Element => {
+const Header: React.FC<{ navigation: Navigation }> = ({
+  navigation: { links },
+}): JSX.Element => {
   return (
     <header className="z-999 relative">
       <div
