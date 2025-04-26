@@ -1,36 +1,16 @@
 "use client";
 
 import Section from "./Section.component";
-
-interface IChild {
-  _key: string;
-  _type: string;
-  marks: string[];
-  text: string;
-}
-
-interface IText {
-  _key: string;
-  _type: string;
-  children: IChild[];
-  markDefs: string[];
-  style: string;
-}
-
-interface IContent {
-  id: string;
-  text: IText[];
-  title: string;
-}
+import type { Pagecontent } from "@/types/sanity.types";
 
 /**
  * IndexContent component that renders multiple content sections with alternating visual styles
  * @param {Object} props - The props for the IndexContent component
- * @param {IContent[]} props.pageContent - Array of content sections to render. Each section alternates between default and alternate variant
+ * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
  * @returns {JSX.Element} The rendered IndexContent component
  * @throws {Error} Throws an error if no content is available
  */
-const IndexContent = ({ pageContent }: { pageContent: IContent[] }) => {
+const IndexContent = ({ pageContent }: { pageContent: Pagecontent[] }) => {
   if (!pageContent || pageContent.length === 0) {
     throw new Error("Ingen innhold tilgjengelig");
   }
