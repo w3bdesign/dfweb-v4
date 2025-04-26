@@ -5,10 +5,11 @@ import NavigationLinkComponent from "./NavigationLink.component";
 
 import type { Navigation } from "@/types/sanity.types";
 
+type NavigationLinksArray = NonNullable<Navigation["links"]>;
+
 const DesktopNavigation: React.FC<{
-  navigationLinks: Navigation[];
+  navigationLinks: NavigationLinksArray;
 }> = ({ navigationLinks }) => {
-  const mainNavLinks = navigationLinks?.[0]?.links ?? [];
   const pathname = usePathname();
   const isLinkActive = (href: string) => pathname === href;
 
@@ -28,7 +29,7 @@ const DesktopNavigation: React.FC<{
       initial="hidden"
       animate="visible"
     >
-      {mainNavLinks.map((link) => (
+      {navigationLinks.map((link) => (
         <MotionLi
           className="h-3/4 flex items-center justify-center relative"
           key={link._key ?? link.title}
