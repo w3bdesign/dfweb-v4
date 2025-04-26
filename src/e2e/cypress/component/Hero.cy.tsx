@@ -4,12 +4,15 @@ import Hero from "@/components/Index/Hero.component";
 
 const content = [
   {
+    _type: "herocontent",
     text: "Hei!",
   },
   {
+    _type: "herocontent",
     text: "Jeg heter Daniel Fjeldstad og er en webutvikler.",
   },
   {
+    _type: "herocontent",
     text: "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
   },
 ];
