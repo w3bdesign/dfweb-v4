@@ -7,25 +7,14 @@ import { MotionDiv } from "@/lib/framer/client";
 import MobileMenu from "./MobileMenu.component";
 import DesktopNavigation from "./DesktopNavigation.component";
 
-interface NavigationLink {
-  title: string;
-  name: string;
-  hash: string;
-  href: string;
-  externalLink: boolean;
-}
-
-interface HeaderProps {
-  navigationLinks: NavigationLink[];
-}
+import type { Navigation } from "@/types/sanity.types";
 
 /**
- * Header component that renders the navigation bar
- * @param {HeaderProps} props - The props for the Header component
- * @param {NavigationLink[]} props.navigationLinks - Array of navigation links
- * @returns {JSX.Element} The rendered Header component
+ * Header component that renders the navigation bar using links from Sanity.
+ * @param {Navigation} props - The navigation data object from Sanity.
+ * @returns {JSX.Element} The rendered Header component.
  */
-const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
+const Header: React.FC<Navigation> = ({ links }): JSX.Element => {
   return (
     <header className="z-999 relative">
       <div
@@ -46,9 +35,9 @@ const Header: React.FC<HeaderProps> = ({ navigationLinks }) => {
         }}
       />
       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-        <DesktopNavigation navigationLinks={navigationLinks} />
+        <DesktopNavigation navigationLinks={[links]} />
         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-          <MobileMenu links={navigationLinks} />
+          <MobileMenu links={links ?? []} />
         </div>
       </nav>
     </header>
