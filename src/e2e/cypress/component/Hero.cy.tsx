@@ -1,8 +1,9 @@
 /// <reference types="cypress"/>
 
 import Hero from "@/components/Index/Hero.component";
+import type { Herocontent } from "@/types/sanity.types";
 
-const content = [
+const content: Herocontent[] = [
   {
     _type: "herocontent",
     text: "Hei!",
