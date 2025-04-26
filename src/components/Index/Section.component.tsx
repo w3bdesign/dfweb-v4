@@ -5,42 +5,26 @@ import { useState } from "react";
 import BounceInScroll from "../Animations/BounceInScroll.component";
 import Button from "../UI/Button.component";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
+import type { Pagecontent } from "@/types/sanity.types";
 
-interface IChild {
-  _key: string;
-  _type: string;
-  marks: string[];
-  text: string;
-}
-
-interface IText {
-  _key: string;
-  _type: string;
-  children: IChild[];
-  markDefs: string[];
-  style: string;
-}
-
-interface IContent {
-  text: IText[];
-  title: string;
+interface SectionProps extends Pagecontent {
   variant?: "default" | "alternate";
 }
 
 /**
  * Section component that renders a single content section
- * @param {IContent} props - The props for the Section component
- * @param {string} props.text - The text content of the section
+ * @param {SectionProps} props - The props for the Section component
+ * @param {Pagecontent['text']} props.text - The text content from Sanity
  * @param {string} props.title - The title of the section
  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
-const Section = ({ text, title, variant = "default" }: IContent) => {
+const Section = ({ text, title, variant = "default" }: SectionProps) => {
   const [shouldError, setShouldError] = useState(false);
 
   if (!title || !text) {
     console.error(
-      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
     );
     return null;
   }
