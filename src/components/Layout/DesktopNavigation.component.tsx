@@ -1,30 +1,16 @@
 import React from "react";
+import { usePathname } from "next/navigation";
 import { MotionLi, MotionUl } from "@/lib/framer/client";
-import NavigationLink from "./NavigationLink.component";
-import { useNavigation } from "@/hooks/useNavigation";
+import NavigationLinkComponent from "./NavigationLink.component";
 
-interface NavigationLink {
-  title: string;
-  name: string;
-  hash: string;
-  href: string;
-  externalLink: boolean;
-}
+import type { Navigation } from "@/types/sanity.types";
 
-interface DesktopNavigationProps {
-  navigationLinks: NavigationLink[];
-}
-
-/**
- * DesktopNavigation component that renders the navigation menu for desktop view
- * @param {DesktopNavigationProps} props - The props for the DesktopNavigation component
- * @param {NavigationLink[]} props.navigationLinks - Array of navigation links to be rendered
- * @returns {JSX.Element} The rendered DesktopNavigation component
- */
-const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
-  navigationLinks,
-}) => {
-  const { isLinkActive } = useNavigation(navigationLinks);
+const DesktopNavigation: React.FC<{
+  navigationLinks: Navigation[];
+}> = ({ navigationLinks }) => {
+  const mainNavLinks = navigationLinks?.[0]?.links ?? [];
+  const pathname = usePathname();
+  const isLinkActive = (href: string) => pathname === href;
 
   return (
     <MotionUl
@@ -42,20 +28,20 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
       initial="hidden"
       animate="visible"
     >
-      {navigationLinks.map((link) => (
+      {mainNavLinks.map((link) => (
         <MotionLi
           className="h-3/4 flex items-center justify-center relative"
-          key={link.name}
+          key={link._key ?? link.title}
           variants={{
             hidden: { y: -20, opacity: 0 },
             visible: { y: 0, opacity: 1 },
           }}
           transition={{ duration: 0.3 }}
         >
-          <NavigationLink
-            name={link.name}
-            href={link.href}
-            isActive={isLinkActive(link.href)}
+          <NavigationLinkComponent
+            name={link.title ?? ""}
+            href={link.href ?? ""}
+            isActive={isLinkActive(link.href ?? "")}
           />
         </MotionLi>
       ))}
