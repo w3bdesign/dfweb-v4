@@ -12,7 +12,7 @@ jest.mock("next/navigation", () => ({
 
 // Mock the MobileMenu component
 jest.mock("@/components/Layout/MobileMenu.component", () => {
-  return function MockMobileMenu({ links }: { links: any[] }) {
+  return function MockMobileMenu() {
     return <div data-testid="mobile-menu">Mobile Menu</div>;
   };
 });
