@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
+type TabOrientation = "horizontal" | "vertical";
+
 interface Tab {
   id: string;
   label: string;
@@ -11,7 +13,7 @@ interface Tab {
 
 interface TabsProps {
   tabs: Tab[];
-  orientation?: "horizontal" | "vertical";
+  orientation?: TabOrientation;
 }
 
 interface TabButtonProps {
