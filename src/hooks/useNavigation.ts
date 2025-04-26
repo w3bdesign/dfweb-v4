@@ -2,8 +2,6 @@ import { usePathname } from "next/navigation";
 
 import type { Navigation } from "@/types/sanity.types";
 
-type NavigationLink = NonNullable<NonNullable<Navigation>["links"]>[number];
-
 /**
  * Custom hook for managing navigation state and logic
  * @param {NavigationLink[]} navigationLinks - Array of navigation links (using the imported type)
@@ -11,7 +9,7 @@ type NavigationLink = NonNullable<NonNullable<Navigation>["links"]>[number];
  * @property {NavigationLink[]} navigationLinks - The array of navigation links passed to the hook
  * @property {function} isLinkActive - A function that checks if a given link is currently active
  */
-export function useNavigation(navigationLinks: NavigationLink[]) {
+export function useNavigation(navigationLinks: Navigation[]) {
   const pathname = usePathname();
 
   const isLinkActive = (href: string) => pathname === href;
