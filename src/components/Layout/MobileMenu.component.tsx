@@ -11,6 +11,8 @@ import useClickOutside from "@/hooks/useClickOutside";
 
 import type { Navigation } from "@/types/sanity.types";
 
+type NavigationLinksArray = NonNullable<Navigation["links"]>;
+
 /**
  * MobileMenu component that renders a responsive navigation menu for mobile devices
  * @param {Object} props
@@ -18,7 +20,7 @@ import type { Navigation } from "@/types/sanity.types";
  * @returns {JSX.Element} The rendered MobileMenu component
  */
 
-const MobileMenu = ({ links }: Navigation) => {
+const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
