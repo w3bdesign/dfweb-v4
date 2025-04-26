@@ -36,11 +36,36 @@ export default defineType({
         {
           type: 'object',
           fields: [
-            defineField({name: 'title', type: 'string', title: 'Title'}),
-            defineField({name: 'name', type: 'string', title: 'Name'}),
-            defineField({name: 'hash', type: 'string', title: 'Hash'}),
-            defineField({name: 'href', type: 'string', title: 'Href'}),
-            defineField({name: 'externalLink', type: 'boolean', title: 'External Link'}),
+            defineField({
+              name: 'title',
+              type: 'string',
+              title: 'Title',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'name',
+              type: 'string',
+              title: 'Name',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'hash',
+              type: 'string',
+              title: 'Hash',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'href',
+              type: 'string',
+              title: 'Href',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'externalLink',
+              type: 'boolean',
+              title: 'External Link',
+              validation: (Rule) => Rule.required(),
+            }),
             defineField({
               name: 'icon',
               title: 'Icon',
