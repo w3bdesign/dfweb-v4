@@ -1,48 +1,24 @@
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import Tabs from "@/components/UI/Tabs.component";
-
-interface CVData {
-  keyQualifications: string[];
-  experience: Array<{
-    period: string;
-    company: string;
-    role: string;
-    description: string;
-  }>;
-  education: Array<{
-    period: string;
-    institution: string;
-    degree: string;
-    description: string;
-  }>;
-  volunteerWork: Array<{
-    period: string;
-    organization: string;
-    role: string;
-    description: string;
-  }>;
-}
-
-interface CVContentProps {
-  cvData: CVData;
-}
+import type { Cv } from "@/types/sanity.types";
 
 /**
  * CVContent component for rendering the CV page with tabs
- * @param {CVContentProps} props - The props for the CVContent component
+ * @param {Object} props - The props for the CVContent component
+ * @param {Cv} props.cvData - The CV data from Sanity
  * @returns {JSX.Element} The rendered CVContent component
  */
-const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
+const CVContent = ({ cvData }: { cvData: Cv }) => {
   const tabs = [
     {
       id: "qualifications",
       label: "Nøkkelkvalifikasjoner",
       content: (
         <ul className="list-disc pl-5 text-slate-300/[0.9]">
-          {cvData.keyQualifications.map((qual) => (
-            <li key={qual} className="mb-2">
-              {qual}
+          {cvData.keyQualifications?.map((qual) => (
+            <li key={qual ?? ""} className="mb-2">
+              {qual ?? ""}
             </li>
           ))}
         </ul>
@@ -53,13 +29,13 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       label: "Erfaring",
       content: (
         <div className="text-slate-300/[0.9]">
-          {cvData.experience.map((exp) => (
-            <div key={exp.description} className="mb-6">
+          {cvData.experience?.map((exp) => (
+            <div key={exp.description ?? ""} className="mb-6">
               <h3 className="font-semibold text-slate-100">
-                {exp.period} - {exp.company}
+                {exp.period ?? ""} - {exp.company ?? ""}
               </h3>
               {exp.role && <p className="italic">{exp.role}</p>}
-              <p>{exp.description}</p>
+              <p>{exp.description ?? ""}</p>
             </div>
           ))}
         </div>
@@ -70,13 +46,13 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       label: "Utdanning",
       content: (
         <div className="text-slate-300/[0.9]">
-          {cvData.education.map((edu) => (
-            <div key={edu.description} className="mb-6">
+          {cvData.education?.map((edu) => (
+            <div key={edu.description ?? ""} className="mb-6">
               <h3 className="font-semibold text-slate-100">
-                {edu.period} - {edu.institution}
+                {edu.period ?? ""} - {edu.institution ?? ""}
               </h3>
               {edu.degree && <p className="italic">{edu.degree}</p>}
-              <p>{edu.description}</p>
+              <p>{edu.description ?? ""}</p>
             </div>
           ))}
         </div>
@@ -88,12 +64,12 @@ const CVContent: React.FC<CVContentProps> = ({ cvData }) => {
       content: (
         <div className="text-slate-300/[0.9]">
           {cvData.volunteerWork?.map((vol) => (
-            <div key={vol.description} className="mb-6">
+            <div key={vol.description ?? ""} className="mb-6">
               <h3 className="font-semibold text-slate-100">
-                {vol.period} - {vol.organization}
+                {vol.period ?? ""} - {vol.organization ?? ""}
               </h3>
               {vol.role && <p className="italic">{vol.role}</p>}
-              <p>{vol.description}</p>
+              <p>{vol.description ?? ""}</p>
             </div>
           ))}
         </div>
