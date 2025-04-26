@@ -9,17 +9,9 @@ import Hamburger from "./Hamburger.component";
 
 import useClickOutside from "@/hooks/useClickOutside";
 
-interface ILink {
-  title: string;
-  name: string;
-  hash: string;
-  href: string;
-  externalLink: boolean;
-}
+import type { Navigation } from "@/types/sanity.types";
 
-interface IMobileMenuProps {
-  links: ILink[];
-}
+type NavigationLinksArray = NonNullable<Navigation["links"]>;
 
 /**
  * MobileMenu component that renders a responsive navigation menu for mobile devices
@@ -28,7 +20,7 @@ interface IMobileMenuProps {
  * @returns {JSX.Element} The rendered MobileMenu component
  */
 
-const MobileMenu = ({ links }: IMobileMenuProps) => {
+const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -116,7 +108,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                   },
                 }}
               >
-                {links.map(({ title, name, href, externalLink }, index) => (
+                {links?.map(({ title, name, href, externalLink }, index) => (
                   <motion.li
                     key={title}
                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
@@ -137,7 +129,7 @@ const MobileMenu = ({ links }: IMobileMenuProps) => {
                       </a>
                     ) : (
                       <Link
-                        href={href}
+                        href={href ?? ""}
                         data-testid={`mobil-${name}`}
                         prefetch={true}
                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${

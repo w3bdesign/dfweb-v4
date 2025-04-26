@@ -6,7 +6,7 @@ import {
   RiGithubLine,
   RiMailLine,
 } from 'react-icons/ri'
-import {defineField, defineType} from 'sanity'
+import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
 
 const iconMap = {
   RiHome4Line,
@@ -15,6 +15,9 @@ const iconMap = {
   RiGithubLine,
   RiMailLine,
 }
+
+const requiredString = (rule: StringRule) => rule.required()
+const requiredBoolean = (rule: BooleanRule) => rule.required()
 
 export default defineType({
   name: 'navigation',
@@ -26,7 +29,7 @@ export default defineType({
       title: 'Title',
       name: 'title',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: requiredString,
     }),
     defineField({
       name: 'links',
@@ -36,11 +39,36 @@ export default defineType({
         {
           type: 'object',
           fields: [
-            defineField({name: 'title', type: 'string', title: 'Title'}),
-            defineField({name: 'name', type: 'string', title: 'Name'}),
-            defineField({name: 'hash', type: 'string', title: 'Hash'}),
-            defineField({name: 'href', type: 'string', title: 'Href'}),
-            defineField({name: 'externalLink', type: 'boolean', title: 'External Link'}),
+            defineField({
+              name: 'title',
+              type: 'string',
+              title: 'Title',
+              validation: requiredString,
+            }),
+            defineField({
+              name: 'name',
+              type: 'string',
+              title: 'Name',
+              validation: requiredString,
+            }),
+            defineField({
+              name: 'hash',
+              type: 'string',
+              title: 'Hash',
+              validation: requiredString,
+            }),
+            defineField({
+              name: 'href',
+              type: 'string',
+              title: 'Href',
+              validation: requiredString,
+            }),
+            defineField({
+              name: 'externalLink',
+              type: 'boolean',
+              title: 'External Link',
+              validation: requiredBoolean,
+            }),
             defineField({
               name: 'icon',
               title: 'Icon',

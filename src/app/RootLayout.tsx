@@ -15,7 +15,7 @@ export default async function RootLayout({
 
   return (
     <ErrorBoundary>
-      <Header navigationLinks={navigation.links} />
+      <Header navigation={navigation} />
       <SpeedInsights />
       {children}
     </ErrorBoundary>
