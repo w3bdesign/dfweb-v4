@@ -4,7 +4,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "./glitch.css";
 
-import Footer from "@/components/Layout/Footer.component";
 import SkipLink from "@/components/UI/SkipLink.component";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -12,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-};
+}; 
 
 export default function RootLayout({
   children,
@@ -49,7 +48,6 @@ export default function RootLayout({
         <div id="main-content" className="grow">
           {children}
         </div>
-        <Footer />
       </body>
     </html>
   );

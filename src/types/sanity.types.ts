@@ -110,6 +110,15 @@ export type Link = {
   external?: boolean
 }
 
+export type Settings = {
+  _id: string
+  _type: 'settings'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  footerCopyrightText?: string
+}
+
 export type Navigation = {
   _id: string
   _type: 'navigation'
@@ -296,6 +305,7 @@ export type AllSanitySchemaTypes =
   | Herocontent
   | Pagecontent
   | Link
+  | Settings
   | Navigation
   | Cv
   | Page
