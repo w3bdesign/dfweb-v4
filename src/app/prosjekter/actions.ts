@@ -1,15 +1,16 @@
 import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
-import type { Project } from "@/types/sanity.types";
+
+import type { ProjectsQueryResult } from "@/types/sanity.types";
 import { isSanityApiError } from "@/types/sanity-errors";
 
-async function fetchProjectsFromSanity(): Promise<Project[]> {
+async function fetchProjectsFromSanity(): Promise<ProjectsQueryResult> {
   return client.fetch(
     projectsQuery,
     {},
     {
       next: { revalidate: 3600 },
-    },
+    }
   );
 }
 
@@ -36,7 +37,7 @@ function handleError(error: unknown): never {
   throw new Error("Failed to fetch projects");
 }
 
-export async function getProjects(): Promise<Project[]> {
+export async function getProjects(): Promise<ProjectsQueryResult> {
   try {
     return await fetchProjectsFromSanity();
   } catch (error) {
