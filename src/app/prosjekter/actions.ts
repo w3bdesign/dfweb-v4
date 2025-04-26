@@ -1,5 +1,6 @@
 import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
+
 import type { Project } from "@/types/sanity.types";
 import { isSanityApiError } from "@/types/sanity-errors";
 
@@ -9,7 +10,7 @@ async function fetchProjectsFromSanity(): Promise<Project[]> {
     {},
     {
       next: { revalidate: 3600 },
-    },
+    }
   );
 }
 
