@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, useCycle, motion } from "motion/react";
+import { useEffect } from "react";
 
 import Hamburger from "./Hamburger.component";
 
@@ -18,7 +19,8 @@ type NavigationLinksArray = NonNullable<Navigation["links"]>;
  */
 
 const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
-  const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
+  const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+  const closeMenu = () => toggleExpanded(0);
 
   const pathname = usePathname();
 
@@ -70,7 +72,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
-      <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
+      <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -123,7 +125,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         href={href ?? ""}
                         data-testid={`mobil-${name}`}
                         prefetch={true}
-                        onClick={() => setisExpanded()}
+                        onClick={closeMenu}
                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
                           pathname === href ? "text-green-400" : ""
                         }`}
