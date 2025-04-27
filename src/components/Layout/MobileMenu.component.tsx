@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, useCycle, motion } from "motion/react";
-import { useEffect } from "react";
 
 import Hamburger from "./Hamburger.component";
 
