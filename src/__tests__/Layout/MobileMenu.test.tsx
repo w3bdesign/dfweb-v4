@@ -7,7 +7,49 @@ import userEvent from "@testing-library/user-event";
 import { usePathname } from "next/navigation";
 
 import MobileMenu from "@/components/Layout/MobileMenu.component";
-import linksmock from "../../__mocks__/links.json";
+
+const linksmock = [
+  {
+    _key: "home",
+    title: "Hjem",
+    name: "Hjem",
+    href: "/",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "projects",
+    title: "Prosjekter",
+    name: "Prosjekter",
+    href: "/prosjekter",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "cv",
+    title: "CV",
+    name: "CV",
+    href: "/cv",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "github",
+    title: "Github",
+    name: "Github",
+    href: "https://github.com/w3bdesign",
+    hash: "",
+    externalLink: true,
+  },
+  {
+    _key: "contact",
+    title: "Kontakt",
+    name: "Kontakt",
+    href: "/kontakt",
+    hash: "",
+    externalLink: false,
+  },
+];
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
@@ -47,7 +89,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Initial state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
 
     // Act - Open menu
@@ -55,7 +97,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Open state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: true })
     ).toBeInTheDocument();
 
     // Act - Close menu
@@ -63,7 +105,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Closed state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
   });
 
@@ -138,7 +180,7 @@ describe("MobileMenu - elementer eksisterer", () => {
     expect(externalLink).toHaveAttribute("rel", "noreferrer");
   });
 
-  it("closes menu when clicking outside", async () => {
+  it("navigates and closes menu when clicking a link", async () => {
     // Arrange
     const user = userEvent.setup();
     const hamburger = screen.getByTestId("hamburger");
@@ -149,13 +191,14 @@ describe("MobileMenu - elementer eksisterer", () => {
     // Assert - Menu is open
     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
 
-    // Act - Close menu
-    await user.click(document.body);
+    // Act - Click a link
+    const link = screen.getByTestId("mobil-Prosjekter");
+    await user.click(link);
 
-    // Assert - Menu is closed
-    expect(screen.getByTestId("hamburger")).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    // Wait for animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+
+    // Assert - Menu should close
+    expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
   });
 });
