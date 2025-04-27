@@ -76,6 +76,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
 
   return (
     <div
+      ref={ref}
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
@@ -93,7 +94,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
             exit="closed"
             variants={menuVariants}
           >
-            <nav ref={ref} aria-label="Navigasjon" className="w-full">
+            <nav aria-label="Navigasjon" className="w-full">
               <motion.ul
                 className="w-full"
                 initial="closed"
