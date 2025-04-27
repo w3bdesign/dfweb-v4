@@ -1,13 +1,10 @@
 "use client";
 
-import { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, useCycle, motion } from "motion/react";
 
 import Hamburger from "./Hamburger.component";
-
-import useClickOutside from "@/hooks/useClickOutside";
 
 import type { Navigation } from "@/types/sanity.types";
 
@@ -22,14 +19,8 @@ type NavigationLinksArray = NonNullable<Navigation["links"]>;
 
 const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
-  const ref = useRef<HTMLDivElement>(null);
+
   const pathname = usePathname();
-
-  const handleClickOutside = () => {
-    setisExpanded(0);
-  };
-
-  useClickOutside(ref, handleClickOutside);
 
   const menuVariants = {
     closed: {
@@ -76,7 +67,6 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
 
   return (
     <div
-      ref={ref}
       className="z-50 md:hidden lg:hidden xl:hidden"
       data-testid="mobilemenu"
     >
