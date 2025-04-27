@@ -7,13 +7,48 @@ import userEvent from "@testing-library/user-event";
 import { usePathname } from "next/navigation";
 
 import MobileMenu from "@/components/Layout/MobileMenu.component";
-// Mock links with required _key property
+
 const linksmock = [
-  { _key: "home", title: "Hjem", name: "Hjem", href: "/", hash: "", externalLink: false },
-  { _key: "projects", title: "Prosjekter", name: "Prosjekter", href: "/prosjekter", hash: "", externalLink: false },
-  { _key: "cv", title: "CV", name: "CV", href: "/cv", hash: "", externalLink: false },
-  { _key: "github", title: "Github", name: "Github", href: "https://github.com/w3bdesign", hash: "", externalLink: true },
-  { _key: "contact", title: "Kontakt", name: "Kontakt", href: "/kontakt", hash: "", externalLink: false }
+  {
+    _key: "home",
+    title: "Hjem",
+    name: "Hjem",
+    href: "/",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "projects",
+    title: "Prosjekter",
+    name: "Prosjekter",
+    href: "/prosjekter",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "cv",
+    title: "CV",
+    name: "CV",
+    href: "/cv",
+    hash: "",
+    externalLink: false,
+  },
+  {
+    _key: "github",
+    title: "Github",
+    name: "Github",
+    href: "https://github.com/w3bdesign",
+    hash: "",
+    externalLink: true,
+  },
+  {
+    _key: "contact",
+    title: "Kontakt",
+    name: "Kontakt",
+    href: "/kontakt",
+    hash: "",
+    externalLink: false,
+  },
 ];
 
 // Mock next/navigation
@@ -54,7 +89,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Initial state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
 
     // Act - Open menu
@@ -62,7 +97,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Open state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: true })
     ).toBeInTheDocument();
 
     // Act - Close menu
@@ -70,7 +105,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Closed state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+      screen.getByRole("button", { name: /hamburger/i, expanded: false })
     ).toBeInTheDocument();
   });
 
@@ -162,7 +197,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Wait for animation to complete
     await new Promise((resolve) => setTimeout(resolve, 2500));
-    
+
     // Assert - Menu should close
     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
   });
