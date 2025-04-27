@@ -123,6 +123,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         href={href ?? ""}
                         data-testid={`mobil-${name}`}
                         prefetch={true}
+                        onClick={() => setisExpanded()}
                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
                           pathname === href ? "text-green-400" : ""
                         }`}
