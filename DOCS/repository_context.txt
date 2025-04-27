@@ -212,7 +212,6 @@ src/
       kontakt.spec.ts
       prosjekter.spec.ts
   hooks/
-    useClickOutside.ts
     useMobile.tsx
     useNavigation.ts
   lib/
@@ -304,6 +303,88 @@ tsconfig.json
 ```
 
 # Files
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@4.0.0
+ 4:   codecov: codecov/codecov@5.3.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.11.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.11.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
+````
 
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
@@ -438,6 +519,62 @@ tsconfig.json
 27:           wait-on: 'http://localhost:3000'
 28:           wait-on-timeout: 120
 29:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v4
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v4
+10:         with:
+11:           node-version: '22'
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@v4
+14:         with:
+15:           version: 8
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI (Mobile)
+42:         run: pnpm lhci:perf
+43:         env:
+44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+45:       - name: Run Lighthouse CI (Desktop)
+46:         run: pnpm lhci:desktop
+47:         env:
+48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+49:       - name: Stop server
+50:         if: always()
+51:         run: |
+52:           pkill -f "next start" || true
 ````
 
 ## File: .github/workflows/pa11y.yml
@@ -3704,6 +3841,124 @@ tsconfig.json
 66: });
 ````
 
+## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
+  5: // Mock the Matrix component to avoid rendering issues in tests
+  6: jest.mock("@/components/Animations/Matrix.component", () => {
+  7:   return function DummyMatrix() {
+  8:     return <div data-testid="matrix-animation" />;
+  9:   };
+ 10: });
+ 11: describe("ErrorFallback", () => {
+ 12:   const mockError = new Error("Test error message");
+ 13:   beforeEach(() => {
+ 14:     // Mock window.location.reload
+ 15:     Object.defineProperty(window, "location", {
+ 16:       configurable: true,
+ 17:       value: { reload: jest.fn() },
+ 18:     });
+ 19:   });
+ 20:   it("renders error message and reload button", () => {
+ 21:     // Arrange
+ 22:     const expectedTexts = {
+ 23:       heading: "Har du funnet en feil i Matrix?",
+ 24:       error: "Test error message",
+ 25:       button: "Returner til Matrix",
+ 26:     };
+ 27:     // Act
+ 28:     render(<ErrorFallback error={mockError} />);
+ 29:     // Assert
+ 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+ 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+ 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
+ 33:   });
+ 34:   it("displays default error message when error.message is undefined in full version", () => {
+ 35:     // Arrange
+ 36:     const errorWithoutMessage = new Error();
+ 37:     const expectedMessage = "En uventet feil har oppstått.";
+ 38:     // Act
+ 39:     render(<ErrorFallback error={errorWithoutMessage} />);
+ 40:     // Assert
+ 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 42:   });
+ 43:   it("displays default error message when error.message is undefined in compact version", () => {
+ 44:     // Arrange
+ 45:     const errorWithoutMessage = new Error();
+ 46:     const expectedMessage = "En uventet feil har oppstått.";
+ 47:     // Act
+ 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
+ 49:     // Assert
+ 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 51:   });
+ 52:   it("renders compact version with correct styling", () => {
+ 53:     // Arrange
+ 54:     const expectedTexts = {
+ 55:       heading: "Har du funnet en feil i Matrix?",
+ 56:       error: "Test error message",
+ 57:       button: "Returner til Matrix",
+ 58:     };
+ 59:     // Act
+ 60:     render(<ErrorFallback error={mockError} compact={true} />);
+ 61:     // Assert
+ 62:     const container = screen
+ 63:       .getByTestId("matrix-animation")
+ 64:       .closest(".bg-gray-900");
+ 65:     expect(container).toHaveClass("bg-gray-900");
+ 66:     expect(container).toHaveClass("p-4");
+ 67:     expect(container).toHaveClass("rounded-lg");
+ 68:     expect(container).toHaveClass("overflow-hidden");
+ 69:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
+ 70:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
+ 71:     const button = screen.getByRole("button");
+ 72:     expect(button).toHaveClass("bg-matrix-light");
+ 73:     expect(button).toHaveClass("text-black");
+ 74:     expect(button).toHaveClass("rounded-sm");
+ 75:     expect(button).toHaveClass("text-sm");
+ 76:   });
+ 77:   it("renders full version with correct styling", () => {
+ 78:     // Arrange
+ 79:     const expectedTexts = {
+ 80:       heading: "Har du funnet en feil i Matrix?",
+ 81:       error: "Test error message",
+ 82:       button: "Returner til Matrix",
+ 83:     };
+ 84:     // Act
+ 85:     render(<ErrorFallback error={mockError} compact={false} />);
+ 86:     // Assert
+ 87:     const container = screen.getByTestId("matrix-animation").parentElement;
+ 88:     expect(container).toHaveClass("absolute", "w-full", "h-full");
+ 89:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
+ 90:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
+ 91:   });
+ 92:   it("reloads the page when reload button is clicked in compact mode", () => {
+ 93:     // Arrange
+ 94:     render(<ErrorFallback error={mockError} compact={true} />);
+ 95:     const reloadButton = screen.getByRole("button", {
+ 96:       name: "Returner til Matrix",
+ 97:     });
+ 98:     // Act
+ 99:     fireEvent.click(reloadButton);
+100:     // Assert
+101:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+102:   });
+103:   it("reloads the page when reload button is clicked in full mode", () => {
+104:     // Arrange
+105:     render(<ErrorFallback error={mockError} compact={false} />);
+106:     const reloadButton = screen.getByRole("button", {
+107:       name: "Returner til Matrix",
+108:     });
+109:     // Act
+110:     fireEvent.click(reloadButton);
+111:     // Assert
+112:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+113:   });
+114: });
+````
+
 ## File: src/__tests__/Index/Hero.test.tsx
 ````typescript
  1: /**
@@ -4090,138 +4345,6 @@ tsconfig.json
 115:     });
 116:   });
 117: });
-````
-
-## File: src/__tests__/Layout/MobileMenu.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, cleanup } from "@testing-library/react";
-  5: import userEvent from "@testing-library/user-event";
-  6: import { usePathname } from "next/navigation";
-  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
-  8: import linksmock from "../../__mocks__/links.json";
-  9: // Mock next/navigation
- 10: jest.mock("next/navigation", () => ({
- 11:   usePathname: jest.fn(),
- 12: }));
- 13: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
- 14: describe("MobileMenu - elementer eksisterer", () => {
- 15:   const testidMenu = "mobile-menu";
- 16:   beforeEach(() => {
- 17:     // Default to home page
- 18:     mockUsePathname.mockReturnValue("/");
- 19:     render(<MobileMenu links={linksmock} />);
- 20:   });
- 21:   afterEach(() => {
- 22:     jest.clearAllMocks();
- 23:   });
- 24:   it("renders mobile menu when hamburger is clicked", () => {
- 25:     // Arrange
- 26:     const hamburger = screen.getByTestId("hamburger");
- 27:     // Act
- 28:     fireEvent.click(hamburger);
- 29:     const mobilemenu = screen.getByTestId(testidMenu);
- 30:     // Assert
- 31:     expect(mobilemenu).toBeInTheDocument();
- 32:   });
- 33:   it("toggles hamburger menu expansion state", () => {
- 34:     // Arrange
- 35:     const hamburger = screen.getByTestId("hamburger");
- 36:     // Assert - Initial state
- 37:     expect(
- 38:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
- 39:     ).toBeInTheDocument();
- 40:     // Act - Open menu
- 41:     fireEvent.click(hamburger);
- 42:     // Assert - Open state
- 43:     expect(
- 44:       screen.getByRole("button", { name: /hamburger/i, expanded: true }),
- 45:     ).toBeInTheDocument();
- 46:     // Act - Close menu
- 47:     fireEvent.click(hamburger);
- 48:     // Assert - Closed state
- 49:     expect(
- 50:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
- 51:     ).toBeInTheDocument();
- 52:   });
- 53:   it("displays correct number of navigation links", () => {
- 54:     // Arrange
- 55:     const hamburger = screen.getByTestId("hamburger");
- 56:     // Act
- 57:     fireEvent.click(hamburger);
- 58:     const menuItems = screen.getAllByRole("link");
- 59:     // Assert
- 60:     expect(menuItems.length).toBe(linksmock.length);
- 61:   });
- 62:   it("renders internal links with correct active state", () => {
- 63:     // Arrange
- 64:     cleanup(); // Clean up previous renders
- 65:     const currentPath = "/prosjekter";
- 66:     mockUsePathname.mockReturnValue(currentPath);
- 67:     const { getByTestId } = render(<MobileMenu links={linksmock} />);
- 68:     const hamburger = getByTestId("hamburger");
- 69:     // Act
- 70:     fireEvent.click(hamburger);
- 71:     // Assert
- 72:     linksmock.forEach((link) => {
- 73:       if (!link.externalLink) {
- 74:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
- 75:         if (link.href === currentPath) {
- 76:           expect(linkElement).toHaveClass("text-green-400");
- 77:           const underline = linkElement.querySelector("span");
- 78:           expect(underline).toHaveClass("bg-green-400");
- 79:         } else {
- 80:           expect(linkElement).not.toHaveClass("text-green-400");
- 81:           const underline = linkElement.querySelector("span");
- 82:           expect(underline).toHaveClass("bg-white");
- 83:         }
- 84:       }
- 85:     });
- 86:   });
- 87:   it("renders internal links with glitch effect", () => {
- 88:     // Arrange
- 89:     const hamburger = screen.getByTestId("hamburger");
- 90:     // Act
- 91:     fireEvent.click(hamburger);
- 92:     // Assert
- 93:     linksmock.forEach((link) => {
- 94:       if (!link.externalLink) {
- 95:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
- 96:         const glitchElement = linkElement.querySelector(".glitch");
- 97:         expect(glitchElement).toBeInTheDocument();
- 98:         expect(glitchElement).toHaveAttribute("data-text", link.name);
- 99:       }
-100:     });
-101:   });
-102:   it("opens external links in new tab with correct attributes", () => {
-103:     // Arrange
-104:     const hamburger = screen.getByTestId("hamburger");
-105:     // Act
-106:     fireEvent.click(hamburger);
-107:     const externalLink = screen.getByRole("link", { name: /github/i });
-108:     // Assert
-109:     expect(externalLink).toHaveAttribute("target", "_blank");
-110:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
-111:   });
-112:   it("closes menu when clicking outside", async () => {
-113:     // Arrange
-114:     const user = userEvent.setup();
-115:     const hamburger = screen.getByTestId("hamburger");
-116:     // Act - Open menu
-117:     await user.click(hamburger);
-118:     // Assert - Menu is open
-119:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-120:     // Act - Close menu
-121:     await user.click(document.body);
-122:     // Assert - Menu is closed
-123:     expect(screen.getByTestId("hamburger")).toHaveAttribute(
-124:       "aria-expanded",
-125:       "false",
-126:     );
-127:   });
-128: });
 ````
 
 ## File: src/__tests__/Prosjekter/actions.test.ts
@@ -6655,32 +6778,6 @@ tsconfig.json
 20: export {};
 ````
 
-## File: src/e2e/cypress/e2e/layout.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: describe("Layout", () => {
- 3:   beforeEach(() => {
- 4:     cy.viewport('iphone-x'); // Set mobile viewport
- 5:     cy.visit("http://localhost:3000");
- 6:   });
- 7:   describe("Mobile Menu", () => {
- 8:     it("should close when clicking outside the nav element", () => {
- 9:       // Open the mobile menu
-10:       cy.get('[data-testid="mobilemenu"]').click();
-11:       // Verify menu is visible
-12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
-13:       // Click on the menu background (outside nav but inside motion.div)
-14:       // This should fail with ref on motion.div, but pass when ref is on nav
-15:       cy.get('[data-testid="mobile-menu"]').click('topRight', { force: true });
-16:       // Menu should NOT be visible (passing test)
-17:       // because clicking outside the nav should close the menu
-18:       cy.get('[data-testid="mobile-menu"]').should('not.be.visible');
-19:     });
-20:   });
-21: });
-22: export {};
-````
-
 ## File: src/e2e/cypress/e2e/prosjekter.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -7051,37 +7148,6 @@ tsconfig.json
 32:     await expect(page.getByText("BesøkGitHub").first()).toBeVisible();
 33:   });
 34: });
-````
-
-## File: src/hooks/useClickOutside.ts
-````typescript
- 1: import { useEffect, RefObject } from "react";
- 2: /**
- 3:  * Hook that handles clicks outside of the passed ref element
- 4:  * @param ref - React ref object for the element to monitor
- 5:  * @param callback - Function to call when a click outside occurs
- 6:  */
- 7: const useClickOutside = (
- 8:   ref: RefObject<HTMLElement | null>,
- 9:   callback: () => void
-10: ): void => {
-11:   useEffect(() => {
-12:     const handleClick = (event: MouseEvent | TouchEvent) => {
-13:       if (ref.current && !ref.current.contains(event.target as Node)) {
-14:         callback();
-15:       }
-16:     };
-17:     // Add event listeners
-18:     document.addEventListener("mousedown", handleClick);
-19:     document.addEventListener("touchend", handleClick);
-20:     // Cleanup function
-21:     return () => {
-22:       document.removeEventListener("mousedown", handleClick);
-23:       document.removeEventListener("touchend", handleClick);
-24:     };
-25:   }, [ref, callback]); // Re-run effect if ref or callback changes
-26: };
-27: export default useClickOutside;
 ````
 
 ## File: src/hooks/useMobile.tsx
@@ -9876,6 +9942,18 @@ tsconfig.json
 62: });
 ````
 
+## File: postcss.config.mjs
+````
+1: /** @type {import('postcss-load-config').Config} */
+2: const config = {
+3:   plugins: {
+4:     '@tailwindcss/postcss': {},
+5:   },
+6: };
+7: 
+8: export default config;
+````
+
 ## File: renovate.json
 ````json
  1: {
@@ -10108,262 +10186,6 @@ tsconfig.json
 33:   ],
 34:   "exclude": ["node_modules"]
 35: }
-````
-
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@4.0.0
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v4
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v4
-10:         with:
-11:           node-version: '22'
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@v4
-14:         with:
-15:           version: 8
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
-````
-
-## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
-  5: // Mock the Matrix component to avoid rendering issues in tests
-  6: jest.mock("@/components/Animations/Matrix.component", () => {
-  7:   return function DummyMatrix() {
-  8:     return <div data-testid="matrix-animation" />;
-  9:   };
- 10: });
- 11: describe("ErrorFallback", () => {
- 12:   const mockError = new Error("Test error message");
- 13:   beforeEach(() => {
- 14:     // Mock window.location.reload
- 15:     Object.defineProperty(window, "location", {
- 16:       configurable: true,
- 17:       value: { reload: jest.fn() },
- 18:     });
- 19:   });
- 20:   it("renders error message and reload button", () => {
- 21:     // Arrange
- 22:     const expectedTexts = {
- 23:       heading: "Har du funnet en feil i Matrix?",
- 24:       error: "Test error message",
- 25:       button: "Returner til Matrix",
- 26:     };
- 27:     // Act
- 28:     render(<ErrorFallback error={mockError} />);
- 29:     // Assert
- 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
- 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
- 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
- 33:   });
- 34:   it("displays default error message when error.message is undefined in full version", () => {
- 35:     // Arrange
- 36:     const errorWithoutMessage = new Error();
- 37:     const expectedMessage = "En uventet feil har oppstått.";
- 38:     // Act
- 39:     render(<ErrorFallback error={errorWithoutMessage} />);
- 40:     // Assert
- 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 42:   });
- 43:   it("displays default error message when error.message is undefined in compact version", () => {
- 44:     // Arrange
- 45:     const errorWithoutMessage = new Error();
- 46:     const expectedMessage = "En uventet feil har oppstått.";
- 47:     // Act
- 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
- 49:     // Assert
- 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 51:   });
- 52:   it("renders compact version with correct styling", () => {
- 53:     // Arrange
- 54:     const expectedTexts = {
- 55:       heading: "Har du funnet en feil i Matrix?",
- 56:       error: "Test error message",
- 57:       button: "Returner til Matrix",
- 58:     };
- 59:     // Act
- 60:     render(<ErrorFallback error={mockError} compact={true} />);
- 61:     // Assert
- 62:     const container = screen
- 63:       .getByTestId("matrix-animation")
- 64:       .closest(".bg-gray-900");
- 65:     expect(container).toHaveClass("bg-gray-900");
- 66:     expect(container).toHaveClass("p-4");
- 67:     expect(container).toHaveClass("rounded-lg");
- 68:     expect(container).toHaveClass("overflow-hidden");
- 69:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
- 70:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
- 71:     const button = screen.getByRole("button");
- 72:     expect(button).toHaveClass("bg-matrix-light");
- 73:     expect(button).toHaveClass("text-black");
- 74:     expect(button).toHaveClass("rounded-sm");
- 75:     expect(button).toHaveClass("text-sm");
- 76:   });
- 77:   it("renders full version with correct styling", () => {
- 78:     // Arrange
- 79:     const expectedTexts = {
- 80:       heading: "Har du funnet en feil i Matrix?",
- 81:       error: "Test error message",
- 82:       button: "Returner til Matrix",
- 83:     };
- 84:     // Act
- 85:     render(<ErrorFallback error={mockError} compact={false} />);
- 86:     // Assert
- 87:     const container = screen.getByTestId("matrix-animation").parentElement;
- 88:     expect(container).toHaveClass("absolute", "w-full", "h-full");
- 89:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
- 90:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
- 91:   });
- 92:   it("reloads the page when reload button is clicked in compact mode", () => {
- 93:     // Arrange
- 94:     render(<ErrorFallback error={mockError} compact={true} />);
- 95:     const reloadButton = screen.getByRole("button", {
- 96:       name: "Returner til Matrix",
- 97:     });
- 98:     // Act
- 99:     fireEvent.click(reloadButton);
-100:     // Assert
-101:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-102:   });
-103:   it("reloads the page when reload button is clicked in full mode", () => {
-104:     // Arrange
-105:     render(<ErrorFallback error={mockError} compact={false} />);
-106:     const reloadButton = screen.getByRole("button", {
-107:       name: "Returner til Matrix",
-108:     });
-109:     // Act
-110:     fireEvent.click(reloadButton);
-111:     // Assert
-112:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-113:   });
-114: });
 ````
 
 ## File: src/__tests__/Layout/Footer.test.tsx
@@ -10892,58 +10714,6 @@ tsconfig.json
 64: export default KontaktContent;
 ````
 
-## File: src/components/Layout/Hamburger.component.tsx
-````typescript
- 1: "use client";
- 2: export interface IHamburgerProps {
- 3:   onClick: () => void;
- 4:   animatetoX: boolean;
- 5: }
- 6: /**
- 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
- 8:  * @function Hamburger
- 9:  * @param {() => void} onClick - onClick handler to respond to clicks
-10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
-11:  * @returns {JSX.Element} - Rendered component
-12:  */
-13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
-14:   const hamburgerLine =
-15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
-16:   const opacityFull = "opacity-100 group-hover:opacity-100";
-17:   return (
-18:     <button
-19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6"
-20:       data-cy="hamburger"
-21:       data-testid="hamburger"
-22:       onClick={onClick}
-23:       aria-expanded={animatetoX}
-24:       type="button"
-25:     >
-26:       <span className="sr-only text-white text-2xl">Hamburger</span>
-27:       <span
-28:         data-testid="hamburgerline"
-29:         className={`${hamburgerLine} ${
-30:           animatetoX
-31:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
-32:             : opacityFull
-33:         }`}
-34:       />
-35:       <span
-36:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
-37:       />
-38:       <span
-39:         className={`${hamburgerLine} ${
-40:           animatetoX
-41:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
-42:             : opacityFull
-43:         }`}
-44:       />
-45:     </button>
-46:   );
-47: };
-48: export default Hamburger;
-````
-
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -11158,6 +10928,30 @@ tsconfig.json
 18:   </div>
 19: );
 20: export default PageHeader;
+````
+
+## File: src/e2e/cypress/e2e/layout.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: describe("Layout", () => {
+ 3:   beforeEach(() => {
+ 4:     cy.viewport('iphone-x'); // Set mobile viewport
+ 5:     cy.visit("http://localhost:3000");
+ 6:   });
+ 7:   describe("Mobile Menu", () => {
+ 8:     it("should close when clicking a link", () => {
+ 9:       // Open the mobile menu
+10:       cy.get('[data-testid="mobilemenu"]').click();
+11:       // Verify menu is visible
+12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
+13:       // Click a link in the menu
+14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
+15:       // Menu should not be visible after clicking a link
+16:       cy.get('[data-testid="mobile-menu"]').should('not.exist');
+17:     });
+18:   });
+19: });
+20: export {};
 ````
 
 ## File: src/lib/sanity/queries.ts
@@ -13370,16 +13164,100 @@ tsconfig.json
 1700: ]
 ````
 
-## File: postcss.config.mjs
-````
-1: /** @type {import('postcss-load-config').Config} */
-2: const config = {
-3:   plugins: {
-4:     '@tailwindcss/postcss': {},
-5:   },
-6: };
-7: 
-8: export default config;
+## File: package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "version": "1.0.9",
+ 4:   "private": true,
+ 5:   "engines": {
+ 6:     "node": ">=20.16.0"
+ 7:   },
+ 8:   "scripts": {
+ 9:     "dev": "next dev --turbopack",
+10:     "lhci": "lhci autorun",
+11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+13:     "build": "next build",
+14:     "start": "next start",
+15:     "lint": "next lint",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
+18:     "test:watch": "jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate"
+25:   },
+26:   "dependencies": {
+27:     "@babel/helpers": ">=7.27.0",
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.0.1",
+30:     "@portabletext/react": "^3.2.1",
+31:     "@sanity/client": "^6.29.1",
+32:     "@sanity/image-url": "^1.1.0",
+33:     "@vercel/speed-insights": "^1.2.0",
+34:     "clsx": "^2.1.1",
+35:     "cookie": ">=1.0.2",
+36:     "envalid": "^8.0.0",
+37:     "jest": "^29.7.0",
+38:     "motion": "^12.9.2",
+39:     "next": "15.3.1",
+40:     "next-sanity": "^9.10.2",
+41:     "path-to-regexp": "^8.2.0",
+42:     "react": "^19.1.0",
+43:     "react-dom": "^19.1.0",
+44:     "react-error-boundary": "^5.0.0",
+45:     "react-hook-form": "^7.56.1",
+46:     "react-icons": "^5.5.0",
+47:     "sanity": "^3.86.1",
+48:     "sitemap": "^8.0.0",
+49:     "ts-node": "^10.9.2",
+50:     "zod": "^3.24.3"
+51:   },
+52:   "devDependencies": {
+53:     "@jest/expect": "^29.7.0",
+54:     "@jest/globals": "^29.7.0",
+55:     "@ladle/react": "^5.0.2",
+56:     "@lhci/cli": "^0.14.0",
+57:     "@playwright/test": "^1.52.0",
+58:     "@portabletext/types": "^2.0.13",
+59:     "@tailwindcss/postcss": "^4.1.4",
+60:     "@testing-library/cypress": "^10.0.3",
+61:     "@testing-library/jest-dom": "^6.6.3",
+62:     "@testing-library/react": "^16.3.0",
+63:     "@testing-library/user-event": "^14.6.1",
+64:     "@types/jest": "^29.5.14",
+65:     "@types/node": "^22.15.2",
+66:     "@types/react": "^19.1.2",
+67:     "@types/react-dom": "^19.1.2",
+68:     "@typescript-eslint/eslint-plugin": "^8.31.0",
+69:     "@typescript-eslint/parser": "^8.31.0",
+70:     "axe-core": "^4.10.3",
+71:     "cypress": "14.3.2",
+72:     "cypress-axe": "^1.6.0",
+73:     "eslint": "9.25.1",
+74:     "eslint-config-next": "15.3.1",
+75:     "eslint-plugin-jest": "^28.11.0",
+76:     "eslint-plugin-jsx-a11y": "^6.10.2",
+77:     "eslint-plugin-react": "^7.37.5",
+78:     "eslint-plugin-react-hooks": "^5.2.0",
+79:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
+80:     "eslint-plugin-testing-library": "^7.1.1",
+81:     "expect": "^29.7.0",
+82:     "jest-environment-jsdom": "^29.7.0",
+83:     "jest-extended": "^4.0.2",
+84:     "jsdom-testing-mocks": "^1.13.1",
+85:     "postcss": "^8.5.3",
+86:     "prettier": "3.5.3",
+87:     "tailwindcss": "^4.1.4",
+88:     "ts-jest": "^29.3.2",
+89:     "typescript": "^5.8.3",
+90:     "wait-on": "^8.0.3"
+91:   }
+92: }
 ````
 
 ## File: README.md
@@ -13642,6 +13520,179 @@ tsconfig.json
 86:     });
 87:   });
 88: });
+````
+
+## File: src/__tests__/Layout/MobileMenu.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, cleanup } from "@testing-library/react";
+  5: import userEvent from "@testing-library/user-event";
+  6: import { usePathname } from "next/navigation";
+  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
+  8: const linksmock = [
+  9:   {
+ 10:     _key: "home",
+ 11:     title: "Hjem",
+ 12:     name: "Hjem",
+ 13:     href: "/",
+ 14:     hash: "",
+ 15:     externalLink: false,
+ 16:   },
+ 17:   {
+ 18:     _key: "projects",
+ 19:     title: "Prosjekter",
+ 20:     name: "Prosjekter",
+ 21:     href: "/prosjekter",
+ 22:     hash: "",
+ 23:     externalLink: false,
+ 24:   },
+ 25:   {
+ 26:     _key: "cv",
+ 27:     title: "CV",
+ 28:     name: "CV",
+ 29:     href: "/cv",
+ 30:     hash: "",
+ 31:     externalLink: false,
+ 32:   },
+ 33:   {
+ 34:     _key: "github",
+ 35:     title: "Github",
+ 36:     name: "Github",
+ 37:     href: "https://github.com/w3bdesign",
+ 38:     hash: "",
+ 39:     externalLink: true,
+ 40:   },
+ 41:   {
+ 42:     _key: "contact",
+ 43:     title: "Kontakt",
+ 44:     name: "Kontakt",
+ 45:     href: "/kontakt",
+ 46:     hash: "",
+ 47:     externalLink: false,
+ 48:   },
+ 49: ];
+ 50: // Mock next/navigation
+ 51: jest.mock("next/navigation", () => ({
+ 52:   usePathname: jest.fn(),
+ 53: }));
+ 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+ 55: describe("MobileMenu - elementer eksisterer", () => {
+ 56:   const testidMenu = "mobile-menu";
+ 57:   beforeEach(() => {
+ 58:     // Default to home page
+ 59:     mockUsePathname.mockReturnValue("/");
+ 60:     render(<MobileMenu links={linksmock} />);
+ 61:   });
+ 62:   afterEach(() => {
+ 63:     jest.clearAllMocks();
+ 64:   });
+ 65:   it("renders mobile menu when hamburger is clicked", () => {
+ 66:     // Arrange
+ 67:     const hamburger = screen.getByTestId("hamburger");
+ 68:     // Act
+ 69:     fireEvent.click(hamburger);
+ 70:     const mobilemenu = screen.getByTestId(testidMenu);
+ 71:     // Assert
+ 72:     expect(mobilemenu).toBeInTheDocument();
+ 73:   });
+ 74:   it("toggles hamburger menu expansion state", () => {
+ 75:     // Arrange
+ 76:     const hamburger = screen.getByTestId("hamburger");
+ 77:     // Assert - Initial state
+ 78:     expect(
+ 79:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
+ 80:     ).toBeInTheDocument();
+ 81:     // Act - Open menu
+ 82:     fireEvent.click(hamburger);
+ 83:     // Assert - Open state
+ 84:     expect(
+ 85:       screen.getByRole("button", { name: /hamburger/i, expanded: true })
+ 86:     ).toBeInTheDocument();
+ 87:     // Act - Close menu
+ 88:     fireEvent.click(hamburger);
+ 89:     // Assert - Closed state
+ 90:     expect(
+ 91:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
+ 92:     ).toBeInTheDocument();
+ 93:   });
+ 94:   it("displays correct number of navigation links", () => {
+ 95:     // Arrange
+ 96:     const hamburger = screen.getByTestId("hamburger");
+ 97:     // Act
+ 98:     fireEvent.click(hamburger);
+ 99:     const menuItems = screen.getAllByRole("link");
+100:     // Assert
+101:     expect(menuItems.length).toBe(linksmock.length);
+102:   });
+103:   it("renders internal links with correct active state", () => {
+104:     // Arrange
+105:     cleanup(); // Clean up previous renders
+106:     const currentPath = "/prosjekter";
+107:     mockUsePathname.mockReturnValue(currentPath);
+108:     const { getByTestId } = render(<MobileMenu links={linksmock} />);
+109:     const hamburger = getByTestId("hamburger");
+110:     // Act
+111:     fireEvent.click(hamburger);
+112:     // Assert
+113:     linksmock.forEach((link) => {
+114:       if (!link.externalLink) {
+115:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
+116:         if (link.href === currentPath) {
+117:           expect(linkElement).toHaveClass("text-green-400");
+118:           const underline = linkElement.querySelector("span");
+119:           expect(underline).toHaveClass("bg-green-400");
+120:         } else {
+121:           expect(linkElement).not.toHaveClass("text-green-400");
+122:           const underline = linkElement.querySelector("span");
+123:           expect(underline).toHaveClass("bg-white");
+124:         }
+125:       }
+126:     });
+127:   });
+128:   it("renders internal links with glitch effect", () => {
+129:     // Arrange
+130:     const hamburger = screen.getByTestId("hamburger");
+131:     // Act
+132:     fireEvent.click(hamburger);
+133:     // Assert
+134:     linksmock.forEach((link) => {
+135:       if (!link.externalLink) {
+136:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
+137:         const glitchElement = linkElement.querySelector(".glitch");
+138:         expect(glitchElement).toBeInTheDocument();
+139:         expect(glitchElement).toHaveAttribute("data-text", link.name);
+140:       }
+141:     });
+142:   });
+143:   it("opens external links in new tab with correct attributes", () => {
+144:     // Arrange
+145:     const hamburger = screen.getByTestId("hamburger");
+146:     // Act
+147:     fireEvent.click(hamburger);
+148:     const externalLink = screen.getByRole("link", { name: /github/i });
+149:     // Assert
+150:     expect(externalLink).toHaveAttribute("target", "_blank");
+151:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+152:   });
+153:   it("navigates and closes menu when clicking a link", async () => {
+154:     // Arrange
+155:     const user = userEvent.setup();
+156:     const hamburger = screen.getByTestId("hamburger");
+157:     // Act - Open menu
+158:     await user.click(hamburger);
+159:     // Assert - Menu is open
+160:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+161:     // Act - Click a link
+162:     const link = screen.getByTestId("mobil-Prosjekter");
+163:     await user.click(link);
+164:     // Wait for animation to complete
+165:     await new Promise((resolve) => setTimeout(resolve, 2500));
+166:     // Assert - Menu should close
+167:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
+168:   });
+169: });
 ````
 
 ## File: src/app/globals.css
@@ -13951,6 +14002,58 @@ tsconfig.json
 29:   </footer>
 30: );
 31: export default Footer;
+````
+
+## File: src/components/Layout/Hamburger.component.tsx
+````typescript
+ 1: "use client";
+ 2: export interface IHamburgerProps {
+ 3:   onClick: () => void;
+ 4:   animatetoX: boolean;
+ 5: }
+ 6: /**
+ 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
+ 8:  * @function Hamburger
+ 9:  * @param {() => void} onClick - onClick handler to respond to clicks
+10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
+14:   const hamburgerLine =
+15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
+16:   const opacityFull = "opacity-100 group-hover:opacity-100";
+17:   return (
+18:     <button
+19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6 relative"
+20:       data-cy="hamburger"
+21:       data-testid="hamburger"
+22:       onClick={onClick}
+23:       aria-expanded={animatetoX}
+24:       type="button"
+25:     >
+26:       <span className="sr-only text-white text-2xl">Hamburger</span>
+27:       <span
+28:         data-testid="hamburgerline"
+29:         className={`${hamburgerLine} ${
+30:           animatetoX
+31:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
+32:             : opacityFull
+33:         }`}
+34:       />
+35:       <span
+36:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
+37:       />
+38:       <span
+39:         className={`${hamburgerLine} ${
+40:           animatetoX
+41:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
+42:             : opacityFull
+43:         }`}
+44:       />
+45:     </button>
+46:   );
+47: };
+48: export default Hamburger;
 ````
 
 ## File: src/components/UI/Tabs.component.tsx
@@ -14700,164 +14803,6 @@ tsconfig.json
 46: }
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import { useRef } from "react";
-  3: import Link from "next/link";
-  4: import { usePathname } from "next/navigation";
-  5: import { AnimatePresence, useCycle, motion } from "motion/react";
-  6: import Hamburger from "./Hamburger.component";
-  7: import useClickOutside from "@/hooks/useClickOutside";
-  8: import type { Navigation } from "@/types/sanity.types";
-  9: type NavigationLinksArray = NonNullable<Navigation["links"]>;
- 10: /**
- 11:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 12:  * @param {Object} props
- 13:  * @param {ILink[]} props.links - Array of navigation link objects
- 14:  * @returns {JSX.Element} The rendered MobileMenu component
- 15:  */
- 16: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 17:   const [isExpanded, setisExpanded] = useCycle<boolean>(false, true);
- 18:   const ref = useRef<HTMLDivElement>(null);
- 19:   const pathname = usePathname();
- 20:   const handleClickOutside = () => {
- 21:     setisExpanded(0);
- 22:   };
- 23:   useClickOutside(ref, handleClickOutside);
- 24:   const menuVariants = {
- 25:     closed: {
- 26:       x: "125%",
- 27:       transition: {
- 28:         type: "spring",
- 29:         stiffness: 60,
- 30:         damping: 10,
- 31:         delay: 0.3,
- 32:       },
- 33:     },
- 34:     open: {
- 35:       x: 0,
- 36:       transition: {
- 37:         type: "spring",
- 38:         stiffness: 60,
- 39:         damping: 10,
- 40:       },
- 41:     },
- 42:   };
- 43:   const itemVariants = {
- 44:     closed: (i: number) => ({
- 45:       x: i % 2 === 0 ? "-50%" : "50%",
- 46:       opacity: 0,
- 47:       transition: {
- 48:         type: "spring",
- 49:         stiffness: 120,
- 50:         damping: 12,
- 51:         duration: 0.25,
- 52:       },
- 53:     }),
- 54:     open: (i: number) => ({
- 55:       x: 0,
- 56:       opacity: 1,
- 57:       transition: {
- 58:         type: "spring",
- 59:         stiffness: 120,
- 60:         damping: 12,
- 61:         delay: i * 0.25,
- 62:       },
- 63:     }),
- 64:   };
- 65:   return (
- 66:     <div
- 67:       className="z-50 md:hidden lg:hidden xl:hidden"
- 68:       data-testid="mobilemenu"
- 69:     >
- 70:       <Hamburger onClick={setisExpanded} animatetoX={isExpanded} />
- 71:       <AnimatePresence>
- 72:         {isExpanded && (
- 73:           <motion.div
- 74:             id="mobile-menu"
- 75:             data-testid="mobile-menu"
- 76:             data-cy="mobile-menu"
- 77:             aria-hidden={!isExpanded}
- 78:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 79:             initial="closed"
- 80:             animate="open"
- 81:             exit="closed"
- 82:             variants={menuVariants}
- 83:           >
- 84:             <nav ref={ref} aria-label="Navigasjon" className="w-full">
- 85:               <motion.ul
- 86:                 className="w-full"
- 87:                 initial="closed"
- 88:                 animate="open"
- 89:                 exit="closed"
- 90:                 variants={{
- 91:                   open: {
- 92:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 93:                   },
- 94:                   closed: {
- 95:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 96:                   },
- 97:                 }}
- 98:               >
- 99:                 {links?.map(({ title, name, href, externalLink }, index) => (
-100:                   <motion.li
-101:                     key={title}
-102:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-103:                     data-cy="mobile-menu-item"
-104:                     custom={index}
-105:                     variants={itemVariants}
-106:                   >
-107:                     {externalLink ? (
-108:                       <a
-109:                         aria-label={name}
-110:                         href={href}
-111:                         target="_blank"
-112:                         rel="noreferrer"
-113:                         data-testid={`mobil-${name}`}
-114:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-115:                       >
-116:                         {name}
-117:                       </a>
-118:                     ) : (
-119:                       <Link
-120:                         href={href ?? ""}
-121:                         data-testid={`mobil-${name}`}
-122:                         prefetch={true}
-123:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-124:                           pathname === href ? "text-green-400" : ""
-125:                         }`}
-126:                       >
-127:                         <div className="glitch relative" data-text={name}>
-128:                           {name}
-129:                           <motion.span
-130:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-131:                               pathname === href ? "bg-green-400" : "bg-white"
-132:                             }`}
-133:                             initial={{
-134:                               width: pathname === href ? "100%" : "0%",
-135:                             }}
-136:                             animate={{
-137:                               width: pathname === href ? "100%" : "0%",
-138:                             }}
-139:                             transition={{ duration: 0.3 }}
-140:                           />
-141:                         </div>
-142:                       </Link>
-143:                     )}
-144:                   </motion.li>
-145:                 ))}
-146:               </motion.ul>
-147:             </nav>
-148:           </motion.div>
-149:         )}
-150:       </AnimatePresence>
-151:     </div>
-152:   );
-153: };
-154: export default MobileMenu;
-````
-
 ## File: src/components/UI/InputField.component.tsx
 ````typescript
  1: import React from "react";
@@ -14960,102 +14905,6 @@ tsconfig.json
 98: export default InputField;
 ````
 
-## File: package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.0.9",
- 4:   "private": true,
- 5:   "engines": {
- 6:     "node": ">=20.16.0"
- 7:   },
- 8:   "scripts": {
- 9:     "dev": "next dev --turbopack",
-10:     "lhci": "lhci autorun",
-11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-13:     "build": "next build",
-14:     "start": "next start",
-15:     "lint": "next lint",
-16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
-18:     "test:watch": "jest --watch",
-19:     "cypress:open": "cypress open",
-20:     "cypress:headless": "cypress run",
-21:     "e2e": "start-test dev 3000 cypress:headless",
-22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-23:     "ladle": "ladle serve",
-24:     "typegen": "npx sanity typegen generate"
-25:   },
-26:   "dependencies": {
-27:     "@babel/helpers": ">=7.27.0",
-28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.0.1",
-30:     "@portabletext/react": "^3.2.1",
-31:     "@sanity/client": "^6.29.1",
-32:     "@sanity/image-url": "^1.1.0",
-33:     "@vercel/speed-insights": "^1.2.0",
-34:     "clsx": "^2.1.1",
-35:     "cookie": ">=1.0.2",
-36:     "envalid": "^8.0.0",
-37:     "jest": "^29.7.0",
-38:     "motion": "^12.9.2",
-39:     "next": "15.3.1",
-40:     "next-sanity": "^9.10.2",
-41:     "path-to-regexp": "^8.2.0",
-42:     "react": "^19.1.0",
-43:     "react-dom": "^19.1.0",
-44:     "react-error-boundary": "^5.0.0",
-45:     "react-hook-form": "^7.56.1",
-46:     "react-icons": "^5.5.0",
-47:     "sanity": "^3.86.1",
-48:     "sitemap": "^8.0.0",
-49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.24.3"
-51:   },
-52:   "devDependencies": {
-53:     "@jest/expect": "^29.7.0",
-54:     "@jest/globals": "^29.7.0",
-55:     "@ladle/react": "^5.0.2",
-56:     "@lhci/cli": "^0.14.0",
-57:     "@playwright/test": "^1.52.0",
-58:     "@portabletext/types": "^2.0.13",
-59:     "@tailwindcss/postcss": "^4.1.4",
-60:     "@testing-library/cypress": "^10.0.3",
-61:     "@testing-library/jest-dom": "^6.6.3",
-62:     "@testing-library/react": "^16.3.0",
-63:     "@testing-library/user-event": "^14.6.1",
-64:     "@types/jest": "^29.5.14",
-65:     "@types/node": "^22.15.2",
-66:     "@types/react": "^19.1.2",
-67:     "@types/react-dom": "^19.1.2",
-68:     "@typescript-eslint/eslint-plugin": "^8.31.0",
-69:     "@typescript-eslint/parser": "^8.31.0",
-70:     "axe-core": "^4.10.3",
-71:     "cypress": "14.3.2",
-72:     "cypress-axe": "^1.6.0",
-73:     "eslint": "9.25.1",
-74:     "eslint-config-next": "15.3.1",
-75:     "eslint-plugin-jest": "^28.11.0",
-76:     "eslint-plugin-jsx-a11y": "^6.10.2",
-77:     "eslint-plugin-react": "^7.37.5",
-78:     "eslint-plugin-react-hooks": "^5.2.0",
-79:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
-80:     "eslint-plugin-testing-library": "^7.1.1",
-81:     "expect": "^29.7.0",
-82:     "jest-environment-jsdom": "^29.7.0",
-83:     "jest-extended": "^4.0.2",
-84:     "jsdom-testing-mocks": "^1.13.1",
-85:     "postcss": "^8.5.3",
-86:     "prettier": "3.5.3",
-87:     "tailwindcss": "^4.1.4",
-88:     "ts-jest": "^29.3.2",
-89:     "typescript": "^5.8.3",
-90:     "wait-on": "^8.0.3"
-91:   }
-92: }
-````
-
 ## File: src/app/prosjekter/actions.ts
 ````typescript
  1: import { client } from "@/lib/sanity/client";
@@ -15145,4 +14994,157 @@ tsconfig.json
 42:   );
 43: };
 44: export default Header;
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, motion } from "motion/react";
+  5: import Hamburger from "./Hamburger.component";
+  6: import type { Navigation } from "@/types/sanity.types";
+  7: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  8: /**
+  9:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 10:  * @param {Object} props
+ 11:  * @param {ILink[]} props.links - Array of navigation link objects
+ 12:  * @returns {JSX.Element} The rendered MobileMenu component
+ 13:  */
+ 14: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 15:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 16:   const closeMenu = () => toggleExpanded(0);
+ 17:   const pathname = usePathname();
+ 18:   const menuVariants = {
+ 19:     closed: {
+ 20:       x: "125%",
+ 21:       transition: {
+ 22:         type: "spring",
+ 23:         stiffness: 60,
+ 24:         damping: 10,
+ 25:         delay: 0.3,
+ 26:       },
+ 27:     },
+ 28:     open: {
+ 29:       x: 0,
+ 30:       transition: {
+ 31:         type: "spring",
+ 32:         stiffness: 60,
+ 33:         damping: 10,
+ 34:       },
+ 35:     },
+ 36:   };
+ 37:   const itemVariants = {
+ 38:     closed: (i: number) => ({
+ 39:       x: i % 2 === 0 ? "-50%" : "50%",
+ 40:       opacity: 0,
+ 41:       transition: {
+ 42:         type: "spring",
+ 43:         stiffness: 120,
+ 44:         damping: 12,
+ 45:         duration: 0.25,
+ 46:       },
+ 47:     }),
+ 48:     open: (i: number) => ({
+ 49:       x: 0,
+ 50:       opacity: 1,
+ 51:       transition: {
+ 52:         type: "spring",
+ 53:         stiffness: 120,
+ 54:         damping: 12,
+ 55:         delay: i * 0.25,
+ 56:       },
+ 57:     }),
+ 58:   };
+ 59:   return (
+ 60:     <div
+ 61:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 62:       data-testid="mobilemenu"
+ 63:     >
+ 64:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 65:       <AnimatePresence>
+ 66:         {isExpanded && (
+ 67:           <motion.div
+ 68:             id="mobile-menu"
+ 69:             data-testid="mobile-menu"
+ 70:             data-cy="mobile-menu"
+ 71:             aria-hidden={!isExpanded}
+ 72:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <motion.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => (
+ 94:                   <motion.li
+ 95:                     key={title}
+ 96:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+ 97:                     data-cy="mobile-menu-item"
+ 98:                     custom={index}
+ 99:                     variants={itemVariants}
+100:                   >
+101:                     {externalLink ? (
+102:                       <a
+103:                         aria-label={name}
+104:                         href={href}
+105:                         target="_blank"
+106:                         rel="noreferrer"
+107:                         data-testid={`mobil-${name}`}
+108:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+109:                       >
+110:                         {name}
+111:                       </a>
+112:                     ) : (
+113:                       <Link
+114:                         href={href ?? ""}
+115:                         data-testid={`mobil-${name}`}
+116:                         prefetch={true}
+117:                         onClick={closeMenu}
+118:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+119:                           pathname === href ? "text-green-400" : ""
+120:                         }`}
+121:                       >
+122:                         <div className="glitch relative" data-text={name}>
+123:                           {name}
+124:                           <motion.span
+125:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+126:                               pathname === href ? "bg-green-400" : "bg-white"
+127:                             }`}
+128:                             initial={{
+129:                               width: pathname === href ? "100%" : "0%",
+130:                             }}
+131:                             animate={{
+132:                               width: pathname === href ? "100%" : "0%",
+133:                             }}
+134:                             transition={{ duration: 0.3 }}
+135:                           />
+136:                         </div>
+137:                       </Link>
+138:                     )}
+139:                   </motion.li>
+140:                 ))}
+141:               </motion.ul>
+142:             </nav>
+143:           </motion.div>
+144:         )}
+145:       </AnimatePresence>
+146:     </div>
+147:   );
+148: };
+149: export default MobileMenu;
 ````
