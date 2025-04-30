@@ -6629,6 +6629,145 @@ tsconfig.json
 64: export default KontaktContent;
 ````
 
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Renders a card displaying information about a single project.
+ 9:  * Uses the Project type definition from Sanity types.
+10:  *
+11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
+12:  * @param {string} props.name - The name of the project.
+13:  * @param {string} [props.description] - A brief description of the project (optional).
+14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+19:  * @returns {JSX.Element} The rendered ProsjektCard component.
+20:  */
+21: const ProsjektCard: React.FC<Project> = ({
+22:   name,
+23:   description,
+24:   subdescription,
+25:   projectimage,
+26:   urlwww,
+27:   urlgithub,
+28:   featured,
+29: }) => {
+30:   return (
+31:     <div
+32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
+33:       data-testid="projectcard"
+34:     >
+35:       <BounceInScroll viewAmount={0.3} instant={featured}>
+36:         <div className="relative w-full md:h-60">
+37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+38:             {projectimage && (
+39:               <img
+40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
+41:                 width={600}
+42:                 src={urlFor(projectimage)
+43:                   .width(600)
+44:                   .fit("max")
+45:                   .quality(100)
+46:                   .auto("format")
+47:                   .url()}
+48:                 alt={name}
+49:               />
+50:             )}
+51:           </div>
+52:         </div>
+53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+55:             {name}
+56:           </h1>
+57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
+58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+59:             {subdescription}
+60:           </p>
+61:           <div className="flex justify-center mt-4">
+62:             {urlwww && urlwww.length > 0 && (
+63:               <Button href={urlwww?.[0]?.url} renderAs="a">
+64:                 Besøk
+65:               </Button>
+66:             )}
+67:             {urlgithub && urlgithub.length > 0 && (
+68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+69:                 GitHub
+70:               </Button>
+71:             )}
+72:           </div>
+73:         </div>
+74:       </BounceInScroll>
+75:     </div>
+76:   );
+77: };
+78: export default ProsjektCard;
+````
+
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10: }
+11: /**
+12:  * Button component that can be rendered as various HTML elements
+13:  * @param {Object} props
+14:  * @param {ReactNode} props.children - The content of the button
+15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+21:  * @returns {JSX.Element} The rendered Button component
+22:  */
+23: const Button = ({
+24:   children,
+25:   href,
+26:   renderAs,
+27:   type = "submit",
+28:   disabled = false,
+29:   download,
+30:   onClick,
+31:   ...props
+32: }: IButtonProps) => {
+33:   const Component = renderAs ?? "button";
+34:   const isLink = renderAs === "a";
+35:   const targetLink = isLink ? "_blank" : undefined;
+36:   return (
+37:     <Component
+38:       type={isLink ? undefined : type}
+39:       data-cy="submit"
+40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
+41:       href={href}
+42:       target={targetLink}
+43:       disabled={disabled}
+44:       data-text={children}
+45:       download={download}
+46:       onClick={onClick}
+47:       {...props}
+48:     >
+49:       {children}
+50:     </Component>
+51:   );
+52: };
+53: export default Button;
+````
+
 ## File: src/components/UI/GenericForm.component.tsx
 ````typescript
  1: import React from "react";
@@ -11048,145 +11187,6 @@ tsconfig.json
 49: export default NavigationLink;
 ````
 
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: /**
- 8:  * Renders a card displaying information about a single project.
- 9:  * Uses the Project type definition from Sanity types.
-10:  *
-11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
-12:  * @param {string} props.name - The name of the project.
-13:  * @param {string} [props.description] - A brief description of the project (optional).
-14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
-19:  * @returns {JSX.Element} The rendered ProsjektCard component.
-20:  */
-21: const ProsjektCard: React.FC<Project> = ({
-22:   name,
-23:   description,
-24:   subdescription,
-25:   projectimage,
-26:   urlwww,
-27:   urlgithub,
-28:   featured,
-29: }) => {
-30:   return (
-31:     <div
-32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
-33:       data-testid="projectcard"
-34:     >
-35:       <BounceInScroll viewAmount={0.3} instant={featured}>
-36:         <div className="relative w-full md:h-60">
-37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-38:             {projectimage && (
-39:               <img
-40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
-41:                 width={600}
-42:                 src={urlFor(projectimage)
-43:                   .width(600)
-44:                   .fit("max")
-45:                   .quality(100)
-46:                   .auto("format")
-47:                   .url()}
-48:                 alt={name}
-49:               />
-50:             )}
-51:           </div>
-52:         </div>
-53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-55:             {name}
-56:           </h1>
-57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
-58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-59:             {subdescription}
-60:           </p>
-61:           <div className="flex justify-center mt-4">
-62:             {urlwww && urlwww.length > 0 && (
-63:               <Button href={urlwww?.[0]?.url} renderAs="a">
-64:                 Besøk
-65:               </Button>
-66:             )}
-67:             {urlgithub && urlgithub.length > 0 && (
-68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-69:                 GitHub
-70:               </Button>
-71:             )}
-72:           </div>
-73:         </div>
-74:       </BounceInScroll>
-75:     </div>
-76:   );
-77: };
-78: export default ProsjektCard;
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10: }
-11: /**
-12:  * Button component that can be rendered as various HTML elements
-13:  * @param {Object} props
-14:  * @param {ReactNode} props.children - The content of the button
-15:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-16:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-17:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-18:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-19:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-20:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-21:  * @returns {JSX.Element} The rendered Button component
-22:  */
-23: const Button = ({
-24:   children,
-25:   href,
-26:   renderAs,
-27:   type = "submit",
-28:   disabled = false,
-29:   download,
-30:   onClick,
-31:   ...props
-32: }: IButtonProps) => {
-33:   const Component = renderAs ?? "button";
-34:   const isLink = renderAs === "a";
-35:   const targetLink = isLink ? "_blank" : undefined;
-36:   return (
-37:     <Component
-38:       type={isLink ? undefined : type}
-39:       data-cy="submit"
-40:       className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
-41:       href={href}
-42:       target={targetLink}
-43:       disabled={disabled}
-44:       data-text={children}
-45:       download={download}
-46:       onClick={onClick}
-47:       {...props}
-48:     >
-49:       {children}
-50:     </Component>
-51:   );
-52: };
-53: export default Button;
-````
-
 ## File: src/components/UI/PageHeader.component.tsx
 ````typescript
  1: import type { ReactNode } from "react";
@@ -14932,7 +14932,7 @@ tsconfig.json
 28:     "@emailjs/browser": "^4.4.1",
 29:     "@hookform/resolvers": "^5.0.1",
 30:     "@portabletext/react": "^3.2.1",
-31:     "@sanity/client": "^6.29.1",
+31:     "@sanity/client": "^7.0.0",
 32:     "@sanity/image-url": "^1.1.0",
 33:     "@vercel/speed-insights": "^1.2.0",
 34:     "clsx": "^2.1.1",
