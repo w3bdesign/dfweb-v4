@@ -11187,6 +11187,108 @@ tsconfig.json
 49: export default NavigationLink;
 ````
 
+## File: src/components/UI/InputField.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import {
+ 3:   UseFormRegister,
+ 4:   FieldValues,
+ 5:   RegisterOptions,
+ 6:   Path,
+ 7: } from "react-hook-form";
+ 8: export interface InputProps<T extends FieldValues> {
+ 9:   readonly name: Path<T>;
+10:   readonly label: string;
+11:   readonly htmlFor: string;
+12:   readonly isRequired?: boolean;
+13:   readonly inputPattern?: RegExp;
+14:   readonly title?: string;
+15:   readonly type?: "input" | "textarea";
+16:   readonly register: UseFormRegister<T>;
+17:   readonly error?: string;
+18: }
+19: /**
+20:  * Creates register options for react-hook-form
+21:  * @template T - Type extending FieldValues
+22:  * @param {boolean} [isRequired] - Whether the field is required
+23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+24:  * @param {string} [title] - Title for the input field
+25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+26:  */
+27: export function createRegisterOptions<T extends FieldValues>(
+28:   isRequired?: boolean,
+29:   inputPattern?: RegExp,
+30:   title?: string
+31: ): RegisterOptions<T, Path<T>> {
+32:   return {
+33:     required: isRequired ? "Dette feltet er påkrevd" : false,
+34:     ...(inputPattern
+35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+36:       : {}),
+37:   };
+38: }
+39: /**
+40:  * InputField component for rendering form inputs
+41:  * @template T - Type extending FieldValues
+42:  * @param {InputProps<T>} props - The props for the InputField component
+43:  * @returns {JSX.Element} The rendered InputField component
+44:  */
+45: function InputField<T extends FieldValues>({
+46:   name,
+47:   label,
+48:   inputPattern,
+49:   isRequired,
+50:   htmlFor,
+51:   title,
+52:   type = "input",
+53:   register,
+54:   error,
+55:   ...props
+56: }: InputProps<T>) {
+57:   const sharedClasses =
+58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
+59:   const registerOptions = createRegisterOptions<T>(
+60:     isRequired,
+61:     inputPattern,
+62:     title
+63:   );
+64:   return (
+65:     <div className="relative my-2 flex flex-col items-center">
+66:       <div className="relative">
+67:         {type === "input" ? (
+68:           <input
+69:             id={htmlFor}
+70:             type="text"
+71:             placeholder={label}
+72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+73:             {...register(name, registerOptions)}
+74:             {...props}
+75:           />
+76:         ) : (
+77:           <textarea
+78:             id={htmlFor}
+79:             placeholder={label}
+80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+81:             {...register(name, registerOptions)}
+82:             {...props}
+83:           ></textarea>
+84:         )}
+85:         <label
+86:           htmlFor={htmlFor}
+87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
+88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
+89:           }`}
+90:         >
+91:           {label}
+92:         </label>
+93:       </div>
+94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+95:     </div>
+96:   );
+97: }
+98: export default InputField;
+````
+
 ## File: src/components/UI/PageHeader.component.tsx
 ````typescript
  1: import type { ReactNode } from "react";
@@ -14667,108 +14769,6 @@ tsconfig.json
 26: })
 ````
 
-## File: src/components/UI/InputField.component.tsx
-````typescript
- 1: import React from "react";
- 2: import {
- 3:   UseFormRegister,
- 4:   FieldValues,
- 5:   RegisterOptions,
- 6:   Path,
- 7: } from "react-hook-form";
- 8: export interface InputProps<T extends FieldValues> {
- 9:   readonly name: Path<T>;
-10:   readonly label: string;
-11:   readonly htmlFor: string;
-12:   readonly isRequired?: boolean;
-13:   readonly inputPattern?: RegExp;
-14:   readonly title?: string;
-15:   readonly type?: "input" | "textarea";
-16:   readonly register: UseFormRegister<T>;
-17:   readonly error?: string;
-18: }
-19: /**
-20:  * Creates register options for react-hook-form
-21:  * @template T - Type extending FieldValues
-22:  * @param {boolean} [isRequired] - Whether the field is required
-23:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
-24:  * @param {string} [title] - Title for the input field
-25:  * @returns {RegisterOptions<T, Path<T>>} Register options object
-26:  */
-27: export function createRegisterOptions<T extends FieldValues>(
-28:   isRequired?: boolean,
-29:   inputPattern?: RegExp,
-30:   title?: string
-31: ): RegisterOptions<T, Path<T>> {
-32:   return {
-33:     required: isRequired ? "Dette feltet er påkrevd" : false,
-34:     ...(inputPattern
-35:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
-36:       : {}),
-37:   };
-38: }
-39: /**
-40:  * InputField component for rendering form inputs
-41:  * @template T - Type extending FieldValues
-42:  * @param {InputProps<T>} props - The props for the InputField component
-43:  * @returns {JSX.Element} The rendered InputField component
-44:  */
-45: function InputField<T extends FieldValues>({
-46:   name,
-47:   label,
-48:   inputPattern,
-49:   isRequired,
-50:   htmlFor,
-51:   title,
-52:   type = "input",
-53:   register,
-54:   error,
-55:   ...props
-56: }: InputProps<T>) {
-57:   const sharedClasses =
-58:     "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
-59:   const registerOptions = createRegisterOptions<T>(
-60:     isRequired,
-61:     inputPattern,
-62:     title
-63:   );
-64:   return (
-65:     <div className="relative my-2 flex flex-col items-center">
-66:       <div className="relative">
-67:         {type === "input" ? (
-68:           <input
-69:             id={htmlFor}
-70:             type="text"
-71:             placeholder={label}
-72:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-73:             {...register(name, registerOptions)}
-74:             {...props}
-75:           />
-76:         ) : (
-77:           <textarea
-78:             id={htmlFor}
-79:             placeholder={label}
-80:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-81:             {...register(name, registerOptions)}
-82:             {...props}
-83:           ></textarea>
-84:         )}
-85:         <label
-86:           htmlFor={htmlFor}
-87:           className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
-88:             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
-89:           }`}
-90:         >
-91:           {label}
-92:         </label>
-93:       </div>
-94:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-95:     </div>
-96:   );
-97: }
-98: export default InputField;
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -14898,102 +14898,6 @@ tsconfig.json
 42:   );
 43: };
 44: export default Header;
-````
-
-## File: package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.0.9",
- 4:   "private": true,
- 5:   "engines": {
- 6:     "node": ">=20.16.0"
- 7:   },
- 8:   "scripts": {
- 9:     "dev": "next dev --turbopack",
-10:     "lhci": "lhci autorun",
-11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-13:     "build": "next build",
-14:     "start": "next start",
-15:     "lint": "next lint",
-16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
-18:     "test:watch": "jest --watch",
-19:     "cypress:open": "cypress open",
-20:     "cypress:headless": "cypress run",
-21:     "e2e": "start-test dev 3000 cypress:headless",
-22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-23:     "ladle": "ladle serve",
-24:     "typegen": "npx sanity typegen generate"
-25:   },
-26:   "dependencies": {
-27:     "@babel/helpers": ">=7.27.0",
-28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.0.1",
-30:     "@portabletext/react": "^3.2.1",
-31:     "@sanity/client": "^7.0.0",
-32:     "@sanity/image-url": "^1.1.0",
-33:     "@vercel/speed-insights": "^1.2.0",
-34:     "clsx": "^2.1.1",
-35:     "cookie": ">=1.0.2",
-36:     "envalid": "^8.0.0",
-37:     "jest": "^29.7.0",
-38:     "motion": "^12.9.2",
-39:     "next": "15.3.1",
-40:     "next-sanity": "^9.10.2",
-41:     "path-to-regexp": "^8.2.0",
-42:     "react": "^19.1.0",
-43:     "react-dom": "^19.1.0",
-44:     "react-error-boundary": "^5.0.0",
-45:     "react-hook-form": "^7.56.1",
-46:     "react-icons": "^5.5.0",
-47:     "sanity": "^3.87.0",
-48:     "sitemap": "^8.0.0",
-49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.24.3"
-51:   },
-52:   "devDependencies": {
-53:     "@jest/expect": "^29.7.0",
-54:     "@jest/globals": "^29.7.0",
-55:     "@ladle/react": "^5.0.2",
-56:     "@lhci/cli": "^0.14.0",
-57:     "@playwright/test": "^1.52.0",
-58:     "@portabletext/types": "^2.0.13",
-59:     "@tailwindcss/postcss": "^4.1.4",
-60:     "@testing-library/cypress": "^10.0.3",
-61:     "@testing-library/jest-dom": "^6.6.3",
-62:     "@testing-library/react": "^16.3.0",
-63:     "@testing-library/user-event": "^14.6.1",
-64:     "@types/jest": "^29.5.14",
-65:     "@types/node": "^22.15.3",
-66:     "@types/react": "^19.1.2",
-67:     "@types/react-dom": "^19.1.3",
-68:     "@typescript-eslint/eslint-plugin": "^8.31.1",
-69:     "@typescript-eslint/parser": "^8.31.1",
-70:     "axe-core": "^4.10.3",
-71:     "cypress": "14.3.2",
-72:     "cypress-axe": "^1.6.0",
-73:     "eslint": "9.25.1",
-74:     "eslint-config-next": "15.3.1",
-75:     "eslint-plugin-jest": "^28.11.0",
-76:     "eslint-plugin-jsx-a11y": "^6.10.2",
-77:     "eslint-plugin-react": "^7.37.5",
-78:     "eslint-plugin-react-hooks": "^5.2.0",
-79:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
-80:     "eslint-plugin-testing-library": "^7.1.1",
-81:     "expect": "^29.7.0",
-82:     "jest-environment-jsdom": "^29.7.0",
-83:     "jest-extended": "^4.0.2",
-84:     "jsdom-testing-mocks": "^1.13.1",
-85:     "postcss": "^8.5.3",
-86:     "prettier": "3.5.3",
-87:     "tailwindcss": "^4.1.4",
-88:     "ts-jest": "^29.3.2",
-89:     "typescript": "^5.8.3",
-90:     "wait-on": "^8.0.3"
-91:   }
-92: }
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
@@ -15147,4 +15051,100 @@ tsconfig.json
 147:   );
 148: };
 149: export default MobileMenu;
+````
+
+## File: package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "version": "1.0.9",
+ 4:   "private": true,
+ 5:   "engines": {
+ 6:     "node": ">=20.16.0"
+ 7:   },
+ 8:   "scripts": {
+ 9:     "dev": "next dev --turbopack",
+10:     "lhci": "lhci autorun",
+11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+13:     "build": "next build",
+14:     "start": "next start",
+15:     "lint": "next lint",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
+18:     "test:watch": "jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate"
+25:   },
+26:   "dependencies": {
+27:     "@babel/helpers": ">=7.27.0",
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.0.1",
+30:     "@portabletext/react": "^3.2.1",
+31:     "@sanity/client": "^7.0.0",
+32:     "@sanity/image-url": "^1.1.0",
+33:     "@vercel/speed-insights": "^1.2.0",
+34:     "clsx": "^2.1.1",
+35:     "cookie": ">=1.0.2",
+36:     "envalid": "^8.0.0",
+37:     "jest": "^29.7.0",
+38:     "motion": "^12.9.2",
+39:     "next": "15.3.1",
+40:     "next-sanity": "^9.10.2",
+41:     "path-to-regexp": "^8.2.0",
+42:     "react": "^19.1.0",
+43:     "react-dom": "^19.1.0",
+44:     "react-error-boundary": "^5.0.0",
+45:     "react-hook-form": "^7.56.1",
+46:     "react-icons": "^5.5.0",
+47:     "sanity": "^3.87.0",
+48:     "sitemap": "^8.0.0",
+49:     "ts-node": "^10.9.2",
+50:     "zod": "^3.24.3"
+51:   },
+52:   "devDependencies": {
+53:     "@jest/expect": "^29.7.0",
+54:     "@jest/globals": "^29.7.0",
+55:     "@ladle/react": "^5.0.2",
+56:     "@lhci/cli": "^0.14.0",
+57:     "@playwright/test": "^1.52.0",
+58:     "@portabletext/types": "^2.0.13",
+59:     "@tailwindcss/postcss": "^4.1.5",
+60:     "@testing-library/cypress": "^10.0.3",
+61:     "@testing-library/jest-dom": "^6.6.3",
+62:     "@testing-library/react": "^16.3.0",
+63:     "@testing-library/user-event": "^14.6.1",
+64:     "@types/jest": "^29.5.14",
+65:     "@types/node": "^22.15.3",
+66:     "@types/react": "^19.1.2",
+67:     "@types/react-dom": "^19.1.3",
+68:     "@typescript-eslint/eslint-plugin": "^8.31.1",
+69:     "@typescript-eslint/parser": "^8.31.1",
+70:     "axe-core": "^4.10.3",
+71:     "cypress": "14.3.2",
+72:     "cypress-axe": "^1.6.0",
+73:     "eslint": "9.25.1",
+74:     "eslint-config-next": "15.3.1",
+75:     "eslint-plugin-jest": "^28.11.0",
+76:     "eslint-plugin-jsx-a11y": "^6.10.2",
+77:     "eslint-plugin-react": "^7.37.5",
+78:     "eslint-plugin-react-hooks": "^5.2.0",
+79:     "eslint-plugin-test-rules": "link:eslint-plugin-test-rules",
+80:     "eslint-plugin-testing-library": "^7.1.1",
+81:     "expect": "^29.7.0",
+82:     "jest-environment-jsdom": "^29.7.0",
+83:     "jest-extended": "^4.0.2",
+84:     "jsdom-testing-mocks": "^1.13.1",
+85:     "postcss": "^8.5.3",
+86:     "prettier": "3.5.3",
+87:     "tailwindcss": "^4.1.5",
+88:     "ts-jest": "^29.3.2",
+89:     "typescript": "^5.8.3",
+90:     "wait-on": "^8.0.3"
+91:   }
+92: }
 ````
