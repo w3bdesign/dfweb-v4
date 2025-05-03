@@ -12,9 +12,6 @@ const customJestConfig: Config = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
   testEnvironment: "jest-environment-jsdom",
-  transformIgnorePatterns: [
-    "/node_modules/(?!react-error-boundary/)",
-  ],
   moduleNameMapper: {
     "@/(.*)": "<rootDir>/src/$1",
   },
