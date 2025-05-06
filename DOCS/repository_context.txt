@@ -5349,6 +5349,49 @@ tsconfig.json
 14: }
 ````
 
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { client } from "@/lib/sanity/client";
+ 2: import { projectsQuery } from "@/lib/sanity/queries";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: import { isSanityApiError } from "@/types/sanity-errors";
+ 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 6:   return client.fetch(
+ 7:     projectsQuery,
+ 8:     {},
+ 9:     {
+10:       next: { revalidate: 3600 },
+11:     }
+12:   );
+13: }
+14: function handleError(error: unknown): never {
+15:   console.error("Error fetching projects:", error);
+16:   if (isSanityApiError(error)) {
+17:     switch (error.statusCode) {
+18:       case 401:
+19:         throw new Error("Authentication failed");
+20:       case 403:
+21:         throw new Error("Insufficient permissions");
+22:       case 429:
+23:         throw new Error("Rate limit exceeded");
+24:       default:
+25:         throw new Error(`Sanity API error: ${error.message}`);
+26:     }
+27:   }
+28:   if (error instanceof Error && error.name === "TimeoutError") {
+29:     throw new Error("Request timed out");
+30:   }
+31:   throw new Error("Failed to fetch projects");
+32: }
+33: export async function getProjects(): Promise<Project[]> {
+34:   try {
+35:     return await fetchProjectsFromSanity();
+36:   } catch (error) {
+37:     handleError(error);
+38:   }
+39: }
+````
+
 ## File: src/app/prosjekter/error.tsx
 ````typescript
  1: "use client";
@@ -14137,49 +14180,6 @@ tsconfig.json
 169: });
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     }
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     return await fetchProjectsFromSanity();
-36:   } catch (error) {
-37:     handleError(error);
-38:   }
-39: }
-````
-
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -14886,7 +14886,7 @@ tsconfig.json
 22:   },
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.2",
+25:     "@types/react": "^19.1.3",
 26:     "eslint": "^9.26.0",
 27:     "prettier": "^3.5.3",
 28:     "typescript": "^5.8.3"
@@ -15120,7 +15120,7 @@ tsconfig.json
 63:     "@testing-library/user-event": "^14.6.1",
 64:     "@types/jest": "^29.5.14",
 65:     "@types/node": "^22.15.3",
-66:     "@types/react": "^19.1.2",
+66:     "@types/react": "^19.1.3",
 67:     "@types/react-dom": "^19.1.3",
 68:     "@typescript-eslint/eslint-plugin": "^8.32.0",
 69:     "@typescript-eslint/parser": "^8.32.0",
