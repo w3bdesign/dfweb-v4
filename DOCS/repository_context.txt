@@ -5793,6 +5793,38 @@ tsconfig.json
 13: }
 ````
 
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import RootLayout from "@/app/RootLayout";
+ 3: import { client } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 6:   loading: () => <div>Loading hero...</div>,
+ 7: });
+ 8: const DynamicIndexContent = dynamic(
+ 9:   () => import("@/components/Index/IndexContent.component"),
+10:   {
+11:     loading: () => <div>Loading content...</div>,
+12:   }
+13: );
+14: export default async function HomePage() {
+15:   const pageContent = await client.fetch(pageContentQuery);
+16:   return (
+17:     <RootLayout>
+18:       <main>
+19:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+20:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+21:         </div>
+22:         {pageContent?.content && (
+23:           <DynamicIndexContent pageContent={pageContent.content} />
+24:         )}
+25:       </main>
+26:     </RootLayout>
+27:   );
+28: }
+````
+
 ## File: src/components/Animations/types/Animations.types.ts
 ````typescript
  1: import { ReactNode } from "react";
@@ -11412,38 +11444,6 @@ tsconfig.json
 17: });
 ````
 
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import RootLayout from "@/app/RootLayout";
- 3: import { client } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 6:   loading: () => <div>Loading hero...</div>,
- 7: });
- 8: const DynamicIndexContent = dynamic(
- 9:   () => import("@/components/Index/IndexContent.component"),
-10:   {
-11:     loading: () => <div>Loading content...</div>,
-12:   }
-13: );
-14: export default async function HomePage() {
-15:   const pageContent = await client.fetch(pageContentQuery);
-16:   return (
-17:     <RootLayout>
-18:       <main>
-19:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-20:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-21:         </div>
-22:         {pageContent?.content && (
-23:           <DynamicIndexContent pageContent={pageContent.content} />
-24:         )}
-25:       </main>
-26:     </RootLayout>
-27:   );
-28: }
-````
-
 ## File: src/components/CV/CVContent.component.tsx
 ````typescript
   1: import PageHeader from "@/components/UI/PageHeader.component";
@@ -14137,6 +14137,49 @@ tsconfig.json
 169: });
 ````
 
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { client } from "@/lib/sanity/client";
+ 2: import { projectsQuery } from "@/lib/sanity/queries";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: import { isSanityApiError } from "@/types/sanity-errors";
+ 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 6:   return client.fetch(
+ 7:     projectsQuery,
+ 8:     {},
+ 9:     {
+10:       next: { revalidate: 3600 },
+11:     }
+12:   );
+13: }
+14: function handleError(error: unknown): never {
+15:   console.error("Error fetching projects:", error);
+16:   if (isSanityApiError(error)) {
+17:     switch (error.statusCode) {
+18:       case 401:
+19:         throw new Error("Authentication failed");
+20:       case 403:
+21:         throw new Error("Insufficient permissions");
+22:       case 429:
+23:         throw new Error("Rate limit exceeded");
+24:       default:
+25:         throw new Error(`Sanity API error: ${error.message}`);
+26:     }
+27:   }
+28:   if (error instanceof Error && error.name === "TimeoutError") {
+29:     throw new Error("Request timed out");
+30:   }
+31:   throw new Error("Failed to fetch projects");
+32: }
+33: export async function getProjects(): Promise<Project[]> {
+34:   try {
+35:     return await fetchProjectsFromSanity();
+36:   } catch (error) {
+37:     handleError(error);
+38:   }
+39: }
+````
+
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -14769,49 +14812,6 @@ tsconfig.json
 26: })
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     }
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     return await fetchProjectsFromSanity();
-36:   } catch (error) {
-37:     handleError(error);
-38:   }
-39: }
-````
-
 ## File: src/components/Layout/Header.component.tsx
 ````typescript
  1: "use client";
@@ -15122,8 +15122,8 @@ tsconfig.json
 65:     "@types/node": "^22.15.3",
 66:     "@types/react": "^19.1.2",
 67:     "@types/react-dom": "^19.1.3",
-68:     "@typescript-eslint/eslint-plugin": "^8.31.1",
-69:     "@typescript-eslint/parser": "^8.31.1",
+68:     "@typescript-eslint/eslint-plugin": "^8.32.0",
+69:     "@typescript-eslint/parser": "^8.32.0",
 70:     "axe-core": "^4.10.3",
 71:     "cypress": "14.3.2",
 72:     "cypress-axe": "^1.6.0",
