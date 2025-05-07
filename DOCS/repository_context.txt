@@ -6920,6 +6920,59 @@ tsconfig.json
 64: export default KontaktContent;
 ````
 
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import { motion } from "motion/react";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: export interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-green-400" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <motion.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-green-400" : "bg-white"
+36:           }`}
+37:           initial={{
+38:             width: isActive ? "100%" : "0%",
+39:           }}
+40:           variants={{
+41:             hover: { width: "100%" },
+42:           }}
+43:           transition={{ duration: 0.3 }}
+44:         />
+45:       </div>
+46:     </Link>
+47:   </MotionDiv>
+48: );
+49: export default NavigationLink;
+````
+
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -7889,6 +7942,27 @@ tsconfig.json
 17:   }, []);
 18:   return isMobile;
 19: }
+````
+
+## File: src/hooks/useNavigation.ts
+````typescript
+ 1: import { usePathname } from "next/navigation";
+ 2: import type { Navigation } from "@/types/sanity.types";
+ 3: /**
+ 4:  * Custom hook for managing navigation state and logic
+ 5:  * @param {NavigationLink[]} navigationLinks - Array of navigation links (using the imported type)
+ 6:  * @returns {Object} An object containing navigation-related data and functions
+ 7:  * @property {NavigationLink[]} navigationLinks - The array of navigation links passed to the hook
+ 8:  * @property {function} isLinkActive - A function that checks if a given link is currently active
+ 9:  */
+10: export function useNavigation(navigationLinks: Navigation[]) {
+11:   const pathname = usePathname();
+12:   const isLinkActive = (href: string) => pathname === href;
+13:   return {
+14:     navigationLinks,
+15:     isLinkActive,
+16:   };
+17: }
 ````
 
 ## File: src/lib/framer/client.ts
@@ -11863,59 +11937,6 @@ tsconfig.json
 48: export default Hamburger;
 ````
 
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import { motion } from "motion/react";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: export interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-green-400" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <motion.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-green-400" : "bg-white"
-36:           }`}
-37:           initial={{
-38:             width: isActive ? "100%" : "0%",
-39:           }}
-40:           variants={{
-41:             hover: { width: "100%" },
-42:           }}
-43:           transition={{ duration: 0.3 }}
-44:         />
-45:       </div>
-46:     </Link>
-47:   </MotionDiv>
-48: );
-49: export default NavigationLink;
-````
-
 ## File: src/components/UI/Tabs.component.tsx
 ````typescript
   1: "use client";
@@ -14761,27 +14782,6 @@ tsconfig.json
 25: });
 ````
 
-## File: src/hooks/useNavigation.ts
-````typescript
- 1: import { usePathname } from "next/navigation";
- 2: import type { Navigation } from "@/types/sanity.types";
- 3: /**
- 4:  * Custom hook for managing navigation state and logic
- 5:  * @param {NavigationLink[]} navigationLinks - Array of navigation links (using the imported type)
- 6:  * @returns {Object} An object containing navigation-related data and functions
- 7:  * @property {NavigationLink[]} navigationLinks - The array of navigation links passed to the hook
- 8:  * @property {function} isLinkActive - A function that checks if a given link is currently active
- 9:  */
-10: export function useNavigation(navigationLinks: Navigation[]) {
-11:   const pathname = usePathname();
-12:   const isLinkActive = (href: string) => pathname === href;
-13:   return {
-14:     navigationLinks,
-15:     isLinkActive,
-16:   };
-17: }
-````
-
 ## File: studio/schemaTypes/documents/settings.ts
 ````typescript
  1: import {defineField, defineType} from 'sanity'
@@ -15092,7 +15092,7 @@ tsconfig.json
 35:     "cookie": ">=1.0.2",
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
-38:     "motion": "^12.9.7",
+38:     "motion": "^12.10.0",
 39:     "next": "15.3.1",
 40:     "next-sanity": "^9.10.6",
 41:     "path-to-regexp": "^8.2.0",
