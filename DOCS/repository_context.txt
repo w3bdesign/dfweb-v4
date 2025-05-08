@@ -4265,6 +4265,98 @@ tsconfig.json
 117: });
 ````
 
+## File: src/__tests__/Layout/Header.test.tsx
+````typescript
+ 1: /**
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import { render, screen } from "@testing-library/react";
+ 5: import Header from "@/components/Layout/Header.component";
+ 6: // Mock the usePathname hook
+ 7: jest.mock("next/navigation", () => ({
+ 8:   usePathname: () => "/",
+ 9: }));
+10: // Mock the MobileMenu component
+11: jest.mock("@/components/Layout/MobileMenu.component", () => {
+12:   return function MockMobileMenu() {
+13:     return <div data-testid="mobile-menu">Mobile Menu</div>;
+14:   };
+15: });
+16: describe("Header", () => {
+17:   const mockNavigationLinks = [
+18:     { _key: "home", name: "Hjem", href: "/", title: "Hjem", hash: "", externalLink: false },
+19:     {
+20:       _key: "projects",
+21:       name: "Prosjekter",
+22:       href: "/prosjekter",
+23:       title: "Prosjekter",
+24:       hash: "",
+25:       externalLink: false,
+26:     },
+27:     { _key: "cv", name: "CV", href: "/cv", title: "CV", hash: "", externalLink: false },
+28:     {
+29:       _key: "contact",
+30:       name: "Kontakt",
+31:       href: "/kontakt",
+32:       title: "Kontakt",
+33:       hash: "",
+34:       externalLink: false,
+35:     },
+36:   ];
+37:   describe("rendering", () => {
+38:     it("renders header container", () => {
+39:       // Arrange
+40:       const expectedRole = "banner";
+41:       // Act
+42:       render(<Header navigation={{
+43:         _id: "mock-nav",
+44:         _type: "navigation",
+45:         _createdAt: "2024-01-01",
+46:         _updatedAt: "2024-01-01",
+47:         _rev: "mock-rev",
+48:         links: mockNavigationLinks
+49:       }} />);
+50:       const header = screen.getByRole(expectedRole);
+51:       // Assert
+52:       expect(header).toBeInTheDocument();
+53:     });
+54:     it("renders all navigation links with correct attributes", () => {
+55:       // Arrange
+56:       render(<Header navigation={{
+57:         _id: "mock-nav",
+58:         _type: "navigation",
+59:         _createdAt: "2024-01-01",
+60:         _updatedAt: "2024-01-01",
+61:         _rev: "mock-rev",
+62:         links: mockNavigationLinks
+63:       }} />);
+64:       // Act & Assert
+65:       mockNavigationLinks.forEach((link) => {
+66:         const linkElement = screen.getByText(link.name);
+67:         expect(linkElement).toBeInTheDocument();
+68:         expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
+69:       });
+70:     });
+71:     it("renders mobile menu component", () => {
+72:       // Arrange
+73:       const expectedTestId = "mobile-menu";
+74:       // Act
+75:       render(<Header navigation={{
+76:         _id: "mock-nav",
+77:         _type: "navigation",
+78:         _createdAt: "2024-01-01",
+79:         _updatedAt: "2024-01-01",
+80:         _rev: "mock-rev",
+81:         links: mockNavigationLinks
+82:       }} />);
+83:       const mobileMenu = screen.getByTestId(expectedTestId);
+84:       // Assert
+85:       expect(mobileMenu).toBeInTheDocument();
+86:     });
+87:   });
+88: });
+````
+
 ## File: src/__tests__/Prosjekter/actions.test.ts
 ````typescript
   1: import { getProjects } from "@/app/prosjekter/actions";
@@ -11781,98 +11873,6 @@ tsconfig.json
 17: });
 ````
 
-## File: src/__tests__/Layout/Header.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import { render, screen } from "@testing-library/react";
- 5: import Header from "@/components/Layout/Header.component";
- 6: // Mock the usePathname hook
- 7: jest.mock("next/navigation", () => ({
- 8:   usePathname: () => "/",
- 9: }));
-10: // Mock the MobileMenu component
-11: jest.mock("@/components/Layout/MobileMenu.component", () => {
-12:   return function MockMobileMenu() {
-13:     return <div data-testid="mobile-menu">Mobile Menu</div>;
-14:   };
-15: });
-16: describe("Header", () => {
-17:   const mockNavigationLinks = [
-18:     { _key: "home", name: "Hjem", href: "/", title: "Hjem", hash: "", externalLink: false },
-19:     {
-20:       _key: "projects",
-21:       name: "Prosjekter",
-22:       href: "/prosjekter",
-23:       title: "Prosjekter",
-24:       hash: "",
-25:       externalLink: false,
-26:     },
-27:     { _key: "cv", name: "CV", href: "/cv", title: "CV", hash: "", externalLink: false },
-28:     {
-29:       _key: "contact",
-30:       name: "Kontakt",
-31:       href: "/kontakt",
-32:       title: "Kontakt",
-33:       hash: "",
-34:       externalLink: false,
-35:     },
-36:   ];
-37:   describe("rendering", () => {
-38:     it("renders header container", () => {
-39:       // Arrange
-40:       const expectedRole = "banner";
-41:       // Act
-42:       render(<Header navigation={{
-43:         _id: "mock-nav",
-44:         _type: "navigation",
-45:         _createdAt: "2024-01-01",
-46:         _updatedAt: "2024-01-01",
-47:         _rev: "mock-rev",
-48:         links: mockNavigationLinks
-49:       }} />);
-50:       const header = screen.getByRole(expectedRole);
-51:       // Assert
-52:       expect(header).toBeInTheDocument();
-53:     });
-54:     it("renders all navigation links with correct attributes", () => {
-55:       // Arrange
-56:       render(<Header navigation={{
-57:         _id: "mock-nav",
-58:         _type: "navigation",
-59:         _createdAt: "2024-01-01",
-60:         _updatedAt: "2024-01-01",
-61:         _rev: "mock-rev",
-62:         links: mockNavigationLinks
-63:       }} />);
-64:       // Act & Assert
-65:       mockNavigationLinks.forEach((link) => {
-66:         const linkElement = screen.getByText(link.name);
-67:         expect(linkElement).toBeInTheDocument();
-68:         expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
-69:       });
-70:     });
-71:     it("renders mobile menu component", () => {
-72:       // Arrange
-73:       const expectedTestId = "mobile-menu";
-74:       // Act
-75:       render(<Header navigation={{
-76:         _id: "mock-nav",
-77:         _type: "navigation",
-78:         _createdAt: "2024-01-01",
-79:         _updatedAt: "2024-01-01",
-80:         _rev: "mock-rev",
-81:         links: mockNavigationLinks
-82:       }} />);
-83:       const mobileMenu = screen.getByTestId(expectedTestId);
-84:       // Assert
-85:       expect(mobileMenu).toBeInTheDocument();
-86:     });
-87:   });
-88: });
-````
-
 ## File: src/app/RootLayout.tsx
 ````typescript
  1: import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -14751,56 +14751,6 @@ tsconfig.json
 169: });
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import "./globals.css";
- 4: import "./glitch.css";
- 5: import SkipLink from "@/components/UI/SkipLink.component";
- 6: const inter = Inter({ subsets: ["latin"] });
- 7: export const metadata: Metadata = {
- 8:   title: "Forside - Dfweb",
- 9:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-10: }; 
-11: export default function RootLayout({
-12:   children,
-13: }: Readonly<{
-14:   children: React.ReactNode;
-15: }>) {
-16:   return (
-17:     <html lang="en">
-18:       <head>
-19:         <link rel="icon" href="/favicon.ico" />
-20:         <link rel="apple-touch-icon" href="/logo.png" />
-21:         <meta property="og:title" content="Daniel Fjeldstad" />
-22:         <meta name="author" content="Daniel Fjeldstad" />
-23:         <meta property="og:locale" content="nb_NO" />
-24:         <meta
-25:           name="description"
-26:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-27:         />
-28:         <meta
-29:           property="og:description"
-30:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-31:         />
-32:         <meta property="og:url" content="https://www.dfweb.no/" />
-33:         <meta property="og:site_name" content="dfweb.no" />
-34:         <meta name="theme-color" content="#004014" />
-35:       </head>
-36:       <body
-37:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-38:       >
-39:         <SkipLink />
-40:         <div id="main-content" className="grow">
-41:           {children}
-42:         </div>
-43:       </body>
-44:     </html>
-45:   );
-46: }
-````
-
 ## File: src/e2e/cypress/component/Hero.cy.tsx
 ````typescript
  1: /// <reference types="cypress"/>
@@ -14858,6 +14808,56 @@ tsconfig.json
 24:     },
 25:   },
 26: })
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import "./globals.css";
+ 4: import "./glitch.css";
+ 5: import SkipLink from "@/components/UI/SkipLink.component";
+ 6: const inter = Inter({ subsets: ["latin"] });
+ 7: export const metadata: Metadata = {
+ 8:   title: "Forside - Dfweb",
+ 9:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+10: }; 
+11: export default function RootLayout({
+12:   children,
+13: }: Readonly<{
+14:   children: React.ReactNode;
+15: }>) {
+16:   return (
+17:     <html lang="nb">
+18:       <head>
+19:         <link rel="icon" href="/favicon.ico" />
+20:         <link rel="apple-touch-icon" href="/logo.png" />
+21:         <meta property="og:title" content="Daniel Fjeldstad" />
+22:         <meta name="author" content="Daniel Fjeldstad" />
+23:         <meta property="og:locale" content="nb_NO" />
+24:         <meta
+25:           name="description"
+26:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+27:         />
+28:         <meta
+29:           property="og:description"
+30:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+31:         />
+32:         <meta property="og:url" content="https://www.dfweb.no/" />
+33:         <meta property="og:site_name" content="dfweb.no" />
+34:         <meta name="theme-color" content="#004014" />
+35:       </head>
+36:       <body
+37:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+38:       >
+39:         <SkipLink />
+40:         <div id="main-content" className="grow">
+41:           {children}
+42:         </div>
+43:       </body>
+44:     </html>
+45:   );
+46: }
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
