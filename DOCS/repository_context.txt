@@ -6920,6 +6920,58 @@ tsconfig.json
 64: export default KontaktContent;
 ````
 
+## File: src/components/Layout/DesktopNavigation.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { usePathname } from "next/navigation";
+ 3: import { MotionLi, MotionUl } from "@/lib/framer/client";
+ 4: import NavigationLinkComponent from "./NavigationLink.component";
+ 5: import type { Navigation } from "@/types/sanity.types";
+ 6: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+ 7: const DesktopNavigation: React.FC<{
+ 8:   navigationLinks: NavigationLinksArray;
+ 9: }> = ({ navigationLinks }) => {
+10:   const pathname = usePathname();
+11:   const isLinkActive = (href: string) => pathname === href;
+12:   return (
+13:     <MotionUl
+14:       className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5"
+15:       variants={{
+16:         hidden: { opacity: 0 },
+17:         visible: {
+18:           opacity: 1,
+19:           transition: {
+20:             staggerChildren: 0.1,
+21:             delayChildren: 0.3,
+22:           },
+23:         },
+24:       }}
+25:       initial="hidden"
+26:       animate="visible"
+27:     >
+28:       {navigationLinks.map((link) => (
+29:         <MotionLi
+30:           className="h-3/4 flex items-center justify-center relative"
+31:           key={link._key ?? link.title}
+32:           variants={{
+33:             hidden: { y: -20, opacity: 0 },
+34:             visible: { y: 0, opacity: 1 },
+35:           }}
+36:           transition={{ duration: 0.3 }}
+37:         >
+38:           <NavigationLinkComponent
+39:             name={link.title ?? ""}
+40:             href={link.href ?? ""}
+41:             isActive={isLinkActive(link.href ?? "")}
+42:           />
+43:         </MotionLi>
+44:       ))}
+45:     </MotionUl>
+46:   );
+47: };
+48: export default DesktopNavigation;
+````
+
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -9543,6 +9595,126 @@ tsconfig.json
 102: }
 ````
 
+## File: studio/schemaTypes/documents/navigation.ts
+````typescript
+  1: import {
+  2:   RiNavigationLine,
+  3:   RiHome4Line,
+  4:   RiProjectorLine,
+  5:   RiFileList3Line,
+  6:   RiGithubLine,
+  7:   RiMailLine,
+  8: } from 'react-icons/ri'
+  9: import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
+ 10: const iconMap = {
+ 11:   RiHome4Line,
+ 12:   RiProjectorLine,
+ 13:   RiFileList3Line,
+ 14:   RiGithubLine,
+ 15:   RiMailLine,
+ 16: }
+ 17: const requiredString = (rule: StringRule) => rule.required()
+ 18: const requiredBoolean = (rule: BooleanRule) => rule.required()
+ 19: export default defineType({
+ 20:   name: 'navigation',
+ 21:   title: 'Navigation',
+ 22:   type: 'document',
+ 23:   icon: RiNavigationLine,
+ 24:   fields: [
+ 25:     defineField({
+ 26:       title: 'Title',
+ 27:       name: 'title',
+ 28:       type: 'string',
+ 29:       validation: requiredString,
+ 30:     }),
+ 31:     defineField({
+ 32:       name: 'links',
+ 33:       title: 'Navigation Links',
+ 34:       type: 'array',
+ 35:       of: [
+ 36:         {
+ 37:           type: 'object',
+ 38:           fields: [
+ 39:             defineField({
+ 40:               name: 'title',
+ 41:               type: 'string',
+ 42:               title: 'Title',
+ 43:               validation: requiredString,
+ 44:             }),
+ 45:             defineField({
+ 46:               name: 'name',
+ 47:               type: 'string',
+ 48:               title: 'Name',
+ 49:               validation: requiredString,
+ 50:             }),
+ 51:             defineField({
+ 52:               name: 'hash',
+ 53:               type: 'string',
+ 54:               title: 'Hash',
+ 55:               validation: requiredString,
+ 56:             }),
+ 57:             defineField({
+ 58:               name: 'href',
+ 59:               type: 'string',
+ 60:               title: 'Href',
+ 61:               validation: requiredString,
+ 62:             }),
+ 63:             defineField({
+ 64:               name: 'externalLink',
+ 65:               type: 'boolean',
+ 66:               title: 'External Link',
+ 67:               validation: requiredBoolean,
+ 68:             }),
+ 69:             defineField({
+ 70:               name: 'icon',
+ 71:               title: 'Icon',
+ 72:               type: 'string',
+ 73:               options: {
+ 74:                 list: [
+ 75:                   {title: 'Home', value: 'RiHome4Line'},
+ 76:                   {title: 'Projects', value: 'RiProjectorLine'},
+ 77:                   {title: 'CV', value: 'RiFileList3Line'},
+ 78:                   {title: 'GitHub', value: 'RiGithubLine'},
+ 79:                   {title: 'Contact', value: 'RiMailLine'},
+ 80:                 ],
+ 81:               },
+ 82:             }),
+ 83:           ],
+ 84:           preview: {
+ 85:             select: {
+ 86:               title: 'title',
+ 87:               icon: 'icon',
+ 88:             },
+ 89:             prepare(selection) {
+ 90:               const {title, icon} = selection
+ 91:               return {
+ 92:                 title,
+ 93:                 media:
+ 94:                   icon && icon in iconMap
+ 95:                     ? iconMap[icon as keyof typeof iconMap]
+ 96:                     : RiNavigationLine,
+ 97:               }
+ 98:             },
+ 99:           },
+100:         },
+101:       ],
+102:     }),
+103:   ],
+104:   preview: {
+105:     select: {
+106:       title: 'title',
+107:     },
+108:     prepare(selection) {
+109:       const {title} = selection
+110:       return {
+111:         title,
+112:         media: RiNavigationLine,
+113:       }
+114:     },
+115:   },
+116: })
+````
+
 ## File: studio/schemaTypes/documents/page.ts
 ````typescript
  1: import {RiPagesLine} from 'react-icons/ri'
@@ -11850,58 +12022,6 @@ tsconfig.json
 73: export default Section;
 ````
 
-## File: src/components/Layout/DesktopNavigation.component.tsx
-````typescript
- 1: import React from "react";
- 2: import { usePathname } from "next/navigation";
- 3: import { MotionLi, MotionUl } from "@/lib/framer/client";
- 4: import NavigationLinkComponent from "./NavigationLink.component";
- 5: import type { Navigation } from "@/types/sanity.types";
- 6: type NavigationLinksArray = NonNullable<Navigation["links"]>;
- 7: const DesktopNavigation: React.FC<{
- 8:   navigationLinks: NavigationLinksArray;
- 9: }> = ({ navigationLinks }) => {
-10:   const pathname = usePathname();
-11:   const isLinkActive = (href: string) => pathname === href;
-12:   return (
-13:     <MotionUl
-14:       className="hidden md:flex md:w-[22rem] flex-wrap items-center justify-center gap-y-1 text-[0.9rem] font-medium text-slate-200 sm:w-[initial] sm:flex-nowrap sm:gap-5"
-15:       variants={{
-16:         hidden: { opacity: 0 },
-17:         visible: {
-18:           opacity: 1,
-19:           transition: {
-20:             staggerChildren: 0.1,
-21:             delayChildren: 0.3,
-22:           },
-23:         },
-24:       }}
-25:       initial="hidden"
-26:       animate="visible"
-27:     >
-28:       {navigationLinks.map((link) => (
-29:         <MotionLi
-30:           className="h-3/4 flex items-center justify-center relative"
-31:           key={link._key ?? link.title}
-32:           variants={{
-33:             hidden: { y: -20, opacity: 0 },
-34:             visible: { y: 0, opacity: 1 },
-35:           }}
-36:           transition={{ duration: 0.3 }}
-37:         >
-38:           <NavigationLinkComponent
-39:             name={link.title ?? ""}
-40:             href={link.href ?? ""}
-41:             isActive={isLinkActive(link.href ?? "")}
-42:           />
-43:         </MotionLi>
-44:       ))}
-45:     </MotionUl>
-46:   );
-47: };
-48: export default DesktopNavigation;
-````
-
 ## File: src/components/Layout/Footer.component.tsx
 ````typescript
  1: "use client";
@@ -12567,126 +12687,6 @@ tsconfig.json
 17:     "eslint": ">=9.26.0"
 18:   }
 19: }
-````
-
-## File: studio/schemaTypes/documents/navigation.ts
-````typescript
-  1: import {
-  2:   RiNavigationLine,
-  3:   RiHome4Line,
-  4:   RiProjectorLine,
-  5:   RiFileList3Line,
-  6:   RiGithubLine,
-  7:   RiMailLine,
-  8: } from 'react-icons/ri'
-  9: import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
- 10: const iconMap = {
- 11:   RiHome4Line,
- 12:   RiProjectorLine,
- 13:   RiFileList3Line,
- 14:   RiGithubLine,
- 15:   RiMailLine,
- 16: }
- 17: const requiredString = (rule: StringRule) => rule.required()
- 18: const requiredBoolean = (rule: BooleanRule) => rule.required()
- 19: export default defineType({
- 20:   name: 'navigation',
- 21:   title: 'Navigation',
- 22:   type: 'document',
- 23:   icon: RiNavigationLine,
- 24:   fields: [
- 25:     defineField({
- 26:       title: 'Title',
- 27:       name: 'title',
- 28:       type: 'string',
- 29:       validation: requiredString,
- 30:     }),
- 31:     defineField({
- 32:       name: 'links',
- 33:       title: 'Navigation Links',
- 34:       type: 'array',
- 35:       of: [
- 36:         {
- 37:           type: 'object',
- 38:           fields: [
- 39:             defineField({
- 40:               name: 'title',
- 41:               type: 'string',
- 42:               title: 'Title',
- 43:               validation: requiredString,
- 44:             }),
- 45:             defineField({
- 46:               name: 'name',
- 47:               type: 'string',
- 48:               title: 'Name',
- 49:               validation: requiredString,
- 50:             }),
- 51:             defineField({
- 52:               name: 'hash',
- 53:               type: 'string',
- 54:               title: 'Hash',
- 55:               validation: requiredString,
- 56:             }),
- 57:             defineField({
- 58:               name: 'href',
- 59:               type: 'string',
- 60:               title: 'Href',
- 61:               validation: requiredString,
- 62:             }),
- 63:             defineField({
- 64:               name: 'externalLink',
- 65:               type: 'boolean',
- 66:               title: 'External Link',
- 67:               validation: requiredBoolean,
- 68:             }),
- 69:             defineField({
- 70:               name: 'icon',
- 71:               title: 'Icon',
- 72:               type: 'string',
- 73:               options: {
- 74:                 list: [
- 75:                   {title: 'Home', value: 'RiHome4Line'},
- 76:                   {title: 'Projects', value: 'RiProjectorLine'},
- 77:                   {title: 'CV', value: 'RiFileList3Line'},
- 78:                   {title: 'GitHub', value: 'RiGithubLine'},
- 79:                   {title: 'Contact', value: 'RiMailLine'},
- 80:                 ],
- 81:               },
- 82:             }),
- 83:           ],
- 84:           preview: {
- 85:             select: {
- 86:               title: 'title',
- 87:               icon: 'icon',
- 88:             },
- 89:             prepare(selection) {
- 90:               const {title, icon} = selection
- 91:               return {
- 92:                 title,
- 93:                 media:
- 94:                   icon && icon in iconMap
- 95:                     ? iconMap[icon as keyof typeof iconMap]
- 96:                     : RiNavigationLine,
- 97:               }
- 98:             },
- 99:           },
-100:         },
-101:       ],
-102:     }),
-103:   ],
-104:   preview: {
-105:     select: {
-106:       title: 'title',
-107:     },
-108:     prepare(selection) {
-109:       const {title} = selection
-110:       return {
-111:         title,
-112:         media: RiNavigationLine,
-113:       }
-114:     },
-115:   },
-116: })
 ````
 
 ## File: studio/schemaTypes/index.ts
@@ -15125,7 +15125,7 @@ tsconfig.json
 68:     "@typescript-eslint/eslint-plugin": "^8.32.0",
 69:     "@typescript-eslint/parser": "^8.32.0",
 70:     "axe-core": "^4.10.3",
-71:     "cypress": "14.3.2",
+71:     "cypress": "14.3.3",
 72:     "cypress-axe": "^1.6.0",
 73:     "eslint": "9.26.0",
 74:     "eslint-config-next": "15.3.1",
