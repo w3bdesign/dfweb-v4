@@ -11733,6 +11733,34 @@ tsconfig.json
 17: });
 ````
 
+## File: src/app/RootLayout.tsx
+````typescript
+ 1: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 2: import { client } from "@/lib/sanity/client";
+ 3: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 4: import Header from "@/components/Layout/Header.component";
+ 5: import Footer from "@/components/Layout/Footer.component";
+ 6: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 7: export default async function RootLayout({
+ 8:   children,
+ 9: }: Readonly<{
+10:   children: React.ReactNode;
+11: }>) {
+12:   const [navigation, { footerCopyrightText }] = await Promise.all([
+13:     client.fetch(navigationQuery),
+14:     client.fetch(settingsQuery)
+15:   ]);
+16:   return (
+17:     <ErrorBoundary>
+18:       <Header navigation={navigation} />
+19:       <SpeedInsights />
+20:       {children}
+21:       <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
+22:     </ErrorBoundary>
+23:   );
+24: }
+````
+
 ## File: src/components/CV/CVContent.component.tsx
 ````typescript
   1: import PageHeader from "@/components/UI/PageHeader.component";
@@ -14725,32 +14753,52 @@ tsconfig.json
 46: }
 ````
 
-## File: src/app/RootLayout.tsx
+## File: src/components/Layout/Header.component.tsx
 ````typescript
- 1: import { SpeedInsights } from "@vercel/speed-insights/next";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 4: import Header from "@/components/Layout/Header.component";
- 5: import Footer from "@/components/Layout/Footer.component";
- 6: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 7: export default async function RootLayout({
- 8:   children,
- 9: }: Readonly<{
-10:   children: React.ReactNode;
-11: }>) {
-12:   const [navigation, { footerCopyrightText }] = await Promise.all([
-13:     client.fetch(navigationQuery),
-14:     client.fetch(settingsQuery)
-15:   ]);
+ 1: "use client";
+ 2: import React from "react";
+ 3: import { MotionDiv } from "@/lib/framer/client";
+ 4: import MobileMenu from "./MobileMenu.component";
+ 5: import DesktopNavigation from "./DesktopNavigation.component";
+ 6: import type { Navigation } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Header component that renders the navigation bar using links from Sanity CMS.
+ 9:  * Provides both desktop and mobile navigation with animated transitions.
+10:  * @param {Navigation} props - The navigation data object from Sanity containing menu links.
+11:  * @returns {JSX.Element} The rendered Header component with responsive navigation.
+12:  */
+13: const Header: React.FC<{ navigation: Navigation }> = ({
+14:   navigation: { links },
+15: }) => {
 16:   return (
-17:     <ErrorBoundary>
-18:       <Header navigation={navigation} />
-19:       <SpeedInsights />
-20:       {children}
-21:       <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
-22:     </ErrorBoundary>
-23:   );
-24: }
+17:     <header className="z-999 relative">
+18:       <div
+19:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+20:         style={{ transform: "translateX(-50%)" }}
+21:       />
+22:       <MotionDiv
+23:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
+24:         initial={{ y: -100, x: "-50%", opacity: 0 }}
+25:         animate={{
+26:           y: 0,
+27:           x: "-51%",
+28:           opacity: 1,
+29:           transition: {
+30:             y: { duration: 0.6, ease: "easeOut" },
+31:             opacity: { duration: 0.6, ease: "easeOut" },
+32:           },
+33:         }}
+34:       />
+35:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
+36:         <DesktopNavigation navigationLinks={links ?? []} />
+37:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+38:           <MobileMenu links={links ?? []} />
+39:         </div>
+40:       </nav>
+41:     </header>
+42:   );
+43: };
+44: export default Header;
 ````
 
 ## File: src/e2e/cypress/component/Hero.cy.tsx
@@ -14810,54 +14858,6 @@ tsconfig.json
 24:     },
 25:   },
 26: })
-````
-
-## File: src/components/Layout/Header.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import { MotionDiv } from "@/lib/framer/client";
- 4: import MobileMenu from "./MobileMenu.component";
- 5: import DesktopNavigation from "./DesktopNavigation.component";
- 6: import type { Navigation } from "@/types/sanity.types";
- 7: /**
- 8:  * Header component that renders the navigation bar using links from Sanity CMS.
- 9:  * Provides both desktop and mobile navigation with animated transitions.
-10:  * @param {Navigation} props - The navigation data object from Sanity containing menu links.
-11:  * @returns {JSX.Element} The rendered Header component with responsive navigation.
-12:  */
-13: const Header: React.FC<{ navigation: Navigation }> = ({
-14:   navigation: { links },
-15: }) => {
-16:   return (
-17:     <header className="z-999 relative">
-18:       <div
-19:         className="sm:hidden w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-20:         style={{ transform: "translateX(-50%)" }}
-21:       />
-22:       <MotionDiv
-23:         className="hidden sm:block w-full w-[450px] md:max-w-[36rem] bg-slate-800 bg-opacity-80 fixed top-0 left-1/2 h-[4.5rem] shadow-sm rounded-none shadow-lg shadow-black/[0.03] backdrop-blur-[0.5rem] sm:top-6 sm:h-[3.25rem] md:w-[36rem] sm:rounded-full mr-8 md:mr-0"
-24:         initial={{ y: -100, x: "-50%", opacity: 0 }}
-25:         animate={{
-26:           y: 0,
-27:           x: "-51%",
-28:           opacity: 1,
-29:           transition: {
-30:             y: { duration: 0.6, ease: "easeOut" },
-31:             opacity: { duration: 0.6, ease: "easeOut" },
-32:           },
-33:         }}
-34:       />
-35:       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
-36:         <DesktopNavigation navigationLinks={links ?? []} />
-37:         <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
-38:           <MobileMenu links={links ?? []} />
-39:         </div>
-40:       </nav>
-41:     </header>
-42:   );
-43: };
-44: export default Header;
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
@@ -15099,7 +15099,7 @@ tsconfig.json
 42:     "react": "^19.1.0",
 43:     "react-dom": "^19.1.0",
 44:     "react-error-boundary": "^5.0.0",
-45:     "react-hook-form": "^7.56.2",
+45:     "react-hook-form": "^7.56.3",
 46:     "react-icons": "^5.5.0",
 47:     "sanity": "^3.88.0",
 48:     "sitemap": "^8.0.0",
