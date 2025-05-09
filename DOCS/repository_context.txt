@@ -6882,6 +6882,37 @@ tsconfig.json
 69: export default Icons;
 ````
 
+## File: src/components/Index/IndexContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import Section from "./Section.component";
+ 3: import type { Pagecontent } from "@/types/sanity.types";
+ 4: /**
+ 5:  * IndexContent component that renders multiple content sections with alternating visual styles
+ 6:  * @param {Object} props - The props for the IndexContent component
+ 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
+ 8:  * @returns {JSX.Element} The rendered IndexContent component
+ 9:  * @throws {Error} Throws an error if no content is available
+10:  */
+11: const IndexContent = ({ pageContent }: { pageContent: Pagecontent[] }) => {
+12:   if (!pageContent || pageContent.length === 0) {
+13:     throw new Error("Ingen innhold tilgjengelig");
+14:   }
+15:   return (
+16:     <div className="w-screen md:w-full overflow-hidden -mb-8">
+17:       {pageContent.map((page, index) => (
+18:         <Section
+19:           key={page.id}
+20:           {...page}
+21:           variant={index % 2 === 0 ? "default" : "alternate"}
+22:         />
+23:       ))}
+24:     </div>
+25:   );
+26: };
+27: export default IndexContent;
+````
+
 ## File: src/components/Index/MobileBackground.component.tsx
 ````typescript
  1: /**
@@ -6899,6 +6930,83 @@ tsconfig.json
 13:   />
 14: );
 15: export default MobileBackground;
+````
+
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import BounceInScroll from "../Animations/BounceInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10: }
+11: /**
+12:  * Section component that renders a single content section
+13:  * @param {SectionProps} props - The props for the Section component
+14:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+15:  * @param {string} props.title - The title of the section
+16:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+17:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+18:  */
+19: const Section = ({ text, title, variant = "default" }: SectionProps) => {
+20:   const [shouldError, setShouldError] = useState(false);
+21:   if (!title || !text) {
+22:     console.error(
+23:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
+24:     );
+25:     return null;
+26:   }
+27:   if (shouldError) {
+28:     throw new Error("En uventet feil har oppstått");
+29:   }
+30:   const sectionStyles = {
+31:     default: "bg-slate-900",
+32:     alternate: "bg-slate-800/30",
+33:   };
+34:   return (
+35:     <section
+36:       aria-label={title}
+37:       data-testid="sanity-section"
+38:       className={`
+39:         md:py-6 
+40:         relative
+41:         transition-colors
+42:         duration-300
+43:         ${sectionStyles[variant]}
+44:       `}
+45:     >
+46:       <div className="p-6 text-lg h-full max-w-7xl mx-auto">
+47:         <BounceInScroll viewAmount={0}>
+48:           <h2
+49:             data-testid="sanity-title"
+50:             data-cy={title}
+51:             className="text-3xl text-center text-slate-100"
+52:           >
+53:             {title}
+54:           </h2>
+55:           <div className="flex justify-center">
+56:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+57:               <PortableText
+58:                 value={text}
+59:                 components={myPortableTextComponents}
+60:               />
+61:             </div>
+62:           </div>
+63:           {process.env.NODE_ENV === "development" && (
+64:             <Button onClick={() => setShouldError(true)} type="button">
+65:               Utløs Testfeil
+66:             </Button>
+67:           )}
+68:         </BounceInScroll>
+69:       </div>
+70:     </section>
+71:   );
+72: };
+73: export default Section;
 ````
 
 ## File: src/components/Kontakt/config/formConfig.ts
@@ -12111,114 +12219,6 @@ tsconfig.json
 102: export default CVContent;
 ````
 
-## File: src/components/Index/IndexContent.component.tsx
-````typescript
- 1: "use client";
- 2: import Section from "./Section.component";
- 3: import type { Pagecontent } from "@/types/sanity.types";
- 4: /**
- 5:  * IndexContent component that renders multiple content sections with alternating visual styles
- 6:  * @param {Object} props - The props for the IndexContent component
- 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
- 8:  * @returns {JSX.Element} The rendered IndexContent component
- 9:  * @throws {Error} Throws an error if no content is available
-10:  */
-11: const IndexContent = ({ pageContent }: { pageContent: Pagecontent[] }) => {
-12:   if (!pageContent || pageContent.length === 0) {
-13:     throw new Error("Ingen innhold tilgjengelig");
-14:   }
-15:   return (
-16:     <div className="w-screen md:w-full overflow-hidden -mb-8">
-17:       {pageContent.map((page, index) => (
-18:         <Section
-19:           key={page.id}
-20:           {...page}
-21:           variant={index % 2 === 0 ? "default" : "alternate"}
-22:         />
-23:       ))}
-24:     </div>
-25:   );
-26: };
-27: export default IndexContent;
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import BounceInScroll from "../Animations/BounceInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10: }
-11: /**
-12:  * Section component that renders a single content section
-13:  * @param {SectionProps} props - The props for the Section component
-14:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-15:  * @param {string} props.title - The title of the section
-16:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-17:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-18:  */
-19: const Section = ({ text, title, variant = "default" }: SectionProps) => {
-20:   const [shouldError, setShouldError] = useState(false);
-21:   if (!title || !text) {
-22:     console.error(
-23:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
-24:     );
-25:     return null;
-26:   }
-27:   if (shouldError) {
-28:     throw new Error("En uventet feil har oppstått");
-29:   }
-30:   const sectionStyles = {
-31:     default: "bg-slate-900",
-32:     alternate: "bg-slate-800/30",
-33:   };
-34:   return (
-35:     <section
-36:       aria-label={title}
-37:       data-testid="sanity-section"
-38:       className={`
-39:         md:py-6 
-40:         relative
-41:         transition-colors
-42:         duration-300
-43:         ${sectionStyles[variant]}
-44:       `}
-45:     >
-46:       <div className="p-6 text-lg h-full max-w-7xl mx-auto">
-47:         <BounceInScroll viewAmount={0}>
-48:           <h2
-49:             data-testid="sanity-title"
-50:             data-cy={title}
-51:             className="text-3xl text-center text-slate-100"
-52:           >
-53:             {title}
-54:           </h2>
-55:           <div className="flex justify-center">
-56:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-57:               <PortableText
-58:                 value={text}
-59:                 components={myPortableTextComponents}
-60:               />
-61:             </div>
-62:           </div>
-63:           {process.env.NODE_ENV === "development" && (
-64:             <Button onClick={() => setShouldError(true)} type="button">
-65:               Utløs Testfeil
-66:             </Button>
-67:           )}
-68:         </BounceInScroll>
-69:       </div>
-70:     </section>
-71:   );
-72: };
-73: export default Section;
-````
-
 ## File: src/components/Layout/Footer.component.tsx
 ````typescript
  1: "use client";
@@ -15113,7 +15113,7 @@ tsconfig.json
 56:     "@lhci/cli": "^0.14.0",
 57:     "@playwright/test": "^1.52.0",
 58:     "@portabletext/types": "^2.0.13",
-59:     "@tailwindcss/postcss": "^4.1.5",
+59:     "@tailwindcss/postcss": "^4.1.6",
 60:     "@testing-library/cypress": "^10.0.3",
 61:     "@testing-library/jest-dom": "^6.6.3",
 62:     "@testing-library/react": "^16.3.0",
@@ -15141,7 +15141,7 @@ tsconfig.json
 84:     "jsdom-testing-mocks": "^1.13.1",
 85:     "postcss": "^8.5.3",
 86:     "prettier": "3.5.3",
-87:     "tailwindcss": "^4.1.5",
+87:     "tailwindcss": "^4.1.6",
 88:     "ts-jest": "^29.3.2",
 89:     "typescript": "^5.8.3",
 90:     "wait-on": "^8.0.3"
