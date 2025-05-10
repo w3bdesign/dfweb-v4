@@ -46,10 +46,12 @@ const nextConfig: NextConfig = {
             value: "ALLOW-FROM https://presentasjon.dfweb.no",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          /*
           {
             key: "Content-Security-Policy",
             value: buildCspHeader(cspDirectives),
           },
+          */
         ],
       },
     ];
