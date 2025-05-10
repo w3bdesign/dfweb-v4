@@ -5878,6 +5878,34 @@ tsconfig.json
 28: }
 ````
 
+## File: src/app/RootLayout.tsx
+````typescript
+ 1: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 2: import { client } from "@/lib/sanity/client";
+ 3: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 4: import Header from "@/components/Layout/Header.component";
+ 5: import Footer from "@/components/Layout/Footer.component";
+ 6: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 7: export default async function RootLayout({
+ 8:   children,
+ 9: }: Readonly<{
+10:   children: React.ReactNode;
+11: }>) {
+12:   const [navigation, { footerCopyrightText }] = await Promise.all([
+13:     client.fetch(navigationQuery),
+14:     client.fetch(settingsQuery)
+15:   ]);
+16:   return (
+17:     <ErrorBoundary>
+18:       <Header navigation={navigation} />
+19:       <SpeedInsights />
+20:       {children}
+21:       <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
+22:     </ErrorBoundary>
+23:   );
+24: }
+````
+
 ## File: src/components/Animations/types/Animations.types.ts
 ````typescript
  1: import { ReactNode } from "react";
@@ -7271,6 +7299,41 @@ tsconfig.json
 48: export default DesktopNavigation;
 ````
 
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: import type { Settings } from "@/types/sanity.types";
+ 5: type FooterProps = Pick<Settings, 'footerCopyrightText'>;
+ 6: /**
+ 7:  * Renders the footer for the application
+ 8:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
+ 9:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
+10:  * @returns {JSX.Element} - Rendered Footer component
+11:  */
+12: const Footer = ({ footerCopyrightText }: FooterProps) => (
+13:   <footer
+14:     className="mt-8"
+15:     aria-label="Innholdet for bunnteksten med copyright"
+16:     data-testid="footer"
+17:   >
+18:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
+19:       <div className="w-full mx-auto p-6 text-center font-semibold">
+20:         <div className="flex justify-center items-center space-x-2">
+21:           <span>{footerCopyrightText}</span>
+22:           <IconContext.Provider value={{ className: "inline-block" }}>
+23:             <BiCopyright size="1.2em" />
+24:           </IconContext.Provider>
+25:           <span>{new Date().getFullYear()}</span>
+26:         </div>
+27:       </div>
+28:     </div>
+29:   </footer>
+30: );
+31: export default Footer;
+````
+
 ## File: src/components/Layout/Header.component.tsx
 ````typescript
  1: "use client";
@@ -8585,6 +8648,82 @@ tsconfig.json
 4: export const urlFor = (source: string) => {
 5:   return builder.image(source);
 6: };
+````
+
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: import { groq } from "next-sanity";
+ 2: export const projectsQuery = groq`
+ 3:   *[_type == "project"] | order(featureOrder asc) {
+ 4:     id,
+ 5:     name,
+ 6:     description,
+ 7:     subdescription,
+ 8:     projectcategory->{
+ 9:       _id,
+10:       title
+11:     },
+12:     urlwww[]{
+13:       ...,
+14:       _key,
+15:     },
+16:     urlgithub[]{
+17:       ...,
+18:       _key,
+19:     },
+20:     projectimage,
+21:     featured,
+22:     featureOrder
+23:   }
+24: `;
+25: export const cvQuery = groq`
+26:   *[_type == "cv"][0] {
+27:     keyQualifications,
+28:     experience[] {
+29:       period,
+30:       company,
+31:       role,
+32:       description
+33:     },
+34:     education[] {
+35:       period,
+36:       institution,
+37:       degree,
+38:       description
+39:     },
+40:     volunteerWork[] {
+41:       period,
+42:       organization,
+43:       role,
+44:       description
+45:     }
+46:   }
+47: `;
+48: export const pageContentQuery = groq`
+49:   *[_type == 'page' && title match 'Hjem'][0]{
+50:     "id": _id, 
+51:     title, 
+52:     hero, 
+53:     content
+54:   }
+55: `;
+56: export const navigationQuery = groq`
+57:   *[_type == "navigation"][0] {
+58:     title,
+59:     links[] {
+60:       title,
+61:       name,
+62:       hash,
+63:       href,
+64:       externalLink
+65:     }
+66:   }
+67: `;
+68: export const settingsQuery = groq`
+69:   *[_type == "settings"][0] {
+70:     footerCopyrightText
+71:   }
+72: `;
 ````
 
 ## File: src/stories/components/BounceInScroll.stories.tsx
@@ -10768,6 +10907,23 @@ tsconfig.json
 29:   ],
 30: }
 31: export default pagecontent
+````
+
+## File: studio/schemaTypes/index.ts
+````typescript
+ 1: //export const schemaTypes = []
+ 2: // Documents
+ 3: import project from './documents/project'
+ 4: import category from './documents/category'
+ 5: import page from './documents/page'
+ 6: import navigation from './documents/navigation'
+ 7: import cv from './documents/cv'
+ 8: import settings from './documents/settings'
+ 9: // Objects
+10: import link from './objects/link'
+11: import pagecontent from './objects/pagecontent'
+12: import herocontent from './objects/herocontent'
+13: export const schemaTypes = [project, category, page, cv, navigation, settings, link, pagecontent, herocontent]
 ````
 
 ## File: studio/schemaTypes/schema.ts
@@ -14293,69 +14449,6 @@ tsconfig.json
 17: });
 ````
 
-## File: src/app/RootLayout.tsx
-````typescript
- 1: import { SpeedInsights } from "@vercel/speed-insights/next";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 4: import Header from "@/components/Layout/Header.component";
- 5: import Footer from "@/components/Layout/Footer.component";
- 6: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 7: export default async function RootLayout({
- 8:   children,
- 9: }: Readonly<{
-10:   children: React.ReactNode;
-11: }>) {
-12:   const [navigation, { footerCopyrightText }] = await Promise.all([
-13:     client.fetch(navigationQuery),
-14:     client.fetch(settingsQuery)
-15:   ]);
-16:   return (
-17:     <ErrorBoundary>
-18:       <Header navigation={navigation} />
-19:       <SpeedInsights />
-20:       {children}
-21:       <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
-22:     </ErrorBoundary>
-23:   );
-24: }
-````
-
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: import type { Settings } from "@/types/sanity.types";
- 5: type FooterProps = Pick<Settings, 'footerCopyrightText'>;
- 6: /**
- 7:  * Renders the footer for the application
- 8:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
- 9:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
-10:  * @returns {JSX.Element} - Rendered Footer component
-11:  */
-12: const Footer = ({ footerCopyrightText }: FooterProps) => (
-13:   <footer
-14:     className="mt-8"
-15:     aria-label="Innholdet for bunnteksten med copyright"
-16:     data-testid="footer"
-17:   >
-18:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
-19:       <div className="w-full mx-auto p-6 text-center font-semibold">
-20:         <div className="flex justify-center items-center space-x-2">
-21:           <span>{footerCopyrightText}</span>
-22:           <IconContext.Provider value={{ className: "inline-block" }}>
-23:             <BiCopyright size="1.2em" />
-24:           </IconContext.Provider>
-25:           <span>{new Date().getFullYear()}</span>
-26:         </div>
-27:       </div>
-28:     </div>
-29:   </footer>
-30: );
-31: export default Footer;
-````
-
 ## File: src/components/Layout/Hamburger.component.tsx
 ````typescript
  1: "use client";
@@ -14432,82 +14525,6 @@ tsconfig.json
 20: export {};
 ````
 
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: import { groq } from "next-sanity";
- 2: export const projectsQuery = groq`
- 3:   *[_type == "project"] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `;
-25: export const cvQuery = groq`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `;
-48: export const pageContentQuery = groq`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id, 
-51:     title, 
-52:     hero, 
-53:     content
-54:   }
-55: `;
-56: export const navigationQuery = groq`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `;
-68: export const settingsQuery = groq`
-69:   *[_type == "settings"][0] {
-70:     footerCopyrightText
-71:   }
-72: `;
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -14531,82 +14548,34 @@ tsconfig.json
 19: }
 ````
 
-## File: studio/schemaTypes/index.ts
+## File: studio/schemaTypes/documents/settings.ts
 ````typescript
- 1: //export const schemaTypes = []
- 2: // Documents
- 3: import project from './documents/project'
- 4: import category from './documents/category'
- 5: import page from './documents/page'
- 6: import navigation from './documents/navigation'
- 7: import cv from './documents/cv'
- 8: import settings from './documents/settings'
- 9: // Objects
-10: import link from './objects/link'
-11: import pagecontent from './objects/pagecontent'
-12: import herocontent from './objects/herocontent'
-13: export const schemaTypes = [project, category, page, cv, navigation, settings, link, pagecontent, herocontent]
-````
-
-## File: next.config.ts
-````typescript
- 1: import type { NextConfig } from "next";
- 2: const cspDirectives = {
- 3:   "default-src": ["'self'"],
- 4:   "script-src": [
- 5:     "'self'",
- 6:     "'unsafe-eval'",
- 7:     "'unsafe-inline'",
- 8:     "https://va.vercel-scripts.com",
- 9:   ],
-10:   "style-src": ["'self'", "'unsafe-inline'"],
-11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
-12:   "font-src": ["'self'"],
-13:   "object-src": ["'none'"],
-14:   "base-uri": ["'self'"],
-15:   "form-action": ["'self'"],
-16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
-17:   "connect-src": [
-18:     "'self'",
-19:     "https://api.emailjs.com",
-20:     "https://va.vercel-scripts.com",
-21:   ],
-22: };
-23: const buildCspHeader = (directives: Record<string, string[]>) =>
-24:   Object.entries(directives)
-25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
-26:     .join(" ") + " upgrade-insecure-requests;";
-27: const nextConfig: NextConfig = {
-28:   images: {
-29:     remotePatterns: [
-30:       {
-31:         protocol: "https",
-32:         hostname: "cdn.sanity.io",
-33:       },
-34:     ],
-35:   },
-36:   async headers() {
-37:     return [
-38:       {
-39:         source: "/:path*",
-40:         headers: [
-41:           {
-42:             key: "X-Frame-Options",
-43:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
-44:           },
-45:           { key: "X-Content-Type-Options", value: "nosniff" },
-46:           /*
-47:           {
-48:             key: "Content-Security-Policy",
-49:             value: buildCspHeader(cspDirectives),
-50:           },
-51:           */
-52:         ],
-53:       },
-54:     ];
-55:   },
-56: };
-57: export default nextConfig;
+ 1: import {defineField, defineType} from 'sanity'
+ 2: import {FiSettings} from 'react-icons/fi'
+ 3: export default defineType({
+ 4:   name: 'settings',
+ 5:   title: 'Site Settings',
+ 6:   type: 'document',
+ 7:   icon: FiSettings,
+ 8:   liveEdit: true,
+ 9:   fields: [
+10:     defineField({
+11:       name: 'footerCopyrightText',
+12:       title: 'Footer Copyright Text',
+13:       type: 'string',
+14:       description:
+15:         'The copyright text displayed in the site footer (e.g., "Copyright Daniel Fjeldstad"). The year is added automatically.',
+16:       validation: (Rule) => Rule.required(),
+17:     }),
+18:   ],
+19:   preview: {
+20:     prepare() {
+21:       return {
+22:         title: 'Site Settings',
+23:       }
+24:     },
+25:   },
+26: })
 ````
 
 ## File: src/__tests__/Layout/MobileMenu.test.tsx
@@ -14832,34 +14801,63 @@ tsconfig.json
 46: }
 ````
 
-## File: studio/schemaTypes/documents/settings.ts
+## File: next.config.ts
 ````typescript
- 1: import {defineField, defineType} from 'sanity'
- 2: import {FiSettings} from 'react-icons/fi'
- 3: export default defineType({
- 4:   name: 'settings',
- 5:   title: 'Site Settings',
- 6:   type: 'document',
- 7:   icon: FiSettings,
- 8:   liveEdit: true,
- 9:   fields: [
-10:     defineField({
-11:       name: 'footerCopyrightText',
-12:       title: 'Footer Copyright Text',
-13:       type: 'string',
-14:       description:
-15:         'The copyright text displayed in the site footer (e.g., "Copyright Daniel Fjeldstad"). The year is added automatically.',
-16:       validation: (Rule) => Rule.required(),
-17:     }),
-18:   ],
-19:   preview: {
-20:     prepare() {
-21:       return {
-22:         title: 'Site Settings',
-23:       }
-24:     },
-25:   },
-26: })
+ 1: import type { NextConfig } from "next";
+ 2: const cspDirectives = {
+ 3:   "default-src": ["'self'"],
+ 4:   "script-src": [
+ 5:     "'self'",
+ 6:     "'unsafe-eval'",
+ 7:     "'unsafe-inline'",
+ 8:     "https://va.vercel-scripts.com",
+ 9:   ],
+10:   "style-src": ["'self'", "'unsafe-inline'"],
+11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
+12:   "font-src": ["'self'"],
+13:   "object-src": ["'none'"],
+14:   "base-uri": ["'self'"],
+15:   "form-action": ["'self'"],
+16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
+17:   "connect-src": [
+18:     "'self'",
+19:     "https://api.emailjs.com",
+20:     "https://va.vercel-scripts.com",
+21:   ],
+22: };
+23: const buildCspHeader = (directives: Record<string, string[]>) =>
+24:   Object.entries(directives)
+25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
+26:     .join(" ") + " upgrade-insecure-requests;";
+27: const nextConfig: NextConfig = {
+28:   images: {
+29:     remotePatterns: [
+30:       {
+31:         protocol: "https",
+32:         hostname: "cdn.sanity.io",
+33:       },
+34:     ],
+35:   },
+36:   async headers() {
+37:     return [
+38:       {
+39:         source: "/:path*",
+40:         headers: [
+41:           {
+42:             key: "X-Frame-Options",
+43:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+44:           },
+45:           { key: "X-Content-Type-Options", value: "nosniff" },
+46:           {
+47:             key: "Content-Security-Policy",
+48:             value: buildCspHeader(cspDirectives),
+49:           },
+50:         ],
+51:       },
+52:     ];
+53:   },
+54: };
+55: export default nextConfig;
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
