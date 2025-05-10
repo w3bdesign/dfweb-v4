@@ -7779,6 +7779,161 @@ tsconfig.json
 12: export default SkipLink;
 ````
 
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { motion, AnimatePresence } from "motion/react";
+  4: type TabOrientation = "horizontal" | "vertical";
+  5: interface Tab {
+  6:   id: string;
+  7:   label: string;
+  8:   content: React.ReactNode;
+  9: }
+ 10: interface TabsProps {
+ 11:   tabs: Tab[];
+ 12:   orientation?: TabOrientation;
+ 13: }
+ 14: interface TabButtonProps {
+ 15:   tab: Tab;
+ 16:   isActive: boolean;
+ 17:   isVertical: boolean;
+ 18:   index: number;
+ 19:   totalTabs: number;
+ 20:   onClick: () => void;
+ 21: }
+ 22: const getTabButtonClassName = (
+ 23:   isActive: boolean,
+ 24:   isVertical: boolean,
+ 25:   index: number,
+ 26:   totalTabs: number,
+ 27: ) => {
+ 28:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
+ 29:   const activeClasses = isActive
+ 30:     ? "text-white"
+ 31:     : "text-gray-300 hover:text-white";
+ 32:   const orientationClasses = isVertical
+ 33:     ? "w-full text-left"
+ 34:     : "grow text-center";
+ 35:   const borderClasses = [
+ 36:     index !== 0 ? "border-t border-gray-600" : "",
+ 37:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
+ 38:   ].join(" ");
+ 39:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 40: };
+ 41: const TabButton: React.FC<TabButtonProps> = ({
+ 42:   tab,
+ 43:   isActive,
+ 44:   isVertical,
+ 45:   index,
+ 46:   totalTabs,
+ 47:   onClick,
+ 48: }) => (
+ 49:   <motion.button
+ 50:     key={tab.id}
+ 51:     onClick={onClick}
+ 52:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 53:     role="tab"
+ 54:     aria-selected={isActive}
+ 55:     aria-controls={`tabpanel-${tab.id}`}
+ 56:     id={`tab-${tab.id}`}
+ 57:   >
+ 58:     {isActive && (
+ 59:       <motion.div
+ 60:         layoutId="active-tab"
+ 61:         className={`absolute ${
+ 62:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 63:         } bg-[var(--matrix-dark)]`}
+ 64:         initial={false}
+ 65:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 66:       />
+ 67:     )}
+ 68:     <span className="relative z-10">{tab.label}</span>
+ 69:   </motion.button>
+ 70: );
+ 71: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 72:   tab,
+ 73:   isActive,
+ 74: }) => {
+ 75:   if (!isActive) return null;
+ 76:   return (
+ 77:     <motion.div
+ 78:       key={tab.id}
+ 79:       role="tabpanel"
+ 80:       id={`tabpanel-${tab.id}`}
+ 81:       aria-labelledby={`tab-${tab.id}`}
+ 82:       className="px-8"
+ 83:       initial={{ opacity: 0, y: 20 }}
+ 84:       animate={{ opacity: 1, y: 0 }}
+ 85:       exit={{ opacity: 0, y: -20 }}
+ 86:       transition={{ duration: 0.3 }}
+ 87:     >
+ 88:       {tab.content}
+ 89:     </motion.div>
+ 90:   );
+ 91: };
+ 92: /**
+ 93:  * Renders a set of tabs with content.
+ 94:  *
+ 95:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 96:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 97:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 98:  * @return {JSX.Element} The rendered Tabs component.
+ 99:  */
+100: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+101:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+102:   const isVertical = orientation === "vertical";
+103:   return (
+104:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
+105:       <div
+106:         className={`flex ${
+107:           isVertical ? "flex-col sm:flex-row" : "flex-col"
+108:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
+109:       >
+110:         <div
+111:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+112:             isVertical ? "max-h-[181px] " : ""
+113:           }`}
+114:         >
+115:           <div
+116:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+117:             role="tablist"
+118:           >
+119:             {tabs.map((tab, index) => (
+120:               <TabButton
+121:                 key={tab.id}
+122:                 tab={tab}
+123:                 isActive={activeTab === tab.id}
+124:                 isVertical={isVertical}
+125:                 index={index}
+126:                 totalTabs={tabs.length}
+127:                 onClick={() => setActiveTab(tab.id)}
+128:               />
+129:             ))}
+130:           </div>
+131:         </div>
+132:         <div
+133:           className={`${
+134:             isVertical ? "sm:w-3/4 w-full" : "w-full"
+135:           } bg-gray-800 overflow-y-auto`}
+136:         >
+137:           <AnimatePresence mode="wait">
+138:             {tabs.map((tab) => (
+139:               <TabPanel
+140:                 key={tab.id}
+141:                 tab={tab}
+142:                 isActive={activeTab === tab.id}
+143:               />
+144:             ))}
+145:           </AnimatePresence>
+146:         </div>
+147:       </div>
+148:     </div>
+149:   );
+150: };
+151: export default Tabs;
+````
+
 ## File: src/config/env.ts
 ````typescript
  1: import { cleanEnv, str } from "envalid";
@@ -12306,161 +12461,6 @@ tsconfig.json
 48: export default Hamburger;
 ````
 
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { motion, AnimatePresence } from "motion/react";
-  4: type TabOrientation = "horizontal" | "vertical";
-  5: interface Tab {
-  6:   id: string;
-  7:   label: string;
-  8:   content: React.ReactNode;
-  9: }
- 10: interface TabsProps {
- 11:   tabs: Tab[];
- 12:   orientation?: TabOrientation;
- 13: }
- 14: interface TabButtonProps {
- 15:   tab: Tab;
- 16:   isActive: boolean;
- 17:   isVertical: boolean;
- 18:   index: number;
- 19:   totalTabs: number;
- 20:   onClick: () => void;
- 21: }
- 22: const getTabButtonClassName = (
- 23:   isActive: boolean,
- 24:   isVertical: boolean,
- 25:   index: number,
- 26:   totalTabs: number,
- 27: ) => {
- 28:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
- 29:   const activeClasses = isActive
- 30:     ? "text-white"
- 31:     : "text-gray-300 hover:text-white";
- 32:   const orientationClasses = isVertical
- 33:     ? "w-full text-left"
- 34:     : "grow text-center";
- 35:   const borderClasses = [
- 36:     index !== 0 ? "border-t border-gray-600" : "",
- 37:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
- 38:   ].join(" ");
- 39:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 40: };
- 41: const TabButton: React.FC<TabButtonProps> = ({
- 42:   tab,
- 43:   isActive,
- 44:   isVertical,
- 45:   index,
- 46:   totalTabs,
- 47:   onClick,
- 48: }) => (
- 49:   <motion.button
- 50:     key={tab.id}
- 51:     onClick={onClick}
- 52:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 53:     role="tab"
- 54:     aria-selected={isActive}
- 55:     aria-controls={`tabpanel-${tab.id}`}
- 56:     id={`tab-${tab.id}`}
- 57:   >
- 58:     {isActive && (
- 59:       <motion.div
- 60:         layoutId="active-tab"
- 61:         className={`absolute ${
- 62:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 63:         } bg-[var(--matrix-dark)]`}
- 64:         initial={false}
- 65:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 66:       />
- 67:     )}
- 68:     <span className="relative z-10">{tab.label}</span>
- 69:   </motion.button>
- 70: );
- 71: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 72:   tab,
- 73:   isActive,
- 74: }) => {
- 75:   if (!isActive) return null;
- 76:   return (
- 77:     <motion.div
- 78:       key={tab.id}
- 79:       role="tabpanel"
- 80:       id={`tabpanel-${tab.id}`}
- 81:       aria-labelledby={`tab-${tab.id}`}
- 82:       className="px-8"
- 83:       initial={{ opacity: 0, y: 20 }}
- 84:       animate={{ opacity: 1, y: 0 }}
- 85:       exit={{ opacity: 0, y: -20 }}
- 86:       transition={{ duration: 0.3 }}
- 87:     >
- 88:       {tab.content}
- 89:     </motion.div>
- 90:   );
- 91: };
- 92: /**
- 93:  * Renders a set of tabs with content.
- 94:  *
- 95:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 96:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 97:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 98:  * @return {JSX.Element} The rendered Tabs component.
- 99:  */
-100: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-101:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-102:   const isVertical = orientation === "vertical";
-103:   return (
-104:     <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
-105:       <div
-106:         className={`flex ${
-107:           isVertical ? "flex-col sm:flex-row" : "flex-col"
-108:         } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
-109:       >
-110:         <div
-111:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-112:             isVertical ? "max-h-[181px] " : ""
-113:           }`}
-114:         >
-115:           <div
-116:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-117:             role="tablist"
-118:           >
-119:             {tabs.map((tab, index) => (
-120:               <TabButton
-121:                 key={tab.id}
-122:                 tab={tab}
-123:                 isActive={activeTab === tab.id}
-124:                 isVertical={isVertical}
-125:                 index={index}
-126:                 totalTabs={tabs.length}
-127:                 onClick={() => setActiveTab(tab.id)}
-128:               />
-129:             ))}
-130:           </div>
-131:         </div>
-132:         <div
-133:           className={`${
-134:             isVertical ? "sm:w-3/4 w-full" : "w-full"
-135:           } bg-gray-800 overflow-y-auto`}
-136:         >
-137:           <AnimatePresence mode="wait">
-138:             {tabs.map((tab) => (
-139:               <TabPanel
-140:                 key={tab.id}
-141:                 tab={tab}
-142:                 isActive={activeTab === tab.id}
-143:               />
-144:             ))}
-145:           </AnimatePresence>
-146:         </div>
-147:       </div>
-148:     </div>
-149:   );
-150: };
-151: export default Tabs;
-````
-
 ## File: src/e2e/cypress/e2e/layout.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -15035,7 +15035,7 @@ tsconfig.json
 18:     "react-dom": "^19.1.0",
 19:     "react-icons": "^5.5.0",   
 20:     "sanity": "^3.88.2",
-21:     "styled-components": "^6.1.17"
+21:     "styled-components": "^6.1.18"
 22:   },
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
