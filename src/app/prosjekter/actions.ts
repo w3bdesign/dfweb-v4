@@ -1,3 +1,6 @@
+import { cache } from "react";
+import "server-only";
+
 import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
 
@@ -37,10 +40,14 @@ function handleError(error: unknown): never {
   throw new Error("Failed to fetch projects");
 }
 
-export async function getProjects(): Promise<Project[]> {
+export const getProjects = cache(async (): Promise<Project[]> => {
   try {
     return await fetchProjectsFromSanity();
   } catch (error) {
     handleError(error);
   }
+});
+
+export function preloadProjects(): void {
+  void getProjects();
 }
