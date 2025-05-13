@@ -85,7 +85,6 @@ describe("ProsjekterPage", () => {
     // to test the loading state.
     (getProjects as jest.Mock).mockReturnValue(new Promise(() => {}));
 
-
     // Act - Perform the action being tested
     await act(async () => {
       render(await ProsjekterPage());
