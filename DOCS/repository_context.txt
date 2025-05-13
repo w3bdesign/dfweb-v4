@@ -4819,86 +4819,6 @@ tsconfig.json
 48: });
 ````
 
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import ProsjekterPage from "@/app/prosjekter/page";
- 5: import { getProjects } from "@/app/prosjekter/actions";
- 6: // Mock the components and functions
- 7: jest.mock("@/app/prosjekter/actions");
- 8: jest.mock("@/components/UI/PageHeader.component", () => {
- 9:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
-10:     return <h1>{children}</h1>;
-11:   };
-12: });
-13: jest.mock("@/components/Prosjekter/ProsjektCard.component", () => {
-14:   return function MockProsjektCard(props: { name: string }) {
-15:     return <div data-testid="project-card">{props.name}</div>;
-16:   };
-17: });
-18: jest.mock("@/components/Animations/RotatingLoader.component", () => {
-19:   return function MockRotatingLoader() {
-20:     return <div data-testid="rotating-loader">Loading...</div>;
-21:   };
-22: });
-23: jest.mock("@/app/RootLayout", () => {
-24:   return function MockRootLayout({ children }: { children: React.ReactNode }) {
-25:     return <div>{children}</div>;
-26:   };
-27: });
-28: describe("ProsjekterPage", () => {
-29:   beforeEach(() => {
-30:     jest.clearAllMocks();
-31:   });
-32:   it("renders projects from server component", async () => {
-33:     // Arrange - Set up test data and conditions
-34:     const mockProjects = [
-35:       {
-36:         id: "1",
-37:         name: "Test Project 1",
-38:         description: "Test Description 1",
-39:         subdescription: "Test Subdescription 1",
-40:         projectimage: { asset: { _ref: "test1" } },
-41:         urlwww: [],
-42:         urlgithub: [],
-43:       },
-44:       {
-45:         id: "2",
-46:         name: "Test Project 2",
-47:         description: "Test Description 2",
-48:         subdescription: "Test Subdescription 2",
-49:         projectimage: { asset: { _ref: "test2" } },
-50:         urlwww: [],
-51:         urlgithub: [],
-52:       },
-53:     ];
-54:     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
-55:     // Act - Perform the action being tested
-56:     const { container } = render(await ProsjekterPage());
-57:     // Assert - Verify the results
-58:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-59:     const projectCards = screen.getAllByTestId("project-card");
-60:     expect(projectCards).toHaveLength(2);
-61:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-62:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-63:     const grid = container.querySelector(".grid");
-64:     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
-65:   });
-66:   it("uses Suspense boundary for loading state", async () => {
-67:     // Arrange - Set up test data and conditions
-68:     (getProjects as jest.Mock).mockResolvedValue([]);
-69:     // Act - Perform the action being tested
-70:     render(await ProsjekterPage());
-71:     // Assert - Verify the results
-72:     const main = screen.getByRole("main");
-73:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-74:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-75:   });
-76: });
-````
-
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
 ````typescript
   1: import React from "react";
@@ -5553,49 +5473,6 @@ tsconfig.json
 14: }
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { client } from "@/lib/sanity/client";
- 2: import { projectsQuery } from "@/lib/sanity/queries";
- 3: import type { Project } from "@/types/sanity.types";
- 4: import { isSanityApiError } from "@/types/sanity-errors";
- 5: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 6:   return client.fetch(
- 7:     projectsQuery,
- 8:     {},
- 9:     {
-10:       next: { revalidate: 3600 },
-11:     }
-12:   );
-13: }
-14: function handleError(error: unknown): never {
-15:   console.error("Error fetching projects:", error);
-16:   if (isSanityApiError(error)) {
-17:     switch (error.statusCode) {
-18:       case 401:
-19:         throw new Error("Authentication failed");
-20:       case 403:
-21:         throw new Error("Insufficient permissions");
-22:       case 429:
-23:         throw new Error("Rate limit exceeded");
-24:       default:
-25:         throw new Error(`Sanity API error: ${error.message}`);
-26:     }
-27:   }
-28:   if (error instanceof Error && error.name === "TimeoutError") {
-29:     throw new Error("Request timed out");
-30:   }
-31:   throw new Error("Failed to fetch projects");
-32: }
-33: export async function getProjects(): Promise<Project[]> {
-34:   try {
-35:     return await fetchProjectsFromSanity();
-36:   } catch (error) {
-37:     handleError(error);
-38:   }
-39: }
-````
-
 ## File: src/app/prosjekter/error.tsx
 ````typescript
  1: "use client";
@@ -5645,44 +5522,6 @@ tsconfig.json
 17:     </RootLayout>
 18:   );
 19: }
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
- 2: import type { Metadata } from "next/types";
- 3: import RootLayout from "../RootLayout";
- 4: import PageHeader from "@/components/UI/PageHeader.component";
- 5: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 6: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 7: import { getProjects } from "./actions";
- 8: export const metadata: Metadata = {
- 9:   title: "Prosjekter - Dfweb",
-10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-11: };
-12: export default async function Prosjekter() {
-13:   const projects = await getProjects();
-14:   return (
-15:     <RootLayout>
-16:       <main
-17:         role="main"
-18:         aria-label="Innhold portefølje"
-19:         className="mt-32 bg-graybg"
-20:       >
-21:         <PageHeader>Prosjekter</PageHeader>
-22:         <Suspense fallback={<RotatingLoader />}>
-23:           <div className="container mx-auto">
-24:             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-25:               {projects.map((project) => (
-26:                 <ProsjektCard key={project.id} {...project} />
-27:               ))}
-28:             </div>
-29:           </div>
-30:         </Suspense>
-31:       </main>
-32:     </RootLayout>
-33:   );
-34: }
 ````
 
 ## File: src/app/cursor.css
@@ -7628,6 +7467,159 @@ tsconfig.json
 44: export default Header;
 ````
 
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, motion } from "motion/react";
+  5: import Hamburger from "./Hamburger.component";
+  6: import type { Navigation } from "@/types/sanity.types";
+  7: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  8: /**
+  9:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 10:  * @param {Object} props
+ 11:  * @param {ILink[]} props.links - Array of navigation link objects
+ 12:  * @returns {JSX.Element} The rendered MobileMenu component
+ 13:  */
+ 14: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 15:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 16:   const closeMenu = () => toggleExpanded(0);
+ 17:   const pathname = usePathname();
+ 18:   const menuVariants = {
+ 19:     closed: {
+ 20:       x: "125%",
+ 21:       transition: {
+ 22:         type: "spring",
+ 23:         stiffness: 60,
+ 24:         damping: 10,
+ 25:         delay: 0.3,
+ 26:       },
+ 27:     },
+ 28:     open: {
+ 29:       x: 0,
+ 30:       transition: {
+ 31:         type: "spring",
+ 32:         stiffness: 60,
+ 33:         damping: 10,
+ 34:       },
+ 35:     },
+ 36:   };
+ 37:   const itemVariants = {
+ 38:     closed: (i: number) => ({
+ 39:       x: i % 2 === 0 ? "-50%" : "50%",
+ 40:       opacity: 0,
+ 41:       transition: {
+ 42:         type: "spring",
+ 43:         stiffness: 120,
+ 44:         damping: 12,
+ 45:         duration: 0.25,
+ 46:       },
+ 47:     }),
+ 48:     open: (i: number) => ({
+ 49:       x: 0,
+ 50:       opacity: 1,
+ 51:       transition: {
+ 52:         type: "spring",
+ 53:         stiffness: 120,
+ 54:         damping: 12,
+ 55:         delay: i * 0.25,
+ 56:       },
+ 57:     }),
+ 58:   };
+ 59:   return (
+ 60:     <div
+ 61:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 62:       data-testid="mobilemenu"
+ 63:     >
+ 64:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 65:       <AnimatePresence>
+ 66:         {isExpanded && (
+ 67:           <motion.div
+ 68:             id="mobile-menu"
+ 69:             data-testid="mobile-menu"
+ 70:             data-cy="mobile-menu"
+ 71:             aria-hidden={!isExpanded}
+ 72:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <motion.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => (
+ 94:                   <motion.li
+ 95:                     key={title}
+ 96:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+ 97:                     data-cy="mobile-menu-item"
+ 98:                     custom={index}
+ 99:                     variants={itemVariants}
+100:                   >
+101:                     {externalLink ? (
+102:                       <a
+103:                         aria-label={name}
+104:                         href={href}
+105:                         target="_blank"
+106:                         rel="noreferrer"
+107:                         data-testid={`mobil-${name}`}
+108:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+109:                       >
+110:                         {name}
+111:                       </a>
+112:                     ) : (
+113:                       <Link
+114:                         href={href ?? ""}
+115:                         data-testid={`mobil-${name}`}
+116:                         prefetch={true}
+117:                         onClick={closeMenu}
+118:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+119:                           pathname === href ? "text-green-400" : ""
+120:                         }`}
+121:                       >
+122:                         <div className="glitch relative" data-text={name}>
+123:                           {name}
+124:                           <motion.span
+125:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+126:                               pathname === href ? "bg-green-400" : "bg-white"
+127:                             }`}
+128:                             initial={{
+129:                               width: pathname === href ? "100%" : "0%",
+130:                             }}
+131:                             animate={{
+132:                               width: pathname === href ? "100%" : "0%",
+133:                             }}
+134:                             transition={{ duration: 0.3 }}
+135:                           />
+136:                         </div>
+137:                       </Link>
+138:                     )}
+139:                   </motion.li>
+140:                 ))}
+141:               </motion.ul>
+142:             </nav>
+143:           </motion.div>
+144:         )}
+145:       </AnimatePresence>
+146:     </div>
+147:   );
+148: };
+149: export default MobileMenu;
+````
+
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -8436,6 +8428,30 @@ tsconfig.json
 15:   });
 16:   it("Kontakt skal ikke ha noen a11y feilmeldinger", () => {
 17:     checkAccessibility(5000);
+18:   });
+19: });
+20: export {};
+````
+
+## File: src/e2e/cypress/e2e/layout.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: describe("Layout", () => {
+ 3:   beforeEach(() => {
+ 4:     cy.viewport('iphone-x'); // Set mobile viewport
+ 5:     cy.visit("http://localhost:3000");
+ 6:   });
+ 7:   describe("Mobile Menu", () => {
+ 8:     it("should close when clicking a link", () => {
+ 9:       // Open the mobile menu
+10:       cy.get('[data-testid="mobilemenu"]').click();
+11:       // Verify menu is visible
+12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
+13:       // Click a link in the menu
+14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
+15:       // Menu should not be visible after clicking a link
+16:       cy.get('[data-testid="mobile-menu"]').should('not.exist');
+17:     });
 18:   });
 19: });
 20: export {};
@@ -14190,176 +14206,6 @@ tsconfig.json
 8: export default config;
 ````
 
-## File: README.md
-````markdown
-  1: [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
-  2: [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
-  3: [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-  4: [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
-  5: [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-  6: [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
-  7: 
-  8: # Dfweb.no Portfolio Version 4
-  9: 
- 10: Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
- 11: 
- 12: ## Table of Contents
- 13: 
- 14: - [Live URL](#live-url)
- 15: - [Frontend](#frontend)
- 16: - [Backend](#backend)
- 17: - [Google Lighthouse](#google-lighthouse)
- 18: - [Features](#features)
- 19:   - [General](#general)
- 20:   - [Design](#design)
- 21:   - [Accessibility](#accessibility)
- 22:   - [Devops and Code quality](#devops-and-code-quality)
- 23:   - [Environment Variables](#environment-variables)
- 24:   - [Testing Standards](#testing-standards)
- 25: 
- 26: ## Live URL
- 27: 
- 28: <https://www.dfweb.no>
- 29: 
- 30: ## Frontend (Next.js)
- 31: 
- 32: <img src="/public/images/frontend.png" alt="Frontend Image" />
- 33: 
- 34: ---
- 35: 
- 36: ## Backend (Sanity headless CMS)
- 37: 
- 38: <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
- 39: 
- 40: ---
- 41: 
- 42: ## Google Lighthouse
- 43: 
- 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 45: 
- 46: ## Features
- 47: 
- 48: ### General
- 49: 
- 50: - Clean, modern, responsive and Matrix-inspired design
- 51: - The application is 100% typescript (the types are generated from Sanity typegen)
- 52: - Matrix canvas rain effect on front page
- 53: - Custom 404 page with Matrix rain effect
- 54: - Next.js 15 with Typescript and App router
- 55:   - Server Components implementation for improved performance
- 56:   - Streaming with Suspense boundaries
- 57:   - Automatic static optimization with revalidation
- 58:   - Server-side data fetching with proper error handling
- 59: - React 19
- 60: - Sanity headless CMS for all of the content, projects and navigation links
- 61: - Ladle for component documentation
- 62: - Animations with Motion
- 63: - React testing library for unit testing
- 64: - Cypress for E2E testing
- 65: - Playwright for cross-browser E2E testing
- 66: - Contact form with Email.js
- 67: - Polymorphic components
- 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 69: - Google rich results for each individual page
- 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 71: - Automated Lighthouse CI testing integrated with GitHub Actions
- 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 73: - Reusable GenericForm component for easy form creation and management
- 74: - Error handling with react-error-boundary for improved user experience and easier debugging
- 75: - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
- 76: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 77: 
- 78: ### Design
- 79: 
- 80: - Fully responsive design tested on all devices
- 81: - React Icons for project icons
- 82: - Tailwind 14 for styling
- 83: - Animated reusable input fields
- 84: - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
- 85: 
- 86: ### Accessibility
- 87: 
- 88: - WCAG accessibility tested
- 89: - Accessibility testing with Cypress Axe and Pa11y
- 90: - Automated Pa11y accessibility testing on every PR and push to main
- 91:   - Tests all main pages against WCAG2AA standards
- 92:   - Captures screenshots for visual reference
- 93:   - Detailed reports available as GitHub Actions artifacts
- 94: - Builds will fail if any a11y errors are found
- 95: 
- 96: ### Devops and Code quality
- 97: 
- 98: - Continuous Integration with CircleCI
- 99: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-100: - Github action workflow for Cypress
-101: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-102: - E2E testing with Cypress and Playwright integrated with Github actions
-103: - Unit testing with Jest and React Testing Library integrated with CircleCI
-104: - Test coverage setup with Codecov
-105: - 100% test coverage with Jest and React testing library
-106: - AI-powered commit message generation following Conventional Commits with gitmojis
-107: - Automated performance monitoring with Lighthouse CI
-108:   - Performance, accessibility, best practices, and SEO checks on every PR
-109:   - Configurable thresholds for quality metrics
-110:   - Both desktop and performance-focused testing
-111: - Automated repository documentation with Repomix
-112:   - AI-friendly documentation generation on every push to main
-113:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-114:   - Automated PR analysis with repository structure insights
-115:   - Security-focused documentation with sensitive information filtering
-116:   - Markdown formatting for improved readability
-117: 
-118: ### Environment Variables
-119: 
-120: - Type-safe environment variable validation with envalid
-121: 
-122:   - Runtime validation of required environment variables
-123:   - Clear error messages with examples for missing variables
-124:   - Separate handling of client-side and server-side variables
-125:   - Default values where appropriate
-126:   - Required variables:
-127: 
-128:     ```env
-129:     # Email Configuration (client-side)
-130:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-131:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-132:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-133: 
-134:     # AI Configuration (server-side)
-135:     AI_API_KEY=xxx                            # AI service API key
-136:     AI_BASE_URL=https://xxx                   # AI service base URL
-137:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
-138:     ```
-139: 
-140:   - Validation prevents application startup if required variables are missing
-141:   - TypeScript integration for type-safe access to environment variables
-142: 
-143: ### Testing Standards
-144: 
-145: - ISTQB-aligned comprehensive test strategy
-146:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-147:   - Multi-level test approach (Unit, Component, E2E)
-148:   - Risk-based testing methodology
-149:   - Defined test metrics and reporting
-150:   - Clear roles and responsibilities
-151:   - Structured defect management process
-152: 
-153: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-154:   - Each test must include the following comments:
-155:     ```typescript
-156:     // Arrange - Set up test data and conditions
-157:     // Act - Perform the action being tested
-158:     // Assert - Verify the results
-159:     ```
-160:   - This pattern ensures:
-161:     - Clear test structure and readability
-162:     - Consistent test organization across the codebase
-163:     - Easy identification of test setup, execution, and verification
-164:   - Simplified test maintenance and debugging
-165:   - Automated validation through custom ESLint rules
-166:   - Tests will fail if AAA pattern is not followed
-````
-
 ## File: renovate.json
 ````json
  1: {
@@ -14594,6 +14440,51 @@ tsconfig.json
 35: }
 ````
 
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import RootLayout from "../RootLayout";
+ 4: import PageHeader from "@/components/UI/PageHeader.component";
+ 5: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 6: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 7: import { getProjects, preloadProjects } from "./actions";
+ 8: export const metadata: Metadata = {
+ 9:   title: "Prosjekter - Dfweb",
+10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+11: };
+12: async function ProjectList() {
+13:   const projects = await getProjects();
+14:   return (
+15:     <div className="container mx-auto">
+16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+17:         {projects.map((project) => (
+18:           <ProsjektCard key={project.id} {...project} />
+19:         ))}
+20:       </div>
+21:     </div>
+22:   );
+23: }
+24: export default function Prosjekter() {
+25:   // Start fetching projects data as early as possible
+26:   preloadProjects();
+27:   return (
+28:     <RootLayout>
+29:       <main
+30:         role="main"
+31:         aria-label="Innhold portefølje"
+32:         className="mt-32 bg-graybg"
+33:       >
+34:         <PageHeader>Prosjekter</PageHeader>
+35:         <Suspense fallback={<RotatingLoader />}>
+36:           <ProjectList />
+37:         </Suspense>
+38:       </main>
+39:     </RootLayout>
+40:   );
+41: }
+````
+
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -14642,183 +14533,6 @@ tsconfig.json
 44:     </html>
 45:   );
 46: }
-````
-
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, motion } from "motion/react";
-  5: import Hamburger from "./Hamburger.component";
-  6: import type { Navigation } from "@/types/sanity.types";
-  7: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  8: /**
-  9:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 10:  * @param {Object} props
- 11:  * @param {ILink[]} props.links - Array of navigation link objects
- 12:  * @returns {JSX.Element} The rendered MobileMenu component
- 13:  */
- 14: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 15:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 16:   const closeMenu = () => toggleExpanded(0);
- 17:   const pathname = usePathname();
- 18:   const menuVariants = {
- 19:     closed: {
- 20:       x: "125%",
- 21:       transition: {
- 22:         type: "spring",
- 23:         stiffness: 60,
- 24:         damping: 10,
- 25:         delay: 0.3,
- 26:       },
- 27:     },
- 28:     open: {
- 29:       x: 0,
- 30:       transition: {
- 31:         type: "spring",
- 32:         stiffness: 60,
- 33:         damping: 10,
- 34:       },
- 35:     },
- 36:   };
- 37:   const itemVariants = {
- 38:     closed: (i: number) => ({
- 39:       x: i % 2 === 0 ? "-50%" : "50%",
- 40:       opacity: 0,
- 41:       transition: {
- 42:         type: "spring",
- 43:         stiffness: 120,
- 44:         damping: 12,
- 45:         duration: 0.25,
- 46:       },
- 47:     }),
- 48:     open: (i: number) => ({
- 49:       x: 0,
- 50:       opacity: 1,
- 51:       transition: {
- 52:         type: "spring",
- 53:         stiffness: 120,
- 54:         damping: 12,
- 55:         delay: i * 0.25,
- 56:       },
- 57:     }),
- 58:   };
- 59:   return (
- 60:     <div
- 61:       className="z-50 md:hidden lg:hidden xl:hidden"
- 62:       data-testid="mobilemenu"
- 63:     >
- 64:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 65:       <AnimatePresence>
- 66:         {isExpanded && (
- 67:           <motion.div
- 68:             id="mobile-menu"
- 69:             data-testid="mobile-menu"
- 70:             data-cy="mobile-menu"
- 71:             aria-hidden={!isExpanded}
- 72:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 73:             initial="closed"
- 74:             animate="open"
- 75:             exit="closed"
- 76:             variants={menuVariants}
- 77:           >
- 78:             <nav aria-label="Navigasjon" className="w-full">
- 79:               <motion.ul
- 80:                 className="w-full"
- 81:                 initial="closed"
- 82:                 animate="open"
- 83:                 exit="closed"
- 84:                 variants={{
- 85:                   open: {
- 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 87:                   },
- 88:                   closed: {
- 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 90:                   },
- 91:                 }}
- 92:               >
- 93:                 {links?.map(({ title, name, href, externalLink }, index) => (
- 94:                   <motion.li
- 95:                     key={title}
- 96:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
- 97:                     data-cy="mobile-menu-item"
- 98:                     custom={index}
- 99:                     variants={itemVariants}
-100:                   >
-101:                     {externalLink ? (
-102:                       <a
-103:                         aria-label={name}
-104:                         href={href}
-105:                         target="_blank"
-106:                         rel="noreferrer"
-107:                         data-testid={`mobil-${name}`}
-108:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-109:                       >
-110:                         {name}
-111:                       </a>
-112:                     ) : (
-113:                       <Link
-114:                         href={href ?? ""}
-115:                         data-testid={`mobil-${name}`}
-116:                         prefetch={true}
-117:                         onClick={closeMenu}
-118:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-119:                           pathname === href ? "text-green-400" : ""
-120:                         }`}
-121:                       >
-122:                         <div className="glitch relative" data-text={name}>
-123:                           {name}
-124:                           <motion.span
-125:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-126:                               pathname === href ? "bg-green-400" : "bg-white"
-127:                             }`}
-128:                             initial={{
-129:                               width: pathname === href ? "100%" : "0%",
-130:                             }}
-131:                             animate={{
-132:                               width: pathname === href ? "100%" : "0%",
-133:                             }}
-134:                             transition={{ duration: 0.3 }}
-135:                           />
-136:                         </div>
-137:                       </Link>
-138:                     )}
-139:                   </motion.li>
-140:                 ))}
-141:               </motion.ul>
-142:             </nav>
-143:           </motion.div>
-144:         )}
-145:       </AnimatePresence>
-146:     </div>
-147:   );
-148: };
-149: export default MobileMenu;
-````
-
-## File: src/e2e/cypress/e2e/layout.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: describe("Layout", () => {
- 3:   beforeEach(() => {
- 4:     cy.viewport('iphone-x'); // Set mobile viewport
- 5:     cy.visit("http://localhost:3000");
- 6:   });
- 7:   describe("Mobile Menu", () => {
- 8:     it("should close when clicking a link", () => {
- 9:       // Open the mobile menu
-10:       cy.get('[data-testid="mobilemenu"]').click();
-11:       // Verify menu is visible
-12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
-13:       // Click a link in the menu
-14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
-15:       // Menu should not be visible after clicking a link
-16:       cy.get('[data-testid="mobile-menu"]').should('not.exist');
-17:     });
-18:   });
-19: });
-20: export {};
 ````
 
 ## File: src/utils/eslint/package.json
@@ -14951,6 +14665,150 @@ tsconfig.json
 78:           name: Build Next.js project
 ````
 
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen, waitFor, act } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ProsjekterPage from "@/app/prosjekter/page";
+ 5: import { getProjects } from "@/app/prosjekter/actions";
+ 6: // Mock the components and functions
+ 7: jest.mock("@/app/prosjekter/actions");
+ 8: jest.mock("@/components/UI/PageHeader.component", () => {
+ 9:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
+10:     return <h1>{children}</h1>;
+11:   };
+12: });
+13: jest.mock("@/components/Prosjekter/ProsjektCard.component", () => {
+14:   return function MockProsjektCard(props: { name: string }) {
+15:     return <div data-testid="project-card">{props.name}</div>;
+16:   };
+17: });
+18: jest.mock("@/components/Animations/RotatingLoader.component", () => {
+19:   return function MockRotatingLoader() {
+20:     return <div data-testid="rotating-loader">Loading...</div>;
+21:   };
+22: });
+23: jest.mock("@/app/RootLayout", () => {
+24:   return function MockRootLayout({ children }: { children: React.ReactNode }) {
+25:     return <div>{children}</div>;
+26:   };
+27: });
+28: describe("ProsjekterPage", () => {
+29:   beforeEach(() => {
+30:     jest.clearAllMocks();
+31:   });
+32:   it("renders projects from server component", async () => {
+33:     // Arrange - Set up test data and conditions
+34:     const mockProjects = [
+35:       {
+36:         id: "1",
+37:         name: "Test Project 1",
+38:         description: "Test Description 1",
+39:         subdescription: "Test Subdescription 1",
+40:         projectimage: { asset: { _ref: "test1" } },
+41:         urlwww: [],
+42:         urlgithub: [],
+43:       },
+44:       {
+45:         id: "2",
+46:         name: "Test Project 2",
+47:         description: "Test Description 2",
+48:         subdescription: "Test Subdescription 2",
+49:         projectimage: { asset: { _ref: "test2" } },
+50:         urlwww: [],
+51:         urlgithub: [],
+52:       },
+53:     ];
+54:     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
+55:     // Act - Perform the action being tested
+56:     let container: HTMLElement;
+57:     await act(async () => {
+58:       const { container: renderedContainer } = render(await ProsjekterPage());
+59:       container = renderedContainer;
+60:     });
+61:     // Assert - Verify the results
+62:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+63:     // Wait for the project cards to be rendered
+64:     await waitFor(() => {
+65:       const projectCards = screen.getAllByTestId("project-card");
+66:       expect(projectCards).toHaveLength(2);
+67:       expect(projectCards[0]).toHaveTextContent("Test Project 1");
+68:       expect(projectCards[1]).toHaveTextContent("Test Project 2");
+69:     });
+70:     // @ts-expect-error container will be assigned
+71:     const grid = container.querySelector(".grid");
+72:     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
+73:   });
+74:   it("uses Suspense boundary for loading state", async () => {
+75:     // Arrange - Set up test data and conditions
+76:     // Ensure getProjects is a promise that doesn't resolve immediately
+77:     // to test the loading state.
+78:     (getProjects as jest.Mock).mockReturnValue(new Promise(() => {}));
+79:     // Act - Perform the action being tested
+80:     await act(async () => {
+81:       render(await ProsjekterPage());
+82:     });
+83:     // Assert - Verify the results
+84:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+85:     expect(screen.getByText("Loading...")).toBeInTheDocument();
+86:     const main = screen.getByRole("main");
+87:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+88:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+89:     // Clean up the mock to prevent it from affecting other tests
+90:     (getProjects as jest.Mock).mockResolvedValue([]);
+91:   });
+92: });
+````
+
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { cache } from "react";
+ 2: import "server-only";
+ 3: import { client } from "@/lib/sanity/client";
+ 4: import { projectsQuery } from "@/lib/sanity/queries";
+ 5: import type { Project } from "@/types/sanity.types";
+ 6: import { isSanityApiError } from "@/types/sanity-errors";
+ 7: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 8:   return client.fetch(
+ 9:     projectsQuery,
+10:     {},
+11:     {
+12:       next: { revalidate: 3600 },
+13:     }
+14:   );
+15: }
+16: function handleError(error: unknown): never {
+17:   console.error("Error fetching projects:", error);
+18:   if (isSanityApiError(error)) {
+19:     switch (error.statusCode) {
+20:       case 401:
+21:         throw new Error("Authentication failed");
+22:       case 403:
+23:         throw new Error("Insufficient permissions");
+24:       case 429:
+25:         throw new Error("Rate limit exceeded");
+26:       default:
+27:         throw new Error(`Sanity API error: ${error.message}`);
+28:     }
+29:   }
+30:   if (error instanceof Error && error.name === "TimeoutError") {
+31:     throw new Error("Request timed out");
+32:   }
+33:   throw new Error("Failed to fetch projects");
+34: }
+35: export const getProjects = cache(async (): Promise<Project[]> => {
+36:   try {
+37:     return await fetchProjectsFromSanity();
+38:   } catch (error) {
+39:     handleError(error);
+40:   }
+41: });
+42: export function preloadProjects(): void {
+43:   getProjects();
+44: }
+````
+
 ## File: next.config.ts
 ````typescript
  1: import type { NextConfig } from "next";
@@ -15008,6 +14866,178 @@ tsconfig.json
 53:   },
 54: };
 55: export default nextConfig;
+````
+
+## File: README.md
+````markdown
+  1: [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+  2: [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
+  3: [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+  4: [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+  5: [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
+  6: [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
+  7: 
+  8: # Dfweb.no Portfolio Version 4
+  9: 
+ 10: Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
+ 11: 
+ 12: ## Table of Contents
+ 13: 
+ 14: - [Live URL](#live-url)
+ 15: - [Frontend](#frontend)
+ 16: - [Backend](#backend)
+ 17: - [Google Lighthouse](#google-lighthouse)
+ 18: - [Features](#features)
+ 19:   - [General](#general)
+ 20:   - [Design](#design)
+ 21:   - [Accessibility](#accessibility)
+ 22:   - [Devops and Code quality](#devops-and-code-quality)
+ 23:   - [Environment Variables](#environment-variables)
+ 24:   - [Testing Standards](#testing-standards)
+ 25: 
+ 26: ## Live URL
+ 27: 
+ 28: <https://www.dfweb.no>
+ 29: 
+ 30: ## Frontend (Next.js)
+ 31: 
+ 32: <img src="/public/images/frontend.png" alt="Frontend Image" />
+ 33: 
+ 34: ---
+ 35: 
+ 36: ## Backend (Sanity headless CMS)
+ 37: 
+ 38: <img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+ 39: 
+ 40: ---
+ 41: 
+ 42: ## Google Lighthouse
+ 43: 
+ 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 45: 
+ 46: ## Features
+ 47: 
+ 48: ### General
+ 49: 
+ 50: - Clean, modern, responsive and Matrix-inspired design
+ 51: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 52: - Matrix canvas rain effect on front page
+ 53: - Custom 404 page with Matrix rain effect
+ 54: - Next.js 15 with Typescript and App router
+ 55:   - Server Components implementation for improved performance
+ 56:   - Streaming with Suspense boundaries
+ 57:   - Automatic static optimization with revalidation
+ 58:   - Server-side data fetching with proper error handling
+ 59: - React 19
+ 60: - Sanity headless CMS for all of the content, projects and navigation links
+ 61: - Ladle for component documentation
+ 62: - Animations with Motion
+ 63: - React testing library for unit testing
+ 64: - Cypress for E2E testing
+ 65: - Playwright for cross-browser E2E testing
+ 66: - Contact form with Email.js
+ 67: - Polymorphic components
+ 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 69: - Google rich results for each individual page
+ 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 71: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 73: - Reusable GenericForm component for easy form creation and management
+ 74: - Error handling with react-error-boundary for improved user experience and easier debugging
+ 75: - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+ 76: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 77: - Efficient data fetching in `/prosjekter` using Next.js preloading, React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with around 1 second.
+ 78: 
+ 79: ### Design
+ 80: 
+ 81: - Fully responsive design tested on all devices
+ 82: - React Icons for project icons
+ 83: - Tailwind 14 for styling
+ 84: - Animated reusable input fields
+ 85: - Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
+ 86: 
+ 87: ### Accessibility
+ 88: 
+ 89: - WCAG accessibility tested
+ 90: - Accessibility testing with Cypress Axe and Pa11y
+ 91: - Automated Pa11y accessibility testing on every PR and push to main
+ 92:   - Tests all main pages against WCAG2AA standards
+ 93:   - Captures screenshots for visual reference
+ 94:   - Detailed reports available as GitHub Actions artifacts
+ 95: - Builds will fail if any a11y errors are found
+ 96: 
+ 97: ### Devops and Code quality
+ 98: 
+ 99: - Continuous Integration with CircleCI
+100: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+101: - Github action workflow for Cypress
+102: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+103: - E2E testing with Cypress and Playwright integrated with Github actions
+104: - Unit testing with Jest and React Testing Library integrated with CircleCI
+105: - Test coverage setup with Codecov
+106: - 100% test coverage with Jest and React testing library
+107: - AI-powered commit message generation following Conventional Commits with gitmojis
+108: - Automated performance monitoring with Lighthouse CI
+109:   - Performance, accessibility, best practices, and SEO checks on every PR
+110:   - Configurable thresholds for quality metrics
+111:   - Both desktop and performance-focused testing
+112: - Automated repository documentation with Repomix
+113:   - AI-friendly documentation generation on every push to main
+114:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+115:   - Automated PR analysis with repository structure insights
+116:   - Security-focused documentation with sensitive information filtering
+117:   - Markdown formatting for improved readability
+118: 
+119: ### Environment Variables
+120: 
+121: - Type-safe environment variable validation with envalid
+122: 
+123:   - Runtime validation of required environment variables
+124:   - Clear error messages with examples for missing variables
+125:   - Separate handling of client-side and server-side variables
+126:   - Default values where appropriate
+127:   - Required variables:
+128: 
+129:     ```env
+130:     # Email Configuration (client-side)
+131:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+132:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+133:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+134: 
+135:     # AI Configuration (server-side)
+136:     AI_API_KEY=xxx                            # AI service API key
+137:     AI_BASE_URL=https://xxx                   # AI service base URL
+138:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
+139:     ```
+140: 
+141:   - Validation prevents application startup if required variables are missing
+142:   - TypeScript integration for type-safe access to environment variables
+143: 
+144: ### Testing Standards
+145: 
+146: - ISTQB-aligned comprehensive test strategy
+147: 
+148:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+149:   - Multi-level test approach (Unit, Component, E2E)
+150:   - Risk-based testing methodology
+151:   - Defined test metrics and reporting
+152:   - Clear roles and responsibilities
+153:   - Structured defect management process
+154: 
+155: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+156:   - Each test must include the following comments:
+157:     ```typescript
+158:     // Arrange - Set up test data and conditions
+159:     // Act - Perform the action being tested
+160:     // Assert - Verify the results
+161:     ```
+162:   - This pattern ensures:
+163:     - Clear test structure and readability
+164:     - Consistent test organization across the codebase
+165:     - Easy identification of test setup, execution, and verification
+166:   - Simplified test maintenance and debugging
+167:   - Automated validation through custom ESLint rules
+168:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: studio/package.json
