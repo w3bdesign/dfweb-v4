@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ProsjekterPage from "@/app/prosjekter/page";
 import { getProjects } from "@/app/prosjekter/actions";
@@ -57,28 +57,47 @@ describe("ProsjekterPage", () => {
     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
 
     // Act - Perform the action being tested
-    const { container } = render(await ProsjekterPage());
+    let container: HTMLElement;
+    await act(async () => {
+      const { container: renderedContainer } = render(await ProsjekterPage());
+      container = renderedContainer;
+    });
 
     // Assert - Verify the results
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-    const projectCards = screen.getAllByTestId("project-card");
-    expect(projectCards).toHaveLength(2);
-    expect(projectCards[0]).toHaveTextContent("Test Project 1");
-    expect(projectCards[1]).toHaveTextContent("Test Project 2");
+
+    // Wait for the project cards to be rendered
+    await waitFor(() => {
+      const projectCards = screen.getAllByTestId("project-card");
+      expect(projectCards).toHaveLength(2);
+      expect(projectCards[0]).toHaveTextContent("Test Project 1");
+      expect(projectCards[1]).toHaveTextContent("Test Project 2");
+    });
+
+    // @ts-expect-error container will be assigned
     const grid = container.querySelector(".grid");
     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
   });
 
   it("uses Suspense boundary for loading state", async () => {
     // Arrange - Set up test data and conditions
-    (getProjects as jest.Mock).mockResolvedValue([]);
+    // Ensure getProjects is a promise that doesn't resolve immediately
+    // to test the loading state.
+    (getProjects as jest.Mock).mockReturnValue(new Promise(() => {}));
 
     // Act - Perform the action being tested
-    render(await ProsjekterPage());
+    await act(async () => {
+      render(await ProsjekterPage());
+    });
 
     // Assert - Verify the results
+    expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
     const main = screen.getByRole("main");
     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
     expect(main).toContainElement(screen.getByText("Prosjekter"));
+
+    // Clean up the mock to prevent it from affecting other tests
+    (getProjects as jest.Mock).mockResolvedValue([]);
   });
 });

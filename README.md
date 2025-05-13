@@ -74,6 +74,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Error handling with react-error-boundary for improved user experience and easier debugging
 - AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
 - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+- Efficient data fetching in `/prosjekter` using Next.js preloading, React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with around 1 second.
 
 ### Design
 
@@ -143,6 +144,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### Testing Standards
 
 - ISTQB-aligned comprehensive test strategy
+
   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
   - Multi-level test approach (Unit, Component, E2E)
   - Risk-based testing methodology
