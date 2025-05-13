@@ -49,5 +49,5 @@ export const getProjects = cache(async (): Promise<Project[]> => {
 });
 
 export function preloadProjects(): void {
-  void getProjects();
+  getProjects();
 }
