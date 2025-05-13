@@ -4378,6 +4378,179 @@ tsconfig.json
 88: });
 ````
 
+## File: src/__tests__/Layout/MobileMenu.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, cleanup } from "@testing-library/react";
+  5: import userEvent from "@testing-library/user-event";
+  6: import { usePathname } from "next/navigation";
+  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
+  8: const linksmock = [
+  9:   {
+ 10:     _key: "home",
+ 11:     title: "Hjem",
+ 12:     name: "Hjem",
+ 13:     href: "/",
+ 14:     hash: "",
+ 15:     externalLink: false,
+ 16:   },
+ 17:   {
+ 18:     _key: "projects",
+ 19:     title: "Prosjekter",
+ 20:     name: "Prosjekter",
+ 21:     href: "/prosjekter",
+ 22:     hash: "",
+ 23:     externalLink: false,
+ 24:   },
+ 25:   {
+ 26:     _key: "cv",
+ 27:     title: "CV",
+ 28:     name: "CV",
+ 29:     href: "/cv",
+ 30:     hash: "",
+ 31:     externalLink: false,
+ 32:   },
+ 33:   {
+ 34:     _key: "github",
+ 35:     title: "Github",
+ 36:     name: "Github",
+ 37:     href: "https://github.com/w3bdesign",
+ 38:     hash: "",
+ 39:     externalLink: true,
+ 40:   },
+ 41:   {
+ 42:     _key: "contact",
+ 43:     title: "Kontakt",
+ 44:     name: "Kontakt",
+ 45:     href: "/kontakt",
+ 46:     hash: "",
+ 47:     externalLink: false,
+ 48:   },
+ 49: ];
+ 50: // Mock next/navigation
+ 51: jest.mock("next/navigation", () => ({
+ 52:   usePathname: jest.fn(),
+ 53: }));
+ 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+ 55: describe("MobileMenu - elementer eksisterer", () => {
+ 56:   const testidMenu = "mobile-menu";
+ 57:   beforeEach(() => {
+ 58:     // Default to home page
+ 59:     mockUsePathname.mockReturnValue("/");
+ 60:     render(<MobileMenu links={linksmock} />);
+ 61:   });
+ 62:   afterEach(() => {
+ 63:     jest.clearAllMocks();
+ 64:   });
+ 65:   it("renders mobile menu when hamburger is clicked", () => {
+ 66:     // Arrange
+ 67:     const hamburger = screen.getByTestId("hamburger");
+ 68:     // Act
+ 69:     fireEvent.click(hamburger);
+ 70:     const mobilemenu = screen.getByTestId(testidMenu);
+ 71:     // Assert
+ 72:     expect(mobilemenu).toBeInTheDocument();
+ 73:   });
+ 74:   it("toggles hamburger menu expansion state", () => {
+ 75:     // Arrange
+ 76:     const hamburger = screen.getByTestId("hamburger");
+ 77:     // Assert - Initial state
+ 78:     expect(
+ 79:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
+ 80:     ).toBeInTheDocument();
+ 81:     // Act - Open menu
+ 82:     fireEvent.click(hamburger);
+ 83:     // Assert - Open state
+ 84:     expect(
+ 85:       screen.getByRole("button", { name: /hamburger/i, expanded: true })
+ 86:     ).toBeInTheDocument();
+ 87:     // Act - Close menu
+ 88:     fireEvent.click(hamburger);
+ 89:     // Assert - Closed state
+ 90:     expect(
+ 91:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
+ 92:     ).toBeInTheDocument();
+ 93:   });
+ 94:   it("displays correct number of navigation links", () => {
+ 95:     // Arrange
+ 96:     const hamburger = screen.getByTestId("hamburger");
+ 97:     // Act
+ 98:     fireEvent.click(hamburger);
+ 99:     const menuItems = screen.getAllByRole("link");
+100:     // Assert
+101:     expect(menuItems.length).toBe(linksmock.length);
+102:   });
+103:   it("renders internal links with correct active state", () => {
+104:     // Arrange
+105:     cleanup(); // Clean up previous renders
+106:     const currentPath = "/prosjekter";
+107:     mockUsePathname.mockReturnValue(currentPath);
+108:     const { getByTestId } = render(<MobileMenu links={linksmock} />);
+109:     const hamburger = getByTestId("hamburger");
+110:     // Act
+111:     fireEvent.click(hamburger);
+112:     // Assert
+113:     linksmock.forEach((link) => {
+114:       if (!link.externalLink) {
+115:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
+116:         if (link.href === currentPath) {
+117:           expect(linkElement).toHaveClass("text-green-400");
+118:           const underline = linkElement.querySelector("span");
+119:           expect(underline).toHaveClass("bg-green-400");
+120:         } else {
+121:           expect(linkElement).not.toHaveClass("text-green-400");
+122:           const underline = linkElement.querySelector("span");
+123:           expect(underline).toHaveClass("bg-white");
+124:         }
+125:       }
+126:     });
+127:   });
+128:   it("renders internal links with glitch effect", () => {
+129:     // Arrange
+130:     const hamburger = screen.getByTestId("hamburger");
+131:     // Act
+132:     fireEvent.click(hamburger);
+133:     // Assert
+134:     linksmock.forEach((link) => {
+135:       if (!link.externalLink) {
+136:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
+137:         const glitchElement = linkElement.querySelector(".glitch");
+138:         expect(glitchElement).toBeInTheDocument();
+139:         expect(glitchElement).toHaveAttribute("data-text", link.name);
+140:       }
+141:     });
+142:   });
+143:   it("opens external links in new tab with correct attributes", () => {
+144:     // Arrange
+145:     const hamburger = screen.getByTestId("hamburger");
+146:     // Act
+147:     fireEvent.click(hamburger);
+148:     const externalLink = screen.getByRole("link", { name: /github/i });
+149:     // Assert
+150:     expect(externalLink).toHaveAttribute("target", "_blank");
+151:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+152:   });
+153:   it("navigates and closes menu when clicking a link", async () => {
+154:     // Arrange
+155:     const user = userEvent.setup();
+156:     const hamburger = screen.getByTestId("hamburger");
+157:     // Act - Open menu
+158:     await user.click(hamburger);
+159:     // Assert - Menu is open
+160:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+161:     // Act - Click a link
+162:     const link = screen.getByTestId("mobil-Prosjekter");
+163:     await user.click(link);
+164:     // Wait for animation to complete
+165:     await new Promise((resolve) => setTimeout(resolve, 2500));
+166:     // Assert - Menu should close
+167:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
+168:   });
+169: });
+````
+
 ## File: src/__tests__/Prosjekter/actions.test.ts
 ````typescript
   1: import { getProjects } from "@/app/prosjekter/actions";
@@ -14421,88 +14594,6 @@ tsconfig.json
 35: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@4.1.0
- 4:   codecov: codecov/codecov@5.3.0
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.0
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.0-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -14551,251 +14642,6 @@ tsconfig.json
 44:     </html>
 45:   );
 46: }
-````
-
-## File: src/e2e/cypress/e2e/layout.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: describe("Layout", () => {
- 3:   beforeEach(() => {
- 4:     cy.viewport('iphone-x'); // Set mobile viewport
- 5:     cy.visit("http://localhost:3000");
- 6:   });
- 7:   describe("Mobile Menu", () => {
- 8:     it("should close when clicking a link", () => {
- 9:       // Open the mobile menu
-10:       cy.get('[data-testid="mobilemenu"]').click();
-11:       // Verify menu is visible
-12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
-13:       // Click a link in the menu
-14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
-15:       // Menu should not be visible after clicking a link
-16:       cy.get('[data-testid="mobile-menu"]').should('not.exist');
-17:     });
-18:   });
-19: });
-20: export {};
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "index.js",
- 6:   "scripts": {
- 7:     "test": "echo \"Error: no test specified\" && exit 1"
- 8:   },
- 9:   "keywords": [
-10:     "eslint",
-11:     "eslintplugin",
-12:     "eslint-plugin"
-13:   ],
-14:   "author": "",
-15:   "license": "ISC",
-16:   "peerDependencies": {
-17:     "eslint": ">=9.26.0"
-18:   }
-19: }
-````
-
-## File: jest.config.ts
-````typescript
- 1: import type { Config } from "jest";
- 2: import nextJest from "next/jest";
- 3: const createJestConfig = nextJest({
- 4:   dir: "./",
- 5: });
- 6: const customJestConfig: Config = {
- 7:   preset: "ts-jest/presets/js-with-babel-esm",
- 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
- 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
-10:   testEnvironment: "jest-environment-jsdom",
-11:   moduleNameMapper: {
-12:     "@/(.*)": "<rootDir>/src/$1",
-13:   },
-14:   collectCoverageFrom: [
-15:     "src/components/*.{js,jsx,ts,tsx}",
-16:     "!src/lib/**/*.*",
-17:     "!src/pages/**/*.*",
-18:     "!src/utils/**/*.*",
-19:   ],
-20: };
-21: export default createJestConfig(customJestConfig);
-````
-
-## File: src/__tests__/Layout/MobileMenu.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, cleanup } from "@testing-library/react";
-  5: import userEvent from "@testing-library/user-event";
-  6: import { usePathname } from "next/navigation";
-  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
-  8: const linksmock = [
-  9:   {
- 10:     _key: "home",
- 11:     title: "Hjem",
- 12:     name: "Hjem",
- 13:     href: "/",
- 14:     hash: "",
- 15:     externalLink: false,
- 16:   },
- 17:   {
- 18:     _key: "projects",
- 19:     title: "Prosjekter",
- 20:     name: "Prosjekter",
- 21:     href: "/prosjekter",
- 22:     hash: "",
- 23:     externalLink: false,
- 24:   },
- 25:   {
- 26:     _key: "cv",
- 27:     title: "CV",
- 28:     name: "CV",
- 29:     href: "/cv",
- 30:     hash: "",
- 31:     externalLink: false,
- 32:   },
- 33:   {
- 34:     _key: "github",
- 35:     title: "Github",
- 36:     name: "Github",
- 37:     href: "https://github.com/w3bdesign",
- 38:     hash: "",
- 39:     externalLink: true,
- 40:   },
- 41:   {
- 42:     _key: "contact",
- 43:     title: "Kontakt",
- 44:     name: "Kontakt",
- 45:     href: "/kontakt",
- 46:     hash: "",
- 47:     externalLink: false,
- 48:   },
- 49: ];
- 50: // Mock next/navigation
- 51: jest.mock("next/navigation", () => ({
- 52:   usePathname: jest.fn(),
- 53: }));
- 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
- 55: describe("MobileMenu - elementer eksisterer", () => {
- 56:   const testidMenu = "mobile-menu";
- 57:   beforeEach(() => {
- 58:     // Default to home page
- 59:     mockUsePathname.mockReturnValue("/");
- 60:     render(<MobileMenu links={linksmock} />);
- 61:   });
- 62:   afterEach(() => {
- 63:     jest.clearAllMocks();
- 64:   });
- 65:   it("renders mobile menu when hamburger is clicked", () => {
- 66:     // Arrange
- 67:     const hamburger = screen.getByTestId("hamburger");
- 68:     // Act
- 69:     fireEvent.click(hamburger);
- 70:     const mobilemenu = screen.getByTestId(testidMenu);
- 71:     // Assert
- 72:     expect(mobilemenu).toBeInTheDocument();
- 73:   });
- 74:   it("toggles hamburger menu expansion state", () => {
- 75:     // Arrange
- 76:     const hamburger = screen.getByTestId("hamburger");
- 77:     // Assert - Initial state
- 78:     expect(
- 79:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
- 80:     ).toBeInTheDocument();
- 81:     // Act - Open menu
- 82:     fireEvent.click(hamburger);
- 83:     // Assert - Open state
- 84:     expect(
- 85:       screen.getByRole("button", { name: /hamburger/i, expanded: true })
- 86:     ).toBeInTheDocument();
- 87:     // Act - Close menu
- 88:     fireEvent.click(hamburger);
- 89:     // Assert - Closed state
- 90:     expect(
- 91:       screen.getByRole("button", { name: /hamburger/i, expanded: false })
- 92:     ).toBeInTheDocument();
- 93:   });
- 94:   it("displays correct number of navigation links", () => {
- 95:     // Arrange
- 96:     const hamburger = screen.getByTestId("hamburger");
- 97:     // Act
- 98:     fireEvent.click(hamburger);
- 99:     const menuItems = screen.getAllByRole("link");
-100:     // Assert
-101:     expect(menuItems.length).toBe(linksmock.length);
-102:   });
-103:   it("renders internal links with correct active state", () => {
-104:     // Arrange
-105:     cleanup(); // Clean up previous renders
-106:     const currentPath = "/prosjekter";
-107:     mockUsePathname.mockReturnValue(currentPath);
-108:     const { getByTestId } = render(<MobileMenu links={linksmock} />);
-109:     const hamburger = getByTestId("hamburger");
-110:     // Act
-111:     fireEvent.click(hamburger);
-112:     // Assert
-113:     linksmock.forEach((link) => {
-114:       if (!link.externalLink) {
-115:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
-116:         if (link.href === currentPath) {
-117:           expect(linkElement).toHaveClass("text-green-400");
-118:           const underline = linkElement.querySelector("span");
-119:           expect(underline).toHaveClass("bg-green-400");
-120:         } else {
-121:           expect(linkElement).not.toHaveClass("text-green-400");
-122:           const underline = linkElement.querySelector("span");
-123:           expect(underline).toHaveClass("bg-white");
-124:         }
-125:       }
-126:     });
-127:   });
-128:   it("renders internal links with glitch effect", () => {
-129:     // Arrange
-130:     const hamburger = screen.getByTestId("hamburger");
-131:     // Act
-132:     fireEvent.click(hamburger);
-133:     // Assert
-134:     linksmock.forEach((link) => {
-135:       if (!link.externalLink) {
-136:         const linkElement = screen.getByTestId(`mobil-${link.name}`);
-137:         const glitchElement = linkElement.querySelector(".glitch");
-138:         expect(glitchElement).toBeInTheDocument();
-139:         expect(glitchElement).toHaveAttribute("data-text", link.name);
-140:       }
-141:     });
-142:   });
-143:   it("opens external links in new tab with correct attributes", () => {
-144:     // Arrange
-145:     const hamburger = screen.getByTestId("hamburger");
-146:     // Act
-147:     fireEvent.click(hamburger);
-148:     const externalLink = screen.getByRole("link", { name: /github/i });
-149:     // Assert
-150:     expect(externalLink).toHaveAttribute("target", "_blank");
-151:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
-152:   });
-153:   it("navigates and closes menu when clicking a link", async () => {
-154:     // Arrange
-155:     const user = userEvent.setup();
-156:     const hamburger = screen.getByTestId("hamburger");
-157:     // Act - Open menu
-158:     await user.click(hamburger);
-159:     // Assert - Menu is open
-160:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-161:     // Act - Click a link
-162:     const link = screen.getByTestId("mobil-Prosjekter");
-163:     await user.click(link);
-164:     // Wait for animation to complete
-165:     await new Promise((resolve) => setTimeout(resolve, 2500));
-166:     // Assert - Menu should close
-167:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
-168:   });
-169: });
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
@@ -14949,6 +14795,160 @@ tsconfig.json
 147:   );
 148: };
 149: export default MobileMenu;
+````
+
+## File: src/e2e/cypress/e2e/layout.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: describe("Layout", () => {
+ 3:   beforeEach(() => {
+ 4:     cy.viewport('iphone-x'); // Set mobile viewport
+ 5:     cy.visit("http://localhost:3000");
+ 6:   });
+ 7:   describe("Mobile Menu", () => {
+ 8:     it("should close when clicking a link", () => {
+ 9:       // Open the mobile menu
+10:       cy.get('[data-testid="mobilemenu"]').click();
+11:       // Verify menu is visible
+12:       cy.get('[data-testid="mobile-menu"]').should('be.visible');
+13:       // Click a link in the menu
+14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
+15:       // Menu should not be visible after clicking a link
+16:       cy.get('[data-testid="mobile-menu"]').should('not.exist');
+17:     });
+18:   });
+19: });
+20: export {};
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "index.js",
+ 6:   "scripts": {
+ 7:     "test": "echo \"Error: no test specified\" && exit 1"
+ 8:   },
+ 9:   "keywords": [
+10:     "eslint",
+11:     "eslintplugin",
+12:     "eslint-plugin"
+13:   ],
+14:   "author": "",
+15:   "license": "ISC",
+16:   "peerDependencies": {
+17:     "eslint": ">=9.26.0"
+18:   }
+19: }
+````
+
+## File: jest.config.ts
+````typescript
+ 1: import type { Config } from "jest";
+ 2: import nextJest from "next/jest";
+ 3: const createJestConfig = nextJest({
+ 4:   dir: "./",
+ 5: });
+ 6: const customJestConfig: Config = {
+ 7:   preset: "ts-jest/presets/js-with-babel-esm",
+ 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+ 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
+10:   testEnvironment: "jest-environment-jsdom",
+11:   moduleNameMapper: {
+12:     "@/(.*)": "<rootDir>/src/$1",
+13:   },
+14:   collectCoverageFrom: [
+15:     "src/components/*.{js,jsx,ts,tsx}",
+16:     "!src/lib/**/*.*",
+17:     "!src/pages/**/*.*",
+18:     "!src/utils/**/*.*",
+19:   ],
+20: };
+21: export default createJestConfig(customJestConfig);
+````
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@4.1.0
+ 4:   codecov: codecov/codecov@5.4.0
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.11.0
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.11.0-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
 ````
 
 ## File: next.config.ts
