@@ -14,7 +14,7 @@ export default async function RootLayout({
 }>) {
   const [navigation, { footerCopyrightText }] = await Promise.all([
     client.fetch(navigationQuery),
-    client.fetch(settingsQuery)
+    client.fetch(settingsQuery),
   ]);
 
   return (
@@ -23,7 +23,11 @@ export default async function RootLayout({
         <Header navigation={navigation} />
         <SpeedInsights />
         <div className="grow">{children}</div>
-        <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
+        <Footer
+          footerCopyrightText={
+            footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+          }
+        />
       </div>
     </ErrorBoundary>
   );
