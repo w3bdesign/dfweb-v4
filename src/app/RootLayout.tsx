@@ -19,10 +19,12 @@ export default async function RootLayout({
 
   return (
     <ErrorBoundary>
-      <Header navigation={navigation} />
-      <SpeedInsights />
-      {children}
-      <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
+      <div className="flex flex-col grow">
+        <Header navigation={navigation} />
+        <SpeedInsights />
+        <main className="grow">{children}</main>
+        <Footer footerCopyrightText={footerCopyrightText ?? "Copyright Daniel Fjeldstad"} />
+      </div>
     </ErrorBoundary>
   );
 }
