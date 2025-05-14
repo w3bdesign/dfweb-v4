@@ -4,9 +4,8 @@ import React from "react";
 import Button from "@/components/UI/Button.component";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
-import { urlFor } from "@/lib/sanity/client";
-
 import type { Project } from "@/types/sanity.types";
+import { urlFor } from "@/lib/sanity/helpers";
 
 /**
  * Renders a card displaying information about a single project.
