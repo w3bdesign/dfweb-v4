@@ -24,6 +24,7 @@ export const projectsQuery = groq`
   }
 `;
 
+/*
 export const cvQuery = groq`
   *[_type == "cv"][0] {
     keyQualifications,
@@ -47,6 +48,7 @@ export const cvQuery = groq`
     }
   }
 `;
+*/
 
 export const pageContentQuery = groq`
   *[_type == 'page' && title match 'Hjem'][0]{
