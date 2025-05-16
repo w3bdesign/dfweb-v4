@@ -4,17 +4,15 @@ export const client = {
 };
 
 export function urlFor() {
-  return {
-    width: () => ({
-      height: () => ({
-        fit: () => ({
-          quality: () => ({
-            auto: () => ({
-              url: () => "/mocked-image-url",
-            }),
-          }),
-        }),
-      }),
-    }),
+  // Create a chainable API with methods that return the same object
+  const imageUrlBuilder = {
+    width: () => imageUrlBuilder,
+    height: () => imageUrlBuilder,
+    fit: () => imageUrlBuilder,
+    quality: () => imageUrlBuilder,
+    auto: () => imageUrlBuilder,
+    url: () => "/mocked-image-url",
   };
+
+  return imageUrlBuilder;
 }
