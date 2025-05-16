@@ -79,6 +79,7 @@ src/
     pagecontent.json
     projects.json
     react-dom.ts
+    sanity-client.ts
   __tests__/
     Animations/
       BounceInScroll.test.tsx
@@ -8884,82 +8885,6 @@ tsconfig.json
 6: };
 ````
 
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: import { groq } from "next-sanity";
- 2: export const projectsQuery = groq`
- 3:   *[_type == "project"] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `;
-25: export const cvQuery = groq`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `;
-48: export const pageContentQuery = groq`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id, 
-51:     title, 
-52:     hero, 
-53:     content
-54:   }
-55: `;
-56: export const navigationQuery = groq`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `;
-68: export const settingsQuery = groq`
-69:   *[_type == "settings"][0] {
-70:     footerCopyrightText
-71:   }
-72: `;
-````
-
 ## File: src/stories/components/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -14480,6 +14405,81 @@ tsconfig.json
 41: }
 ````
 
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: export const projectsQuery = `
+ 2:   *[_type == "project"] | order(featureOrder asc) {
+ 3:     id,
+ 4:     name,
+ 5:     description,
+ 6:     subdescription,
+ 7:     projectcategory->{
+ 8:       _id,
+ 9:       title
+10:     },
+11:     urlwww[]{
+12:       ...,
+13:       _key,
+14:     },
+15:     urlgithub[]{
+16:       ...,
+17:       _key,
+18:     },
+19:     projectimage,
+20:     featured,
+21:     featureOrder
+22:   }
+23: `;
+24: export const cvQuery = `
+25:   *[_type == "cv"][0] {
+26:     keyQualifications,
+27:     experience[] {
+28:       period,
+29:       company,
+30:       role,
+31:       description
+32:     },
+33:     education[] {
+34:       period,
+35:       institution,
+36:       degree,
+37:       description
+38:     },
+39:     volunteerWork[] {
+40:       period,
+41:       organization,
+42:       role,
+43:       description
+44:     }
+45:   }
+46: `;
+47: export const pageContentQuery = `
+48:   *[_type == 'page' && title match 'Hjem'][0]{
+49:     "id": _id, 
+50:     title, 
+51:     hero, 
+52:     content
+53:   }
+54: `;
+55: export const navigationQuery = `
+56:   *[_type == "navigation"][0] {
+57:     title,
+58:     links[] {
+59:       title,
+60:       name,
+61:       hash,
+62:       href,
+63:       externalLink
+64:     }
+65:   }
+66: `;
+67: export const settingsQuery = `
+68:   *[_type == "settings"][0] {
+69:     footerCopyrightText
+70:   }
+71: `;
+````
+
 ## File: jest.config.ts
 ````typescript
  1: import type { Config } from "jest";
@@ -14503,102 +14503,6 @@ tsconfig.json
 19:   ],
 20: };
 21: export default createJestConfig(customJestConfig);
-````
-
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen, waitFor, act } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import ProsjekterPage from "@/app/prosjekter/page";
- 5: import { getProjects } from "@/app/prosjekter/actions";
- 6: // Mock the components and functions
- 7: jest.mock("@/app/prosjekter/actions");
- 8: jest.mock("@/components/UI/PageHeader.component", () => {
- 9:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
-10:     return <h1>{children}</h1>;
-11:   };
-12: });
-13: jest.mock("@/components/Prosjekter/ProsjektCard.component", () => {
-14:   return function MockProsjektCard(props: { name: string }) {
-15:     return <div data-testid="project-card">{props.name}</div>;
-16:   };
-17: });
-18: jest.mock("@/components/Animations/RotatingLoader.component", () => {
-19:   return function MockRotatingLoader() {
-20:     return <div data-testid="rotating-loader">Loading...</div>;
-21:   };
-22: });
-23: jest.mock("@/app/RootLayout", () => {
-24:   return function MockRootLayout({ children }: { children: React.ReactNode }) {
-25:     return <div>{children}</div>;
-26:   };
-27: });
-28: describe("ProsjekterPage", () => {
-29:   beforeEach(() => {
-30:     jest.clearAllMocks();
-31:   });
-32:   it("renders projects from server component", async () => {
-33:     // Arrange - Set up test data and conditions
-34:     const mockProjects = [
-35:       {
-36:         id: "1",
-37:         name: "Test Project 1",
-38:         description: "Test Description 1",
-39:         subdescription: "Test Subdescription 1",
-40:         projectimage: { asset: { _ref: "test1" } },
-41:         urlwww: [],
-42:         urlgithub: [],
-43:       },
-44:       {
-45:         id: "2",
-46:         name: "Test Project 2",
-47:         description: "Test Description 2",
-48:         subdescription: "Test Subdescription 2",
-49:         projectimage: { asset: { _ref: "test2" } },
-50:         urlwww: [],
-51:         urlgithub: [],
-52:       },
-53:     ];
-54:     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
-55:     // Act - Perform the action being tested
-56:     let container: HTMLElement;
-57:     await act(async () => {
-58:       const { container: renderedContainer } = render(await ProsjekterPage());
-59:       container = renderedContainer;
-60:     });
-61:     // Assert - Verify the results
-62:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-63:     // Wait for the project cards to be rendered
-64:     await waitFor(() => {
-65:       const projectCards = screen.getAllByTestId("project-card");
-66:       expect(projectCards).toHaveLength(2);
-67:       expect(projectCards[0]).toHaveTextContent("Test Project 1");
-68:       expect(projectCards[1]).toHaveTextContent("Test Project 2");
-69:     });
-70:     // @ts-expect-error container will be assigned
-71:     const grid = container.querySelector(".grid");
-72:     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
-73:   });
-74:   it("uses Suspense boundary for loading state", async () => {
-75:     // Arrange - Set up test data and conditions
-76:     // Ensure getProjects is a promise that doesn't resolve immediately
-77:     // to test the loading state.
-78:     (getProjects as jest.Mock).mockReturnValue(new Promise(() => {}));
-79:     // Act - Perform the action being tested
-80:     await act(async () => {
-81:       render(await ProsjekterPage());
-82:     });
-83:     // Assert - Verify the results
-84:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-85:     expect(screen.getByText("Loading...")).toBeInTheDocument();
-86:     const main = screen.getByRole("main");
-87:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-88:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-89:     // Clean up the mock to prevent it from affecting other tests
-90:     (getProjects as jest.Mock).mockResolvedValue([]);
-91:   });
-92: });
 ````
 
 ## File: src/app/prosjekter/actions.ts
@@ -14928,6 +14832,123 @@ tsconfig.json
 166:   - Simplified test maintenance and debugging
 167:   - Automated validation through custom ESLint rules
 168:   - Tests will fail if AAA pattern is not followed
+````
+
+## File: src/__mocks__/sanity-client.ts
+````typescript
+ 1: export const client = {
+ 2:   fetch: jest.fn().mockResolvedValue([]),
+ 3: };
+ 4: export function urlFor() {
+ 5:   const imageUrlBuilder = {
+ 6:     width: () => imageUrlBuilder,
+ 7:     height: () => imageUrlBuilder,
+ 8:     fit: () => imageUrlBuilder,
+ 9:     quality: () => imageUrlBuilder,
+10:     auto: () => imageUrlBuilder,
+11:     url: () => "/mocked-image-url",
+12:   };
+13:   return imageUrlBuilder;
+14: }
+````
+
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen, waitFor, act } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ProsjekterPage from "@/app/prosjekter/page";
+ 5: import { getProjects } from "@/app/prosjekter/actions";
+ 6: // Mock the components and functions
+ 7: jest.mock("@/lib/sanity/client", () => {
+ 8:   return require("../../../src/__mocks__/sanity-client");
+ 9: });
+10: jest.mock("@/app/prosjekter/actions");
+11: jest.mock("@/components/UI/PageHeader.component", () => {
+12:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
+13:     return <h1>{children}</h1>;
+14:   };
+15: });
+16: jest.mock("@/components/Prosjekter/ProsjektCard.component", () => {
+17:   return function MockProsjektCard(props: { name: string }) {
+18:     return <div data-testid="project-card">{props.name}</div>;
+19:   };
+20: });
+21: jest.mock("@/components/Animations/RotatingLoader.component", () => {
+22:   return function MockRotatingLoader() {
+23:     return <div data-testid="rotating-loader">Loading...</div>;
+24:   };
+25: });
+26: jest.mock("@/app/RootLayout", () => {
+27:   return function MockRootLayout({ children }: { children: React.ReactNode }) {
+28:     return <div>{children}</div>;
+29:   };
+30: });
+31: describe("ProsjekterPage", () => {
+32:   beforeEach(() => {
+33:     jest.clearAllMocks();
+34:   });
+35:   it("renders projects from server component", async () => {
+36:     // Arrange - Set up test data and conditions
+37:     const mockProjects = [
+38:       {
+39:         id: "1",
+40:         name: "Test Project 1",
+41:         description: "Test Description 1",
+42:         subdescription: "Test Subdescription 1",
+43:         projectimage: { asset: { _ref: "test1" } },
+44:         urlwww: [],
+45:         urlgithub: [],
+46:       },
+47:       {
+48:         id: "2",
+49:         name: "Test Project 2",
+50:         description: "Test Description 2",
+51:         subdescription: "Test Subdescription 2",
+52:         projectimage: { asset: { _ref: "test2" } },
+53:         urlwww: [],
+54:         urlgithub: [],
+55:       },
+56:     ];
+57:     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
+58:     // Act - Perform the action being tested
+59:     let container: HTMLElement;
+60:     await act(async () => {
+61:       const { container: renderedContainer } = render(await ProsjekterPage());
+62:       container = renderedContainer;
+63:     });
+64:     // Assert - Verify the results
+65:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+66:     // Wait for the project cards to be rendered
+67:     await waitFor(() => {
+68:       const projectCards = screen.getAllByTestId("project-card");
+69:       expect(projectCards).toHaveLength(2);
+70:       expect(projectCards[0]).toHaveTextContent("Test Project 1");
+71:       expect(projectCards[1]).toHaveTextContent("Test Project 2");
+72:     });
+73:     // @ts-expect-error container will be assigned
+74:     const grid = container.querySelector(".grid");
+75:     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
+76:   });
+77:   it("uses Suspense boundary for loading state", async () => {
+78:     // Arrange - Set up test data and conditions
+79:     // Ensure getProjects is a promise that doesn't resolve immediately
+80:     // to test the loading state.
+81:     (getProjects as jest.Mock).mockReturnValue(new Promise(() => {}));
+82:     // Act - Perform the action being tested
+83:     await act(async () => {
+84:       render(await ProsjekterPage());
+85:     });
+86:     // Assert - Verify the results
+87:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+88:     expect(screen.getByText("Loading...")).toBeInTheDocument();
+89:     const main = screen.getByRole("main");
+90:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+91:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+92:     // Clean up the mock to prevent it from affecting other tests
+93:     (getProjects as jest.Mock).mockResolvedValue([]);
+94:   });
+95: });
 ````
 
 ## File: src/app/RootLayout.tsx
