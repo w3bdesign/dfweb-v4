@@ -1,6 +1,4 @@
-import { groq } from "next-sanity";
-
-export const projectsQuery = groq`
+export const projectsQuery = `
   *[_type == "project"] | order(featureOrder asc) {
     id,
     name,
@@ -24,7 +22,7 @@ export const projectsQuery = groq`
   }
 `;
 
-export const cvQuery = groq`
+export const cvQuery = `
   *[_type == "cv"][0] {
     keyQualifications,
     experience[] {
@@ -48,7 +46,7 @@ export const cvQuery = groq`
   }
 `;
 
-export const pageContentQuery = groq`
+export const pageContentQuery = `
   *[_type == 'page' && title match 'Hjem'][0]{
     "id": _id, 
     title, 
@@ -57,7 +55,7 @@ export const pageContentQuery = groq`
   }
 `;
 
-export const navigationQuery = groq`
+export const navigationQuery = `
   *[_type == "navigation"][0] {
     title,
     links[] {
@@ -70,7 +68,7 @@ export const navigationQuery = groq`
   }
 `;
 
-export const settingsQuery = groq`
+export const settingsQuery = `
   *[_type == "settings"][0] {
     footerCopyrightText
   }
