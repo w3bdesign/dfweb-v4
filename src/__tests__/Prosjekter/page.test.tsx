@@ -5,6 +5,9 @@ import ProsjekterPage from "@/app/prosjekter/page";
 import { getProjects } from "@/app/prosjekter/actions";
 
 // Mock the components and functions
+jest.mock("@/lib/sanity/client", () => {
+  return require("../../../src/__mocks__/sanity-client");
+});
 jest.mock("@/app/prosjekter/actions");
 jest.mock("@/components/UI/PageHeader.component", () => {
   return function MockPageHeader({ children }: { children: React.ReactNode }) {
