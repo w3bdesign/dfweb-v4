@@ -1,4 +1,6 @@
-export const projectsQuery = `
+import { defineQuery } from "next-sanity";
+
+export const projectsQuery = defineQuery(`
   *[_type == "project"] | order(featureOrder asc) {
     id,
     name,
@@ -20,9 +22,9 @@ export const projectsQuery = `
     featured,
     featureOrder
   }
-`;
+`);
 
-export const cvQuery = `
+export const cvQuery = defineQuery(`
   *[_type == "cv"][0] {
     keyQualifications,
     experience[] {
@@ -44,18 +46,18 @@ export const cvQuery = `
       description
     }
   }
-`;
+`);
 
-export const pageContentQuery = `
+export const pageContentQuery = defineQuery(`
   *[_type == 'page' && title match 'Hjem'][0]{
-    "id": _id, 
-    title, 
-    hero, 
+    "id": _id,
+    title,
+    hero,
     content
   }
-`;
+`);
 
-export const navigationQuery = `
+export const navigationQuery = defineQuery(`
   *[_type == "navigation"][0] {
     title,
     links[] {
@@ -66,10 +68,20 @@ export const navigationQuery = `
       externalLink
     }
   }
-`;
+`);
 
-export const settingsQuery = `
+export const settingsQuery = defineQuery(`
   *[_type == "settings"][0] {
     footerCopyrightText
   }
-`;
+`);
+
+export const POSTS_QUERY =
+  defineQuery(`*[_type == "post" && defined(slug.current)][0...12]{
+  _id, title, slug
+}`);
+
+export const POST_QUERY =
+  defineQuery(`*[_type == "post" && slug.current == $slug][0]{
+  title, body, mainImage
+}`);
