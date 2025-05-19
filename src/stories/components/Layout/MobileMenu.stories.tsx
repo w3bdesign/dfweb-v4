@@ -2,15 +2,14 @@ import React from "react";
 import { Meta } from "@ladle/react";
 import MobileMenu from "@/components/Layout/MobileMenu.component";
 import "@/app/globals.css";
-import type { StoryDefault } from "@ladle/react"; // Import StoryDefault for satisfies
 
 export default {
   title: "Layout/MobileMenu",
   component: MobileMenu,
-  meta: { // Ladle-specific story-wide parameters
+  meta: {
     width: "xsmall",
   },
-} as Meta; // Use 'as Meta' and hope Ladle processes the 'meta' property
+} as Meta;
 
 // Sample navigation links
 const mockLinks = [
