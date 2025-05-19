@@ -8,25 +8,29 @@ export default {
   component: FadeUp,
 } as Meta;
 
-const Template: Story<IAnimateWithDelayProps> = (args) => <FadeUp {...args} />;
+export const Default: Story<IAnimateWithDelayProps> = () => (
+  <FadeUp
+    delay={0}
+    cssClass="p-4 bg-gray-100 border border-gray-300 rounded-sm text-neutral-800"
+  >
+    Fade Up Animation
+  </FadeUp>
+);
 
-export const Default = Template.bind({});
-Default.args = {
-  children: "Fade Up Animation",
-  cssClass: "p-4 bg-gray-100 border border-gray-300 rounded-sm",
-  delay: 0,
-};
+export const WithDelay: Story<IAnimateWithDelayProps> = () => (
+  <FadeUp
+    delay={1}
+    cssClass="p-4 bg-blue-100 border border-blue-300 rounded-sm text-neutral-800"
+  >
+    Fade Up with Delay
+  </FadeUp>
+);
 
-export const WithDelay = Template.bind({});
-WithDelay.args = {
-  children: "Fade Up with Delay",
-  cssClass: "p-4 bg-blue-100 border border-blue-300 rounded-sm",
-  delay: 1,
-};
-
-export const CustomStyles = Template.bind({});
-CustomStyles.args = {
-  children: "Fade Up with Custom Styles",
-  cssClass: "p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg",
-  delay: 0.5,
-};
+export const CustomStyles: Story<IAnimateWithDelayProps> = () => (
+  <FadeUp
+    delay={0.5}
+    cssClass="p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg text-neutral-800"
+  >
+    Fade Up with Custom Styles
+  </FadeUp>
+);
