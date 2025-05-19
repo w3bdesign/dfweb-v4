@@ -9,6 +9,7 @@ import type { Pagecontent } from "@/types/sanity.types";
 
 interface SectionProps extends Pagecontent {
   variant?: "default" | "alternate";
+  showDebugButton?: boolean;
 }
 
 /**
@@ -19,7 +20,7 @@ interface SectionProps extends Pagecontent {
  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
-const Section = ({ text, title, variant = "default" }: SectionProps) => {
+const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
   const [shouldError, setShouldError] = useState(false);
 
   if (!title || !text) {
@@ -67,7 +68,7 @@ const Section = ({ text, title, variant = "default" }: SectionProps) => {
               />
             </div>
           </div>
-          {process.env.NODE_ENV === "development" && (
+          {process.env.NODE_ENV === "development" && showDebugButton && (
             <Button onClick={() => setShouldError(true)} type="button">
               Utløs Testfeil
             </Button>
