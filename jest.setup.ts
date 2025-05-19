@@ -21,8 +21,8 @@ declare global {
       toHaveLength(length: number): R;
 
       // Jest matchers
-      toBe(expected: any): R;
-      toEqual(expected: any): R;
+      toBe(expected: unknown): R;
+      toEqual(expected: unknown): R;
       toBeNull(): R;
       toBeDefined(): R;
       toBeUndefined(): R;
@@ -32,10 +32,10 @@ declare global {
       toBeLessThan(number: number): R;
       toBeLessThanOrEqual(number: number): R;
       toBeGreaterThanOrEqual(number: number): R;
-      toContain(item: any): R;
+      toContain(item: unknown): R;
       toHaveBeenCalled(): R;
       toHaveBeenCalledTimes(number: number): R;
-      toHaveBeenCalledWith(...args: any[]): R;
+      toHaveBeenCalledWith(...args: unknown[]): R;
       toHaveBeenCalledExactly(times: number): R;
       toThrow(error?: string | Error | RegExp): R;
       toMatch(regexpOrString: string | RegExp): R;
@@ -46,15 +46,18 @@ declare global {
   }
 }
 
+type ExpectWithGetState = typeof expect & {
+  getState: () => { testPath?: string };
+};
+
 function getTestPath(): string | undefined {
-  return (expect as any).getState().testPath;
+  const expectWithGetState = expect as ExpectWithGetState;
+  return expectWithGetState.getState().testPath;
 }
 
 beforeEach(async () => {
   const testPath = getTestPath();
 
-  // Skip this check for test-rule.test.tsx since it contains intentionally invalid tests
-  // Also skip if we can't determine the test path
   if (
     testPath &&
     !testPath.includes("test-rule.test.tsx") &&
@@ -70,7 +73,7 @@ beforeEach(async () => {
             "Each test should include:\n" +
             "// Arrange - Set up test data and conditions\n" +
             "// Act - Perform the action being tested\n" +
-            "// Assert - Verify the results",
+            "// Assert - Verify the results"
         );
       }
     } catch (error) {
