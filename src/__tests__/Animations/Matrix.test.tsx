@@ -26,7 +26,6 @@ const mockBitmapContext = {
   transferFromImageBitmap: jest.fn(),
 } as unknown as ImageBitmapRenderingContext;
 
-// Use a single mock implementation that handles different context types
 HTMLCanvasElement.prototype.getContext = function (contextId: string) {
   switch (contextId) {
     case "2d":
