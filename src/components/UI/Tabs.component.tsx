@@ -121,7 +121,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-            isVertical ? "max-h-[230px] " : ""
+            isVertical ? "max-h-[185px] " : ""
           }`}
         >
           <div
