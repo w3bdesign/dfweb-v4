@@ -39,7 +39,7 @@ HTMLCanvasElement.prototype.getContext = function (contextId: string) {
     default:
       return null;
   }
-} as any;
+} as typeof HTMLCanvasElement.prototype.getContext;
 
 global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
 
