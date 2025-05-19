@@ -24,7 +24,7 @@ export const WithHTMLContent = () => (
   <PageHeader>
     <span className="flex items-center justify-center gap-2">
       <span aria-label="projects icon">🚀</span>
-      My Projects
+      <span>My Projects</span>
       <span className="text-sm bg-green-600 px-2 py-1 rounded-full ml-2">
         New
       </span>
