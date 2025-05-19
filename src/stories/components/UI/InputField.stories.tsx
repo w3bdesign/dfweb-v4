@@ -20,13 +20,8 @@ const InputFieldStory = ({
   isRequired = false,
   error = undefined as string | undefined,
   inputPattern = undefined as RegExp | undefined,
-  title = undefined as string | undefined,
 }) => {
-  // Create a simple form using react-hook-form
-  const {
-    register,
-    formState: { errors },
-  } = useForm();
+  const { register } = useForm();
 
   return (
     <div className="p-6 bg-gray-900 min-w-[350px]">
