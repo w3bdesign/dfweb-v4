@@ -5,6 +5,7 @@ This guide provides standards for creating and maintaining stories in our projec
 ## Structure and Organization
 
 Stories are organized in folders that mirror the component structure:
+
 - `src/stories/components/UI/` - For UI components
 - `src/stories/components/Layout/` - For layout components
 - `src/stories/components/Animations/` - For animation components
@@ -46,7 +47,8 @@ export const ComplexExample = () => (
 
 3. **Comments**: Add a brief comment above each story variant to explain what it's demonstrating.
 
-4. **Naming Conventions**: 
+4. **Naming Conventions**:
+
    - Use PascalCase for story export names (e.g., `export const WithCustomClass = () => ...`)
    - Use descriptive names that indicate what's special about the variant
 
