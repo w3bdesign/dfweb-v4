@@ -23,9 +23,7 @@ export const WithEmoji = () => <PageHeader>📝 Contact Page</PageHeader>;
 export const WithHTMLContent = () => (
   <PageHeader>
     <span className="flex items-center justify-center gap-2">
-      <span aria-label="projects icon">
-        🚀
-      </span>
+      <span aria-label="projects icon">🚀</span>
       My Projects
       <span className="text-sm bg-green-600 px-2 py-1 rounded-full ml-2">
         New
@@ -41,12 +39,12 @@ export const ContainerSizes = () => (
       <p className="text-white text-center mb-2">Full width container</p>
       <PageHeader>Full Width</PageHeader>
     </div>
-    
+
     <div className="w-full max-w-3xl mx-auto border border-dashed border-gray-500 p-2">
       <p className="text-white text-center mb-2">Medium width container</p>
       <PageHeader>Medium Width</PageHeader>
     </div>
-    
+
     <div className="w-full max-w-sm mx-auto border border-dashed border-gray-500 p-2">
       <p className="text-white text-center mb-2">Small width container</p>
       <PageHeader>Small Width</PageHeader>
