@@ -8,27 +8,29 @@ export default {
   component: FadeDown,
 } as Meta;
 
-const Template: Story<IAnimateWithDelayProps> = (args) => (
-  <FadeDown {...args} />
+export const Default: Story<IAnimateWithDelayProps> = () => (
+  <FadeDown
+    delay={0}
+    cssClass="p-4 bg-gray-100 border border-gray-300 rounded-sm text-neutral-800"
+  >
+    Fade Down Animation
+  </FadeDown>
 );
 
-export const Default = Template.bind({});
-Default.args = {
-  children: "Fade Down Animation",
-  cssClass: "p-4 bg-gray-100 border border-gray-300 rounded-sm text-neutral-800",
-  delay: 0,
-};
+export const WithDelay: Story<IAnimateWithDelayProps> = () => (
+  <FadeDown
+    delay={1}
+    cssClass="p-4 bg-blue-100 border border-blue-300 rounded-sm text-neutral-800"
+  >
+    Fade Down with Delay
+  </FadeDown>
+);
 
-export const WithDelay = Template.bind({});
-WithDelay.args = {
-  children: "Fade Down with Delay",
-  cssClass: "p-4 bg-blue-100 border border-blue-300 rounded-sm text-neutral-800",
-  delay: 1,
-};
-
-export const CustomStyles = Template.bind({});
-CustomStyles.args = {
-  children: "Fade Down with Custom Styles",
-  cssClass: "p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg text-neutral-800",
-  delay: 0.5,
-};
+export const CustomStyles: Story<IAnimateWithDelayProps> = () => (
+  <FadeDown
+    delay={0.5}
+    cssClass="p-4 bg-green-100 border border-green-300 rounded-sm shadow-lg text-neutral-800"
+  >
+    Fade Down with Custom Styles
+  </FadeDown>
+);
