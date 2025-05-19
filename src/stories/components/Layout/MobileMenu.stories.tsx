@@ -82,40 +82,40 @@ export const WithExternalLink = () => {
   );
 };
 
+const manyLinksData = [
+  ...mockLinks,
+  {
+    _key: "link5",
+    title: "About",
+    name: "About",
+    href: "/about",
+  },
+  {
+    _key: "link6",
+    title: "Blog",
+    name: "Blog",
+    href: "/blog",
+  },
+  {
+    _key: "link7",
+    title: "Resources",
+    name: "Resources",
+    href: "/resources",
+  },
+  {
+    _key: "link8",
+    title: "Gallery",
+    name: "Gallery",
+    href: "/gallery",
+  },
+];
+
 // Mobile menu with many links
 export const ManyLinks = () => {
-  const manyLinks = [
-    ...mockLinks,
-    {
-      _key: "link5",
-      title: "About",
-      name: "About",
-      href: "/about",
-    },
-    {
-      _key: "link6",
-      title: "Blog",
-      name: "Blog",
-      href: "/blog",
-    },
-    {
-      _key: "link7",
-      title: "Resources",
-      name: "Resources",
-      href: "/resources",
-    },
-    {
-      _key: "link8",
-      title: "Gallery",
-      name: "Gallery",
-      href: "/gallery",
-    },
-  ];
-
   return (
     <div className="bg-slate-800 min-h-screen p-4">
       <div className="relative flex justify-end">
-        <MobileMenu links={manyLinks} />
+        <MobileMenu links={manyLinksData} />
       </div>
       <div className="mt-32 text-gray-400 text-center">
         <p>Click on the hamburger menu icon to see a menu with many links</p>
