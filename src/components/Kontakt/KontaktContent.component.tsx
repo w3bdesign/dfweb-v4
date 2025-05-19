@@ -58,7 +58,7 @@ const KontaktContent: React.FC<Props> = ({
     }
   };
 
-  const handleSubmit = onSubmitProp || defaultOnSubmit;
+  const handleSubmit = onSubmitProp ?? defaultOnSubmit;
 
   /**
    * Handles the actual form submission, calling the appropriate submit handler
