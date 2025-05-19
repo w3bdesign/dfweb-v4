@@ -1,11 +1,6 @@
 import React from "react";
 import { Pagecontent } from "@/types/sanity.types";
 
-/**
- * This is a simplified mock of @portabletext/react for Ladle stories
- * NOTE: This is for TESTING / STORYBOOK use only
- */
-
 // Mock the PortableText component to render text for stories
 export const PortableText = ({
   value,
@@ -13,7 +8,6 @@ export const PortableText = ({
   value: Pagecontent["text"];
   components?: Record<string, unknown>;
 }) => {
-  // For simplicity, we'll just render the text content of each block
   return React.createElement(
     React.Fragment,
     null,
@@ -61,24 +55,16 @@ export const PortableText = ({
 };
 
 // Helper function to get the appropriate HTML element for a style
-function getElementForStyle(style: string) {
-  switch (style) {
-    case "h1":
-      return "h1";
-    case "h2":
-      return "h2";
-    case "h3":
-      return "h3";
-    case "h4":
-      return "h4";
-    case "h5":
-      return "h5";
-    case "h6":
-      return "h6";
-    case "blockquote":
-      return "blockquote";
-    case "normal":
-    default:
-      return "p";
-  }
+function getElementForStyle(style: string): string {
+  const styleToElementMap: Record<string, string> = {
+    h1: "h1",
+    h2: "h2",
+    h3: "h3",
+    h4: "h4",
+    h5: "h5",
+    h6: "h6",
+    blockquote: "blockquote",
+    normal: "p",
+  };
+  return styleToElementMap[style] || "p"; // Default to 'p' if style is not found
 }
