@@ -50,7 +50,7 @@ const Section = ({ text, title, variant = "default" }: SectionProps) => {
         ${sectionStyles[variant]}
       `}
     >
-      <div className="p-6 text-lg h-full max-w-7xl mx-auto">
+      <div className="p-2 text-lg h-full max-w-7xl mx-auto">
         <BounceInScroll viewAmount={0}>
           <h2
             data-testid="sanity-title"
