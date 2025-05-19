@@ -1,6 +1,12 @@
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import Tabs from "@/components/UI/Tabs.component";
+
+import QualificationsTabContent from "./QualificationsTabContent";
+import ExperienceTabContent from "./ExperienceTabContent";
+import EducationTabContent from "./EducationTabContent";
+import VolunteerWorkTabContent from "./VolunteerWorkTabContent";
+
 import type { Cv } from "@/types/sanity.types";
 
 /**
@@ -15,65 +21,23 @@ const CVContent = ({ cvData }: { cvData: Cv }) => {
       id: "qualifications",
       label: "Nøkkelkvalifikasjoner",
       content: (
-        <ul className="list-disc pl-5 text-slate-300/[0.9]">
-          {cvData.keyQualifications?.map((qual) => (
-            <li key={qual ?? ""} className="mb-2">
-              {qual ?? ""}
-            </li>
-          ))}
-        </ul>
+        <QualificationsTabContent qualifications={cvData.keyQualifications} />
       ),
     },
     {
       id: "experience",
       label: "Erfaring",
-      content: (
-        <div className="text-slate-300/[0.9]">
-          {cvData.experience?.map((exp) => (
-            <div key={exp.description ?? ""} className="mb-6">
-              <h3 className="font-semibold text-slate-100">
-                {exp.period ?? ""} - {exp.company ?? ""}
-              </h3>
-              {exp.role && <p className="italic">{exp.role}</p>}
-              <p>{exp.description ?? ""}</p>
-            </div>
-          ))}
-        </div>
-      ),
+      content: <ExperienceTabContent experience={cvData.experience} />,
     },
     {
       id: "education",
       label: "Utdanning",
-      content: (
-        <div className="text-slate-300/[0.9]">
-          {cvData.education?.map((edu) => (
-            <div key={edu.description ?? ""} className="mb-6">
-              <h3 className="font-semibold text-slate-100">
-                {edu.period ?? ""} - {edu.institution ?? ""}
-              </h3>
-              {edu.degree && <p className="italic">{edu.degree}</p>}
-              <p>{edu.description ?? ""}</p>
-            </div>
-          ))}
-        </div>
-      ),
+      content: <EducationTabContent education={cvData.education} />,
     },
     {
       id: "volunteerWork",
       label: "Frivillig arbeid",
-      content: (
-        <div className="text-slate-300/[0.9]">
-          {cvData.volunteerWork?.map((vol) => (
-            <div key={vol.description ?? ""} className="mb-6">
-              <h3 className="font-semibold text-slate-100">
-                {vol.period ?? ""} - {vol.organization ?? ""}
-              </h3>
-              {vol.role && <p className="italic">{vol.role}</p>}
-              <p>{vol.description ?? ""}</p>
-            </div>
-          ))}
-        </div>
-      ),
+      content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
     },
   ];
 
