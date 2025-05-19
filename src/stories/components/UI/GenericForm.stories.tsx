@@ -72,7 +72,7 @@ export const ContactForm = () => (
 // Subscribe Form Story
 export const SubscribeForm = () => (
   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
-    <h2 className="text-2xl text-white mb-6">Subscribe to Newsletter</h2>
+    <h2 className="text-2xl text-white mb-6 text-center">Subscribe to Newsletter</h2>
     <GenericForm
       formSchema={subscribeSchema}
       onSubmit={mockSubmit}
@@ -98,7 +98,7 @@ export const SubscribeForm = () => (
 // Feedback Form Story
 export const FeedbackForm = () => (
   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
-    <h2 className="text-2xl text-white mb-6">Provide Feedback</h2>
+    <h2 className="text-2xl text-white mb-6 text-center">Provide Feedback</h2>
     <GenericForm
       formSchema={feedbackSchema}
       onSubmit={mockSubmit}
@@ -129,7 +129,7 @@ export const FeedbackForm = () => (
 // Simple Form Story
 export const SimpleForm = () => (
   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
-    <h2 className="text-2xl text-white mb-6">Quick Contact</h2>
+    <h2 className="text-2xl text-white mb-6 text-center">Quick Contact</h2>
     <GenericForm
       formSchema={z.object({
         email: z.string().email("Invalid email address"),

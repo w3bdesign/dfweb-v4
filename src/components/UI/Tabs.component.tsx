@@ -113,7 +113,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const isVertical = orientation === "vertical";
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
+    <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px] min-h-[20rem]">
       <div
         className={`flex ${
           isVertical ? "flex-col sm:flex-row" : "flex-col"
@@ -121,7 +121,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-            isVertical ? "max-h-[181px] " : ""
+            isVertical ? "max-h-[185px] " : ""
           }`}
         >
           <div

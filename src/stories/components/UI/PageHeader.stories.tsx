@@ -8,37 +8,46 @@ export default {
   component: PageHeader,
 } as Meta;
 
-// Default header with text
-export const Default = () => <PageHeader>Welcome to the Page</PageHeader>;
+// Default page header with text
+export const Default = () => <PageHeader>Page Title</PageHeader>;
 
-// With HTML elements
-export const WithHtmlElements = () => (
+// With longer text
+export const LongTitle = () => (
+  <PageHeader>A Much Longer Page Title That Might Wrap on Mobile</PageHeader>
+);
+
+// With emoji
+export const WithEmoji = () => <PageHeader>📝 Contact Page</PageHeader>;
+
+// With HTML content
+export const WithHTMLContent = () => (
   <PageHeader>
-    Welcome to <span className="text-matrix-light">Matrix</span>
+    <span className="flex items-center justify-center gap-2">
+      <span aria-label="projects icon">🚀</span>
+      <span>My Projects</span>
+      <span className="text-sm bg-green-600 px-2 py-1 rounded-full ml-2">
+        New
+      </span>
+    </span>
   </PageHeader>
 );
 
-// Long text
-export const LongText = () => (
-  <PageHeader>
-    This is a very long page header text that demonstrates how the component
-    handles longer content
-  </PageHeader>
-);
+// Showing different container widths
+export const ContainerSizes = () => (
+  <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto border border-dashed border-gray-500 p-2">
+      <p className="text-white text-center mb-2">Full width container</p>
+      <PageHeader>Full Width</PageHeader>
+    </div>
 
-// Short text
-export const ShortText = () => <PageHeader>Projects</PageHeader>;
+    <div className="w-full max-w-3xl mx-auto border border-dashed border-gray-500 p-2">
+      <p className="text-white text-center mb-2">Medium width container</p>
+      <PageHeader>Medium Width</PageHeader>
+    </div>
 
-// Narrow viewport
-export const NarrowViewport = () => (
-  <div style={{ width: "320px" }}>
-    <PageHeader>Mobile View Header</PageHeader>
-  </div>
-);
-
-// Wide viewport
-export const WideViewport = () => (
-  <div style={{ width: "1200px" }}>
-    <PageHeader>Desktop View Header</PageHeader>
+    <div className="w-full max-w-sm mx-auto border border-dashed border-gray-500 p-2">
+      <p className="text-white text-center mb-2">Small width container</p>
+      <PageHeader>Small Width</PageHeader>
+    </div>
   </div>
 );

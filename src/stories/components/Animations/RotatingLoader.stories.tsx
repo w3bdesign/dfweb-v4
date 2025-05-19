@@ -7,6 +7,4 @@ export default {
   component: RotatingLoader,
 } as Meta;
 
-const Template: Story = () => <RotatingLoader />;
-
-export const Default = Template.bind({});
+export const Default: Story = () => <RotatingLoader />;
