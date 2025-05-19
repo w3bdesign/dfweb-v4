@@ -1,72 +1,64 @@
 import React from "react";
-import { Meta, Story } from "@ladle/react";
-import InputField, {
-  InputProps,
-} from "@/components/UI/InputField.component";
-import { useForm, FieldValues } from "react-hook-form";
+import { Meta } from "@ladle/react";
+import InputField from "@/components/UI/InputField.component";
+import { useForm } from "react-hook-form";
+import "@/app/globals.css";
 
 export default {
   title: "UI/InputField",
   component: InputField,
+  parameters: {
+    layout: "centered",
+  },
 } as Meta;
 
-// Define a type for the form values
-interface StoryFormValues extends FieldValues {
-  defaultInput?: string;
-  requiredInput?: string;
-  emailInput?: string;
-  textArea?: string;
-  errorInput?: string;
-}
+// Create a story wrapper to provide the react-hook-form context
+const InputFieldStory = ({
+  name = "exampleField",
+  label = "Label",
+  type = "input" as "input" | "textarea",
+  isRequired = false,
+  error = undefined as string | undefined,
+  inputPattern = undefined as RegExp | undefined,
+  title = undefined as string | undefined,
+}) => {
+  // Create a simple form using react-hook-form
+  const {
+    register,
+    formState: { errors },
+  } = useForm();
 
-// Wrapper component to provide form context
-const InputFieldWrapper = <T extends FieldValues>(
-  props: Omit<InputProps<T>, "register">,
-) => {
-  const { register } = useForm<T>();
-  return <InputField {...props} register={register} />;
+  return (
+    <div className="p-6 bg-gray-900 min-w-[350px]">
+      <InputField
+        name={name}
+        label={label}
+        htmlFor={`field-${name}`}
+        type={type}
+        isRequired={isRequired}
+        register={register}
+        error={error}
+        inputPattern={inputPattern}
+      />
+    </div>
+  );
 };
 
-const Template: Story<Omit<InputProps<StoryFormValues>, "register">> = (
-  args,
-) => <InputFieldWrapper {...args} />;
+// Default text input
+export const DefaultInput = () => (
+  <InputFieldStory label="Your Name" name="name" />
+);
 
-export const Default = Template.bind({});
-Default.args = {
-  name: "defaultInput",
-  label: "Default Input",
-  htmlFor: "defaultInput",
-};
+// With error message
+export const WithError = () => (
+  <InputFieldStory
+    label="Username"
+    name="username"
+    error="Username is already taken"
+  />
+);
 
-export const Required = Template.bind({});
-Required.args = {
-  name: "requiredInput",
-  label: "Required Input",
-  htmlFor: "requiredInput",
-  isRequired: true,
-};
-
-export const WithPattern = Template.bind({});
-WithPattern.args = {
-  name: "emailInput",
-  label: "Email Input",
-  htmlFor: "emailInput",
-  inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-  title: "Please enter a valid email address",
-};
-
-export const TextArea = Template.bind({});
-TextArea.args = {
-  name: "textArea",
-  label: "Text Area",
-  htmlFor: "textArea",
-  type: "textarea",
-};
-
-export const WithError = Template.bind({});
-WithError.args = {
-  name: "errorInput",
-  label: "Input with Error",
-  htmlFor: "errorInput",
-  error: "This field has an error",
-};
+// Textarea input
+export const TextareaInput = () => (
+  <InputFieldStory label="Your Message" name="message" type="textarea" />
+);
