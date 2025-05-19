@@ -18,6 +18,7 @@ interface SectionProps extends Pagecontent {
  * @param {Pagecontent['text']} props.text - The text content from Sanity
  * @param {string} props.title - The title of the section
  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+ * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
 const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
