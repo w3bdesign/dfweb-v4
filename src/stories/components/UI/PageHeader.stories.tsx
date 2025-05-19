@@ -23,7 +23,7 @@ export const WithEmoji = () => <PageHeader>📝 Contact Page</PageHeader>;
 export const WithHTMLContent = () => (
   <PageHeader>
     <span className="flex items-center justify-center gap-2">
-      <span role="img" aria-label="projects icon">
+      <span aria-label="projects icon">
         🚀
       </span>
       My Projects
