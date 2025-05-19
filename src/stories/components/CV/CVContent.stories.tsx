@@ -88,40 +88,40 @@ const mockCvData: Cv = {
 export const Default = () => <CVContent cvData={mockCvData} />;
 
 // CV with long content
-export const ExtensiveCV = () => {
-  const extensiveData: Cv = {
-    ...mockCvData,
-    _id: "mock-cv-extensive",
-    keyQualifications: [
-      ...(mockCvData.keyQualifications || []),
-      "Backend integration with Node.js",
-      "Database design and management",
-      "GraphQL API development",
-      "Docker containerization",
-      "CI/CD pipeline implementation",
-      "AWS cloud services",
-      "Agile methodology",
-      "Team leadership",
-    ],
-    experience: [
-      ...(mockCvData.experience || []),
-      {
-        _key: "exp-4",
-        period: "2013 - 2015",
-        company: "StartupHub",
-        role: "Intern",
-        description:
-          "Learned fundamentals of web development in a startup environment.",
-      },
-      {
-        _key: "exp-5",
-        period: "2011 - 2013",
-        company: "Freelance",
-        role: "Web Developer",
-        description: "Created websites for small businesses and individuals.",
-      },
-    ],
-  };
+const extensiveCvData: Cv = {
+  ...mockCvData,
+  _id: "mock-cv-extensive",
+  keyQualifications: [
+    ...(mockCvData.keyQualifications || []),
+    "Backend integration with Node.js",
+    "Database design and management",
+    "GraphQL API development",
+    "Docker containerization",
+    "CI/CD pipeline implementation",
+    "AWS cloud services",
+    "Agile methodology",
+    "Team leadership",
+  ],
+  experience: [
+    ...(mockCvData.experience || []),
+    {
+      _key: "exp-4",
+      period: "2013 - 2015",
+      company: "StartupHub",
+      role: "Intern",
+      description:
+        "Learned fundamentals of web development in a startup environment.",
+    },
+    {
+      _key: "exp-5",
+      period: "2011 - 2013",
+      company: "Freelance",
+      role: "Web Developer",
+      description: "Created websites for small businesses and individuals.",
+    },
+  ],
+};
 
-  return <CVContent cvData={extensiveData} />;
+export const ExtensiveCV = () => {
+  return <CVContent cvData={extensiveCvData} />;
 };
