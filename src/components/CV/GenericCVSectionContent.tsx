@@ -21,7 +21,7 @@ const GenericCVSectionContent = <T extends BaseItem>({
         <h3 className="font-semibold text-slate-100">
           {renderHeaderContent(item)}
         </h3>
-        {renderSubHeaderContent && renderSubHeaderContent(item)}
+        {renderSubHeaderContent?.(item)}
         <p>{item.description ?? ""}</p>
       </div>
     ))}
