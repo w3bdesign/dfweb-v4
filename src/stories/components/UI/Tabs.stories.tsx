@@ -109,7 +109,6 @@ export const ManyTabs = () => (
       { id: "tab2", label: "Tab 2", content: <ListContent /> },
       { id: "tab3", label: "Tab 3", content: <FormContent /> },
       { id: "tab4", label: "Tab 4", content: <TextContent /> },
-      { id: "tab5", label: "Tab 5", content: <ListContent /> },
     ]}
   />
 );
