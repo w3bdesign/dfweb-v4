@@ -1,15 +1,12 @@
 import React from "react";
-import { Meta, Story } from "@ladle/react";
+import { Meta } from "@ladle/react";
 import Tabs from "@/components/UI/Tabs.component";
+import "@/app/globals.css";
 
 export default {
   title: "UI/Tabs",
   component: Tabs,
 } as Meta;
-
-const Template: Story<React.ComponentProps<typeof Tabs>> = (args) => (
-  <Tabs {...args} />
-);
 
 // Sample content components
 const TextContent = () => (
@@ -80,41 +77,62 @@ const FormContent = () => {
   );
 };
 
-export const VerticalTabs = Template.bind({});
-VerticalTabs.args = {
-  orientation: "vertical",
-  tabs: [
-    { id: "tab1", label: "Text", content: <TextContent /> },
-    { id: "tab2", label: "List", content: <ListContent /> },
-    { id: "tab3", label: "Form", content: <FormContent /> },
-  ],
-};
+// Vertical tabs
+export const VerticalTabs = () => (
+  <Tabs
+    orientation="vertical"
+    tabs={[
+      { id: "tab1", label: "Text", content: <TextContent /> },
+      { id: "tab2", label: "List", content: <ListContent /> },
+      { id: "tab3", label: "Form", content: <FormContent /> },
+    ]}
+  />
+);
 
-export const HorizontalTabs = Template.bind({});
-HorizontalTabs.args = {
-  orientation: "horizontal",
-  tabs: [
-    { id: "tab1", label: "Text", content: <TextContent /> },
-    { id: "tab2", label: "List", content: <ListContent /> },
-    { id: "tab3", label: "Form", content: <FormContent /> },
-  ],
-};
+// Horizontal tabs
+export const HorizontalTabs = () => (
+  <Tabs
+    orientation="horizontal"
+    tabs={[
+      { id: "tab1", label: "Text", content: <TextContent /> },
+      { id: "tab2", label: "List", content: <ListContent /> },
+      { id: "tab3", label: "Form", content: <FormContent /> },
+    ]}
+  />
+);
 
-export const ManyTabs = Template.bind({});
-ManyTabs.args = {
-  tabs: [
-    { id: "tab1", label: "Tab 1", content: <TextContent /> },
-    { id: "tab2", label: "Tab 2", content: <ListContent /> },
-    { id: "tab3", label: "Tab 3", content: <FormContent /> },
-    { id: "tab4", label: "Tab 4", content: <TextContent /> },
-    { id: "tab5", label: "Tab 5", content: <ListContent /> },
-  ],
-};
+// Many tabs
+export const ManyTabs = () => (
+  <Tabs
+    tabs={[
+      { id: "tab1", label: "Tab 1", content: <TextContent /> },
+      { id: "tab2", label: "Tab 2", content: <ListContent /> },
+      { id: "tab3", label: "Tab 3", content: <FormContent /> },
+      { id: "tab4", label: "Tab 4", content: <TextContent /> },
+      { id: "tab5", label: "Tab 5", content: <ListContent /> },
+    ]}
+  />
+);
 
-export const TwoTabs = Template.bind({});
-TwoTabs.args = {
-  tabs: [
-    { id: "tab1", label: "First Tab", content: <TextContent /> },
-    { id: "tab2", label: "Second Tab", content: <ListContent /> },
-  ],
-};
+// Two tabs
+export const TwoTabs = () => (
+  <Tabs
+    tabs={[
+      { id: "tab1", label: "First Tab", content: <TextContent /> },
+      { id: "tab2", label: "Second Tab", content: <ListContent /> },
+    ]}
+  />
+);
+
+// Tabs in a container
+export const TabsInContainer = () => (
+  <div className="p-4 border border-gray-700 rounded-md">
+    <h3 className="text-white mb-4">Contained Tabs</h3>
+    <Tabs
+      tabs={[
+        { id: "tab1", label: "Info", content: <TextContent /> },
+        { id: "tab2", label: "Settings", content: <ListContent /> },
+      ]}
+    />
+  </div>
+);
