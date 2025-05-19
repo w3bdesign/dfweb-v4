@@ -1,9 +1,7 @@
-import React, { ReactNode, ComponentType } from 'react';
+import React, { ReactNode, ComponentType } from "react";
 
 /**
- * This mocks the 'motion/react' module for Ladle stories
- * Note: This is a TESTING-ONLY mock and intentionally uses looser typing than production code
- * because it's designed to be flexible for stories
+ * This mocks the 'motion/react' module for Ladle stories 
  */
 
 // Define types for the motion component props
@@ -18,47 +16,59 @@ type MotionProps = {
   [key: string]: any; // Allow other props to pass through
 };
 
-const createMotionComponent = (component = 'div'): ComponentType<MotionProps> => {
+const createMotionComponent = (
+  component = "div"
+): ComponentType<MotionProps> => {
   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
     // Extract the className from variants if present
-    const { className = '', animate, variants, whileInView, viewport, initial, ...rest } = props;
-    
+    const {
+      className = "",
+      animate,
+      variants,
+      whileInView,
+      viewport,
+      initial,
+      ...rest
+    } = props;
+
     // Add a class to indicate this is a mocked motion component
     const combinedClassName = `${className} mock-motion-component`;
-    
+
     return React.createElement(
       component,
-      { 
-        ...rest, 
+      {
+        ...rest,
         className: combinedClassName,
-        'data-mock-motion': true,
-        'data-mock-initial': initial,
-        'data-mock-animate': animate,
-        'data-mock-while-in-view': whileInView,
+        "data-mock-motion": true,
+        "data-mock-initial": initial,
+        "data-mock-animate": animate,
+        "data-mock-while-in-view": whileInView,
       },
       children
     );
   };
-  
+
   return MotionComponent;
 };
 
 // Export the mock components
 export const motion = {
-  div: createMotionComponent('div'),
-  span: createMotionComponent('span'),
-  ul: createMotionComponent('ul'),
-  li: createMotionComponent('li'),
-  p: createMotionComponent('p'),
-  section: createMotionComponent('section'),
-  nav: createMotionComponent('nav'),
-  header: createMotionComponent('header'),
-  footer: createMotionComponent('footer'),
-  button: createMotionComponent('button'),
-  a: createMotionComponent('a'),
+  div: createMotionComponent("div"),
+  span: createMotionComponent("span"),
+  ul: createMotionComponent("ul"),
+  li: createMotionComponent("li"),
+  p: createMotionComponent("p"),
+  section: createMotionComponent("section"),
+  nav: createMotionComponent("nav"),
+  header: createMotionComponent("header"),
+  footer: createMotionComponent("footer"),
+  button: createMotionComponent("button"),
+  a: createMotionComponent("a"),
 };
 
-export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({ children }) => {
+export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
+  children,
+}) => {
   return React.createElement(React.Fragment, null, children);
 };
 
