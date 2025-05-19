@@ -158,6 +158,10 @@ src/
       RotatingLoader.component.tsx
     CV/
       CVContent.component.tsx
+      EducationTabContent.tsx
+      ExperienceTabContent.tsx
+      QualificationsTabContent.tsx
+      VolunteerWorkTabContent.tsx
     ErrorBoundary/
       ErrorBoundary.tsx
       ErrorFallback.component.tsx
@@ -7020,112 +7024,6 @@ tsconfig.json
 36: }
 ````
 
-## File: src/components/CV/CVContent.component.tsx
-````typescript
-  1: import PageHeader from "@/components/UI/PageHeader.component";
-  2: import Button from "@/components/UI/Button.component";
-  3: import Tabs from "@/components/UI/Tabs.component";
-  4: import type { Cv } from "@/types/sanity.types";
-  5: /**
-  6:  * CVContent component for rendering the CV page with tabs
-  7:  * @param {Object} props - The props for the CVContent component
-  8:  * @param {Cv} props.cvData - The CV data from Sanity
-  9:  * @returns {JSX.Element} The rendered CVContent component
- 10:  */
- 11: const CVContent = ({ cvData }: { cvData: Cv }) => {
- 12:   const tabs = [
- 13:     {
- 14:       id: "qualifications",
- 15:       label: "Nøkkelkvalifikasjoner",
- 16:       content: (
- 17:         <ul className="list-disc pl-5 text-slate-300/[0.9]">
- 18:           {cvData.keyQualifications?.map((qual) => (
- 19:             <li key={qual ?? ""} className="mb-2">
- 20:               {qual ?? ""}
- 21:             </li>
- 22:           ))}
- 23:         </ul>
- 24:       ),
- 25:     },
- 26:     {
- 27:       id: "experience",
- 28:       label: "Erfaring",
- 29:       content: (
- 30:         <div className="text-slate-300/[0.9]">
- 31:           {cvData.experience?.map((exp) => (
- 32:             <div key={exp.description ?? ""} className="mb-6">
- 33:               <h3 className="font-semibold text-slate-100">
- 34:                 {exp.period ?? ""} - {exp.company ?? ""}
- 35:               </h3>
- 36:               {exp.role && <p className="italic">{exp.role}</p>}
- 37:               <p>{exp.description ?? ""}</p>
- 38:             </div>
- 39:           ))}
- 40:         </div>
- 41:       ),
- 42:     },
- 43:     {
- 44:       id: "education",
- 45:       label: "Utdanning",
- 46:       content: (
- 47:         <div className="text-slate-300/[0.9]">
- 48:           {cvData.education?.map((edu) => (
- 49:             <div key={edu.description ?? ""} className="mb-6">
- 50:               <h3 className="font-semibold text-slate-100">
- 51:                 {edu.period ?? ""} - {edu.institution ?? ""}
- 52:               </h3>
- 53:               {edu.degree && <p className="italic">{edu.degree}</p>}
- 54:               <p>{edu.description ?? ""}</p>
- 55:             </div>
- 56:           ))}
- 57:         </div>
- 58:       ),
- 59:     },
- 60:     {
- 61:       id: "volunteerWork",
- 62:       label: "Frivillig arbeid",
- 63:       content: (
- 64:         <div className="text-slate-300/[0.9]">
- 65:           {cvData.volunteerWork?.map((vol) => (
- 66:             <div key={vol.description ?? ""} className="mb-6">
- 67:               <h3 className="font-semibold text-slate-100">
- 68:                 {vol.period ?? ""} - {vol.organization ?? ""}
- 69:               </h3>
- 70:               {vol.role && <p className="italic">{vol.role}</p>}
- 71:               <p>{vol.description ?? ""}</p>
- 72:             </div>
- 73:           ))}
- 74:         </div>
- 75:       ),
- 76:     },
- 77:   ];
- 78:   return (
- 79:     <main id="maincontent">
- 80:       <div className="mt-32 bg-graybg">
- 81:         <PageHeader>CV</PageHeader>
- 82:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 83:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 84:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
- 85:               <div className="p-4 text-lg rounded-sm md:w-full">
- 86:                 <div className="md:flex md:justify-center hidden">
- 87:                   <Tabs tabs={tabs} />
- 88:                 </div>
- 89:                 <div className="mx-auto text-center md:mt-8 md:hidden">
- 90:                   <Button href="./cv2.pdf" renderAs="a" type="button">
- 91:                     Last ned PDF
- 92:                   </Button>
- 93:                 </div>
- 94:               </div>
- 95:             </div>
- 96:           </div>
- 97:         </div>
- 98:       </div>
- 99:     </main>
-100:   );
-101: };
-102: export default CVContent;
-````
-
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
 ````typescript
  1: "use client";
@@ -13413,6 +13311,176 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/components/CV/CVContent.component.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import Button from "@/components/UI/Button.component";
+ 3: import Tabs from "@/components/UI/Tabs.component";
+ 4: import QualificationsTabContent from "./QualificationsTabContent";
+ 5: import ExperienceTabContent from "./ExperienceTabContent";
+ 6: import EducationTabContent from "./EducationTabContent";
+ 7: import VolunteerWorkTabContent from "./VolunteerWorkTabContent";
+ 8: import type { Cv } from "@/types/sanity.types";
+ 9: /**
+10:  * CVContent component for rendering the CV page with tabs
+11:  * @param {Object} props - The props for the CVContent component
+12:  * @param {Cv} props.cvData - The CV data from Sanity
+13:  * @returns {JSX.Element} The rendered CVContent component
+14:  */
+15: const CVContent = ({ cvData }: { cvData: Cv }) => {
+16:   const tabs = [
+17:     {
+18:       id: "qualifications",
+19:       label: "Nøkkelkvalifikasjoner",
+20:       content: (
+21:         <QualificationsTabContent qualifications={cvData.keyQualifications} />
+22:       ),
+23:     },
+24:     {
+25:       id: "experience",
+26:       label: "Erfaring",
+27:       content: <ExperienceTabContent experience={cvData.experience} />,
+28:     },
+29:     {
+30:       id: "education",
+31:       label: "Utdanning",
+32:       content: <EducationTabContent education={cvData.education} />,
+33:     },
+34:     {
+35:       id: "volunteerWork",
+36:       label: "Frivillig arbeid",
+37:       content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
+38:     },
+39:   ];
+40:   return (
+41:     <main id="maincontent">
+42:       <div className="mt-32 bg-graybg">
+43:         <PageHeader>CV</PageHeader>
+44:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+45:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+46:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
+47:               <div className="p-4 text-lg rounded-sm md:w-full">
+48:                 <div className="md:flex md:justify-center hidden">
+49:                   <Tabs tabs={tabs} />
+50:                 </div>
+51:                 <div className="mx-auto text-center md:mt-8 md:hidden">
+52:                   <Button href="./cv2.pdf" renderAs="a" type="button">
+53:                     Last ned PDF
+54:                   </Button>
+55:                 </div>
+56:               </div>
+57:             </div>
+58:           </div>
+59:         </div>
+60:       </div>
+61:     </main>
+62:   );
+63: };
+64: export default CVContent;
+````
+
+## File: src/components/CV/EducationTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface Education {
+ 3:   period?: string;
+ 4:   institution?: string;
+ 5:   degree?: string;
+ 6:   description?: string;
+ 7: }
+ 8: interface EducationTabContentProps {
+ 9:   education?: Education[];
+10: }
+11: const EducationTabContent: React.FC<EducationTabContentProps> = ({ education }) => (
+12:   <div className="text-slate-300/[0.9]">
+13:     {education?.map((edu) => (
+14:       <div key={edu.description ?? ""} className="mb-6">
+15:         <h3 className="font-semibold text-slate-100">
+16:           {edu.period ?? ""} - {edu.institution ?? ""}
+17:         </h3>
+18:         {edu.degree && <p className="italic">{edu.degree}</p>}
+19:         <p>{edu.description ?? ""}</p>
+20:       </div>
+21:     ))}
+22:   </div>
+23: );
+24: export default EducationTabContent;
+````
+
+## File: src/components/CV/ExperienceTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface Experience {
+ 3:   period?: string;
+ 4:   company?: string;
+ 5:   role?: string;
+ 6:   description?: string;
+ 7: }
+ 8: interface ExperienceTabContentProps {
+ 9:   experience?: Experience[];
+10: }
+11: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({ experience }) => (
+12:   <div className="text-slate-300/[0.9]">
+13:     {experience?.map((exp) => (
+14:       <div key={exp.description ?? ""} className="mb-6">
+15:         <h3 className="font-semibold text-slate-100">
+16:           {exp.period ?? ""} - {exp.company ?? ""}
+17:         </h3>
+18:         {exp.role && <p className="italic">{exp.role}</p>}
+19:         <p>{exp.description ?? ""}</p>
+20:       </div>
+21:     ))}
+22:   </div>
+23: );
+24: export default ExperienceTabContent;
+````
+
+## File: src/components/CV/QualificationsTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface QualificationsTabContentProps {
+ 3:   qualifications?: string[];
+ 4: }
+ 5: const QualificationsTabContent: React.FC<QualificationsTabContentProps> = ({ qualifications }) => (
+ 6:   <ul className="list-disc pl-5 text-slate-300/[0.9]">
+ 7:     {qualifications?.map((qual) => (
+ 8:       <li key={qual ?? ""} className="mb-2">
+ 9:         {qual ?? ""}
+10:       </li>
+11:     ))}
+12:   </ul>
+13: );
+14: export default QualificationsTabContent;
+````
+
+## File: src/components/CV/VolunteerWorkTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface VolunteerWork {
+ 3:   period?: string;
+ 4:   organization?: string;
+ 5:   role?: string;
+ 6:   description?: string;
+ 7: }
+ 8: interface VolunteerWorkTabContentProps {
+ 9:   volunteerWork?: VolunteerWork[];
+10: }
+11: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({ volunteerWork }) => (
+12:   <div className="text-slate-300/[0.9]">
+13:     {volunteerWork?.map((vol) => (
+14:       <div key={vol.description ?? ""} className="mb-6">
+15:         <h3 className="font-semibold text-slate-100">
+16:           {vol.period ?? ""} - {vol.organization ?? ""}
+17:         </h3>
+18:         {vol.role && <p className="italic">{vol.role}</p>}
+19:         <p>{vol.description ?? ""}</p>
+20:       </div>
+21:     ))}
+22:   </div>
+23: );
+24: export default VolunteerWorkTabContent;
+````
+
 ## File: src/stories/components/Animations/Matrix.stories.tsx
 ````typescript
   1: import React, { useEffect, useState } from "react";
@@ -16675,7 +16743,7 @@ tsconfig.json
 62:     "@testing-library/react": "^16.3.0",
 63:     "@testing-library/user-event": "^14.6.1",
 64:     "@types/jest": "^29.5.14",
-65:     "@types/node": "^22.15.18",
+65:     "@types/node": "^22.15.19",
 66:     "@types/react": "^19.1.4",
 67:     "@types/react-dom": "^19.1.5",
 68:     "@typescript-eslint/eslint-plugin": "^8.32.1",
