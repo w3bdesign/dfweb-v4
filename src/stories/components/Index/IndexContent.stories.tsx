@@ -5,8 +5,6 @@ import type { Pagecontent } from "@/types/sanity.types";
 
 import "@/app/globals.css";
 
-import "@/__mocks__/portabletext-react";
-
 export default {
   title: "Index/IndexContent",
   component: IndexContent,
