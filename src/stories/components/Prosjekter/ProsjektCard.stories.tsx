@@ -21,7 +21,10 @@ const project = (props = {}): Project => ({
   subdescription: "Built with React, TypeScript, and Next.js",
   projectimage: {
     _type: "image",
-    asset: { _ref: "image-1fbc6a91ed51fa9870504faf332f16823953d716-1207x614-png", _type: "reference" }, // Use real Sanity asset _ref
+    asset: {
+      _ref: "image-1fbc6a91ed51fa9870504faf332f16823953d716-1207x614-png",
+      _type: "reference",
+    },
   },
   urlwww: [
     {
@@ -41,66 +44,80 @@ const project = (props = {}): Project => ({
 });
 
 // Story variants
-export const Default = () => <ProsjektCard {...project()} />; // Revert to default, should now work with real _ref
+export const Default = () => (
+  <div className="max-w-lg mx-auto p-4">
+    <ProsjektCard {...project()} />
+  </div>
+);
 
 export const Featured = () => (
-  <ProsjektCard
-    {...project({
-      featured: true,
-      name: "Featured Project",
-      description: "Project with instant animation",
-    })}
-  />
-);
-
-export const WithoutImage = () => (
-  <ProsjektCard {...project({ projectimage: undefined })} />
-);
-
-export const WebsiteOnly = () => (
-  <ProsjektCard
-    {...project({
-      urlgithub: undefined,
-      name: "Website Only",
-    })}
-  />
-);
-
-export const GitHubOnly = () => (
-  <ProsjektCard
-    {...project({
-      urlwww: undefined,
-      name: "GitHub Only",
-    })}
-  />
-);
-
-export const NoLinks = () => (
-  <ProsjektCard
-    {...project({
-      urlwww: undefined,
-      urlgithub: undefined,
-      name: "No Links Project",
-    })}
-  />
-);
-
-export const Grid = () => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <ProsjektCard {...project()} />
+  <div className="max-w-lg mx-auto p-4">
     <ProsjektCard
       {...project({
         featured: true,
         name: "Featured Project",
-        description: "Mobile app for iOS and Android",
+        description: "Project with instant animation",
       })}
     />
+  </div>
+);
+
+export const WebsiteOnly = () => (
+  <div className="max-w-lg mx-auto p-4">
     <ProsjektCard
       {...project({
-        name: "Backend API",
-        description: "Node.js & MongoDB service",
-        urlwww: undefined,
+        urlgithub: undefined,
+        name: "Website Only",
       })}
     />
+  </div>
+);
+
+export const GitHubOnly = () => (
+  <div className="max-w-lg mx-auto p-4">
+    <ProsjektCard
+      {...project({
+        urlwww: undefined,
+        name: "GitHub Only",
+      })}
+    />
+  </div>
+);
+
+export const NoLinks = () => (
+  <div className="max-w-lg mx-auto p-4">
+    <ProsjektCard
+      {...project({
+        urlwww: undefined,
+        urlgithub: undefined,
+        name: "No Links Project",
+      })}
+    />
+  </div>
+);
+
+export const Grid = () => (
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+    <div className="max-w-lg mx-auto">
+      <ProsjektCard {...project()} />
+    </div>
+    <div className="max-w-lg mx-auto">
+      <ProsjektCard
+        {...project({
+          featured: true,
+          name: "Featured Project",
+          description: "Mobile app for iOS and Android",
+        })}
+      />
+    </div>
+    <div className="max-w-lg mx-auto">
+      <ProsjektCard
+        {...project({
+          name: "Backend API",
+          description: "Node.js & MongoDB service",
+          urlwww: undefined,
+        })}
+      />
+    </div>
   </div>
 );
