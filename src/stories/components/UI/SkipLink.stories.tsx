@@ -7,10 +7,7 @@ export default {
   component: SkipLink,
 } as Meta;
 
-// Basic template
-const Template: Story = () => <SkipLink />;
-
-export const Default = Template.bind({});
+export const Default: Story = () => <SkipLink />;
 
 // Story showing the skip link in context
 export const WithContext = () => (
