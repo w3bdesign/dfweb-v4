@@ -1,7 +1,7 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import BounceInScroll from "../../components/Animations/BounceInScroll.component";
-import { IAnimateBounceProps } from "../../components/Animations/types/Animations.types";
+import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+import { IAnimateBounceProps } from "@/components/Animations/types/Animations.types";
 
 export default {
   title: "Animations/BounceInScroll",

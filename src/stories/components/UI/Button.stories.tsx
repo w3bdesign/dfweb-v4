@@ -1,9 +1,9 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import Button, { IButtonProps } from "../../components/UI/Button.component";
+import Button, { IButtonProps } from "@/components/UI/Button.component";
 
 export default {
-  title: "Button",
+  title: "UI/Button",
   component: Button,
 } as Meta;
 

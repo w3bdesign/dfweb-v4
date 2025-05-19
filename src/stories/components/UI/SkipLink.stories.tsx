@@ -1,9 +1,9 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import SkipLink from "../../components/UI/SkipLink.component";
+import SkipLink from "@/components/UI/SkipLink.component";
 
 export default {
-  title: "SkipLink",
+  title: "UI/SkipLink",
   component: SkipLink,
 } as Meta;
 
