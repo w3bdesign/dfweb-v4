@@ -62,3 +62,23 @@ export const NarrowContainer = () => (
     />
   </div>
 );
+
+// Section with debug button hidden
+export const DebugButtonHidden = () => (
+  <Section
+    _type="pagecontent"
+    title="No Debug Button"
+    text={mockPortableText}
+    showDebugButton={false}
+  />
+);
+
+// Section with debug button explicitly shown (default behavior)
+export const DebugButtonVisible = () => (
+  <Section
+    _type="pagecontent"
+    title="Debug Button Visible"
+    text={mockPortableText}
+    showDebugButton={true}
+  />
+);
