@@ -46,13 +46,10 @@ declare global {
   }
 }
 
-type ExpectWithGetState = typeof expect & {
-  getState: () => { testPath?: string };
-};
-
 function getTestPath(): string | undefined {
-  const expectWithGetState = expect as ExpectWithGetState;
-  return expectWithGetState.getState().testPath;
+  return (
+    expect as unknown as { getState: () => { testPath?: string } }
+  ).getState().testPath;
 }
 
 beforeEach(async () => {
