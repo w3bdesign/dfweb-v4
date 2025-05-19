@@ -1,10 +1,10 @@
 import React from "react";
 import { Meta } from "@ladle/react";
 import { z } from "zod";
-import GenericForm from "../../components/UI/GenericForm.component";
+import GenericForm from "@/components/UI/GenericForm.component";
 
 export default {
-  title: "GenericForm",
+  title: "UI/GenericForm",
   component: GenericForm,
 } as Meta;
 

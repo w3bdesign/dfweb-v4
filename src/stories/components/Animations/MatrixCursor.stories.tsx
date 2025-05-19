@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Meta } from "@ladle/react";
-import MatrixCursor from "../../components/Animations/MatrixCursor.component";
+import MatrixCursor from "@/components/Animations/MatrixCursor.component";
 import "@/app/cursor.css";
 
 export default {

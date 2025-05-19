@@ -20,7 +20,7 @@ const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
     useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
 
   useEffect(() => {
-    import("../../components/Animations/Matrix.component").then((mod) => {
+    import("@/components/Animations/Matrix.component").then((mod) => {
       setMatrix(() => mod.default);
     });
   }, []);

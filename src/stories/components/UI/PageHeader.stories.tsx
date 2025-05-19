@@ -1,6 +1,6 @@
 import React from "react";
 import { Meta } from "@ladle/react";
-import PageHeader from "../../components/UI/PageHeader.component";
+import PageHeader from "@/components/UI/PageHeader.component";
 import "@/app/globals.css";
 
 export default {

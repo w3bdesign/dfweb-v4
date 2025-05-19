@@ -1,9 +1,9 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import Pill from "../../components/UI/Pill.component";
+import Pill from "@/components/UI/Pill.component";
 
 export default {
-  title: "Pill",
+  title: "UI/Pill",
   component: Pill,
 } as Meta;
 

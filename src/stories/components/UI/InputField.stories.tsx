@@ -2,11 +2,11 @@ import React from "react";
 import { Meta, Story } from "@ladle/react";
 import InputField, {
   InputProps,
-} from "../../components/UI/InputField.component";
+} from "@/components/UI/InputField.component";
 import { useForm, FieldValues } from "react-hook-form";
 
 export default {
-  title: "InputField",
+  title: "UI/InputField",
   component: InputField,
 } as Meta;
 

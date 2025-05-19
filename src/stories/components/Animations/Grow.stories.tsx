@@ -1,10 +1,10 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import Grow from "../../components/Animations/Grow.component";
-import { IGrowProps } from "../../components/Animations/types/Animations.types";
+import Grow from "@/components/Animations/Grow.component";
+import { IGrowProps } from "@/components/Animations/types/Animations.types";
 
 export default {
-  title: "Grow",
+  title: "Animations/Grow",
   component: Grow,
 } as Meta;
 

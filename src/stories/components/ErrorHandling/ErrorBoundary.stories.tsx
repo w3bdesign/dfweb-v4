@@ -1,10 +1,10 @@
 import React from "react";
 import { Meta } from "@ladle/react";
-import ErrorBoundary from "../../components/ErrorBoundary/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 import "@/app/globals.css";
 
 export default {
-  title: "ErrorBoundary",
+  title: "ErrorHandling/ErrorBoundary",
   component: ErrorBoundary,
 } as Meta;
 

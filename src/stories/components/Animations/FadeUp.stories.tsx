@@ -1,10 +1,10 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import FadeUp from "../../components/Animations/FadeUp.component";
-import { IAnimateWithDelayProps } from "../../components/Animations/types/Animations.types";
+import FadeUp from "@/components/Animations/FadeUp.component";
+import { IAnimateWithDelayProps } from "@/components/Animations/types/Animations.types";
 
 export default {
-  title: "FadeUp",
+  title: "Animations/FadeUp",
   component: FadeUp,
 } as Meta;
 

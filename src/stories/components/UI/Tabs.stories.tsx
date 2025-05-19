@@ -1,9 +1,9 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import Tabs from "../../components/UI/Tabs.component";
+import Tabs from "@/components/UI/Tabs.component";
 
 export default {
-  title: "Tabs",
+  title: "UI/Tabs",
   component: Tabs,
 } as Meta;
 

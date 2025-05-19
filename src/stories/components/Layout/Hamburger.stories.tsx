@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Meta } from "@ladle/react";
-import Hamburger from "../../components/Layout/Hamburger.component";
+import Hamburger from "@/components/Layout/Hamburger.component";
 
 export default {
   title: "Layout/Hamburger",
