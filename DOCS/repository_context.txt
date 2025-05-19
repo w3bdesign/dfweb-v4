@@ -4072,94 +4072,6 @@ tsconfig.json
 101: });
 ````
 
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
- 1: /// <reference types="@testing-library/jest-dom" />
- 2: import React from "react";
- 3: import { render, screen, fireEvent } from "@testing-library/react";
- 4: import "@testing-library/jest-dom";
- 5: import Section from "@/components/Index/Section.component";
- 6: import { PortableText } from "@portabletext/react";
- 7: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 8: // Mock the BounceInScroll component
- 9: jest.mock("@/components/Animations/BounceInScroll.component", () => {
-10:   return ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-11: });
-12: // Mock the PortableText component
-13: jest.mock("@portabletext/react", () => ({
-14:   PortableText: jest.fn(() => null),
-15: }));
-16: describe("Section Component", () => {
-17:   const mockProps = {
-18:     title: "Test Title",
-19:     text: [
-20:       {
-21:         _key: "1",
-22:         _type: "block",
-23:         children: [
-24:           { _key: "2", _type: "span", text: "Test content", marks: [] },
-25:         ],
-26:         markDefs: [],
-27:         style: "normal",
-28:       },
-29:     ],
-30:   };
-31:   const originalEnv = process.env;
-32:   beforeEach(() => {
-33:     jest.clearAllMocks();
-34:     process.env = { ...originalEnv };
-35:   });
-36:   afterEach(() => {
-37:     process.env = originalEnv;
-38:   });
-39:   it("renders with valid props", () => {
-40:     // Arrange - Set up test data and conditions
-41:     const props = mockProps;
-42:     // Act - Perform the action being tested
-43:     render(<Section {...props} />);
-44:     // Assert - Verify the results
-45:     expect(screen.getByText("Test Title")).toBeInTheDocument();
-46:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
-47:     expect(mockCall).toEqual({
-48:       value: mockProps.text,
-49:       components: myPortableTextComponents,
-50:     });
-51:   });
-52:   it("returns null with invalid props", () => {
-53:     // Arrange - Set up test data and conditions
-54:     const consoleErrorSpy = jest
-55:       .spyOn(console, "error")
-56:       .mockImplementation(() => {});
-57:     // Act - Perform the action being tested
-58:     const { container } = render(<Section title="" text={[]} />);
-59:     // Assert - Verify the results
-60:     expect(container.firstChild).toBeNull();
-61:     expect(consoleErrorSpy).toHaveBeenCalled();
-62:     consoleErrorSpy.mockRestore();
-63:   });
-64:   it("triggers error in development mode", () => {
-65:     // Arrange - Set up test data and conditions
-66:     process.env = { ...originalEnv, NODE_ENV: "development" };
-67:     // Act - Perform the action being tested
-68:     render(<Section {...mockProps} />);
-69:     const errorButton = screen.getByText("Utløs Testfeil");
-70:     // Assert - Verify the results
-71:     expect(errorButton).toBeInTheDocument();
-72:     expect(() => fireEvent.click(errorButton)).toThrow(
-73:       "En uventet feil har oppstått",
-74:     );
-75:   });
-76:   it("does not show error button in production mode", () => {
-77:     // Arrange - Set up test data and conditions
-78:     process.env = { ...originalEnv, NODE_ENV: "production" };
-79:     // Act - Perform the action being tested
-80:     render(<Section {...mockProps} />);
-81:     // Assert - Verify the results
-82:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
-83:   });
-84: });
-````
-
 ## File: src/__tests__/Kontakt/KontaktContent.test.tsx
 ````typescript
   1: /**
@@ -13443,6 +13355,107 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+ 1: /// <reference types="@testing-library/jest-dom" />
+ 2: import React from "react";
+ 3: import { render, screen, fireEvent } from "@testing-library/react";
+ 4: import "@testing-library/jest-dom";
+ 5: import Section from "@/components/Index/Section.component";
+ 6: import { PortableText } from "@portabletext/react";
+ 7: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 8: // Mock the BounceInScroll component
+ 9: jest.mock("@/components/Animations/BounceInScroll.component", () => {
+10:   return ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+11: });
+12: // Mock the PortableText component
+13: jest.mock("@portabletext/react", () => ({
+14:   PortableText: jest.fn(() => null),
+15: }));
+16: describe("Section Component", () => {
+17:   const mockProps: import("@/types/sanity.types").Pagecontent = {
+18:     _type: "pagecontent",
+19:     title: "Test Title",
+20:     text: [
+21:       {
+22:         _key: "1",
+23:         _type: "block",
+24:         children: [
+25:           { _key: "2", _type: "span", text: "Test content", marks: [] },
+26:         ],
+27:         markDefs: [],
+28:         style: "normal",
+29:       },
+30:     ],
+31:   };
+32:   const originalEnv = process.env;
+33:   beforeEach(() => {
+34:     jest.clearAllMocks();
+35:     process.env = { ...originalEnv };
+36:   });
+37:   afterEach(() => {
+38:     process.env = originalEnv;
+39:   });
+40:   it("renders with valid props", () => {
+41:     // Arrange - Set up test data and conditions
+42:     const props = mockProps;
+43:     // Act - Perform the action being tested
+44:     render(<Section {...props} />);
+45:     // Assert - Verify the results
+46:     expect(screen.getByText("Test Title")).toBeInTheDocument();
+47:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
+48:     expect(mockCall).toEqual({
+49:       value: mockProps.text,
+50:       components: myPortableTextComponents,
+51:     });
+52:   });
+53:   it("returns null with invalid props", () => {
+54:     // Arrange - Set up test data and conditions
+55:     const consoleErrorSpy = jest
+56:       .spyOn(console, "error")
+57:       .mockImplementation(() => {});
+58:     // Act - Perform the action being tested
+59:     const { container } = render(
+60:       <Section _type="pagecontent" title="" text={[]} />
+61:     );
+62:     // Assert - Verify the results
+63:     expect(container.firstChild).toBeNull();
+64:     expect(consoleErrorSpy).toHaveBeenCalled();
+65:     consoleErrorSpy.mockRestore();
+66:   });
+67:   it("triggers error in development mode", () => {
+68:     // Arrange - Set up test data and conditions
+69:     process.env = { ...originalEnv, NODE_ENV: "development" };
+70:     // Act - Perform the action being tested
+71:     render(<Section {...mockProps} />);
+72:     const errorButton = screen.getByText("Utløs Testfeil");
+73:     // Assert - Verify the results
+74:     expect(errorButton).toBeInTheDocument();
+75:     expect(() => fireEvent.click(errorButton)).toThrow(
+76:       "En uventet feil har oppstått"
+77:     );
+78:   });
+79:   it("does not show error button in production mode", () => {
+80:     // Arrange - Set up test data and conditions
+81:     process.env = { ...originalEnv, NODE_ENV: "production" };
+82:     // Act - Perform the action being tested
+83:     render(<Section {...mockProps} />);
+84:     // Assert - Verify the results
+85:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+86:   });
+87:   it("does not show error button when showDebugButton is false in development mode", () => {
+88:     process.env = { ...originalEnv, NODE_ENV: "development" };
+89:     render(<Section {...mockProps} showDebugButton={false} />);
+90:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+91:   });
+92:   it("shows error button when showDebugButton is true in development mode", () => {
+93:     process.env = { ...originalEnv, NODE_ENV: "development" };
+94:     render(<Section {...mockProps} showDebugButton={true} />);
+95:     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
+96:   });
+97: });
+````
+
 ## File: src/components/CV/CVContent.component.tsx
 ````typescript
  1: import PageHeader from "@/components/UI/PageHeader.component";
@@ -13527,83 +13540,6 @@ tsconfig.json
 12:   </ul>
 13: );
 14: export default QualificationsTabContent;
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import BounceInScroll from "../Animations/BounceInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10: }
-11: /**
-12:  * Section component that renders a single content section
-13:  * @param {SectionProps} props - The props for the Section component
-14:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-15:  * @param {string} props.title - The title of the section
-16:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-17:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-18:  */
-19: const Section = ({ text, title, variant = "default" }: SectionProps) => {
-20:   const [shouldError, setShouldError] = useState(false);
-21:   if (!title || !text) {
-22:     console.error(
-23:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
-24:     );
-25:     return null;
-26:   }
-27:   if (shouldError) {
-28:     throw new Error("En uventet feil har oppstått");
-29:   }
-30:   const sectionStyles = {
-31:     default: "bg-slate-900",
-32:     alternate: "bg-slate-800/30",
-33:   };
-34:   return (
-35:     <section
-36:       aria-label={title}
-37:       data-testid="sanity-section"
-38:       className={`
-39:         md:py-6 
-40:         relative
-41:         transition-colors
-42:         duration-300
-43:         ${sectionStyles[variant]}
-44:       `}
-45:     >
-46:       <div className="p-2 text-lg h-full max-w-7xl mx-auto">
-47:         <BounceInScroll viewAmount={0}>
-48:           <h2
-49:             data-testid="sanity-title"
-50:             data-cy={title}
-51:             className="text-3xl text-center text-slate-100"
-52:           >
-53:             {title}
-54:           </h2>
-55:           <div className="flex justify-center">
-56:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-57:               <PortableText
-58:                 value={text}
-59:                 components={myPortableTextComponents}
-60:               />
-61:             </div>
-62:           </div>
-63:           {process.env.NODE_ENV === "development" && (
-64:             <Button onClick={() => setShouldError(true)} type="button">
-65:               Utløs Testfeil
-66:             </Button>
-67:           )}
-68:         </BounceInScroll>
-69:       </div>
-70:     </section>
-71:   );
-72: };
-73: export default Section;
 ````
 
 ## File: src/stories/components/Animations/Matrix.stories.tsx
@@ -15269,66 +15205,6 @@ tsconfig.json
 210: );
 ````
 
-## File: src/stories/components/Index/Section.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import Section from "@/components/Index/Section.component";
- 4: import pagecontent from "@/__mocks__/pagecontent.json";
- 5: import type { Pagecontent } from "@/types/sanity.types";
- 6: import "@/app/globals.css";
- 7: export default {
- 8:   title: "Index/Section",
- 9:   component: Section,
-10: } as Meta;
-11: const mockPortableText = pagecontent[0].content[0].text as Pagecontent['text'];
-12: const longContent = pagecontent[0].content[1].text as Pagecontent['text'];
-13: // Default section
-14: export const Default = () => (
-15:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-16: );
-17: // Section with alternate styling
-18: export const Alternate = () => (
-19:   <div className="bg-[#121c30] p-4">
-20:     <Section
-21:       _type="pagecontent"
-22:       title="My Projects"
-23:       text={mockPortableText}
-24:       variant="alternate"
-25:     />
-26:   </div>
-27: );
-28: // Section with longer content
-29: export const LongContent = () => (
-30:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
-31: );
-32: // Multiple sections together
-33: export const MultipleSections = () => (
-34:   <div>
-35:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-36:     <div className="bg-[#121c30]">
-37:       <Section
-38:         _type="pagecontent"
-39:         title="My Skills"
-40:         text={longContent}
-41:         variant="alternate"
-42:       />
-43:     </div>
-44:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
-45:   </div>
-46: );
-47: // Section in a narrower container
-48: export const NarrowContainer = () => (
-49:   <div className="max-w-xl mx-auto border border-gray-700">
-50:     <Section
-51:       _type="pagecontent"
-52:       title="Narrow Section"
-53:       text={mockPortableText}
-54:     />
-55:   </div>
-56: );
-````
-
 ## File: src/stories/components/Kontakt/KontaktWithMocks.tsx
 ````typescript
  1: import React from "react";
@@ -16130,6 +16006,85 @@ tsconfig.json
 106: });
 ````
 
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import BounceInScroll from "../Animations/BounceInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11: }
+12: /**
+13:  * Section component that renders a single content section
+14:  * @param {SectionProps} props - The props for the Section component
+15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+16:  * @param {string} props.title - The title of the section
+17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+20:  */
+21: const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
+22:   const [shouldError, setShouldError] = useState(false);
+23:   if (!title || !text) {
+24:     console.error(
+25:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
+26:     );
+27:     return null;
+28:   }
+29:   if (shouldError) {
+30:     throw new Error("En uventet feil har oppstått");
+31:   }
+32:   const sectionStyles = {
+33:     default: "bg-slate-900",
+34:     alternate: "bg-slate-800/30",
+35:   };
+36:   return (
+37:     <section
+38:       aria-label={title}
+39:       data-testid="sanity-section"
+40:       className={`
+41:         md:py-6 
+42:         relative
+43:         transition-colors
+44:         duration-300
+45:         ${sectionStyles[variant]}
+46:       `}
+47:     >
+48:       <div className="p-2 text-lg h-full max-w-7xl mx-auto">
+49:         <BounceInScroll viewAmount={0}>
+50:           <h2
+51:             data-testid="sanity-title"
+52:             data-cy={title}
+53:             className="text-3xl text-center text-slate-100"
+54:           >
+55:             {title}
+56:           </h2>
+57:           <div className="flex justify-center">
+58:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+59:               <PortableText
+60:                 value={text}
+61:                 components={myPortableTextComponents}
+62:               />
+63:             </div>
+64:           </div>
+65:           {process.env.NODE_ENV === "development" && showDebugButton && (
+66:             <Button onClick={() => setShouldError(true)} type="button">
+67:               Utløs Testfeil
+68:             </Button>
+69:           )}
+70:         </BounceInScroll>
+71:       </div>
+72:     </section>
+73:   );
+74: };
+75: export default Section;
+````
+
 ## File: src/components/UI/Tabs.component.tsx
 ````typescript
   1: "use client";
@@ -16319,6 +16274,84 @@ tsconfig.json
 30:     Fade Down with Custom Styles
 31:   </FadeDown>
 32: );
+````
+
+## File: src/stories/components/Index/Section.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import Section from "@/components/Index/Section.component";
+ 4: import pagecontent from "@/__mocks__/pagecontent.json";
+ 5: import type { Pagecontent } from "@/types/sanity.types";
+ 6: import "@/app/globals.css";
+ 7: export default {
+ 8:   title: "Index/Section",
+ 9:   component: Section,
+10: } as Meta;
+11: const mockPortableText = pagecontent[0].content[0].text as Pagecontent['text'];
+12: const longContent = pagecontent[0].content[1].text as Pagecontent['text'];
+13: // Default section
+14: export const Default = () => (
+15:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+16: );
+17: // Section with alternate styling
+18: export const Alternate = () => (
+19:   <div className="bg-[#121c30] p-4">
+20:     <Section
+21:       _type="pagecontent"
+22:       title="My Projects"
+23:       text={mockPortableText}
+24:       variant="alternate"
+25:     />
+26:   </div>
+27: );
+28: // Section with longer content
+29: export const LongContent = () => (
+30:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
+31: );
+32: // Multiple sections together
+33: export const MultipleSections = () => (
+34:   <div>
+35:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+36:     <div className="bg-[#121c30]">
+37:       <Section
+38:         _type="pagecontent"
+39:         title="My Skills"
+40:         text={longContent}
+41:         variant="alternate"
+42:       />
+43:     </div>
+44:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
+45:   </div>
+46: );
+47: // Section in a narrower container
+48: export const NarrowContainer = () => (
+49:   <div className="max-w-xl mx-auto border border-gray-700">
+50:     <Section
+51:       _type="pagecontent"
+52:       title="Narrow Section"
+53:       text={mockPortableText}
+54:     />
+55:   </div>
+56: );
+57: // Section with debug button hidden
+58: export const DebugButtonHidden = () => (
+59:   <Section
+60:     _type="pagecontent"
+61:     title="No Debug Button"
+62:     text={mockPortableText}
+63:     showDebugButton={false}
+64:   />
+65: );
+66: // Section with debug button explicitly shown (default behavior)
+67: export const DebugButtonVisible = () => (
+68:   <Section
+69:     _type="pagecontent"
+70:     title="Debug Button Visible"
+71:     text={mockPortableText}
+72:     showDebugButton={true}
+73:   />
+74: );
 ````
 
 ## File: src/stories/components/Layout/MobileMenu.stories.tsx
