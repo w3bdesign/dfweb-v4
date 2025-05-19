@@ -1,4 +1,5 @@
 import React from "react";
+import GenericCVSectionContent from "./GenericCVSectionContent";
 
 interface Experience {
   period?: string;
@@ -12,17 +13,11 @@ interface ExperienceTabContentProps {
 }
 
 const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({ experience }) => (
-  <div className="text-slate-300/[0.9]">
-    {experience?.map((exp) => (
-      <div key={exp.description ?? ""} className="mb-6">
-        <h3 className="font-semibold text-slate-100">
-          {exp.period ?? ""} - {exp.company ?? ""}
-        </h3>
-        {exp.role && <p className="italic">{exp.role}</p>}
-        <p>{exp.description ?? ""}</p>
-      </div>
-    ))}
-  </div>
+  <GenericCVSectionContent<Experience>
+    items={experience}
+    renderHeaderContent={(exp) => <>{exp.period ?? ""} - {exp.company ?? ""}</>}
+    renderSubHeaderContent={(exp) => exp.role && <p className="italic">{exp.role}</p>}
+  />
 );
 
 export default ExperienceTabContent;

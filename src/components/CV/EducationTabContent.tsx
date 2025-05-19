@@ -1,4 +1,5 @@
 import React from "react";
+import GenericCVSectionContent from "./GenericCVSectionContent";
 
 interface Education {
   period?: string;
@@ -12,17 +13,11 @@ interface EducationTabContentProps {
 }
 
 const EducationTabContent: React.FC<EducationTabContentProps> = ({ education }) => (
-  <div className="text-slate-300/[0.9]">
-    {education?.map((edu) => (
-      <div key={edu.description ?? ""} className="mb-6">
-        <h3 className="font-semibold text-slate-100">
-          {edu.period ?? ""} - {edu.institution ?? ""}
-        </h3>
-        {edu.degree && <p className="italic">{edu.degree}</p>}
-        <p>{edu.description ?? ""}</p>
-      </div>
-    ))}
-  </div>
+  <GenericCVSectionContent<Education>
+    items={education}
+    renderHeaderContent={(edu) => <>{edu.period ?? ""} - {edu.institution ?? ""}</>}
+    renderSubHeaderContent={(edu) => edu.degree && <p className="italic">{edu.degree}</p>}
+  />
 );
 
 export default EducationTabContent;
