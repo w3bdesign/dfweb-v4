@@ -9872,6 +9872,86 @@ tsconfig.json
 140: );
 ````
 
+## File: src/stories/components/UI/Pill.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import Pill from "@/components/UI/Pill.component";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "UI/Pill",
+ 7:   component: Pill,
+ 8: } as Meta;
+ 9: // Default pill as button
+10: export const DefaultButton = () => <Pill text="Click Me" />;
+11: // Pill with custom class
+12: export const CustomClass = () => (
+13:   <Pill text="Custom Styling" className="bg-purple-600 bg-opacity-20 border-purple-800" />
+14: );
+15: // Pill as link
+16: export const AsLink = () => <Pill text="Go to Example" href="https://example.com" />;
+17: // Multiple pills
+18: export const MultiplePills = () => (
+19:   <div className="flex flex-wrap justify-center">
+20:     <Pill text="React" />
+21:     <Pill text="TypeScript" />
+22:     <Pill text="Next.js" />
+23:     <Pill text="Tailwind CSS" />
+24:   </div>
+25: );
+26: // With click handler
+27: export const WithClickHandler = () => {
+28:   const [clickCount, setClickCount] = React.useState(0);
+29:   return (
+30:     <div className="flex flex-col items-center">
+31:       <Pill 
+32:         text={`Clicked ${clickCount} times`} 
+33:         onClick={() => setClickCount(clickCount + 1)} 
+34:       />
+35:       {clickCount > 0 && (
+36:         <div className="mt-4 text-white">
+37:           You clicked me {clickCount} time{clickCount !== 1 && "s"}!
+38:         </div>
+39:       )}
+40:     </div>
+41:   );
+42: };
+43: // Different sizes using className
+44: export const Sizes = () => (
+45:   <div className="space-y-4 flex flex-col items-center">
+46:     <Pill text="Small Pill" className="text-sm p-4" />
+47:     <Pill text="Default Size" />
+48:     <Pill text="Large Pill" className="text-2xl p-8" />
+49:   </div>
+50: );
+51: // Different colors
+52: export const Colors = () => (
+53:   <div className="space-y-4 flex flex-col items-center">
+54:     <Pill 
+55:       text="Blue (Default)" 
+56:     />
+57:     <Pill 
+58:       text="Green" 
+59:       className="bg-green-600 bg-opacity-20 border-green-800 border-opacity-30
+60:                 hover:bg-green-400 hover:bg-opacity-30
+61:                 hover:shadow-[0_0_15px_rgba(0,255,0,0.1),0_0_20px_rgba(0,255,0,0.1),inset_0_0_20px_rgba(0,255,0,0.1)]"
+62:     />
+63:     <Pill 
+64:       text="Red" 
+65:       className="bg-red-600 bg-opacity-20 border-red-800 border-opacity-30
+66:                 hover:bg-red-400 hover:bg-opacity-30
+67:                 hover:shadow-[0_0_15px_rgba(255,0,0,0.1),0_0_20px_rgba(255,0,0,0.1),inset_0_0_20px_rgba(255,0,0,0.1)]" 
+68:     />
+69:     <Pill 
+70:       text="Purple" 
+71:       className="bg-purple-600 bg-opacity-20 border-purple-800 border-opacity-30
+72:                 hover:bg-purple-400 hover:bg-opacity-30
+73:                 hover:shadow-[0_0_15px_rgba(128,0,128,0.1),0_0_20px_rgba(128,0,128,0.1),inset_0_0_20px_rgba(128,0,128,0.1)]" 
+74:     />
+75:   </div>
+76: );
+````
+
 ## File: src/stories/components/UI/Tabs.stories.tsx
 ````typescript
   1: import React from "react";
@@ -14485,88 +14565,6 @@ tsconfig.json
 35: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@4.1.0
- 4:   codecov: codecov/codecov@5.4.2
- 5:   node: circleci/node@7.1.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.1
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.1-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run: 
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload      
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: commit/commit_analyzer.py
 ````python
   1: import subprocess
@@ -15533,84 +15531,61 @@ tsconfig.json
 42: export default KontaktWithMocks;
 ````
 
-## File: src/stories/components/UI/Pill.stories.tsx
+## File: src/stories/components/UI/InputField.stories.tsx
 ````typescript
  1: import React from "react";
  2: import { Meta } from "@ladle/react";
- 3: import Pill from "@/components/UI/Pill.component";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "UI/Pill",
- 7:   component: Pill,
- 8: } as Meta;
- 9: // Default pill as button
-10: export const DefaultButton = () => <Pill text="Click Me" />;
-11: // Pill with custom class
-12: export const CustomClass = () => (
-13:   <Pill text="Custom Styling" className="bg-purple-600 bg-opacity-20 border-purple-800" />
-14: );
-15: // Pill as link
-16: export const AsLink = () => <Pill text="Go to Example" href="https://example.com" />;
-17: // Multiple pills
-18: export const MultiplePills = () => (
-19:   <div className="flex flex-wrap justify-center">
-20:     <Pill text="React" />
-21:     <Pill text="TypeScript" />
-22:     <Pill text="Next.js" />
-23:     <Pill text="Tailwind CSS" />
-24:   </div>
-25: );
-26: // With click handler
-27: export const WithClickHandler = () => {
-28:   const [clickCount, setClickCount] = React.useState(0);
-29:   return (
-30:     <div className="flex flex-col items-center">
-31:       <Pill 
-32:         text={`Clicked ${clickCount} times`} 
-33:         onClick={() => setClickCount(clickCount + 1)} 
+ 3: import InputField from "@/components/UI/InputField.component";
+ 4: import { useForm } from "react-hook-form";
+ 5: import "@/app/globals.css";
+ 6: export default {
+ 7:   title: "UI/InputField",
+ 8:   component: InputField,
+ 9:   parameters: {
+10:     layout: "centered",
+11:   },
+12: } as Meta;
+13: // Create a story wrapper to provide the react-hook-form context
+14: const InputFieldStory = ({
+15:   name = "exampleField",
+16:   label = "Label",
+17:   type = "input" as "input" | "textarea",
+18:   isRequired = false,
+19:   error = undefined as string | undefined,
+20:   inputPattern = undefined as RegExp | undefined,
+21: }) => {
+22:   const { register } = useForm();
+23:   return (
+24:     <div className="p-6 bg-gray-900 min-w-[350px]">
+25:       <InputField
+26:         name={name}
+27:         label={label}
+28:         htmlFor={`field-${name}`}
+29:         type={type}
+30:         isRequired={isRequired}
+31:         register={register}
+32:         error={error}
+33:         inputPattern={inputPattern}
 34:       />
-35:       {clickCount > 0 && (
-36:         <div className="mt-4 text-white">
-37:           You clicked me {clickCount} time{clickCount !== 1 && "s"}!
-38:         </div>
-39:       )}
-40:     </div>
-41:   );
-42: };
-43: // Different sizes using className
-44: export const Sizes = () => (
-45:   <div className="space-y-4 flex flex-col items-center">
-46:     <Pill text="Small Pill" className="text-sm p-4" />
-47:     <Pill text="Default Size" />
-48:     <Pill text="Large Pill" className="text-2xl p-8" />
-49:   </div>
-50: );
-51: // Different colors
-52: export const Colors = () => (
-53:   <div className="space-y-4 flex flex-col items-center">
-54:     <Pill 
-55:       text="Blue (Default)" 
-56:     />
-57:     <Pill 
-58:       text="Green" 
-59:       className="bg-green-600 bg-opacity-20 border-green-800 border-opacity-30
-60:                 hover:bg-green-400 hover:bg-opacity-30
-61:                 hover:shadow-[0_0_15px_rgba(0,255,0,0.1),0_0_20px_rgba(0,255,0,0.1),inset_0_0_20px_rgba(0,255,0,0.1)]"
-62:     />
-63:     <Pill 
-64:       text="Red" 
-65:       className="bg-red-600 bg-opacity-20 border-red-800 border-opacity-30
-66:                 hover:bg-red-400 hover:bg-opacity-30
-67:                 hover:shadow-[0_0_15px_rgba(255,0,0,0.1),0_0_20px_rgba(255,0,0,0.1),inset_0_0_20px_rgba(255,0,0,0.1)]" 
-68:     />
-69:     <Pill 
-70:       text="Purple" 
-71:       className="bg-purple-600 bg-opacity-20 border-purple-800 border-opacity-30
-72:                 hover:bg-purple-400 hover:bg-opacity-30
-73:                 hover:shadow-[0_0_15px_rgba(128,0,128,0.1),0_0_20px_rgba(128,0,128,0.1),inset_0_0_20px_rgba(128,0,128,0.1)]" 
-74:     />
-75:   </div>
-76: );
+35:     </div>
+36:   );
+37: };
+38: // Default text input
+39: export const DefaultInput = () => (
+40:   <InputFieldStory label="Your Name" name="name" />
+41: );
+42: // With error message
+43: export const WithError = () => (
+44:   <InputFieldStory
+45:     label="Username"
+46:     name="username"
+47:     error="Username is already taken"
+48:   />
+49: );
+50: // Textarea input
+51: export const TextareaInput = () => (
+52:   <InputFieldStory label="Your Message" name="message" type="textarea" />
+53: );
 ````
 
 ## File: src/stories/components/UI/SkipLink.stories.tsx
@@ -15728,6 +15703,88 @@ tsconfig.json
 71: 1. Create mock files in `src/__mocks__/` directory
 72: 2. Use proper TypeScript typing in your mocks
 73: 3. Prefer using existing types from the project where possible
+````
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@4.1.0
+ 4:   codecov: codecov/codecov@5.4.3
+ 5:   node: circleci/node@7.1.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.11.1
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.11.1-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run: 
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload      
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -16236,63 +16293,6 @@ tsconfig.json
 210: );
 ````
 
-## File: src/stories/components/UI/InputField.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import InputField from "@/components/UI/InputField.component";
- 4: import { useForm } from "react-hook-form";
- 5: import "@/app/globals.css";
- 6: export default {
- 7:   title: "UI/InputField",
- 8:   component: InputField,
- 9:   parameters: {
-10:     layout: "centered",
-11:   },
-12: } as Meta;
-13: // Create a story wrapper to provide the react-hook-form context
-14: const InputFieldStory = ({
-15:   name = "exampleField",
-16:   label = "Label",
-17:   type = "input" as "input" | "textarea",
-18:   isRequired = false,
-19:   error = undefined as string | undefined,
-20:   inputPattern = undefined as RegExp | undefined,
-21: }) => {
-22:   const { register } = useForm();
-23:   return (
-24:     <div className="p-6 bg-gray-900 min-w-[350px]">
-25:       <InputField
-26:         name={name}
-27:         label={label}
-28:         htmlFor={`field-${name}`}
-29:         type={type}
-30:         isRequired={isRequired}
-31:         register={register}
-32:         error={error}
-33:         inputPattern={inputPattern}
-34:       />
-35:     </div>
-36:   );
-37: };
-38: // Default text input
-39: export const DefaultInput = () => (
-40:   <InputFieldStory label="Your Name" name="name" />
-41: );
-42: // With error message
-43: export const WithError = () => (
-44:   <InputFieldStory
-45:     label="Username"
-46:     name="username"
-47:     error="Username is already taken"
-48:   />
-49: );
-50: // Textarea input
-51: export const TextareaInput = () => (
-52:   <InputFieldStory label="Your Message" name="message" type="textarea" />
-53: );
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -16735,6 +16735,55 @@ tsconfig.json
 129: );
 ````
 
+## File: src/stories/components/UI/PageHeader.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "UI/PageHeader",
+ 7:   component: PageHeader,
+ 8: } as Meta;
+ 9: // Default page header with text
+10: export const Default = () => <PageHeader>Page Title</PageHeader>;
+11: // With longer text
+12: export const LongTitle = () => (
+13:   <PageHeader>A Much Longer Page Title That Might Wrap on Mobile</PageHeader>
+14: );
+15: // With emoji
+16: export const WithEmoji = () => <PageHeader>📝 Contact Page</PageHeader>;
+17: // With HTML content
+18: export const WithHTMLContent = () => (
+19:   <PageHeader>
+20:     <span className="flex items-center justify-center gap-2">
+21:       <span aria-label="projects icon">🚀</span>
+22:       <span>My Projects</span>
+23:       <span className="text-sm bg-green-600 px-2 py-1 rounded-full ml-2">
+24:         New
+25:       </span>
+26:     </span>
+27:   </PageHeader>
+28: );
+29: // Showing different container widths
+30: export const ContainerSizes = () => (
+31:   <div className="space-y-8">
+32:     <div className="w-full max-w-7xl mx-auto border border-dashed border-gray-500 p-2">
+33:       <p className="text-white text-center mb-2">Full width container</p>
+34:       <PageHeader>Full Width</PageHeader>
+35:     </div>
+36:     <div className="w-full max-w-3xl mx-auto border border-dashed border-gray-500 p-2">
+37:       <p className="text-white text-center mb-2">Medium width container</p>
+38:       <PageHeader>Medium Width</PageHeader>
+39:     </div>
+40:     <div className="w-full max-w-sm mx-auto border border-dashed border-gray-500 p-2">
+41:       <p className="text-white text-center mb-2">Small width container</p>
+42:       <PageHeader>Small Width</PageHeader>
+43:     </div>
+44:   </div>
+45: );
+````
+
 ## File: src/components/Index/Section.component.tsx
 ````typescript
  1: "use client";
@@ -16812,55 +16861,6 @@ tsconfig.json
 73:   );
 74: };
 75: export default Section;
-````
-
-## File: src/stories/components/UI/PageHeader.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "UI/PageHeader",
- 7:   component: PageHeader,
- 8: } as Meta;
- 9: // Default page header with text
-10: export const Default = () => <PageHeader>Page Title</PageHeader>;
-11: // With longer text
-12: export const LongTitle = () => (
-13:   <PageHeader>A Much Longer Page Title That Might Wrap on Mobile</PageHeader>
-14: );
-15: // With emoji
-16: export const WithEmoji = () => <PageHeader>📝 Contact Page</PageHeader>;
-17: // With HTML content
-18: export const WithHTMLContent = () => (
-19:   <PageHeader>
-20:     <span className="flex items-center justify-center gap-2">
-21:       <span aria-label="projects icon">🚀</span>
-22:       <span>My Projects</span>
-23:       <span className="text-sm bg-green-600 px-2 py-1 rounded-full ml-2">
-24:         New
-25:       </span>
-26:     </span>
-27:   </PageHeader>
-28: );
-29: // Showing different container widths
-30: export const ContainerSizes = () => (
-31:   <div className="space-y-8">
-32:     <div className="w-full max-w-7xl mx-auto border border-dashed border-gray-500 p-2">
-33:       <p className="text-white text-center mb-2">Full width container</p>
-34:       <PageHeader>Full Width</PageHeader>
-35:     </div>
-36:     <div className="w-full max-w-3xl mx-auto border border-dashed border-gray-500 p-2">
-37:       <p className="text-white text-center mb-2">Medium width container</p>
-38:       <PageHeader>Medium Width</PageHeader>
-39:     </div>
-40:     <div className="w-full max-w-sm mx-auto border border-dashed border-gray-500 p-2">
-41:       <p className="text-white text-center mb-2">Small width container</p>
-42:       <PageHeader>Small Width</PageHeader>
-43:     </div>
-44:   </div>
-45: );
 ````
 
 ## File: package.json
