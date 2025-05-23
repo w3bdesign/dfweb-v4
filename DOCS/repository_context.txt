@@ -2471,6 +2471,42 @@ tsconfig.json
 6: ]
 ````
 
+## File: src/__mocks__/framer-client.ts
+````typescript
+ 1: /**
+ 2:  * Mock for @/lib/framer/client module for use in Ladle stories
+ 3:  */
+ 4: import React from "react";
+ 5: // Create mock components that just render the standard HTML elements
+ 6: export const MotionDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
+ 7:   children,
+ 8:   ...props 
+ 9: }) => {
+10:   return React.createElement("div", { 
+11:     ...props,
+12:     "data-framer-mock": "MotionDiv" 
+13:   }, children);
+14: };
+15: export const MotionLi: React.FC<React.HTMLAttributes<HTMLLIElement>> = ({ 
+16:   children,
+17:   ...props 
+18: }) => {
+19:   return React.createElement("li", { 
+20:     ...props,
+21:     "data-framer-mock": "MotionLi" 
+22:   }, children);
+23: };
+24: export const MotionUl: React.FC<React.HTMLAttributes<HTMLUListElement>> = ({ 
+25:   children,
+26:   ...props 
+27: }) => {
+28:   return React.createElement("ul", { 
+29:     ...props,
+30:     "data-framer-mock": "MotionUl" 
+31:   }, children);
+32: };
+````
+
 ## File: src/__mocks__/hero.json
 ````json
  1: {
@@ -2529,6 +2565,38 @@ tsconfig.json
 35:     "externalLink": false
 36:   }
 37: ]
+````
+
+## File: src/__mocks__/next-navigation.ts
+````typescript
+ 1: /**
+ 2:  * Mock for next/navigation module for use in Ladle stories
+ 3:  */
+ 4: let currentPathname = "/";
+ 5: export const usePathname = () => currentPathname;
+ 6: // Helper function to change the mock pathname for stories
+ 7: export const setMockPathname = (path: string) => {
+ 8:   currentPathname = path;
+ 9:   return currentPathname;
+10: };
+11: export const useRouter = () => ({
+12:   push: (path: string) => {
+13:     currentPathname = path;
+14:   },
+15:   back: () => {},
+16:   forward: () => {},
+17: });
+18: export const useSearchParams = () => {
+19:   return {
+20:     get: (key: string) => null,
+21:     getAll: (key: string) => [],
+22:     has: (key: string) => false,
+23:     forEach: () => {},
+24:     entries: () => [],
+25:     keys: () => [],
+26:     values: () => [],
+27:   };
+28: };
 ````
 
 ## File: src/__mocks__/next-sanity.ts
@@ -14485,72 +14553,83 @@ tsconfig.json
 78:           name: Build Next.js project
 ````
 
-## File: src/__mocks__/framer-client.ts
+## File: src/__mocks__/motion.ts
 ````typescript
- 1: /**
- 2:  * Mock for @/lib/framer/client module for use in Ladle stories
- 3:  */
- 4: import React from "react";
- 5: // Create mock components that just render the standard HTML elements
- 6: export const MotionDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
- 7:   children,
- 8:   ...props 
- 9: }) => {
-10:   return React.createElement("div", { 
-11:     ...props,
-12:     "data-framer-mock": "MotionDiv" 
-13:   }, children);
-14: };
-15: export const MotionLi: React.FC<React.HTMLAttributes<HTMLLIElement>> = ({ 
-16:   children,
-17:   ...props 
-18: }) => {
-19:   return React.createElement("li", { 
-20:     ...props,
-21:     "data-framer-mock": "MotionLi" 
-22:   }, children);
-23: };
-24: export const MotionUl: React.FC<React.HTMLAttributes<HTMLUListElement>> = ({ 
-25:   children,
-26:   ...props 
-27: }) => {
-28:   return React.createElement("ul", { 
-29:     ...props,
-30:     "data-framer-mock": "MotionUl" 
-31:   }, children);
-32: };
-````
-
-## File: src/__mocks__/next-navigation.ts
-````typescript
- 1: /**
- 2:  * Mock for next/navigation module for use in Ladle stories
- 3:  */
- 4: let currentPathname = "/";
- 5: export const usePathname = () => currentPathname;
- 6: // Helper function to change the mock pathname for stories
- 7: export const setMockPathname = (path: string) => {
- 8:   currentPathname = path;
- 9:   return currentPathname;
-10: };
-11: export const useRouter = () => ({
-12:   push: (path: string) => {
-13:     currentPathname = path;
-14:   },
-15:   back: () => {},
-16:   forward: () => {},
-17: });
-18: export const useSearchParams = () => {
-19:   return {
-20:     get: (key: string) => null,
-21:     getAll: (key: string) => [],
-22:     has: (key: string) => false,
-23:     forEach: () => {},
-24:     entries: () => [],
-25:     keys: () => [],
-26:     values: () => [],
-27:   };
-28: };
+ 1: import React, { ReactNode, ComponentType } from "react";
+ 2: /**
+ 3:  * This mocks the 'motion/react' module for Ladle stories 
+ 4:  */
+ 5: // Define types for the motion component props
+ 6: type MotionProps = {
+ 7:   children?: ReactNode;
+ 8:   className?: string;
+ 9:   animate?: string | Record<string, unknown>;
+10:   initial?: string | Record<string, unknown>;
+11:   variants?: Record<string, unknown>;
+12:   whileInView?: string | Record<string, unknown>;
+13:   viewport?: Record<string, unknown>;
+14:   [key: string]: any; // Allow other props to pass through
+15: };
+16: const createMotionComponent = (
+17:   component = "div"
+18: ): ComponentType<MotionProps> => {
+19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
+20:     // Extract the className from variants if present
+21:     const {
+22:       className = "",
+23:       animate,
+24:       variants,
+25:       whileInView,
+26:       viewport,
+27:       initial,
+28:       ...rest
+29:     } = props;
+30:     // Add a class to indicate this is a mocked motion component
+31:     const combinedClassName = `${className} mock-motion-component`;
+32:     return React.createElement(
+33:       component,
+34:       {
+35:         ...rest,
+36:         className: combinedClassName,
+37:         "data-mock-motion": true,
+38:         "data-mock-initial": initial,
+39:         "data-mock-animate": animate,
+40:         "data-mock-while-in-view": whileInView,
+41:       },
+42:       children
+43:     );
+44:   };
+45:   return MotionComponent;
+46: };
+47: // Export the mock components
+48: export const motion = {
+49:   div: createMotionComponent("div"),
+50:   span: createMotionComponent("span"),
+51:   ul: createMotionComponent("ul"),
+52:   li: createMotionComponent("li"),
+53:   p: createMotionComponent("p"),
+54:   section: createMotionComponent("section"),
+55:   nav: createMotionComponent("nav"),
+56:   header: createMotionComponent("header"),
+57:   footer: createMotionComponent("footer"),
+58:   button: createMotionComponent("button"),
+59:   a: createMotionComponent("a"),
+60: };
+61: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
+62:   children,
+63: }) => {
+64:   return React.createElement(React.Fragment, null, children);
+65: };
+66: // Basic animations for use in stories
+67: export const useAnimation = () => ({
+68:   start: () => Promise.resolve(),
+69:   stop: () => Promise.resolve(),
+70:   set: () => {},
+71: });
+72: // Mock variants for animations
+73: export type Variants = Record<string, Record<string, unknown>>;
+74: export const Variants = {} as Record<string, unknown>;
+75: export default { motion, AnimatePresence, useAnimation };
 ````
 
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
@@ -15530,85 +15609,6 @@ tsconfig.json
 ````typescript
 1: import "@/app/globals.css";
 2: import "@/__mocks__/process";
-````
-
-## File: src/__mocks__/motion.ts
-````typescript
- 1: import React, { ReactNode, ComponentType } from "react";
- 2: /**
- 3:  * This mocks the 'motion/react' module for Ladle stories 
- 4:  */
- 5: // Define types for the motion component props
- 6: type MotionProps = {
- 7:   children?: ReactNode;
- 8:   className?: string;
- 9:   animate?: string | Record<string, unknown>;
-10:   initial?: string | Record<string, unknown>;
-11:   variants?: Record<string, unknown>;
-12:   whileInView?: string | Record<string, unknown>;
-13:   viewport?: Record<string, unknown>;
-14:   [key: string]: any; // Allow other props to pass through
-15: };
-16: const createMotionComponent = (
-17:   component = "div"
-18: ): ComponentType<MotionProps> => {
-19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
-20:     // Extract the className from variants if present
-21:     const {
-22:       className = "",
-23:       animate,
-24:       variants,
-25:       whileInView,
-26:       viewport,
-27:       initial,
-28:       ...rest
-29:     } = props;
-30:     // Add a class to indicate this is a mocked motion component
-31:     const combinedClassName = `${className} mock-motion-component`;
-32:     return React.createElement(
-33:       component,
-34:       {
-35:         ...rest,
-36:         className: combinedClassName,
-37:         "data-mock-motion": true,
-38:         "data-mock-initial": initial,
-39:         "data-mock-animate": animate,
-40:         "data-mock-while-in-view": whileInView,
-41:       },
-42:       children
-43:     );
-44:   };
-45:   return MotionComponent;
-46: };
-47: // Export the mock components
-48: export const motion = {
-49:   div: createMotionComponent("div"),
-50:   span: createMotionComponent("span"),
-51:   ul: createMotionComponent("ul"),
-52:   li: createMotionComponent("li"),
-53:   p: createMotionComponent("p"),
-54:   section: createMotionComponent("section"),
-55:   nav: createMotionComponent("nav"),
-56:   header: createMotionComponent("header"),
-57:   footer: createMotionComponent("footer"),
-58:   button: createMotionComponent("button"),
-59:   a: createMotionComponent("a"),
-60: };
-61: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
-62:   children,
-63: }) => {
-64:   return React.createElement(React.Fragment, null, children);
-65: };
-66: // Basic animations for use in stories
-67: export const useAnimation = () => ({
-68:   start: () => Promise.resolve(),
-69:   stop: () => Promise.resolve(),
-70:   set: () => {},
-71: });
-72: // Mock variants for animations
-73: export type Variants = Record<string, Record<string, unknown>>;
-74: export const Variants = {} as Record<string, unknown>;
-75: export default { motion, AnimatePresence, useAnimation };
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -16914,7 +16914,7 @@ tsconfig.json
 47:     "sanity": "^3.89.0",
 48:     "sitemap": "^8.0.0",
 49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.25.1"
+50:     "zod": "^3.25.23"
 51:   },
 52:   "devDependencies": {
 53:     "@jest/expect": "^29.7.0",
