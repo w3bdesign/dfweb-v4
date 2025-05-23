@@ -886,220 +886,10 @@ tsconfig.json
 157: - Document complex logic
 ````
 
-## File: commit/commit_analyzer.py
-````python
-  1: import subprocess
-  2: import os
-  3: import sys
-  4: import json
-  5: import codecs
-  6: import shlex
-  7: from openai import OpenAI
-  8: from pathlib import Path
-  9: from dotenv import load_dotenv
- 10: def read_config_file():
- 11:     """Read configuration from local config file."""
- 12:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 13:     try:
- 14:         if os.path.exists(config_path):
- 15:             with open(config_path, "r") as f:
- 16:                 return json.load(f)
- 17:     except Exception as e:
- 18:         print(f"Error reading config file: {e}")
- 19:     return {}
- 20: def get_api_config():
- 21:     """Get API configuration from environment variables or config file."""
- 22:     load_dotenv()
- 23:     # Try environment variables first
- 24:     api_key = os.getenv("AI_API_KEY")
- 25:     base_url = os.getenv("AI_BASE_URL")
- 26:     # If no API key in env, try config file
- 27:     if not api_key:
- 28:         config = read_config_file()
- 29:         api_key = config.get("api_key")
- 30:         base_url = config.get("base_url", base_url)
- 31:     if not api_key:
- 32:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 33:         raise ValueError(
- 34:             "No API key found. Please either:\n"
- 35:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
- 36:             "2. Set AI_API_KEY environment variable, or\n"
- 37:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
- 38:         )
- 39:     return api_key, base_url
- 40: def get_staged_diff():
- 41:     """Get the diff of staged changes and list of changed files"""
- 42:     try:
- 43:         # Get list of staged files
- 44:         files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
- 45:         staged_files = files_output.splitlines()
- 46:         # Check if any staged files are lock files
- 47:         lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 48:         if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 49:             return None, True  # Indicate lock file presence
- 50:         # Get the actual diff
- 51:         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
- 52:         if not diff:
- 53:             # If no staged changes, get diff of last commit
- 54:             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
- 55:             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
- 56:             staged_files = files_output.splitlines()
- 57:             lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 58:             if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 59:                 return None, True
- 60:         return diff, False  # No lock files found
- 61:     except subprocess.CalledProcessError as e:
- 62:         print(f"Error getting git diff: {e}")
- 63:         return None, False
- 64: def load_gitmojis():
- 65:     """Load gitmojis from gitmojis.json"""
- 66:     try:
- 67:         with open("gitmojis.json", "r", encoding="utf-8") as f:
- 68:             data = json.load(f)
- 69:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
- 70:     except Exception as e:
- 71:         print(f"Error loading gitmojis: {e}")
- 72:         return {}
- 73: def get_emoji_for_type(commit_type, gitmojis):
- 74:     """Map commit type to appropriate emoji"""
- 75:     type_to_emoji = {
- 76:         # Core conventional commit types
- 77:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
- 78:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
- 79:         "docs": gitmojis.get("memo", "📝"),  # Documentation
- 80:         "style": gitmojis.get("art", "🎨"),  # Style/format
- 81:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
- 82:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
- 83:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
- 84:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
- 85:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
- 86:         # Additional commit types with specific emojis
- 87:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
- 88:         "deps": gitmojis.get("package", "📦"),  # Dependencies
- 89:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
- 90:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
- 91:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
- 92:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
- 93:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
- 94:         "license": gitmojis.get("page-facing-up", "📄"),  # License
- 95:         "docker": gitmojis.get("whale", "🐳"),  # Docker
- 96:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
- 97:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
- 98:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
- 99:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
-100:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
-101:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
-102:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
-103:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
-104:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
-105:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
-106:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
-107:     }
-108:     return type_to_emoji.get(commit_type, "")
-109: def generate_commit_message(diff):
-110:     """Generate commit message using OpenAI API"""
-111:     try:
-112:         api_key, base_url = get_api_config()
-113:         client_kwargs = {"api_key": api_key}
-114:         if base_url:
-115:             client_kwargs["base_url"] = base_url
-116:         client = OpenAI(**client_kwargs)
-117:         # Get model from environment variable or use default
-118:         model = os.getenv("MODEL_NAME", "claude-3.7-sonnet@anthropic")
-119:         # Load gitmojis
-120:         # gitmojis = load_gitmojis()
-121:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
-122:         The commit message MUST follow this format:
-123:         <emoji> <type>[optional scope]: <description>
-124:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-125:         [optional footer(s)]
-126:         Where:
-127:         1. Type MUST be one of (with corresponding emoji):
-128:            Core types:
-129:            - ✨ feat: A new feature
-130:            - 🐛 fix: A bug fix
-131:            - 📝 docs: Documentation only changes
-132:            - 🎨 style: Changes that don't affect the meaning of the code
-133:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-134:            - ⚡️ perf: A code change that improves performance
-135:            - ✅ test: Adding missing tests or correcting existing tests
-136:            - 🔧 chore: Changes to build process or auxiliary tools
-137:            - 👷 ci: Changes to CI configuration files and scripts
-138:            Additional specific types:
-139:            - 🔒 security: Security fixes
-140:            - 📦 deps: Dependencies
-141:            - 💥 breaking: Breaking changes
-142:            - 💄 ui: UI/style changes
-143:            - 🌐 i18n: Internationalization
-144:            - ✏️ typo: Fix typos
-145:            - 🎉 init: Initial commit
-146:            - 📄 license: License
-147:            - 🐳 docker: Docker
-148:            - ♿️ access: Accessibility
-149:            - 🔊 logs: Logging
-150:            - 🗃️ db: Database
-151:            - 🔥 cleanup: Remove code/files
-152:            - 🚧 wip: Work in progress
-153:            - 🚚 move: Move/rename files
-154:            - ⏪ revert: Revert changes
-155:            - 🔀 merge: Merge branches
-156:            - 📱 responsive: Responsive design
-157:            - 🚑 hotfix: Critical hotfix
-158:         2. Description MUST:
-159:            - Be 50 characters or less
-160:            - Start with lowercase
-161:            - Use imperative mood ("add" not "adds/added")
-162:            - No period at end
-163:            - Be clear and descriptive
-164:         3. Body (if included) MUST:
-165:            - Be separated from title by blank line
-166:            - Wrap at 72 characters
-167:            - Explain what and why vs. how
-168:            - Use proper punctuation
-169:         Git diff to analyze:
-170:         {diff}
-171:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-172:         response = client.chat.completions.create(
-173:             model=model,
-174:             messages=[{"role": "user", "content": prompt}],
-175:             stream=False,
-176:         )
-177:         # Get the message and clean any potential explanatory text
-178:         message = response.choices[0].message.content.strip()
-179:         if "Based on the diff" in message:
-180:             message = message.split("\n")[-1].strip()
-181:         return message
-182:     except Exception as e:
-183:         print(f"Error generating commit message: {e}")
-184:         return None
-185: def main():
-186:     # Get the diff and check for lock files
-187:     diff, has_lock_files = get_staged_diff()
-188:     if has_lock_files:
-189:         # Use hardcoded message for lock files
-190:         commit_message = "📦 deps: update dependencies"
-191:     elif not diff:
-192:         print("No changes to analyze")
-193:         sys.exit(1)
-194:     else:
-195:         # Generate commit message for non-lock files
-196:         commit_message = generate_commit_message(diff)
-197:     if not commit_message:
-198:         print("Failed to generate commit message")
-199:         sys.exit(1)
-200:     # Print the commit message
-201:     print("\nGenerated commit message:")
-202:     print("------------------------")
-203:     # Use sys.stdout.buffer.write for Unicode support in console
-204:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-205:     print("\n------------------------")
-206:     # If running as a hook, save the message
-207:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-208:         # Use UTF-8 encoding when writing the commit message
-209:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-210:             f.write(commit_message)
-211: if __name__ == "__main__":
-212:     main()
+## File: .ladle/components.tsx
+````typescript
+1: import "@/app/globals.css";
+2: import "@/__mocks__/process";
 ````
 
 ## File: DOCS/EXPLANATION.md
@@ -8181,45 +7971,6 @@ tsconfig.json
 151: export default Tabs;
 ````
 
-## File: src/config/env.ts
-````typescript
- 1: import { cleanEnv, str } from "envalid";
- 2: // Server-side environment variables
- 3: export const serverEnv = cleanEnv(process.env, {
- 4:   AI_API_KEY: str({
- 5:     desc: "AI service API key",
- 6:   }),
- 7:   AI_BASE_URL: str({
- 8:     desc: "AI service base URL",
- 9:   }),
-10:   MODEL_NAME: str({
-11:     desc: "AI model identifier",
-12:     default: "claude-3.7-sonnet@anthropic",
-13:   }),
-14: });
-15: // Client-side environment variables (NEXT_PUBLIC_)
-16: export const publicEnv = cleanEnv(process.env, {
-17:   NEXT_PUBLIC_EMAIL_API_KEY: str({
-18:     desc: 'EmailJS API key starting with "user_"',
-19:     example: "user_abc123",
-20:   }),
-21:   NEXT_PUBLIC_EMAIL_TEMPLATE_KEY: str({
-22:     desc: 'EmailJS template key starting with "template_"',
-23:     example: "template_xyz789",
-24:   }),
-25:   NEXT_PUBLIC_EMAIL_SERVICE_KEY: str({
-26:     desc: 'EmailJS service key starting with "service_"',
-27:     example: "service_def456",
-28:   }),
-29: });
-30: // Type-safe way to access public env vars from the client
-31: export const clientEnv = {
-32:   EMAIL_API_KEY: publicEnv.NEXT_PUBLIC_EMAIL_API_KEY,
-33:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
-34:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
-35: };
-````
-
 ## File: src/e2e/cypress/component/Button.cy.tsx
 ````typescript
  1: /// <reference types="cypress" />
@@ -9787,6 +9538,125 @@ tsconfig.json
 94: );
 ````
 
+## File: src/stories/components/Prosjekter/ProsjektCard.stories.tsx
+````typescript
+  1: import React from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+  4: import type { Project } from "@/types/sanity.types";
+  5: import "@/app/globals.css";
+  6: export default {
+  7:   title: "Prosjekter/ProsjektCard",
+  8:   component: ProsjektCard,
+  9: } as Meta;
+ 10: // Mock project factory with sensible defaults
+ 11: const project = (props = {}): Project => ({
+ 12:   _id: "mock-project",
+ 13:   _type: "project",
+ 14:   _createdAt: "2023-01-01T00:00:00Z",
+ 15:   _updatedAt: "2023-01-01T00:00:00Z",
+ 16:   _rev: "rev1",
+ 17:   name: "Sample Project",
+ 18:   description: "This is a sample project description",
+ 19:   subdescription: "Built with React, TypeScript, and Next.js",
+ 20:   projectimage: {
+ 21:     _type: "image",
+ 22:     asset: {
+ 23:       _ref: "image-1fbc6a91ed51fa9870504faf332f16823953d716-1207x614-png",
+ 24:       _type: "reference",
+ 25:     },
+ 26:   },
+ 27:   urlwww: [
+ 28:     {
+ 29:       _key: "link1",
+ 30:       _type: "link",
+ 31:       url: "https://example.com",
+ 32:     },
+ 33:   ],
+ 34:   urlgithub: [
+ 35:     {
+ 36:       _key: "github1",
+ 37:       _type: "link",
+ 38:       url: "https://github.com/example/repo",
+ 39:     },
+ 40:   ],
+ 41:   ...props,
+ 42: });
+ 43: // Story variants
+ 44: export const Default = () => (
+ 45:   <div className="max-w-lg mx-auto p-4">
+ 46:     <ProsjektCard {...project()} />
+ 47:   </div>
+ 48: );
+ 49: export const Featured = () => (
+ 50:   <div className="max-w-lg mx-auto p-4">
+ 51:     <ProsjektCard
+ 52:       {...project({
+ 53:         featured: true,
+ 54:         name: "Featured Project",
+ 55:         description: "Project with instant animation",
+ 56:       })}
+ 57:     />
+ 58:   </div>
+ 59: );
+ 60: export const WebsiteOnly = () => (
+ 61:   <div className="max-w-lg mx-auto p-4">
+ 62:     <ProsjektCard
+ 63:       {...project({
+ 64:         urlgithub: undefined,
+ 65:         name: "Website Only",
+ 66:       })}
+ 67:     />
+ 68:   </div>
+ 69: );
+ 70: export const GitHubOnly = () => (
+ 71:   <div className="max-w-lg mx-auto p-4">
+ 72:     <ProsjektCard
+ 73:       {...project({
+ 74:         urlwww: undefined,
+ 75:         name: "GitHub Only",
+ 76:       })}
+ 77:     />
+ 78:   </div>
+ 79: );
+ 80: export const NoLinks = () => (
+ 81:   <div className="max-w-lg mx-auto p-4">
+ 82:     <ProsjektCard
+ 83:       {...project({
+ 84:         urlwww: undefined,
+ 85:         urlgithub: undefined,
+ 86:         name: "No Links Project",
+ 87:       })}
+ 88:     />
+ 89:   </div>
+ 90: );
+ 91: export const Grid = () => (
+ 92:   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+ 93:     <div className="max-w-lg mx-auto">
+ 94:       <ProsjektCard {...project()} />
+ 95:     </div>
+ 96:     <div className="max-w-lg mx-auto">
+ 97:       <ProsjektCard
+ 98:         {...project({
+ 99:           featured: true,
+100:           name: "Featured Project",
+101:           description: "Mobile app for iOS and Android",
+102:         })}
+103:       />
+104:     </div>
+105:     <div className="max-w-lg mx-auto">
+106:       <ProsjektCard
+107:         {...project({
+108:           name: "Backend API",
+109:           description: "Node.js & MongoDB service",
+110:           urlwww: undefined,
+111:         })}
+112:       />
+113:     </div>
+114:   </div>
+115: );
+````
+
 ## File: src/stories/components/UI/Button.stories.tsx
 ````typescript
  1: import React from "react";
@@ -9856,6 +9726,150 @@ tsconfig.json
 65:     </span>
 66:   </Button>
 67: );
+````
+
+## File: src/stories/components/UI/GenericForm.stories.tsx
+````typescript
+  1: import React from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import { z } from "zod";
+  4: import GenericForm from "@/components/UI/GenericForm.component";
+  5: export default {
+  6:   title: "UI/GenericForm",
+  7:   component: GenericForm,
+  8: } as Meta;
+  9: // Example schemas
+ 10: const contactSchema = z.object({
+ 11:   name: z.string().min(2, "Name must be at least 2 characters"),
+ 12:   email: z.string().email("Invalid email address"),
+ 13:   message: z.string().min(10, "Message must be at least 10 characters"),
+ 14: });
+ 15: const subscribeSchema = z.object({
+ 16:   email: z.string().email("Invalid email address"),
+ 17:   preferences: z.string().min(1, "Please select your preferences"),
+ 18: });
+ 19: const feedbackSchema = z.object({
+ 20:   title: z.string().min(3, "Title must be at least 3 characters"),
+ 21:   rating: z.string().regex(/^[1-5]$/, "Rating must be between 1 and 5"),
+ 22:   feedback: z.string().min(20, "Feedback must be at least 20 characters"),
+ 23: });
+ 24: type FormData =
+ 25:   | z.infer<typeof contactSchema>
+ 26:   | z.infer<typeof subscribeSchema>
+ 27:   | z.infer<typeof feedbackSchema>
+ 28:   | { email: string };
+ 29: // Example async submit handlers
+ 30: const mockSubmit = async (data: FormData) => {
+ 31:   await new Promise((resolve) => setTimeout(resolve, 1000));
+ 32:   console.log("Form submitted:", data);
+ 33: };
+ 34: // Contact Form Story
+ 35: export const ContactForm = () => (
+ 36:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
+ 37:     <h2 className="text-2xl text-white mb-6">Contact Us</h2>
+ 38:     <GenericForm
+ 39:       formSchema={contactSchema}
+ 40:       onSubmit={mockSubmit}
+ 41:       submitButtonText="Send Message"
+ 42:       fields={[
+ 43:         {
+ 44:           name: "name",
+ 45:           label: "Your Name",
+ 46:           type: "input",
+ 47:         },
+ 48:         {
+ 49:           name: "email",
+ 50:           label: "Email Address",
+ 51:           type: "input",
+ 52:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+ 53:           title: "Please enter a valid email address",
+ 54:         },
+ 55:         {
+ 56:           name: "message",
+ 57:           label: "Your Message",
+ 58:           type: "textarea",
+ 59:         },
+ 60:       ]}
+ 61:     />
+ 62:   </div>
+ 63: );
+ 64: // Subscribe Form Story
+ 65: export const SubscribeForm = () => (
+ 66:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
+ 67:     <h2 className="text-2xl text-white mb-6 text-center">Subscribe to Newsletter</h2>
+ 68:     <GenericForm
+ 69:       formSchema={subscribeSchema}
+ 70:       onSubmit={mockSubmit}
+ 71:       submitButtonText="Subscribe"
+ 72:       fields={[
+ 73:         {
+ 74:           name: "email",
+ 75:           label: "Email Address",
+ 76:           type: "input",
+ 77:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+ 78:           title: "Please enter a valid email address",
+ 79:         },
+ 80:         {
+ 81:           name: "preferences",
+ 82:           label: "Newsletter Preferences",
+ 83:           type: "textarea",
+ 84:         },
+ 85:       ]}
+ 86:     />
+ 87:   </div>
+ 88: );
+ 89: // Feedback Form Story
+ 90: export const FeedbackForm = () => (
+ 91:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
+ 92:     <h2 className="text-2xl text-white mb-6 text-center">Provide Feedback</h2>
+ 93:     <GenericForm
+ 94:       formSchema={feedbackSchema}
+ 95:       onSubmit={mockSubmit}
+ 96:       submitButtonText="Submit Feedback"
+ 97:       fields={[
+ 98:         {
+ 99:           name: "title",
+100:           label: "Feedback Title",
+101:           type: "input",
+102:         },
+103:         {
+104:           name: "rating",
+105:           label: "Rating (1-5)",
+106:           type: "input",
+107:           inputPattern: /^[1-5]$/,
+108:           title: "Please enter a number between 1 and 5",
+109:         },
+110:         {
+111:           name: "feedback",
+112:           label: "Detailed Feedback",
+113:           type: "textarea",
+114:         },
+115:       ]}
+116:     />
+117:   </div>
+118: );
+119: // Simple Form Story
+120: export const SimpleForm = () => (
+121:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
+122:     <h2 className="text-2xl text-white mb-6 text-center">Quick Contact</h2>
+123:     <GenericForm
+124:       formSchema={z.object({
+125:         email: z.string().email("Invalid email address"),
+126:       })}
+127:       onSubmit={mockSubmit}
+128:       submitButtonText="Contact"
+129:       fields={[
+130:         {
+131:           name: "email",
+132:           label: "Email Address",
+133:           type: "input",
+134:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+135:           title: "Please enter a valid email address",
+136:         },
+137:       ]}
+138:     />
+139:   </div>
+140: );
 ````
 
 ## File: src/stories/components/UI/Tabs.stories.tsx
@@ -14553,6 +14567,222 @@ tsconfig.json
 78:           name: Build Next.js project
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: import subprocess
+  2: import os
+  3: import sys
+  4: import json
+  5: import codecs
+  6: import shlex
+  7: from openai import OpenAI
+  8: from pathlib import Path
+  9: from dotenv import load_dotenv
+ 10: def read_config_file():
+ 11:     """Read configuration from local config file."""
+ 12:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 13:     try:
+ 14:         if os.path.exists(config_path):
+ 15:             with open(config_path, "r") as f:
+ 16:                 return json.load(f)
+ 17:     except Exception as e:
+ 18:         print(f"Error reading config file: {e}")
+ 19:     return {}
+ 20: def get_api_config():
+ 21:     """Get API configuration from environment variables or config file."""
+ 22:     load_dotenv()
+ 23:     # Try environment variables first
+ 24:     api_key = os.getenv("AI_API_KEY")
+ 25:     base_url = os.getenv("AI_BASE_URL")
+ 26:     # If no API key in env, try config file
+ 27:     if not api_key:
+ 28:         config = read_config_file()
+ 29:         api_key = config.get("api_key")
+ 30:         base_url = config.get("base_url", base_url)
+ 31:     if not api_key:
+ 32:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 33:         raise ValueError(
+ 34:             "No API key found. Please either:\n"
+ 35:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
+ 36:             "2. Set AI_API_KEY environment variable, or\n"
+ 37:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
+ 38:         )
+ 39:     return api_key, base_url
+ 40: def get_staged_diff():
+ 41:     """Get the diff of staged changes and list of changed files"""
+ 42:     try:
+ 43:         # Get list of staged files
+ 44:         files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
+ 45:         staged_files = files_output.splitlines()
+ 46:         # Check if any staged files are lock files
+ 47:         lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+ 48:         if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+ 49:             return None, True  # Indicate lock file presence
+ 50:         # Get the actual diff
+ 51:         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
+ 52:         if not diff:
+ 53:             # If no staged changes, get diff of last commit
+ 54:             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
+ 55:             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
+ 56:             staged_files = files_output.splitlines()
+ 57:             lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+ 58:             if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+ 59:                 return None, True
+ 60:         return diff, False  # No lock files found
+ 61:     except subprocess.CalledProcessError as e:
+ 62:         print(f"Error getting git diff: {e}")
+ 63:         return None, False
+ 64: def load_gitmojis():
+ 65:     """Load gitmojis from gitmojis.json"""
+ 66:     try:
+ 67:         with open("gitmojis.json", "r", encoding="utf-8") as f:
+ 68:             data = json.load(f)
+ 69:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
+ 70:     except Exception as e:
+ 71:         print(f"Error loading gitmojis: {e}")
+ 72:         return {}
+ 73: def get_emoji_for_type(commit_type, gitmojis):
+ 74:     """Map commit type to appropriate emoji"""
+ 75:     type_to_emoji = {
+ 76:         # Core conventional commit types
+ 77:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
+ 78:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
+ 79:         "docs": gitmojis.get("memo", "📝"),  # Documentation
+ 80:         "style": gitmojis.get("art", "🎨"),  # Style/format
+ 81:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
+ 82:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
+ 83:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
+ 84:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
+ 85:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
+ 86:         # Additional commit types with specific emojis
+ 87:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
+ 88:         "deps": gitmojis.get("package", "📦"),  # Dependencies
+ 89:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
+ 90:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
+ 91:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
+ 92:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
+ 93:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
+ 94:         "license": gitmojis.get("page-facing-up", "📄"),  # License
+ 95:         "docker": gitmojis.get("whale", "🐳"),  # Docker
+ 96:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
+ 97:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
+ 98:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
+ 99:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
+100:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
+101:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
+102:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
+103:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
+104:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
+105:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
+106:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
+107:     }
+108:     return type_to_emoji.get(commit_type, "")
+109: def generate_commit_message(diff):
+110:     """Generate commit message using OpenAI API"""
+111:     try:
+112:         api_key, base_url = get_api_config()
+113:         client_kwargs = {"api_key": api_key}
+114:         if base_url:
+115:             client_kwargs["base_url"] = base_url
+116:         client = OpenAI(**client_kwargs)
+117:         # Get model from environment variable or use default
+118:         model = os.getenv("MODEL_NAME", "claude-4-sonnet@anthropic")
+119:         # Load gitmojis
+120:         # gitmojis = load_gitmojis()
+121:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+122:         The commit message MUST follow this format:
+123:         <emoji> <type>[optional scope]: <description>
+124:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+125:         [optional footer(s)]
+126:         Where:
+127:         1. Type MUST be one of (with corresponding emoji):
+128:            Core types:
+129:            - ✨ feat: A new feature
+130:            - 🐛 fix: A bug fix
+131:            - 📝 docs: Documentation only changes
+132:            - 🎨 style: Changes that don't affect the meaning of the code
+133:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+134:            - ⚡️ perf: A code change that improves performance
+135:            - ✅ test: Adding missing tests or correcting existing tests
+136:            - 🔧 chore: Changes to build process or auxiliary tools
+137:            - 👷 ci: Changes to CI configuration files and scripts
+138:            Additional specific types:
+139:            - 🔒 security: Security fixes
+140:            - 📦 deps: Dependencies
+141:            - 💥 breaking: Breaking changes
+142:            - 💄 ui: UI/style changes
+143:            - 🌐 i18n: Internationalization
+144:            - ✏️ typo: Fix typos
+145:            - 🎉 init: Initial commit
+146:            - 📄 license: License
+147:            - 🐳 docker: Docker
+148:            - ♿️ access: Accessibility
+149:            - 🔊 logs: Logging
+150:            - 🗃️ db: Database
+151:            - 🔥 cleanup: Remove code/files
+152:            - 🚧 wip: Work in progress
+153:            - 🚚 move: Move/rename files
+154:            - ⏪ revert: Revert changes
+155:            - 🔀 merge: Merge branches
+156:            - 📱 responsive: Responsive design
+157:            - 🚑 hotfix: Critical hotfix
+158:         2. Description MUST:
+159:            - Be 50 characters or less
+160:            - Start with lowercase
+161:            - Use imperative mood ("add" not "adds/added")
+162:            - No period at end
+163:            - Be clear and descriptive
+164:         3. Body (if included) MUST:
+165:            - Be separated from title by blank line
+166:            - Wrap at 72 characters
+167:            - Explain what and why vs. how
+168:            - Use proper punctuation
+169:         Git diff to analyze:
+170:         {diff}
+171:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+172:         response = client.chat.completions.create(
+173:             model=model,
+174:             messages=[{"role": "user", "content": prompt}],
+175:             stream=False,
+176:         )
+177:         # Get the message and clean any potential explanatory text
+178:         message = response.choices[0].message.content.strip()
+179:         if "Based on the diff" in message:
+180:             message = message.split("\n")[-1].strip()
+181:         return message
+182:     except Exception as e:
+183:         print(f"Error generating commit message: {e}")
+184:         return None
+185: def main():
+186:     # Get the diff and check for lock files
+187:     diff, has_lock_files = get_staged_diff()
+188:     if has_lock_files:
+189:         # Use hardcoded message for lock files
+190:         commit_message = "📦 deps: update dependencies"
+191:     elif not diff:
+192:         print("No changes to analyze")
+193:         sys.exit(1)
+194:     else:
+195:         # Generate commit message for non-lock files
+196:         commit_message = generate_commit_message(diff)
+197:     if not commit_message:
+198:         print("Failed to generate commit message")
+199:         sys.exit(1)
+200:     # Print the commit message
+201:     print("\nGenerated commit message:")
+202:     print("------------------------")
+203:     # Use sys.stdout.buffer.write for Unicode support in console
+204:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+205:     print("\n------------------------")
+206:     # If running as a hook, save the message
+207:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+208:         # Use UTF-8 encoding when writing the commit message
+209:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+210:             f.write(commit_message)
+211: if __name__ == "__main__":
+212:     main()
+````
+
 ## File: src/__mocks__/motion.ts
 ````typescript
  1: import React, { ReactNode, ComponentType } from "react";
@@ -14957,6 +15187,45 @@ tsconfig.json
 14: export default QualificationsTabContent;
 ````
 
+## File: src/config/env.ts
+````typescript
+ 1: import { cleanEnv, str } from "envalid";
+ 2: // Server-side environment variables
+ 3: export const serverEnv = cleanEnv(process.env, {
+ 4:   AI_API_KEY: str({
+ 5:     desc: "AI service API key",
+ 6:   }),
+ 7:   AI_BASE_URL: str({
+ 8:     desc: "AI service base URL",
+ 9:   }),
+10:   MODEL_NAME: str({
+11:     desc: "AI model identifier",
+12:     default: "claude-4-sonnet@anthropic",
+13:   }),
+14: });
+15: // Client-side environment variables (NEXT_PUBLIC_)
+16: export const publicEnv = cleanEnv(process.env, {
+17:   NEXT_PUBLIC_EMAIL_API_KEY: str({
+18:     desc: 'EmailJS API key starting with "user_"',
+19:     example: "user_abc123",
+20:   }),
+21:   NEXT_PUBLIC_EMAIL_TEMPLATE_KEY: str({
+22:     desc: 'EmailJS template key starting with "template_"',
+23:     example: "template_xyz789",
+24:   }),
+25:   NEXT_PUBLIC_EMAIL_SERVICE_KEY: str({
+26:     desc: 'EmailJS service key starting with "service_"',
+27:     example: "service_def456",
+28:   }),
+29: });
+30: // Type-safe way to access public env vars from the client
+31: export const clientEnv = {
+32:   EMAIL_API_KEY: publicEnv.NEXT_PUBLIC_EMAIL_API_KEY,
+33:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
+34:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
+35: };
+````
+
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -15264,150 +15533,6 @@ tsconfig.json
 42: export default KontaktWithMocks;
 ````
 
-## File: src/stories/components/UI/GenericForm.stories.tsx
-````typescript
-  1: import React from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import { z } from "zod";
-  4: import GenericForm from "@/components/UI/GenericForm.component";
-  5: export default {
-  6:   title: "UI/GenericForm",
-  7:   component: GenericForm,
-  8: } as Meta;
-  9: // Example schemas
- 10: const contactSchema = z.object({
- 11:   name: z.string().min(2, "Name must be at least 2 characters"),
- 12:   email: z.string().email("Invalid email address"),
- 13:   message: z.string().min(10, "Message must be at least 10 characters"),
- 14: });
- 15: const subscribeSchema = z.object({
- 16:   email: z.string().email("Invalid email address"),
- 17:   preferences: z.string().min(1, "Please select your preferences"),
- 18: });
- 19: const feedbackSchema = z.object({
- 20:   title: z.string().min(3, "Title must be at least 3 characters"),
- 21:   rating: z.string().regex(/^[1-5]$/, "Rating must be between 1 and 5"),
- 22:   feedback: z.string().min(20, "Feedback must be at least 20 characters"),
- 23: });
- 24: type FormData =
- 25:   | z.infer<typeof contactSchema>
- 26:   | z.infer<typeof subscribeSchema>
- 27:   | z.infer<typeof feedbackSchema>
- 28:   | { email: string };
- 29: // Example async submit handlers
- 30: const mockSubmit = async (data: FormData) => {
- 31:   await new Promise((resolve) => setTimeout(resolve, 1000));
- 32:   console.log("Form submitted:", data);
- 33: };
- 34: // Contact Form Story
- 35: export const ContactForm = () => (
- 36:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 37:     <h2 className="text-2xl text-white mb-6">Contact Us</h2>
- 38:     <GenericForm
- 39:       formSchema={contactSchema}
- 40:       onSubmit={mockSubmit}
- 41:       submitButtonText="Send Message"
- 42:       fields={[
- 43:         {
- 44:           name: "name",
- 45:           label: "Your Name",
- 46:           type: "input",
- 47:         },
- 48:         {
- 49:           name: "email",
- 50:           label: "Email Address",
- 51:           type: "input",
- 52:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
- 53:           title: "Please enter a valid email address",
- 54:         },
- 55:         {
- 56:           name: "message",
- 57:           label: "Your Message",
- 58:           type: "textarea",
- 59:         },
- 60:       ]}
- 61:     />
- 62:   </div>
- 63: );
- 64: // Subscribe Form Story
- 65: export const SubscribeForm = () => (
- 66:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 67:     <h2 className="text-2xl text-white mb-6 text-center">Subscribe to Newsletter</h2>
- 68:     <GenericForm
- 69:       formSchema={subscribeSchema}
- 70:       onSubmit={mockSubmit}
- 71:       submitButtonText="Subscribe"
- 72:       fields={[
- 73:         {
- 74:           name: "email",
- 75:           label: "Email Address",
- 76:           type: "input",
- 77:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
- 78:           title: "Please enter a valid email address",
- 79:         },
- 80:         {
- 81:           name: "preferences",
- 82:           label: "Newsletter Preferences",
- 83:           type: "textarea",
- 84:         },
- 85:       ]}
- 86:     />
- 87:   </div>
- 88: );
- 89: // Feedback Form Story
- 90: export const FeedbackForm = () => (
- 91:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 92:     <h2 className="text-2xl text-white mb-6 text-center">Provide Feedback</h2>
- 93:     <GenericForm
- 94:       formSchema={feedbackSchema}
- 95:       onSubmit={mockSubmit}
- 96:       submitButtonText="Submit Feedback"
- 97:       fields={[
- 98:         {
- 99:           name: "title",
-100:           label: "Feedback Title",
-101:           type: "input",
-102:         },
-103:         {
-104:           name: "rating",
-105:           label: "Rating (1-5)",
-106:           type: "input",
-107:           inputPattern: /^[1-5]$/,
-108:           title: "Please enter a number between 1 and 5",
-109:         },
-110:         {
-111:           name: "feedback",
-112:           label: "Detailed Feedback",
-113:           type: "textarea",
-114:         },
-115:       ]}
-116:     />
-117:   </div>
-118: );
-119: // Simple Form Story
-120: export const SimpleForm = () => (
-121:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
-122:     <h2 className="text-2xl text-white mb-6 text-center">Quick Contact</h2>
-123:     <GenericForm
-124:       formSchema={z.object({
-125:         email: z.string().email("Invalid email address"),
-126:       })}
-127:       onSubmit={mockSubmit}
-128:       submitButtonText="Contact"
-129:       fields={[
-130:         {
-131:           name: "email",
-132:           label: "Email Address",
-133:           type: "input",
-134:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-135:           title: "Please enter a valid email address",
-136:         },
-137:       ]}
-138:     />
-139:   </div>
-140: );
-````
-
 ## File: src/stories/components/UI/Pill.stories.tsx
 ````typescript
  1: import React from "react";
@@ -15603,12 +15728,6 @@ tsconfig.json
 71: 1. Create mock files in `src/__mocks__/` directory
 72: 2. Use proper TypeScript typing in your mocks
 73: 3. Prefer using existing types from the project where possible
-````
-
-## File: .ladle/components.tsx
-````typescript
-1: import "@/app/globals.css";
-2: import "@/__mocks__/process";
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -16115,125 +16234,6 @@ tsconfig.json
 208:     </div>
 209:   </div>
 210: );
-````
-
-## File: src/stories/components/Prosjekter/ProsjektCard.stories.tsx
-````typescript
-  1: import React from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
-  4: import type { Project } from "@/types/sanity.types";
-  5: import "@/app/globals.css";
-  6: export default {
-  7:   title: "Prosjekter/ProsjektCard",
-  8:   component: ProsjektCard,
-  9: } as Meta;
- 10: // Mock project factory with sensible defaults
- 11: const project = (props = {}): Project => ({
- 12:   _id: "mock-project",
- 13:   _type: "project",
- 14:   _createdAt: "2023-01-01T00:00:00Z",
- 15:   _updatedAt: "2023-01-01T00:00:00Z",
- 16:   _rev: "rev1",
- 17:   name: "Sample Project",
- 18:   description: "This is a sample project description",
- 19:   subdescription: "Built with React, TypeScript, and Next.js",
- 20:   projectimage: {
- 21:     _type: "image",
- 22:     asset: {
- 23:       _ref: "image-1fbc6a91ed51fa9870504faf332f16823953d716-1207x614-png",
- 24:       _type: "reference",
- 25:     },
- 26:   },
- 27:   urlwww: [
- 28:     {
- 29:       _key: "link1",
- 30:       _type: "link",
- 31:       url: "https://example.com",
- 32:     },
- 33:   ],
- 34:   urlgithub: [
- 35:     {
- 36:       _key: "github1",
- 37:       _type: "link",
- 38:       url: "https://github.com/example/repo",
- 39:     },
- 40:   ],
- 41:   ...props,
- 42: });
- 43: // Story variants
- 44: export const Default = () => (
- 45:   <div className="max-w-lg mx-auto p-4">
- 46:     <ProsjektCard {...project()} />
- 47:   </div>
- 48: );
- 49: export const Featured = () => (
- 50:   <div className="max-w-lg mx-auto p-4">
- 51:     <ProsjektCard
- 52:       {...project({
- 53:         featured: true,
- 54:         name: "Featured Project",
- 55:         description: "Project with instant animation",
- 56:       })}
- 57:     />
- 58:   </div>
- 59: );
- 60: export const WebsiteOnly = () => (
- 61:   <div className="max-w-lg mx-auto p-4">
- 62:     <ProsjektCard
- 63:       {...project({
- 64:         urlgithub: undefined,
- 65:         name: "Website Only",
- 66:       })}
- 67:     />
- 68:   </div>
- 69: );
- 70: export const GitHubOnly = () => (
- 71:   <div className="max-w-lg mx-auto p-4">
- 72:     <ProsjektCard
- 73:       {...project({
- 74:         urlwww: undefined,
- 75:         name: "GitHub Only",
- 76:       })}
- 77:     />
- 78:   </div>
- 79: );
- 80: export const NoLinks = () => (
- 81:   <div className="max-w-lg mx-auto p-4">
- 82:     <ProsjektCard
- 83:       {...project({
- 84:         urlwww: undefined,
- 85:         urlgithub: undefined,
- 86:         name: "No Links Project",
- 87:       })}
- 88:     />
- 89:   </div>
- 90: );
- 91: export const Grid = () => (
- 92:   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
- 93:     <div className="max-w-lg mx-auto">
- 94:       <ProsjektCard {...project()} />
- 95:     </div>
- 96:     <div className="max-w-lg mx-auto">
- 97:       <ProsjektCard
- 98:         {...project({
- 99:           featured: true,
-100:           name: "Featured Project",
-101:           description: "Mobile app for iOS and Android",
-102:         })}
-103:       />
-104:     </div>
-105:     <div className="max-w-lg mx-auto">
-106:       <ProsjektCard
-107:         {...project({
-108:           name: "Backend API",
-109:           description: "Node.js & MongoDB service",
-110:           urlwww: undefined,
-111:         })}
-112:       />
-113:     </div>
-114:   </div>
-115: );
 ````
 
 ## File: src/stories/components/UI/InputField.stories.tsx
