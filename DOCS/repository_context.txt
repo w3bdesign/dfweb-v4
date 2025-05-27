@@ -2357,6 +2357,85 @@ tsconfig.json
 37: ]
 ````
 
+## File: src/__mocks__/motion.ts
+````typescript
+ 1: import React, { ReactNode, ComponentType } from "react";
+ 2: /**
+ 3:  * This mocks the 'motion/react' module for Ladle stories 
+ 4:  */
+ 5: // Define types for the motion component props
+ 6: type MotionProps = {
+ 7:   children?: ReactNode;
+ 8:   className?: string;
+ 9:   animate?: string | Record<string, unknown>;
+10:   initial?: string | Record<string, unknown>;
+11:   variants?: Record<string, unknown>;
+12:   whileInView?: string | Record<string, unknown>;
+13:   viewport?: Record<string, unknown>;
+14:   [key: string]: any; // Allow other props to pass through
+15: };
+16: const createMotionComponent = (
+17:   component = "div"
+18: ): ComponentType<MotionProps> => {
+19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
+20:     // Extract the className from variants if present
+21:     const {
+22:       className = "",
+23:       animate,
+24:       variants,
+25:       whileInView,
+26:       viewport,
+27:       initial,
+28:       ...rest
+29:     } = props;
+30:     // Add a class to indicate this is a mocked motion component
+31:     const combinedClassName = `${className} mock-motion-component`;
+32:     return React.createElement(
+33:       component,
+34:       {
+35:         ...rest,
+36:         className: combinedClassName,
+37:         "data-mock-motion": true,
+38:         "data-mock-initial": initial,
+39:         "data-mock-animate": animate,
+40:         "data-mock-while-in-view": whileInView,
+41:       },
+42:       children
+43:     );
+44:   };
+45:   return MotionComponent;
+46: };
+47: // Export the mock components
+48: export const motion = {
+49:   div: createMotionComponent("div"),
+50:   span: createMotionComponent("span"),
+51:   ul: createMotionComponent("ul"),
+52:   li: createMotionComponent("li"),
+53:   p: createMotionComponent("p"),
+54:   section: createMotionComponent("section"),
+55:   nav: createMotionComponent("nav"),
+56:   header: createMotionComponent("header"),
+57:   footer: createMotionComponent("footer"),
+58:   button: createMotionComponent("button"),
+59:   a: createMotionComponent("a"),
+60: };
+61: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
+62:   children,
+63: }) => {
+64:   return React.createElement(React.Fragment, null, children);
+65: };
+66: // Basic animations for use in stories
+67: export const useAnimation = () => ({
+68:   start: () => Promise.resolve(),
+69:   stop: () => Promise.resolve(),
+70:   set: () => {},
+71: });
+72: // Mock variants for animations
+73: export type Variants = Record<string, Record<string, unknown>>;
+74: export const Variants = {} as Record<string, unknown>;
+75: export default { motion, AnimatePresence, useAnimation };
+````
+
 ## File: src/__mocks__/next-navigation.ts
 ````typescript
  1: /**
@@ -14956,85 +15035,6 @@ tsconfig.json
 212:     main()
 ````
 
-## File: src/__mocks__/motion.ts
-````typescript
- 1: import React, { ReactNode, ComponentType } from "react";
- 2: /**
- 3:  * This mocks the 'motion/react' module for Ladle stories 
- 4:  */
- 5: // Define types for the motion component props
- 6: type MotionProps = {
- 7:   children?: ReactNode;
- 8:   className?: string;
- 9:   animate?: string | Record<string, unknown>;
-10:   initial?: string | Record<string, unknown>;
-11:   variants?: Record<string, unknown>;
-12:   whileInView?: string | Record<string, unknown>;
-13:   viewport?: Record<string, unknown>;
-14:   [key: string]: any; // Allow other props to pass through
-15: };
-16: const createMotionComponent = (
-17:   component = "div"
-18: ): ComponentType<MotionProps> => {
-19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
-20:     // Extract the className from variants if present
-21:     const {
-22:       className = "",
-23:       animate,
-24:       variants,
-25:       whileInView,
-26:       viewport,
-27:       initial,
-28:       ...rest
-29:     } = props;
-30:     // Add a class to indicate this is a mocked motion component
-31:     const combinedClassName = `${className} mock-motion-component`;
-32:     return React.createElement(
-33:       component,
-34:       {
-35:         ...rest,
-36:         className: combinedClassName,
-37:         "data-mock-motion": true,
-38:         "data-mock-initial": initial,
-39:         "data-mock-animate": animate,
-40:         "data-mock-while-in-view": whileInView,
-41:       },
-42:       children
-43:     );
-44:   };
-45:   return MotionComponent;
-46: };
-47: // Export the mock components
-48: export const motion = {
-49:   div: createMotionComponent("div"),
-50:   span: createMotionComponent("span"),
-51:   ul: createMotionComponent("ul"),
-52:   li: createMotionComponent("li"),
-53:   p: createMotionComponent("p"),
-54:   section: createMotionComponent("section"),
-55:   nav: createMotionComponent("nav"),
-56:   header: createMotionComponent("header"),
-57:   footer: createMotionComponent("footer"),
-58:   button: createMotionComponent("button"),
-59:   a: createMotionComponent("a"),
-60: };
-61: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
-62:   children,
-63: }) => {
-64:   return React.createElement(React.Fragment, null, children);
-65: };
-66: // Basic animations for use in stories
-67: export const useAnimation = () => ({
-68:   start: () => Promise.resolve(),
-69:   stop: () => Promise.resolve(),
-70:   set: () => {},
-71: });
-72: // Mock variants for animations
-73: export type Variants = Record<string, Record<string, unknown>>;
-74: export const Variants = {} as Record<string, unknown>;
-75: export default { motion, AnimatePresence, useAnimation };
-````
-
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
  1: import React from "react";
@@ -15397,6 +15397,101 @@ tsconfig.json
 33:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
 34:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
 35: };
+````
+
+## File: src/stories/components/Animations/PageTransition.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import PageTransition from "@/components/Animations/PageTransition.component";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "Animations/PageTransition",
+ 7:   component: PageTransition,
+ 8: } as Meta;
+ 9: // Default page transition with simple content
+10: export const Default = () => (
+11:   <PageTransition>
+12:     <div className="p-6 bg-slate-800 rounded-lg">
+13:       <h2 className="text-white text-xl mb-4">Page Content</h2>
+14:       <p className="text-gray-300">
+15:         This content will have a fade in/out transition when the component
+16:         mounts or unmounts.
+17:       </p>
+18:     </div>
+19:   </PageTransition>
+20: );
+21: // Page transition with custom CSS class
+22: export const WithCustomClass = () => (
+23:   <PageTransition cssClass="max-w-2xl mx-auto border-2 border-green-500 rounded-xl overflow-hidden">
+24:     <div className="p-6 bg-slate-800">
+25:       <h2 className="text-white text-xl mb-4">Styled Container</h2>
+26:       <p className="text-gray-300">
+27:         This content has a custom CSS class applied to the transition wrapper.
+28:       </p>
+29:     </div>
+30:   </PageTransition>
+31: );
+32: // Multiple transitions side by side
+33: export const MultipleTransitions = () => (
+34:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+35:     <PageTransition>
+36:       <div className="p-6 bg-blue-900 rounded-lg h-full">
+37:         <h2 className="text-white text-xl mb-4">First Panel</h2>
+38:         <p className="text-gray-300">This is the first transition panel.</p>
+39:       </div>
+40:     </PageTransition>
+41:     <PageTransition>
+42:       <div className="p-6 bg-purple-900 rounded-lg h-full">
+43:         <h2 className="text-white text-xl mb-4">Second Panel</h2>
+44:         <p className="text-gray-300">This is the second transition panel.</p>
+45:       </div>
+46:     </PageTransition>
+47:   </div>
+48: );
+49: // Page transition with a form
+50: export const WithForm = () => (
+51:   <PageTransition>
+52:     <div className="p-6 bg-slate-800 rounded-lg">
+53:       <h2 className="text-white text-xl mb-4">Contact Form</h2>
+54:       <form className="space-y-4">
+55:         <div>
+56:           <label htmlFor="storyFormName" className="block text-gray-300 mb-1">Name</label>
+57:           <input
+58:             id="storyFormName"
+59:             type="text"
+60:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+61:             placeholder="Your name"
+62:           />
+63:         </div>
+64:         <div>
+65:           <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">Email</label>
+66:           <input
+67:             id="storyFormEmail"
+68:             type="email"
+69:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+70:             placeholder="your.email@example.com"
+71:           />
+72:         </div>
+73:         <div>
+74:           <label htmlFor="storyFormMessage" className="block text-gray-300 mb-1">Message</label>
+75:           <textarea
+76:             id="storyFormMessage"
+77:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+78:             rows={4}
+79:             placeholder="Your message here..."
+80:           ></textarea>
+81:         </div>
+82:         <button
+83:           type="button"
+84:           className="px-4 py-2 bg-blue-600 text-white rounded"
+85:         >
+86:           Submit
+87:         </button>
+88:       </form>
+89:     </div>
+90:   </PageTransition>
+91: );
 ````
 
 ## File: src/stories/components/CV/CVContent.stories.tsx
@@ -16331,99 +16426,82 @@ tsconfig.json
 93: export default KontaktContent;
 ````
 
-## File: src/stories/components/Animations/PageTransition.stories.tsx
+## File: src/stories/components/Index/Section.stories.tsx
 ````typescript
  1: import React from "react";
  2: import { Meta } from "@ladle/react";
- 3: import PageTransition from "@/components/Animations/PageTransition.component";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "Animations/PageTransition",
- 7:   component: PageTransition,
- 8: } as Meta;
- 9: // Default page transition with simple content
-10: export const Default = () => (
-11:   <PageTransition>
-12:     <div className="p-6 bg-slate-800 rounded-lg">
-13:       <h2 className="text-white text-xl mb-4">Page Content</h2>
-14:       <p className="text-gray-300">
-15:         This content will have a fade in/out transition when the component
-16:         mounts or unmounts.
-17:       </p>
-18:     </div>
-19:   </PageTransition>
-20: );
-21: // Page transition with custom CSS class
-22: export const WithCustomClass = () => (
-23:   <PageTransition cssClass="max-w-2xl mx-auto border-2 border-green-500 rounded-xl overflow-hidden">
-24:     <div className="p-6 bg-slate-800">
-25:       <h2 className="text-white text-xl mb-4">Styled Container</h2>
-26:       <p className="text-gray-300">
-27:         This content has a custom CSS class applied to the transition wrapper.
-28:       </p>
-29:     </div>
-30:   </PageTransition>
+ 3: import Section from "@/components/Index/Section.component";
+ 4: import pagecontent from "@/__mocks__/pagecontent.json";
+ 5: import type { Pagecontent } from "@/types/sanity.types";
+ 6: import "@/app/globals.css";
+ 7: export default {
+ 8:   title: "Index/Section",
+ 9:   component: Section,
+10: } as Meta;
+11: const mockPortableText = pagecontent[0].content[0].text as Pagecontent['text'];
+12: const longContent = pagecontent[0].content[1].text as Pagecontent['text'];
+13: // Default section
+14: export const Default = () => (
+15:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+16: );
+17: // Section with alternate styling
+18: export const Alternate = () => (
+19:   <div className="bg-[#121c30] p-4">
+20:     <Section
+21:       _type="pagecontent"
+22:       title="My Projects"
+23:       text={mockPortableText}
+24:       variant="alternate"
+25:     />
+26:   </div>
+27: );
+28: // Section with longer content
+29: export const LongContent = () => (
+30:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
 31: );
-32: // Multiple transitions side by side
-33: export const MultipleTransitions = () => (
-34:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-35:     <PageTransition>
-36:       <div className="p-6 bg-blue-900 rounded-lg h-full">
-37:         <h2 className="text-white text-xl mb-4">First Panel</h2>
-38:         <p className="text-gray-300">This is the first transition panel.</p>
-39:       </div>
-40:     </PageTransition>
-41:     <PageTransition>
-42:       <div className="p-6 bg-purple-900 rounded-lg h-full">
-43:         <h2 className="text-white text-xl mb-4">Second Panel</h2>
-44:         <p className="text-gray-300">This is the second transition panel.</p>
-45:       </div>
-46:     </PageTransition>
-47:   </div>
-48: );
-49: // Page transition with a form
-50: export const WithForm = () => (
-51:   <PageTransition>
-52:     <div className="p-6 bg-slate-800 rounded-lg">
-53:       <h2 className="text-white text-xl mb-4">Contact Form</h2>
-54:       <form className="space-y-4">
-55:         <div>
-56:           <label htmlFor="storyFormName" className="block text-gray-300 mb-1">Name</label>
-57:           <input
-58:             id="storyFormName"
-59:             type="text"
-60:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-61:             placeholder="Your name"
-62:           />
-63:         </div>
-64:         <div>
-65:           <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">Email</label>
-66:           <input
-67:             id="storyFormEmail"
-68:             type="email"
-69:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-70:             placeholder="your.email@example.com"
-71:           />
-72:         </div>
-73:         <div>
-74:           <label htmlFor="storyFormMessage" className="block text-gray-300 mb-1">Message</label>
-75:           <textarea
-76:             id="storyFormMessage"
-77:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-78:             rows={4}
-79:             placeholder="Your message here..."
-80:           ></textarea>
-81:         </div>
-82:         <button
-83:           type="button"
-84:           className="px-4 py-2 bg-blue-600 text-white rounded"
-85:         >
-86:           Submit
-87:         </button>
-88:       </form>
-89:     </div>
-90:   </PageTransition>
-91: );
+32: // Multiple sections together
+33: export const MultipleSections = () => (
+34:   <div>
+35:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+36:     <div className="bg-[#121c30]">
+37:       <Section
+38:         _type="pagecontent"
+39:         title="My Skills"
+40:         text={longContent}
+41:         variant="alternate"
+42:       />
+43:     </div>
+44:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
+45:   </div>
+46: );
+47: // Section in a narrower container
+48: export const NarrowContainer = () => (
+49:   <div className="max-w-xl mx-auto border border-gray-700">
+50:     <Section
+51:       _type="pagecontent"
+52:       title="Narrow Section"
+53:       text={mockPortableText}
+54:     />
+55:   </div>
+56: );
+57: // Section with debug button hidden
+58: export const DebugButtonHidden = () => (
+59:   <Section
+60:     _type="pagecontent"
+61:     title="No Debug Button"
+62:     text={mockPortableText}
+63:     showDebugButton={false}
+64:   />
+65: );
+66: // Section with debug button explicitly shown (default behavior)
+67: export const DebugButtonVisible = () => (
+68:   <Section
+69:     _type="pagecontent"
+70:     title="Debug Button Visible"
+71:     text={mockPortableText}
+72:     showDebugButton={true}
+73:   />
+74: );
 ````
 
 ## File: studio/package.json
@@ -16657,84 +16735,6 @@ tsconfig.json
 106: });
 ````
 
-## File: src/stories/components/Index/Section.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import Section from "@/components/Index/Section.component";
- 4: import pagecontent from "@/__mocks__/pagecontent.json";
- 5: import type { Pagecontent } from "@/types/sanity.types";
- 6: import "@/app/globals.css";
- 7: export default {
- 8:   title: "Index/Section",
- 9:   component: Section,
-10: } as Meta;
-11: const mockPortableText = pagecontent[0].content[0].text as Pagecontent['text'];
-12: const longContent = pagecontent[0].content[1].text as Pagecontent['text'];
-13: // Default section
-14: export const Default = () => (
-15:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-16: );
-17: // Section with alternate styling
-18: export const Alternate = () => (
-19:   <div className="bg-[#121c30] p-4">
-20:     <Section
-21:       _type="pagecontent"
-22:       title="My Projects"
-23:       text={mockPortableText}
-24:       variant="alternate"
-25:     />
-26:   </div>
-27: );
-28: // Section with longer content
-29: export const LongContent = () => (
-30:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
-31: );
-32: // Multiple sections together
-33: export const MultipleSections = () => (
-34:   <div>
-35:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-36:     <div className="bg-[#121c30]">
-37:       <Section
-38:         _type="pagecontent"
-39:         title="My Skills"
-40:         text={longContent}
-41:         variant="alternate"
-42:       />
-43:     </div>
-44:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
-45:   </div>
-46: );
-47: // Section in a narrower container
-48: export const NarrowContainer = () => (
-49:   <div className="max-w-xl mx-auto border border-gray-700">
-50:     <Section
-51:       _type="pagecontent"
-52:       title="Narrow Section"
-53:       text={mockPortableText}
-54:     />
-55:   </div>
-56: );
-57: // Section with debug button hidden
-58: export const DebugButtonHidden = () => (
-59:   <Section
-60:     _type="pagecontent"
-61:     title="No Debug Button"
-62:     text={mockPortableText}
-63:     showDebugButton={false}
-64:   />
-65: );
-66: // Section with debug button explicitly shown (default behavior)
-67: export const DebugButtonVisible = () => (
-68:   <Section
-69:     _type="pagecontent"
-70:     title="Debug Button Visible"
-71:     text={mockPortableText}
-72:     showDebugButton={true}
-73:   />
-74: );
-````
-
 ## File: src/stories/components/UI/PageHeader.stories.tsx
 ````typescript
  1: import React from "react";
@@ -16902,7 +16902,7 @@ tsconfig.json
 35:     "cookie": ">=1.0.2",
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
-38:     "motion": "^12.12.2",
+38:     "motion": "^12.14.0",
 39:     "next": "15.3.2",
 40:     "next-sanity": "^9.11.1",
 41:     "path-to-regexp": "^8.2.0",
