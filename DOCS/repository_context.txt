@@ -7095,6 +7095,103 @@ tsconfig.json
 32: ] as const;
 ````
 
+## File: src/components/Kontakt/KontaktContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import emailjs from "@emailjs/browser";
+ 3: import React, { useState } from "react";
+ 4: import PageHeader from "@/components/UI/PageHeader.component";
+ 5: import GenericForm from "@/components/UI/GenericForm.component";
+ 6: import { formSchema, formFields, FormData } from "./config/formConfig";
+ 7: /**
+ 8:  * Props for the KontaktContent component.
+ 9:  */
+10: type Props = {
+11:   /**
+12:    * Optional custom submit handler. If provided, this function will be called
+13:    * instead of the default emailjs submission. It should handle the submission
+14:    * logic and return a promise that resolves to a message string.
+15:    */
+16:   onSubmit?: (data: FormData) => Promise<string>;
+17:   /**
+18:    * Optional initial response message to display.
+19:    */
+20:   initialResponse?: string;
+21: };
+22: /**
+23:  * Renders the contact form.
+24:  * Uses EmailJS to send emails by default, but can accept a custom onSubmit handler.
+25:  * @function KontaktContent
+26:  * @param {Props} props - The component props.
+27:  * @returns {JSX.Element} - Rendered component
+28:  */
+29: const KontaktContent: React.FC<Props> = ({
+30:   onSubmit: onSubmitProp,
+31:   initialResponse = "",
+32: }) => {
+33:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+34:   /**
+35:    * Default form submission handler using EmailJS.
+36:    * Sends an email using the provided API keys.
+37:    * @param {FormData} data - The form data.
+38:    * @return {Promise<string>} A promise that resolves to a success or error message.
+39:    */
+40:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+41:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+42:     const TEMPLATE_KEY =
+43:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+44:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+45:     try {
+46:       emailjs.init(EMAIL_API_KEY);
+47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+48:       return "Takk for din beskjed";
+49:     } catch {
+50:       return "Feil under sending av skjema";
+51:     }
+52:   };
+53:   const handleSubmit = onSubmitProp ?? defaultOnSubmit;
+54:   /**
+55:    * Handles the actual form submission, calling the appropriate submit handler
+56:    * (either the provided prop or the default) and updates the server response.
+57:    * @param {FormData} data - The form data.
+58:    */
+59:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+60:     const message = await handleSubmit(data);
+61:     setServerResponse(message);
+62:   };
+63:   return (
+64:     <main data-testid="kontaktcontent" id="maincontent">
+65:       <div className="mt-32 bg-graybg">
+66:         <PageHeader>Kontakt</PageHeader>
+67:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+68:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+69:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+70:               <div className="p-2 md:p-6 pt-8">
+71:                 {serverResponse ? (
+72:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+73:                     {serverResponse}
+74:                   </h3>
+75:                 ) : (
+76:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+77:                     <GenericForm<typeof formSchema>
+78:                       formSchema={formSchema}
+79:                       onSubmit={handleFormSubmit}
+80:                       fields={formFields}
+81:                       submitButtonText="Send skjema"
+82:                     />
+83:                   </div>
+84:                 )}
+85:               </div>
+86:             </div>
+87:           </div>
+88:         </div>
+89:       </div>
+90:     </main>
+91:   );
+92: };
+93: export default KontaktContent;
+````
+
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -9186,6 +9283,101 @@ tsconfig.json
 110:     </div>
 111:   </DemoContainer>
 112: );
+````
+
+## File: src/stories/components/Animations/PageTransition.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import PageTransition from "@/components/Animations/PageTransition.component";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "Animations/PageTransition",
+ 7:   component: PageTransition,
+ 8: } as Meta;
+ 9: // Default page transition with simple content
+10: export const Default = () => (
+11:   <PageTransition>
+12:     <div className="p-6 bg-slate-800 rounded-lg">
+13:       <h2 className="text-white text-xl mb-4">Page Content</h2>
+14:       <p className="text-gray-300">
+15:         This content will have a fade in/out transition when the component
+16:         mounts or unmounts.
+17:       </p>
+18:     </div>
+19:   </PageTransition>
+20: );
+21: // Page transition with custom CSS class
+22: export const WithCustomClass = () => (
+23:   <PageTransition cssClass="max-w-2xl mx-auto border-2 border-green-500 rounded-xl overflow-hidden">
+24:     <div className="p-6 bg-slate-800">
+25:       <h2 className="text-white text-xl mb-4">Styled Container</h2>
+26:       <p className="text-gray-300">
+27:         This content has a custom CSS class applied to the transition wrapper.
+28:       </p>
+29:     </div>
+30:   </PageTransition>
+31: );
+32: // Multiple transitions side by side
+33: export const MultipleTransitions = () => (
+34:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+35:     <PageTransition>
+36:       <div className="p-6 bg-blue-900 rounded-lg h-full">
+37:         <h2 className="text-white text-xl mb-4">First Panel</h2>
+38:         <p className="text-gray-300">This is the first transition panel.</p>
+39:       </div>
+40:     </PageTransition>
+41:     <PageTransition>
+42:       <div className="p-6 bg-purple-900 rounded-lg h-full">
+43:         <h2 className="text-white text-xl mb-4">Second Panel</h2>
+44:         <p className="text-gray-300">This is the second transition panel.</p>
+45:       </div>
+46:     </PageTransition>
+47:   </div>
+48: );
+49: // Page transition with a form
+50: export const WithForm = () => (
+51:   <PageTransition>
+52:     <div className="p-6 bg-slate-800 rounded-lg">
+53:       <h2 className="text-white text-xl mb-4">Contact Form</h2>
+54:       <form className="space-y-4">
+55:         <div>
+56:           <label htmlFor="storyFormName" className="block text-gray-300 mb-1">Name</label>
+57:           <input
+58:             id="storyFormName"
+59:             type="text"
+60:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+61:             placeholder="Your name"
+62:           />
+63:         </div>
+64:         <div>
+65:           <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">Email</label>
+66:           <input
+67:             id="storyFormEmail"
+68:             type="email"
+69:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+70:             placeholder="your.email@example.com"
+71:           />
+72:         </div>
+73:         <div>
+74:           <label htmlFor="storyFormMessage" className="block text-gray-300 mb-1">Message</label>
+75:           <textarea
+76:             id="storyFormMessage"
+77:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
+78:             rows={4}
+79:             placeholder="Your message here..."
+80:           ></textarea>
+81:         </div>
+82:         <button
+83:           type="button"
+84:           className="px-4 py-2 bg-blue-600 text-white rounded"
+85:         >
+86:           Submit
+87:         </button>
+88:       </form>
+89:     </div>
+90:   </PageTransition>
+91: );
 ````
 
 ## File: src/stories/components/Animations/RotatingLoader.stories.tsx
@@ -15620,103 +15812,6 @@ tsconfig.json
 14: export default QualificationsTabContent;
 ````
 
-## File: src/components/Kontakt/KontaktContent.component.tsx
-````typescript
- 1: "use client";
- 2: import emailjs from "@emailjs/browser";
- 3: import React, { useState } from "react";
- 4: import PageHeader from "@/components/UI/PageHeader.component";
- 5: import GenericForm from "@/components/UI/GenericForm.component";
- 6: import { formSchema, formFields, FormData } from "./config/formConfig";
- 7: /**
- 8:  * Props for the KontaktContent component.
- 9:  */
-10: type Props = {
-11:   /**
-12:    * Optional custom submit handler. If provided, this function will be called
-13:    * instead of the default emailjs submission. It should handle the submission
-14:    * logic and return a promise that resolves to a message string.
-15:    */
-16:   onSubmit?: (data: FormData) => Promise<string>;
-17:   /**
-18:    * Optional initial response message to display.
-19:    */
-20:   initialResponse?: string;
-21: };
-22: /**
-23:  * Renders the contact form.
-24:  * Uses EmailJS to send emails by default, but can accept a custom onSubmit handler.
-25:  * @function KontaktContent
-26:  * @param {Props} props - The component props.
-27:  * @returns {JSX.Element} - Rendered component
-28:  */
-29: const KontaktContent: React.FC<Props> = ({
-30:   onSubmit: onSubmitProp,
-31:   initialResponse = "",
-32: }) => {
-33:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
-34:   /**
-35:    * Default form submission handler using EmailJS.
-36:    * Sends an email using the provided API keys.
-37:    * @param {FormData} data - The form data.
-38:    * @return {Promise<string>} A promise that resolves to a success or error message.
-39:    */
-40:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
-41:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-42:     const TEMPLATE_KEY =
-43:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
-44:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
-45:     try {
-46:       emailjs.init(EMAIL_API_KEY);
-47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
-48:       return "Takk for din beskjed";
-49:     } catch {
-50:       return "Feil under sending av skjema";
-51:     }
-52:   };
-53:   const handleSubmit = onSubmitProp ?? defaultOnSubmit;
-54:   /**
-55:    * Handles the actual form submission, calling the appropriate submit handler
-56:    * (either the provided prop or the default) and updates the server response.
-57:    * @param {FormData} data - The form data.
-58:    */
-59:   const handleFormSubmit = async (data: FormData): Promise<void> => {
-60:     const message = await handleSubmit(data);
-61:     setServerResponse(message);
-62:   };
-63:   return (
-64:     <main data-testid="kontaktcontent" id="maincontent">
-65:       <div className="mt-32 bg-graybg">
-66:         <PageHeader>Kontakt</PageHeader>
-67:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-68:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
-69:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
-70:               <div className="p-2 md:p-6 pt-8">
-71:                 {serverResponse ? (
-72:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
-73:                     {serverResponse}
-74:                   </h3>
-75:                 ) : (
-76:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
-77:                     <GenericForm<typeof formSchema>
-78:                       formSchema={formSchema}
-79:                       onSubmit={handleFormSubmit}
-80:                       fields={formFields}
-81:                       submitButtonText="Send skjema"
-82:                     />
-83:                   </div>
-84:                 )}
-85:               </div>
-86:             </div>
-87:           </div>
-88:         </div>
-89:       </div>
-90:     </main>
-91:   );
-92: };
-93: export default KontaktContent;
-````
-
 ## File: src/config/env.ts
 ````typescript
  1: import { cleanEnv, str } from "envalid";
@@ -15754,101 +15849,6 @@ tsconfig.json
 33:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
 34:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
 35: };
-````
-
-## File: src/stories/components/Animations/PageTransition.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import PageTransition from "@/components/Animations/PageTransition.component";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "Animations/PageTransition",
- 7:   component: PageTransition,
- 8: } as Meta;
- 9: // Default page transition with simple content
-10: export const Default = () => (
-11:   <PageTransition>
-12:     <div className="p-6 bg-slate-800 rounded-lg">
-13:       <h2 className="text-white text-xl mb-4">Page Content</h2>
-14:       <p className="text-gray-300">
-15:         This content will have a fade in/out transition when the component
-16:         mounts or unmounts.
-17:       </p>
-18:     </div>
-19:   </PageTransition>
-20: );
-21: // Page transition with custom CSS class
-22: export const WithCustomClass = () => (
-23:   <PageTransition cssClass="max-w-2xl mx-auto border-2 border-green-500 rounded-xl overflow-hidden">
-24:     <div className="p-6 bg-slate-800">
-25:       <h2 className="text-white text-xl mb-4">Styled Container</h2>
-26:       <p className="text-gray-300">
-27:         This content has a custom CSS class applied to the transition wrapper.
-28:       </p>
-29:     </div>
-30:   </PageTransition>
-31: );
-32: // Multiple transitions side by side
-33: export const MultipleTransitions = () => (
-34:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-35:     <PageTransition>
-36:       <div className="p-6 bg-blue-900 rounded-lg h-full">
-37:         <h2 className="text-white text-xl mb-4">First Panel</h2>
-38:         <p className="text-gray-300">This is the first transition panel.</p>
-39:       </div>
-40:     </PageTransition>
-41:     <PageTransition>
-42:       <div className="p-6 bg-purple-900 rounded-lg h-full">
-43:         <h2 className="text-white text-xl mb-4">Second Panel</h2>
-44:         <p className="text-gray-300">This is the second transition panel.</p>
-45:       </div>
-46:     </PageTransition>
-47:   </div>
-48: );
-49: // Page transition with a form
-50: export const WithForm = () => (
-51:   <PageTransition>
-52:     <div className="p-6 bg-slate-800 rounded-lg">
-53:       <h2 className="text-white text-xl mb-4">Contact Form</h2>
-54:       <form className="space-y-4">
-55:         <div>
-56:           <label htmlFor="storyFormName" className="block text-gray-300 mb-1">Name</label>
-57:           <input
-58:             id="storyFormName"
-59:             type="text"
-60:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-61:             placeholder="Your name"
-62:           />
-63:         </div>
-64:         <div>
-65:           <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">Email</label>
-66:           <input
-67:             id="storyFormEmail"
-68:             type="email"
-69:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-70:             placeholder="your.email@example.com"
-71:           />
-72:         </div>
-73:         <div>
-74:           <label htmlFor="storyFormMessage" className="block text-gray-300 mb-1">Message</label>
-75:           <textarea
-76:             id="storyFormMessage"
-77:             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"
-78:             rows={4}
-79:             placeholder="Your message here..."
-80:           ></textarea>
-81:         </div>
-82:         <button
-83:           type="button"
-84:           className="px-4 py-2 bg-blue-600 text-white rounded"
-85:         >
-86:           Submit
-87:         </button>
-88:       </form>
-89:     </div>
-90:   </PageTransition>
-91: );
 ````
 
 ## File: src/stories/components/CV/CVContent.stories.tsx
@@ -16929,7 +16929,7 @@ tsconfig.json
 62:     "@testing-library/react": "^16.3.0",
 63:     "@testing-library/user-event": "^14.6.1",
 64:     "@types/jest": "^29.5.14",
-65:     "@types/node": "^22.15.21",
+65:     "@types/node": "^22.15.23",
 66:     "@types/react": "^19.1.6",
 67:     "@types/react-dom": "^19.1.5",
 68:     "@typescript-eslint/eslint-plugin": "^8.32.1",
