@@ -36,7 +36,9 @@ Sanity.io and Typescript.
 
 ## Backend (Sanity headless CMS)
 
-<img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+<img
+  src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4"
+  alt="Backend Image" />
 
 ---
 
@@ -72,8 +74,10 @@ Sanity.io and Typescript.
 - Automated Lighthouse CI testing integrated with GitHub Actions
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
-- Error handling with react-error-boundary for improved user experience and easier debugging
-- AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+- Error handling with react-error-boundary for improved user experience and
+  easier debugging
+- AI-friendly repository documentation with automated updates (Repomix with
+  Github action workflow)
 - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
 - Efficient data fetching in `/prosjekter` using Next.js preloading,
   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
@@ -111,16 +115,14 @@ Sanity.io and Typescript.
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
-- AI-powered commit message generation following Conventional Commits with
-  gitmojis
+- AI-powered commit message generation following Conventional Commits with gitmojis
 - Automated performance monitoring with Lighthouse CI
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
   - Both desktop and performance-focused testing
 - Automated repository documentation with Repomix
   - AI-friendly documentation generation on every push to main
-  - Comprehensive repository context maintained in
-    `DOCS/repository_context.txt`
+  - Comprehensive repository context maintained in `DOCS/repository_context.txt`
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
