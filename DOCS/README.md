@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-DFWeb v4 is a modern portfolio website that demonstrates advanced web development practices and architectural patterns. Built with Next.js 15, React 19, TypeScript, and Sanity.io, it showcases several key technical achievements:
+DFWeb v4 is a modern portfolio website that demonstrates advanced web
+development practices and architectural patterns. Built with Next.js 15, React
+19, TypeScript, and Sanity.io, it showcases several key technical achievements:
 
 ### Technical Highlights
 
@@ -114,7 +116,7 @@ DFWeb v4 is a modern portfolio website that demonstrates advanced web developmen
 
 ### Directory Structure
 
-```
+```text
 src/
 ├── app/                 # Next.js App Router pages
 ├── components/          # React components
@@ -345,19 +347,27 @@ See TODO.md for detailed plans including:
 
 ## Repository Context File
 
-The `repository_context.txt` file is a merged representation of the entire codebase, combining all repository files into a single document. It is designed to be easily consumable by AI systems for analysis, code review, or other automated processes.
+The `repository_context.txt` file is a merged representation of the entire
+codebase, combining all repository files into a single document. It is designed
+to be easily consumable by AI systems for analysis, code review, or other
+automated processes.
 
 ### Purpose
 
 - **Unified View**: Provides a unified view of the codebase for AI analysis.
-- **Facilitates Automation**: Assists in code review and automated testing procedures.
-- **Important Context**: Contains crucial context and guidelines specific to this project.
+- **Facilitates Automation**: Assists in code review and automated testing
+  procedures.
+- **Important Context**: Contains crucial context and guidelines specific to this
+  project.
 
 ### Usage Guidelines
 
-- **Read-Only**: Do not edit `repository_context.txt` directly. Make changes in the original repository files.
-- **Sensitive Information**: Handle with caution as it may contain sensitive data.
-- **File Paths**: Use the file paths within the document to distinguish between different files in the repository.
+- **Read-Only**: Do not edit `repository_context.txt` directly. Make changes in
+  the original repository files.
+- **Sensitive Information**: Handle with caution as it may contain sensitive
+  data.
+- **File Paths**: Use the file paths within the document to distinguish between
+  different files in the repository.
 
 ## Additional Resources
 
