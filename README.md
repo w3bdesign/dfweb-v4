@@ -30,15 +30,13 @@ Sanity.io and Typescript.
 
 ## Frontend (Next.js)
 
-<img src="/public/images/frontend.png" alt="Frontend Image" />
+![Frontend Image](public/images/frontend.png)
 
 ---
 
 ## Backend (Sanity headless CMS)
 
-<img
-  src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4"
-  alt="Backend Image" />
+![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
 
 ---
 
