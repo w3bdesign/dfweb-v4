@@ -1,3 +1,5 @@
+# Dfweb.no Portfolio Version 4
+
 [![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
 [![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
@@ -5,15 +7,14 @@
 [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
 [![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
 
-# Dfweb.no Portfolio Version 4
-
-Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
+Fourth version of my personal portfolio website with Next.js, Motion,
+Sanity.io and Typescript.
 
 ## Table of Contents
 
 - [Live URL](#live-url)
-- [Frontend](#frontend)
-- [Backend](#backend)
+- [Frontend (Next.js)](#frontend-nextjs)
+- [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
 - [Google Lighthouse](#google-lighthouse)
 - [Features](#features)
   - [General](#general)
@@ -29,13 +30,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ## Frontend (Next.js)
 
-<img src="/public/images/frontend.png" alt="Frontend Image" />
+![Frontend Image](public/images/frontend.png)
 
 ---
 
 ## Backend (Sanity headless CMS)
 
-<img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
 
 ---
 
@@ -71,11 +72,18 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Automated Lighthouse CI testing integrated with GitHub Actions
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
-- Error handling with react-error-boundary for improved user experience and easier debugging
-- AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+- Error handling with react-error-boundary for improved user experience and
+  easier debugging
+- AI-friendly repository documentation with automated updates (Repomix with
+  Github action workflow)
 - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
-- Efficient data fetching in `/prosjekter` using Next.js preloading, React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with around 1 second.
-- Recommended: [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity) for enhanced GROQ query development, including syntax highlighting when using `defineQuery`.
+- Efficient data fetching in `/prosjekter` using Next.js preloading,
+  React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+  around 1 second.
+- Recommended:
+  [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+  for enhanced GROQ query development, including syntax highlighting when using
+  `defineQuery`.
 
 ### Design
 
@@ -83,7 +91,8 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - React Icons for project icons
 - Tailwind 14 for styling
 - Animated reusable input fields
-- Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
+- Matrix-inspired animated cursor with dynamic trailing effect with fading
+  Matrix characters
 
 ### Accessibility
 
@@ -105,7 +114,8 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
-- AI-powered commit message generation following Conventional Commits with gitmojis
+- AI-powered commit message generation following Conventional Commits with
+  gitmojis
 - Automated performance monitoring with Lighthouse CI
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
@@ -155,11 +165,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
   - Each test must include the following comments:
+
     ```typescript
     // Arrange - Set up test data and conditions
     // Act - Perform the action being tested
     // Assert - Verify the results
     ```
+
   - This pattern ensures:
     - Clear test structure and readability
     - Consistent test organization across the codebase

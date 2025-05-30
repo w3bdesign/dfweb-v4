@@ -1,18 +1,21 @@
 # Next.js 15 Implementation TODO
 
-This document outlines suggestions for improvements for implementing Next.js 15 features in our project.
+This document outlines suggestions for improvements for implementing Next.js 15
+features in our project.
 
 ## 1. Project Structure Reorganization
 
 ### Current Structure
 
-Currently, our project has a flat structure in src/components with separate folders for different component types. While organized, we can improve the structure using Next.js 15's recommended patterns.
+Currently, our project has a flat structure in src/components with separate
+folders for different component types. While organized, we can improve the
+structure using Next.js 15's recommended patterns.
 
 ### Implementation Plan
 
 1. **Create Three Main Zones**
 
-   ```
+   ```text
    src/
    ├── shared/           # Green Zone - Shared code
    │   ├── components/   # Reusable UI components
@@ -49,9 +52,10 @@ Currently, our project has a flat structure in src/components with separate fold
 
 ### Current Caching
 
-We currently rely on Next.js's default caching behavior. We can improve performance with explicit cache controls.
+We currently rely on Next.js's default caching behavior. We can improve
+performance with explicit cache controls.
 
-### Implementation Plan
+### Caching Implementation Plan
 
 1. **Define Cache Profiles**
 
@@ -93,13 +97,14 @@ We currently rely on Next.js's default caching behavior. We can improve performa
 
 ### Current Component Structure
 
-Components are currently organized by type (UI, Animations, etc.). We'll reorganize by feature for better modularity.
+Components are currently organized by type (UI, Animations, etc.). We'll
+reorganize by feature for better modularity.
 
 ### Implementation Steps
 
 1. **Feature Module Structure**
 
-   ```
+   ```text
    src/features/
    ├── cv/
    │   ├── components/
@@ -131,9 +136,10 @@ Components are currently organized by type (UI, Animations, etc.). We'll reorgan
 
 ### Current Build Setup
 
-We use the default webpack configuration. Turbopack can significantly improve build times.
+We use the default webpack configuration. Turbopack can significantly improve
+build times.
 
-### Implementation Steps
+### Turbopack Implementation Steps
 
 1. **Enable Turbopack**
 
@@ -231,4 +237,6 @@ We use the default webpack configuration. Turbopack can significantly improve bu
 - Successful integration of all Next.js 15 features
 - Positive developer feedback on new structure
 
-This TODO list serves as a comprehensive guide for implementing Next.js 15 features in our project. Each section should be reviewed and adjusted as needed during implementation.
+This TODO list serves as a comprehensive guide for implementing Next.js 15
+features in our project. Each section should be reviewed and adjusted as needed
+during implementation.
