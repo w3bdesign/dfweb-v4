@@ -41,28 +41,37 @@ export const ComplexExample = () => (
 
 ## Best Practices
 
-1. **Direct Component Approach**: All stories should use the direct component approach rather than the Template.bind({}) pattern.
+1. **Direct Component Approach**: All stories should use the direct component
+   approach rather than the Template.bind({}) pattern.
 
-2. **CSS Import**: Always include `import "@/app/globals.css";` to ensure consistent styling.
+2. **CSS Import**: Always include `import "@/app/globals.css";` to ensure
+   consistent styling.
 
-3. **Comments**: Add a brief comment above each story variant to explain what it's demonstrating.
+3. **Comments**: Add a brief comment above each story variant to explain what
+   it's demonstrating.
 
 4. **Naming Conventions**:
 
-   - Use PascalCase for story export names (e.g., `export const WithCustomClass = () => ...`)
+   - Use PascalCase for story export names (e.g.,
+     `export const WithCustomClass = () => ...`)
    - Use descriptive names that indicate what's special about the variant
 
-5. **Mock Data**: When components require data from APIs or other external sources, create mock data within the story file or in a separate mock file.
+5. **Mock Data**: When components require data from APIs or other external
+   sources, create mock data within the story file or in a separate mock file.
 
 6. **TypeScript**: Ensure all stories are properly typed.
 
-7. **Story Variants**: Include multiple variants to showcase different states, props, and use cases for each component.
+7. **Story Variants**: Include multiple variants to showcase different states,
+   props, and use cases for each component.
 
-8. **Layout and Context**: If a component needs specific context or layout to be properly demonstrated, provide it within the story.
+8. **Layout and Context**: If a component needs specific context or layout to be
+   properly demonstrated, provide it within the story.
 
-9. **Interactive Examples**: Where appropriate, include interactive examples with state.
+9. **Interactive Examples**: Where appropriate, include interactive examples
+   with state.
 
-10. **Accessibility**: Test and ensure components are accessible in their story representations.
+10. **Accessibility**: Test and ensure components are accessible in their story
+    representations.
 
 ## Mocking Dependencies
 
