@@ -155,11 +155,13 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
   - Each test must include the following comments:
+
     ```typescript
     // Arrange - Set up test data and conditions
     // Act - Perform the action being tested
     // Assert - Verify the results
     ```
+
   - This pattern ensures:
     - Clear test structure and readability
     - Consistent test organization across the codebase
