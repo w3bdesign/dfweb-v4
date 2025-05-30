@@ -1,6 +1,7 @@
 # Next.js 15 Implementation TODO
 
-This document outlines suggestions for improvements for implementing Next.js 15 features in our project.
+This document outlines suggestions for improvements for implementing Next.js 15
+features in our project.
 
 ## 1. Project Structure Reorganization
 
