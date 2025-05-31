@@ -6123,6 +6123,85 @@ tsconfig.json
 15: export default MobileBackground;
 ````
 
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import BounceInScroll from "../Animations/BounceInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11: }
+12: /**
+13:  * Section component that renders a single content section
+14:  * @param {SectionProps} props - The props for the Section component
+15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+16:  * @param {string} props.title - The title of the section
+17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+20:  */
+21: const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
+22:   const [shouldError, setShouldError] = useState(false);
+23:   if (!title || !text) {
+24:     console.error(
+25:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
+26:     );
+27:     return null;
+28:   }
+29:   if (shouldError) {
+30:     throw new Error("En uventet feil har oppstått");
+31:   }
+32:   const sectionStyles = {
+33:     default: "bg-slate-900",
+34:     alternate: "bg-slate-800/30",
+35:   };
+36:   return (
+37:     <section
+38:       aria-label={title}
+39:       data-testid="sanity-section"
+40:       className={`
+41:         md:py-6 
+42:         relative
+43:         transition-colors
+44:         duration-300
+45:         ${sectionStyles[variant]}
+46:       `}
+47:     >
+48:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+49:         <BounceInScroll viewAmount={0}>
+50:           <h2
+51:             data-testid="sanity-title"
+52:             data-cy={title}
+53:             className="text-3xl text-center text-slate-100"
+54:           >
+55:             {title}
+56:           </h2>
+57:           <div className="flex justify-center">
+58:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+59:               <PortableText
+60:                 value={text}
+61:                 components={myPortableTextComponents}
+62:               />
+63:             </div>
+64:           </div>
+65:           {process.env.NODE_ENV === "development" && showDebugButton && (
+66:             <Button onClick={() => setShouldError(true)} type="button">
+67:               Utløs Testfeil
+68:             </Button>
+69:           )}
+70:         </BounceInScroll>
+71:       </div>
+72:     </section>
+73:   );
+74: };
+75: export default Section;
+````
+
 ## File: src/components/Kontakt/config/formConfig.ts
 ````typescript
  1: import { z } from "zod";
@@ -15911,85 +15990,6 @@ tsconfig.json
 65: });
 ````
 
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import BounceInScroll from "../Animations/BounceInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11: }
-12: /**
-13:  * Section component that renders a single content section
-14:  * @param {SectionProps} props - The props for the Section component
-15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-16:  * @param {string} props.title - The title of the section
-17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-20:  */
-21: const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
-22:   const [shouldError, setShouldError] = useState(false);
-23:   if (!title || !text) {
-24:     console.error(
-25:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
-26:     );
-27:     return null;
-28:   }
-29:   if (shouldError) {
-30:     throw new Error("En uventet feil har oppstått");
-31:   }
-32:   const sectionStyles = {
-33:     default: "bg-slate-900",
-34:     alternate: "bg-slate-800/30",
-35:   };
-36:   return (
-37:     <section
-38:       aria-label={title}
-39:       data-testid="sanity-section"
-40:       className={`
-41:         md:py-6 
-42:         relative
-43:         transition-colors
-44:         duration-300
-45:         ${sectionStyles[variant]}
-46:       `}
-47:     >
-48:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-49:         <BounceInScroll viewAmount={0}>
-50:           <h2
-51:             data-testid="sanity-title"
-52:             data-cy={title}
-53:             className="text-3xl text-center text-slate-100"
-54:           >
-55:             {title}
-56:           </h2>
-57:           <div className="flex justify-center">
-58:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-59:               <PortableText
-60:                 value={text}
-61:                 components={myPortableTextComponents}
-62:               />
-63:             </div>
-64:           </div>
-65:           {process.env.NODE_ENV === "development" && showDebugButton && (
-66:             <Button onClick={() => setShouldError(true)} type="button">
-67:               Utløs Testfeil
-68:             </Button>
-69:           )}
-70:         </BounceInScroll>
-71:       </div>
-72:     </section>
-73:   );
-74: };
-75: export default Section;
-````
-
 ## File: src/config/env.ts
 ````typescript
  1: import { cleanEnv, str } from "envalid";
@@ -17032,7 +17032,7 @@ tsconfig.json
 24:     "typegen": "npx sanity typegen generate"
 25:   },
 26:   "dependencies": {
-27:     "@babel/helpers": ">=7.27.3",
+27:     "@babel/helpers": ">=7.27.4",
 28:     "@emailjs/browser": "^4.4.1",
 29:     "@hookform/resolvers": "^5.0.1",
 30:     "@portabletext/react": "^3.2.1",
@@ -17044,7 +17044,7 @@ tsconfig.json
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
 38:     "motion": "^12.14.0",
-39:     "next": "15.3.2",
+39:     "next": "15.3.3",
 40:     "next-sanity": "^9.12.0",
 41:     "path-to-regexp": "^8.2.0",
 42:     "react": "^19.1.0",
@@ -17079,7 +17079,7 @@ tsconfig.json
 71:     "cypress": "14.4.0",
 72:     "cypress-axe": "^1.6.0",
 73:     "eslint": "9.28.0",
-74:     "eslint-config-next": "15.3.2",
+74:     "eslint-config-next": "15.3.3",
 75:     "eslint-plugin-jest": "^28.12.0",
 76:     "eslint-plugin-jsx-a11y": "^6.10.2",
 77:     "eslint-plugin-react": "^7.37.5",
