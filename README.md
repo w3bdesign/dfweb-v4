@@ -116,6 +116,7 @@ Sanity.io and Typescript.
 - 100% test coverage with Jest and React testing library
 - AI-powered commit message generation following Conventional Commits with
   gitmojis
+- Automated pre-commit linting and formatting using Lefthook and lint-staged.
 - Automated performance monitoring with Lighthouse CI
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
@@ -164,6 +165,7 @@ Sanity.io and Typescript.
   - Structured defect management process
 
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+
   - Each test must include the following comments:
 
     ```typescript
