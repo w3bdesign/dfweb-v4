@@ -48,7 +48,7 @@ Sanity.io and Typescript.
 
 ### General
 
--            Clean, modern, responsive and Matrix-inspired design
+- Clean, modern, responsive and Matrix-inspired design
 - The application is 100% typescript (the types are generated from Sanity typegen)
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
