@@ -5,7 +5,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-[![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
+[![Snyk Security Scan](https://github.com/w3bdesign/dfweb-v4/actions/workflows/snyk-scan.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/snyk-scan.yml)
 
 Fourth version of my personal portfolio website with Next.js, Motion,
 Sanity.io and Typescript.
