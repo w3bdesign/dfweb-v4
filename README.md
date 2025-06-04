@@ -127,6 +127,9 @@ Sanity.io and Typescript.
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
+  - Automated security vulnerability scanning with Snyk
+    - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+    - Integrates with GitHub Security tab for vulnerability tracking
 
 ### Environment Variables
 
