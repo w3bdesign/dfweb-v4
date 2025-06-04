@@ -34,14 +34,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install dependencies for studio
+        run: cd studio && pnpm install --frozen-lockfile && cd ..
+
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         # continue-on-error: true # Temporarily removed for debugging Snyk step failure
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }} # Add your Snyk Org ID as a secret
         with:
           command: "test"
-          args: "--all-projects --sarif-file-output=snyk.sarif --severity-threshold=high"
+          args: "--all-projects --sarif-file-output=snyk.sarif --severity-threshold=high --org=${{ secrets.SNYK_ORG_ID }}"
 
       - name: Upload Snyk SARIF report to GitHub Security tab
         if: always() # Run this step even if the Snyk step failed
@@ -54,6 +58,7 @@ jobs:
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }} # Add your Snyk Org ID as a secret
         with:
           command: "monitor"
-          args: "--all-projects"
+          args: "--all-projects --org=${{ secrets.SNYK_ORG_ID }}"
