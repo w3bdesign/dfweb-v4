@@ -39,12 +39,18 @@ jobs:
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
-        continue-on-error: true # Allow other steps to run if Snyk test has findings but doesn't hard fail
+        # continue-on-error: true # Removed: Let the step fail if vulns above threshold are found
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: "test"
-          args: "--all-projects --severity-threshold=high"
+          args: "--all-projects --sarif-file-output=snyk.sarif --severity-threshold=high"
+
+      - name: Upload Snyk SARIF report to GitHub Security tab
+        if: always() # Run this step even if the Snyk step failed or had no findings
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk.sarif
 
       - name: Snyk Monitor (only for pushes to main branch)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
