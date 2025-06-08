@@ -6,7 +6,8 @@ import reactHooks from "eslint-plugin-react-hooks";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import jest from "eslint-plugin-jest";
 import testingLibrary from "eslint-plugin-testing-library";
-import next from "@next/eslint-plugin-next";
+import nextConfig from "eslint-config-next";
+
 const arrangeActAssertRule = {
   meta: {
     type: "suggestion",
@@ -48,6 +49,7 @@ export default [
   {
     ignores: ["node_modules/", "build/", ".next/", "coverage/"],
   },
+  ...nextConfig,
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
@@ -57,7 +59,6 @@ export default [
       "jsx-a11y": jsxA11y,
       "jest": jest,
       "testing-library": testingLibrary,
-      "@next/next": next,
       "test-rules": {
         rules: {
           "arrange-act-assert": arrangeActAssertRule,
@@ -91,8 +92,6 @@ export default [
       ...jsxA11y.configs.recommended.rules,
       ...jest.configs.recommended.rules,
       ...testingLibrary.configs["react"].rules,
-      ...next.configs.recommended.rules,
-      ...next.configs["core-web-vitals"].rules,
       "test-rules/arrange-act-assert": "error",
       "jest/expect-expect": "error",
       "jest/no-disabled-tests": "warn",
