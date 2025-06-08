@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm, Path, FieldValues } from "react-hook-form";
-import { z } from "zod";
+import { z, AnyZodObject } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import Button from "./Button.component";
@@ -16,7 +16,7 @@ type FieldConfig<T extends FieldValues> = {
   readonly title?: string;
 };
 
-interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
+interface GenericFormProps<TSchema extends AnyZodObject> {
   readonly formSchema: TSchema;
   readonly onSubmit: (data: z.infer<TSchema>) => Promise<void>;
   readonly fields: ReadonlyArray<FieldConfig<z.infer<TSchema>>>;
@@ -31,7 +31,7 @@ interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
  * @param {Readonly<GenericFormProps<TSchema>>} props - The props for the GenericForm component.
  * @returns {JSX.Element} The rendered form.
  */
-function GenericForm<TSchema extends z.ZodType<FieldValues>>({
+function GenericForm<TSchema extends AnyZodObject>({
   formSchema,
   onSubmit,
   fields,
