@@ -13,11 +13,16 @@ export const DefaultButton = () => <Pill text="Click Me" />;
 
 // Pill with custom class
 export const CustomClass = () => (
-  <Pill text="Custom Styling" className="bg-purple-600 bg-opacity-20 border-purple-800" />
+  <Pill
+    text="Custom Styling"
+    className="bg-purple-600 bg-opacity-20 border-purple-800"
+  />
 );
 
 // Pill as link
-export const AsLink = () => <Pill text="Go to Example" href="https://example.com" />;
+export const AsLink = () => (
+  <Pill text="Go to Example" href="https://example.com" />
+);
 
 // Multiple pills
 export const MultiplePills = () => (
@@ -35,9 +40,9 @@ export const WithClickHandler = () => {
 
   return (
     <div className="flex flex-col items-center">
-      <Pill 
-        text={`Clicked ${clickCount} times`} 
-        onClick={() => setClickCount(clickCount + 1)} 
+      <Pill
+        text={`Clicked ${clickCount} times`}
+        onClick={() => setClickCount(clickCount + 1)}
       />
       {clickCount > 0 && (
         <div className="mt-4 text-white">
@@ -60,26 +65,24 @@ export const Sizes = () => (
 // Different colors
 export const Colors = () => (
   <div className="space-y-4 flex flex-col items-center">
-    <Pill 
-      text="Blue (Default)" 
-    />
-    <Pill 
-      text="Green" 
+    <Pill text="Blue (Default)" />
+    <Pill
+      text="Green"
       className="bg-green-600 bg-opacity-20 border-green-800 border-opacity-30
                 hover:bg-green-400 hover:bg-opacity-30
                 hover:shadow-[0_0_15px_rgba(0,255,0,0.1),0_0_20px_rgba(0,255,0,0.1),inset_0_0_20px_rgba(0,255,0,0.1)]"
     />
-    <Pill 
-      text="Red" 
+    <Pill
+      text="Red"
       className="bg-red-600 bg-opacity-20 border-red-800 border-opacity-30
                 hover:bg-red-400 hover:bg-opacity-30
-                hover:shadow-[0_0_15px_rgba(255,0,0,0.1),0_0_20px_rgba(255,0,0,0.1),inset_0_0_20px_rgba(255,0,0,0.1)]" 
+                hover:shadow-[0_0_15px_rgba(255,0,0,0.1),0_0_20px_rgba(255,0,0,0.1),inset_0_0_20px_rgba(255,0,0,0.1)]"
     />
-    <Pill 
-      text="Purple" 
+    <Pill
+      text="Purple"
       className="bg-purple-600 bg-opacity-20 border-purple-800 border-opacity-30
                 hover:bg-purple-400 hover:bg-opacity-30
-                hover:shadow-[0_0_15px_rgba(128,0,128,0.1),0_0_20px_rgba(128,0,128,0.1),inset_0_0_20px_rgba(128,0,128,0.1)]" 
+                hover:shadow-[0_0_15px_rgba(128,0,128,0.1),0_0_20px_rgba(128,0,128,0.1),inset_0_0_20px_rgba(128,0,128,0.1)]"
     />
   </div>
 );

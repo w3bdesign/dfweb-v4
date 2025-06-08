@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-}; 
+};
 
 export default function RootLayout({
   children,

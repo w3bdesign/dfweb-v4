@@ -1,7 +1,7 @@
 import React, { ReactNode, ComponentType } from "react";
 
 /**
- * This mocks the 'motion/react' module for Ladle stories 
+ * This mocks the 'motion/react' module for Ladle stories
  */
 
 // Define types for the motion component props
@@ -17,7 +17,7 @@ type MotionProps = {
 };
 
 const createMotionComponent = (
-  component = "div"
+  component = "div",
 ): ComponentType<MotionProps> => {
   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
     // Extract the className from variants if present
@@ -44,7 +44,7 @@ const createMotionComponent = (
         "data-mock-animate": animate,
         "data-mock-while-in-view": whileInView,
       },
-      children
+      children,
     );
   };
 

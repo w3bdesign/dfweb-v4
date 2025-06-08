@@ -16,10 +16,10 @@ type FieldConfig<T extends FieldValues> = {
   readonly title?: string;
 };
 
-interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
-  readonly formSchema: TSchema;
-  readonly onSubmit: (data: z.infer<TSchema>) => Promise<void>;
-  readonly fields: ReadonlyArray<FieldConfig<z.infer<TSchema>>>;
+interface GenericFormProps<T extends z.ZodRawShape> {
+  readonly formSchema: z.ZodObject<T>;
+  readonly onSubmit: (data: z.infer<z.ZodObject<T>>) => Promise<void>;
+  readonly fields: ReadonlyArray<FieldConfig<z.infer<z.ZodObject<T>>>>;
   readonly submitButtonText: string;
 }
 
@@ -27,17 +27,17 @@ interface GenericFormProps<TSchema extends z.ZodType<FieldValues>> {
  * A generic, reusable form component that can be easily customized and extended.
  * It uses Zod for schema validation and react-hook-form for form handling.
  *
- * @template TSchema - The Zod schema type for form validation.
- * @param {Readonly<GenericFormProps<TSchema>>} props - The props for the GenericForm component.
+ * @template T - The Zod object shape.
+ * @param {Readonly<GenericFormProps<T>>} props - The props for the GenericForm component.
  * @returns {JSX.Element} The rendered form.
  */
-function GenericForm<TSchema extends z.ZodType<FieldValues>>({
+function GenericForm<T extends z.ZodRawShape>({
   formSchema,
   onSubmit,
   fields,
   submitButtonText,
-}: Readonly<GenericFormProps<TSchema>>) {
-  type FormData = z.infer<TSchema>;
+}: Readonly<GenericFormProps<T>>) {
+  type FormData = z.infer<typeof formSchema>;
 
   const {
     register,
@@ -67,7 +67,10 @@ function GenericForm<TSchema extends z.ZodType<FieldValues>>({
               label={field.label}
               htmlFor={field.name}
               register={register}
-              error={errors[field.name]?.message as string | undefined}
+              error={
+                (errors[field.name] as { message?: string })?.message ??
+                undefined
+              }
               isRequired
               type={field.type}
               inputPattern={field.inputPattern}

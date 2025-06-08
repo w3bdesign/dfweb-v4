@@ -30,9 +30,7 @@ export const SubmissionSuccess = () => (
   <div className="bg-slate-800 min-h-screen py-16">
     <KontaktWithMocks simulateError={false} />
     <div className="mt-8 text-center text-gray-400">
-      <p>
-        (Note: Fill in the form and submit to see a success message)
-      </p>
+      <p>(Note: Fill in the form and submit to see a success message)</p>
     </div>
   </div>
 );
@@ -42,9 +40,7 @@ export const SubmissionError = () => (
   <div className="bg-slate-800 min-h-screen py-16">
     <KontaktWithMocks simulateError={true} />
     <div className="mt-8 text-center text-gray-400">
-      <p>
-        (Note: Fill in the form and submit to see an error message)
-      </p>
+      <p>(Note: Fill in the form and submit to see an error message)</p>
     </div>
   </div>
 );

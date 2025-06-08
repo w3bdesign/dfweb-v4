@@ -18,7 +18,7 @@ type StoryProps = {
  */
 const KontaktWithMocks: React.FC<StoryProps> = ({
   simulateError = false,
-  initialResponse = ""
+  initialResponse = "",
 }) => {
   /**
    * Simulated form submission that doesn't make any actual API calls.
@@ -28,7 +28,7 @@ const KontaktWithMocks: React.FC<StoryProps> = ({
     console.log("Story mock: Form submitted with data:", data);
 
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     if (simulateError) {
       return "Feil under sending av skjema"; // Story mock: Simulate error
@@ -38,10 +38,7 @@ const KontaktWithMocks: React.FC<StoryProps> = ({
   };
 
   return (
-    <KontaktContent
-      onSubmit={mockOnSubmit}
-      initialResponse={initialResponse}
-    />
+    <KontaktContent onSubmit={mockOnSubmit} initialResponse={initialResponse} />
   );
 };
 

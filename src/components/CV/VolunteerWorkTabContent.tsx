@@ -12,11 +12,19 @@ interface VolunteerWorkTabContentProps {
   volunteerWork?: VolunteerWork[];
 }
 
-const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({ volunteerWork }) => (
+const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
+  volunteerWork,
+}) => (
   <GenericCVSectionContent<VolunteerWork>
     items={volunteerWork}
-    renderHeaderContent={(vol) => <>{vol.period ?? ""} - {vol.organization ?? ""}</>}
-    renderSubHeaderContent={(vol) => vol.role && <p className="italic">{vol.role}</p>}
+    renderHeaderContent={(vol) => (
+      <>
+        {vol.period ?? ""} - {vol.organization ?? ""}
+      </>
+    )}
+    renderSubHeaderContent={(vol) =>
+      vol.role && <p className="italic">{vol.role}</p>
+    }
   />
 );
 

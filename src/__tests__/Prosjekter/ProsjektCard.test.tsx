@@ -68,7 +68,7 @@ describe("ProsjektCard", () => {
       expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
       expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
       expect(
-        screen.getByText(expectedContent.subdescription)
+        screen.getByText(expectedContent.subdescription),
       ).toBeInTheDocument();
     });
 
@@ -110,12 +110,12 @@ describe("ProsjektCard", () => {
       expect(visitButton).toBeInTheDocument();
       expect(visitButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.visit.href
+        expectedLinks.visit.href,
       );
       expect(githubButton).toBeInTheDocument();
       expect(githubButton.closest("a")).toHaveAttribute(
         "href",
-        expectedLinks.github.href
+        expectedLinks.github.href,
       );
     });
   });

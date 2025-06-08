@@ -89,7 +89,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Initial state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
 
     // Act - Open menu
@@ -97,7 +97,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Open state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true })
+      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
     ).toBeInTheDocument();
 
     // Act - Close menu
@@ -105,7 +105,7 @@ describe("MobileMenu - elementer eksisterer", () => {
 
     // Assert - Closed state
     expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false })
+      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
     ).toBeInTheDocument();
   });
 

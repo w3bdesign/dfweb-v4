@@ -13,7 +13,7 @@ async function fetchProjectsFromSanity(): Promise<Project[]> {
     {},
     {
       next: { revalidate: 3600 },
-    }
+    },
   );
 }
 
