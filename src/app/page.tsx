@@ -11,7 +11,7 @@ const DynamicIndexContent = dynamic(
   () => import("@/components/Index/IndexContent.component"),
   {
     loading: () => <div>Loading content...</div>,
-  }
+  },
 );
 
 export default async function HomePage() {

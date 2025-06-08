@@ -13,4 +13,14 @@ import link from './objects/link'
 import pagecontent from './objects/pagecontent'
 import herocontent from './objects/herocontent'
 
-export const schemaTypes = [project, category, page, cv, navigation, settings, link, pagecontent, herocontent]
+export const schemaTypes = [
+  project,
+  category,
+  page,
+  cv,
+  navigation,
+  settings,
+  link,
+  pagecontent,
+  herocontent,
+]

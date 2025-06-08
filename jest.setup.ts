@@ -70,7 +70,7 @@ beforeEach(async () => {
             "Each test should include:\n" +
             "// Arrange - Set up test data and conditions\n" +
             "// Act - Perform the action being tested\n" +
-            "// Assert - Verify the results"
+            "// Assert - Verify the results",
         );
       }
     } catch (error) {

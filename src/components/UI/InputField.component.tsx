@@ -29,7 +29,7 @@ export interface InputProps<T extends FieldValues> {
 export function createRegisterOptions<T extends FieldValues>(
   isRequired?: boolean,
   inputPattern?: RegExp,
-  title?: string
+  title?: string,
 ): RegisterOptions<T, Path<T>> {
   return {
     required: isRequired ? "Dette feltet er påkrevd" : false,
@@ -63,7 +63,7 @@ function InputField<T extends FieldValues>({
   const registerOptions = createRegisterOptions<T>(
     isRequired,
     inputPattern,
-    title
+    title,
   );
 
   return (
@@ -89,7 +89,8 @@ function InputField<T extends FieldValues>({
         )}
         <label
           htmlFor={htmlFor}
-          className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${ // Removed peer-focus:text-primary
+          className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+            // Removed peer-focus:text-primary
             type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
           }`}
         >

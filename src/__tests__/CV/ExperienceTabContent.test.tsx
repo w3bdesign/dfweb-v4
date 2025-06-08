@@ -18,7 +18,9 @@ describe("ExperienceTabContent", () => {
     render(<ExperienceTabContent experience={mockExperience} />);
 
     // Assert
-    expect(screen.getByText("2022-2024 - Tech Company Inc")).toBeInTheDocument();
+    expect(
+      screen.getByText("2022-2024 - Tech Company Inc"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
   });
 
@@ -37,7 +39,9 @@ describe("ExperienceTabContent", () => {
     render(<ExperienceTabContent experience={mockExperience} />);
 
     // Assert
-    expect(screen.getByText("2022-2024 - Tech Company Inc")).toBeInTheDocument();
+    expect(
+      screen.getByText("2022-2024 - Tech Company Inc"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
   });
 
@@ -56,7 +60,9 @@ describe("ExperienceTabContent", () => {
     render(<ExperienceTabContent experience={mockExperience} />);
 
     // Assert
-    expect(screen.getByText("2022-2024 - Tech Company Inc")).toBeInTheDocument();
+    expect(
+      screen.getByText("2022-2024 - Tech Company Inc"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
   });
 

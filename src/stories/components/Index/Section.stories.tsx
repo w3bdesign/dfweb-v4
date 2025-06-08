@@ -11,8 +11,8 @@ export default {
   component: Section,
 } as Meta;
 
-const mockPortableText = pagecontent[0].content[0].text as Pagecontent['text'];
-const longContent = pagecontent[0].content[1].text as Pagecontent['text'];
+const mockPortableText = pagecontent[0].content[0].text as Pagecontent["text"];
+const longContent = pagecontent[0].content[1].text as Pagecontent["text"];
 
 // Default section
 export const Default = () => (

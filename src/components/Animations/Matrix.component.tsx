@@ -68,14 +68,14 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize]
+    [tileSize],
   );
 
   const tick = useCallback(
     (
       timestamp: number,
       ctx: CanvasRenderingContext2D,
-      canvas: HTMLCanvasElement
+      canvas: HTMLCanvasElement,
     ) => {
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = timestamp;
@@ -103,7 +103,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet]
+    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet],
   );
 
   useEffect(() => {
