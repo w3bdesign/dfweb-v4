@@ -1,13 +1,13 @@
 "use client";
 
-import emailjs from "@emailjs/browser";
 import React, { useState } from "react";
+import { z } from "zod";
+import emailjs from "@emailjs/browser";
 
 import PageHeader from "@/components/UI/PageHeader.component";
 import GenericForm from "@/components/UI/GenericForm.component";
 
 import { formSchema, formFields, FormData } from "./config/formConfig";
-import { z } from "zod";
 
 type KontaktFormShape = {
   navn: z.ZodString;
