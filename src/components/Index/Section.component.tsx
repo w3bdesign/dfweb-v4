@@ -21,12 +21,17 @@ interface SectionProps extends Pagecontent {
  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
-const Section = ({ text, title, variant = "default", showDebugButton = true }: SectionProps) => {
+const Section = ({
+  text,
+  title,
+  variant = "default",
+  showDebugButton = true,
+}: SectionProps) => {
   const [shouldError, setShouldError] = useState(false);
 
   if (!title || !text) {
     console.error(
-      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`
+      `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
     );
     return null;
   }

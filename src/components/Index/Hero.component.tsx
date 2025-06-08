@@ -20,7 +20,7 @@ const ReactMatrixAnimation = dynamic(
         <RotatingLoader />
       </div>
     ),
-  }
+  },
 );
 
 /**

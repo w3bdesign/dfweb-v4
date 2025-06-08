@@ -68,7 +68,7 @@ describe("Section Component", () => {
 
     // Act - Perform the action being tested
     const { container } = render(
-      <Section _type="pagecontent" title="" text={[]} />
+      <Section _type="pagecontent" title="" text={[]} />,
     );
 
     // Assert - Verify the results
@@ -88,7 +88,7 @@ describe("Section Component", () => {
     // Assert - Verify the results
     expect(errorButton).toBeInTheDocument();
     expect(() => fireEvent.click(errorButton)).toThrow(
-      "En uventet feil har oppstått"
+      "En uventet feil har oppstått",
     );
   });
 

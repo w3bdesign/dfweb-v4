@@ -5,32 +5,44 @@
 import React from "react";
 
 // Create mock components that just render the standard HTML elements
-export const MotionDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
+export const MotionDiv: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   children,
-  ...props 
+  ...props
 }) => {
-  return React.createElement("div", { 
-    ...props,
-    "data-framer-mock": "MotionDiv" 
-  }, children);
+  return React.createElement(
+    "div",
+    {
+      ...props,
+      "data-framer-mock": "MotionDiv",
+    },
+    children,
+  );
 };
 
-export const MotionLi: React.FC<React.HTMLAttributes<HTMLLIElement>> = ({ 
+export const MotionLi: React.FC<React.HTMLAttributes<HTMLLIElement>> = ({
   children,
-  ...props 
+  ...props
 }) => {
-  return React.createElement("li", { 
-    ...props,
-    "data-framer-mock": "MotionLi" 
-  }, children);
+  return React.createElement(
+    "li",
+    {
+      ...props,
+      "data-framer-mock": "MotionLi",
+    },
+    children,
+  );
 };
 
-export const MotionUl: React.FC<React.HTMLAttributes<HTMLUListElement>> = ({ 
+export const MotionUl: React.FC<React.HTMLAttributes<HTMLUListElement>> = ({
   children,
-  ...props 
+  ...props
 }) => {
-  return React.createElement("ul", { 
-    ...props,
-    "data-framer-mock": "MotionUl" 
-  }, children);
+  return React.createElement(
+    "ul",
+    {
+      ...props,
+      "data-framer-mock": "MotionUl",
+    },
+    children,
+  );
 };

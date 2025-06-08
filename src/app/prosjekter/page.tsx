@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 async function ProjectList() {
   const projects = await getProjects();
-  
+
   return (
     <div className="container mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">

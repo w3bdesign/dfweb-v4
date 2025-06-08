@@ -59,7 +59,9 @@ export const WithForm = () => (
       <h2 className="text-white text-xl mb-4">Contact Form</h2>
       <form className="space-y-4">
         <div>
-          <label htmlFor="storyFormName" className="block text-gray-300 mb-1">Name</label>
+          <label htmlFor="storyFormName" className="block text-gray-300 mb-1">
+            Name
+          </label>
           <input
             id="storyFormName"
             type="text"
@@ -68,7 +70,9 @@ export const WithForm = () => (
           />
         </div>
         <div>
-          <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">Email</label>
+          <label htmlFor="storyFormEmail" className="block text-gray-300 mb-1">
+            Email
+          </label>
           <input
             id="storyFormEmail"
             type="email"
@@ -77,7 +81,12 @@ export const WithForm = () => (
           />
         </div>
         <div>
-          <label htmlFor="storyFormMessage" className="block text-gray-300 mb-1">Message</label>
+          <label
+            htmlFor="storyFormMessage"
+            className="block text-gray-300 mb-1"
+          >
+            Message
+          </label>
           <textarea
             id="storyFormMessage"
             className="w-full p-2 rounded bg-slate-700 text-white border border-slate-600"

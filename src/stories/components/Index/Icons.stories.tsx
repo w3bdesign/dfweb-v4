@@ -34,10 +34,11 @@ export const NarrowContainer = () => (
 
 // Icons with matrix-like background
 export const WithMatrixBackground = () => (
-  <div 
-    className="p-8 rounded-lg relative overflow-hidden" 
-    style={{ 
-      background: "linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://raw.githubusercontent.com/kbrsh/moon/gh-pages/img/bg-1.png')"
+  <div
+    className="p-8 rounded-lg relative overflow-hidden"
+    style={{
+      background:
+        "linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://raw.githubusercontent.com/kbrsh/moon/gh-pages/img/bg-1.png')",
     }}
   >
     <Icons />

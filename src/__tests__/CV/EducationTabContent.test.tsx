@@ -18,8 +18,12 @@ describe("EducationTabContent", () => {
     render(<EducationTabContent education={mockEducation} />);
 
     // Assert
-    expect(screen.getByText("2020-2024 - University of Technology")).toBeInTheDocument();
-    expect(screen.getByText("Bachelor of Computer Science")).toBeInTheDocument();
+    expect(
+      screen.getByText("2020-2024 - University of Technology"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Bachelor of Computer Science"),
+    ).toBeInTheDocument();
   });
 
   it("renders education items without degree (conditional branch)", () => {
@@ -37,8 +41,12 @@ describe("EducationTabContent", () => {
     render(<EducationTabContent education={mockEducation} />);
 
     // Assert
-    expect(screen.getByText("2020-2024 - University of Technology")).toBeInTheDocument();
-    expect(screen.queryByText("Bachelor of Computer Science")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("2020-2024 - University of Technology"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Bachelor of Computer Science"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders education items with empty degree (conditional branch)", () => {
@@ -56,8 +64,12 @@ describe("EducationTabContent", () => {
     render(<EducationTabContent education={mockEducation} />);
 
     // Assert
-    expect(screen.getByText("2020-2024 - University of Technology")).toBeInTheDocument();
-    expect(screen.queryByText("Bachelor of Computer Science")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("2020-2024 - University of Technology"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Bachelor of Computer Science"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders with undefined education", () => {
@@ -65,7 +77,9 @@ describe("EducationTabContent", () => {
     render(<EducationTabContent />);
 
     // Assert - Should not crash and render empty content
-    expect(screen.queryByText("University of Technology")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("University of Technology"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders with empty education array", () => {
@@ -73,6 +87,8 @@ describe("EducationTabContent", () => {
     render(<EducationTabContent education={[]} />);
 
     // Assert - Should not crash and render empty content
-    expect(screen.queryByText("University of Technology")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("University of Technology"),
+    ).not.toBeInTheDocument();
   });
 });

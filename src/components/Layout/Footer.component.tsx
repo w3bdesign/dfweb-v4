@@ -5,7 +5,7 @@ import { BiCopyright } from "react-icons/bi";
 
 import type { Settings } from "@/types/sanity.types";
 
-type FooterProps = Pick<Settings, 'footerCopyrightText'>;
+type FooterProps = Pick<Settings, "footerCopyrightText">;
 
 /**
  * Renders the footer for the application
