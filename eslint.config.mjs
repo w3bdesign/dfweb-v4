@@ -1,4 +1,5 @@
 import globals from "globals";
+import eslintJs from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import tsEslint from "@typescript-eslint/eslint-plugin";
 import react from "eslint-plugin-react";
@@ -86,6 +87,7 @@ export default [
       },
     },
     rules: {
+      ...eslintJs.configs.recommended.rules,
       ...tsEslint.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
