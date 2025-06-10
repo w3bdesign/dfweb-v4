@@ -47,9 +47,13 @@ describe("SkipLink", () => {
 
       // Act
       render(<SkipLink />);
-      const skipLinkContainer = screen.getByText("Hopp til hovedinnhold").parentElement;
-
-      // Assert
+      
+      // Assert - Check that the skip link has the expected accessibility structure
+      const skipLink = screen.getByRole("link", { name: "Hopp til hovedinnhold" });
+      expect(skipLink).toBeInTheDocument();
+      
+      // Test that the container wrapper has the expected CSS classes by finding it through the link
+      const skipLinkContainer = skipLink.closest("div");
       expectedClasses.forEach((className) => {
         expect(skipLinkContainer).toHaveClass(className);
       });
