@@ -5,16 +5,13 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Hero from "@/components/Index/Hero.component";
-import heromock from "../../__mocks__/hero.json";
-
-interface THero {
-  text: string;
-}
+import type { Herocontent } from "@/types/sanity.types";
+import heromock from "./fixtures/hero.json";
 
 describe("Hero", () => {
   it("Hero loads and displays content from mock", () => {
     // Arrange
-    const mockContent = heromock.content;
+    const mockContent = heromock.content as ({ _key: string } & Herocontent)[];
 
     // Act
     render(<Hero content={mockContent} />);
@@ -26,7 +23,7 @@ describe("Hero", () => {
 
   it("renders default text when content array is empty", () => {
     // Arrange
-    const emptyContent: THero[] = [];
+    const emptyContent: ({ _key: string } & Herocontent)[] = [];
     const expectedText = "Hei!";
 
     // Act
