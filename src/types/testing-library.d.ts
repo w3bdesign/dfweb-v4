@@ -34,6 +34,7 @@ declare global {
       toHaveBeenCalledTimes(n: number): Assertion;
       toBe(expected: unknown): Assertion;
       toEqual(expected: unknown): Assertion;
+      toStrictEqual(expected: unknown): Assertion;
       toBeNull(): Assertion;
       toBeDefined(): Assertion;
       toBeGreaterThan(n: number): Assertion;
