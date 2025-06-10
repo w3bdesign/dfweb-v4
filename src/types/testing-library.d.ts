@@ -1,17 +1,19 @@
 /// <reference types="jest" />
 /// <reference types="@testing-library/jest-dom" />
 
-// Extend Jest matchers
-declare namespace jest {
-  interface Matchers<R> {
-    toBeInTheDocument(): R;
-    toHaveTextContent(text: string): R;
-    toBeVisible(): R;
-    toBeDisabled(): R;
-    toBeEnabled(): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toHaveClass(className: string): R;
-    toHaveStyle(css: React.CSSProperties): R;
+// Extend Jest matchers - using module augmentation instead of namespace declaration
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+      toHaveTextContent(text: string): R;
+      toBeVisible(): R;
+      toBeDisabled(): R;
+      toBeEnabled(): R;
+      toHaveAttribute(attr: string, value?: string): R;
+      toHaveClass(className: string): R;
+      toHaveStyle(css: React.CSSProperties): R;
+    }
   }
 }
 
