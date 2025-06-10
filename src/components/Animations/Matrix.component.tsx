@@ -103,7 +103,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet],
+    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet, frameInterval],
   );
 
   useEffect(() => {
