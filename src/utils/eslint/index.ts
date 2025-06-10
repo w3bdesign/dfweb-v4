@@ -44,7 +44,7 @@ const hasAAAComments = (
   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
   testFn: TSESTree.ArrowFunctionExpression,
 ): boolean => {
-  const comments = context.getSourceCode().getCommentsBefore(testFn.body);
+  const comments = context.getSourceCode().getCommentsInside(testFn.body);
   const patterns = ["Arrange", "Act", "Assert"];
 
   return comments.some((comment: TSESTree.Comment) =>
