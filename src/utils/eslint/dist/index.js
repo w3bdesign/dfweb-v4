@@ -1,13 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("@typescript-eslint/utils");
+import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
 const isTestFunction = (node) => {
     const testNames = ["it", "test"];
-    return (node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
+    return (node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
         testNames.includes(node.callee.name));
 };
 const isArrowFunction = (node) => {
-    return (node === null || node === void 0 ? void 0 : node.type) === utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+    return (node === null || node === void 0 ? void 0 : node.type) === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
 };
 const validateAAAPattern = (context, node) => {
     const testFn = node.arguments[1];
@@ -30,7 +28,7 @@ const hasAAAComments = (context, testFn) => {
     const patterns = ["Arrange", "Act", "Assert"];
     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
 };
-const createRule = utils_1.ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
+const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
 const rule = createRule({
     name: "arrange-act-assert",
     meta: {
