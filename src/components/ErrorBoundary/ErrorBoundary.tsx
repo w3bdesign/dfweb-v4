@@ -5,6 +5,7 @@ import {
   ErrorBoundary as ReactErrorBoundary,
   FallbackProps,
 } from "react-error-boundary";
+import { useRouter } from "next/router";
 import Fallback from "./Fallback.component";
 
 interface ErrorBoundaryProps {
@@ -25,12 +26,13 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
   children,
   compact = false,
 }) => {
+  const router = useRouter();
   const handleError = (error: Error, info: ErrorInfo) => {
     console.error("Uventet feil i Matrix:", error, info);
   };
 
   const ErrorFallback = (props: FallbackProps) => {
-    return <Fallback {...props} compact={compact} />;
+    return <Fallback {...props} compact={compact} router={router} />;
   };
 
   return (
