@@ -80,7 +80,7 @@ const rule = createRule<Options, MessageIds>({
   },
 });
 
-export default {
+module.exports = {
   configs: {
     recommended: {
       plugins: ["test-rules"],
