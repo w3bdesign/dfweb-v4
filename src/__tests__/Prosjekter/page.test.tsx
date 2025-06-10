@@ -156,7 +156,8 @@ describe("ProsjekterPage", () => {
 
   it("uses Suspense boundary for loading state", async () => {
     // Arrange - Set up test data and conditions
-    mockGetProjects.mockImplementation(() => createDelayedPromise([], 100));
+    const delayedPromise = createDelayedPromise([], 100);
+    mockGetProjects.mockImplementation(() => delayedPromise);
 
     // Act - Perform the action being tested
     render(<TestProsjekterPage />);
