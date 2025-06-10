@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("@typescript-eslint/utils");
