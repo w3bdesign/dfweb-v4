@@ -139,12 +139,8 @@ describe("ProsjekterPage", () => {
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
 
     // Wait for projects to load and render
-    await waitFor(async () => {
-      const projectCards = await screen.findAllByTestId("project-card");
-      expect(projectCards).toHaveLength(2);
-    });
-
-    const projectCards = screen.getAllByTestId("project-card");
+    const projectCards = await screen.findAllByTestId("project-card");
+    expect(projectCards).toHaveLength(2);
     expect(projectCards[0]).toHaveTextContent("Test Project 1");
     expect(projectCards[1]).toHaveTextContent("Test Project 2");
 
