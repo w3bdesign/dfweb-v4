@@ -26,7 +26,7 @@ const validateTestCase = (context, node) => {
     validateAAAPattern(context, node);
 };
 const hasAAAComments = (context, testFn) => {
-    const comments = context.getSourceCode().getCommentsBefore(testFn.body);
+    const comments = context.getSourceCode().getCommentsInside(testFn.body);
     const patterns = ["Arrange", "Act", "Assert"];
     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
 };
