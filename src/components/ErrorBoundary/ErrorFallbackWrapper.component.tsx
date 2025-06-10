@@ -1,9 +1,11 @@
 import React from "react";
+import { NextRouter } from "next/router";
 import ErrorFallback from "./ErrorFallback.component";
 
 interface ErrorFallbackWrapperProps {
   error: Error;
   compact?: boolean;
+  router?: NextRouter;
 }
 
 /**
@@ -16,6 +18,7 @@ interface ErrorFallbackWrapperProps {
 const ErrorFallbackWrapper: React.FC<ErrorFallbackWrapperProps> = ({
   error,
   compact,
-}) => <ErrorFallback error={error} compact={compact} />;
+  router,
+}) => <ErrorFallback error={error} compact={compact} router={router} />;
 
 export default ErrorFallbackWrapper;
