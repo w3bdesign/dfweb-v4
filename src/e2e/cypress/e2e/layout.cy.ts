@@ -24,5 +24,3 @@ describe("Layout", () => {
     });
   });
 });
-
-export {};
