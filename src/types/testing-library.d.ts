@@ -1,4 +1,3 @@
-/// <reference types="jest" />
 /// <reference types="@testing-library/jest-dom" />
 
 // Extend Jest matchers
@@ -49,7 +48,7 @@ declare global {
     }
 
     interface ExpectStatic {
-      any(constructor: Function): unknown;
+      any<T>(classType: new (...args: unknown[]) => T): unknown;
     }
   }
 
