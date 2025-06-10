@@ -22,9 +22,9 @@ export const useRouter = () => ({
 
 export const useSearchParams = () => {
   return {
-    get: (key: string) => null,
-    getAll: (key: string) => [],
-    has: (key: string) => false,
+    get: () => null,
+    getAll: () => [],
+    has: () => false,
     forEach: () => {},
     entries: () => [],
     keys: () => [],
