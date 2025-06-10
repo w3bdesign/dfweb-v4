@@ -5,12 +5,16 @@ import type { Pagecontent } from "@/types/sanity.types";
 
 import "@/app/globals.css";
 
+interface PageContentWithKey extends Pagecontent {
+  _key: string;
+}
+
 export default {
   title: "Index/IndexContent",
   component: IndexContent,
 } as Meta;
 
-const mockPageContentSingle: ({ _key: string } & Pagecontent)[] = [
+const mockPageContentSingle: PageContentWithKey[] = [
   {
     _key: "1",
     _type: "pagecontent",
@@ -51,7 +55,7 @@ const mockPageContentSingle: ({ _key: string } & Pagecontent)[] = [
   },
 ];
 
-const mockPageContentMultiple: ({ _key: string } & Pagecontent)[] = [
+const mockPageContentMultiple: PageContentWithKey[] = [
   {
     _key: "1",
     _type: "pagecontent",
@@ -153,7 +157,7 @@ const mockPageContentMultiple: ({ _key: string } & Pagecontent)[] = [
   },
 ];
 
-const mockPageContentMany: ({ _key: string } & Pagecontent)[] = [
+const mockPageContentMany: PageContentWithKey[] = [
   ...mockPageContentMultiple,
   {
     _key: "4",
