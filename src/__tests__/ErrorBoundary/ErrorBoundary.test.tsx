@@ -1,14 +1,22 @@
 import React from "react";
 import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { useRouter } from "next/router";
 
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+
+jest.mock("next/router", () => ({
+  useRouter: jest.fn(),
+}));
 
 describe("ErrorBoundary", () => {
   let consoleErrorSpy: jest.SpyInstance;
   const errorMock = new Error("Dette er en testfeil");
 
   beforeAll(() => {
+    (useRouter as jest.Mock).mockReturnValue({
+      reload: jest.fn(),
+    });
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
