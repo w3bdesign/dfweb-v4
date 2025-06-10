@@ -2,6 +2,9 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  new Promise((resolve) => setTimeout(() => resolve(data), delay));
+
 // Define the project type
 interface ProjectType {
   id: string;
@@ -39,14 +42,28 @@ jest.mock("@/lib/sanity/client", () => ({
 }));
 
 // Mock components
-const MockPageHeader = ({ children }: { children: React.ReactNode }) => <h1>{children}</h1>;
-const MockProsjektCard = (props: { name: string }) => <div data-testid="project-card">{props.name}</div>;
-const MockRotatingLoader = () => <div data-testid="rotating-loader">Loading...</div>;
-const MockRootLayout = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+  <h1>{children}</h1>
+);
+const MockProsjektCard = (props: { name: string }) => (
+  <div data-testid="project-card">{props.name}</div>
+);
+const MockRotatingLoader = () => (
+  <div data-testid="rotating-loader">Loading...</div>
+);
+const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
+  <div>{children}</div>
+);
 
 jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
-jest.mock("@/components/Prosjekter/ProsjektCard.component", () => MockProsjektCard);
-jest.mock("@/components/Animations/RotatingLoader.component", () => MockRotatingLoader);
+jest.mock(
+  "@/components/Prosjekter/ProsjektCard.component",
+  () => MockProsjektCard
+);
+jest.mock(
+  "@/components/Animations/RotatingLoader.component",
+  () => MockRotatingLoader
+);
 jest.mock("@/app/RootLayout", () => MockRootLayout);
 
 // Create a test component that simulates the page behavior without async server components
@@ -63,7 +80,11 @@ function TestProsjekterPage() {
 
   return (
     <MockRootLayout>
-      <main role="main" aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+      <main
+        role="main"
+        aria-label="Innhold portefølje"
+        className="mt-32 bg-graybg"
+      >
         <MockPageHeader>Prosjekter</MockPageHeader>
         {loading ? (
           <MockRotatingLoader />
@@ -108,7 +129,7 @@ describe("ProsjekterPage", () => {
         urlgithub: [],
       },
     ];
-    
+
     mockGetProjects.mockResolvedValue(mockProjects);
 
     // Act - Perform the action being tested
@@ -116,17 +137,17 @@ describe("ProsjekterPage", () => {
 
     // Assert - Verify the results
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-    
+
     // Wait for projects to load and render
     await waitFor(async () => {
       const projectCards = await screen.findAllByTestId("project-card");
       expect(projectCards).toHaveLength(2);
     });
-    
+
     const projectCards = screen.getAllByTestId("project-card");
     expect(projectCards[0]).toHaveTextContent("Test Project 1");
     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-    
+
     // Test that projects are rendered within the main content area
     const main = screen.getByRole("main");
     expect(main).toContainElement(projectCards[0]);
@@ -135,9 +156,7 @@ describe("ProsjekterPage", () => {
 
   it("uses Suspense boundary for loading state", async () => {
     // Arrange - Set up test data and conditions
-    mockGetProjects.mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve([]), 100))
-    );
+    mockGetProjects.mockImplementation(() => createDelayedPromise([], 100));
 
     // Act - Perform the action being tested
     render(<TestProsjekterPage />);
@@ -145,7 +164,7 @@ describe("ProsjekterPage", () => {
     // Assert - Verify the results
     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-    
+
     const main = screen.getByRole("main");
     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
     expect(main).toContainElement(screen.getByText("Prosjekter"));
