@@ -32,8 +32,8 @@ describe("ProsjekterPage", () => {
     jest.clearAllMocks();
   });
 
+  // Arrange - Set up test data and conditions
   it("renders projects from server component", async () => {
-    // Arrange - Set up test data and conditions
     const mockProjects = [
       {
         id: "1",
@@ -69,8 +69,8 @@ describe("ProsjekterPage", () => {
     expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
   });
 
+  // Arrange - Set up test data and conditions
   it("uses Suspense boundary for loading state", async () => {
-    // Arrange - Set up test data and conditions
     (getProjects as jest.Mock).mockResolvedValue([]);
 
     // Act - Perform the action being tested
