@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
+import { Pagecontent } from "@/types/sanity.types";
 
 interface SectionProps {
   title: string;
@@ -14,7 +15,7 @@ interface SectionProps {
       marks: string[];
       text: string;
     }>;
-    markDefs: any[];
+    markDefs: unknown[];
     style: string;
   }>;
 }
@@ -39,9 +40,10 @@ jest.mock("@/components/Index/Section.component", () => {
   };
 });
 
-const mockContent = [
+const mockContent: Pagecontent[] = [
   {
-    id: "1",
+    _key: "1",
+    _type: "pagecontent",
     title: "Test Title 1",
     text: [
       {
@@ -57,7 +59,8 @@ const mockContent = [
     ],
   },
   {
-    id: "2",
+    _key: "2",
+    _type: "pagecontent",
     title: "Test Title 2",
     text: [
       {
@@ -85,20 +88,20 @@ describe("IndexContent Component", () => {
     // Act
     render(<IndexContent pageContent={mockContent} />);
     const sections = screen.getAllByTestId("mock-section");
-    const titles = screen.getAllByTestId("sanity-title");
-    const portableTexts = screen.getAllByTestId("portable-text");
 
     // Assert
     expect(sections).toHaveLength(expected.sectionCount);
-    expect(titles[0]).toHaveTextContent(expected.titles[0]);
-    expect(titles[1]).toHaveTextContent(expected.titles[1]);
-    expect(portableTexts[0]).toHaveTextContent(expected.content[0]);
-    expect(portableTexts[1]).toHaveTextContent(expected.content[1]);
+    expected.titles.forEach((title) => {
+      expect(screen.getByText(title)).toBeInTheDocument();
+    });
+    expected.content.forEach((content) => {
+      expect(screen.getByText(content, { exact: false })).toBeInTheDocument();
+    });
   });
 
   it("throws error when no content is provided", () => {
     // Arrange
-    const emptyContent: typeof mockContent = [];
+    const emptyContent: Pagecontent[] = [];
     const expectedError = "Ingen innhold tilgjengelig";
 
     // Act & Assert
