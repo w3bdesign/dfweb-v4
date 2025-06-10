@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { useRouter } from "next/router";
 
 import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
 
@@ -11,16 +12,12 @@ jest.mock("@/components/Animations/Matrix.component", () => {
   };
 });
 
+jest.mock("next/router", () => ({
+  useRouter: jest.fn(),
+}));
+
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
-
-  beforeEach(() => {
-    // Mock window.location.reload
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { reload: jest.fn() },
-    });
-  });
 
   it("renders error message and reload button", () => {
     // Arrange
@@ -111,7 +108,11 @@ describe("ErrorFallback", () => {
 
   it("reloads the page when reload button is clicked in compact mode", () => {
     // Arrange
-    render(<ErrorFallback error={mockError} compact={true} />);
+    const reload = jest.fn();
+    const router = { reload };
+    render(
+      <ErrorFallback error={mockError} compact={true} router={router as any} />,
+    );
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
     });
@@ -120,12 +121,16 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("reloads the page when reload button is clicked in full mode", () => {
     // Arrange
-    render(<ErrorFallback error={mockError} compact={false} />);
+    const reload = jest.fn();
+    const router = { reload };
+    render(
+      <ErrorFallback error={mockError} compact={false} router={router as any} />,
+    );
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
     });
@@ -134,6 +139,6 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
