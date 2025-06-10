@@ -11,7 +11,7 @@ describe("Prosjekter Page", () => {
 
   it("should load the prosjekter page", () => {
     cy.url().should("include", "/prosjekter");
-    cy.get("h1").should("contain", "Prosjekter"); // Assumption: there is an h1 element with the text 'Prosjekter' on the page
+    cy.get("h1").should("contain", "Prosjekter");
   });
 
   it("should display project cards", () => {
