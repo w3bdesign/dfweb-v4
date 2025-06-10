@@ -2,6 +2,17 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+// Define the project type
+interface ProjectType {
+  id: string;
+  name: string;
+  description: string;
+  subdescription: string;
+  projectimage: { asset: { _ref: string } };
+  urlwww: unknown[];
+  urlgithub: unknown[];
+}
+
 // Mock the actions before importing the page component
 const mockGetProjects = jest.fn();
 const mockPreloadProjects = jest.fn();
@@ -42,11 +53,11 @@ jest.mock("@/app/RootLayout", () => MockRootLayout);
 
 // Create a test component that simulates the page behavior without async server components
 function TestProsjekterPage() {
-  const [projects, setProjects] = React.useState<any[]>([]);
+  const [projects, setProjects] = React.useState<ProjectType[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    mockGetProjects().then((data: any) => {
+    mockGetProjects().then((data: ProjectType[]) => {
       setProjects(data);
       setLoading(false);
     });
@@ -112,13 +123,14 @@ describe("ProsjekterPage", () => {
     await waitFor(async () => {
       const projectCards = await screen.findAllByTestId("project-card");
       expect(projectCards).toHaveLength(2);
-      expect(projectCards[0]).toHaveTextContent("Test Project 1");
-      expect(projectCards[1]).toHaveTextContent("Test Project 2");
     });
+    
+    const projectCards = screen.getAllByTestId("project-card");
+    expect(projectCards[0]).toHaveTextContent("Test Project 1");
+    expect(projectCards[1]).toHaveTextContent("Test Project 2");
     
     // Test that projects are rendered within the main content area
     const main = screen.getByRole("main");
-    const projectCards = screen.getAllByTestId("project-card");
     expect(main).toContainElement(projectCards[0]);
     expect(main).toContainElement(projectCards[1]);
   });
