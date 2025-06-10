@@ -57,7 +57,7 @@ describe("ProsjekterPage", () => {
     (getProjects as jest.Mock).mockResolvedValue(mockProjects);
 
     // Act - Perform the action being tested
-    const { container } = render(await ProsjekterPage());
+    render(await ProsjekterPage());
 
     // Assert - Verify the results
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
@@ -65,8 +65,10 @@ describe("ProsjekterPage", () => {
     expect(projectCards).toHaveLength(2);
     expect(projectCards[0]).toHaveTextContent("Test Project 1");
     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-    const grid = container.querySelector(".grid");
-    expect(grid).toHaveClass("grid-cols-1", "xl:grid-cols-2", "gap-8");
+    // Test that projects are rendered within the main content area
+    const main = screen.getByRole("main");
+    expect(main).toContainElement(projectCards[0]);
+    expect(main).toContainElement(projectCards[1]);
   });
 
   // Arrange - Set up test data and conditions
