@@ -49,7 +49,7 @@ describe("Matrix Renderer", () => {
 
   it("creates a renderer with the provided configuration", () => {
     // Act
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -57,12 +57,12 @@ describe("Matrix Renderer", () => {
     });
 
     // Assert
-    expect(typeof renderer.draw).toBe("function");
+    expect(typeof view.draw).toBe("function");
   });
 
   it("draws background with correct settings", () => {
     // Arrange
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -71,7 +71,7 @@ describe("Matrix Renderer", () => {
     const expectedFont = "8px monospace";
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     // The fillStyle should be set to the font color after drawing is complete
@@ -85,29 +85,41 @@ describe("Matrix Renderer", () => {
 
   it("draws columns with characters", () => {
     // Arrange
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
       ...defaultConfig,
     });
-    const mockStackCounter = columns[0].stackCounter;
-    const mockStackHeight = columns[0].stackHeight;
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     expect(mockCtx.fillText).toHaveBeenCalled();
-    if (mockStackCounter === Math.floor(mockStackHeight) - 1) {
-      expect(mockCtx.save).toHaveBeenCalled();
-      expect(mockCtx.restore).toHaveBeenCalled();
-    }
+  });
+
+  it("applies glow effect when drawing the last character in stack", () => {
+    // Arrange
+    columns[0].stackCounter = columns[0].stackHeight - 1;
+    const view = createMatrixRenderer({
+      ctx: mockCtx,
+      canvas: mockCanvas,
+      columns,
+      ...defaultConfig,
+    });
+
+    // Act
+    view.draw();
+
+    // Assert
+    expect(mockCtx.save).toHaveBeenCalled();
+    expect(mockCtx.restore).toHaveBeenCalled();
   });
 
   it("updates column state correctly", () => {
     // Arrange
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -116,7 +128,7 @@ describe("Matrix Renderer", () => {
     const originalStackCounter = columns[0].stackCounter;
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
@@ -125,7 +137,7 @@ describe("Matrix Renderer", () => {
   it("resets column when reaching stack height", () => {
     // Arrange
     columns[0].stackCounter = columns[0].stackHeight - 1;
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -134,7 +146,7 @@ describe("Matrix Renderer", () => {
     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     expect(columns[0].stackCounter).toBe(0);
@@ -144,7 +156,7 @@ describe("Matrix Renderer", () => {
   it("applies glow effect to the last character", () => {
     // Arrange
     columns[0].stackCounter = columns[0].stackHeight - 1;
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -152,7 +164,7 @@ describe("Matrix Renderer", () => {
     });
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     expect(mockCtx.save).toHaveBeenCalled();
@@ -164,7 +176,7 @@ describe("Matrix Renderer", () => {
   it("skips drawing for columns with negative stack counter", () => {
     // Arrange
     columns[0].stackCounter = -1;
-    const renderer = createMatrixRenderer({
+    const view = createMatrixRenderer({
       ctx: mockCtx,
       canvas: mockCanvas,
       columns,
@@ -172,7 +184,7 @@ describe("Matrix Renderer", () => {
     });
 
     // Act
-    renderer.draw();
+    view.draw();
 
     // Assert
     expect(mockCtx.fillText).not.toHaveBeenCalled();
