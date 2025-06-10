@@ -40,7 +40,7 @@ HTMLCanvasElement.prototype.getContext = function (contextId: string) {
   }
 } as typeof HTMLCanvasElement.prototype.getContext;
 
-global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
+jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb) => setTimeout(cb, 0));
 
 describe("ReactMatrixAnimation", () => {
   beforeEach(() => {
@@ -95,7 +95,7 @@ describe("ReactMatrixAnimation", () => {
   describe("validation", () => {
     beforeEach(() => {
       // Arrange - Suppress console.error for validation tests
-      console.error = jest.fn();
+      jest.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     it("throws error for invalid background color", () => {
