@@ -75,9 +75,7 @@ describe("ErrorFallback", () => {
     render(<ErrorFallback error={mockError} compact={true} />);
 
     // Assert
-    const container = screen
-      .getByTestId("matrix-animation")
-      .closest(".bg-gray-900");
+    const container = screen.getByTestId("error-fallback-container");
     expect(container).toHaveClass("bg-gray-900");
     expect(container).toHaveClass("p-4");
     expect(container).toHaveClass("rounded-lg");
@@ -103,7 +101,7 @@ describe("ErrorFallback", () => {
     render(<ErrorFallback error={mockError} compact={false} />);
 
     // Assert
-    const container = screen.getByTestId("matrix-animation").parentElement;
+    const container = screen.getByTestId("error-fallback-container");
     expect(container).toHaveClass("absolute", "w-full", "h-full");
     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
