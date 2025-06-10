@@ -25,7 +25,7 @@ const KontaktWithMocks: React.FC<StoryProps> = ({
    * It returns a promise that resolves to a message string, which KontaktContent will use.
    */
   const mockOnSubmit = async (data: FormData): Promise<string> => {
-    console.log("Story mock: Form submitted with data:", data);
+    console.warn("Story mock: Form submitted with data:", data);
 
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 500));
