@@ -1,11 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+import React from "react";
 
 // Mock framer-motion
 jest.mock("motion/react", () => ({
   motion: {
-    div: ({ children, className, "data-testid": testId }: any) => (
+    div: ({
+      children,
+      className,
+      "data-testid": testId,
+    }: {
+      children: React.ReactNode;
+      className: string;
+      "data-testid": string;
+    }) => (
       <div className={className} data-testid={testId}>
         {children}
       </div>
