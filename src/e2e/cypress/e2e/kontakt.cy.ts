@@ -23,5 +23,3 @@ describe("Kontakt", () => {
     checkAccessibility(5000);
   });
 });
-
-export {};
