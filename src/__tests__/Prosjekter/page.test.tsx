@@ -23,21 +23,19 @@ jest.mock("@/app/prosjekter/actions", () => ({
 }));
 
 // Mock the sanity client
+const mockUrlBuilder = {
+  width: jest.fn().mockReturnThis(),
+  fit: jest.fn().mockReturnThis(),
+  quality: jest.fn().mockReturnThis(),
+  auto: jest.fn().mockReturnThis(),
+  url: jest.fn().mockReturnValue("mock-url"),
+};
+
 jest.mock("@/lib/sanity/client", () => ({
   client: {
     fetch: jest.fn(),
   },
-  urlFor: jest.fn(() => ({
-    width: jest.fn(() => ({
-      fit: jest.fn(() => ({
-        quality: jest.fn(() => ({
-          auto: jest.fn(() => ({
-            url: jest.fn(() => "mock-url"),
-          })),
-        })),
-      })),
-    })),
-  })),
+  urlFor: jest.fn(() => mockUrlBuilder),
 }));
 
 // Mock components
