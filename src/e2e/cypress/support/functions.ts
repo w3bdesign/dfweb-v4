@@ -17,7 +17,7 @@ export function terminalLog(violations: Result[]) {
     }),
   );
   cy.task("table", violationData);
-  console.table(violationData);
+  console.error(violationData);
 }
 
 export function checkAccessibility(delay?: number) {
