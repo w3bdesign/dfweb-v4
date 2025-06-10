@@ -20,8 +20,8 @@ export default {
 export const Default = () => (
   <div className="relative h-[32rem] overflow-hidden w-full bg-gray-800 p-4">
     <p className="text-white text-center mb-4">
-      Note: This component has md:hidden class so it's not visible on
-      desktop/Ladle. Use the "Visible" story below to see how it looks.
+      Note: This component has md:hidden class so it&apos;s not visible on
+      desktop/Ladle. Use the &quot;Visible&quot; story below to see how it looks.
     </p>
     <MobileBackground />
     <div className="relative z-10 flex items-center justify-center h-full">
@@ -48,7 +48,7 @@ export const Visible = () => (
         </h1>
         <p className="text-white text-md text-center">
           This is how the component looks on mobile screens, with the md:hidden
-          class removed so it's visible in Ladle.
+          class removed so it&apos;s visible in Ladle.
         </p>
       </div>
     </div>
