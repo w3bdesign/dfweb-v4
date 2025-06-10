@@ -1,6 +1,7 @@
 import React from "react";
 import { Meta } from "@ladle/react";
 import Section from "@/components/Index/Section.component";
+// eslint-disable-next-line jest/no-mocks-import
 import pagecontent from "@/__mocks__/pagecontent.json";
 import type { Pagecontent } from "@/types/sanity.types";
 
