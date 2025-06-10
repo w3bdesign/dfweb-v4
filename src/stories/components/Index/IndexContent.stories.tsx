@@ -10,8 +10,9 @@ export default {
   component: IndexContent,
 } as Meta;
 
-const mockPageContentSingle: Pagecontent[] = [
+const mockPageContentSingle: ({ _key: string } & Pagecontent)[] = [
   {
+    _key: "1",
     _type: "pagecontent",
     id: 1,
     title: "Velkommen til min portefølje",
@@ -50,8 +51,9 @@ const mockPageContentSingle: Pagecontent[] = [
   },
 ];
 
-const mockPageContentMultiple: Pagecontent[] = [
+const mockPageContentMultiple: ({ _key: string } & Pagecontent)[] = [
   {
+    _key: "1",
     _type: "pagecontent",
     id: 1,
     title: "Om Meg",
@@ -71,6 +73,7 @@ const mockPageContentMultiple: Pagecontent[] = [
     ],
   },
   {
+    _key: "2",
     _type: "pagecontent",
     id: 2,
     title: "Mine Ferdigheter",
@@ -129,6 +132,7 @@ const mockPageContentMultiple: Pagecontent[] = [
     ],
   },
   {
+    _key: "3",
     _type: "pagecontent",
     id: 3,
     title: "Prosjekterfaring",
@@ -149,9 +153,10 @@ const mockPageContentMultiple: Pagecontent[] = [
   },
 ];
 
-const mockPageContentMany: Pagecontent[] = [
+const mockPageContentMany: ({ _key: string } & Pagecontent)[] = [
   ...mockPageContentMultiple,
   {
+    _key: "4",
     _type: "pagecontent",
     id: 4,
     title: "Interesser",
@@ -171,6 +176,7 @@ const mockPageContentMany: Pagecontent[] = [
     ],
   },
   {
+    _key: "5",
     _type: "pagecontent",
     id: 5,
     title: "Kontaktinformasjon",
