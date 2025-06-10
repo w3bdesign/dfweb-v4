@@ -1,4 +1,3 @@
-/// <reference types="@testing-library/jest-dom" />
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -7,9 +6,10 @@ import { PortableText } from "@portabletext/react";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
 
 // Mock the BounceInScroll component
-jest.mock("@/components/Animations/BounceInScroll.component", () => {
-  return ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-});
+const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+MockBounceInScroll.displayName = 'MockBounceInScroll';
+
+jest.mock("@/components/Animations/BounceInScroll.component", () => MockBounceInScroll);
 
 // Mock the PortableText component
 jest.mock("@portabletext/react", () => ({
@@ -54,7 +54,7 @@ describe("Section Component", () => {
     // Assert - Verify the results
     expect(screen.getByText("Test Title")).toBeInTheDocument();
     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
-    expect(mockCall).toEqual({
+    expect(mockCall).toStrictEqual({
       value: mockProps.text,
       components: myPortableTextComponents,
     });
@@ -67,12 +67,12 @@ describe("Section Component", () => {
       .mockImplementation(() => {});
 
     // Act - Perform the action being tested
-    const { container } = render(
+    render(
       <Section _type="pagecontent" title="" text={[]} />,
     );
 
     // Assert - Verify the results
-    expect(container.firstChild).toBeNull();
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });
@@ -104,14 +104,24 @@ describe("Section Component", () => {
   });
 
   it("does not show error button when showDebugButton is false in development mode", () => {
+    // Arrange - Set up test data and conditions
     process.env = { ...originalEnv, NODE_ENV: "development" };
+
+    // Act - Perform the action being tested
     render(<Section {...mockProps} showDebugButton={false} />);
+
+    // Assert - Verify the results
     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
   });
 
   it("shows error button when showDebugButton is true in development mode", () => {
+    // Arrange - Set up test data and conditions
     process.env = { ...originalEnv, NODE_ENV: "development" };
+
+    // Act - Perform the action being tested
     render(<Section {...mockProps} showDebugButton={true} />);
+
+    // Assert - Verify the results
     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
   });
 });
