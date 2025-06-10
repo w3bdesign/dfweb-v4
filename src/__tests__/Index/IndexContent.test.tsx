@@ -27,13 +27,16 @@ jest.mock("@/components/Index/Section.component", () => {
       <div data-testid="mock-section">
         <h2 data-testid="sanity-title">{title}</h2>
         <div data-testid="portable-text">
-          {text.map((block) => (
-            <div key={block._key}>
-              {block.children.map((child) => (
-                <span key={child._key}>{child.text}</span>
-              ))}
-            </div>
-          ))}
+          {text.map((block) => {
+            const { children: spans, _key } = block;
+            return (
+              <div key={_key}>
+                {spans.map((span) => (
+                  <span key={span._key}>{span.text}</span>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
