@@ -61,8 +61,8 @@ describe("KontaktContent", () => {
     // Assert - Final state
     await waitFor(() => {
       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
-      expect(emailjs.send).toHaveBeenCalledTimes(1);
     });
+    expect(emailjs.send).toHaveBeenCalledTimes(1);
   });
 
   it("displays error message on form submission failure", async () => {
@@ -79,8 +79,8 @@ describe("KontaktContent", () => {
       expect(
         screen.getByText("Feil under sending av skjema"),
       ).toBeInTheDocument();
-      expect(emailjs.send).toHaveBeenCalledTimes(1);
     });
+    expect(emailjs.send).toHaveBeenCalledTimes(1);
   });
 
   it("displays validation errors for empty fields", async () => {
@@ -98,10 +98,10 @@ describe("KontaktContent", () => {
     // Assert
     await waitFor(() => {
       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-      expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-      expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
-      expect(emailjs.send).not.toHaveBeenCalled();
     });
+    expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+    expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
+    expect(emailjs.send).not.toHaveBeenCalled();
   });
 
   it("displays validation errors for invalid inputs", async () => {
@@ -132,8 +132,8 @@ describe("KontaktContent", () => {
     // Assert
     await waitFor(() => {
       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-      expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-      expect(emailjs.send).not.toHaveBeenCalled();
     });
+    expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+    expect(emailjs.send).not.toHaveBeenCalled();
   });
 });

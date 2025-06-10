@@ -23,6 +23,7 @@ declare global {
       // Jest matchers
       toBe(expected: unknown): R;
       toEqual(expected: unknown): R;
+      toStrictEqual(expected: unknown): R;
       toBeNull(): R;
       toBeDefined(): R;
       toBeUndefined(): R;

@@ -20,5 +20,3 @@ describe("Forside", () => {
     cy.get('[data-cy="Prosjekter"]').contains("Prosjekter");
   });
 });
-
-export {};

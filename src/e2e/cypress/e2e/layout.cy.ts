@@ -2,7 +2,7 @@
 
 describe("Layout", () => {
   beforeEach(() => {
-    cy.viewport("iphone-x"); // Set mobile viewport
+    cy.viewport("iphone-x");
     cy.visit("http://localhost:3000");
   });
 
@@ -22,5 +22,3 @@ describe("Layout", () => {
     });
   });
 });
-
-export {};

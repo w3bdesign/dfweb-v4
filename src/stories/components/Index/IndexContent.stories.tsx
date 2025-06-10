@@ -5,13 +5,18 @@ import type { Pagecontent } from "@/types/sanity.types";
 
 import "@/app/globals.css";
 
+interface PageContentWithKey extends Pagecontent {
+  _key: string;
+}
+
 export default {
   title: "Index/IndexContent",
   component: IndexContent,
 } as Meta;
 
-const mockPageContentSingle: Pagecontent[] = [
+const mockPageContentSingle: PageContentWithKey[] = [
   {
+    _key: "1",
     _type: "pagecontent",
     id: 1,
     title: "Velkommen til min portefølje",
@@ -50,8 +55,9 @@ const mockPageContentSingle: Pagecontent[] = [
   },
 ];
 
-const mockPageContentMultiple: Pagecontent[] = [
+const mockPageContentMultiple: PageContentWithKey[] = [
   {
+    _key: "1",
     _type: "pagecontent",
     id: 1,
     title: "Om Meg",
@@ -71,6 +77,7 @@ const mockPageContentMultiple: Pagecontent[] = [
     ],
   },
   {
+    _key: "2",
     _type: "pagecontent",
     id: 2,
     title: "Mine Ferdigheter",
@@ -129,6 +136,7 @@ const mockPageContentMultiple: Pagecontent[] = [
     ],
   },
   {
+    _key: "3",
     _type: "pagecontent",
     id: 3,
     title: "Prosjekterfaring",
@@ -149,9 +157,10 @@ const mockPageContentMultiple: Pagecontent[] = [
   },
 ];
 
-const mockPageContentMany: Pagecontent[] = [
+const mockPageContentMany: PageContentWithKey[] = [
   ...mockPageContentMultiple,
   {
+    _key: "4",
     _type: "pagecontent",
     id: 4,
     title: "Interesser",
@@ -171,6 +180,7 @@ const mockPageContentMany: Pagecontent[] = [
     ],
   },
   {
+    _key: "5",
     _type: "pagecontent",
     id: 5,
     title: "Kontaktinformasjon",

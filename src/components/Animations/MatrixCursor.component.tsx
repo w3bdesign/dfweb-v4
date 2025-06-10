@@ -129,6 +129,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
       {trails.map((trail) => (
         <div
           key={trail.id}
+          data-testid="matrix-trail"
           className="matrix-trail"
           style={{
             position: "fixed",

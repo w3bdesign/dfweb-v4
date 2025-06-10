@@ -85,7 +85,7 @@ describe("ProsjektCard", () => {
 
       // Assert
       expect(img).toBeInTheDocument();
-      expect(img.getAttribute("src")).toBe(expectedImage.src);
+      expect(img).toHaveAttribute("src", expectedImage.src);
     });
 
     it("renders navigation buttons with correct hrefs", () => {
@@ -103,20 +103,15 @@ describe("ProsjektCard", () => {
 
       // Act
       render(<ProsjektCard {...mockProjectProps} />);
-      const visitButton = screen.getByText(expectedLinks.visit.text);
-      const githubButton = screen.getByText(expectedLinks.github.text);
 
       // Assert
-      expect(visitButton).toBeInTheDocument();
-      expect(visitButton.closest("a")).toHaveAttribute(
-        "href",
-        expectedLinks.visit.href,
-      );
-      expect(githubButton).toBeInTheDocument();
-      expect(githubButton.closest("a")).toHaveAttribute(
-        "href",
-        expectedLinks.github.href,
-      );
+      const visitLink = screen.getByRole("link", { name: expectedLinks.visit.text });
+      const githubLink = screen.getByRole("link", { name: expectedLinks.github.text });
+      
+      expect(visitLink).toBeInTheDocument();
+      expect(visitLink).toHaveAttribute("href", expectedLinks.visit.href);
+      expect(githubLink).toBeInTheDocument();
+      expect(githubLink).toHaveAttribute("href", expectedLinks.github.href);
     });
   });
 

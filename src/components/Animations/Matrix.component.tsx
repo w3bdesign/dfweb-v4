@@ -84,7 +84,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       const delta = timestamp - lastFrameTimeRef.current;
 
       if (delta > frameInterval) {
-        const renderer = createMatrixRenderer({
+        const view = createMatrixRenderer({
           ctx,
           canvas,
           columns: columnsRef.current,
@@ -97,13 +97,13 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
           tileSet,
           getRandomInt,
         });
-        renderer.draw();
+        view.draw();
         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
       }
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet],
+    [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet, frameInterval],
   );
 
   useEffect(() => {

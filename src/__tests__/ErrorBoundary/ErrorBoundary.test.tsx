@@ -1,5 +1,5 @@
 import React from "react";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
@@ -21,14 +21,14 @@ describe("ErrorBoundary", () => {
     const testContent = "Test Innhold";
 
     // Act
-    const { getByText } = render(
+    render(
       <ErrorBoundary>
         <div>{testContent}</div>
       </ErrorBoundary>,
     );
 
     // Assert
-    expect(getByText(testContent)).toBeInTheDocument();
+    expect(screen.getByText(testContent)).toBeInTheDocument();
   });
 
   it("should render error fallback when there is an error", () => {
@@ -43,16 +43,16 @@ describe("ErrorBoundary", () => {
     };
 
     // Act
-    const { getByText } = render(
+    render(
       <ErrorBoundary>
         <ErrorComponent />
       </ErrorBoundary>,
     );
 
     // Assert
-    expect(getByText(expectedTexts.heading)).toBeInTheDocument();
-    expect(getByText(expectedTexts.error)).toBeInTheDocument();
-    expect(getByText(expectedTexts.button)).toBeInTheDocument();
+    expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+    expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+    expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
   });
 
   it("should call console.error when an error occurs", () => {

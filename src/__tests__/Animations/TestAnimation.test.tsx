@@ -32,20 +32,16 @@ function testAnimationComponent(
   testId: string,
   expectedAttribute: string,
 ) {
-  describe(Component.name, () => {
+  describe(`${Component.name}`, () => {
     // Arrange - Set up test data and conditions
     const testContent = Component.name;
 
-    beforeEach(() => {
-      // Act - Perform the action being tested
-      render(<Component delay={1}>{testContent}</Component>);
-    });
-
-    it(`${Component.name} loads and can be displayed`, () => {
+    it(`loads and can be displayed`, () => {
       // Arrange - Set up test data and conditions
       const expectedTestId = testId;
 
       // Act - Perform the action being tested
+      render(<Component delay={1}>{testContent}</Component>);
       const element = screen.getByTestId(expectedTestId);
 
       expect(element).toBeInTheDocument();
@@ -56,6 +52,7 @@ function testAnimationComponent(
       const expectedTestId = testId;
 
       // Act - Perform the action being tested
+      render(<Component delay={1}>{testContent}</Component>);
       const element = screen.getByTestId(expectedTestId);
 
       // Assert - Verify the results

@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
+import { Page } from "@/types/sanity.types";
 
 interface SectionProps {
   title: string;
@@ -14,7 +15,7 @@ interface SectionProps {
       marks: string[];
       text: string;
     }>;
-    markDefs: any[];
+    markDefs: unknown[];
     style: string;
   }>;
 }
@@ -26,22 +27,26 @@ jest.mock("@/components/Index/Section.component", () => {
       <div data-testid="mock-section">
         <h2 data-testid="sanity-title">{title}</h2>
         <div data-testid="portable-text">
-          {text.map((block) => (
-            <div key={block._key}>
-              {block.children.map((child) => (
-                <span key={child._key}>{child.text}</span>
-              ))}
-            </div>
-          ))}
+          {text.map((block) => {
+            const { children: spans, _key } = block;
+            return (
+              <div key={_key}>
+                {spans.map((span) => (
+                  <span key={span._key}>{span.text}</span>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
   };
 });
 
-const mockContent = [
+const mockContent: Page["content"] = [
   {
-    id: "1",
+    _key: "1",
+    _type: "pagecontent",
     title: "Test Title 1",
     text: [
       {
@@ -57,7 +62,8 @@ const mockContent = [
     ],
   },
   {
-    id: "2",
+    _key: "2",
+    _type: "pagecontent",
     title: "Test Title 2",
     text: [
       {
@@ -84,21 +90,19 @@ describe("IndexContent Component", () => {
 
     // Act
     render(<IndexContent pageContent={mockContent} />);
-    const sections = screen.getAllByTestId("mock-section");
-    const titles = screen.getAllByTestId("sanity-title");
-    const portableTexts = screen.getAllByTestId("portable-text");
 
     // Assert
-    expect(sections).toHaveLength(expected.sectionCount);
-    expect(titles[0]).toHaveTextContent(expected.titles[0]);
-    expect(titles[1]).toHaveTextContent(expected.titles[1]);
-    expect(portableTexts[0]).toHaveTextContent(expected.content[0]);
-    expect(portableTexts[1]).toHaveTextContent(expected.content[1]);
+    expected.titles.forEach((title) => {
+      expect(screen.getByText(title)).toBeInTheDocument();
+    });
+    expect(screen.getByText("Bold Text")).toBeInTheDocument();
+    expect(screen.getByText("Normal Text")).toBeInTheDocument();
+    expect(screen.getByText("Italic Text")).toBeInTheDocument();
   });
 
   it("throws error when no content is provided", () => {
     // Arrange
-    const emptyContent: typeof mockContent = [];
+    const emptyContent: Page["content"] = [];
     const expectedError = "Ingen innhold tilgjengelig";
 
     // Act & Assert

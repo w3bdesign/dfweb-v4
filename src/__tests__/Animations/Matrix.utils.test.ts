@@ -19,7 +19,7 @@ describe("Matrix Utils", () => {
 
       // Act & Assert
       hexColors.forEach((hex, index) => {
-        expect(hexToRgb(hex)).toEqual(expectedResults[index]);
+        expect(hexToRgb(hex)).toStrictEqual(expectedResults[index]);
       });
     });
 

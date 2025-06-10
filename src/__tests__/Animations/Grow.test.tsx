@@ -8,17 +8,14 @@ import Grow from "@/components/Animations/Grow.component";
 
 describe("Grow", () => {
   describe("with provided props", () => {
-    beforeEach(() => {
+    it("renders component with custom animation props", () => {
+      // Arrange
+      const expectedTestId = "grow";
       render(
         <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
           Hello World
         </Grow>,
       );
-    });
-
-    it("renders component with custom animation props", () => {
-      // Arrange
-      const expectedTestId = "grow";
 
       // Act
       const element = screen.getByTestId(expectedTestId);
@@ -30,6 +27,11 @@ describe("Grow", () => {
     it("applies initial scale transform animation", () => {
       // Arrange
       const expectedStyle = { transform: "scale(0)" };
+      render(
+        <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
+          Hello World
+        </Grow>,
+      );
 
       // Act
       const element = screen.getByTestId("grow");
@@ -41,6 +43,11 @@ describe("Grow", () => {
     it("renders children content", () => {
       // Arrange
       const expectedContent = "Hello World";
+      render(
+        <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
+          Hello World
+        </Grow>,
+      );
 
       // Act
       const content = screen.getByText(expectedContent);

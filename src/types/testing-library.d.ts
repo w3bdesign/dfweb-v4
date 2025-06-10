@@ -1,17 +1,19 @@
 /// <reference types="jest" />
 /// <reference types="@testing-library/jest-dom" />
 
-// Extend Jest matchers
-declare namespace jest {
-  interface Matchers<R> {
-    toBeInTheDocument(): R;
-    toHaveTextContent(text: string): R;
-    toBeVisible(): R;
-    toBeDisabled(): R;
-    toBeEnabled(): R;
-    toHaveAttribute(attr: string, value?: string): R;
-    toHaveClass(className: string): R;
-    toHaveStyle(css: React.CSSProperties): R;
+// Extend Jest matchers - using module augmentation instead of namespace declaration
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeInTheDocument(): R;
+      toHaveTextContent(text: string): R;
+      toBeVisible(): R;
+      toBeDisabled(): R;
+      toBeEnabled(): R;
+      toHaveAttribute(attr: string, value?: string): R;
+      toHaveClass(className: string): R;
+      toHaveStyle(css: React.CSSProperties): R;
+    }
   }
 }
 
@@ -32,6 +34,7 @@ declare global {
       toHaveBeenCalledTimes(n: number): Assertion;
       toBe(expected: unknown): Assertion;
       toEqual(expected: unknown): Assertion;
+      toStrictEqual(expected: unknown): Assertion;
       toBeNull(): Assertion;
       toBeDefined(): Assertion;
       toBeGreaterThan(n: number): Assertion;
@@ -49,7 +52,7 @@ declare global {
     }
 
     interface ExpectStatic {
-      any(constructor: Function): unknown;
+      any<T>(classType: new (...args: unknown[]) => T): unknown;
     }
   }
 

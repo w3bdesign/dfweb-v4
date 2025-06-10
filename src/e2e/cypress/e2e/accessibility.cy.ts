@@ -14,5 +14,3 @@ describe("Accessibility testing av forside", () => {
     checkAccessibility(5000);
   });
 });
-
-export {};

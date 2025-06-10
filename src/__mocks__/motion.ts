@@ -13,7 +13,7 @@ type MotionProps = {
   variants?: Record<string, unknown>;
   whileInView?: string | Record<string, unknown>;
   viewport?: Record<string, unknown>;
-  [key: string]: any; // Allow other props to pass through
+  [key: string]: unknown;
 };
 
 const createMotionComponent = (
@@ -24,9 +24,7 @@ const createMotionComponent = (
     const {
       className = "",
       animate,
-      variants,
       whileInView,
-      viewport,
       initial,
       ...rest
     } = props;
@@ -82,6 +80,5 @@ export const useAnimation = () => ({
 // Mock variants for animations
 export type Variants = Record<string, Record<string, unknown>>;
 
-export const Variants = {} as Record<string, unknown>;
-
-export default { motion, AnimatePresence, useAnimation };
+const motionMock = { motion, AnimatePresence, useAnimation };
+export default motionMock;
