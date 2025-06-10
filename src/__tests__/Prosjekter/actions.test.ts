@@ -2,20 +2,6 @@ import { getProjects } from "@/app/prosjekter/actions";
 import { client } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
 
-interface ErrorTestCase {
-  name: string;
-  error: {
-    statusCode?: number;
-    message: string;
-    details?: {
-      type: string;
-      description: string;
-    };
-    name?: string;
-  };
-  expectedErrorMessage: string;
-}
-
 // Mock the Sanity client
 jest.mock("@/lib/sanity/client", () => ({
   client: {
@@ -50,11 +36,11 @@ describe("getProjects", () => {
     const result = await getProjects();
 
     // Assert
-    expect(result).toEqual(mockProjects);
+    expect(result).toStrictEqual(mockProjects);
     expect(client.fetch).toHaveBeenCalledWith(
       projectsQuery,
       {},
-      expectedFetchOptions,
+      expectedFetchOptions
     );
   });
 
@@ -117,7 +103,9 @@ describe("getProjects", () => {
       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
-      await expect(getProjects()).rejects.toThrow("Sanity API error: Invalid GROQ query");
+      await expect(getProjects()).rejects.toThrow(
+        "Sanity API error: Invalid GROQ query"
+      );
     });
 
     it("handles network timeouts", async () => {
@@ -171,7 +159,7 @@ describe("getProjects", () => {
 
       // Second call should succeed
       const result = await getProjects();
-      expect(result).toEqual(mockProjects);
+      expect(result).toStrictEqual(mockProjects);
     });
   });
 });
