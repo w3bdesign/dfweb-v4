@@ -68,6 +68,12 @@ export type Geopoint = {
   alt?: number;
 };
 
+export type Slug = {
+  _type: "slug";
+  current?: string;
+  source?: string;
+};
+
 export type Herocontent = {
   _type: "herocontent";
   text?: string;
@@ -104,25 +110,66 @@ export type Link = {
   external?: boolean;
 };
 
+export type Settings = {
+  _id: string;
+  _type: "settings";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  footerCopyrightText?: string;
+};
+
 export type Navigation = {
   _id: string;
-  _type: "Navigation";
+  _type: "navigation";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
   title?: string;
-  slug?: Slug;
-  navigation?: Array<
-    {
-      _key: string;
-    } & Link
-  >;
+  links?: Array<{
+    title?: string;
+    name?: string;
+    hash?: string;
+    href?: string;
+    externalLink?: boolean;
+    icon?:
+      | "RiHome4Line"
+      | "RiProjectorLine"
+      | "RiFileList3Line"
+      | "RiGithubLine"
+      | "RiMailLine";
+    _key: string;
+  }>;
 };
 
-export type Slug = {
-  _type: "slug";
-  current?: string;
-  source?: string;
+export type Cv = {
+  _id: string;
+  _type: "cv";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  keyQualifications?: Array<string>;
+  experience?: Array<{
+    period?: string;
+    company?: string;
+    role?: string;
+    description?: string;
+    _key: string;
+  }>;
+  education?: Array<{
+    period?: string;
+    institution?: string;
+    degree?: string;
+    description?: string;
+    _key: string;
+  }>;
+  volunteerWork?: Array<{
+    period?: string;
+    organization?: string;
+    role?: string;
+    description?: string;
+    _key: string;
+  }>;
 };
 
 export type Page = {
@@ -152,7 +199,7 @@ export type Project = {
   _updatedAt: string;
   _rev: string;
   id?: number;
-  name: string;
+  name?: string;
   description?: string;
   subdescription?: string;
   projectcategory?: {
@@ -171,7 +218,17 @@ export type Project = {
       _key: string;
     } & Link
   >;
-  projectimage: string;
+  projectimage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    _type: "image";
+  };
   featured?: boolean;
   featureOrder?: number;
 };
@@ -249,11 +306,13 @@ export type AllSanitySchemaTypes =
   | SanityImageDimensions
   | SanityFileAsset
   | Geopoint
+  | Slug
   | Herocontent
   | Pagecontent
   | Link
+  | Settings
   | Navigation
-  | Slug
+  | Cv
   | Page
   | Project
   | SanityImageCrop

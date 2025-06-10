@@ -1,6 +1,6 @@
-import { groq } from "next-sanity";
+import { defineQuery } from "next-sanity";
 
-export const projectsQuery = groq`
+export const projectsQuery = defineQuery(`
   *[_type == "project"] | order(featureOrder asc) {
     id,
     name,
@@ -18,13 +18,13 @@ export const projectsQuery = groq`
       ...,
       _key,
     },
-    "projectimage": projectimage.asset->url,
+    projectimage,
     featured,
     featureOrder
   }
-`;
+`);
 
-export const cvQuery = groq`
+export const cvQuery = defineQuery(`
   *[_type == "cv"][0] {
     keyQualifications,
     experience[] {
@@ -46,18 +46,18 @@ export const cvQuery = groq`
       description
     }
   }
-`;
+`);
 
-export const pageContentQuery = groq`
+export const pageContentQuery = defineQuery(`
   *[_type == 'page' && title match 'Hjem'][0]{
-    "id": _id, 
-    title, 
-    hero, 
+    "id": _id,
+    title,
+    hero,
     content
   }
-`;
+`);
 
-export const navigationQuery = groq`
+export const navigationQuery = defineQuery(`
   *[_type == "navigation"][0] {
     title,
     links[] {
@@ -68,4 +68,10 @@ export const navigationQuery = groq`
       externalLink
     }
   }
-`;
+`);
+
+export const settingsQuery = defineQuery(`
+  *[_type == "settings"][0] {
+    footerCopyrightText
+  }
+`);

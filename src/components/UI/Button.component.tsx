@@ -41,7 +41,7 @@ const Button = ({
     <Component
       type={isLink ? undefined : type}
       data-cy="submit"
-      className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
+      className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
       href={href}
       target={targetLink}
       disabled={disabled}

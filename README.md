@@ -1,19 +1,20 @@
-[![cypress](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
-[![Lighthouse CI](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3e803ad0f17146b78bbed9850eb1461f)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![codecov](https://codecov.io/gh/w3bdesign/dfweb-v4/graph/badge.svg?token=AHQW8WQ6U8)](https://codecov.io/gh/w3bdesign/dfweb-v4)
-[![Pa11y](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml/badge.svg)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-[![Maintainability](https://api.codeclimate.com/v1/badges/8d5cae5017b1a9698843/maintainability)](https://codeclimate.com/github/w3bdesign/dfweb-v4/maintainability)
-
 # Dfweb.no Portfolio Version 4
 
-Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io and Typescript.
+[![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+[![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
+[![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [
+![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/snyk-scan.yml?branch=main&style=flat-square&logo=snyk&label=Security)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/snyk-scan.yml)
+
+Fourth version of my personal portfolio website with Next.js, Motion,
+Sanity.io and Typescript.
 
 ## Table of Contents
 
 - [Live URL](#live-url)
-- [Frontend](#frontend)
-- [Backend](#backend)
+- [Frontend (Next.js)](#frontend-nextjs)
+- [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
 - [Google Lighthouse](#google-lighthouse)
 - [Features](#features)
   - [General](#general)
@@ -25,17 +26,17 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 
 ## Live URL
 
-<https://www.dfweb.no/>
+<https://www.dfweb.no>
 
 ## Frontend (Next.js)
 
-<img src="/public/images/frontend.png" alt="Frontend Image" />
+![Frontend Image](public/images/frontend.png)
 
 ---
 
 ## Backend (Sanity headless CMS)
 
-<img src="https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4" alt="Backend Image" />
+![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
 
 ---
 
@@ -48,7 +49,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### General
 
 - Clean, modern, responsive and Matrix-inspired design
-- The application is 100% typescript
+- The application is 100% typescript (the types are generated from Sanity typegen)
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
 - Next.js 15 with Typescript and App router
@@ -71,16 +72,27 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Automated Lighthouse CI testing integrated with GitHub Actions
 - React Hook Form with Typescript and Zod for efficient form handling and validation
 - Reusable GenericForm component for easy form creation and management
-- Error handling with react-error-boundary for improved user experience and easier debugging
-- AI-friendly repository documentation with automated updates (Repomix with Github action workflow)
+- Error handling with react-error-boundary for improved user experience and
+  easier debugging
+- AI-friendly repository documentation with automated updates (Repomix with
+  Github action workflow)
+- Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+- Efficient data fetching in `/prosjekter` using Next.js preloading,
+  React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+  around 1 second.
+- Recommended:
+  [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+  for enhanced GROQ query development, including syntax highlighting when using
+  `defineQuery`.
 
 ### Design
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind CSS for styling
+- Tailwind 14 for styling
 - Animated reusable input fields
-- Matrix-inspired animated cursor with dynamic trailing effect with fading Matrix characters
+- Matrix-inspired animated cursor with dynamic trailing effect with fading
+  Matrix characters
 
 ### Accessibility
 
@@ -102,7 +114,8 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
 - 100% test coverage with Jest and React testing library
-- AI-powered commit message generation following Conventional Commits with gitmojis
+- AI-powered commit message generation following Conventional Commits with
+  gitmojis
 - Automated performance monitoring with Lighthouse CI
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
@@ -113,6 +126,9 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
+  - Automated security vulnerability scanning with Snyk
+    - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+    - Integrates with GitHub Security tab for vulnerability tracking
 
 ### Environment Variables
 
@@ -142,6 +158,7 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
 ### Testing Standards
 
 - ISTQB-aligned comprehensive test strategy
+
   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
   - Multi-level test approach (Unit, Component, E2E)
   - Risk-based testing methodology
@@ -150,12 +167,15 @@ Fourth version of my personal portfolio website with Next.js, Motion, Sanity.io 
   - Structured defect management process
 
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+
   - Each test must include the following comments:
+
     ```typescript
     // Arrange - Set up test data and conditions
     // Act - Perform the action being tested
     // Assert - Verify the results
     ```
+
   - This pattern ensures:
     - Clear test structure and readability
     - Consistent test organization across the codebase

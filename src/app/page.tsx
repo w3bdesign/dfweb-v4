@@ -21,9 +21,9 @@ export default async function HomePage() {
     <RootLayout>
       <main>
         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-          {pageContent.hero && <DynamicHero content={pageContent.hero} />}
+          {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
         </div>
-        {pageContent.content && (
+        {pageContent?.content && (
           <DynamicIndexContent pageContent={pageContent.content} />
         )}
       </main>

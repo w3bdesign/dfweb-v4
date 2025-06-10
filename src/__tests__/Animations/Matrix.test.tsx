@@ -26,11 +26,7 @@ const mockBitmapContext = {
   transferFromImageBitmap: jest.fn(),
 } as unknown as ImageBitmapRenderingContext;
 
-// Use a single mock implementation that handles different context types
-HTMLCanvasElement.prototype.getContext = function (
-  contextId: string,
-  options?: any,
-) {
+HTMLCanvasElement.prototype.getContext = function (contextId: string) {
   switch (contextId) {
     case "2d":
       return mock2DContext;
@@ -42,7 +38,7 @@ HTMLCanvasElement.prototype.getContext = function (
     default:
       return null;
   }
-} as any;
+} as typeof HTMLCanvasElement.prototype.getContext;
 
 global.requestAnimationFrame = jest.fn((cb) => setTimeout(cb, 0));
 

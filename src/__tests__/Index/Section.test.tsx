@@ -17,7 +17,8 @@ jest.mock("@portabletext/react", () => ({
 }));
 
 describe("Section Component", () => {
-  const mockProps = {
+  const mockProps: import("@/types/sanity.types").Pagecontent = {
+    _type: "pagecontent",
     title: "Test Title",
     text: [
       {
@@ -66,7 +67,9 @@ describe("Section Component", () => {
       .mockImplementation(() => {});
 
     // Act - Perform the action being tested
-    const { container } = render(<Section title="" text={[]} />);
+    const { container } = render(
+      <Section _type="pagecontent" title="" text={[]} />,
+    );
 
     // Assert - Verify the results
     expect(container.firstChild).toBeNull();
@@ -98,5 +101,17 @@ describe("Section Component", () => {
 
     // Assert - Verify the results
     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+  });
+
+  it("does not show error button when showDebugButton is false in development mode", () => {
+    process.env = { ...originalEnv, NODE_ENV: "development" };
+    render(<Section {...mockProps} showDebugButton={false} />);
+    expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+  });
+
+  it("shows error button when showDebugButton is true in development mode", () => {
+    process.env = { ...originalEnv, NODE_ENV: "development" };
+    render(<Section {...mockProps} showDebugButton={true} />);
+    expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
   });
 });

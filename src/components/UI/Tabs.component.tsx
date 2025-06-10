@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
+type TabOrientation = "horizontal" | "vertical";
+
 interface Tab {
   id: string;
   label: string;
@@ -11,7 +13,7 @@ interface Tab {
 
 interface TabsProps {
   tabs: Tab[];
-  orientation?: "horizontal" | "vertical";
+  orientation?: TabOrientation;
 }
 
 interface TabButtonProps {
@@ -35,7 +37,7 @@ const getTabButtonClassName = (
     : "text-gray-300 hover:text-white";
   const orientationClasses = isVertical
     ? "w-full text-left"
-    : "flex-grow text-center";
+    : "grow text-center";
   const borderClasses = [
     index !== 0 ? "border-t border-gray-600" : "",
     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
@@ -111,7 +113,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const isVertical = orientation === "vertical";
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg md:max-w-[1000px] min-h-[20rem]">
+    <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px] min-h-[20rem]">
       <div
         className={`flex ${
           isVertical ? "flex-col sm:flex-row" : "flex-col"
@@ -119,7 +121,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-            isVertical ? "max-h-[181px] " : ""
+            isVertical ? "max-h-[185px] " : ""
           }`}
         >
           <div

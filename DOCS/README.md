@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-DFWeb v4 is a modern portfolio website that demonstrates advanced web development practices and architectural patterns. Built with Next.js 15, React 19, TypeScript, and Sanity.io, it showcases several key technical achievements:
+DFWeb v4 is a modern portfolio website that demonstrates advanced web
+development practices and architectural patterns. Built with Next.js 15, React
+19, TypeScript, and Sanity.io, it showcases several key technical achievements:
 
 ### Technical Highlights
 
@@ -41,6 +43,7 @@ DFWeb v4 is a modern portfolio website that demonstrates advanced web developmen
 ### Technical Stack Deep Dive
 
 #### Frontend Core
+
 - **Next.js 15**
   - App Router for enhanced routing control
   - Server Components for improved performance
@@ -78,6 +81,7 @@ DFWeb v4 is a modern portfolio website that demonstrates advanced web developmen
   - Image optimization pipeline
 
 #### Development & Testing Infrastructure
+
 - **Jest & React Testing Library**
   - Custom test utilities and helpers
   - Mock implementations for external services
@@ -111,7 +115,8 @@ DFWeb v4 is a modern portfolio website that demonstrates advanced web developmen
 ## Project Architecture
 
 ### Directory Structure
-```
+
+```text
 src/
 ├── app/                 # Next.js App Router pages
 ├── components/          # React components
@@ -135,30 +140,35 @@ src/
 ### Key Features
 
 #### 1. Server Components & Data Fetching
+
 - Server-side rendering for optimal performance
 - Streaming with Suspense boundaries
 - Automatic static optimization with revalidation
 - Type-safe environment variables using envalid
 
 #### 2. Animation System
+
 - Matrix-inspired animations and effects
 - Custom cursor with matrix trail effect
 - Page transitions and scroll animations
 - Motion library integration
 
 #### 3. Form Handling
+
 - React Hook Form with TypeScript
 - Zod schema validation
 - Reusable GenericForm component
 - Email.js integration for contact form
 
 #### 4. Testing Infrastructure
+
 - Jest and React Testing Library for unit tests
 - Cypress for E2E testing with accessibility checks
 - Playwright for cross-browser testing
 - Custom ESLint rules enforcing AAA pattern
 
 #### 5. Error Handling
+
 - Custom ErrorBoundary components
 - Fallback UI for different error scenarios
 - Development mode error triggers
@@ -167,7 +177,9 @@ src/
 ## Development Practices
 
 ### Testing Standards
+
 All tests must follow the AAA (Arrange-Act-Assert) pattern:
+
 ```typescript
 describe('Component', () => {
   it('should do something', () => {
@@ -184,18 +196,21 @@ describe('Component', () => {
 ```
 
 ### Code Quality
+
 - ESLint configuration with strict rules
 - Custom ESLint plugin for test patterns
 - Prettier for consistent formatting
 - TypeScript strict mode enabled
 
 ### Accessibility
+
 - WCAG compliance testing
 - Cypress Axe integration
 - Skip links and ARIA labels
 - Keyboard navigation support
 
 ### Performance Monitoring
+
 - Lighthouse CI integration
 - Performance budgets
 - Automated performance testing
@@ -204,12 +219,14 @@ describe('Component', () => {
 ## Content Management
 
 ### Sanity.io Integration
+
 - Headless CMS for content
 - Type-safe queries using GROQ
 - Image optimization
 - Real-time content updates
 
 ### Schema Types
+
 - Projects
 - Categories
 - Pages
@@ -219,13 +236,16 @@ describe('Component', () => {
 ## Deployment & CI/CD
 
 ### GitHub Actions Workflows
+
 - Cypress tests
 - Lighthouse CI
 - CodeQL analysis
 - Cross-browser testing
 
 ### Environment Variables
+
 Required variables:
+
 ```env
 # Email Configuration (client-side)
 NEXT_PUBLIC_EMAIL_API_KEY=user_xxx
@@ -241,10 +261,12 @@ MODEL_NAME=claude-3.7-sonnet@anthropic
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js >= 20.16.0
 - pnpm (recommended package manager)
 
 ### Development Commands
+
 ```bash
 # Install dependencies
 pnpm install
@@ -277,6 +299,7 @@ pnpm ladle            # Start Ladle server
 ## Best Practices
 
 ### Component Development
+
 1. Use TypeScript for all new components
 2. Include comprehensive tests
 3. Document with Ladle stories
@@ -284,18 +307,21 @@ pnpm ladle            # Start Ladle server
 5. Optimize for performance
 
 ### State Management
+
 1. Use React hooks for local state
 2. Implement context where needed
 3. Keep state close to where it's used
 4. Avoid prop drilling
 
 ### Error Handling
+
 1. Use ErrorBoundary components
 2. Provide meaningful error messages
 3. Include fallback UI
 4. Log errors appropriately
 
 ### Performance
+
 1. Use server components where possible
 2. Implement proper caching strategies
 3. Optimize images and assets
@@ -304,6 +330,7 @@ pnpm ladle            # Start Ladle server
 ## Future Improvements
 
 See TODO.md for detailed plans including:
+
 1. Project structure reorganization
 2. Enhanced caching strategy
 3. Feature-based organization
@@ -320,19 +347,27 @@ See TODO.md for detailed plans including:
 
 ## Repository Context File
 
-The `repository_context.txt` file is a merged representation of the entire codebase, combining all repository files into a single document. It is designed to be easily consumable by AI systems for analysis, code review, or other automated processes.
+The `repository_context.txt` file is a merged representation of the entire
+codebase, combining all repository files into a single document. It is designed
+to be easily consumable by AI systems for analysis, code review, or other
+automated processes.
 
 ### Purpose
 
 - **Unified View**: Provides a unified view of the codebase for AI analysis.
-- **Facilitates Automation**: Assists in code review and automated testing procedures.
-- **Important Context**: Contains crucial context and guidelines specific to this project.
+- **Facilitates Automation**: Assists in code review and automated testing
+  procedures.
+- **Important Context**: Contains crucial context and guidelines specific to this
+  project.
 
 ### Usage Guidelines
 
-- **Read-Only**: Do not edit `repository_context.txt` directly. Make changes in the original repository files.
-- **Sensitive Information**: Handle with caution as it may contain sensitive data.
-- **File Paths**: Use the file paths within the document to distinguish between different files in the repository.
+- **Read-Only**: Do not edit `repository_context.txt` directly. Make changes in
+  the original repository files.
+- **Sensitive Information**: Handle with caution as it may contain sensitive
+  data.
+- **File Paths**: Use the file paths within the document to distinguish between
+  different files in the repository.
 
 ## Additional Resources
 

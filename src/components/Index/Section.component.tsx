@@ -5,37 +5,28 @@ import { useState } from "react";
 import BounceInScroll from "../Animations/BounceInScroll.component";
 import Button from "../UI/Button.component";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
+import type { Pagecontent } from "@/types/sanity.types";
 
-interface IChild {
-  _key: string;
-  _type: string;
-  marks: string[];
-  text: string;
-}
-
-interface IText {
-  _key: string;
-  _type: string;
-  children: IChild[];
-  markDefs: string[];
-  style: string;
-}
-
-interface IContent {
-  text: IText[];
-  title: string;
+interface SectionProps extends Pagecontent {
   variant?: "default" | "alternate";
+  showDebugButton?: boolean;
 }
 
 /**
  * Section component that renders a single content section
- * @param {IContent} props - The props for the Section component
- * @param {string} props.text - The text content of the section
+ * @param {SectionProps} props - The props for the Section component
+ * @param {Pagecontent['text']} props.text - The text content from Sanity
  * @param {string} props.title - The title of the section
  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+ * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
-const Section = ({ text, title, variant = "default" }: IContent) => {
+const Section = ({
+  text,
+  title,
+  variant = "default",
+  showDebugButton = true,
+}: SectionProps) => {
   const [shouldError, setShouldError] = useState(false);
 
   if (!title || !text) {
@@ -66,7 +57,7 @@ const Section = ({ text, title, variant = "default" }: IContent) => {
         ${sectionStyles[variant]}
       `}
     >
-      <div className="p-6 text-lg h-full max-w-7xl mx-auto">
+      <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
         <BounceInScroll viewAmount={0}>
           <h2
             data-testid="sanity-title"
@@ -83,7 +74,7 @@ const Section = ({ text, title, variant = "default" }: IContent) => {
               />
             </div>
           </div>
-          {process.env.NODE_ENV === "development" && (
+          {process.env.NODE_ENV === "development" && showDebugButton && (
             <Button onClick={() => setShouldError(true)} type="button">
               Utløs Testfeil
             </Button>

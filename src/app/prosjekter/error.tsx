@@ -19,7 +19,7 @@ export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
       </h2>
       <button
         onClick={reset}
-        className="px-4 py-2 bg-matrix-dark hover:bg-matrix-light text-white rounded transition-colors"
+        className="px-4 py-2 bg-matrix-dark hover:bg-matrix-light text-white rounded-sm transition-colors"
       >
         Prøv igjen
       </button>
