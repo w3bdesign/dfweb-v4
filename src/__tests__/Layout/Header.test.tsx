@@ -94,9 +94,9 @@ describe("Header", () => {
 
       // Act & Assert
       mockNavigationLinks.forEach((link) => {
-        const linkElement = screen.getByText(link.name);
+        const linkElement = screen.getByRole("link", { name: link.name });
         expect(linkElement).toBeInTheDocument();
-        expect(linkElement.closest("a")).toHaveAttribute("href", link.href);
+        expect(linkElement).toHaveAttribute("href", link.href);
       });
     });
 
