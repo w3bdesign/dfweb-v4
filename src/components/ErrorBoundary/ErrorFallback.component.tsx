@@ -1,4 +1,5 @@
 import React from "react";
+import { NextRouter, useRouter } from "next/router";
 
 import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
 import Pill from "../../components/UI/Pill.component";
@@ -6,6 +7,7 @@ import Pill from "../../components/UI/Pill.component";
 interface ErrorFallbackProps {
   error: Error;
   compact?: boolean;
+  router?: NextRouter;
 }
 
 /**
@@ -20,7 +22,14 @@ interface ErrorFallbackProps {
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   error,
   compact = false,
+  router,
 }) => {
+  const { reload } = router || { reload: () => {} };
+
+  const handleReload = () => {
+    reload();
+  };
+
   if (compact) {
     return (
       <div className="relative bg-gray-900 p-4 rounded-lg overflow-hidden">
@@ -35,7 +44,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
             {error.message || "En uventet feil har oppstått."}
           </p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={handleReload}
             className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
           >
             Returner til Matrix
@@ -55,10 +64,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         <p className="text-white text-xl mb-6">
           {error.message || "En uventet feil har oppstått."}
         </p>
-        <Pill
-          text="Returner til Matrix"
-          onClick={() => window.location.reload()}
-        />
+        <Pill text="Returner til Matrix" onClick={handleReload} />
       </div>
     </div>
   );
