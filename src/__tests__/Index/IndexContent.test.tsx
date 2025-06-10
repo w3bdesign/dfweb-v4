@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
-import { Pagecontent } from "@/types/sanity.types";
+import { Page } from "@/types/sanity.types";
 
 interface SectionProps {
   title: string;
@@ -43,8 +43,9 @@ jest.mock("@/components/Index/Section.component", () => {
   };
 });
 
-const mockContent: Pagecontent[] = [
+const mockContent: Page["content"] = [
   {
+    _key: "1",
     _type: "pagecontent",
     title: "Test Title 1",
     text: [
@@ -61,6 +62,7 @@ const mockContent: Pagecontent[] = [
     ],
   },
   {
+    _key: "2",
     _type: "pagecontent",
     title: "Test Title 2",
     text: [
@@ -93,14 +95,14 @@ describe("IndexContent Component", () => {
     expected.titles.forEach((title) => {
       expect(screen.getByText(title)).toBeInTheDocument();
     });
-    expected.content.forEach((content) => {
-      expect(screen.getByText(content, { exact: false })).toBeInTheDocument();
-    });
+    expect(screen.getByText("Bold Text")).toBeInTheDocument();
+    expect(screen.getByText("Normal Text")).toBeInTheDocument();
+    expect(screen.getByText("Italic Text")).toBeInTheDocument();
   });
 
   it("throws error when no content is provided", () => {
     // Arrange
-    const emptyContent: Pagecontent[] = [];
+    const emptyContent: Page["content"] = [];
     const expectedError = "Ingen innhold tilgjengelig";
 
     // Act & Assert

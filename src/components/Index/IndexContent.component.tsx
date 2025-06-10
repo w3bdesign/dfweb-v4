@@ -1,7 +1,7 @@
 "use client";
 
 import Section from "./Section.component";
-import type { Pagecontent } from "@/types/sanity.types";
+import type { Page } from "@/types/sanity.types";
 
 /**
  * IndexContent component that renders multiple content sections with alternating visual styles
@@ -10,7 +10,7 @@ import type { Pagecontent } from "@/types/sanity.types";
  * @returns {JSX.Element} The rendered IndexContent component
  * @throws {Error} Throws an error if no content is available
  */
-const IndexContent = ({ pageContent }: { pageContent: Pagecontent[] }) => {
+const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
   if (!pageContent || pageContent.length === 0) {
     throw new Error("Ingen innhold tilgjengelig");
   }
@@ -19,7 +19,7 @@ const IndexContent = ({ pageContent }: { pageContent: Pagecontent[] }) => {
     <div className="w-screen md:w-full overflow-hidden -mb-8">
       {pageContent.map((page, index) => (
         <Section
-          key={page.id}
+          key={page._key}
           {...page}
           variant={index % 2 === 0 ? "default" : "alternate"}
         />
