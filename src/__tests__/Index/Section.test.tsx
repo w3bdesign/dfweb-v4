@@ -6,10 +6,11 @@ import { PortableText } from "@portabletext/react";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
 
 // Mock the BounceInScroll component
-const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-MockBounceInScroll.displayName = 'MockBounceInScroll';
-
-jest.mock("@/components/Animations/BounceInScroll.component", () => MockBounceInScroll);
+jest.mock("@/components/Animations/BounceInScroll.component", () => {
+  const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+  MockBounceInScroll.displayName = 'MockBounceInScroll';
+  return MockBounceInScroll;
+});
 
 // Mock the PortableText component
 jest.mock("@portabletext/react", () => ({
