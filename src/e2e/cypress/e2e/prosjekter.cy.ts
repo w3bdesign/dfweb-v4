@@ -15,11 +15,11 @@ describe("Prosjekter Page", () => {
   });
 
   it("should display project cards", () => {
-    cy.get('[data-testid="projectcard"]').should("have.length.at.least", 1);
+    cy.get('[data-testid="project-card"]').should("have.length.at.least", 1);
   });
 
   it("should display project name, description, and subdescription", () => {
-    cy.get('[data-testid="projectcard"]')
+    cy.get('[data-testid="project-card"]')
       .first()
       .within(() => {
         cy.get("h1").should("have.class", "text-xl").and("not.be.empty");
@@ -29,7 +29,7 @@ describe("Prosjekter Page", () => {
   });
 
   it('should have functioning "Besøk" button if urlwww exists', () => {
-    cy.get('[data-testid="projectcard"]')
+    cy.get('[data-testid="project-card"]')
       .first()
       .within(() => {
         cy.get("a")
@@ -40,7 +40,7 @@ describe("Prosjekter Page", () => {
   });
 
   it('should have functioning "GitHub" button if urlgithub exists', () => {
-    cy.get('[data-testid="projectcard"]')
+    cy.get('[data-testid="project-card"]')
       .first()
       .within(() => {
         cy.get("a")
@@ -51,7 +51,7 @@ describe("Prosjekter Page", () => {
   });
 
   it('should have the correct URL for "GitHub" button', () => {
-    cy.get('[data-testid="projectcard"]')
+    cy.get('[data-testid="project-card"]')
       .first()
       .within(() => {
         cy.get("a")
