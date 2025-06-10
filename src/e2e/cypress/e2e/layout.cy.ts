@@ -12,7 +12,7 @@ describe("Layout", () => {
       cy.get('[data-testid="mobilemenu"]').click();
 
       // Verify menu is visible
-      cy.get('[data-testid="mobile-menu"]').should("be.visible");
+      cy.get('[data-testid="mobilemenu"]').should("be.visible");
 
       // Click a link in the menu
       cy.get('[data-testid="mobil-Prosjekter"]').click();
