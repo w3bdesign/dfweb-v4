@@ -35,7 +35,7 @@ type FormData =
 // Example async submit handlers
 const mockSubmit = async (data: FormData) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  console.log("Form submitted:", data);
+  console.warn("Form submitted:", data);
 };
 
 // Contact Form Story
