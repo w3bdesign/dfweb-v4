@@ -42,7 +42,6 @@ jest.mock("@/components/Index/Section.component", () => {
 
 const mockContent: Pagecontent[] = [
   {
-    _key: "1",
     _type: "pagecontent",
     title: "Test Title 1",
     text: [
@@ -59,7 +58,6 @@ const mockContent: Pagecontent[] = [
     ],
   },
   {
-    _key: "2",
     _type: "pagecontent",
     title: "Test Title 2",
     text: [
