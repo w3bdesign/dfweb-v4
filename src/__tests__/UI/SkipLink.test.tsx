@@ -47,11 +47,11 @@ describe("SkipLink", () => {
 
       // Act
       render(<SkipLink />);
-      const skipLink = screen.getByText("Hopp til hovedinnhold").closest("div");
+      const skipLinkContainer = screen.getByText("Hopp til hovedinnhold").parentElement;
 
       // Assert
       expectedClasses.forEach((className) => {
-        expect(skipLink).toHaveClass(className);
+        expect(skipLinkContainer).toHaveClass(className);
       });
     });
   });
