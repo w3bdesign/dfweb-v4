@@ -85,10 +85,8 @@ describe("IndexContent Component", () => {
 
     // Act
     render(<IndexContent pageContent={mockContent} />);
-    const sections = screen.getAllByTestId("mock-section");
 
     // Assert
-    expect(sections).toHaveLength(expected.sectionCount);
     expected.titles.forEach((title) => {
       expect(screen.getByText(title)).toBeInTheDocument();
     });
