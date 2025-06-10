@@ -9241,6 +9241,33 @@ tsconfig.json
 303: export declare const internalGroqTypeReferenceTo: unique symbol;
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.28.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.8.3"
+22:   }
+23: }
+````
+
 ## File: src/utils/portableTextComponents.tsx
 ````typescript
  1: import Link from "next/link";
@@ -15514,31 +15541,90 @@ tsconfig.json
 39: export default KontaktWithMocks;
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.28.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.8.3"
-22:   }
-23: }
+## File: src/utils/eslint/index.ts
+````typescript
+ 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
+ 2: type MessageIds = "missingAAAPattern";
+ 3: type Options = [];
+ 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
+ 5:   const testNames = ["it", "test"];
+ 6:   return (
+ 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
+ 8:     testNames.includes(node.callee.name)
+ 9:   );
+10: };
+11: const isArrowFunction = (
+12:   node: TSESTree.Node,
+13: ): node is TSESTree.ArrowFunctionExpression => {
+14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+15: };
+16: const validateAAAPattern = (
+17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+18:   node: TSESTree.CallExpression,
+19: ) => {
+20:   const testFn = node.arguments[1];
+21:   if (!isArrowFunction(testFn)) return;
+22:   if (!hasAAAComments(context, testFn)) {
+23:     context.report({
+24:       node,
+25:       messageId: "missingAAAPattern",
+26:     });
+27:   }
+28: };
+29: const validateTestCase = (
+30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+31:   node: TSESTree.CallExpression,
+32: ) => {
+33:   if (!isTestFunction(node)) return;
+34:   validateAAAPattern(context, node);
+35: };
+36: const hasAAAComments = (
+37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+38:   testFn: TSESTree.ArrowFunctionExpression,
+39: ): boolean => {
+40:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
+41:   const patterns = ["Arrange", "Act", "Assert"];
+42:   return comments.some((comment: TSESTree.Comment) =>
+43:     patterns.some((pattern) => comment.value.includes(pattern)),
+44:   );
+45: };
+46: const createRule = ESLintUtils.RuleCreator(
+47:   (name) =>
+48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
+49: );
+50: const rule = createRule<Options, MessageIds>({
+51:   name: "arrange-act-assert",
+52:   meta: {
+53:     type: "suggestion",
+54:     docs: {
+55:       description: "enforce AAA pattern in tests",
+56:     },
+57:     messages: {
+58:       missingAAAPattern: "Test should follow AAA pattern with comments",
+59:     },
+60:     schema: [],
+61:   },
+62:   defaultOptions: [],
+63:   create(context) {
+64:     return {
+65:       CallExpression: (node: TSESTree.CallExpression) =>
+66:         validateTestCase(context, node),
+67:     };
+68:   },
+69: });
+70: module.exports = {
+71:   configs: {
+72:     recommended: {
+73:       plugins: ["test-rules"],
+74:       rules: {
+75:         "test-rules/arrange-act-assert": "error",
+76:       },
+77:     },
+78:   },
+79:   rules: {
+80:     "arrange-act-assert": rule,
+81:   },
+82: };
 ````
 
 ## File: src/utils/eslint/tsconfig.json
@@ -16731,92 +16817,6 @@ tsconfig.json
 76: );
 ````
 
-## File: src/utils/eslint/index.ts
-````typescript
- 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
- 2: type MessageIds = "missingAAAPattern";
- 3: type Options = [];
- 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
- 5:   const testNames = ["it", "test"];
- 6:   return (
- 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
- 8:     testNames.includes(node.callee.name)
- 9:   );
-10: };
-11: const isArrowFunction = (
-12:   node: TSESTree.Node,
-13: ): node is TSESTree.ArrowFunctionExpression => {
-14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
-15: };
-16: const validateAAAPattern = (
-17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-18:   node: TSESTree.CallExpression,
-19: ) => {
-20:   const testFn = node.arguments[1];
-21:   if (!isArrowFunction(testFn)) return;
-22:   if (!hasAAAComments(context, testFn)) {
-23:     context.report({
-24:       node,
-25:       messageId: "missingAAAPattern",
-26:     });
-27:   }
-28: };
-29: const validateTestCase = (
-30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-31:   node: TSESTree.CallExpression,
-32: ) => {
-33:   if (!isTestFunction(node)) return;
-34:   validateAAAPattern(context, node);
-35: };
-36: const hasAAAComments = (
-37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-38:   testFn: TSESTree.ArrowFunctionExpression,
-39: ): boolean => {
-40:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
-41:   const patterns = ["Arrange", "Act", "Assert"];
-42:   return comments.some((comment: TSESTree.Comment) =>
-43:     patterns.some((pattern) => comment.value.includes(pattern)),
-44:   );
-45: };
-46: const createRule = ESLintUtils.RuleCreator(
-47:   (name) =>
-48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
-49: );
-50: const rule = createRule<Options, MessageIds>({
-51:   name: "arrange-act-assert",
-52:   meta: {
-53:     type: "suggestion",
-54:     docs: {
-55:       description: "enforce AAA pattern in tests",
-56:     },
-57:     messages: {
-58:       missingAAAPattern: "Test should follow AAA pattern with comments",
-59:     },
-60:     schema: [],
-61:   },
-62:   defaultOptions: [],
-63:   create(context) {
-64:     return {
-65:       CallExpression: (node: TSESTree.CallExpression) =>
-66:         validateTestCase(context, node),
-67:     };
-68:   },
-69: });
-70: module.exports = {
-71:   configs: {
-72:     recommended: {
-73:       plugins: ["test-rules"],
-74:       rules: {
-75:         "test-rules/arrange-act-assert": "error",
-76:       },
-77:     },
-78:   },
-79:   rules: {
-80:     "arrange-act-assert": rule,
-81:   },
-82: };
-````
-
 ## File: .eslintrc.json
 ````json
   1: {
@@ -17062,6 +17062,76 @@ tsconfig.json
 59: export {};
 ````
 
+## File: src/utils/eslint/dist/index.js
+````javascript
+ 1: /* eslint-disable @typescript-eslint/no-require-imports */
+ 2: "use strict";
+ 3: Object.defineProperty(exports, "__esModule", { value: true });
+ 4: const utils_1 = require("@typescript-eslint/utils");
+ 5: const isTestFunction = (node) => {
+ 6:     const testNames = ["it", "test"];
+ 7:     return (node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
+ 8:         testNames.includes(node.callee.name));
+ 9: };
+10: const isArrowFunction = (node) => {
+11:     return (node === null || node === void 0 ? void 0 : node.type) === utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+12: };
+13: const validateAAAPattern = (context, node) => {
+14:     const testFn = node.arguments[1];
+15:     if (!isArrowFunction(testFn))
+16:         return;
+17:     if (!hasAAAComments(context, testFn)) {
+18:         context.report({
+19:             node,
+20:             messageId: "missingAAAPattern",
+21:         });
+22:     }
+23: };
+24: const validateTestCase = (context, node) => {
+25:     if (!isTestFunction(node))
+26:         return;
+27:     validateAAAPattern(context, node);
+28: };
+29: const hasAAAComments = (context, testFn) => {
+30:     const comments = context.getSourceCode().getCommentsInside(testFn.body);
+31:     const patterns = ["Arrange", "Act", "Assert"];
+32:     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
+33: };
+34: const createRule = utils_1.ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
+35: const rule = createRule({
+36:     name: "arrange-act-assert",
+37:     meta: {
+38:         type: "suggestion",
+39:         docs: {
+40:             description: "enforce AAA pattern in tests",
+41:         },
+42:         messages: {
+43:             missingAAAPattern: "Test should follow AAA pattern with comments",
+44:         },
+45:         schema: [],
+46:     },
+47:     defaultOptions: [],
+48:     create(context) {
+49:         return {
+50:             CallExpression: (node) => validateTestCase(context, node),
+51:         };
+52:     },
+53: });
+54: module.exports = {
+55:     configs: {
+56:         recommended: {
+57:             plugins: ["test-rules"],
+58:             rules: {
+59:                 "test-rules/arrange-act-assert": "error",
+60:             },
+61:         },
+62:     },
+63:     rules: {
+64:         "arrange-act-assert": rule,
+65:     },
+66: };
+````
+
 ## File: src/__tests__/Index/IndexContent.test.tsx
 ````typescript
   1: import React from "react";
@@ -17171,76 +17241,6 @@ tsconfig.json
 105: });
 ````
 
-## File: src/utils/eslint/dist/index.js
-````javascript
- 1: /* eslint-disable @typescript-eslint/no-require-imports */
- 2: "use strict";
- 3: Object.defineProperty(exports, "__esModule", { value: true });
- 4: const utils_1 = require("@typescript-eslint/utils");
- 5: const isTestFunction = (node) => {
- 6:     const testNames = ["it", "test"];
- 7:     return (node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
- 8:         testNames.includes(node.callee.name));
- 9: };
-10: const isArrowFunction = (node) => {
-11:     return (node === null || node === void 0 ? void 0 : node.type) === utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
-12: };
-13: const validateAAAPattern = (context, node) => {
-14:     const testFn = node.arguments[1];
-15:     if (!isArrowFunction(testFn))
-16:         return;
-17:     if (!hasAAAComments(context, testFn)) {
-18:         context.report({
-19:             node,
-20:             messageId: "missingAAAPattern",
-21:         });
-22:     }
-23: };
-24: const validateTestCase = (context, node) => {
-25:     if (!isTestFunction(node))
-26:         return;
-27:     validateAAAPattern(context, node);
-28: };
-29: const hasAAAComments = (context, testFn) => {
-30:     const comments = context.getSourceCode().getCommentsInside(testFn.body);
-31:     const patterns = ["Arrange", "Act", "Assert"];
-32:     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
-33: };
-34: const createRule = utils_1.ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
-35: const rule = createRule({
-36:     name: "arrange-act-assert",
-37:     meta: {
-38:         type: "suggestion",
-39:         docs: {
-40:             description: "enforce AAA pattern in tests",
-41:         },
-42:         messages: {
-43:             missingAAAPattern: "Test should follow AAA pattern with comments",
-44:         },
-45:         schema: [],
-46:     },
-47:     defaultOptions: [],
-48:     create(context) {
-49:         return {
-50:             CallExpression: (node) => validateTestCase(context, node),
-51:         };
-52:     },
-53: });
-54: module.exports = {
-55:     configs: {
-56:         recommended: {
-57:             plugins: ["test-rules"],
-58:             rules: {
-59:                 "test-rules/arrange-act-assert": "error",
-60:             },
-61:         },
-62:     },
-63:     rules: {
-64:         "arrange-act-assert": rule,
-65:     },
-66: };
-````
-
 ## File: package.json
 ````json
  1: {
@@ -17329,7 +17329,7 @@ tsconfig.json
 84:     "jest-environment-jsdom": "^29.7.0",
 85:     "jest-extended": "^4.0.2",
 86:     "jsdom-testing-mocks": "^1.13.1",
-87:     "postcss": "^8.5.3",
+87:     "postcss": "^8.5.4",
 88:     "prettier": "3.5.3",
 89:     "tailwindcss": "^4.1.8",
 90:     "ts-jest": "^29.3.2",
