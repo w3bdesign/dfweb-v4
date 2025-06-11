@@ -15240,6 +15240,134 @@ tsconfig.json
 121: });
 ````
 
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: export interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrixCanvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = null,
+ 26: }) => {
+ 27:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 28:   const columnsRef = useRef<Column[]>([]);
+ 29:   const maxStackHeightRef = useRef<number>(0);
+ 30:   const lastFrameTimeRef = useRef<number>(0);
+ 31:   const isInitializedRef = useRef<boolean>(false);
+ 32:   const fps = 10;
+ 33:   const frameInterval = 1000 / fps;
+ 34:   const rgbBackground = hexToRgb(backgroundColor);
+ 35:   if (!rgbBackground) {
+ 36:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 37:   }
+ 38:   const rgbFont = hexToRgb(fontColor);
+ 39:   if (!rgbFont) {
+ 40:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 41:   }
+ 42:   /**
+ 43:    * Initializes the matrix columns
+ 44:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 45:    */
+ 46:   const initMatrix = useCallback(
+ 47:     (canvas: HTMLCanvasElement) => {
+ 48:       const columns: Column[] = [];
+ 49:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 50:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 51:         const column: Column = {
+ 52:           x: i * tileSize,
+ 53:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 54:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 55:         };
+ 56:         columns.push(column);
+ 57:       }
+ 58:       columnsRef.current = columns;
+ 59:       maxStackHeightRef.current = maxStackHeight;
+ 60:     },
+ 61:     [tileSize],
+ 62:   );
+ 63:   const tick = useCallback(
+ 64:     (
+ 65:       timestamp: number,
+ 66:       ctx: CanvasRenderingContext2D,
+ 67:       canvas: HTMLCanvasElement,
+ 68:     ) => {
+ 69:       if (!lastFrameTimeRef.current) {
+ 70:         lastFrameTimeRef.current = timestamp;
+ 71:       }
+ 72:       const delta = timestamp - lastFrameTimeRef.current;
+ 73:       if (delta > frameInterval) {
+ 74:         const view = createMatrixRenderer({
+ 75:           ctx,
+ 76:           canvas,
+ 77:           columns: columnsRef.current,
+ 78:           maxStackHeight: maxStackHeightRef.current,
+ 79:           tileSize,
+ 80:           fadeFactor,
+ 81:           rgbBackground,
+ 82:           rgbFont,
+ 83:           glowColor,
+ 84:           tileSet,
+ 85:           getRandomInt,
+ 86:         });
+ 87:         view.draw();
+ 88:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 89:       }
+ 90:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 91:     },
+ 92:     [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet, frameInterval],
+ 93:   );
+ 94:   useEffect(() => {
+ 95:     const canvas = canvasRef.current;
+ 96:     if (!canvas) return;
+ 97:     const ctx = canvas.getContext("2d");
+ 98:     if (!ctx) return;
+ 99:     const handleResize = () => {
+100:       const boundingClientRect = canvas.getBoundingClientRect();
+101:       canvas.width = boundingClientRect.width;
+102:       canvas.height = boundingClientRect.height;
+103:       initMatrix(canvas);
+104:       isInitializedRef.current = true;
+105:     };
+106:     const debouncedResize = debounce(handleResize, 100);
+107:     window.addEventListener("resize", debouncedResize);
+108:     handleResize();
+109:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+110:     return () => {
+111:       window.removeEventListener("resize", debouncedResize);
+112:     };
+113:   }, [initMatrix, tick]);
+114:   return (
+115:     <canvas
+116:       ref={canvasRef}
+117:       id={CANVAS_ID}
+118:       style={{ width: "100%", height: "100%" }}
+119:       data-testid="matrix-canvas"
+120:       className="absolute inset-0"
+121:     />
+122:   );
+123: };
+124: export default ReactMatrixAnimation;
+````
+
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -15780,6 +15908,76 @@ tsconfig.json
 37:   );
 38: };
 39: export default KontaktWithMocks;
+````
+
+## File: src/utils/eslint/dist/index.js
+````javascript
+ 1: /* eslint-disable @typescript-eslint/no-require-imports */
+ 2: "use strict";
+ 3: Object.defineProperty(exports, "__esModule", { value: true });
+ 4: const utils_1 = require("@typescript-eslint/utils");
+ 5: const isTestFunction = (node) => {
+ 6:     const testNames = ["it", "test"];
+ 7:     return (node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
+ 8:         testNames.includes(node.callee.name));
+ 9: };
+10: const isArrowFunction = (node) => {
+11:     return (node === null || node === void 0 ? void 0 : node.type) === utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+12: };
+13: const validateAAAPattern = (context, node) => {
+14:     const testFn = node.arguments[1];
+15:     if (!isArrowFunction(testFn))
+16:         return;
+17:     if (!hasAAAComments(context, testFn)) {
+18:         context.report({
+19:             node,
+20:             messageId: "missingAAAPattern",
+21:         });
+22:     }
+23: };
+24: const validateTestCase = (context, node) => {
+25:     if (!isTestFunction(node))
+26:         return;
+27:     validateAAAPattern(context, node);
+28: };
+29: const hasAAAComments = (context, testFn) => {
+30:     const comments = context.getSourceCode().getCommentsInside(testFn.body);
+31:     const patterns = ["Arrange", "Act", "Assert"];
+32:     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
+33: };
+34: const createRule = utils_1.ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
+35: const rule = createRule({
+36:     name: "arrange-act-assert",
+37:     meta: {
+38:         type: "suggestion",
+39:         docs: {
+40:             description: "enforce AAA pattern in tests",
+41:         },
+42:         messages: {
+43:             missingAAAPattern: "Test should follow AAA pattern with comments",
+44:         },
+45:         schema: [],
+46:     },
+47:     defaultOptions: [],
+48:     create(context) {
+49:         return {
+50:             CallExpression: (node) => validateTestCase(context, node),
+51:         };
+52:     },
+53: });
+54: module.exports = {
+55:     configs: {
+56:         recommended: {
+57:             plugins: ["test-rules"],
+58:             rules: {
+59:                 "test-rules/arrange-act-assert": "error",
+60:             },
+61:         },
+62:     },
+63:     rules: {
+64:         "arrange-act-assert": rule,
+65:     },
+66: };
 ````
 
 ## File: studio/package.json
@@ -16433,134 +16631,6 @@ tsconfig.json
 144: });
 ````
 
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: export interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrixCanvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = null,
- 26: }) => {
- 27:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 28:   const columnsRef = useRef<Column[]>([]);
- 29:   const maxStackHeightRef = useRef<number>(0);
- 30:   const lastFrameTimeRef = useRef<number>(0);
- 31:   const isInitializedRef = useRef<boolean>(false);
- 32:   const fps = 10;
- 33:   const frameInterval = 1000 / fps;
- 34:   const rgbBackground = hexToRgb(backgroundColor);
- 35:   if (!rgbBackground) {
- 36:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 37:   }
- 38:   const rgbFont = hexToRgb(fontColor);
- 39:   if (!rgbFont) {
- 40:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 41:   }
- 42:   /**
- 43:    * Initializes the matrix columns
- 44:    * @param {HTMLCanvasElement} canvas - The canvas element
- 45:    */
- 46:   const initMatrix = useCallback(
- 47:     (canvas: HTMLCanvasElement) => {
- 48:       const columns: Column[] = [];
- 49:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 50:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 51:         const column: Column = {
- 52:           x: i * tileSize,
- 53:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 54:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 55:         };
- 56:         columns.push(column);
- 57:       }
- 58:       columnsRef.current = columns;
- 59:       maxStackHeightRef.current = maxStackHeight;
- 60:     },
- 61:     [tileSize],
- 62:   );
- 63:   const tick = useCallback(
- 64:     (
- 65:       timestamp: number,
- 66:       ctx: CanvasRenderingContext2D,
- 67:       canvas: HTMLCanvasElement,
- 68:     ) => {
- 69:       if (!lastFrameTimeRef.current) {
- 70:         lastFrameTimeRef.current = timestamp;
- 71:       }
- 72:       const delta = timestamp - lastFrameTimeRef.current;
- 73:       if (delta > frameInterval) {
- 74:         const view = createMatrixRenderer({
- 75:           ctx,
- 76:           canvas,
- 77:           columns: columnsRef.current,
- 78:           maxStackHeight: maxStackHeightRef.current,
- 79:           tileSize,
- 80:           fadeFactor,
- 81:           rgbBackground,
- 82:           rgbFont,
- 83:           glowColor,
- 84:           tileSet,
- 85:           getRandomInt,
- 86:         });
- 87:         view.draw();
- 88:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 89:       }
- 90:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 91:     },
- 92:     [fadeFactor, rgbBackground, rgbFont, tileSize, glowColor, tileSet, frameInterval],
- 93:   );
- 94:   useEffect(() => {
- 95:     const canvas = canvasRef.current;
- 96:     if (!canvas) return;
- 97:     const ctx = canvas.getContext("2d");
- 98:     if (!ctx) return;
- 99:     const handleResize = () => {
-100:       const boundingClientRect = canvas.getBoundingClientRect();
-101:       canvas.width = boundingClientRect.width;
-102:       canvas.height = boundingClientRect.height;
-103:       initMatrix(canvas);
-104:       isInitializedRef.current = true;
-105:     };
-106:     const debouncedResize = debounce(handleResize, 100);
-107:     window.addEventListener("resize", debouncedResize);
-108:     handleResize();
-109:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-110:     return () => {
-111:       window.removeEventListener("resize", debouncedResize);
-112:     };
-113:   }, [initMatrix, tick]);
-114:   return (
-115:     <canvas
-116:       ref={canvasRef}
-117:       id={CANVAS_ID}
-118:       style={{ width: "100%", height: "100%" }}
-119:       data-testid="matrix-canvas"
-120:       className="absolute inset-0"
-121:     />
-122:   );
-123: };
-124: export default ReactMatrixAnimation;
-````
-
 ## File: src/e2e/cypress/e2e/prosjekter.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -16999,76 +17069,6 @@ tsconfig.json
 19: });
 ````
 
-## File: src/utils/eslint/dist/index.js
-````javascript
- 1: /* eslint-disable @typescript-eslint/no-require-imports */
- 2: "use strict";
- 3: Object.defineProperty(exports, "__esModule", { value: true });
- 4: const utils_1 = require("@typescript-eslint/utils");
- 5: const isTestFunction = (node) => {
- 6:     const testNames = ["it", "test"];
- 7:     return (node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
- 8:         testNames.includes(node.callee.name));
- 9: };
-10: const isArrowFunction = (node) => {
-11:     return (node === null || node === void 0 ? void 0 : node.type) === utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
-12: };
-13: const validateAAAPattern = (context, node) => {
-14:     const testFn = node.arguments[1];
-15:     if (!isArrowFunction(testFn))
-16:         return;
-17:     if (!hasAAAComments(context, testFn)) {
-18:         context.report({
-19:             node,
-20:             messageId: "missingAAAPattern",
-21:         });
-22:     }
-23: };
-24: const validateTestCase = (context, node) => {
-25:     if (!isTestFunction(node))
-26:         return;
-27:     validateAAAPattern(context, node);
-28: };
-29: const hasAAAComments = (context, testFn) => {
-30:     const comments = context.getSourceCode().getCommentsInside(testFn.body);
-31:     const patterns = ["Arrange", "Act", "Assert"];
-32:     return comments.some((comment) => patterns.some((pattern) => comment.value.includes(pattern)));
-33: };
-34: const createRule = utils_1.ESLintUtils.RuleCreator((name) => `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`);
-35: const rule = createRule({
-36:     name: "arrange-act-assert",
-37:     meta: {
-38:         type: "suggestion",
-39:         docs: {
-40:             description: "enforce AAA pattern in tests",
-41:         },
-42:         messages: {
-43:             missingAAAPattern: "Test should follow AAA pattern with comments",
-44:         },
-45:         schema: [],
-46:     },
-47:     defaultOptions: [],
-48:     create(context) {
-49:         return {
-50:             CallExpression: (node) => validateTestCase(context, node),
-51:         };
-52:     },
-53: });
-54: module.exports = {
-55:     configs: {
-56:         recommended: {
-57:             plugins: ["test-rules"],
-58:             rules: {
-59:                 "test-rules/arrange-act-assert": "error",
-60:             },
-61:         },
-62:     },
-63:     rules: {
-64:         "arrange-act-assert": rule,
-65:     },
-66: };
-````
-
 ## File: src/types/testing-library.d.ts
 ````typescript
  1: /// <reference types="jest" />
@@ -17471,7 +17471,7 @@ tsconfig.json
 71:     "@typescript-eslint/parser": "^8.30.1",
 72:     "@typescript-eslint/utils": "^8.34.0",
 73:     "axe-core": "^4.10.3",
-74:     "cypress": "14.3.3",
+74:     "cypress": "14.4.1",
 75:     "cypress-axe": "^1.6.0",
 76:     "eslint": "9.28.0",
 77:     "eslint-config-next": "15.3.3",
