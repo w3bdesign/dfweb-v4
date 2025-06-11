@@ -3568,6 +3568,128 @@ tsconfig.json
 48: });
 ````
 
+## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import { mockIntersectionObserver } from "jsdom-testing-mocks";
+  4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+  5: import type { Project } from "@/types/sanity.types";
+  6: mockIntersectionObserver();
+  7: interface ButtonProps {
+  8:   href: string;
+  9:   children: React.ReactNode;
+ 10: }
+ 11: jest.mock("@/components/UI/Button.component", () => {
+ 12:   return function MockButton({ href, children }: ButtonProps) {
+ 13:     return <a href={href}>{children}</a>;
+ 14:   };
+ 15: });
+ 16: jest.mock("@/lib/sanity/client", () => ({
+ 17:   urlFor: jest.fn().mockReturnValue({
+ 18:     width: jest.fn().mockReturnThis(),
+ 19:     height: jest.fn().mockReturnThis(),
+ 20:     fit: jest.fn().mockReturnThis(),
+ 21:     quality: jest.fn().mockReturnThis(),
+ 22:     auto: jest.fn().mockReturnThis(),
+ 23:     url: jest.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
+ 24:   }),
+ 25: }));
+ 26: const mockProjectProps: Project = {
+ 27:   _id: "1",
+ 28:   _type: "project",
+ 29:   _createdAt: "2024-01-23",
+ 30:   _updatedAt: "2024-01-23",
+ 31:   _rev: "rev1",
+ 32:   id: 1,
+ 33:   name: "Test Project",
+ 34:   description: "This is a test project",
+ 35:   subdescription: "This is a subdescription",
+ 36:   // Use a valid Sanity image object structure
+ 37:   projectimage: {
+ 38:     _type: "image",
+ 39:     asset: {
+ 40:       _ref: "image-abcde12345-100x100-jpg",
+ 41:       _type: "reference",
+ 42:     },
+ 43:   },
+ 44:   urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
+ 45:   urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
+ 46: };
+ 47: describe("ProsjektCard", () => {
+ 48:   describe("rendering project content", () => {
+ 49:     it("renders basic project information", () => {
+ 50:       // Arrange
+ 51:       const expectedContent = {
+ 52:         name: "Test Project",
+ 53:         description: "This is a test project",
+ 54:         subdescription: "This is a subdescription",
+ 55:       };
+ 56:       // Act
+ 57:       render(<ProsjektCard {...mockProjectProps} />);
+ 58:       // Assert
+ 59:       expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
+ 60:       expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
+ 61:       expect(
+ 62:         screen.getByText(expectedContent.subdescription),
+ 63:       ).toBeInTheDocument();
+ 64:     });
+ 65:     it("renders project image with correct attributes", () => {
+ 66:       // Arrange
+ 67:       const expectedImage = {
+ 68:         alt: "Test Project",
+ 69:         src: "/test-image.jpg",
+ 70:       };
+ 71:       // Act
+ 72:       render(<ProsjektCard {...mockProjectProps} />);
+ 73:       const img = screen.getByAltText(expectedImage.alt);
+ 74:       // Assert
+ 75:       expect(img).toBeInTheDocument();
+ 76:       expect(img).toHaveAttribute("src", expectedImage.src);
+ 77:     });
+ 78:     it("renders navigation buttons with correct hrefs", () => {
+ 79:       // Arrange
+ 80:       const expectedLinks = {
+ 81:         visit: {
+ 82:           text: "Besøk",
+ 83:           href: "https://example.com",
+ 84:         },
+ 85:         github: {
+ 86:           text: "GitHub",
+ 87:           href: "https://github.com/example",
+ 88:         },
+ 89:       };
+ 90:       // Act
+ 91:       render(<ProsjektCard {...mockProjectProps} />);
+ 92:       // Assert
+ 93:       const visitLink = screen.getByRole("link", { name: expectedLinks.visit.text });
+ 94:       const githubLink = screen.getByRole("link", { name: expectedLinks.github.text });
+ 95:       expect(visitLink).toBeInTheDocument();
+ 96:       expect(visitLink).toHaveAttribute("href", expectedLinks.visit.href);
+ 97:       expect(githubLink).toBeInTheDocument();
+ 98:       expect(githubLink).toHaveAttribute("href", expectedLinks.github.href);
+ 99:     });
+100:   });
+101:   describe("conditional rendering", () => {
+102:     it("does not render navigation buttons when urls are not provided", () => {
+103:       // Arrange
+104:       const propsWithoutUrls: Project = {
+105:         ...mockProjectProps,
+106:         urlwww: [],
+107:         urlgithub: [],
+108:       };
+109:       const buttonTexts = ["Besøk", "GitHub"];
+110:       // Act
+111:       render(<ProsjektCard {...propsWithoutUrls} />);
+112:       // Assert
+113:       buttonTexts.forEach((text) => {
+114:         expect(screen.queryByText(text)).not.toBeInTheDocument();
+115:       });
+116:     });
+117:   });
+118: });
+````
+
 ## File: src/__tests__/UI/Button.test.tsx
 ````typescript
  1: /**
@@ -3628,6 +3750,107 @@ tsconfig.json
 56:     });
 57:   });
 58: });
+````
+
+## File: src/__tests__/UI/InputField.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import { UseFormRegister } from "react-hook-form";
+ 5: import InputField, {
+ 6:   createRegisterOptions,
+ 7: } from "@/components/UI/InputField.component";
+ 8: interface TestFormData {
+ 9:   testField: string;
+10: }
+11: const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
+12:   onChange: jest.fn(),
+13:   onBlur: jest.fn(),
+14:   ref: jest.fn(),
+15:   name,
+16: }));
+17: const TestComponent = ({
+18:   type = "input",
+19:   isRequired = false,
+20:   inputPattern,
+21: }: {
+22:   type?: "input" | "textarea";
+23:   isRequired?: boolean;
+24:   inputPattern?: RegExp;
+25: }) => {
+26:   return (
+27:     <InputField<TestFormData>
+28:       name="testField"
+29:       label="Test Field"
+30:       htmlFor="testField"
+31:       type={type}
+32:       isRequired={isRequired}
+33:       inputPattern={inputPattern}
+34:       register={mockRegister}
+35:     />
+36:   );
+37: };
+38: describe("InputField", () => {
+39:   describe("rendering", () => {
+40:     it("renders input field with label", () => {
+41:       // Arrange
+42:       const expectedLabel = "Test Field";
+43:       // Act
+44:       render(<TestComponent />);
+45:       const input = screen.getByLabelText(expectedLabel);
+46:       // Assert
+47:       expect(input).toBeInTheDocument();
+48:     });
+49:     it("renders textarea when specified", () => {
+50:       // Arrange
+51:       const expectedLabel = "Test Field";
+52:       const expectedTag = "TEXTAREA";
+53:       // Act
+54:       render(<TestComponent type="textarea" />);
+55:       const textarea = screen.getByLabelText(expectedLabel);
+56:       // Assert
+57:       expect(textarea).toBeInTheDocument();
+58:       expect(textarea.tagName).toBe(expectedTag);
+59:     });
+60:     it("displays provided error message", () => {
+61:       // Arrange
+62:       const errorMessage = "This is an error message";
+63:       const props = {
+64:         name: "testField" as const,
+65:         label: "Test Field",
+66:         htmlFor: "testField",
+67:         register: mockRegister,
+68:         error: errorMessage,
+69:       };
+70:       // Act
+71:       render(<InputField<TestFormData> {...props} />);
+72:       // Assert
+73:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
+74:     });
+75:   });
+76:   describe("form registration", () => {
+77:     it("creates required validation option when isRequired is true", () => {
+78:       // Arrange
+79:       const isRequired = true;
+80:       const expectedMessage = "Dette feltet er påkrevd";
+81:       // Act
+82:       const options = createRegisterOptions(isRequired);
+83:       // Assert
+84:       expect(options.required).toBe(expectedMessage);
+85:     });
+86:     it("creates pattern validation option when pattern is provided", () => {
+87:       // Arrange
+88:       const pattern = /[A-Za-z]+/;
+89:       const isRequired = false;
+90:       // Act
+91:       const options = createRegisterOptions(isRequired, pattern);
+92:       // Assert
+93:       expect(options.pattern).toBeDefined();
+94:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(pattern);
+95:     });
+96:   });
+97: });
 ````
 
 ## File: src/__tests__/UI/Pill.test.tsx
@@ -3739,6 +3962,131 @@ tsconfig.json
 105:     });
 106:   });
 107: });
+````
+
+## File: src/__tests__/UI/Tabs.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen, fireEvent } from "@testing-library/react";
+  6: import "@testing-library/jest-dom";
+  7: import Tabs from "@/components/UI/Tabs.component";
+  8: // Component that throws an error immediately
+  9: const ImmediateCrash = () => {
+ 10:   throw new Error("Immediate crash!");
+ 11: };
+ 12: const mockMotion = {
+ 13:   motion: {
+ 14:     div: (props: React.ComponentProps<"div">) => (
+ 15:       <div {...props}>{props.children}</div>
+ 16:     ),
+ 17:     button: (props: React.ComponentProps<"button">) => (
+ 18:       <button type="button" {...props}>
+ 19:         {props.children}
+ 20:       </button>
+ 21:     ),
+ 22:   },
+ 23:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+ 24:     <>{children}</>
+ 25:   ),
+ 26: };
+ 27: jest.mock("motion", () => mockMotion);
+ 28: const mockTabs = [
+ 29:   {
+ 30:     id: "tab1",
+ 31:     label: "Normal Tab",
+ 32:     content: <div>Normal content</div>,
+ 33:   },
+ 34:   {
+ 35:     id: "tab2",
+ 36:     label: "Crashing Tab",
+ 37:     content: <ImmediateCrash />,
+ 38:   },
+ 39: ];
+ 40: describe("Tabs", () => {
+ 41:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
+ 42:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
+ 43:   it("renders tabs with correct layout in vertical orientation", () => {
+ 44:     // Arrange
+ 45:     const orientation = undefined; // default vertical orientation
+ 46:     // Act
+ 47:     renderTabs(orientation);
+ 48:     const tabList = screen.getByRole("tablist");
+ 49:     // Assert
+ 50:     expect(tabList).toHaveClass("sm:flex-col");
+ 51:   });
+ 52:   it("renders tabs with correct layout in horizontal orientation", () => {
+ 53:     // Arrange
+ 54:     const orientation = "horizontal";
+ 55:     // Act
+ 56:     renderTabs(orientation);
+ 57:     const tabList = screen.getByRole("tablist");
+ 58:     // Assert
+ 59:     expect(tabList).toHaveClass("flex-row");
+ 60:     expect(tabList).not.toHaveClass("sm:flex-col");
+ 61:   });
+ 62:   it("applies correct ARIA attributes to tabs", () => {
+ 63:     // Arrange
+ 64:     const expectedAttributes = mockTabs.map((tab, index) => ({
+ 65:       tab,
+ 66:       isSelected: index === 0,
+ 67:       controlsId: `tabpanel-${tab.id}`,
+ 68:     }));
+ 69:     // Act
+ 70:     renderTabs();
+ 71:     // Assert
+ 72:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
+ 73:       const tabElement = screen.getByRole("tab", { name: tab.label });
+ 74:       expect(tabElement).toHaveAttribute(
+ 75:         "aria-selected",
+ 76:         isSelected.toString(),
+ 77:       );
+ 78:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
+ 79:     });
+ 80:   });
+ 81:   it("switches tab content when clicking tabs", () => {
+ 82:     // Arrange
+ 83:     renderTabs();
+ 84:     const initialContent = "Normal content";
+ 85:     // Act & Assert - Initial state
+ 86:     expect(screen.getByText(initialContent)).toBeInTheDocument();
+ 87:     // Act & Assert - Click handling
+ 88:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+ 89:     expect(() => {
+ 90:       fireEvent.click(crashingTab);
+ 91:       render(<ImmediateCrash />);
+ 92:     }).toThrow("Immediate crash!");
+ 93:   });
+ 94:   it("applies correct border styles to tabs", () => {
+ 95:     // Arrange
+ 96:     renderTabs();
+ 97:     // Act
+ 98:     const tabs = screen.getAllByRole("tab");
+ 99:     // Assert
+100:     expect(tabs[0]).not.toHaveClass("border-t");
+101:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+102:   });
+103:   it("renders tab panels with correct attributes", () => {
+104:     // Arrange
+105:     const expectedAttributes = {
+106:       id: "tabpanel-tab1",
+107:       labelledBy: "tab-tab1",
+108:       className: "px-8",
+109:     };
+110:     // Act
+111:     renderTabs();
+112:     const activePanel = screen.getByRole("tabpanel");
+113:     // Assert
+114:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
+115:     expect(activePanel).toHaveAttribute(
+116:       "aria-labelledby",
+117:       expectedAttributes.labelledBy,
+118:     );
+119:     expect(activePanel).toHaveClass(expectedAttributes.className);
+120:   });
+121: });
 ````
 
 ## File: src/app/api/siteMapGenerator.ts
@@ -15020,354 +15368,6 @@ tsconfig.json
 114: });
 ````
 
-## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import { mockIntersectionObserver } from "jsdom-testing-mocks";
-  4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
-  5: import type { Project } from "@/types/sanity.types";
-  6: mockIntersectionObserver();
-  7: interface ButtonProps {
-  8:   href: string;
-  9:   children: React.ReactNode;
- 10: }
- 11: jest.mock("@/components/UI/Button.component", () => {
- 12:   return function MockButton({ href, children }: ButtonProps) {
- 13:     return <a href={href}>{children}</a>;
- 14:   };
- 15: });
- 16: jest.mock("@/lib/sanity/client", () => ({
- 17:   urlFor: jest.fn().mockReturnValue({
- 18:     width: jest.fn().mockReturnThis(),
- 19:     height: jest.fn().mockReturnThis(),
- 20:     fit: jest.fn().mockReturnThis(),
- 21:     quality: jest.fn().mockReturnThis(),
- 22:     auto: jest.fn().mockReturnThis(),
- 23:     url: jest.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
- 24:   }),
- 25: }));
- 26: const mockProjectProps: Project = {
- 27:   _id: "1",
- 28:   _type: "project",
- 29:   _createdAt: "2024-01-23",
- 30:   _updatedAt: "2024-01-23",
- 31:   _rev: "rev1",
- 32:   id: 1,
- 33:   name: "Test Project",
- 34:   description: "This is a test project",
- 35:   subdescription: "This is a subdescription",
- 36:   // Use a valid Sanity image object structure
- 37:   projectimage: {
- 38:     _type: "image",
- 39:     asset: {
- 40:       _ref: "image-abcde12345-100x100-jpg",
- 41:       _type: "reference",
- 42:     },
- 43:   },
- 44:   urlwww: [{ url: "https://example.com", _key: "1", _type: "link" }],
- 45:   urlgithub: [{ url: "https://github.com/example", _key: "1", _type: "link" }],
- 46: };
- 47: describe("ProsjektCard", () => {
- 48:   describe("rendering project content", () => {
- 49:     it("renders basic project information", () => {
- 50:       // Arrange
- 51:       const expectedContent = {
- 52:         name: "Test Project",
- 53:         description: "This is a test project",
- 54:         subdescription: "This is a subdescription",
- 55:       };
- 56:       // Act
- 57:       render(<ProsjektCard {...mockProjectProps} />);
- 58:       // Assert
- 59:       expect(screen.getByText(expectedContent.name)).toBeInTheDocument();
- 60:       expect(screen.getByText(expectedContent.description)).toBeInTheDocument();
- 61:       expect(
- 62:         screen.getByText(expectedContent.subdescription),
- 63:       ).toBeInTheDocument();
- 64:     });
- 65:     it("renders project image with correct attributes", () => {
- 66:       // Arrange
- 67:       const expectedImage = {
- 68:         alt: "Test Project",
- 69:         src: "/test-image.jpg",
- 70:       };
- 71:       // Act
- 72:       render(<ProsjektCard {...mockProjectProps} />);
- 73:       const img = screen.getByAltText(expectedImage.alt);
- 74:       // Assert
- 75:       expect(img).toBeInTheDocument();
- 76:       expect(img).toHaveAttribute("src", expectedImage.src);
- 77:     });
- 78:     it("renders navigation buttons with correct hrefs", () => {
- 79:       // Arrange
- 80:       const expectedLinks = {
- 81:         visit: {
- 82:           text: "Besøk",
- 83:           href: "https://example.com",
- 84:         },
- 85:         github: {
- 86:           text: "GitHub",
- 87:           href: "https://github.com/example",
- 88:         },
- 89:       };
- 90:       // Act
- 91:       render(<ProsjektCard {...mockProjectProps} />);
- 92:       // Assert
- 93:       const visitLink = screen.getByRole("link", { name: expectedLinks.visit.text });
- 94:       const githubLink = screen.getByRole("link", { name: expectedLinks.github.text });
- 95:       expect(visitLink).toBeInTheDocument();
- 96:       expect(visitLink).toHaveAttribute("href", expectedLinks.visit.href);
- 97:       expect(githubLink).toBeInTheDocument();
- 98:       expect(githubLink).toHaveAttribute("href", expectedLinks.github.href);
- 99:     });
-100:   });
-101:   describe("conditional rendering", () => {
-102:     it("does not render navigation buttons when urls are not provided", () => {
-103:       // Arrange
-104:       const propsWithoutUrls: Project = {
-105:         ...mockProjectProps,
-106:         urlwww: [],
-107:         urlgithub: [],
-108:       };
-109:       const buttonTexts = ["Besøk", "GitHub"];
-110:       // Act
-111:       render(<ProsjektCard {...propsWithoutUrls} />);
-112:       // Assert
-113:       buttonTexts.forEach((text) => {
-114:         expect(screen.queryByText(text)).not.toBeInTheDocument();
-115:       });
-116:     });
-117:   });
-118: });
-````
-
-## File: src/__tests__/UI/InputField.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import { UseFormRegister } from "react-hook-form";
- 5: import InputField, {
- 6:   createRegisterOptions,
- 7: } from "@/components/UI/InputField.component";
- 8: interface TestFormData {
- 9:   testField: string;
-10: }
-11: const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
-12:   onChange: jest.fn(),
-13:   onBlur: jest.fn(),
-14:   ref: jest.fn(),
-15:   name,
-16: }));
-17: const TestComponent = ({
-18:   type = "input",
-19:   isRequired = false,
-20:   inputPattern,
-21: }: {
-22:   type?: "input" | "textarea";
-23:   isRequired?: boolean;
-24:   inputPattern?: RegExp;
-25: }) => {
-26:   return (
-27:     <InputField<TestFormData>
-28:       name="testField"
-29:       label="Test Field"
-30:       htmlFor="testField"
-31:       type={type}
-32:       isRequired={isRequired}
-33:       inputPattern={inputPattern}
-34:       register={mockRegister}
-35:     />
-36:   );
-37: };
-38: describe("InputField", () => {
-39:   describe("rendering", () => {
-40:     it("renders input field with label", () => {
-41:       // Arrange
-42:       const expectedLabel = "Test Field";
-43:       // Act
-44:       render(<TestComponent />);
-45:       const input = screen.getByLabelText(expectedLabel);
-46:       // Assert
-47:       expect(input).toBeInTheDocument();
-48:     });
-49:     it("renders textarea when specified", () => {
-50:       // Arrange
-51:       const expectedLabel = "Test Field";
-52:       const expectedTag = "TEXTAREA";
-53:       // Act
-54:       render(<TestComponent type="textarea" />);
-55:       const textarea = screen.getByLabelText(expectedLabel);
-56:       // Assert
-57:       expect(textarea).toBeInTheDocument();
-58:       expect(textarea.tagName).toBe(expectedTag);
-59:     });
-60:     it("displays provided error message", () => {
-61:       // Arrange
-62:       const errorMessage = "This is an error message";
-63:       const props = {
-64:         name: "testField" as const,
-65:         label: "Test Field",
-66:         htmlFor: "testField",
-67:         register: mockRegister,
-68:         error: errorMessage,
-69:       };
-70:       // Act
-71:       render(<InputField<TestFormData> {...props} />);
-72:       // Assert
-73:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
-74:     });
-75:   });
-76:   describe("form registration", () => {
-77:     it("creates required validation option when isRequired is true", () => {
-78:       // Arrange
-79:       const isRequired = true;
-80:       const expectedMessage = "Dette feltet er påkrevd";
-81:       // Act
-82:       const options = createRegisterOptions(isRequired);
-83:       // Assert
-84:       expect(options.required).toBe(expectedMessage);
-85:     });
-86:     it("creates pattern validation option when pattern is provided", () => {
-87:       // Arrange
-88:       const pattern = /[A-Za-z]+/;
-89:       const isRequired = false;
-90:       // Act
-91:       const options = createRegisterOptions(isRequired, pattern);
-92:       // Assert
-93:       expect(options.pattern).toBeDefined();
-94:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(pattern);
-95:     });
-96:   });
-97: });
-````
-
-## File: src/__tests__/UI/Tabs.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen, fireEvent } from "@testing-library/react";
-  6: import "@testing-library/jest-dom";
-  7: import Tabs from "@/components/UI/Tabs.component";
-  8: // Component that throws an error immediately
-  9: const ImmediateCrash = () => {
- 10:   throw new Error("Immediate crash!");
- 11: };
- 12: const mockMotion = {
- 13:   motion: {
- 14:     div: (props: React.ComponentProps<"div">) => (
- 15:       <div {...props}>{props.children}</div>
- 16:     ),
- 17:     button: (props: React.ComponentProps<"button">) => (
- 18:       <button type="button" {...props}>
- 19:         {props.children}
- 20:       </button>
- 21:     ),
- 22:   },
- 23:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
- 24:     <>{children}</>
- 25:   ),
- 26: };
- 27: jest.mock("motion", () => mockMotion);
- 28: const mockTabs = [
- 29:   {
- 30:     id: "tab1",
- 31:     label: "Normal Tab",
- 32:     content: <div>Normal content</div>,
- 33:   },
- 34:   {
- 35:     id: "tab2",
- 36:     label: "Crashing Tab",
- 37:     content: <ImmediateCrash />,
- 38:   },
- 39: ];
- 40: describe("Tabs", () => {
- 41:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
- 42:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
- 43:   it("renders tabs with correct layout in vertical orientation", () => {
- 44:     // Arrange
- 45:     const orientation = undefined; // default vertical orientation
- 46:     // Act
- 47:     renderTabs(orientation);
- 48:     const tabList = screen.getByRole("tablist");
- 49:     // Assert
- 50:     expect(tabList).toHaveClass("sm:flex-col");
- 51:   });
- 52:   it("renders tabs with correct layout in horizontal orientation", () => {
- 53:     // Arrange
- 54:     const orientation = "horizontal";
- 55:     // Act
- 56:     renderTabs(orientation);
- 57:     const tabList = screen.getByRole("tablist");
- 58:     // Assert
- 59:     expect(tabList).toHaveClass("flex-row");
- 60:     expect(tabList).not.toHaveClass("sm:flex-col");
- 61:   });
- 62:   it("applies correct ARIA attributes to tabs", () => {
- 63:     // Arrange
- 64:     const expectedAttributes = mockTabs.map((tab, index) => ({
- 65:       tab,
- 66:       isSelected: index === 0,
- 67:       controlsId: `tabpanel-${tab.id}`,
- 68:     }));
- 69:     // Act
- 70:     renderTabs();
- 71:     // Assert
- 72:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
- 73:       const tabElement = screen.getByRole("tab", { name: tab.label });
- 74:       expect(tabElement).toHaveAttribute(
- 75:         "aria-selected",
- 76:         isSelected.toString(),
- 77:       );
- 78:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
- 79:     });
- 80:   });
- 81:   it("switches tab content when clicking tabs", () => {
- 82:     // Arrange
- 83:     renderTabs();
- 84:     const initialContent = "Normal content";
- 85:     // Act & Assert - Initial state
- 86:     expect(screen.getByText(initialContent)).toBeInTheDocument();
- 87:     // Act & Assert - Click handling
- 88:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
- 89:     expect(() => {
- 90:       fireEvent.click(crashingTab);
- 91:       render(<ImmediateCrash />);
- 92:     }).toThrow("Immediate crash!");
- 93:   });
- 94:   it("applies correct border styles to tabs", () => {
- 95:     // Arrange
- 96:     renderTabs();
- 97:     // Act
- 98:     const tabs = screen.getAllByRole("tab");
- 99:     // Assert
-100:     expect(tabs[0]).not.toHaveClass("border-t");
-101:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
-102:   });
-103:   it("renders tab panels with correct attributes", () => {
-104:     // Arrange
-105:     const expectedAttributes = {
-106:       id: "tabpanel-tab1",
-107:       labelledBy: "tab-tab1",
-108:       className: "px-8",
-109:     };
-110:     // Act
-111:     renderTabs();
-112:     const activePanel = screen.getByRole("tabpanel");
-113:     // Assert
-114:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
-115:     expect(activePanel).toHaveAttribute(
-116:       "aria-labelledby",
-117:       expectedAttributes.labelledBy,
-118:     );
-119:     expect(activePanel).toHaveClass(expectedAttributes.className);
-120:   });
-121: });
-````
-
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -15908,6 +15908,69 @@ tsconfig.json
 37:   );
 38: };
 39: export default KontaktWithMocks;
+````
+
+## File: src/types/testing-library.d.ts
+````typescript
+ 1: /// <reference types="jest" />
+ 2: /// <reference types="@testing-library/jest-dom" />
+ 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
+ 4: declare global {
+ 5:   namespace jest {
+ 6:     interface Matchers<R> {
+ 7:       toBeInTheDocument(): R;
+ 8:       toHaveTextContent(text: string): R;
+ 9:       toBeVisible(): R;
+10:       toBeDisabled(): R;
+11:       toBeEnabled(): R;
+12:       toHaveAttribute(attr: string, value?: string): R;
+13:       toHaveClass(className: string): R;
+14:       toHaveStyle(css: React.CSSProperties): R;
+15:     }
+16:   }
+17: }
+18: // Augment Chai assertions for Cypress
+19: declare global {
+20:   namespace Chai {
+21:     interface Assertion {
+22:       toBeInTheDocument(): Assertion;
+23:       toHaveTextContent(text: string): Assertion;
+24:       toBeVisible(): Assertion;
+25:       toBeDisabled(): Assertion;
+26:       toBeEnabled(): Assertion;
+27:       toHaveAttribute(attr: string, value?: string): Assertion;
+28:       toHaveClass(...classNames: string[]): Assertion;
+29:       toHaveStyle(css: React.CSSProperties): Assertion;
+30:       toHaveBeenCalled(): Assertion;
+31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
+32:       toHaveBeenCalledTimes(n: number): Assertion;
+33:       toBe(expected: unknown): Assertion;
+34:       toEqual(expected: unknown): Assertion;
+35:       toStrictEqual(expected: unknown): Assertion;
+36:       toBeNull(): Assertion;
+37:       toBeDefined(): Assertion;
+38:       toBeGreaterThan(n: number): Assertion;
+39:       toBeLessThanOrEqual(n: number): Assertion;
+40:       toMatch(pattern: RegExp | string): Assertion;
+41:       toThrow(error?: string | Error | RegExp): Assertion;
+42:       toContain(item: unknown): Assertion;
+43:       toContainElement(element: HTMLElement): Assertion;
+44:       toContainHTML(html: string): Assertion;
+45:       toHaveLength(length: number): Assertion;
+46:       rejects: {
+47:         toThrow(error?: string | Error | RegExp): Promise<void>;
+48:       };
+49:     }
+50:     interface ExpectStatic {
+51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
+52:     }
+53:   }
+54:   // Add canvas mocking support
+55:   interface HTMLCanvasElement {
+56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
+57:   }
+58: }
+59: export {};
 ````
 
 ## File: src/utils/eslint/dist/index.js
@@ -16996,69 +17059,6 @@ tsconfig.json
 76: );
 ````
 
-## File: src/types/testing-library.d.ts
-````typescript
- 1: /// <reference types="jest" />
- 2: /// <reference types="@testing-library/jest-dom" />
- 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
- 4: declare global {
- 5:   namespace jest {
- 6:     interface Matchers<R> {
- 7:       toBeInTheDocument(): R;
- 8:       toHaveTextContent(text: string): R;
- 9:       toBeVisible(): R;
-10:       toBeDisabled(): R;
-11:       toBeEnabled(): R;
-12:       toHaveAttribute(attr: string, value?: string): R;
-13:       toHaveClass(className: string): R;
-14:       toHaveStyle(css: React.CSSProperties): R;
-15:     }
-16:   }
-17: }
-18: // Augment Chai assertions for Cypress
-19: declare global {
-20:   namespace Chai {
-21:     interface Assertion {
-22:       toBeInTheDocument(): Assertion;
-23:       toHaveTextContent(text: string): Assertion;
-24:       toBeVisible(): Assertion;
-25:       toBeDisabled(): Assertion;
-26:       toBeEnabled(): Assertion;
-27:       toHaveAttribute(attr: string, value?: string): Assertion;
-28:       toHaveClass(...classNames: string[]): Assertion;
-29:       toHaveStyle(css: React.CSSProperties): Assertion;
-30:       toHaveBeenCalled(): Assertion;
-31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
-32:       toHaveBeenCalledTimes(n: number): Assertion;
-33:       toBe(expected: unknown): Assertion;
-34:       toEqual(expected: unknown): Assertion;
-35:       toStrictEqual(expected: unknown): Assertion;
-36:       toBeNull(): Assertion;
-37:       toBeDefined(): Assertion;
-38:       toBeGreaterThan(n: number): Assertion;
-39:       toBeLessThanOrEqual(n: number): Assertion;
-40:       toMatch(pattern: RegExp | string): Assertion;
-41:       toThrow(error?: string | Error | RegExp): Assertion;
-42:       toContain(item: unknown): Assertion;
-43:       toContainElement(element: HTMLElement): Assertion;
-44:       toContainHTML(html: string): Assertion;
-45:       toHaveLength(length: number): Assertion;
-46:       rejects: {
-47:         toThrow(error?: string | Error | RegExp): Promise<void>;
-48:       };
-49:     }
-50:     interface ExpectStatic {
-51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
-52:     }
-53:   }
-54:   // Add canvas mocking support
-55:   interface HTMLCanvasElement {
-56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
-57:   }
-58: }
-59: export {};
-````
-
 ## File: src/__tests__/UI/SkipLink.test.tsx
 ````typescript
  1: import React from "react";
@@ -17437,7 +17437,7 @@ tsconfig.json
 37:     "jest": "^29.7.0",
 38:     "motion": "^12.16.0",
 39:     "next": "15.3.0",
-40:     "next-sanity": "^9.10.2",
+40:     "next-sanity": "^9.12.0",
 41:     "path-to-regexp": "^8.2.0",
 42:     "react": "^19.1.0",
 43:     "react-dom": "^19.1.0",
@@ -17475,7 +17475,7 @@ tsconfig.json
 75:     "cypress-axe": "^1.6.0",
 76:     "eslint": "9.28.0",
 77:     "eslint-config-next": "15.3.3",
-78:     "eslint-plugin-jest": "^28.11.0",
+78:     "eslint-plugin-jest": "^28.13.3",
 79:     "eslint-plugin-jsx-a11y": "^6.10.2",
 80:     "eslint-plugin-react": "^7.37.5",
 81:     "eslint-plugin-react-hooks": "^5.2.0",
