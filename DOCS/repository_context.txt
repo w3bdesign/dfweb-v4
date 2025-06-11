@@ -10275,6 +10275,69 @@ tsconfig.json
 303: export declare const internalGroqTypeReferenceTo: unique symbol;
 ````
 
+## File: src/types/testing-library.d.ts
+````typescript
+ 1: /// <reference types="jest" />
+ 2: /// <reference types="@testing-library/jest-dom" />
+ 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
+ 4: declare global {
+ 5:   namespace jest {
+ 6:     interface Matchers<R> {
+ 7:       toBeInTheDocument(): R;
+ 8:       toHaveTextContent(text: string): R;
+ 9:       toBeVisible(): R;
+10:       toBeDisabled(): R;
+11:       toBeEnabled(): R;
+12:       toHaveAttribute(attr: string, value?: string): R;
+13:       toHaveClass(className: string): R;
+14:       toHaveStyle(css: React.CSSProperties): R;
+15:     }
+16:   }
+17: }
+18: // Augment Chai assertions for Cypress
+19: declare global {
+20:   namespace Chai {
+21:     interface Assertion {
+22:       toBeInTheDocument(): Assertion;
+23:       toHaveTextContent(text: string): Assertion;
+24:       toBeVisible(): Assertion;
+25:       toBeDisabled(): Assertion;
+26:       toBeEnabled(): Assertion;
+27:       toHaveAttribute(attr: string, value?: string): Assertion;
+28:       toHaveClass(...classNames: string[]): Assertion;
+29:       toHaveStyle(css: React.CSSProperties): Assertion;
+30:       toHaveBeenCalled(): Assertion;
+31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
+32:       toHaveBeenCalledTimes(n: number): Assertion;
+33:       toBe(expected: unknown): Assertion;
+34:       toEqual(expected: unknown): Assertion;
+35:       toStrictEqual(expected: unknown): Assertion;
+36:       toBeNull(): Assertion;
+37:       toBeDefined(): Assertion;
+38:       toBeGreaterThan(n: number): Assertion;
+39:       toBeLessThanOrEqual(n: number): Assertion;
+40:       toMatch(pattern: RegExp | string): Assertion;
+41:       toThrow(error?: string | Error | RegExp): Assertion;
+42:       toContain(item: unknown): Assertion;
+43:       toContainElement(element: HTMLElement): Assertion;
+44:       toContainHTML(html: string): Assertion;
+45:       toHaveLength(length: number): Assertion;
+46:       rejects: {
+47:         toThrow(error?: string | Error | RegExp): Promise<void>;
+48:       };
+49:     }
+50:     interface ExpectStatic {
+51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
+52:     }
+53:   }
+54:   // Add canvas mocking support
+55:   interface HTMLCanvasElement {
+56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
+57:   }
+58: }
+59: export {};
+````
+
 ## File: src/utils/eslint/index.ts
 ````typescript
  1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
@@ -13824,6 +13887,88 @@ tsconfig.json
 23: export default createJestConfig(customJestConfig);
 ````
 
+## File: jest.setup.ts
+````typescript
+ 1: /// <reference types="jest" />
+ 2: import "@testing-library/jest-dom";
+ 3: import "jest-extended";
+ 4: import { checkAAAPattern } from "./src/utils/test-utils";
+ 5: import fs from "fs/promises";
+ 6: declare global {
+ 7:   namespace jest {
+ 8:     interface Matchers<R> {
+ 9:       // Testing Library matchers
+10:       toBeInTheDocument(): R;
+11:       toHaveTextContent(text: string): R;
+12:       toBeVisible(): R;
+13:       toBeDisabled(): R;
+14:       toBeEnabled(): R;
+15:       toHaveAttribute(attr: string, value?: string): R;
+16:       toHaveClass(...classNames: string[]): R;
+17:       toHaveStyle(css: Record<string, unknown>): R;
+18:       toContainElement(element: Element | null): R;
+19:       toContainHTML(html: string): R;
+20:       toHaveLength(length: number): R;
+21:       // Jest matchers
+22:       toBe(expected: unknown): R;
+23:       toEqual(expected: unknown): R;
+24:       toStrictEqual(expected: unknown): R;
+25:       toBeNull(): R;
+26:       toBeDefined(): R;
+27:       toBeUndefined(): R;
+28:       toBeTruthy(): R;
+29:       toBeFalsy(): R;
+30:       toBeGreaterThan(number: number): R;
+31:       toBeLessThan(number: number): R;
+32:       toBeLessThanOrEqual(number: number): R;
+33:       toBeGreaterThanOrEqual(number: number): R;
+34:       toContain(item: unknown): R;
+35:       toHaveBeenCalled(): R;
+36:       toHaveBeenCalledTimes(number: number): R;
+37:       toHaveBeenCalledWith(...args: unknown[]): R;
+38:       toHaveBeenCalledExactly(times: number): R;
+39:       toThrow(error?: string | Error | RegExp): R;
+40:       toMatch(regexpOrString: string | RegExp): R;
+41:       rejects: {
+42:         toThrow(error?: string | Error | RegExp): Promise<R>;
+43:       };
+44:     }
+45:   }
+46: }
+47: function getTestPath(): string | undefined {
+48:   return (
+49:     expect as unknown as { getState: () => { testPath?: string } }
+50:   ).getState().testPath;
+51: }
+52: beforeEach(async () => {
+53:   const testPath = getTestPath();
+54:   if (
+55:     testPath &&
+56:     !testPath.includes("test-rule.test.tsx") &&
+57:     !testPath.includes("node_modules")
+58:   ) {
+59:     try {
+60:       const content = await fs.readFile(testPath, "utf8");
+61:       const result = checkAAAPattern(content);
+62:       if (!result.isValid) {
+63:         throw new Error(
+64:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+65:             "Each test should include:\n" +
+66:             "// Arrange - Set up test data and conditions\n" +
+67:             "// Act - Perform the action being tested\n" +
+68:             "// Assert - Verify the results",
+69:         );
+70:       }
+71:     } catch (error) {
+72:       if (error instanceof Error) {
+73:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
+74:       }
+75:       throw error;
+76:     }
+77:   }
+78: });
+````
+
 ## File: LICENSE
 ````
  1: MIT License
@@ -15547,6 +15692,114 @@ tsconfig.json
 29: });
 ````
 
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import Section from "@/components/Index/Section.component";
+  5: import { PortableText } from "@portabletext/react";
+  6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+  7: // Mock the BounceInScroll component
+  8: jest.mock("@/components/Animations/BounceInScroll.component", () => {
+  9:   const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+ 10:   MockBounceInScroll.displayName = 'MockBounceInScroll';
+ 11:   return MockBounceInScroll;
+ 12: });
+ 13: // Mock the PortableText component
+ 14: jest.mock("@portabletext/react", () => ({
+ 15:   PortableText: jest.fn(() => null),
+ 16: }));
+ 17: describe("Section Component", () => {
+ 18:   const mockProps: import("@/types/sanity.types").Pagecontent = {
+ 19:     _type: "pagecontent",
+ 20:     title: "Test Title",
+ 21:     text: [
+ 22:       {
+ 23:         _key: "1",
+ 24:         _type: "block",
+ 25:         children: [
+ 26:           { _key: "2", _type: "span", text: "Test content", marks: [] },
+ 27:         ],
+ 28:         markDefs: [],
+ 29:         style: "normal",
+ 30:       },
+ 31:     ],
+ 32:   };
+ 33:   const originalEnv = process.env;
+ 34:   beforeEach(() => {
+ 35:     jest.clearAllMocks();
+ 36:     process.env = { ...originalEnv };
+ 37:   });
+ 38:   afterEach(() => {
+ 39:     process.env = originalEnv;
+ 40:   });
+ 41:   it("renders with valid props", () => {
+ 42:     // Arrange - Set up test data and conditions
+ 43:     const props = mockProps;
+ 44:     // Act - Perform the action being tested
+ 45:     render(<Section {...props} />);
+ 46:     // Assert - Verify the results
+ 47:     expect(screen.getByText("Test Title")).toBeInTheDocument();
+ 48:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
+ 49:     expect(mockCall).toStrictEqual({
+ 50:       value: mockProps.text,
+ 51:       components: myPortableTextComponents,
+ 52:     });
+ 53:   });
+ 54:   it("returns null with invalid props", () => {
+ 55:     // Arrange - Set up test data and conditions
+ 56:     const consoleErrorSpy = jest
+ 57:       .spyOn(console, "error")
+ 58:       .mockImplementation(() => {});
+ 59:     // Act - Perform the action being tested
+ 60:     render(
+ 61:       <Section _type="pagecontent" title="" text={[]} />,
+ 62:     );
+ 63:     // Assert - Verify the results
+ 64:     expect(screen.queryByRole('article')).not.toBeInTheDocument();
+ 65:     expect(consoleErrorSpy).toHaveBeenCalled();
+ 66:     consoleErrorSpy.mockRestore();
+ 67:   });
+ 68:   it("triggers error in development mode", () => {
+ 69:     // Arrange - Set up test data and conditions
+ 70:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 71:     // Act - Perform the action being tested
+ 72:     render(<Section {...mockProps} />);
+ 73:     const errorButton = screen.getByText("Utløs Testfeil");
+ 74:     // Assert - Verify the results
+ 75:     expect(errorButton).toBeInTheDocument();
+ 76:     expect(() => fireEvent.click(errorButton)).toThrow(
+ 77:       "En uventet feil har oppstått",
+ 78:     );
+ 79:   });
+ 80:   it("does not show error button in production mode", () => {
+ 81:     // Arrange - Set up test data and conditions
+ 82:     process.env = { ...originalEnv, NODE_ENV: "production" };
+ 83:     // Act - Perform the action being tested
+ 84:     render(<Section {...mockProps} />);
+ 85:     // Assert - Verify the results
+ 86:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+ 87:   });
+ 88:   it("does not show error button when showDebugButton is false in development mode", () => {
+ 89:     // Arrange - Set up test data and conditions
+ 90:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 91:     // Act - Perform the action being tested
+ 92:     render(<Section {...mockProps} showDebugButton={false} />);
+ 93:     // Assert - Verify the results
+ 94:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+ 95:   });
+ 96:   it("shows error button when showDebugButton is true in development mode", () => {
+ 97:     // Arrange - Set up test data and conditions
+ 98:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 99:     // Act - Perform the action being tested
+100:     render(<Section {...mockProps} showDebugButton={true} />);
+101:     // Assert - Verify the results
+102:     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
+103:   });
+104: });
+````
+
 ## File: src/__tests__/Layout/Header.test.tsx
 ````typescript
   1: /**
@@ -16273,69 +16526,6 @@ tsconfig.json
 39: export default KontaktWithMocks;
 ````
 
-## File: src/types/testing-library.d.ts
-````typescript
- 1: /// <reference types="jest" />
- 2: /// <reference types="@testing-library/jest-dom" />
- 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
- 4: declare global {
- 5:   namespace jest {
- 6:     interface Matchers<R> {
- 7:       toBeInTheDocument(): R;
- 8:       toHaveTextContent(text: string): R;
- 9:       toBeVisible(): R;
-10:       toBeDisabled(): R;
-11:       toBeEnabled(): R;
-12:       toHaveAttribute(attr: string, value?: string): R;
-13:       toHaveClass(className: string): R;
-14:       toHaveStyle(css: React.CSSProperties): R;
-15:     }
-16:   }
-17: }
-18: // Augment Chai assertions for Cypress
-19: declare global {
-20:   namespace Chai {
-21:     interface Assertion {
-22:       toBeInTheDocument(): Assertion;
-23:       toHaveTextContent(text: string): Assertion;
-24:       toBeVisible(): Assertion;
-25:       toBeDisabled(): Assertion;
-26:       toBeEnabled(): Assertion;
-27:       toHaveAttribute(attr: string, value?: string): Assertion;
-28:       toHaveClass(...classNames: string[]): Assertion;
-29:       toHaveStyle(css: React.CSSProperties): Assertion;
-30:       toHaveBeenCalled(): Assertion;
-31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
-32:       toHaveBeenCalledTimes(n: number): Assertion;
-33:       toBe(expected: unknown): Assertion;
-34:       toEqual(expected: unknown): Assertion;
-35:       toStrictEqual(expected: unknown): Assertion;
-36:       toBeNull(): Assertion;
-37:       toBeDefined(): Assertion;
-38:       toBeGreaterThan(n: number): Assertion;
-39:       toBeLessThanOrEqual(n: number): Assertion;
-40:       toMatch(pattern: RegExp | string): Assertion;
-41:       toThrow(error?: string | Error | RegExp): Assertion;
-42:       toContain(item: unknown): Assertion;
-43:       toContainElement(element: HTMLElement): Assertion;
-44:       toContainHTML(html: string): Assertion;
-45:       toHaveLength(length: number): Assertion;
-46:       rejects: {
-47:         toThrow(error?: string | Error | RegExp): Promise<void>;
-48:       };
-49:     }
-50:     interface ExpectStatic {
-51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
-52:     }
-53:   }
-54:   // Add canvas mocking support
-55:   interface HTMLCanvasElement {
-56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
-57:   }
-58: }
-59: export {};
-````
-
 ## File: src/utils/eslint/dist/index.js
 ````javascript
  1: /* eslint-disable @typescript-eslint/no-require-imports */
@@ -16446,88 +16636,6 @@ tsconfig.json
 36: }
 ````
 
-## File: jest.setup.ts
-````typescript
- 1: /// <reference types="jest" />
- 2: import "@testing-library/jest-dom";
- 3: import "jest-extended";
- 4: import { checkAAAPattern } from "./src/utils/test-utils";
- 5: import fs from "fs/promises";
- 6: declare global {
- 7:   namespace jest {
- 8:     interface Matchers<R> {
- 9:       // Testing Library matchers
-10:       toBeInTheDocument(): R;
-11:       toHaveTextContent(text: string): R;
-12:       toBeVisible(): R;
-13:       toBeDisabled(): R;
-14:       toBeEnabled(): R;
-15:       toHaveAttribute(attr: string, value?: string): R;
-16:       toHaveClass(...classNames: string[]): R;
-17:       toHaveStyle(css: Record<string, unknown>): R;
-18:       toContainElement(element: Element | null): R;
-19:       toContainHTML(html: string): R;
-20:       toHaveLength(length: number): R;
-21:       // Jest matchers
-22:       toBe(expected: unknown): R;
-23:       toEqual(expected: unknown): R;
-24:       toStrictEqual(expected: unknown): R;
-25:       toBeNull(): R;
-26:       toBeDefined(): R;
-27:       toBeUndefined(): R;
-28:       toBeTruthy(): R;
-29:       toBeFalsy(): R;
-30:       toBeGreaterThan(number: number): R;
-31:       toBeLessThan(number: number): R;
-32:       toBeLessThanOrEqual(number: number): R;
-33:       toBeGreaterThanOrEqual(number: number): R;
-34:       toContain(item: unknown): R;
-35:       toHaveBeenCalled(): R;
-36:       toHaveBeenCalledTimes(number: number): R;
-37:       toHaveBeenCalledWith(...args: unknown[]): R;
-38:       toHaveBeenCalledExactly(times: number): R;
-39:       toThrow(error?: string | Error | RegExp): R;
-40:       toMatch(regexpOrString: string | RegExp): R;
-41:       rejects: {
-42:         toThrow(error?: string | Error | RegExp): Promise<R>;
-43:       };
-44:     }
-45:   }
-46: }
-47: function getTestPath(): string | undefined {
-48:   return (
-49:     expect as unknown as { getState: () => { testPath?: string } }
-50:   ).getState().testPath;
-51: }
-52: beforeEach(async () => {
-53:   const testPath = getTestPath();
-54:   if (
-55:     testPath &&
-56:     !testPath.includes("test-rule.test.tsx") &&
-57:     !testPath.includes("node_modules")
-58:   ) {
-59:     try {
-60:       const content = await fs.readFile(testPath, "utf8");
-61:       const result = checkAAAPattern(content);
-62:       if (!result.isValid) {
-63:         throw new Error(
-64:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-65:             "Each test should include:\n" +
-66:             "// Arrange - Set up test data and conditions\n" +
-67:             "// Act - Perform the action being tested\n" +
-68:             "// Assert - Verify the results",
-69:         );
-70:       }
-71:     } catch (error) {
-72:       if (error instanceof Error) {
-73:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-74:       }
-75:       throw error;
-76:     }
-77:   }
-78: });
-````
-
 ## File: tailwind.config.ts
 ````typescript
   1: import type { Config } from "tailwindcss";
@@ -16634,114 +16742,6 @@ tsconfig.json
 102:   plugins: [],
 103: };
 104: export default config;
-````
-
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import Section from "@/components/Index/Section.component";
-  5: import { PortableText } from "@portabletext/react";
-  6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
-  7: // Mock the BounceInScroll component
-  8: jest.mock("@/components/Animations/BounceInScroll.component", () => {
-  9:   const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
- 10:   MockBounceInScroll.displayName = 'MockBounceInScroll';
- 11:   return MockBounceInScroll;
- 12: });
- 13: // Mock the PortableText component
- 14: jest.mock("@portabletext/react", () => ({
- 15:   PortableText: jest.fn(() => null),
- 16: }));
- 17: describe("Section Component", () => {
- 18:   const mockProps: import("@/types/sanity.types").Pagecontent = {
- 19:     _type: "pagecontent",
- 20:     title: "Test Title",
- 21:     text: [
- 22:       {
- 23:         _key: "1",
- 24:         _type: "block",
- 25:         children: [
- 26:           { _key: "2", _type: "span", text: "Test content", marks: [] },
- 27:         ],
- 28:         markDefs: [],
- 29:         style: "normal",
- 30:       },
- 31:     ],
- 32:   };
- 33:   const originalEnv = process.env;
- 34:   beforeEach(() => {
- 35:     jest.clearAllMocks();
- 36:     process.env = { ...originalEnv };
- 37:   });
- 38:   afterEach(() => {
- 39:     process.env = originalEnv;
- 40:   });
- 41:   it("renders with valid props", () => {
- 42:     // Arrange - Set up test data and conditions
- 43:     const props = mockProps;
- 44:     // Act - Perform the action being tested
- 45:     render(<Section {...props} />);
- 46:     // Assert - Verify the results
- 47:     expect(screen.getByText("Test Title")).toBeInTheDocument();
- 48:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
- 49:     expect(mockCall).toStrictEqual({
- 50:       value: mockProps.text,
- 51:       components: myPortableTextComponents,
- 52:     });
- 53:   });
- 54:   it("returns null with invalid props", () => {
- 55:     // Arrange - Set up test data and conditions
- 56:     const consoleErrorSpy = jest
- 57:       .spyOn(console, "error")
- 58:       .mockImplementation(() => {});
- 59:     // Act - Perform the action being tested
- 60:     render(
- 61:       <Section _type="pagecontent" title="" text={[]} />,
- 62:     );
- 63:     // Assert - Verify the results
- 64:     expect(screen.queryByRole('article')).not.toBeInTheDocument();
- 65:     expect(consoleErrorSpy).toHaveBeenCalled();
- 66:     consoleErrorSpy.mockRestore();
- 67:   });
- 68:   it("triggers error in development mode", () => {
- 69:     // Arrange - Set up test data and conditions
- 70:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 71:     // Act - Perform the action being tested
- 72:     render(<Section {...mockProps} />);
- 73:     const errorButton = screen.getByText("Utløs Testfeil");
- 74:     // Assert - Verify the results
- 75:     expect(errorButton).toBeInTheDocument();
- 76:     expect(() => fireEvent.click(errorButton)).toThrow(
- 77:       "En uventet feil har oppstått",
- 78:     );
- 79:   });
- 80:   it("does not show error button in production mode", () => {
- 81:     // Arrange - Set up test data and conditions
- 82:     process.env = { ...originalEnv, NODE_ENV: "production" };
- 83:     // Act - Perform the action being tested
- 84:     render(<Section {...mockProps} />);
- 85:     // Assert - Verify the results
- 86:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
- 87:   });
- 88:   it("does not show error button when showDebugButton is false in development mode", () => {
- 89:     // Arrange - Set up test data and conditions
- 90:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 91:     // Act - Perform the action being tested
- 92:     render(<Section {...mockProps} showDebugButton={false} />);
- 93:     // Assert - Verify the results
- 94:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
- 95:   });
- 96:   it("shows error button when showDebugButton is true in development mode", () => {
- 97:     // Arrange - Set up test data and conditions
- 98:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 99:     // Act - Perform the action being tested
-100:     render(<Section {...mockProps} showDebugButton={true} />);
-101:     // Assert - Verify the results
-102:     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
-103:   });
-104: });
 ````
 
 ## File: src/e2e/cypress/e2e/prosjekter.cy.ts
@@ -17456,7 +17456,7 @@ tsconfig.json
 56:     "@jest/expect": "^29.7.0",
 57:     "@jest/globals": "^29.7.0",
 58:     "@ladle/react": "^5.0.3",
-59:     "@lhci/cli": "^0.14.0",
+59:     "@lhci/cli": "^0.15.0",
 60:     "@playwright/test": "^1.53.0",
 61:     "@portabletext/types": "^2.0.13",
 62:     "@testing-library/cypress": "^10.0.3",
