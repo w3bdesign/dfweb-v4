@@ -6497,6 +6497,23 @@ tsconfig.json
 13: });
 ````
 
+## File: src/e2e/cypress/e2e/accessibility.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: /// <reference types="cypress-axe"/>
+ 3: /// <reference types="axe-core"/>
+ 4: import { checkAccessibility } from "../support/functions";
+ 5: describe("Accessibility testing av forside", () => {
+ 6:   beforeEach(() => {
+ 7:     cy.visit("/");
+ 8:   });
+ 9:   it("Forside skal ikke ha noen a11y feilmeldinger", () => {
+10:     // Vent på at animasjonene skal bli ferdige før vi tester
+11:     checkAccessibility(5000);
+12:   });
+13: });
+````
+
 ## File: src/e2e/cypress/e2e/cv.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -6644,6 +6661,36 @@ tsconfig.json
 17: import "./commands";
 18: // Alternatively you can use CommonJS syntax:
 19: // require('./commands')
+````
+
+## File: src/e2e/cypress/support/functions.ts
+````typescript
+ 1: import { Result } from "axe-core";
+ 2: export function terminalLog(violations: Result[]) {
+ 3:   cy.task(
+ 4:     "log",
+ 5:     `${violations.length} accessibility violation${violations.length === 1 ? "" : "s"} ${
+ 6:       violations.length === 1 ? "was" : "were"
+ 7:     } detected`,
+ 8:   );
+ 9:   const violationData = violations.map(
+10:     ({ id, impact, description, nodes }) => ({
+11:       id,
+12:       impact,
+13:       description,
+14:       nodes: nodes.length,
+15:     }),
+16:   );
+17:   cy.task("table", violationData);
+18:   console.error(violationData);
+19: }
+20: export function checkAccessibility(delay?: number) {
+21:   if (delay) {
+22:     cy.wait(delay);
+23:   }
+24:   cy.injectAxe();
+25:   cy.checkA11y(undefined, undefined, terminalLog);
+26: }
 ````
 
 ## File: src/e2e/playwright/cv.spec.ts
@@ -15324,53 +15371,6 @@ tsconfig.json
 78: export default ProsjektCard;
 ````
 
-## File: src/e2e/cypress/e2e/accessibility.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: /// <reference types="cypress-axe"/>
- 3: /// <reference types="axe-core"/>
- 4: import { checkAccessibility } from "../support/functions";
- 5: describe("Accessibility testing av forside", () => {
- 6:   beforeEach(() => {
- 7:     cy.visit("/");
- 8:   });
- 9:   it("Forside skal ikke ha noen a11y feilmeldinger", () => {
-10:     // Vent på at animasjonene skal bli ferdige før vi tester
-11:     checkAccessibility(5000);
-12:   });
-13: });
-````
-
-## File: src/e2e/cypress/support/functions.ts
-````typescript
- 1: import { Result } from "axe-core";
- 2: export function terminalLog(violations: Result[]) {
- 3:   cy.task(
- 4:     "log",
- 5:     `${violations.length} accessibility violation${violations.length === 1 ? "" : "s"} ${
- 6:       violations.length === 1 ? "was" : "were"
- 7:     } detected`,
- 8:   );
- 9:   const violationData = violations.map(
-10:     ({ id, impact, description, nodes }) => ({
-11:       id,
-12:       impact,
-13:       description,
-14:       nodes: nodes.length,
-15:     }),
-16:   );
-17:   cy.task("table", violationData);
-18:   console.error(violationData);
-19: }
-20: export function checkAccessibility(delay?: number) {
-21:   if (delay) {
-22:     cy.wait(delay);
-23:   }
-24:   cy.injectAxe();
-25:   cy.checkA11y(undefined, undefined, terminalLog);
-26: }
-````
-
 ## File: src/e2e/cypress/tsconfig.json
 ````json
  1: {
@@ -15682,6 +15682,115 @@ tsconfig.json
 34:     "singleQuote": true
 35:   }
 36: }
+````
+
+## File: .eslintrc.json
+````json
+  1: {
+  2:   "extends": [
+  3:     "next/core-web-vitals",
+  4:     "eslint:recommended",
+  5:     "plugin:@typescript-eslint/recommended",
+  6:     "plugin:react/recommended",
+  7:     "plugin:react-hooks/recommended",
+  8:     "plugin:jsx-a11y/recommended",
+  9:     "plugin:jest/recommended",
+ 10:     "plugin:jest/style",
+ 11:     "plugin:testing-library/react",
+ 12:     "plugin:test-rules/recommended"
+ 13:   ],
+ 14:   "plugins": [
+ 15:     "@typescript-eslint",
+ 16:     "react",
+ 17:     "jsx-a11y",
+ 18:     "jest",
+ 19:     "testing-library",
+ 20:     "test-rules"
+ 21:   ],
+ 22:   "overrides": [
+ 23:     {
+ 24:       "files": ["**/*.test.ts", "**/*.test.tsx"],
+ 25:       "rules": {
+ 26:         "@typescript-eslint/no-explicit-any": "error"
+ 27:       }
+ 28:     },
+ 29:     {
+ 30:       "files": ["./src/e2e/cypress/**/*.ts", "./src/e2e/cypress/**/*.tsx"],
+ 31:       "rules": {
+ 32:         "test-rules/arrange-act-assert": "off",
+ 33:         "jest/expect-expect": "off"
+ 34:       }
+ 35:     },
+ 36:     {
+ 37:       "files": ["./src/e2e/playwright/**/*.ts"],
+ 38:       "rules": {
+ 39:         "test-rules/arrange-act-assert": "off",
+ 40:         "testing-library/prefer-screen-queries": "off"
+ 41:       }
+ 42:     },
+ 43:     {
+ 44:       "files": ["./src/e2e/cypress/support/component.ts"],
+ 45:       "rules": {
+ 46:         "@typescript-eslint/triple-slash-reference": "off"
+ 47:       }
+ 48:     }
+ 49:   ],
+ 50:   "parser": "@typescript-eslint/parser",
+ 51:   "rules": {
+ 52:     "jest/expect-expect": "error",
+ 53:     "jest/no-disabled-tests": "warn",
+ 54:     "jest/no-focused-tests": "error",
+ 55:     "jest/no-identical-title": "error",
+ 56:     "jest/valid-expect": "error",
+ 57:     "jest/prefer-to-have-length": "warn",
+ 58:     "jest/prefer-to-be": "warn",
+ 59:     "jest/no-commented-out-tests": "warn",
+ 60:     "jest/prefer-strict-equal": "warn",
+ 61:     "jest/prefer-spy-on": "error",
+ 62:     "jest/prefer-todo": "warn",
+ 63:     "testing-library/await-async-queries": "error",
+ 64:     "testing-library/no-await-sync-queries": "error",
+ 65:     "testing-library/no-container": "error",
+ 66:     "testing-library/no-debugging-utils": "warn",
+ 67:     "testing-library/prefer-screen-queries": "error",
+ 68:     "react/react-in-jsx-scope": "off",
+ 69:     "react/prop-types": "off",
+ 70:     "@typescript-eslint/explicit-module-boundary-types": "off",
+ 71:     "@typescript-eslint/no-unused-vars": [
+ 72:       "error",
+ 73:       { "argsIgnorePattern": "^_" }
+ 74:     ],
+ 75:     "@typescript-eslint/no-explicit-any": "error",
+ 76:     "no-console": ["warn", { "allow": ["warn", "error"] }],
+ 77:     "prefer-const": "error",
+ 78:     "jsx-a11y/anchor-is-valid": [
+ 79:       "error",
+ 80:       {
+ 81:         "components": ["Link"],
+ 82:         "specialLink": ["hrefLeft", "hrefRight"],
+ 83:         "aspects": ["invalidHref", "preferButton"]
+ 84:       }
+ 85:     ],
+ 86:     "react-hooks/rules-of-hooks": "error",
+ 87:     "react-hooks/exhaustive-deps": "warn",
+ 88:     "jsx-a11y/label-has-associated-control": [
+ 89:       "error",
+ 90:       {
+ 91:         "labelComponents": [],
+ 92:         "labelAttributes": [],
+ 93:         "controlComponents": [],
+ 94:         "assert": "either",
+ 95:         "depth": 25
+ 96:       }
+ 97:     ]
+ 98:   },
+ 99:   "settings": {
+100:     "react": {
+101:       "version": "detect"
+102:     }
+103:   },
+104:   "ignorePatterns": ["node_modules/", "build/", ".next/", "coverage/"]
+105: }
 ````
 
 ## File: jest.setup.ts
@@ -16817,115 +16926,6 @@ tsconfig.json
 76: );
 ````
 
-## File: .eslintrc.json
-````json
-  1: {
-  2:   "extends": [
-  3:     "next/core-web-vitals",
-  4:     "eslint:recommended",
-  5:     "plugin:@typescript-eslint/recommended",
-  6:     "plugin:react/recommended",
-  7:     "plugin:react-hooks/recommended",
-  8:     "plugin:jsx-a11y/recommended",
-  9:     "plugin:jest/recommended",
- 10:     "plugin:jest/style",
- 11:     "plugin:testing-library/react",
- 12:     "plugin:test-rules/recommended"
- 13:   ],
- 14:   "plugins": [
- 15:     "@typescript-eslint",
- 16:     "react",
- 17:     "jsx-a11y",
- 18:     "jest",
- 19:     "testing-library",
- 20:     "test-rules"
- 21:   ],
- 22:   "overrides": [
- 23:     {
- 24:       "files": ["**/*.test.ts", "**/*.test.tsx"],
- 25:       "rules": {
- 26:         "@typescript-eslint/no-explicit-any": "error"
- 27:       }
- 28:     },
- 29:     {
- 30:       "files": ["./src/e2e/cypress/**/*.ts", "./src/e2e/cypress/**/*.tsx"],
- 31:       "rules": {
- 32:         "test-rules/arrange-act-assert": "off",
- 33:         "jest/expect-expect": "off"
- 34:       }
- 35:     },
- 36:     {
- 37:       "files": ["./src/e2e/playwright/**/*.ts"],
- 38:       "rules": {
- 39:         "test-rules/arrange-act-assert": "off",
- 40:         "testing-library/prefer-screen-queries": "off"
- 41:       }
- 42:     },
- 43:     {
- 44:       "files": ["./src/e2e/cypress/support/component.ts"],
- 45:       "rules": {
- 46:         "@typescript-eslint/triple-slash-reference": "off"
- 47:       }
- 48:     }
- 49:   ],
- 50:   "parser": "@typescript-eslint/parser",
- 51:   "rules": {
- 52:     "jest/expect-expect": "error",
- 53:     "jest/no-disabled-tests": "warn",
- 54:     "jest/no-focused-tests": "error",
- 55:     "jest/no-identical-title": "error",
- 56:     "jest/valid-expect": "error",
- 57:     "jest/prefer-to-have-length": "warn",
- 58:     "jest/prefer-to-be": "warn",
- 59:     "jest/no-commented-out-tests": "warn",
- 60:     "jest/prefer-strict-equal": "warn",
- 61:     "jest/prefer-spy-on": "error",
- 62:     "jest/prefer-todo": "warn",
- 63:     "testing-library/await-async-queries": "error",
- 64:     "testing-library/no-await-sync-queries": "error",
- 65:     "testing-library/no-container": "error",
- 66:     "testing-library/no-debugging-utils": "warn",
- 67:     "testing-library/prefer-screen-queries": "error",
- 68:     "react/react-in-jsx-scope": "off",
- 69:     "react/prop-types": "off",
- 70:     "@typescript-eslint/explicit-module-boundary-types": "off",
- 71:     "@typescript-eslint/no-unused-vars": [
- 72:       "error",
- 73:       { "argsIgnorePattern": "^_" }
- 74:     ],
- 75:     "@typescript-eslint/no-explicit-any": "error",
- 76:     "no-console": ["warn", { "allow": ["warn", "error"] }],
- 77:     "prefer-const": "error",
- 78:     "jsx-a11y/anchor-is-valid": [
- 79:       "error",
- 80:       {
- 81:         "components": ["Link"],
- 82:         "specialLink": ["hrefLeft", "hrefRight"],
- 83:         "aspects": ["invalidHref", "preferButton"]
- 84:       }
- 85:     ],
- 86:     "react-hooks/rules-of-hooks": "error",
- 87:     "react-hooks/exhaustive-deps": "warn",
- 88:     "jsx-a11y/label-has-associated-control": [
- 89:       "error",
- 90:       {
- 91:         "labelComponents": [],
- 92:         "labelAttributes": [],
- 93:         "controlComponents": [],
- 94:         "assert": "either",
- 95:         "depth": 25
- 96:       }
- 97:     ]
- 98:   },
- 99:   "settings": {
-100:     "react": {
-101:       "version": "detect"
-102:     }
-103:   },
-104:   "ignorePatterns": ["node_modules/", "build/", ".next/", "coverage/"]
-105: }
-````
-
 ## File: src/__tests__/UI/SkipLink.test.tsx
 ````typescript
  1: import React from "react";
@@ -17241,105 +17241,6 @@ tsconfig.json
 105: });
 ````
 
-## File: package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.0.8",
- 4:   "private": true,
- 5:   "engines": {
- 6:     "node": ">=20.16.0"
- 7:   },
- 8:   "scripts": {
- 9:     "dev": "next dev --turbopack",
-10:     "lhci": "lhci autorun",
-11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-13:     "build": "next build",
-14:     "start": "next start",
-15:     "lint": "next lint",
-16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
-18:     "test:watch": "jest --watch",
-19:     "cypress:open": "cypress open",
-20:     "cypress:headless": "cypress run",
-21:     "e2e": "start-test dev 3000 cypress:headless",
-22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-23:     "ladle": "ladle serve",
-24:     "typegen": "npx sanity typegen generate"
-25:   },
-26:   "dependencies": {
-27:     "@emailjs/browser": "^4.4.1",
-28:     "@hookform/resolvers": "^5.0.1",
-29:     "@portabletext/react": "^3.2.1",
-30:     "@sanity/client": "^6.29.0",
-31:     "@sanity/image-url": "^1.1.0",
-32:     "@vercel/speed-insights": "^1.2.0",
-33:     "autoprefixer": "^10.4.21",
-34:     "clsx": "^2.1.1",
-35:     "cookie": ">=1.0.2",
-36:     "envalid": "^8.0.0",
-37:     "jest": "^29.7.0",
-38:     "motion": "^12.7.4",
-39:     "next": "15.3.0",
-40:     "next-sanity": "^9.10.2",
-41:     "path-to-regexp": "^8.2.0",
-42:     "react": "^19.1.0",
-43:     "react-dom": "^19.1.0",
-44:     "react-error-boundary": "^5.0.0",
-45:     "react-hook-form": "^7.55.0",
-46:     "react-icons": "^5.5.0",
-47:     "sanity": "^3.92.0",
-48:     "sitemap": "^8.0.0",
-49:     "ts-node": "^10.9.2",
-50:     "zod": "^3.25.58",
-51:     "@babel/helpers": ">=7.27.6",
-52:     "tar-fs": ">=3.0.9"
-53:   },
-54:   "devDependencies": {
-55:     "@tailwindcss/postcss": "^4.1.8",
-56:     "@jest/expect": "^29.7.0",
-57:     "@jest/globals": "^29.7.0",
-58:     "@ladle/react": "^5.0.3",
-59:     "@lhci/cli": "^0.14.0",
-60:     "@playwright/test": "^1.51.1",
-61:     "@portabletext/types": "^2.0.13",
-62:     "@testing-library/cypress": "^10.0.3",
-63:     "@testing-library/jest-dom": "^6.6.3",
-64:     "@testing-library/react": "^16.3.0",
-65:     "@testing-library/user-event": "^14.6.1",
-66:     "@types/jest": "^29.5.14",
-67:     "@types/node": "^22.14.1",
-68:     "@types/react": "^19.1.2",
-69:     "@types/react-dom": "^19.1.2",
-70:     "@typescript-eslint/eslint-plugin": "^8.30.1",
-71:     "@typescript-eslint/parser": "^8.30.1",
-72:     "@typescript-eslint/utils": "^8.34.0",
-73:     "axe-core": "^4.10.3",
-74:     "cypress": "14.3.3",
-75:     "cypress-axe": "^1.6.0",
-76:     "eslint": "9.28.0",
-77:     "eslint-config-next": "15.3.3",
-78:     "eslint-plugin-jest": "^28.11.0",
-79:     "eslint-plugin-jsx-a11y": "^6.10.2",
-80:     "eslint-plugin-react": "^7.37.5",
-81:     "eslint-plugin-react-hooks": "^5.2.0",
-82:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-83:     "eslint-plugin-testing-library": "^7.1.1",
-84:     "expect": "^29.7.0",
-85:     "jest-environment-jsdom": "^29.7.0",
-86:     "jest-extended": "^4.0.2",
-87:     "jsdom-testing-mocks": "^1.13.1",
-88:     "postcss": "^8.5.4",
-89:     "prettier": "3.5.3",
-90:     "tailwindcss": "^4.1.8",
-91:     "ts-jest": "^29.3.2",
-92:     "typescript": "^5.8.3",
-93:     "wait-on": "^8.0.3"
-94:   }
-95: }
-````
-
 ## File: src/__tests__/Prosjekter/page.test.tsx
 ````typescript
   1: import React from "react";
@@ -17493,4 +17394,103 @@ tsconfig.json
 149:     });
 150:   });
 151: });
+````
+
+## File: package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "version": "1.0.8",
+ 4:   "private": true,
+ 5:   "engines": {
+ 6:     "node": ">=20.16.0"
+ 7:   },
+ 8:   "scripts": {
+ 9:     "dev": "next dev --turbopack",
+10:     "lhci": "lhci autorun",
+11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+13:     "build": "next build",
+14:     "start": "next start",
+15:     "lint": "next lint",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
+18:     "test:watch": "jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate"
+25:   },
+26:   "dependencies": {
+27:     "@emailjs/browser": "^4.4.1",
+28:     "@hookform/resolvers": "^5.0.1",
+29:     "@portabletext/react": "^3.2.1",
+30:     "@sanity/client": "^6.29.0",
+31:     "@sanity/image-url": "^1.1.0",
+32:     "@vercel/speed-insights": "^1.2.0",
+33:     "autoprefixer": "^10.4.21",
+34:     "clsx": "^2.1.1",
+35:     "cookie": ">=1.0.2",
+36:     "envalid": "^8.0.0",
+37:     "jest": "^29.7.0",
+38:     "motion": "^12.7.4",
+39:     "next": "15.3.0",
+40:     "next-sanity": "^9.10.2",
+41:     "path-to-regexp": "^8.2.0",
+42:     "react": "^19.1.0",
+43:     "react-dom": "^19.1.0",
+44:     "react-error-boundary": "^5.0.0",
+45:     "react-hook-form": "^7.55.0",
+46:     "react-icons": "^5.5.0",
+47:     "sanity": "^3.92.0",
+48:     "sitemap": "^8.0.0",
+49:     "ts-node": "^10.9.2",
+50:     "zod": "^3.25.58",
+51:     "@babel/helpers": ">=7.27.6",
+52:     "tar-fs": ">=3.0.9"
+53:   },
+54:   "devDependencies": {
+55:     "@tailwindcss/postcss": "^4.1.8",
+56:     "@jest/expect": "^29.7.0",
+57:     "@jest/globals": "^29.7.0",
+58:     "@ladle/react": "^5.0.3",
+59:     "@lhci/cli": "^0.14.0",
+60:     "@playwright/test": "^1.51.1",
+61:     "@portabletext/types": "^2.0.13",
+62:     "@testing-library/cypress": "^10.0.3",
+63:     "@testing-library/jest-dom": "^6.6.3",
+64:     "@testing-library/react": "^16.3.0",
+65:     "@testing-library/user-event": "^14.6.1",
+66:     "@types/jest": "^29.5.14",
+67:     "@types/node": "^22.14.1",
+68:     "@types/react": "^19.1.2",
+69:     "@types/react-dom": "^19.1.2",
+70:     "@typescript-eslint/eslint-plugin": "^8.30.1",
+71:     "@typescript-eslint/parser": "^8.30.1",
+72:     "@typescript-eslint/utils": "^8.34.0",
+73:     "axe-core": "^4.10.3",
+74:     "cypress": "14.3.3",
+75:     "cypress-axe": "^1.6.0",
+76:     "eslint": "9.28.0",
+77:     "eslint-config-next": "15.3.3",
+78:     "eslint-plugin-jest": "^28.11.0",
+79:     "eslint-plugin-jsx-a11y": "^6.10.2",
+80:     "eslint-plugin-react": "^7.37.5",
+81:     "eslint-plugin-react-hooks": "^5.2.0",
+82:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+83:     "eslint-plugin-testing-library": "^7.1.1",
+84:     "expect": "^29.7.0",
+85:     "jest-environment-jsdom": "^29.7.0",
+86:     "jest-extended": "^4.0.2",
+87:     "jsdom-testing-mocks": "^1.13.1",
+88:     "postcss": "^8.5.4",
+89:     "prettier": "3.5.3",
+90:     "tailwindcss": "^4.1.8",
+91:     "ts-jest": "^29.3.2",
+92:     "typescript": "^5.8.3",
+93:     "wait-on": "^8.0.3"
+94:   }
+95: }
 ````
