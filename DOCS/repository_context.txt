@@ -3441,6 +3441,127 @@ tsconfig.json
 35: });
 ````
 
+## File: src/__tests__/Kontakt/KontaktContent.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+  5: import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+  8: jest.mock("@emailjs/browser", () => ({
+  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
+ 10:   init: jest.fn(),
+ 11: }));
+ 12: describe("KontaktContent", () => {
+ 13:   const fulltNavn = "Fullt navn";
+ 14:   const telefonNummer = "Telefonnummer";
+ 15:   const hvaOnskerDu = "Hva ønsker du å si?";
+ 16:   const sendSkjemaText = "Send skjema";
+ 17:   beforeEach(() => {
+ 18:     jest.clearAllMocks();
+ 19:   });
+ 20:   const fillFormWithValidData = () => {
+ 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+ 22:       target: { value: "Bruker Test" },
+ 23:     });
+ 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+ 25:       target: { value: "12345678" },
+ 26:     });
+ 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+ 28:       target: { value: "Test melding" },
+ 29:     });
+ 30:   };
+ 31:   it("renders the component", () => {
+ 32:     // Arrange
+ 33:     const expectedTestId = "kontaktcontent";
+ 34:     // Act
+ 35:     render(<KontaktContent />);
+ 36:     // Assert
+ 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
+ 38:   });
+ 39:   it("submits the form successfully and disables submit button while submitting", async () => {
+ 40:     // Arrange
+ 41:     render(<KontaktContent />);
+ 42:     const submitButton = screen.getByText(sendSkjemaText);
+ 43:     // Act
+ 44:     fillFormWithValidData();
+ 45:     fireEvent.click(submitButton);
+ 46:     // Assert - Initial state
+ 47:     expect(submitButton).toBeDisabled();
+ 48:     // Assert - Final state
+ 49:     await waitFor(() => {
+ 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
+ 51:     });
+ 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 53:   });
+ 54:   it("displays error message on form submission failure", async () => {
+ 55:     // Arrange
+ 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+ 57:     render(<KontaktContent />);
+ 58:     // Act
+ 59:     fillFormWithValidData();
+ 60:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 61:     // Assert
+ 62:     await waitFor(() => {
+ 63:       expect(
+ 64:         screen.getByText("Feil under sending av skjema"),
+ 65:       ).toBeInTheDocument();
+ 66:     });
+ 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 68:   });
+ 69:   it("displays validation errors for empty fields", async () => {
+ 70:     // Arrange
+ 71:     render(<KontaktContent />);
+ 72:     const expectedErrors = {
+ 73:       name: "Fullt navn er påkrevd",
+ 74:       phone: "Telefonnummer er påkrevd",
+ 75:       message: "Beskjed er påkrevd",
+ 76:     };
+ 77:     // Act
+ 78:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 79:     // Assert
+ 80:     await waitFor(() => {
+ 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+ 82:     });
+ 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+ 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
+ 85:     expect(emailjs.send).not.toHaveBeenCalled();
+ 86:   });
+ 87:   it("displays validation errors for invalid inputs", async () => {
+ 88:     // Arrange
+ 89:     render(<KontaktContent />);
+ 90:     const invalidInputs = {
+ 91:       name: "User123", // Invalid name format
+ 92:       phone: "123", // Invalid phone number
+ 93:       message: "Test melding",
+ 94:     };
+ 95:     const expectedErrors = {
+ 96:       name: "Vennligst bruk norske bokstaver",
+ 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
+ 98:     };
+ 99:     // Act
+100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+101:       target: { value: invalidInputs.name },
+102:     });
+103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+104:       target: { value: invalidInputs.phone },
+105:     });
+106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+107:       target: { value: invalidInputs.message },
+108:     });
+109:     fireEvent.click(screen.getByText(sendSkjemaText));
+110:     // Assert
+111:     await waitFor(() => {
+112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+113:     });
+114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+115:     expect(emailjs.send).not.toHaveBeenCalled();
+116:   });
+117: });
+````
+
 ## File: src/__tests__/Layout/Footer.test.tsx
 ````typescript
  1: /**
@@ -6590,6 +6711,88 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Renders a card displaying information about a single project.
+ 9:  * Uses the Project type definition from Sanity types.
+10:  *
+11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
+12:  * @param {string} props.name - The name of the project.
+13:  * @param {string} [props.description] - A brief description of the project (optional).
+14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+19:  * @returns {JSX.Element} The rendered ProsjektCard component.
+20:  */
+21: const ProsjektCard: React.FC<Project> = ({
+22:   name,
+23:   description,
+24:   subdescription,
+25:   projectimage,
+26:   urlwww,
+27:   urlgithub,
+28:   featured,
+29: }) => {
+30:   return (
+31:     <div
+32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
+33:       data-testid="project-card"
+34:     >
+35:       <BounceInScroll viewAmount={0.3} instant={featured}>
+36:         <div className="relative w-full md:h-60">
+37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+38:             {projectimage && (
+39:               <img
+40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
+41:                 width={600}
+42:                 src={urlFor(projectimage)
+43:                   .width(600)
+44:                   .fit("max")
+45:                   .quality(100)
+46:                   .auto("format")
+47:                   .url()}
+48:                 alt={name}
+49:               />
+50:             )}
+51:           </div>
+52:         </div>
+53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+55:             {name}
+56:           </h1>
+57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
+58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+59:             {subdescription}
+60:           </p>
+61:           <div className="flex justify-center mt-4">
+62:             {urlwww && urlwww.length > 0 && (
+63:               <Button href={urlwww?.[0]?.url} renderAs="a">
+64:                 Besøk
+65:               </Button>
+66:             )}
+67:             {urlgithub && urlgithub.length > 0 && (
+68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+69:                 GitHub
+70:               </Button>
+71:             )}
+72:           </div>
+73:         </div>
+74:       </BounceInScroll>
+75:     </div>
+76:   );
+77: };
+78: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -15344,127 +15547,6 @@ tsconfig.json
 29: });
 ````
 
-## File: src/__tests__/Kontakt/KontaktContent.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-  5: import KontaktContent from "@/components/Kontakt/KontaktContent.component";
-  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
-  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
-  8: jest.mock("@emailjs/browser", () => ({
-  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
- 10:   init: jest.fn(),
- 11: }));
- 12: describe("KontaktContent", () => {
- 13:   const fulltNavn = "Fullt navn";
- 14:   const telefonNummer = "Telefonnummer";
- 15:   const hvaOnskerDu = "Hva ønsker du å si?";
- 16:   const sendSkjemaText = "Send skjema";
- 17:   beforeEach(() => {
- 18:     jest.clearAllMocks();
- 19:   });
- 20:   const fillFormWithValidData = () => {
- 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
- 22:       target: { value: "Bruker Test" },
- 23:     });
- 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
- 25:       target: { value: "12345678" },
- 26:     });
- 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
- 28:       target: { value: "Test melding" },
- 29:     });
- 30:   };
- 31:   it("renders the component", () => {
- 32:     // Arrange
- 33:     const expectedTestId = "kontaktcontent";
- 34:     // Act
- 35:     render(<KontaktContent />);
- 36:     // Assert
- 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
- 38:   });
- 39:   it("submits the form successfully and disables submit button while submitting", async () => {
- 40:     // Arrange
- 41:     render(<KontaktContent />);
- 42:     const submitButton = screen.getByText(sendSkjemaText);
- 43:     // Act
- 44:     fillFormWithValidData();
- 45:     fireEvent.click(submitButton);
- 46:     // Assert - Initial state
- 47:     expect(submitButton).toBeDisabled();
- 48:     // Assert - Final state
- 49:     await waitFor(() => {
- 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
- 51:     });
- 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 53:   });
- 54:   it("displays error message on form submission failure", async () => {
- 55:     // Arrange
- 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
- 57:     render(<KontaktContent />);
- 58:     // Act
- 59:     fillFormWithValidData();
- 60:     fireEvent.click(screen.getByText(sendSkjemaText));
- 61:     // Assert
- 62:     await waitFor(() => {
- 63:       expect(
- 64:         screen.getByText("Feil under sending av skjema"),
- 65:       ).toBeInTheDocument();
- 66:     });
- 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 68:   });
- 69:   it("displays validation errors for empty fields", async () => {
- 70:     // Arrange
- 71:     render(<KontaktContent />);
- 72:     const expectedErrors = {
- 73:       name: "Fullt navn er påkrevd",
- 74:       phone: "Telefonnummer er påkrevd",
- 75:       message: "Beskjed er påkrevd",
- 76:     };
- 77:     // Act
- 78:     fireEvent.click(screen.getByText(sendSkjemaText));
- 79:     // Assert
- 80:     await waitFor(() => {
- 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
- 82:     });
- 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
- 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
- 85:     expect(emailjs.send).not.toHaveBeenCalled();
- 86:   });
- 87:   it("displays validation errors for invalid inputs", async () => {
- 88:     // Arrange
- 89:     render(<KontaktContent />);
- 90:     const invalidInputs = {
- 91:       name: "User123", // Invalid name format
- 92:       phone: "123", // Invalid phone number
- 93:       message: "Test melding",
- 94:     };
- 95:     const expectedErrors = {
- 96:       name: "Vennligst bruk norske bokstaver",
- 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
- 98:     };
- 99:     // Act
-100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
-101:       target: { value: invalidInputs.name },
-102:     });
-103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
-104:       target: { value: invalidInputs.phone },
-105:     });
-106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-107:       target: { value: invalidInputs.message },
-108:     });
-109:     fireEvent.click(screen.getByText(sendSkjemaText));
-110:     // Assert
-111:     await waitFor(() => {
-112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-113:     });
-114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-115:     expect(emailjs.send).not.toHaveBeenCalled();
-116:   });
-117: });
-````
-
 ## File: src/__tests__/Layout/Header.test.tsx
 ````typescript
   1: /**
@@ -15581,6 +15663,154 @@ tsconfig.json
 112:     });
 113:   });
 114: });
+````
+
+## File: src/__tests__/Prosjekter/actions.test.ts
+````typescript
+  1: import { getProjects } from "@/app/prosjekter/actions";
+  2: import { client } from "@/lib/sanity/client";
+  3: import { projectsQuery } from "@/lib/sanity/queries";
+  4: // Mock the Sanity client
+  5: jest.mock("@/lib/sanity/client", () => ({
+  6:   client: {
+  7:     fetch: jest.fn(),
+  8:   },
+  9: }));
+ 10: describe("getProjects", () => {
+ 11:   beforeEach(() => {
+ 12:     jest.clearAllMocks();
+ 13:   });
+ 14:   it("fetches projects successfully", async () => {
+ 15:     // Arrange
+ 16:     const mockProjects = [
+ 17:       {
+ 18:         id: "1",
+ 19:         name: "Test Project",
+ 20:         description: "Test Description",
+ 21:         subdescription: "Test Subdescription",
+ 22:         projectimage: { asset: { _ref: "test" } },
+ 23:         urlwww: [],
+ 24:         urlgithub: [],
+ 25:       },
+ 26:     ];
+ 27:     const expectedFetchOptions = {
+ 28:       next: { revalidate: 3600 },
+ 29:     };
+ 30:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 31:     // Act
+ 32:     const result = await getProjects();
+ 33:     // Assert
+ 34:     expect(result).toStrictEqual(mockProjects);
+ 35:     expect(client.fetch).toHaveBeenCalledWith(
+ 36:       projectsQuery,
+ 37:       {},
+ 38:       expectedFetchOptions
+ 39:     );
+ 40:   });
+ 41:   describe("error handling", () => {
+ 42:     it("handles authentication errors (401)", async () => {
+ 43:       // Arrange
+ 44:       const error = {
+ 45:         statusCode: 401,
+ 46:         message: "Invalid token",
+ 47:         details: {
+ 48:           type: "credentials",
+ 49:           description: "Invalid token provided",
+ 50:         },
+ 51:       };
+ 52:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 53:       // Act & Assert
+ 54:       await expect(getProjects()).rejects.toThrow("Authentication failed");
+ 55:     });
+ 56:     it("handles permission errors (403)", async () => {
+ 57:       // Arrange
+ 58:       const error = {
+ 59:         statusCode: 403,
+ 60:         message: "Insufficient permissions",
+ 61:         details: {
+ 62:           type: "authorization",
+ 63:           description: "Missing read access",
+ 64:         },
+ 65:       };
+ 66:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 67:       // Act & Assert
+ 68:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
+ 69:     });
+ 70:     it("handles rate limiting (429)", async () => {
+ 71:       // Arrange
+ 72:       const error = {
+ 73:         statusCode: 429,
+ 74:         message: "Too Many Requests",
+ 75:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 76:       };
+ 77:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 78:       // Act & Assert
+ 79:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+ 80:     });
+ 81:     it("handles malformed GROQ queries (400)", async () => {
+ 82:       // Arrange
+ 83:       const error = {
+ 84:         statusCode: 400,
+ 85:         message: "Invalid GROQ query",
+ 86:         details: {
+ 87:           type: "query_error",
+ 88:           description: "Syntax error in GROQ query",
+ 89:         },
+ 90:       };
+ 91:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 92:       // Act & Assert
+ 93:       await expect(getProjects()).rejects.toThrow(
+ 94:         "Sanity API error: Invalid GROQ query"
+ 95:       );
+ 96:     });
+ 97:     it("handles network timeouts", async () => {
+ 98:       // Arrange
+ 99:       const error = Object.assign(new Error("Network timeout"), {
+100:         name: "TimeoutError",
+101:       });
+102:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+103:       // Act & Assert
+104:       await expect(getProjects()).rejects.toThrow("Request timed out");
+105:     });
+106:     it("handles generic fetch errors", async () => {
+107:       // Arrange
+108:       const error = {
+109:         message: "Fetch failed",
+110:       };
+111:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+112:       // Act & Assert
+113:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+114:     });
+115:     it("recovers after temporary errors", async () => {
+116:       // Arrange
+117:       const rateError = {
+118:         statusCode: 429,
+119:         message: "Too Many Requests",
+120:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+121:       };
+122:       const mockProjects = [
+123:         {
+124:           id: "1",
+125:           name: "Test Project",
+126:           description: "Test Description",
+127:           subdescription: "Test Subdescription",
+128:           projectimage: { asset: { _ref: "test" } },
+129:           urlwww: [],
+130:           urlgithub: [],
+131:         },
+132:       ];
+133:       // First call fails with rate limit
+134:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
+135:       // Second call succeeds
+136:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+137:       // First call should fail
+138:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+139:       // Second call should succeed
+140:       const result = await getProjects();
+141:       expect(result).toStrictEqual(mockProjects);
+142:     });
+143:   });
+144: });
 ````
 
 ## File: src/components/Animations/MatrixCursor.component.tsx
@@ -15873,88 +16103,6 @@ tsconfig.json
 25:   );
 26: };
 27: export default IndexContent;
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: /**
- 8:  * Renders a card displaying information about a single project.
- 9:  * Uses the Project type definition from Sanity types.
-10:  *
-11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
-12:  * @param {string} props.name - The name of the project.
-13:  * @param {string} [props.description] - A brief description of the project (optional).
-14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
-19:  * @returns {JSX.Element} The rendered ProsjektCard component.
-20:  */
-21: const ProsjektCard: React.FC<Project> = ({
-22:   name,
-23:   description,
-24:   subdescription,
-25:   projectimage,
-26:   urlwww,
-27:   urlgithub,
-28:   featured,
-29: }) => {
-30:   return (
-31:     <div
-32:       className="bg-slate-700 shadow-md rounded-sm overflow-hidden mx-4 md:m-0"
-33:       data-testid="project-card"
-34:     >
-35:       <BounceInScroll viewAmount={0.3} instant={featured}>
-36:         <div className="relative w-full md:h-60">
-37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-38:             {projectimage && (
-39:               <img
-40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)]"
-41:                 width={600}
-42:                 src={urlFor(projectimage)
-43:                   .width(600)
-44:                   .fit("max")
-45:                   .quality(100)
-46:                   .auto("format")
-47:                   .url()}
-48:                 alt={name}
-49:               />
-50:             )}
-51:           </div>
-52:         </div>
-53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-54:           <h1 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-55:             {name}
-56:           </h1>
-57:           <h2 className="text-md px-4 text-gray-300">{description}</h2>
-58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-59:             {subdescription}
-60:           </p>
-61:           <div className="flex justify-center mt-4">
-62:             {urlwww && urlwww.length > 0 && (
-63:               <Button href={urlwww?.[0]?.url} renderAs="a">
-64:                 Besøk
-65:               </Button>
-66:             )}
-67:             {urlgithub && urlgithub.length > 0 && (
-68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-69:                 GitHub
-70:               </Button>
-71:             )}
-72:           </div>
-73:         </div>
-74:       </BounceInScroll>
-75:     </div>
-76:   );
-77: };
-78: export default ProsjektCard;
 ````
 
 ## File: src/stories/components/Index/MobileBackground.stories.tsx
@@ -16596,154 +16744,6 @@ tsconfig.json
 104: });
 ````
 
-## File: src/__tests__/Prosjekter/actions.test.ts
-````typescript
-  1: import { getProjects } from "@/app/prosjekter/actions";
-  2: import { client } from "@/lib/sanity/client";
-  3: import { projectsQuery } from "@/lib/sanity/queries";
-  4: // Mock the Sanity client
-  5: jest.mock("@/lib/sanity/client", () => ({
-  6:   client: {
-  7:     fetch: jest.fn(),
-  8:   },
-  9: }));
- 10: describe("getProjects", () => {
- 11:   beforeEach(() => {
- 12:     jest.clearAllMocks();
- 13:   });
- 14:   it("fetches projects successfully", async () => {
- 15:     // Arrange
- 16:     const mockProjects = [
- 17:       {
- 18:         id: "1",
- 19:         name: "Test Project",
- 20:         description: "Test Description",
- 21:         subdescription: "Test Subdescription",
- 22:         projectimage: { asset: { _ref: "test" } },
- 23:         urlwww: [],
- 24:         urlgithub: [],
- 25:       },
- 26:     ];
- 27:     const expectedFetchOptions = {
- 28:       next: { revalidate: 3600 },
- 29:     };
- 30:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 31:     // Act
- 32:     const result = await getProjects();
- 33:     // Assert
- 34:     expect(result).toStrictEqual(mockProjects);
- 35:     expect(client.fetch).toHaveBeenCalledWith(
- 36:       projectsQuery,
- 37:       {},
- 38:       expectedFetchOptions
- 39:     );
- 40:   });
- 41:   describe("error handling", () => {
- 42:     it("handles authentication errors (401)", async () => {
- 43:       // Arrange
- 44:       const error = {
- 45:         statusCode: 401,
- 46:         message: "Invalid token",
- 47:         details: {
- 48:           type: "credentials",
- 49:           description: "Invalid token provided",
- 50:         },
- 51:       };
- 52:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 53:       // Act & Assert
- 54:       await expect(getProjects()).rejects.toThrow("Authentication failed");
- 55:     });
- 56:     it("handles permission errors (403)", async () => {
- 57:       // Arrange
- 58:       const error = {
- 59:         statusCode: 403,
- 60:         message: "Insufficient permissions",
- 61:         details: {
- 62:           type: "authorization",
- 63:           description: "Missing read access",
- 64:         },
- 65:       };
- 66:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 67:       // Act & Assert
- 68:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
- 69:     });
- 70:     it("handles rate limiting (429)", async () => {
- 71:       // Arrange
- 72:       const error = {
- 73:         statusCode: 429,
- 74:         message: "Too Many Requests",
- 75:         details: { type: "rate_limit", description: "Rate limit exceeded" },
- 76:       };
- 77:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 78:       // Act & Assert
- 79:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
- 80:     });
- 81:     it("handles malformed GROQ queries (400)", async () => {
- 82:       // Arrange
- 83:       const error = {
- 84:         statusCode: 400,
- 85:         message: "Invalid GROQ query",
- 86:         details: {
- 87:           type: "query_error",
- 88:           description: "Syntax error in GROQ query",
- 89:         },
- 90:       };
- 91:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 92:       // Act & Assert
- 93:       await expect(getProjects()).rejects.toThrow(
- 94:         "Sanity API error: Invalid GROQ query"
- 95:       );
- 96:     });
- 97:     it("handles network timeouts", async () => {
- 98:       // Arrange
- 99:       const error = Object.assign(new Error("Network timeout"), {
-100:         name: "TimeoutError",
-101:       });
-102:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-103:       // Act & Assert
-104:       await expect(getProjects()).rejects.toThrow("Request timed out");
-105:     });
-106:     it("handles generic fetch errors", async () => {
-107:       // Arrange
-108:       const error = {
-109:         message: "Fetch failed",
-110:       };
-111:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-112:       // Act & Assert
-113:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-114:     });
-115:     it("recovers after temporary errors", async () => {
-116:       // Arrange
-117:       const rateError = {
-118:         statusCode: 429,
-119:         message: "Too Many Requests",
-120:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-121:       };
-122:       const mockProjects = [
-123:         {
-124:           id: "1",
-125:           name: "Test Project",
-126:           description: "Test Description",
-127:           subdescription: "Test Subdescription",
-128:           projectimage: { asset: { _ref: "test" } },
-129:           urlwww: [],
-130:           urlgithub: [],
-131:         },
-132:       ];
-133:       // First call fails with rate limit
-134:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
-135:       // Second call succeeds
-136:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-137:       // First call should fail
-138:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-139:       // Second call should succeed
-140:       const result = await getProjects();
-141:       expect(result).toStrictEqual(mockProjects);
-142:     });
-143:   });
-144: });
-````
-
 ## File: src/e2e/cypress/e2e/prosjekter.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -17132,115 +17132,6 @@ tsconfig.json
 19: });
 ````
 
-## File: src/__tests__/Index/IndexContent.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import IndexContent from "@/components/Index/IndexContent.component";
-  5: import { Page } from "@/types/sanity.types";
-  6: interface SectionProps {
-  7:   title: string;
-  8:   text: Array<{
-  9:     _key: string;
- 10:     _type: string;
- 11:     children: Array<{
- 12:       _key: string;
- 13:       _type: string;
- 14:       marks: string[];
- 15:       text: string;
- 16:     }>;
- 17:     markDefs: unknown[];
- 18:     style: string;
- 19:   }>;
- 20: }
- 21: // Mock the Section component
- 22: jest.mock("@/components/Index/Section.component", () => {
- 23:   return function MockSection({ title, text }: SectionProps) {
- 24:     return (
- 25:       <div data-testid="mock-section">
- 26:         <h2 data-testid="sanity-title">{title}</h2>
- 27:         <div data-testid="portable-text">
- 28:           {text.map((block) => {
- 29:             const { children: spans, _key } = block;
- 30:             return (
- 31:               <div key={_key}>
- 32:                 {spans.map((span) => (
- 33:                   <span key={span._key}>{span.text}</span>
- 34:                 ))}
- 35:               </div>
- 36:             );
- 37:           })}
- 38:         </div>
- 39:       </div>
- 40:     );
- 41:   };
- 42: });
- 43: const mockContent: Page["content"] = [
- 44:   {
- 45:     _key: "1",
- 46:     _type: "pagecontent",
- 47:     title: "Test Title 1",
- 48:     text: [
- 49:       {
- 50:         _key: "a",
- 51:         _type: "block",
- 52:         children: [
- 53:           { _key: "a1", _type: "span", marks: ["bold"], text: "Bold Text" },
- 54:           { _key: "a2", _type: "span", marks: [], text: " Normal Text" },
- 55:         ],
- 56:         markDefs: [],
- 57:         style: "normal",
- 58:       },
- 59:     ],
- 60:   },
- 61:   {
- 62:     _key: "2",
- 63:     _type: "pagecontent",
- 64:     title: "Test Title 2",
- 65:     text: [
- 66:       {
- 67:         _key: "b",
- 68:         _type: "block",
- 69:         children: [
- 70:           { _key: "b1", _type: "span", marks: ["italic"], text: "Italic Text" },
- 71:         ],
- 72:         markDefs: [],
- 73:         style: "normal",
- 74:       },
- 75:     ],
- 76:   },
- 77: ];
- 78: describe("IndexContent Component", () => {
- 79:   it("renders IndexContent with given content", () => {
- 80:     // Arrange
- 81:     const expected = {
- 82:       sectionCount: 2,
- 83:       titles: ["Test Title 1", "Test Title 2"],
- 84:       content: ["Bold Text Normal Text", "Italic Text"],
- 85:     };
- 86:     // Act
- 87:     render(<IndexContent pageContent={mockContent} />);
- 88:     // Assert
- 89:     expected.titles.forEach((title) => {
- 90:       expect(screen.getByText(title)).toBeInTheDocument();
- 91:     });
- 92:     expect(screen.getByText("Bold Text")).toBeInTheDocument();
- 93:     expect(screen.getByText("Normal Text")).toBeInTheDocument();
- 94:     expect(screen.getByText("Italic Text")).toBeInTheDocument();
- 95:   });
- 96:   it("throws error when no content is provided", () => {
- 97:     // Arrange
- 98:     const emptyContent: Page["content"] = [];
- 99:     const expectedError = "Ingen innhold tilgjengelig";
-100:     // Act & Assert
-101:     expect(() => {
-102:       render(<IndexContent pageContent={emptyContent} />);
-103:     }).toThrow(expectedError);
-104:   });
-105: });
-````
-
 ## File: src/__tests__/Prosjekter/page.test.tsx
 ````typescript
   1: import React from "react";
@@ -17396,6 +17287,115 @@ tsconfig.json
 151: });
 ````
 
+## File: src/__tests__/Index/IndexContent.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import IndexContent from "@/components/Index/IndexContent.component";
+  5: import { Page } from "@/types/sanity.types";
+  6: interface SectionProps {
+  7:   title: string;
+  8:   text: Array<{
+  9:     _key: string;
+ 10:     _type: string;
+ 11:     children: Array<{
+ 12:       _key: string;
+ 13:       _type: string;
+ 14:       marks: string[];
+ 15:       text: string;
+ 16:     }>;
+ 17:     markDefs: unknown[];
+ 18:     style: string;
+ 19:   }>;
+ 20: }
+ 21: // Mock the Section component
+ 22: jest.mock("@/components/Index/Section.component", () => {
+ 23:   return function MockSection({ title, text }: SectionProps) {
+ 24:     return (
+ 25:       <div data-testid="mock-section">
+ 26:         <h2 data-testid="sanity-title">{title}</h2>
+ 27:         <div data-testid="portable-text">
+ 28:           {text.map((block) => {
+ 29:             const { children: spans, _key } = block;
+ 30:             return (
+ 31:               <div key={_key}>
+ 32:                 {spans.map((span) => (
+ 33:                   <span key={span._key}>{span.text}</span>
+ 34:                 ))}
+ 35:               </div>
+ 36:             );
+ 37:           })}
+ 38:         </div>
+ 39:       </div>
+ 40:     );
+ 41:   };
+ 42: });
+ 43: const mockContent: Page["content"] = [
+ 44:   {
+ 45:     _key: "1",
+ 46:     _type: "pagecontent",
+ 47:     title: "Test Title 1",
+ 48:     text: [
+ 49:       {
+ 50:         _key: "a",
+ 51:         _type: "block",
+ 52:         children: [
+ 53:           { _key: "a1", _type: "span", marks: ["bold"], text: "Bold Text" },
+ 54:           { _key: "a2", _type: "span", marks: [], text: " Normal Text" },
+ 55:         ],
+ 56:         markDefs: [],
+ 57:         style: "normal",
+ 58:       },
+ 59:     ],
+ 60:   },
+ 61:   {
+ 62:     _key: "2",
+ 63:     _type: "pagecontent",
+ 64:     title: "Test Title 2",
+ 65:     text: [
+ 66:       {
+ 67:         _key: "b",
+ 68:         _type: "block",
+ 69:         children: [
+ 70:           { _key: "b1", _type: "span", marks: ["italic"], text: "Italic Text" },
+ 71:         ],
+ 72:         markDefs: [],
+ 73:         style: "normal",
+ 74:       },
+ 75:     ],
+ 76:   },
+ 77: ];
+ 78: describe("IndexContent Component", () => {
+ 79:   it("renders IndexContent with given content", () => {
+ 80:     // Arrange
+ 81:     const expected = {
+ 82:       sectionCount: 2,
+ 83:       titles: ["Test Title 1", "Test Title 2"],
+ 84:       content: ["Bold Text Normal Text", "Italic Text"],
+ 85:     };
+ 86:     // Act
+ 87:     render(<IndexContent pageContent={mockContent} />);
+ 88:     // Assert
+ 89:     expected.titles.forEach((title) => {
+ 90:       expect(screen.getByText(title)).toBeInTheDocument();
+ 91:     });
+ 92:     expect(screen.getByText("Bold Text")).toBeInTheDocument();
+ 93:     expect(screen.getByText("Normal Text")).toBeInTheDocument();
+ 94:     expect(screen.getByText("Italic Text")).toBeInTheDocument();
+ 95:   });
+ 96:   it("throws error when no content is provided", () => {
+ 97:     // Arrange
+ 98:     const emptyContent: Page["content"] = [];
+ 99:     const expectedError = "Ingen innhold tilgjengelig";
+100:     // Act & Assert
+101:     expect(() => {
+102:       render(<IndexContent pageContent={emptyContent} />);
+103:     }).toThrow(expectedError);
+104:   });
+105: });
+````
+
 ## File: package.json
 ````json
  1: {
@@ -17425,9 +17425,9 @@ tsconfig.json
 25:   },
 26:   "dependencies": {
 27:     "@emailjs/browser": "^4.4.1",
-28:     "@hookform/resolvers": "^5.0.1",
+28:     "@hookform/resolvers": "^5.1.1",
 29:     "@portabletext/react": "^3.2.1",
-30:     "@sanity/client": "^6.29.0",
+30:     "@sanity/client": "^7.5.0",
 31:     "@sanity/image-url": "^1.1.0",
 32:     "@vercel/speed-insights": "^1.2.0",
 33:     "autoprefixer": "^10.4.21",
