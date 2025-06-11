@@ -3462,6 +3462,171 @@ tsconfig.json
 17: });
 ````
 
+## File: src/__tests__/Layout/MobileMenu.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen } from "@testing-library/react";
+  5: import userEvent from "@testing-library/user-event";
+  6: import { usePathname } from "next/navigation";
+  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
+  8: const linksmock = [
+  9:   {
+ 10:     _key: "home",
+ 11:     title: "Hjem",
+ 12:     name: "Hjem",
+ 13:     href: "/",
+ 14:     hash: "",
+ 15:     externalLink: false,
+ 16:   },
+ 17:   {
+ 18:     _key: "projects",
+ 19:     title: "Prosjekter",
+ 20:     name: "Prosjekter",
+ 21:     href: "/prosjekter",
+ 22:     hash: "",
+ 23:     externalLink: false,
+ 24:   },
+ 25:   {
+ 26:     _key: "cv",
+ 27:     title: "CV",
+ 28:     name: "CV",
+ 29:     href: "/cv",
+ 30:     hash: "",
+ 31:     externalLink: false,
+ 32:   },
+ 33:   {
+ 34:     _key: "github",
+ 35:     title: "Github",
+ 36:     name: "Github",
+ 37:     href: "https://github.com/w3bdesign",
+ 38:     hash: "",
+ 39:     externalLink: true,
+ 40:   },
+ 41:   {
+ 42:     _key: "contact",
+ 43:     title: "Kontakt",
+ 44:     name: "Kontakt",
+ 45:     href: "/kontakt",
+ 46:     hash: "",
+ 47:     externalLink: false,
+ 48:   },
+ 49: ];
+ 50: // Mock next/navigation
+ 51: jest.mock("next/navigation", () => ({
+ 52:   usePathname: jest.fn(),
+ 53: }));
+ 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+ 55: describe("MobileMenu - elementer eksisterer", () => {
+ 56:   const testidMenu = "mobile-menu";
+ 57:   afterEach(() => {
+ 58:     jest.clearAllMocks();
+ 59:   });
+ 60:   it("renders mobile menu when hamburger is clicked", () => {
+ 61:     // Arrange
+ 62:     mockUsePathname.mockReturnValue("/");
+ 63:     render(<MobileMenu links={linksmock} />);
+ 64:     const hamburger = screen.getByTestId("hamburger");
+ 65:     // Act
+ 66:     fireEvent.click(hamburger);
+ 67:     const mobilemenu = screen.getByTestId(testidMenu);
+ 68:     // Assert
+ 69:     expect(mobilemenu).toBeInTheDocument();
+ 70:   });
+ 71:   it("toggles hamburger menu expansion state", () => {
+ 72:     // Arrange
+ 73:     mockUsePathname.mockReturnValue("/");
+ 74:     render(<MobileMenu links={linksmock} />);
+ 75:     const hamburger = screen.getByTestId("hamburger");
+ 76:     // Assert - Initial state
+ 77:     expect(
+ 78:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+ 79:     ).toBeInTheDocument();
+ 80:     // Act - Open menu
+ 81:     fireEvent.click(hamburger);
+ 82:     // Assert - Open state
+ 83:     expect(
+ 84:       screen.getByRole("button", { name: /hamburger/i, expanded: true }),
+ 85:     ).toBeInTheDocument();
+ 86:     // Act - Close menu
+ 87:     fireEvent.click(hamburger);
+ 88:     // Assert - Closed state
+ 89:     expect(
+ 90:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
+ 91:     ).toBeInTheDocument();
+ 92:   });
+ 93:   it("displays correct number of navigation links", () => {
+ 94:     // Arrange
+ 95:     mockUsePathname.mockReturnValue("/");
+ 96:     render(<MobileMenu links={linksmock} />);
+ 97:     const hamburger = screen.getByTestId("hamburger");
+ 98:     // Act
+ 99:     fireEvent.click(hamburger);
+100:     const menuItems = screen.getAllByRole("link");
+101:     // Assert
+102:     expect(menuItems).toHaveLength(linksmock.length);
+103:   });
+104:   it("renders internal links with correct active state", () => {
+105:     // Arrange
+106:     const currentPath = "/prosjekter";
+107:     mockUsePathname.mockReturnValue(currentPath);
+108:     render(<MobileMenu links={linksmock} />);
+109:     const hamburger = screen.getByTestId("hamburger");
+110:     // Act
+111:     fireEvent.click(hamburger);
+112:     // Assert - Test active link styling
+113:     const activeLink = screen.getByTestId("mobil-Prosjekter");
+114:     expect(activeLink).toHaveClass("text-green-400");
+115:     // Assert - Test non-active link styling
+116:     const inactiveLink = screen.getByTestId("mobil-Hjem");
+117:     expect(inactiveLink).not.toHaveClass("text-green-400");
+118:   });
+119:   it("renders internal links with glitch effect", () => {
+120:     // Arrange
+121:     mockUsePathname.mockReturnValue("/");
+122:     render(<MobileMenu links={linksmock} />);
+123:     const hamburger = screen.getByTestId("hamburger");
+124:     // Act
+125:     fireEvent.click(hamburger);
+126:     // Assert - Test that glitch effect is present for internal links
+127:     const internalLink = screen.getByTestId("mobil-Hjem");
+128:     expect(internalLink).toBeInTheDocument();
+129:     expect(internalLink).toHaveTextContent("Hjem");
+130:   });
+131:   it("opens external links in new tab with correct attributes", () => {
+132:     // Arrange
+133:     mockUsePathname.mockReturnValue("/");
+134:     render(<MobileMenu links={linksmock} />);
+135:     const hamburger = screen.getByTestId("hamburger");
+136:     // Act
+137:     fireEvent.click(hamburger);
+138:     const externalLink = screen.getByRole("link", { name: /github/i });
+139:     // Assert
+140:     expect(externalLink).toHaveAttribute("target", "_blank");
+141:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+142:   });
+143:   it("navigates and closes menu when clicking a link", async () => {
+144:     // Arrange
+145:     mockUsePathname.mockReturnValue("/");
+146:     render(<MobileMenu links={linksmock} />);
+147:     const user = userEvent.setup();
+148:     const hamburger = screen.getByTestId("hamburger");
+149:     // Act - Open menu
+150:     await user.click(hamburger);
+151:     // Assert - Menu is open
+152:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+153:     // Act - Click a link
+154:     const link = screen.getByTestId("mobil-Prosjekter");
+155:     await user.click(link);
+156:     // Wait for animation to complete
+157:     await new Promise((resolve) => setTimeout(resolve, 2500));
+158:     // Assert - Menu should close
+159:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
+160:   });
+161: });
+````
+
 ## File: src/__tests__/Prosjekter/error.test.tsx
 ````typescript
  1: import React from "react";
@@ -3962,6 +4127,56 @@ tsconfig.json
 105:     });
 106:   });
 107: });
+````
+
+## File: src/__tests__/UI/SkipLink.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import SkipLink from "@/components/UI/SkipLink.component";
+ 5: describe("SkipLink", () => {
+ 6:   describe("rendering", () => {
+ 7:     it("renders skip link with correct text", () => {
+ 8:       // Arrange
+ 9:       const expectedText = "Hopp til hovedinnhold";
+10:       // Act
+11:       render(<SkipLink />);
+12:       const skipLink = screen.getByText(expectedText);
+13:       // Assert
+14:       expect(skipLink).toBeInTheDocument();
+15:     });
+16:     it("renders as link with correct href", () => {
+17:       // Arrange
+18:       const expectedProps = {
+19:         text: "Hopp til hovedinnhold",
+20:         href: "#main-content",
+21:       };
+22:       // Act
+23:       render(<SkipLink />);
+24:       const button = screen.getByRole("link", { name: expectedProps.text });
+25:       // Assert
+26:       expect(button).toHaveAttribute("href", expectedProps.href);
+27:     });
+28:   });
+29:   describe("accessibility", () => {
+30:     it("renders skip link with proper accessibility attributes", () => {
+31:       // Arrange
+32:       const expectedProps = {
+33:         text: "Hopp til hovedinnhold",
+34:         href: "#main-content",
+35:       };
+36:       // Act
+37:       render(<SkipLink />);
+38:       // Assert - Check that the skip link has the expected accessibility structure
+39:       const skipLink = screen.getByRole("link", { name: expectedProps.text });
+40:       expect(skipLink).toBeInTheDocument();
+41:       expect(skipLink).toHaveAttribute("href", expectedProps.href);
+42:       // Verify the component renders without errors (implicit test of CSS classes)
+43:       expect(screen.getByText(expectedProps.text)).toBeInTheDocument();
+44:     });
+45:   });
+46: });
 ````
 
 ## File: src/__tests__/UI/Tabs.test.tsx
@@ -15368,56 +15583,6 @@ tsconfig.json
 114: });
 ````
 
-## File: src/__tests__/UI/SkipLink.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import SkipLink from "@/components/UI/SkipLink.component";
- 5: describe("SkipLink", () => {
- 6:   describe("rendering", () => {
- 7:     it("renders skip link with correct text", () => {
- 8:       // Arrange
- 9:       const expectedText = "Hopp til hovedinnhold";
-10:       // Act
-11:       render(<SkipLink />);
-12:       const skipLink = screen.getByText(expectedText);
-13:       // Assert
-14:       expect(skipLink).toBeInTheDocument();
-15:     });
-16:     it("renders as link with correct href", () => {
-17:       // Arrange
-18:       const expectedProps = {
-19:         text: "Hopp til hovedinnhold",
-20:         href: "#main-content",
-21:       };
-22:       // Act
-23:       render(<SkipLink />);
-24:       const button = screen.getByRole("link", { name: expectedProps.text });
-25:       // Assert
-26:       expect(button).toHaveAttribute("href", expectedProps.href);
-27:     });
-28:   });
-29:   describe("accessibility", () => {
-30:     it("renders skip link with proper accessibility attributes", () => {
-31:       // Arrange
-32:       const expectedProps = {
-33:         text: "Hopp til hovedinnhold",
-34:         href: "#main-content",
-35:       };
-36:       // Act
-37:       render(<SkipLink />);
-38:       // Assert - Check that the skip link has the expected accessibility structure
-39:       const skipLink = screen.getByRole("link", { name: expectedProps.text });
-40:       expect(skipLink).toBeInTheDocument();
-41:       expect(skipLink).toHaveAttribute("href", expectedProps.href);
-42:       // Verify the component renders without errors (implicit test of CSS classes)
-43:       expect(screen.getByText(expectedProps.text)).toBeInTheDocument();
-44:     });
-45:   });
-46: });
-````
-
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -16431,171 +16596,6 @@ tsconfig.json
 104: });
 ````
 
-## File: src/__tests__/Layout/MobileMenu.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen } from "@testing-library/react";
-  5: import userEvent from "@testing-library/user-event";
-  6: import { usePathname } from "next/navigation";
-  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
-  8: const linksmock = [
-  9:   {
- 10:     _key: "home",
- 11:     title: "Hjem",
- 12:     name: "Hjem",
- 13:     href: "/",
- 14:     hash: "",
- 15:     externalLink: false,
- 16:   },
- 17:   {
- 18:     _key: "projects",
- 19:     title: "Prosjekter",
- 20:     name: "Prosjekter",
- 21:     href: "/prosjekter",
- 22:     hash: "",
- 23:     externalLink: false,
- 24:   },
- 25:   {
- 26:     _key: "cv",
- 27:     title: "CV",
- 28:     name: "CV",
- 29:     href: "/cv",
- 30:     hash: "",
- 31:     externalLink: false,
- 32:   },
- 33:   {
- 34:     _key: "github",
- 35:     title: "Github",
- 36:     name: "Github",
- 37:     href: "https://github.com/w3bdesign",
- 38:     hash: "",
- 39:     externalLink: true,
- 40:   },
- 41:   {
- 42:     _key: "contact",
- 43:     title: "Kontakt",
- 44:     name: "Kontakt",
- 45:     href: "/kontakt",
- 46:     hash: "",
- 47:     externalLink: false,
- 48:   },
- 49: ];
- 50: // Mock next/navigation
- 51: jest.mock("next/navigation", () => ({
- 52:   usePathname: jest.fn(),
- 53: }));
- 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
- 55: describe("MobileMenu - elementer eksisterer", () => {
- 56:   const testidMenu = "mobile-menu";
- 57:   afterEach(() => {
- 58:     jest.clearAllMocks();
- 59:   });
- 60:   it("renders mobile menu when hamburger is clicked", () => {
- 61:     // Arrange
- 62:     mockUsePathname.mockReturnValue("/");
- 63:     render(<MobileMenu links={linksmock} />);
- 64:     const hamburger = screen.getByTestId("hamburger");
- 65:     // Act
- 66:     fireEvent.click(hamburger);
- 67:     const mobilemenu = screen.getByTestId(testidMenu);
- 68:     // Assert
- 69:     expect(mobilemenu).toBeInTheDocument();
- 70:   });
- 71:   it("toggles hamburger menu expansion state", () => {
- 72:     // Arrange
- 73:     mockUsePathname.mockReturnValue("/");
- 74:     render(<MobileMenu links={linksmock} />);
- 75:     const hamburger = screen.getByTestId("hamburger");
- 76:     // Assert - Initial state
- 77:     expect(
- 78:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
- 79:     ).toBeInTheDocument();
- 80:     // Act - Open menu
- 81:     fireEvent.click(hamburger);
- 82:     // Assert - Open state
- 83:     expect(
- 84:       screen.getByRole("button", { name: /hamburger/i, expanded: true }),
- 85:     ).toBeInTheDocument();
- 86:     // Act - Close menu
- 87:     fireEvent.click(hamburger);
- 88:     // Assert - Closed state
- 89:     expect(
- 90:       screen.getByRole("button", { name: /hamburger/i, expanded: false }),
- 91:     ).toBeInTheDocument();
- 92:   });
- 93:   it("displays correct number of navigation links", () => {
- 94:     // Arrange
- 95:     mockUsePathname.mockReturnValue("/");
- 96:     render(<MobileMenu links={linksmock} />);
- 97:     const hamburger = screen.getByTestId("hamburger");
- 98:     // Act
- 99:     fireEvent.click(hamburger);
-100:     const menuItems = screen.getAllByRole("link");
-101:     // Assert
-102:     expect(menuItems).toHaveLength(linksmock.length);
-103:   });
-104:   it("renders internal links with correct active state", () => {
-105:     // Arrange
-106:     const currentPath = "/prosjekter";
-107:     mockUsePathname.mockReturnValue(currentPath);
-108:     render(<MobileMenu links={linksmock} />);
-109:     const hamburger = screen.getByTestId("hamburger");
-110:     // Act
-111:     fireEvent.click(hamburger);
-112:     // Assert - Test active link styling
-113:     const activeLink = screen.getByTestId("mobil-Prosjekter");
-114:     expect(activeLink).toHaveClass("text-green-400");
-115:     // Assert - Test non-active link styling
-116:     const inactiveLink = screen.getByTestId("mobil-Hjem");
-117:     expect(inactiveLink).not.toHaveClass("text-green-400");
-118:   });
-119:   it("renders internal links with glitch effect", () => {
-120:     // Arrange
-121:     mockUsePathname.mockReturnValue("/");
-122:     render(<MobileMenu links={linksmock} />);
-123:     const hamburger = screen.getByTestId("hamburger");
-124:     // Act
-125:     fireEvent.click(hamburger);
-126:     // Assert - Test that glitch effect is present for internal links
-127:     const internalLink = screen.getByTestId("mobil-Hjem");
-128:     expect(internalLink).toBeInTheDocument();
-129:     expect(internalLink).toHaveTextContent("Hjem");
-130:   });
-131:   it("opens external links in new tab with correct attributes", () => {
-132:     // Arrange
-133:     mockUsePathname.mockReturnValue("/");
-134:     render(<MobileMenu links={linksmock} />);
-135:     const hamburger = screen.getByTestId("hamburger");
-136:     // Act
-137:     fireEvent.click(hamburger);
-138:     const externalLink = screen.getByRole("link", { name: /github/i });
-139:     // Assert
-140:     expect(externalLink).toHaveAttribute("target", "_blank");
-141:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
-142:   });
-143:   it("navigates and closes menu when clicking a link", async () => {
-144:     // Arrange
-145:     mockUsePathname.mockReturnValue("/");
-146:     render(<MobileMenu links={linksmock} />);
-147:     const user = userEvent.setup();
-148:     const hamburger = screen.getByTestId("hamburger");
-149:     // Act - Open menu
-150:     await user.click(hamburger);
-151:     // Assert - Menu is open
-152:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-153:     // Act - Click a link
-154:     const link = screen.getByTestId("mobil-Prosjekter");
-155:     await user.click(link);
-156:     // Wait for animation to complete
-157:     await new Promise((resolve) => setTimeout(resolve, 2500));
-158:     // Assert - Menu should close
-159:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
-160:   });
-161: });
-````
-
 ## File: src/__tests__/Prosjekter/actions.test.ts
 ````typescript
   1: import { getProjects } from "@/app/prosjekter/actions";
@@ -17457,7 +17457,7 @@ tsconfig.json
 57:     "@jest/globals": "^29.7.0",
 58:     "@ladle/react": "^5.0.3",
 59:     "@lhci/cli": "^0.14.0",
-60:     "@playwright/test": "^1.51.1",
+60:     "@playwright/test": "^1.53.0",
 61:     "@portabletext/types": "^2.0.13",
 62:     "@testing-library/cypress": "^10.0.3",
 63:     "@testing-library/jest-dom": "^6.6.3",
@@ -17467,8 +17467,8 @@ tsconfig.json
 67:     "@types/node": "^22.14.1",
 68:     "@types/react": "^19.1.2",
 69:     "@types/react-dom": "^19.1.2",
-70:     "@typescript-eslint/eslint-plugin": "^8.30.1",
-71:     "@typescript-eslint/parser": "^8.30.1",
+70:     "@typescript-eslint/eslint-plugin": "^8.34.0",
+71:     "@typescript-eslint/parser": "^8.34.0",
 72:     "@typescript-eslint/utils": "^8.34.0",
 73:     "axe-core": "^4.10.3",
 74:     "cypress": "14.4.1",
