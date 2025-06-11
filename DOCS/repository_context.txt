@@ -3144,6 +3144,55 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/Animations/RotatingLoader.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 5: describe("RotatingLoader", () => {
+ 6:   describe("rendering", () => {
+ 7:     it("renders component structure with correct classes and attributes", () => {
+ 8:       // Arrange
+ 9:       const expectedClasses = {
+10:         wrapper: "grid min-h-[140px] w-full place-items-center",
+11:         svg: "animate-spin",
+12:         paths: ["stroke-matrix-dark", "stroke-matrix-light"],
+13:       };
+14:       // Act
+15:       render(<RotatingLoader />);
+16:       const wrapperDiv = screen.getByTestId("rotating-loader");
+17:       const svg = screen.getByTestId("loader-svg");
+18:       const paths = screen.getAllByTestId("loader-path");
+19:       // Assert
+20:       expect(wrapperDiv).toHaveClass(expectedClasses.wrapper);
+21:       expect(svg).toBeInTheDocument();
+22:       expect(svg).toHaveClass(expectedClasses.svg);
+23:       expect(paths).toHaveLength(2);
+24:       expect(paths[0]).toHaveClass(expectedClasses.paths[0]);
+25:       expect(paths[1]).toHaveClass(expectedClasses.paths[1]);
+26:     });
+27:   });
+28:   describe("animations", () => {
+29:     it("applies correct animation classes", () => {
+30:       // Arrange
+31:       const expectedAnimations = {
+32:         glow: "animate-matrix-glow",
+33:         spin: "animate-spin",
+34:       };
+35:       // Act
+36:       render(<RotatingLoader />);
+37:       const glowContainer = screen.getByTestId("glow-container");
+38:       const svg = screen.getByTestId("loader-svg");
+39:       // Assert
+40:       expect(glowContainer).toBeInTheDocument();
+41:       expect(glowContainer).toHaveClass(expectedAnimations.glow);
+42:       expect(svg).toHaveClass(expectedAnimations.spin);
+43:     });
+44:   });
+45: });
+````
+
 ## File: src/__tests__/CV/CVContent.test.tsx
 ````typescript
  1: /**
@@ -3402,6 +3451,76 @@ tsconfig.json
 71: });
 ````
 
+## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 5: describe("ErrorBoundary", () => {
+ 6:   let consoleErrorSpy: jest.SpyInstance;
+ 7:   const errorMock = new Error("Dette er en testfeil");
+ 8:   beforeAll(() => {
+ 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterAll(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("should render children when there is no error", () => {
+15:     // Arrange
+16:     const testContent = "Test Innhold";
+17:     // Act
+18:     render(
+19:       <ErrorBoundary>
+20:         <div>{testContent}</div>
+21:       </ErrorBoundary>,
+22:     );
+23:     // Assert
+24:     expect(screen.getByText(testContent)).toBeInTheDocument();
+25:   });
+26:   it("should render error fallback when there is an error", () => {
+27:     // Arrange
+28:     const ErrorComponent = () => {
+29:       throw errorMock;
+30:     };
+31:     const expectedTexts = {
+32:       heading: "Har du funnet en feil i Matrix?",
+33:       error: "Dette er en testfeil",
+34:       button: "Returner til Matrix",
+35:     };
+36:     // Act
+37:     render(
+38:       <ErrorBoundary>
+39:         <ErrorComponent />
+40:       </ErrorBoundary>,
+41:     );
+42:     // Assert
+43:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+44:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+45:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
+46:   });
+47:   it("should call console.error when an error occurs", () => {
+48:     // Arrange
+49:     const ErrorComponent = () => {
+50:       throw errorMock;
+51:     };
+52:     const expectedErrorArgs = [
+53:       "Uventet feil i Matrix:",
+54:       errorMock,
+55:       { componentStack: expect.any(String) },
+56:     ];
+57:     // Act
+58:     render(
+59:       <ErrorBoundary>
+60:         <ErrorComponent />
+61:       </ErrorBoundary>,
+62:     );
+63:     // Assert
+64:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
+65:   });
+66: });
+````
+
 ## File: src/__tests__/Index/Icons.test.tsx
 ````typescript
  1: /**
@@ -3439,6 +3558,114 @@ tsconfig.json
 33:     });
 34:   });
 35: });
+````
+
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import Section from "@/components/Index/Section.component";
+  5: import { PortableText } from "@portabletext/react";
+  6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+  7: // Mock the BounceInScroll component
+  8: jest.mock("@/components/Animations/BounceInScroll.component", () => {
+  9:   const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
+ 10:   MockBounceInScroll.displayName = 'MockBounceInScroll';
+ 11:   return MockBounceInScroll;
+ 12: });
+ 13: // Mock the PortableText component
+ 14: jest.mock("@portabletext/react", () => ({
+ 15:   PortableText: jest.fn(() => null),
+ 16: }));
+ 17: describe("Section Component", () => {
+ 18:   const mockProps: import("@/types/sanity.types").Pagecontent = {
+ 19:     _type: "pagecontent",
+ 20:     title: "Test Title",
+ 21:     text: [
+ 22:       {
+ 23:         _key: "1",
+ 24:         _type: "block",
+ 25:         children: [
+ 26:           { _key: "2", _type: "span", text: "Test content", marks: [] },
+ 27:         ],
+ 28:         markDefs: [],
+ 29:         style: "normal",
+ 30:       },
+ 31:     ],
+ 32:   };
+ 33:   const originalEnv = process.env;
+ 34:   beforeEach(() => {
+ 35:     jest.clearAllMocks();
+ 36:     process.env = { ...originalEnv };
+ 37:   });
+ 38:   afterEach(() => {
+ 39:     process.env = originalEnv;
+ 40:   });
+ 41:   it("renders with valid props", () => {
+ 42:     // Arrange - Set up test data and conditions
+ 43:     const props = mockProps;
+ 44:     // Act - Perform the action being tested
+ 45:     render(<Section {...props} />);
+ 46:     // Assert - Verify the results
+ 47:     expect(screen.getByText("Test Title")).toBeInTheDocument();
+ 48:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
+ 49:     expect(mockCall).toStrictEqual({
+ 50:       value: mockProps.text,
+ 51:       components: myPortableTextComponents,
+ 52:     });
+ 53:   });
+ 54:   it("returns null with invalid props", () => {
+ 55:     // Arrange - Set up test data and conditions
+ 56:     const consoleErrorSpy = jest
+ 57:       .spyOn(console, "error")
+ 58:       .mockImplementation(() => {});
+ 59:     // Act - Perform the action being tested
+ 60:     render(
+ 61:       <Section _type="pagecontent" title="" text={[]} />,
+ 62:     );
+ 63:     // Assert - Verify the results
+ 64:     expect(screen.queryByRole('article')).not.toBeInTheDocument();
+ 65:     expect(consoleErrorSpy).toHaveBeenCalled();
+ 66:     consoleErrorSpy.mockRestore();
+ 67:   });
+ 68:   it("triggers error in development mode", () => {
+ 69:     // Arrange - Set up test data and conditions
+ 70:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 71:     // Act - Perform the action being tested
+ 72:     render(<Section {...mockProps} />);
+ 73:     const errorButton = screen.getByText("Utløs Testfeil");
+ 74:     // Assert - Verify the results
+ 75:     expect(errorButton).toBeInTheDocument();
+ 76:     expect(() => fireEvent.click(errorButton)).toThrow(
+ 77:       "En uventet feil har oppstått",
+ 78:     );
+ 79:   });
+ 80:   it("does not show error button in production mode", () => {
+ 81:     // Arrange - Set up test data and conditions
+ 82:     process.env = { ...originalEnv, NODE_ENV: "production" };
+ 83:     // Act - Perform the action being tested
+ 84:     render(<Section {...mockProps} />);
+ 85:     // Assert - Verify the results
+ 86:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+ 87:   });
+ 88:   it("does not show error button when showDebugButton is false in development mode", () => {
+ 89:     // Arrange - Set up test data and conditions
+ 90:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 91:     // Act - Perform the action being tested
+ 92:     render(<Section {...mockProps} showDebugButton={false} />);
+ 93:     // Assert - Verify the results
+ 94:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+ 95:   });
+ 96:   it("shows error button when showDebugButton is true in development mode", () => {
+ 97:     // Arrange - Set up test data and conditions
+ 98:     process.env = { ...originalEnv, NODE_ENV: "development" };
+ 99:     // Act - Perform the action being tested
+100:     render(<Section {...mockProps} showDebugButton={true} />);
+101:     // Assert - Verify the results
+102:     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
+103:   });
+104: });
 ````
 
 ## File: src/__tests__/Kontakt/KontaktContent.test.tsx
@@ -3746,6 +3973,154 @@ tsconfig.json
 159:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
 160:   });
 161: });
+````
+
+## File: src/__tests__/Prosjekter/actions.test.ts
+````typescript
+  1: import { getProjects } from "@/app/prosjekter/actions";
+  2: import { client } from "@/lib/sanity/client";
+  3: import { projectsQuery } from "@/lib/sanity/queries";
+  4: // Mock the Sanity client
+  5: jest.mock("@/lib/sanity/client", () => ({
+  6:   client: {
+  7:     fetch: jest.fn(),
+  8:   },
+  9: }));
+ 10: describe("getProjects", () => {
+ 11:   beforeEach(() => {
+ 12:     jest.clearAllMocks();
+ 13:   });
+ 14:   it("fetches projects successfully", async () => {
+ 15:     // Arrange
+ 16:     const mockProjects = [
+ 17:       {
+ 18:         id: "1",
+ 19:         name: "Test Project",
+ 20:         description: "Test Description",
+ 21:         subdescription: "Test Subdescription",
+ 22:         projectimage: { asset: { _ref: "test" } },
+ 23:         urlwww: [],
+ 24:         urlgithub: [],
+ 25:       },
+ 26:     ];
+ 27:     const expectedFetchOptions = {
+ 28:       next: { revalidate: 3600 },
+ 29:     };
+ 30:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 31:     // Act
+ 32:     const result = await getProjects();
+ 33:     // Assert
+ 34:     expect(result).toStrictEqual(mockProjects);
+ 35:     expect(client.fetch).toHaveBeenCalledWith(
+ 36:       projectsQuery,
+ 37:       {},
+ 38:       expectedFetchOptions
+ 39:     );
+ 40:   });
+ 41:   describe("error handling", () => {
+ 42:     it("handles authentication errors (401)", async () => {
+ 43:       // Arrange
+ 44:       const error = {
+ 45:         statusCode: 401,
+ 46:         message: "Invalid token",
+ 47:         details: {
+ 48:           type: "credentials",
+ 49:           description: "Invalid token provided",
+ 50:         },
+ 51:       };
+ 52:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 53:       // Act & Assert
+ 54:       await expect(getProjects()).rejects.toThrow("Authentication failed");
+ 55:     });
+ 56:     it("handles permission errors (403)", async () => {
+ 57:       // Arrange
+ 58:       const error = {
+ 59:         statusCode: 403,
+ 60:         message: "Insufficient permissions",
+ 61:         details: {
+ 62:           type: "authorization",
+ 63:           description: "Missing read access",
+ 64:         },
+ 65:       };
+ 66:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 67:       // Act & Assert
+ 68:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
+ 69:     });
+ 70:     it("handles rate limiting (429)", async () => {
+ 71:       // Arrange
+ 72:       const error = {
+ 73:         statusCode: 429,
+ 74:         message: "Too Many Requests",
+ 75:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 76:       };
+ 77:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 78:       // Act & Assert
+ 79:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+ 80:     });
+ 81:     it("handles malformed GROQ queries (400)", async () => {
+ 82:       // Arrange
+ 83:       const error = {
+ 84:         statusCode: 400,
+ 85:         message: "Invalid GROQ query",
+ 86:         details: {
+ 87:           type: "query_error",
+ 88:           description: "Syntax error in GROQ query",
+ 89:         },
+ 90:       };
+ 91:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+ 92:       // Act & Assert
+ 93:       await expect(getProjects()).rejects.toThrow(
+ 94:         "Sanity API error: Invalid GROQ query"
+ 95:       );
+ 96:     });
+ 97:     it("handles network timeouts", async () => {
+ 98:       // Arrange
+ 99:       const error = Object.assign(new Error("Network timeout"), {
+100:         name: "TimeoutError",
+101:       });
+102:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+103:       // Act & Assert
+104:       await expect(getProjects()).rejects.toThrow("Request timed out");
+105:     });
+106:     it("handles generic fetch errors", async () => {
+107:       // Arrange
+108:       const error = {
+109:         message: "Fetch failed",
+110:       };
+111:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+112:       // Act & Assert
+113:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+114:     });
+115:     it("recovers after temporary errors", async () => {
+116:       // Arrange
+117:       const rateError = {
+118:         statusCode: 429,
+119:         message: "Too Many Requests",
+120:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+121:       };
+122:       const mockProjects = [
+123:         {
+124:           id: "1",
+125:           name: "Test Project",
+126:           description: "Test Description",
+127:           subdescription: "Test Subdescription",
+128:           projectimage: { asset: { _ref: "test" } },
+129:           urlwww: [],
+130:           urlgithub: [],
+131:         },
+132:       ];
+133:       // First call fails with rate limit
+134:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
+135:       // Second call succeeds
+136:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+137:       // First call should fail
+138:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+139:       // Second call should succeed
+140:       const result = await getProjects();
+141:       expect(result).toStrictEqual(mockProjects);
+142:     });
+143:   });
+144: });
 ````
 
 ## File: src/__tests__/Prosjekter/error.test.tsx
@@ -5606,6 +5981,152 @@ tsconfig.json
 65: };
 ````
 
+## File: src/components/Animations/MatrixCursor.component.tsx
+````typescript
+  1: "use client";
+  2: import { useEffect, RefObject, useState, useCallback } from "react";
+  3: import "@/app/cursor.css";
+  4: import { useMobile } from "../../hooks/useMobile"; // Pb51b
+  5: interface MatrixCursorProps {
+  6:   heroRef: RefObject<HTMLElement | null>;
+  7: }
+  8: interface CursorStyles extends React.CSSProperties {
+  9:   "--cursor-x": string;
+ 10:   "--cursor-y": string;
+ 11: }
+ 12: interface MatrixTrail {
+ 13:   id: string;
+ 14:   x: number;
+ 15:   y: number;
+ 16:   char: string;
+ 17: }
+ 18: /**
+ 19:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 20:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 21:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 22:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 23:  */
+ 24: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 25:   const isMobile = useMobile(); // Pd528
+ 26:   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+ 27:   const [isHovered, setIsHovered] = useState(false);
+ 28:   const [trails, setTrails] = useState<MatrixTrail[]>([]);
+ 29:   const getRandomChar = useCallback(() => {
+ 30:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 31:     const index = Math.floor(Math.random() * matrixChars.length);
+ 32:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 33:   }, []);
+ 34:   const createTrail = useCallback(
+ 35:     (x: number, y: number) => {
+ 36:       const newTrail: MatrixTrail = {
+ 37:         id: Math.random().toString(36).substring(2, 100),
+ 38:         x,
+ 39:         y,
+ 40:         char: getRandomChar(),
+ 41:       };
+ 42:       setTrails((currentTrails) => {
+ 43:         const updatedTrails = [...currentTrails, newTrail];
+ 44:         if (updatedTrails.length > 20) {
+ 45:           return updatedTrails.slice(1);
+ 46:         }
+ 47:         return updatedTrails;
+ 48:       });
+ 49:     },
+ 50:     [getRandomChar],
+ 51:   );
+ 52:   useEffect(() => {
+ 53:     const heroSection = heroRef.current;
+ 54:     if (!heroSection) return;
+ 55:     // Add cursor: none to the hero section when hovered
+ 56:     if (isHovered) {
+ 57:       heroSection.style.cursor = "none";
+ 58:     } else {
+ 59:       heroSection.style.cursor = "";
+ 60:     }
+ 61:     const handleMouseMove = (e: MouseEvent) => {
+ 62:       setCursorPosition({ x: e.clientX, y: e.clientY });
+ 63:       if (isHovered) {
+ 64:         createTrail(e.clientX, e.clientY);
+ 65:       }
+ 66:     };
+ 67:     const handleMouseEnter = () => {
+ 68:       setIsHovered(true);
+ 69:       heroSection.style.cursor = "none";
+ 70:     };
+ 71:     const handleMouseLeave = () => {
+ 72:       setIsHovered(false);
+ 73:       heroSection.style.cursor = "";
+ 74:       setTrails([]);
+ 75:     };
+ 76:     heroSection.addEventListener("mousemove", handleMouseMove);
+ 77:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+ 78:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+ 79:     return () => {
+ 80:       heroSection.removeEventListener("mousemove", handleMouseMove);
+ 81:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+ 82:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+ 83:       heroSection.style.cursor = "";
+ 84:     };
+ 85:   }, [heroRef, isHovered, createTrail]);
+ 86:   const handleAnimationEnd = useCallback((trailId: string) => {
+ 87:     setTrails((currentTrails) =>
+ 88:       currentTrails.filter((trail) => trail.id !== trailId),
+ 89:     );
+ 90:   }, []);
+ 91:   if (!heroRef.current || isMobile) return null; // P6ecf
+ 92:   const cursorStyles: CursorStyles = {
+ 93:     position: "fixed",
+ 94:     top: 0,
+ 95:     left: 0,
+ 96:     width: "100%",
+ 97:     height: "100%",
+ 98:     pointerEvents: "none",
+ 99:     zIndex: 9999,
+100:     "--cursor-x": `${cursorPosition.x}px`,
+101:     "--cursor-y": `${cursorPosition.y}px`,
+102:   };
+103:   return (
+104:     <div
+105:       data-testid="matrix-cursor"
+106:       className={isHovered ? "matrix-cursor" : ""}
+107:       style={cursorStyles}
+108:     >
+109:       {trails.map((trail) => (
+110:         <div
+111:           key={trail.id}
+112:           data-testid="matrix-trail"
+113:           className="matrix-trail"
+114:           style={{
+115:             position: "fixed",
+116:             left: `${trail.x}px`,
+117:             top: `${trail.y}px`,
+118:             zIndex: 10000,
+119:             pointerEvents: "none",
+120:           }}
+121:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+122:         >
+123:           {trail.char}
+124:         </div>
+125:       ))}
+126:       {isHovered && (
+127:         <div
+128:           style={{
+129:             position: "fixed",
+130:             top: 0,
+131:             left: 0,
+132:             width: "100%",
+133:             height: "100%",
+134:             pointerEvents: "none",
+135:             zIndex: 9999,
+136:           }}
+137:         />
+138:       )}
+139:     </div>
+140:   );
+141: };
+142: export default MatrixCursor;
+````
+
 ## File: src/components/Animations/PageTransition.component.tsx
 ````typescript
  1: import { Variants, motion, AnimatePresence } from "motion/react";
@@ -5639,6 +6160,52 @@ tsconfig.json
 29:   );
 30: };
 31: export default PageTransition;
+````
+
+## File: src/components/Animations/RotatingLoader.component.tsx
+````typescript
+ 1: /**
+ 2:  * RotatingLoader component
+ 3:  * Renders a rotating loader animation with Matrix theme
+ 4:  * @returns {JSX.Element} The rendered RotatingLoader component
+ 5:  */
+ 6: export default function RotatingLoader() {
+ 7:   return (
+ 8:     <div
+ 9:       className="grid min-h-[140px] w-full place-items-center overflow-x-scroll rounded-lg p-6 lg:overflow-visible"
+10:       data-testid="rotating-loader"
+11:     >
+12:       <div className="animate-matrix-glow" data-testid="glow-container">
+13:         <svg
+14:           className="animate-spin"
+15:           viewBox="0 0 64 64"
+16:           fill="none"
+17:           xmlns="http://www.w3.org/2000/svg"
+18:           width="64"
+19:           height="64"
+20:           data-testid="loader-svg"
+21:         >
+22:           <path
+23:             d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
+24:             className="stroke-matrix-dark"
+25:             strokeWidth="5"
+26:             strokeLinecap="round"
+27:             strokeLinejoin="round"
+28:             data-testid="loader-path"
+29:           ></path>
+30:           <path
+31:             d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
+32:             className="stroke-matrix-light"
+33:             strokeWidth="5"
+34:             strokeLinecap="round"
+35:             strokeLinejoin="round"
+36:             data-testid="loader-path"
+37:           ></path>
+38:         </svg>
+39:       </div>
+40:     </div>
+41:   );
+42: }
 ````
 
 ## File: src/components/CV/CVContent.component.tsx
@@ -15346,55 +15913,6 @@ tsconfig.json
 171: });
 ````
 
-## File: src/__tests__/Animations/RotatingLoader.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 5: describe("RotatingLoader", () => {
- 6:   describe("rendering", () => {
- 7:     it("renders component structure with correct classes and attributes", () => {
- 8:       // Arrange
- 9:       const expectedClasses = {
-10:         wrapper: "grid min-h-[140px] w-full place-items-center",
-11:         svg: "animate-spin",
-12:         paths: ["stroke-matrix-dark", "stroke-matrix-light"],
-13:       };
-14:       // Act
-15:       render(<RotatingLoader />);
-16:       const wrapperDiv = screen.getByTestId("rotating-loader");
-17:       const svg = screen.getByTestId("loader-svg");
-18:       const paths = screen.getAllByTestId("loader-path");
-19:       // Assert
-20:       expect(wrapperDiv).toHaveClass(expectedClasses.wrapper);
-21:       expect(svg).toBeInTheDocument();
-22:       expect(svg).toHaveClass(expectedClasses.svg);
-23:       expect(paths).toHaveLength(2);
-24:       expect(paths[0]).toHaveClass(expectedClasses.paths[0]);
-25:       expect(paths[1]).toHaveClass(expectedClasses.paths[1]);
-26:     });
-27:   });
-28:   describe("animations", () => {
-29:     it("applies correct animation classes", () => {
-30:       // Arrange
-31:       const expectedAnimations = {
-32:         glow: "animate-matrix-glow",
-33:         spin: "animate-spin",
-34:       };
-35:       // Act
-36:       render(<RotatingLoader />);
-37:       const glowContainer = screen.getByTestId("glow-container");
-38:       const svg = screen.getByTestId("loader-svg");
-39:       // Assert
-40:       expect(glowContainer).toBeInTheDocument();
-41:       expect(glowContainer).toHaveClass(expectedAnimations.glow);
-42:       expect(svg).toHaveClass(expectedAnimations.spin);
-43:     });
-44:   });
-45: });
-````
-
 ## File: src/__tests__/Animations/TestAnimation.test.tsx
 ````typescript
  1: /**
@@ -15452,76 +15970,6 @@ tsconfig.json
 53: testAnimationComponent(FadeDown, "fadedown", "translateY");
 54: testAnimationComponent(FadeUp, "fadeup", "translateY");
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
-````
-
-## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 5: describe("ErrorBoundary", () => {
- 6:   let consoleErrorSpy: jest.SpyInstance;
- 7:   const errorMock = new Error("Dette er en testfeil");
- 8:   beforeAll(() => {
- 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-10:   });
-11:   afterAll(() => {
-12:     consoleErrorSpy.mockRestore();
-13:   });
-14:   it("should render children when there is no error", () => {
-15:     // Arrange
-16:     const testContent = "Test Innhold";
-17:     // Act
-18:     render(
-19:       <ErrorBoundary>
-20:         <div>{testContent}</div>
-21:       </ErrorBoundary>,
-22:     );
-23:     // Assert
-24:     expect(screen.getByText(testContent)).toBeInTheDocument();
-25:   });
-26:   it("should render error fallback when there is an error", () => {
-27:     // Arrange
-28:     const ErrorComponent = () => {
-29:       throw errorMock;
-30:     };
-31:     const expectedTexts = {
-32:       heading: "Har du funnet en feil i Matrix?",
-33:       error: "Dette er en testfeil",
-34:       button: "Returner til Matrix",
-35:     };
-36:     // Act
-37:     render(
-38:       <ErrorBoundary>
-39:         <ErrorComponent />
-40:       </ErrorBoundary>,
-41:     );
-42:     // Assert
-43:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
-44:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-45:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
-46:   });
-47:   it("should call console.error when an error occurs", () => {
-48:     // Arrange
-49:     const ErrorComponent = () => {
-50:       throw errorMock;
-51:     };
-52:     const expectedErrorArgs = [
-53:       "Uventet feil i Matrix:",
-54:       errorMock,
-55:       { componentStack: expect.any(String) },
-56:     ];
-57:     // Act
-58:     render(
-59:       <ErrorBoundary>
-60:         <ErrorComponent />
-61:       </ErrorBoundary>,
-62:     );
-63:     // Assert
-64:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
-65:   });
-66: });
 ````
 
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
@@ -15692,114 +16140,6 @@ tsconfig.json
 29: });
 ````
 
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import Section from "@/components/Index/Section.component";
-  5: import { PortableText } from "@portabletext/react";
-  6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
-  7: // Mock the BounceInScroll component
-  8: jest.mock("@/components/Animations/BounceInScroll.component", () => {
-  9:   const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
- 10:   MockBounceInScroll.displayName = 'MockBounceInScroll';
- 11:   return MockBounceInScroll;
- 12: });
- 13: // Mock the PortableText component
- 14: jest.mock("@portabletext/react", () => ({
- 15:   PortableText: jest.fn(() => null),
- 16: }));
- 17: describe("Section Component", () => {
- 18:   const mockProps: import("@/types/sanity.types").Pagecontent = {
- 19:     _type: "pagecontent",
- 20:     title: "Test Title",
- 21:     text: [
- 22:       {
- 23:         _key: "1",
- 24:         _type: "block",
- 25:         children: [
- 26:           { _key: "2", _type: "span", text: "Test content", marks: [] },
- 27:         ],
- 28:         markDefs: [],
- 29:         style: "normal",
- 30:       },
- 31:     ],
- 32:   };
- 33:   const originalEnv = process.env;
- 34:   beforeEach(() => {
- 35:     jest.clearAllMocks();
- 36:     process.env = { ...originalEnv };
- 37:   });
- 38:   afterEach(() => {
- 39:     process.env = originalEnv;
- 40:   });
- 41:   it("renders with valid props", () => {
- 42:     // Arrange - Set up test data and conditions
- 43:     const props = mockProps;
- 44:     // Act - Perform the action being tested
- 45:     render(<Section {...props} />);
- 46:     // Assert - Verify the results
- 47:     expect(screen.getByText("Test Title")).toBeInTheDocument();
- 48:     const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
- 49:     expect(mockCall).toStrictEqual({
- 50:       value: mockProps.text,
- 51:       components: myPortableTextComponents,
- 52:     });
- 53:   });
- 54:   it("returns null with invalid props", () => {
- 55:     // Arrange - Set up test data and conditions
- 56:     const consoleErrorSpy = jest
- 57:       .spyOn(console, "error")
- 58:       .mockImplementation(() => {});
- 59:     // Act - Perform the action being tested
- 60:     render(
- 61:       <Section _type="pagecontent" title="" text={[]} />,
- 62:     );
- 63:     // Assert - Verify the results
- 64:     expect(screen.queryByRole('article')).not.toBeInTheDocument();
- 65:     expect(consoleErrorSpy).toHaveBeenCalled();
- 66:     consoleErrorSpy.mockRestore();
- 67:   });
- 68:   it("triggers error in development mode", () => {
- 69:     // Arrange - Set up test data and conditions
- 70:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 71:     // Act - Perform the action being tested
- 72:     render(<Section {...mockProps} />);
- 73:     const errorButton = screen.getByText("Utløs Testfeil");
- 74:     // Assert - Verify the results
- 75:     expect(errorButton).toBeInTheDocument();
- 76:     expect(() => fireEvent.click(errorButton)).toThrow(
- 77:       "En uventet feil har oppstått",
- 78:     );
- 79:   });
- 80:   it("does not show error button in production mode", () => {
- 81:     // Arrange - Set up test data and conditions
- 82:     process.env = { ...originalEnv, NODE_ENV: "production" };
- 83:     // Act - Perform the action being tested
- 84:     render(<Section {...mockProps} />);
- 85:     // Assert - Verify the results
- 86:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
- 87:   });
- 88:   it("does not show error button when showDebugButton is false in development mode", () => {
- 89:     // Arrange - Set up test data and conditions
- 90:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 91:     // Act - Perform the action being tested
- 92:     render(<Section {...mockProps} showDebugButton={false} />);
- 93:     // Assert - Verify the results
- 94:     expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
- 95:   });
- 96:   it("shows error button when showDebugButton is true in development mode", () => {
- 97:     // Arrange - Set up test data and conditions
- 98:     process.env = { ...originalEnv, NODE_ENV: "development" };
- 99:     // Act - Perform the action being tested
-100:     render(<Section {...mockProps} showDebugButton={true} />);
-101:     // Assert - Verify the results
-102:     expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
-103:   });
-104: });
-````
-
 ## File: src/__tests__/Layout/Header.test.tsx
 ````typescript
   1: /**
@@ -15916,346 +16256,6 @@ tsconfig.json
 112:     });
 113:   });
 114: });
-````
-
-## File: src/__tests__/Prosjekter/actions.test.ts
-````typescript
-  1: import { getProjects } from "@/app/prosjekter/actions";
-  2: import { client } from "@/lib/sanity/client";
-  3: import { projectsQuery } from "@/lib/sanity/queries";
-  4: // Mock the Sanity client
-  5: jest.mock("@/lib/sanity/client", () => ({
-  6:   client: {
-  7:     fetch: jest.fn(),
-  8:   },
-  9: }));
- 10: describe("getProjects", () => {
- 11:   beforeEach(() => {
- 12:     jest.clearAllMocks();
- 13:   });
- 14:   it("fetches projects successfully", async () => {
- 15:     // Arrange
- 16:     const mockProjects = [
- 17:       {
- 18:         id: "1",
- 19:         name: "Test Project",
- 20:         description: "Test Description",
- 21:         subdescription: "Test Subdescription",
- 22:         projectimage: { asset: { _ref: "test" } },
- 23:         urlwww: [],
- 24:         urlgithub: [],
- 25:       },
- 26:     ];
- 27:     const expectedFetchOptions = {
- 28:       next: { revalidate: 3600 },
- 29:     };
- 30:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 31:     // Act
- 32:     const result = await getProjects();
- 33:     // Assert
- 34:     expect(result).toStrictEqual(mockProjects);
- 35:     expect(client.fetch).toHaveBeenCalledWith(
- 36:       projectsQuery,
- 37:       {},
- 38:       expectedFetchOptions
- 39:     );
- 40:   });
- 41:   describe("error handling", () => {
- 42:     it("handles authentication errors (401)", async () => {
- 43:       // Arrange
- 44:       const error = {
- 45:         statusCode: 401,
- 46:         message: "Invalid token",
- 47:         details: {
- 48:           type: "credentials",
- 49:           description: "Invalid token provided",
- 50:         },
- 51:       };
- 52:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 53:       // Act & Assert
- 54:       await expect(getProjects()).rejects.toThrow("Authentication failed");
- 55:     });
- 56:     it("handles permission errors (403)", async () => {
- 57:       // Arrange
- 58:       const error = {
- 59:         statusCode: 403,
- 60:         message: "Insufficient permissions",
- 61:         details: {
- 62:           type: "authorization",
- 63:           description: "Missing read access",
- 64:         },
- 65:       };
- 66:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 67:       // Act & Assert
- 68:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
- 69:     });
- 70:     it("handles rate limiting (429)", async () => {
- 71:       // Arrange
- 72:       const error = {
- 73:         statusCode: 429,
- 74:         message: "Too Many Requests",
- 75:         details: { type: "rate_limit", description: "Rate limit exceeded" },
- 76:       };
- 77:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 78:       // Act & Assert
- 79:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
- 80:     });
- 81:     it("handles malformed GROQ queries (400)", async () => {
- 82:       // Arrange
- 83:       const error = {
- 84:         statusCode: 400,
- 85:         message: "Invalid GROQ query",
- 86:         details: {
- 87:           type: "query_error",
- 88:           description: "Syntax error in GROQ query",
- 89:         },
- 90:       };
- 91:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 92:       // Act & Assert
- 93:       await expect(getProjects()).rejects.toThrow(
- 94:         "Sanity API error: Invalid GROQ query"
- 95:       );
- 96:     });
- 97:     it("handles network timeouts", async () => {
- 98:       // Arrange
- 99:       const error = Object.assign(new Error("Network timeout"), {
-100:         name: "TimeoutError",
-101:       });
-102:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-103:       // Act & Assert
-104:       await expect(getProjects()).rejects.toThrow("Request timed out");
-105:     });
-106:     it("handles generic fetch errors", async () => {
-107:       // Arrange
-108:       const error = {
-109:         message: "Fetch failed",
-110:       };
-111:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-112:       // Act & Assert
-113:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-114:     });
-115:     it("recovers after temporary errors", async () => {
-116:       // Arrange
-117:       const rateError = {
-118:         statusCode: 429,
-119:         message: "Too Many Requests",
-120:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-121:       };
-122:       const mockProjects = [
-123:         {
-124:           id: "1",
-125:           name: "Test Project",
-126:           description: "Test Description",
-127:           subdescription: "Test Subdescription",
-128:           projectimage: { asset: { _ref: "test" } },
-129:           urlwww: [],
-130:           urlgithub: [],
-131:         },
-132:       ];
-133:       // First call fails with rate limit
-134:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
-135:       // Second call succeeds
-136:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-137:       // First call should fail
-138:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-139:       // Second call should succeed
-140:       const result = await getProjects();
-141:       expect(result).toStrictEqual(mockProjects);
-142:     });
-143:   });
-144: });
-````
-
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, RefObject, useState, useCallback } from "react";
-  3: import "@/app/cursor.css";
-  4: import { useMobile } from "../../hooks/useMobile"; // Pb51b
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: /**
- 19:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 20:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 21:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 22:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 23:  */
- 24: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 25:   const isMobile = useMobile(); // Pd528
- 26:   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
- 27:   const [isHovered, setIsHovered] = useState(false);
- 28:   const [trails, setTrails] = useState<MatrixTrail[]>([]);
- 29:   const getRandomChar = useCallback(() => {
- 30:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 31:     const index = Math.floor(Math.random() * matrixChars.length);
- 32:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 33:   }, []);
- 34:   const createTrail = useCallback(
- 35:     (x: number, y: number) => {
- 36:       const newTrail: MatrixTrail = {
- 37:         id: Math.random().toString(36).substring(2, 100),
- 38:         x,
- 39:         y,
- 40:         char: getRandomChar(),
- 41:       };
- 42:       setTrails((currentTrails) => {
- 43:         const updatedTrails = [...currentTrails, newTrail];
- 44:         if (updatedTrails.length > 20) {
- 45:           return updatedTrails.slice(1);
- 46:         }
- 47:         return updatedTrails;
- 48:       });
- 49:     },
- 50:     [getRandomChar],
- 51:   );
- 52:   useEffect(() => {
- 53:     const heroSection = heroRef.current;
- 54:     if (!heroSection) return;
- 55:     // Add cursor: none to the hero section when hovered
- 56:     if (isHovered) {
- 57:       heroSection.style.cursor = "none";
- 58:     } else {
- 59:       heroSection.style.cursor = "";
- 60:     }
- 61:     const handleMouseMove = (e: MouseEvent) => {
- 62:       setCursorPosition({ x: e.clientX, y: e.clientY });
- 63:       if (isHovered) {
- 64:         createTrail(e.clientX, e.clientY);
- 65:       }
- 66:     };
- 67:     const handleMouseEnter = () => {
- 68:       setIsHovered(true);
- 69:       heroSection.style.cursor = "none";
- 70:     };
- 71:     const handleMouseLeave = () => {
- 72:       setIsHovered(false);
- 73:       heroSection.style.cursor = "";
- 74:       setTrails([]);
- 75:     };
- 76:     heroSection.addEventListener("mousemove", handleMouseMove);
- 77:     heroSection.addEventListener("mouseenter", handleMouseEnter);
- 78:     heroSection.addEventListener("mouseleave", handleMouseLeave);
- 79:     return () => {
- 80:       heroSection.removeEventListener("mousemove", handleMouseMove);
- 81:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
- 82:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
- 83:       heroSection.style.cursor = "";
- 84:     };
- 85:   }, [heroRef, isHovered, createTrail]);
- 86:   const handleAnimationEnd = useCallback((trailId: string) => {
- 87:     setTrails((currentTrails) =>
- 88:       currentTrails.filter((trail) => trail.id !== trailId),
- 89:     );
- 90:   }, []);
- 91:   if (!heroRef.current || isMobile) return null; // P6ecf
- 92:   const cursorStyles: CursorStyles = {
- 93:     position: "fixed",
- 94:     top: 0,
- 95:     left: 0,
- 96:     width: "100%",
- 97:     height: "100%",
- 98:     pointerEvents: "none",
- 99:     zIndex: 9999,
-100:     "--cursor-x": `${cursorPosition.x}px`,
-101:     "--cursor-y": `${cursorPosition.y}px`,
-102:   };
-103:   return (
-104:     <div
-105:       data-testid="matrix-cursor"
-106:       className={isHovered ? "matrix-cursor" : ""}
-107:       style={cursorStyles}
-108:     >
-109:       {trails.map((trail) => (
-110:         <div
-111:           key={trail.id}
-112:           data-testid="matrix-trail"
-113:           className="matrix-trail"
-114:           style={{
-115:             position: "fixed",
-116:             left: `${trail.x}px`,
-117:             top: `${trail.y}px`,
-118:             zIndex: 10000,
-119:             pointerEvents: "none",
-120:           }}
-121:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-122:         >
-123:           {trail.char}
-124:         </div>
-125:       ))}
-126:       {isHovered && (
-127:         <div
-128:           style={{
-129:             position: "fixed",
-130:             top: 0,
-131:             left: 0,
-132:             width: "100%",
-133:             height: "100%",
-134:             pointerEvents: "none",
-135:             zIndex: 9999,
-136:           }}
-137:         />
-138:       )}
-139:     </div>
-140:   );
-141: };
-142: export default MatrixCursor;
-````
-
-## File: src/components/Animations/RotatingLoader.component.tsx
-````typescript
- 1: /**
- 2:  * RotatingLoader component
- 3:  * Renders a rotating loader animation with Matrix theme
- 4:  * @returns {JSX.Element} The rendered RotatingLoader component
- 5:  */
- 6: export default function RotatingLoader() {
- 7:   return (
- 8:     <div
- 9:       className="grid min-h-[140px] w-full place-items-center overflow-x-scroll rounded-lg p-6 lg:overflow-visible"
-10:       data-testid="rotating-loader"
-11:     >
-12:       <div className="animate-matrix-glow" data-testid="glow-container">
-13:         <svg
-14:           className="animate-spin"
-15:           viewBox="0 0 64 64"
-16:           fill="none"
-17:           xmlns="http://www.w3.org/2000/svg"
-18:           width="64"
-19:           height="64"
-20:           data-testid="loader-svg"
-21:         >
-22:           <path
-23:             d="M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z"
-24:             className="stroke-matrix-dark"
-25:             strokeWidth="5"
-26:             strokeLinecap="round"
-27:             strokeLinejoin="round"
-28:             data-testid="loader-path"
-29:           ></path>
-30:           <path
-31:             d="M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762"
-32:             className="stroke-matrix-light"
-33:             strokeWidth="5"
-34:             strokeLinecap="round"
-35:             strokeLinejoin="round"
-36:             data-testid="loader-path"
-37:           ></path>
-38:         </svg>
-39:       </div>
-40:     </div>
-41:   );
-42: }
 ````
 
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
@@ -16594,46 +16594,6 @@ tsconfig.json
 64:         "arrange-act-assert": rule,
 65:     },
 66: };
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.1.0",
-18:     "react-dom": "^19.1.0",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^3.92.0",
-21:     "styled-components": "^6.1.18"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.7",
-26:     "eslint": "^9.28.0",
-27:     "prettier": "^3.5.3",
-28:     "typescript": "^5.8.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: tailwind.config.ts
@@ -17109,6 +17069,46 @@ tsconfig.json
 76: );
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.1.0",
+18:     "react-dom": "^19.1.0",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^3.92.0",
+21:     "styled-components": "^6.1.18"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.1.8",
+26:     "eslint": "^9.28.0",
+27:     "prettier": "^3.5.3",
+28:     "typescript": "^5.8.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: src/e2e/cypress/e2e/layout.cy.ts
 ````typescript
  1: /// <reference types="cypress"/>
@@ -17435,7 +17435,7 @@ tsconfig.json
 35:     "cookie": ">=1.0.2",
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
-38:     "motion": "^12.16.0",
+38:     "motion": "^12.17.0",
 39:     "next": "15.3.0",
 40:     "next-sanity": "^9.12.0",
 41:     "path-to-regexp": "^8.2.0",
@@ -17465,8 +17465,8 @@ tsconfig.json
 65:     "@testing-library/user-event": "^14.6.1",
 66:     "@types/jest": "^29.5.14",
 67:     "@types/node": "^22.14.1",
-68:     "@types/react": "^19.1.2",
-69:     "@types/react-dom": "^19.1.2",
+68:     "@types/react": "^19.1.8",
+69:     "@types/react-dom": "^19.1.6",
 70:     "@typescript-eslint/eslint-plugin": "^8.34.0",
 71:     "@typescript-eslint/parser": "^8.34.0",
 72:     "@typescript-eslint/utils": "^8.34.0",
