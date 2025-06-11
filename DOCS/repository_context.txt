@@ -6693,6 +6693,25 @@ tsconfig.json
 26: }
 ````
 
+## File: src/e2e/cypress/tsconfig.json
+````json
+ 1: {
+ 2:   "extends": "../../../tsconfig.json",
+ 3:   "compilerOptions": {
+ 4:     "noEmit": true,
+ 5:     "isolatedModules": false,
+ 6:     "types": ["cypress", "@testing-library/cypress"]
+ 7:   },
+ 8:   "include": [
+ 9:     "../../../node_modules/cypress",
+10:     "../../../node_modules/@testing-library/cypress",
+11:     "support/component.ts",
+12:     "support/component.d.ts",
+13:     "./**/*.ts"
+14:   ]
+15: }
+````
+
 ## File: src/e2e/playwright/cv.spec.ts
 ````typescript
  1: import { test, expect } from "@playwright/test";
@@ -9331,6 +9350,92 @@ tsconfig.json
 301:   | SanityImageMetadata
 302:   | Category;
 303: export declare const internalGroqTypeReferenceTo: unique symbol;
+````
+
+## File: src/utils/eslint/index.ts
+````typescript
+ 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
+ 2: type MessageIds = "missingAAAPattern";
+ 3: type Options = [];
+ 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
+ 5:   const testNames = ["it", "test"];
+ 6:   return (
+ 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
+ 8:     testNames.includes(node.callee.name)
+ 9:   );
+10: };
+11: const isArrowFunction = (
+12:   node: TSESTree.Node,
+13: ): node is TSESTree.ArrowFunctionExpression => {
+14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
+15: };
+16: const validateAAAPattern = (
+17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+18:   node: TSESTree.CallExpression,
+19: ) => {
+20:   const testFn = node.arguments[1];
+21:   if (!isArrowFunction(testFn)) return;
+22:   if (!hasAAAComments(context, testFn)) {
+23:     context.report({
+24:       node,
+25:       messageId: "missingAAAPattern",
+26:     });
+27:   }
+28: };
+29: const validateTestCase = (
+30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+31:   node: TSESTree.CallExpression,
+32: ) => {
+33:   if (!isTestFunction(node)) return;
+34:   validateAAAPattern(context, node);
+35: };
+36: const hasAAAComments = (
+37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
+38:   testFn: TSESTree.ArrowFunctionExpression,
+39: ): boolean => {
+40:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
+41:   const patterns = ["Arrange", "Act", "Assert"];
+42:   return comments.some((comment: TSESTree.Comment) =>
+43:     patterns.some((pattern) => comment.value.includes(pattern)),
+44:   );
+45: };
+46: const createRule = ESLintUtils.RuleCreator(
+47:   (name) =>
+48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
+49: );
+50: const rule = createRule<Options, MessageIds>({
+51:   name: "arrange-act-assert",
+52:   meta: {
+53:     type: "suggestion",
+54:     docs: {
+55:       description: "enforce AAA pattern in tests",
+56:     },
+57:     messages: {
+58:       missingAAAPattern: "Test should follow AAA pattern with comments",
+59:     },
+60:     schema: [],
+61:   },
+62:   defaultOptions: [],
+63:   create(context) {
+64:     return {
+65:       CallExpression: (node: TSESTree.CallExpression) =>
+66:         validateTestCase(context, node),
+67:     };
+68:   },
+69: });
+70: module.exports = {
+71:   configs: {
+72:     recommended: {
+73:       plugins: ["test-rules"],
+74:       rules: {
+75:         "test-rules/arrange-act-assert": "error",
+76:       },
+77:     },
+78:   },
+79:   rules: {
+80:     "arrange-act-assert": rule,
+81:   },
+82: };
 ````
 
 ## File: src/utils/eslint/package.json
@@ -15371,25 +15476,6 @@ tsconfig.json
 78: export default ProsjektCard;
 ````
 
-## File: src/e2e/cypress/tsconfig.json
-````json
- 1: {
- 2:   "extends": "../../../tsconfig.json",
- 3:   "compilerOptions": {
- 4:     "noEmit": true,
- 5:     "isolatedModules": false,
- 6:     "types": ["cypress", "@testing-library/cypress"]
- 7:   },
- 8:   "include": [
- 9:     "../../../node_modules/cypress",
-10:     "../../../node_modules/@testing-library/cypress",
-11:     "support/component.ts",
-12:     "support/component.d.ts",
-13:     "./**/*.ts"
-14:   ]
-15: }
-````
-
 ## File: src/stories/components/Index/MobileBackground.stories.tsx
 ````typescript
   1: import React from "react";
@@ -15556,92 +15642,6 @@ tsconfig.json
 37:   );
 38: };
 39: export default KontaktWithMocks;
-````
-
-## File: src/utils/eslint/index.ts
-````typescript
- 1: import { ESLintUtils, TSESTree, TSESLint } from "@typescript-eslint/utils";
- 2: type MessageIds = "missingAAAPattern";
- 3: type Options = [];
- 4: const isTestFunction = (node: TSESTree.CallExpression): boolean => {
- 5:   const testNames = ["it", "test"];
- 6:   return (
- 7:     node.callee.type === TSESTree.AST_NODE_TYPES.Identifier &&
- 8:     testNames.includes(node.callee.name)
- 9:   );
-10: };
-11: const isArrowFunction = (
-12:   node: TSESTree.Node,
-13: ): node is TSESTree.ArrowFunctionExpression => {
-14:   return node?.type === TSESTree.AST_NODE_TYPES.ArrowFunctionExpression;
-15: };
-16: const validateAAAPattern = (
-17:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-18:   node: TSESTree.CallExpression,
-19: ) => {
-20:   const testFn = node.arguments[1];
-21:   if (!isArrowFunction(testFn)) return;
-22:   if (!hasAAAComments(context, testFn)) {
-23:     context.report({
-24:       node,
-25:       messageId: "missingAAAPattern",
-26:     });
-27:   }
-28: };
-29: const validateTestCase = (
-30:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-31:   node: TSESTree.CallExpression,
-32: ) => {
-33:   if (!isTestFunction(node)) return;
-34:   validateAAAPattern(context, node);
-35: };
-36: const hasAAAComments = (
-37:   context: Readonly<TSESLint.RuleContext<MessageIds, Options>>,
-38:   testFn: TSESTree.ArrowFunctionExpression,
-39: ): boolean => {
-40:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
-41:   const patterns = ["Arrange", "Act", "Assert"];
-42:   return comments.some((comment: TSESTree.Comment) =>
-43:     patterns.some((pattern) => comment.value.includes(pattern)),
-44:   );
-45: };
-46: const createRule = ESLintUtils.RuleCreator(
-47:   (name) =>
-48:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
-49: );
-50: const rule = createRule<Options, MessageIds>({
-51:   name: "arrange-act-assert",
-52:   meta: {
-53:     type: "suggestion",
-54:     docs: {
-55:       description: "enforce AAA pattern in tests",
-56:     },
-57:     messages: {
-58:       missingAAAPattern: "Test should follow AAA pattern with comments",
-59:     },
-60:     schema: [],
-61:   },
-62:   defaultOptions: [],
-63:   create(context) {
-64:     return {
-65:       CallExpression: (node: TSESTree.CallExpression) =>
-66:         validateTestCase(context, node),
-67:     };
-68:   },
-69: });
-70: module.exports = {
-71:   configs: {
-72:     recommended: {
-73:       plugins: ["test-rules"],
-74:       rules: {
-75:         "test-rules/arrange-act-assert": "error",
-76:       },
-77:     },
-78:   },
-79:   rules: {
-80:     "arrange-act-assert": rule,
-81:   },
-82: };
 ````
 
 ## File: studio/package.json
@@ -16999,69 +16999,6 @@ tsconfig.json
 19: });
 ````
 
-## File: src/types/testing-library.d.ts
-````typescript
- 1: /// <reference types="jest" />
- 2: /// <reference types="@testing-library/jest-dom" />
- 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
- 4: declare global {
- 5:   namespace jest {
- 6:     interface Matchers<R> {
- 7:       toBeInTheDocument(): R;
- 8:       toHaveTextContent(text: string): R;
- 9:       toBeVisible(): R;
-10:       toBeDisabled(): R;
-11:       toBeEnabled(): R;
-12:       toHaveAttribute(attr: string, value?: string): R;
-13:       toHaveClass(className: string): R;
-14:       toHaveStyle(css: React.CSSProperties): R;
-15:     }
-16:   }
-17: }
-18: // Augment Chai assertions for Cypress
-19: declare global {
-20:   namespace Chai {
-21:     interface Assertion {
-22:       toBeInTheDocument(): Assertion;
-23:       toHaveTextContent(text: string): Assertion;
-24:       toBeVisible(): Assertion;
-25:       toBeDisabled(): Assertion;
-26:       toBeEnabled(): Assertion;
-27:       toHaveAttribute(attr: string, value?: string): Assertion;
-28:       toHaveClass(...classNames: string[]): Assertion;
-29:       toHaveStyle(css: React.CSSProperties): Assertion;
-30:       toHaveBeenCalled(): Assertion;
-31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
-32:       toHaveBeenCalledTimes(n: number): Assertion;
-33:       toBe(expected: unknown): Assertion;
-34:       toEqual(expected: unknown): Assertion;
-35:       toStrictEqual(expected: unknown): Assertion;
-36:       toBeNull(): Assertion;
-37:       toBeDefined(): Assertion;
-38:       toBeGreaterThan(n: number): Assertion;
-39:       toBeLessThanOrEqual(n: number): Assertion;
-40:       toMatch(pattern: RegExp | string): Assertion;
-41:       toThrow(error?: string | Error | RegExp): Assertion;
-42:       toContain(item: unknown): Assertion;
-43:       toContainElement(element: HTMLElement): Assertion;
-44:       toContainHTML(html: string): Assertion;
-45:       toHaveLength(length: number): Assertion;
-46:       rejects: {
-47:         toThrow(error?: string | Error | RegExp): Promise<void>;
-48:       };
-49:     }
-50:     interface ExpectStatic {
-51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
-52:     }
-53:   }
-54:   // Add canvas mocking support
-55:   interface HTMLCanvasElement {
-56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
-57:   }
-58: }
-59: export {};
-````
-
 ## File: src/utils/eslint/dist/index.js
 ````javascript
  1: /* eslint-disable @typescript-eslint/no-require-imports */
@@ -17130,6 +17067,69 @@ tsconfig.json
 64:         "arrange-act-assert": rule,
 65:     },
 66: };
+````
+
+## File: src/types/testing-library.d.ts
+````typescript
+ 1: /// <reference types="jest" />
+ 2: /// <reference types="@testing-library/jest-dom" />
+ 3: // Extend Jest matchers - using module augmentation instead of namespace declaration
+ 4: declare global {
+ 5:   namespace jest {
+ 6:     interface Matchers<R> {
+ 7:       toBeInTheDocument(): R;
+ 8:       toHaveTextContent(text: string): R;
+ 9:       toBeVisible(): R;
+10:       toBeDisabled(): R;
+11:       toBeEnabled(): R;
+12:       toHaveAttribute(attr: string, value?: string): R;
+13:       toHaveClass(className: string): R;
+14:       toHaveStyle(css: React.CSSProperties): R;
+15:     }
+16:   }
+17: }
+18: // Augment Chai assertions for Cypress
+19: declare global {
+20:   namespace Chai {
+21:     interface Assertion {
+22:       toBeInTheDocument(): Assertion;
+23:       toHaveTextContent(text: string): Assertion;
+24:       toBeVisible(): Assertion;
+25:       toBeDisabled(): Assertion;
+26:       toBeEnabled(): Assertion;
+27:       toHaveAttribute(attr: string, value?: string): Assertion;
+28:       toHaveClass(...classNames: string[]): Assertion;
+29:       toHaveStyle(css: React.CSSProperties): Assertion;
+30:       toHaveBeenCalled(): Assertion;
+31:       toHaveBeenCalledWith(...args: unknown[]): Assertion;
+32:       toHaveBeenCalledTimes(n: number): Assertion;
+33:       toBe(expected: unknown): Assertion;
+34:       toEqual(expected: unknown): Assertion;
+35:       toStrictEqual(expected: unknown): Assertion;
+36:       toBeNull(): Assertion;
+37:       toBeDefined(): Assertion;
+38:       toBeGreaterThan(n: number): Assertion;
+39:       toBeLessThanOrEqual(n: number): Assertion;
+40:       toMatch(pattern: RegExp | string): Assertion;
+41:       toThrow(error?: string | Error | RegExp): Assertion;
+42:       toContain(item: unknown): Assertion;
+43:       toContainElement(element: HTMLElement): Assertion;
+44:       toContainHTML(html: string): Assertion;
+45:       toHaveLength(length: number): Assertion;
+46:       rejects: {
+47:         toThrow(error?: string | Error | RegExp): Promise<void>;
+48:       };
+49:     }
+50:     interface ExpectStatic {
+51:       any<T>(classType: new (...args: unknown[]) => T): unknown;
+52:     }
+53:   }
+54:   // Add canvas mocking support
+55:   interface HTMLCanvasElement {
+56:     getContext(contextId: "2d"): CanvasRenderingContext2D | null;
+57:   }
+58: }
+59: export {};
 ````
 
 ## File: src/__tests__/Index/IndexContent.test.tsx
