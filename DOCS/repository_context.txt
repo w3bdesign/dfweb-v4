@@ -5631,159 +5631,6 @@ tsconfig.json
 44: export default Header;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, motion } from "motion/react";
-  5: import Hamburger from "./Hamburger.component";
-  6: import type { Navigation } from "@/types/sanity.types";
-  7: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  8: /**
-  9:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 10:  * @param {Object} props
- 11:  * @param {ILink[]} props.links - Array of navigation link objects
- 12:  * @returns {JSX.Element} The rendered MobileMenu component
- 13:  */
- 14: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 15:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 16:   const closeMenu = () => toggleExpanded(0);
- 17:   const pathname = usePathname();
- 18:   const menuVariants = {
- 19:     closed: {
- 20:       x: "125%",
- 21:       transition: {
- 22:         type: "spring",
- 23:         stiffness: 60,
- 24:         damping: 10,
- 25:         delay: 0.3,
- 26:       },
- 27:     },
- 28:     open: {
- 29:       x: 0,
- 30:       transition: {
- 31:         type: "spring",
- 32:         stiffness: 60,
- 33:         damping: 10,
- 34:       },
- 35:     },
- 36:   };
- 37:   const itemVariants = {
- 38:     closed: (i: number) => ({
- 39:       x: i % 2 === 0 ? "-50%" : "50%",
- 40:       opacity: 0,
- 41:       transition: {
- 42:         type: "spring",
- 43:         stiffness: 120,
- 44:         damping: 12,
- 45:         duration: 0.25,
- 46:       },
- 47:     }),
- 48:     open: (i: number) => ({
- 49:       x: 0,
- 50:       opacity: 1,
- 51:       transition: {
- 52:         type: "spring",
- 53:         stiffness: 120,
- 54:         damping: 12,
- 55:         delay: i * 0.25,
- 56:       },
- 57:     }),
- 58:   };
- 59:   return (
- 60:     <div
- 61:       className="z-50 md:hidden lg:hidden xl:hidden"
- 62:       data-testid="mobilemenu"
- 63:     >
- 64:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 65:       <AnimatePresence>
- 66:         {isExpanded && (
- 67:           <motion.div
- 68:             id="mobile-menu"
- 69:             data-testid="mobile-menu"
- 70:             data-cy="mobile-menu"
- 71:             aria-hidden={!isExpanded}
- 72:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 73:             initial="closed"
- 74:             animate="open"
- 75:             exit="closed"
- 76:             variants={menuVariants}
- 77:           >
- 78:             <nav aria-label="Navigasjon" className="w-full">
- 79:               <motion.ul
- 80:                 className="w-full"
- 81:                 initial="closed"
- 82:                 animate="open"
- 83:                 exit="closed"
- 84:                 variants={{
- 85:                   open: {
- 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 87:                   },
- 88:                   closed: {
- 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 90:                   },
- 91:                 }}
- 92:               >
- 93:                 {links?.map(({ title, name, href, externalLink }, index) => (
- 94:                   <motion.li
- 95:                     key={title}
- 96:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
- 97:                     data-cy="mobile-menu-item"
- 98:                     custom={index}
- 99:                     variants={itemVariants}
-100:                   >
-101:                     {externalLink ? (
-102:                       <a
-103:                         aria-label={name}
-104:                         href={href}
-105:                         target="_blank"
-106:                         rel="noreferrer"
-107:                         data-testid={`mobil-${name}`}
-108:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-109:                       >
-110:                         {name}
-111:                       </a>
-112:                     ) : (
-113:                       <Link
-114:                         href={href ?? ""}
-115:                         data-testid={`mobil-${name}`}
-116:                         prefetch={true}
-117:                         onClick={closeMenu}
-118:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-119:                           pathname === href ? "text-green-400" : ""
-120:                         }`}
-121:                       >
-122:                         <div className="glitch relative" data-text={name}>
-123:                           {name}
-124:                           <motion.span
-125:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-126:                               pathname === href ? "bg-green-400" : "bg-white"
-127:                             }`}
-128:                             initial={{
-129:                               width: pathname === href ? "100%" : "0%",
-130:                             }}
-131:                             animate={{
-132:                               width: pathname === href ? "100%" : "0%",
-133:                             }}
-134:                             transition={{ duration: 0.3 }}
-135:                           />
-136:                         </div>
-137:                       </Link>
-138:                     )}
-139:                   </motion.li>
-140:                 ))}
-141:               </motion.ul>
-142:             </nav>
-143:           </motion.div>
-144:         )}
-145:       </AnimatePresence>
-146:     </div>
-147:   );
-148: };
-149: export default MobileMenu;
-````
-
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -6596,6 +6443,68 @@ tsconfig.json
 17:     checkAccessibility(5000);
 18:   });
 19: });
+````
+
+## File: src/e2e/cypress/e2e/prosjekter.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: /// <reference types="cypress-axe"/>
+ 3: /// <reference types="axe-core"/>
+ 4: import { checkAccessibility } from "../support/functions";
+ 5: describe("Prosjekter Page", () => {
+ 6:   beforeEach(() => {
+ 7:     cy.visit("http://localhost:3000/prosjekter");
+ 8:   });
+ 9:   it("should load the prosjekter page", () => {
+10:     cy.url().should("include", "/prosjekter");
+11:     cy.get("h1").should("contain", "Prosjekter");
+12:   });
+13:   it("should display project cards", () => {
+14:     cy.get('[data-testid="project-card"]').should("have.length.at.least", 1);
+15:   });
+16:   it("should display project name, description, and subdescription", () => {
+17:     cy.get('[data-testid="project-card"]')
+18:       .first()
+19:       .within(() => {
+20:         cy.get("h1").should("have.class", "text-xl").and("not.be.empty");
+21:         cy.get("h2").should("have.class", "text-md").and("not.be.empty");
+22:         cy.get("p").should("have.class", "text-sm").and("not.be.empty");
+23:       });
+24:   });
+25:   it('should have functioning "Besøk" button if urlwww exists', () => {
+26:     cy.get('[data-testid="project-card"]')
+27:       .first()
+28:       .within(() => {
+29:         cy.get("a")
+30:           .contains("Besøk")
+31:           .should("have.attr", "href")
+32:           .and("not.be.empty");
+33:       });
+34:   });
+35:   it('should have functioning "GitHub" button if urlgithub exists', () => {
+36:     cy.get('[data-testid="project-card"]')
+37:       .first()
+38:       .within(() => {
+39:         cy.get("a")
+40:           .contains("GitHub")
+41:           .should("have.attr", "href")
+42:           .and("not.be.empty");
+43:       });
+44:   });
+45:   it('should have the correct URL for "GitHub" button', () => {
+46:     cy.get('[data-testid="project-card"]')
+47:       .first()
+48:       .within(() => {
+49:         cy.get("a")
+50:           .contains("GitHub")
+51:           .should("have.attr", "href")
+52:           .and("match", /^https:\/\/github\.com\/.+$/);
+53:       });
+54:   });
+55:   it("Prosjekter page should not have any a11y issues", () => {
+56:     checkAccessibility(5000);
+57:   });
+58: });
 ````
 
 ## File: src/e2e/cypress/support/commands.ts
@@ -13296,46 +13205,6 @@ tsconfig.json
 21: SOFTWARE.
 ````
 
-## File: lighthouserc.json
-````json
- 1: {
- 2:   "ci": {
- 3:     "collect": {
- 4:       "numberOfRuns": 1,
- 5:       "url": [
- 6:         "http://localhost:3000/",
- 7:         "http://localhost:3000/cv",
- 8:         "http://localhost:3000/prosjekter",
- 9:         "http://localhost:3000/kontakt"
-10:       ],
-11:       "port": 3000,
-12:       "settings": {
-13:         "onlyCategories": [
-14:           "performance",
-15:           "accessibility",
-16:           "best-practices",
-17:           "seo"
-18:         ],
-19:         "skipAudits": ["uses-http2"]
-20:       }
-21:     },
-22:     "upload": {
-23:       "target": "temporary-public-storage"
-24:     },
-25:     "assert": {
-26:       "assertions": {
-27:         "categories:performance": ["error", { "minScore": 0.6 }],
-28:         "categories:accessibility": ["error", { "minScore": 0.9 }],
-29:         "categories:best-practices": ["error", { "minScore": 0.9 }],
-30:         "categories:seo": ["error", { "minScore": 0.9 }],
-31:         "uses-responsive-images": ["error", { "maxWastedBytes": 102400 }],
-32:         "uses-http2": "off"
-33:       }
-34:     }
-35:   }
-36: }
-````
-
 ## File: next.config.ts
 ````typescript
  1: import type { NextConfig } from "next";
@@ -16221,6 +16090,161 @@ tsconfig.json
 144: });
 ````
 
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  6: // Define the project type
+  7: interface ProjectType {
+  8:   id: string;
+  9:   name: string;
+ 10:   description: string;
+ 11:   subdescription: string;
+ 12:   projectimage: { asset: { _ref: string } };
+ 13:   urlwww: unknown[];
+ 14:   urlgithub: unknown[];
+ 15: }
+ 16: // Mock the actions before importing the page component
+ 17: const mockGetProjects = jest.fn();
+ 18: const mockPreloadProjects = jest.fn();
+ 19: jest.mock("@/app/prosjekter/actions", () => ({
+ 20:   getProjects: mockGetProjects,
+ 21:   preloadProjects: mockPreloadProjects,
+ 22: }));
+ 23: // Mock the sanity client
+ 24: const mockUrlBuilder = {
+ 25:   width: jest.fn().mockReturnThis(),
+ 26:   fit: jest.fn().mockReturnThis(),
+ 27:   quality: jest.fn().mockReturnThis(),
+ 28:   auto: jest.fn().mockReturnThis(),
+ 29:   url: jest.fn().mockReturnValue("mock-url"),
+ 30: };
+ 31: jest.mock("@/lib/sanity/client", () => ({
+ 32:   client: {
+ 33:     fetch: jest.fn(),
+ 34:   },
+ 35:   urlFor: jest.fn(() => mockUrlBuilder),
+ 36: }));
+ 37: // Mock components
+ 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 39:   <h1>{children}</h1>
+ 40: );
+ 41: const MockProsjektCard = (props: { name: string }) => (
+ 42:   <div data-testid="project-card">{props.name}</div>
+ 43: );
+ 44: const MockRotatingLoader = () => (
+ 45:   <div data-testid="rotating-loader">Loading...</div>
+ 46: );
+ 47: const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
+ 48:   <div>{children}</div>
+ 49: );
+ 50: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+ 51: jest.mock(
+ 52:   "@/components/Prosjekter/ProsjektCard.component",
+ 53:   () => MockProsjektCard,
+ 54: );
+ 55: jest.mock(
+ 56:   "@/components/Animations/RotatingLoader.component",
+ 57:   () => MockRotatingLoader,
+ 58: );
+ 59: jest.mock("@/app/RootLayout", () => MockRootLayout);
+ 60: // Create a test component that simulates the page behavior without async server components
+ 61: function TestProsjekterPage() {
+ 62:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 63:   const [loading, setLoading] = React.useState(true);
+ 64:   React.useEffect(() => {
+ 65:     mockGetProjects().then((data: ProjectType[]) => {
+ 66:       setProjects(data);
+ 67:       setLoading(false);
+ 68:     });
+ 69:   }, []);
+ 70:   return (
+ 71:     <MockRootLayout>
+ 72:       <main
+ 73:         role="main"
+ 74:         aria-label="Innhold portefølje"
+ 75:         className="mt-32 bg-graybg"
+ 76:       >
+ 77:         <MockPageHeader>Prosjekter</MockPageHeader>
+ 78:         {loading ? (
+ 79:           <MockRotatingLoader />
+ 80:         ) : (
+ 81:           <div className="container mx-auto">
+ 82:             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 83:               {projects.map((project) => (
+ 84:                 <MockProsjektCard key={project.id} {...project} />
+ 85:               ))}
+ 86:             </div>
+ 87:           </div>
+ 88:         )}
+ 89:       </main>
+ 90:     </MockRootLayout>
+ 91:   );
+ 92: }
+ 93: describe("ProsjekterPage", () => {
+ 94:   beforeEach(() => {
+ 95:     jest.clearAllMocks();
+ 96:   });
+ 97:   it("renders projects from server component", async () => {
+ 98:     // Arrange - Set up test data and conditions
+ 99:     const mockProjects = [
+100:       {
+101:         id: "1",
+102:         name: "Test Project 1",
+103:         description: "Test Description 1",
+104:         subdescription: "Test Subdescription 1",
+105:         projectimage: { asset: { _ref: "test1" } },
+106:         urlwww: [],
+107:         urlgithub: [],
+108:       },
+109:       {
+110:         id: "2",
+111:         name: "Test Project 2",
+112:         description: "Test Description 2",
+113:         subdescription: "Test Subdescription 2",
+114:         projectimage: { asset: { _ref: "test2" } },
+115:         urlwww: [],
+116:         urlgithub: [],
+117:       },
+118:     ];
+119:     mockGetProjects.mockResolvedValue(mockProjects);
+120:     // Act - Perform the action being tested
+121:     render(<TestProsjekterPage />);
+122:     // Assert - Verify the results
+123:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+124:     // Wait for projects to load and render
+125:     const projectCards = await screen.findAllByTestId("project-card");
+126:     expect(projectCards).toHaveLength(2);
+127:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+128:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+129:     // Test that projects are rendered within the main content area
+130:     const main = screen.getByRole("main");
+131:     expect(main).toContainElement(projectCards[0]);
+132:     expect(main).toContainElement(projectCards[1]);
+133:   });
+134:   it("uses Suspense boundary for loading state", async () => {
+135:     // Arrange - Set up test data and conditions
+136:     const delayedPromise = createDelayedPromise([], 100);
+137:     mockGetProjects.mockImplementation(() => delayedPromise);
+138:     // Act - Perform the action being tested
+139:     render(<TestProsjekterPage />);
+140:     // Assert - Verify the results
+141:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+142:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+143:     const main = screen.getByRole("main");
+144:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+145:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+146:     // Wait for loading to complete
+147:     await waitFor(() => {
+148:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+149:     });
+150:   });
+151: });
+````
+
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
 ````typescript
   1: import React from "react";
@@ -16708,6 +16732,182 @@ tsconfig.json
 68: export default ErrorFallback;
 ````
 
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, motion, Variants } from "motion/react";
+  5: import Hamburger from "./Hamburger.component";
+  6: import type { Navigation } from "@/types/sanity.types";
+  7: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  8: /**
+  9:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 10:  * @param {Object} props
+ 11:  * @param {ILink[]} props.links - Array of navigation link objects
+ 12:  * @returns {JSX.Element} The rendered MobileMenu component
+ 13:  */
+ 14: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 15:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 16:   const closeMenu = () => toggleExpanded(0);
+ 17:   const pathname = usePathname();
+ 18:   const menuVariants: Variants = {
+ 19:     closed: {
+ 20:       x: "125%",
+ 21:       transition: {
+ 22:         type: "spring",
+ 23:         stiffness: 60,
+ 24:         damping: 10,
+ 25:         delay: 0.3,
+ 26:       },
+ 27:     },
+ 28:     open: {
+ 29:       x: 0,
+ 30:       transition: {
+ 31:         type: "spring",
+ 32:         stiffness: 60,
+ 33:         damping: 10,
+ 34:       },
+ 35:     },
+ 36:   };
+ 37:   const itemVariants: Variants = {
+ 38:     closed: (i: number) => ({
+ 39:       x: i % 2 === 0 ? "-50%" : "50%",
+ 40:       opacity: 0,
+ 41:       transition: {
+ 42:         type: "spring",
+ 43:         stiffness: 120,
+ 44:         damping: 12,
+ 45:         duration: 0.25,
+ 46:       },
+ 47:     }),
+ 48:     open: (i: number) => ({
+ 49:       x: 0,
+ 50:       opacity: 1,
+ 51:       transition: {
+ 52:         type: "spring",
+ 53:         stiffness: 120,
+ 54:         damping: 12,
+ 55:         delay: i * 0.25,
+ 56:       },
+ 57:     }),
+ 58:   };
+ 59:   return (
+ 60:     <div
+ 61:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 62:       data-testid="mobilemenu"
+ 63:     >
+ 64:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 65:       <AnimatePresence>
+ 66:         {isExpanded && (
+ 67:           <motion.div
+ 68:             id="mobile-menu"
+ 69:             data-testid="mobile-menu"
+ 70:             data-cy="mobile-menu"
+ 71:             aria-hidden={!isExpanded}
+ 72:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <motion.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => (
+ 94:                   <motion.li
+ 95:                     key={title}
+ 96:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+ 97:                     data-cy="mobile-menu-item"
+ 98:                     custom={index}
+ 99:                     variants={itemVariants}
+100:                   >
+101:                     {externalLink ? (
+102:                       <a
+103:                         aria-label={name}
+104:                         href={href}
+105:                         target="_blank"
+106:                         rel="noreferrer"
+107:                         data-testid={`mobil-${name}`}
+108:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+109:                       >
+110:                         {name}
+111:                       </a>
+112:                     ) : (
+113:                       <Link
+114:                         href={href ?? ""}
+115:                         data-testid={`mobil-${name}`}
+116:                         prefetch={true}
+117:                         onClick={closeMenu}
+118:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+119:                           pathname === href ? "text-green-400" : ""
+120:                         }`}
+121:                       >
+122:                         <div className="glitch relative" data-text={name}>
+123:                           {name}
+124:                           <motion.span
+125:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+126:                               pathname === href ? "bg-green-400" : "bg-white"
+127:                             }`}
+128:                             initial={{
+129:                               width: pathname === href ? "100%" : "0%",
+130:                             }}
+131:                             animate={{
+132:                               width: pathname === href ? "100%" : "0%",
+133:                             }}
+134:                             transition={{ duration: 0.3 }}
+135:                           />
+136:                         </div>
+137:                       </Link>
+138:                     )}
+139:                   </motion.li>
+140:                 ))}
+141:               </motion.ul>
+142:             </nav>
+143:           </motion.div>
+144:         )}
+145:       </AnimatePresence>
+146:     </div>
+147:   );
+148: };
+149: export default MobileMenu;
+````
+
+## File: src/e2e/cypress/e2e/layout.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: describe("Layout", () => {
+ 3:   beforeEach(() => {
+ 4:     cy.viewport("iphone-x");
+ 5:     cy.visit("http://localhost:3000");
+ 6:   });
+ 7:   describe("Mobile Menu", () => {
+ 8:     it("should close when clicking a link", () => {
+ 9:       // Open the mobile menu
+10:       cy.get('[data-testid="mobilemenu"]').click();
+11:       // Verify menu is visible
+12:       cy.get('[data-testid="mobile-menu"]').should("be.visible");
+13:       // Click a link in the menu
+14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
+15:       // Menu should not be visible after clicking a link
+16:       cy.get('[data-testid="mobile-menu"]').should("not.exist");
+17:     });
+18:   });
+19: });
+````
+
 ## File: src/e2e/cypress/support/component-index.html
 ````html
  1: <!doctype html>
@@ -17040,6 +17240,46 @@ tsconfig.json
 106: }
 ````
 
+## File: lighthouserc.json
+````json
+ 1: {
+ 2:   "ci": {
+ 3:     "collect": {
+ 4:       "numberOfRuns": 1,
+ 5:       "url": [
+ 6:         "http://localhost:3000/",
+ 7:         "http://localhost:3000/cv",
+ 8:         "http://localhost:3000/prosjekter",
+ 9:         "http://localhost:3000/kontakt"
+10:       ],
+11:       "port": 3000,
+12:       "settings": {
+13:         "onlyCategories": [
+14:           "performance",
+15:           "accessibility",
+16:           "best-practices",
+17:           "seo"
+18:         ],
+19:         "skipAudits": ["uses-http2"]
+20:       }
+21:     },
+22:     "upload": {
+23:       "target": "temporary-public-storage"
+24:     },
+25:     "assert": {
+26:       "assertions": {
+27:         "categories:performance": ["error", { "minScore": 0.6 }],
+28:         "categories:accessibility": ["error", { "minScore": 0.9 }],
+29:         "categories:best-practices": ["error", { "minScore": 0.9 }],
+30:         "categories:seo": ["error", { "minScore": 0.9 }],
+31:         "uses-responsive-images": ["error", { "maxWastedBytes": 102300 }],
+32:         "uses-http2": "off"
+33:       }
+34:     }
+35:   }
+36: }
+````
+
 ## File: postcss.config.mjs
 ````
 1: /** @type {import('postcss-load-config').Config} */
@@ -17160,68 +17400,6 @@ tsconfig.json
 104: export default config;
 ````
 
-## File: src/e2e/cypress/e2e/prosjekter.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: /// <reference types="cypress-axe"/>
- 3: /// <reference types="axe-core"/>
- 4: import { checkAccessibility } from "../support/functions";
- 5: describe("Prosjekter Page", () => {
- 6:   beforeEach(() => {
- 7:     cy.visit("http://localhost:3000/prosjekter");
- 8:   });
- 9:   it("should load the prosjekter page", () => {
-10:     cy.url().should("include", "/prosjekter");
-11:     cy.get("h1").should("contain", "Prosjekter");
-12:   });
-13:   it("should display project cards", () => {
-14:     cy.get('[data-testid="project-card"]').should("have.length.at.least", 1);
-15:   });
-16:   it("should display project name, description, and subdescription", () => {
-17:     cy.get('[data-testid="project-card"]')
-18:       .first()
-19:       .within(() => {
-20:         cy.get("h1").should("have.class", "text-xl").and("not.be.empty");
-21:         cy.get("h2").should("have.class", "text-md").and("not.be.empty");
-22:         cy.get("p").should("have.class", "text-sm").and("not.be.empty");
-23:       });
-24:   });
-25:   it('should have functioning "Besøk" button if urlwww exists', () => {
-26:     cy.get('[data-testid="project-card"]')
-27:       .first()
-28:       .within(() => {
-29:         cy.get("a")
-30:           .contains("Besøk")
-31:           .should("have.attr", "href")
-32:           .and("not.be.empty");
-33:       });
-34:   });
-35:   it('should have functioning "GitHub" button if urlgithub exists', () => {
-36:     cy.get('[data-testid="project-card"]')
-37:       .first()
-38:       .within(() => {
-39:         cy.get("a")
-40:           .contains("GitHub")
-41:           .should("have.attr", "href")
-42:           .and("not.be.empty");
-43:       });
-44:   });
-45:   it('should have the correct URL for "GitHub" button', () => {
-46:     cy.get('[data-testid="project-card"]')
-47:       .first()
-48:       .within(() => {
-49:         cy.get("a")
-50:           .contains("GitHub")
-51:           .should("have.attr", "href")
-52:           .and("match", /^https:\/\/github\.com\/.+$/);
-53:       });
-54:   });
-55:   it("Prosjekter page should not have any a11y issues", () => {
-56:     checkAccessibility(5000);
-57:   });
-58: });
-````
-
 ## File: src/e2e/cypress/support/component.ts
 ````typescript
  1: // ***********************************************************
@@ -17303,184 +17481,6 @@ tsconfig.json
 8: }
 ````
 
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  6: // Define the project type
-  7: interface ProjectType {
-  8:   id: string;
-  9:   name: string;
- 10:   description: string;
- 11:   subdescription: string;
- 12:   projectimage: { asset: { _ref: string } };
- 13:   urlwww: unknown[];
- 14:   urlgithub: unknown[];
- 15: }
- 16: // Mock the actions before importing the page component
- 17: const mockGetProjects = jest.fn();
- 18: const mockPreloadProjects = jest.fn();
- 19: jest.mock("@/app/prosjekter/actions", () => ({
- 20:   getProjects: mockGetProjects,
- 21:   preloadProjects: mockPreloadProjects,
- 22: }));
- 23: // Mock the sanity client
- 24: const mockUrlBuilder = {
- 25:   width: jest.fn().mockReturnThis(),
- 26:   fit: jest.fn().mockReturnThis(),
- 27:   quality: jest.fn().mockReturnThis(),
- 28:   auto: jest.fn().mockReturnThis(),
- 29:   url: jest.fn().mockReturnValue("mock-url"),
- 30: };
- 31: jest.mock("@/lib/sanity/client", () => ({
- 32:   client: {
- 33:     fetch: jest.fn(),
- 34:   },
- 35:   urlFor: jest.fn(() => mockUrlBuilder),
- 36: }));
- 37: // Mock components
- 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 39:   <h1>{children}</h1>
- 40: );
- 41: const MockProsjektCard = (props: { name: string }) => (
- 42:   <div data-testid="project-card">{props.name}</div>
- 43: );
- 44: const MockRotatingLoader = () => (
- 45:   <div data-testid="rotating-loader">Loading...</div>
- 46: );
- 47: const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
- 48:   <div>{children}</div>
- 49: );
- 50: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
- 51: jest.mock(
- 52:   "@/components/Prosjekter/ProsjektCard.component",
- 53:   () => MockProsjektCard,
- 54: );
- 55: jest.mock(
- 56:   "@/components/Animations/RotatingLoader.component",
- 57:   () => MockRotatingLoader,
- 58: );
- 59: jest.mock("@/app/RootLayout", () => MockRootLayout);
- 60: // Create a test component that simulates the page behavior without async server components
- 61: function TestProsjekterPage() {
- 62:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 63:   const [loading, setLoading] = React.useState(true);
- 64:   React.useEffect(() => {
- 65:     mockGetProjects().then((data: ProjectType[]) => {
- 66:       setProjects(data);
- 67:       setLoading(false);
- 68:     });
- 69:   }, []);
- 70:   return (
- 71:     <MockRootLayout>
- 72:       <main
- 73:         role="main"
- 74:         aria-label="Innhold portefølje"
- 75:         className="mt-32 bg-graybg"
- 76:       >
- 77:         <MockPageHeader>Prosjekter</MockPageHeader>
- 78:         {loading ? (
- 79:           <MockRotatingLoader />
- 80:         ) : (
- 81:           <div className="container mx-auto">
- 82:             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 83:               {projects.map((project) => (
- 84:                 <MockProsjektCard key={project.id} {...project} />
- 85:               ))}
- 86:             </div>
- 87:           </div>
- 88:         )}
- 89:       </main>
- 90:     </MockRootLayout>
- 91:   );
- 92: }
- 93: describe("ProsjekterPage", () => {
- 94:   beforeEach(() => {
- 95:     jest.clearAllMocks();
- 96:   });
- 97:   it("renders projects from server component", async () => {
- 98:     // Arrange - Set up test data and conditions
- 99:     const mockProjects = [
-100:       {
-101:         id: "1",
-102:         name: "Test Project 1",
-103:         description: "Test Description 1",
-104:         subdescription: "Test Subdescription 1",
-105:         projectimage: { asset: { _ref: "test1" } },
-106:         urlwww: [],
-107:         urlgithub: [],
-108:       },
-109:       {
-110:         id: "2",
-111:         name: "Test Project 2",
-112:         description: "Test Description 2",
-113:         subdescription: "Test Subdescription 2",
-114:         projectimage: { asset: { _ref: "test2" } },
-115:         urlwww: [],
-116:         urlgithub: [],
-117:       },
-118:     ];
-119:     mockGetProjects.mockResolvedValue(mockProjects);
-120:     // Act - Perform the action being tested
-121:     render(<TestProsjekterPage />);
-122:     // Assert - Verify the results
-123:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-124:     // Wait for projects to load and render
-125:     const projectCards = await screen.findAllByTestId("project-card");
-126:     expect(projectCards).toHaveLength(2);
-127:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-128:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-129:     // Test that projects are rendered within the main content area
-130:     const main = screen.getByRole("main");
-131:     expect(main).toContainElement(projectCards[0]);
-132:     expect(main).toContainElement(projectCards[1]);
-133:   });
-134:   it("uses Suspense boundary for loading state", async () => {
-135:     // Arrange - Set up test data and conditions
-136:     const delayedPromise = createDelayedPromise([], 100);
-137:     mockGetProjects.mockImplementation(() => delayedPromise);
-138:     // Act - Perform the action being tested
-139:     render(<TestProsjekterPage />);
-140:     // Assert - Verify the results
-141:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-142:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-143:     const main = screen.getByRole("main");
-144:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-145:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-146:     // Wait for loading to complete
-147:     await waitFor(() => {
-148:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-149:     });
-150:   });
-151: });
-````
-
-## File: src/e2e/cypress/e2e/layout.cy.ts
-````typescript
- 1: /// <reference types="cypress"/>
- 2: describe("Layout", () => {
- 3:   beforeEach(() => {
- 4:     cy.viewport("iphone-x");
- 5:     cy.visit("http://localhost:3000");
- 6:   });
- 7:   describe("Mobile Menu", () => {
- 8:     it("should close when clicking a link", () => {
- 9:       // Open the mobile menu
-10:       cy.get('[data-testid="mobilemenu"]').click();
-11:       // Verify menu is visible
-12:       cy.get('[data-testid="mobile-menu"]').should("be.visible");
-13:       // Click a link in the menu
-14:       cy.get('[data-testid="mobil-Prosjekter"]').click();
-15:       // Menu should not be visible after clicking a link
-16:       cy.get('[data-testid="mobile-menu"]').should("not.exist");
-17:     });
-18:   });
-19: });
-````
-
 ## File: package.json
 ````json
  1: {
@@ -17521,7 +17521,7 @@ tsconfig.json
 36:     "cookie": ">=1.0.2",
 37:     "envalid": "^8.0.0",
 38:     "jest": "^29.7.0",
-39:     "motion": "^12.17.0",
+39:     "motion": "^12.17.3",
 40:     "next": "15.3.3",
 41:     "next-sanity": "^9.12.0",
 42:     "path-to-regexp": "^8.2.0",
