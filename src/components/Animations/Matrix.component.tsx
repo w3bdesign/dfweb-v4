@@ -27,7 +27,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   fontColor = "#008529",
   glowColor = "#00FF00",
   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
-    ""
+    "",
   ),
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,14 +70,14 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       columnsRef.current = columns;
       maxStackHeightRef.current = maxStackHeight;
     },
-    [tileSize]
+    [tileSize],
   );
 
   const tick = useCallback(
     (
       timestamp: number,
       ctx: CanvasRenderingContext2D,
-      canvas: HTMLCanvasElement
+      canvas: HTMLCanvasElement,
     ) => {
       if (!lastFrameTimeRef.current) {
         lastFrameTimeRef.current = timestamp;
@@ -113,7 +113,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       glowColor,
       tileSet,
       frameInterval,
-    ]
+    ],
   );
 
   useEffect(() => {
