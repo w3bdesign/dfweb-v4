@@ -3144,6 +3144,173 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/Animations/Matrix.renderer.test.tsx
+````typescript
+  1: import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
+  2: import { RGB, Column } from "@/components/Animations/Matrix.utils";
+  3: import "@testing-library/jest-dom";
+  4: describe("Matrix Renderer", () => {
+  5:   let mockCtx: CanvasRenderingContext2D;
+  6:   let mockCanvas: HTMLCanvasElement;
+  7:   let columns: Column[];
+  8:   const rgbBackground: RGB = { r: 0, g: 0, b: 0 };
+  9:   const rgbFont: RGB = { r: 0, g: 255, b: 0 };
+ 10:   const defaultConfig = {
+ 11:     maxStackHeight: 20,
+ 12:     tileSize: 10,
+ 13:     fadeFactor: 0.5,
+ 14:     rgbBackground,
+ 15:     rgbFont,
+ 16:     glowColor: "#00ff00",
+ 17:     tileSet: ["A", "B", "C"],
+ 18:     getRandomInt: (max: number) => 123456789 % max,
+ 19:   };
+ 20:   beforeEach(() => {
+ 21:     mockCtx = {
+ 22:       fillStyle: "",
+ 23:       fillRect: jest.fn(),
+ 24:       fillText: jest.fn(),
+ 25:       font: "",
+ 26:       save: jest.fn(),
+ 27:       restore: jest.fn(),
+ 28:       shadowColor: "",
+ 29:       shadowBlur: 0,
+ 30:     } as unknown as CanvasRenderingContext2D;
+ 31:     mockCanvas = {
+ 32:       width: 100,
+ 33:       height: 100,
+ 34:     } as unknown as HTMLCanvasElement;
+ 35:     columns = [
+ 36:       {
+ 37:         x: 0,
+ 38:         stackHeight: 10,
+ 39:         stackCounter: 5,
+ 40:       },
+ 41:     ];
+ 42:   });
+ 43:   it("creates a renderer with the provided configuration", () => {
+ 44:     // Act
+ 45:     const view = createMatrixRenderer({
+ 46:       ctx: mockCtx,
+ 47:       canvas: mockCanvas,
+ 48:       columns,
+ 49:       ...defaultConfig,
+ 50:     });
+ 51:     // Assert
+ 52:     expect(typeof view.draw).toBe("function");
+ 53:   });
+ 54:   it("draws background with correct settings", () => {
+ 55:     // Arrange
+ 56:     const view = createMatrixRenderer({
+ 57:       ctx: mockCtx,
+ 58:       canvas: mockCanvas,
+ 59:       columns,
+ 60:       ...defaultConfig,
+ 61:     });
+ 62:     const expectedFont = "8px monospace";
+ 63:     // Act
+ 64:     view.draw();
+ 65:     // Assert
+ 66:     // The fillStyle should be set to the font color after drawing is complete
+ 67:     // since that's the last operation
+ 68:     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
+ 69:     expect(mockCtx.font).toBe(expectedFont);
+ 70:     expect(mockCtx.fillStyle).toBe(
+ 71:       `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`,
+ 72:     );
+ 73:   });
+ 74:   it("draws columns with characters", () => {
+ 75:     // Arrange
+ 76:     const view = createMatrixRenderer({
+ 77:       ctx: mockCtx,
+ 78:       canvas: mockCanvas,
+ 79:       columns,
+ 80:       ...defaultConfig,
+ 81:     });
+ 82:     // Act
+ 83:     view.draw();
+ 84:     // Assert
+ 85:     expect(mockCtx.fillText).toHaveBeenCalled();
+ 86:   });
+ 87:   it("applies glow effect when drawing the last character in stack", () => {
+ 88:     // Arrange
+ 89:     columns[0].stackCounter = columns[0].stackHeight - 1;
+ 90:     const view = createMatrixRenderer({
+ 91:       ctx: mockCtx,
+ 92:       canvas: mockCanvas,
+ 93:       columns,
+ 94:       ...defaultConfig,
+ 95:     });
+ 96:     // Act
+ 97:     view.draw();
+ 98:     // Assert
+ 99:     expect(mockCtx.save).toHaveBeenCalled();
+100:     expect(mockCtx.restore).toHaveBeenCalled();
+101:   });
+102:   it("updates column state correctly", () => {
+103:     // Arrange
+104:     const view = createMatrixRenderer({
+105:       ctx: mockCtx,
+106:       canvas: mockCanvas,
+107:       columns,
+108:       ...defaultConfig,
+109:     });
+110:     const originalStackCounter = columns[0].stackCounter;
+111:     // Act
+112:     view.draw();
+113:     // Assert
+114:     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
+115:   });
+116:   it("resets column when reaching stack height", () => {
+117:     // Arrange
+118:     columns[0].stackCounter = columns[0].stackHeight - 1;
+119:     const view = createMatrixRenderer({
+120:       ctx: mockCtx,
+121:       canvas: mockCanvas,
+122:       columns,
+123:       ...defaultConfig,
+124:     });
+125:     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
+126:     // Act
+127:     view.draw();
+128:     // Assert
+129:     expect(columns[0].stackCounter).toBe(0);
+130:     expect(columns[0].stackHeight).toBe(expectedNewStackHeight);
+131:   });
+132:   it("applies glow effect to the last character", () => {
+133:     // Arrange
+134:     columns[0].stackCounter = columns[0].stackHeight - 1;
+135:     const view = createMatrixRenderer({
+136:       ctx: mockCtx,
+137:       canvas: mockCanvas,
+138:       columns,
+139:       ...defaultConfig,
+140:     });
+141:     // Act
+142:     view.draw();
+143:     // Assert
+144:     expect(mockCtx.save).toHaveBeenCalled();
+145:     expect(mockCtx.shadowColor).toBe("#00ff00");
+146:     expect(mockCtx.shadowBlur).toBe(10);
+147:     expect(mockCtx.restore).toHaveBeenCalled();
+148:   });
+149:   it("skips drawing for columns with negative stack counter", () => {
+150:     // Arrange
+151:     columns[0].stackCounter = -1;
+152:     const view = createMatrixRenderer({
+153:       ctx: mockCtx,
+154:       canvas: mockCanvas,
+155:       columns,
+156:       ...defaultConfig,
+157:     });
+158:     // Act
+159:     view.draw();
+160:     // Assert
+161:     expect(mockCtx.fillText).not.toHaveBeenCalled();
+162:   });
+163: });
+````
+
 ## File: src/__tests__/Animations/MatrixCursor.test.tsx
 ````typescript
   1: import React, { useRef } from "react";
@@ -6752,6 +6919,75 @@ tsconfig.json
 37: export default ErrorBoundary;
 ````
 
+## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
+ 3: import Pill from "../../components/UI/Pill.component";
+ 4: interface ErrorFallbackProps {
+ 5:   error: Error;
+ 6:   compact?: boolean;
+ 7: }
+ 8: /**
+ 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
+10:  * It shows a Matrix-themed error message with the option to reload the page.
+11:  *
+12:  * @param {Object} props - The component props
+13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
+14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
+15:  * @returns {JSX.Element} A React component displaying the error message and reload option
+16:  */
+17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+18:   error,
+19:   compact = false,
+20: }) => {
+21:   if (compact) {
+22:     return (
+23:       <div 
+24:         data-testid="error-fallback-container"
+25:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
+26:       >
+27:         <div className="absolute inset-0 opacity-30">
+28:           <ReactMatrixAnimation />
+29:         </div>
+30:         <div className="relative z-10 flex flex-col items-center text-center">
+31:           <h2 className="text-white text-lg mb-2">
+32:             Har du funnet en feil i Matrix?
+33:           </h2>
+34:           <p className="text-white text-sm mb-3">
+35:             {error.message || "En uventet feil har oppstått."}
+36:           </p>
+37:           <button
+38:             onClick={() => window.location.reload()}
+39:             className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
+40:           >
+41:             Returner til Matrix
+42:           </button>
+43:         </div>
+44:       </div>
+45:     );
+46:   }
+47:   return (
+48:     <div data-testid="error-fallback-container" className="absolute w-full h-full">
+49:       <ReactMatrixAnimation />
+50:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+51:         <h1 className="text-white text-5xl m-6">
+52:           Har du funnet en feil i Matrix?
+53:         </h1>
+54:         <p className="text-white text-xl mb-6">
+55:           {error.message || "En uventet feil har oppstått."}
+56:         </p>
+57:         <Pill
+58:           text="Returner til Matrix"
+59:           onClick={() => window.location.reload()}
+60:         />
+61:       </div>
+62:     </div>
+63:   );
+64: };
+65: export default ErrorFallback;
+````
+
 ## File: src/components/ErrorBoundary/ErrorFallbackWrapper.component.tsx
 ````typescript
  1: import React from "react";
@@ -9659,6 +9895,131 @@ tsconfig.json
 51:     </div>
 52:   </div>
 53: );
+````
+
+## File: src/stories/components/Index/MobileBackground.stories.tsx
+````typescript
+  1: import React from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import MobileBackground from "@/components/Index/MobileBackground.component";
+  4: import "@/app/globals.css";
+  5: export default {
+  6:   title: "Index/MobileBackground",
+  7:   component: MobileBackground,
+  8:   parameters: {
+  9:     docs: {
+ 10:       description: {
+ 11:         component:
+ 12:           "Mobile background component that is only visible on mobile screens (md:hidden). In desktop view, this component will not be displayed.",
+ 13:       },
+ 14:     },
+ 15:   },
+ 16: } as Meta;
+ 17: // Default mobile background (note: only visible on mobile screens)
+ 18: export const Default = () => (
+ 19:   <div className="relative h-[32rem] overflow-hidden w-full bg-gray-800 p-4">
+ 20:     <p className="text-white text-center mb-4">
+ 21:       Note: This component has md:hidden class so it&apos;s not visible on
+ 22:       desktop/Ladle. Use the &quot;Visible&quot; story below to see how it looks.
+ 23:     </p>
+ 24:     <MobileBackground />
+ 25:     <div className="relative z-10 flex items-center justify-center h-full">
+ 26:       <p className="text-white p-2 border border-white">Component location</p>
+ 27:     </div>
+ 28:   </div>
+ 29: );
+ 30: // Modified version with the md:hidden class removed to make it visible in Ladle
+ 31: export const Visible = () => (
+ 32:   <div className="relative h-[32rem] overflow-hidden w-full">
+ 33:     <div
+ 34:       className="absolute inset-0 bg-cover bg-center bg-no-repeat pb-4"
+ 35:       style={{
+ 36:         backgroundImage: "url('/images/mobilbg.webp')",
+ 37:         top: "-0.5rem",
+ 38:         marginBottom: "0.5rem",
+ 39:       }}
+ 40:     />
+ 41:     <div className="relative z-10 flex flex-col items-center justify-center h-full p-4">
+ 42:       <div className="bg-black/50 p-4 rounded-lg max-w-md">
+ 43:         <h1 className="text-white text-2xl font-bold text-center mb-2">
+ 44:           Mobile Background
+ 45:         </h1>
+ 46:         <p className="text-white text-md text-center">
+ 47:           This is how the component looks on mobile screens, with the md:hidden
+ 48:           class removed so it&apos;s visible in Ladle.
+ 49:         </p>
+ 50:       </div>
+ 51:     </div>
+ 52:   </div>
+ 53: );
+ 54: // With content overlay
+ 55: export const WithContent = () => (
+ 56:   <div className="relative h-[32rem] overflow-hidden w-full">
+ 57:     <div
+ 58:       className="absolute inset-0 bg-cover bg-center bg-no-repeat pb-4"
+ 59:       style={{
+ 60:         backgroundImage: "url('/images/mobilbg.webp')",
+ 61:         top: "-0.5rem",
+ 62:         marginBottom: "0.5rem",
+ 63:       }}
+ 64:     />
+ 65:     <div className="relative z-10 flex flex-col items-center justify-center h-full p-4">
+ 66:       <div className="bg-black/50 p-6 rounded-lg max-w-md text-center">
+ 67:         <h1 className="text-white text-4xl font-bold mb-4">Welcome</h1>
+ 68:         <p className="text-white text-xl">
+ 69:           This content is displayed over the mobile background. The background
+ 70:           is only visible on mobile devices.
+ 71:         </p>
+ 72:         <button className="mt-6 bg-white text-black px-4 py-2 rounded">
+ 73:           Get Started
+ 74:         </button>
+ 75:       </div>
+ 76:     </div>
+ 77:   </div>
+ 78: );
+ 79: // Dark vs light content comparison
+ 80: export const ContentComparison = () => (
+ 81:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+ 82:     <div className="p-2 border border-gray-500 rounded">
+ 83:       <h2 className="text-center mb-2">Dark Overlay</h2>
+ 84:       <div className="relative h-[16rem] overflow-hidden w-full">
+ 85:         <div
+ 86:           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+ 87:           style={{
+ 88:             backgroundImage: "url('/images/mobilbg.webp')",
+ 89:             top: "-0.5rem",
+ 90:             marginBottom: "0.5rem",
+ 91:           }}
+ 92:         />
+ 93:         <div className="relative z-10 flex flex-col items-center justify-center h-full">
+ 94:           <div className="bg-black/70 p-4 rounded-lg">
+ 95:             <p className="text-white text-center">
+ 96:               Dark overlay for better contrast
+ 97:             </p>
+ 98:           </div>
+ 99:         </div>
+100:       </div>
+101:     </div>
+102:     <div className="p-2 border border-gray-500 rounded">
+103:       <h2 className="text-center mb-2">Light Text</h2>
+104:       <div className="relative h-[16rem] overflow-hidden w-full">
+105:         <div
+106:           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+107:           style={{
+108:             backgroundImage: "url('/images/mobilbg.webp')",
+109:             top: "-0.5rem",
+110:             marginBottom: "0.5rem",
+111:           }}
+112:         />
+113:         <div className="relative z-10 flex flex-col items-center justify-center h-full">
+114:           <p className="text-white text-center font-bold text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+115:             Text with drop shadow
+116:           </p>
+117:         </div>
+118:       </div>
+119:     </div>
+120:   </div>
+121: );
 ````
 
 ## File: src/stories/components/Kontakt/KontaktContent.stories.tsx
@@ -15633,173 +15994,6 @@ tsconfig.json
 62: });
 ````
 
-## File: src/__tests__/Animations/Matrix.renderer.test.tsx
-````typescript
-  1: import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
-  2: import { RGB, Column } from "@/components/Animations/Matrix.utils";
-  3: import "@testing-library/jest-dom";
-  4: describe("Matrix Renderer", () => {
-  5:   let mockCtx: CanvasRenderingContext2D;
-  6:   let mockCanvas: HTMLCanvasElement;
-  7:   let columns: Column[];
-  8:   const rgbBackground: RGB = { r: 0, g: 0, b: 0 };
-  9:   const rgbFont: RGB = { r: 0, g: 255, b: 0 };
- 10:   const defaultConfig = {
- 11:     maxStackHeight: 20,
- 12:     tileSize: 10,
- 13:     fadeFactor: 0.5,
- 14:     rgbBackground,
- 15:     rgbFont,
- 16:     glowColor: "#00ff00",
- 17:     tileSet: ["A", "B", "C"],
- 18:     getRandomInt: (max: number) => 123456789 % max,
- 19:   };
- 20:   beforeEach(() => {
- 21:     mockCtx = {
- 22:       fillStyle: "",
- 23:       fillRect: jest.fn(),
- 24:       fillText: jest.fn(),
- 25:       font: "",
- 26:       save: jest.fn(),
- 27:       restore: jest.fn(),
- 28:       shadowColor: "",
- 29:       shadowBlur: 0,
- 30:     } as unknown as CanvasRenderingContext2D;
- 31:     mockCanvas = {
- 32:       width: 100,
- 33:       height: 100,
- 34:     } as unknown as HTMLCanvasElement;
- 35:     columns = [
- 36:       {
- 37:         x: 0,
- 38:         stackHeight: 10,
- 39:         stackCounter: 5,
- 40:       },
- 41:     ];
- 42:   });
- 43:   it("creates a renderer with the provided configuration", () => {
- 44:     // Act
- 45:     const view = createMatrixRenderer({
- 46:       ctx: mockCtx,
- 47:       canvas: mockCanvas,
- 48:       columns,
- 49:       ...defaultConfig,
- 50:     });
- 51:     // Assert
- 52:     expect(typeof view.draw).toBe("function");
- 53:   });
- 54:   it("draws background with correct settings", () => {
- 55:     // Arrange
- 56:     const view = createMatrixRenderer({
- 57:       ctx: mockCtx,
- 58:       canvas: mockCanvas,
- 59:       columns,
- 60:       ...defaultConfig,
- 61:     });
- 62:     const expectedFont = "8px monospace";
- 63:     // Act
- 64:     view.draw();
- 65:     // Assert
- 66:     // The fillStyle should be set to the font color after drawing is complete
- 67:     // since that's the last operation
- 68:     expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
- 69:     expect(mockCtx.font).toBe(expectedFont);
- 70:     expect(mockCtx.fillStyle).toBe(
- 71:       `rgb(${rgbFont.r}, ${rgbFont.g}, ${rgbFont.b})`,
- 72:     );
- 73:   });
- 74:   it("draws columns with characters", () => {
- 75:     // Arrange
- 76:     const view = createMatrixRenderer({
- 77:       ctx: mockCtx,
- 78:       canvas: mockCanvas,
- 79:       columns,
- 80:       ...defaultConfig,
- 81:     });
- 82:     // Act
- 83:     view.draw();
- 84:     // Assert
- 85:     expect(mockCtx.fillText).toHaveBeenCalled();
- 86:   });
- 87:   it("applies glow effect when drawing the last character in stack", () => {
- 88:     // Arrange
- 89:     columns[0].stackCounter = columns[0].stackHeight - 1;
- 90:     const view = createMatrixRenderer({
- 91:       ctx: mockCtx,
- 92:       canvas: mockCanvas,
- 93:       columns,
- 94:       ...defaultConfig,
- 95:     });
- 96:     // Act
- 97:     view.draw();
- 98:     // Assert
- 99:     expect(mockCtx.save).toHaveBeenCalled();
-100:     expect(mockCtx.restore).toHaveBeenCalled();
-101:   });
-102:   it("updates column state correctly", () => {
-103:     // Arrange
-104:     const view = createMatrixRenderer({
-105:       ctx: mockCtx,
-106:       canvas: mockCanvas,
-107:       columns,
-108:       ...defaultConfig,
-109:     });
-110:     const originalStackCounter = columns[0].stackCounter;
-111:     // Act
-112:     view.draw();
-113:     // Assert
-114:     expect(columns[0].stackCounter).toBe(originalStackCounter + 1);
-115:   });
-116:   it("resets column when reaching stack height", () => {
-117:     // Arrange
-118:     columns[0].stackCounter = columns[0].stackHeight - 1;
-119:     const view = createMatrixRenderer({
-120:       ctx: mockCtx,
-121:       canvas: mockCanvas,
-122:       columns,
-123:       ...defaultConfig,
-124:     });
-125:     const expectedNewStackHeight = 19; // 10 + (123456789 % 20)
-126:     // Act
-127:     view.draw();
-128:     // Assert
-129:     expect(columns[0].stackCounter).toBe(0);
-130:     expect(columns[0].stackHeight).toBe(expectedNewStackHeight);
-131:   });
-132:   it("applies glow effect to the last character", () => {
-133:     // Arrange
-134:     columns[0].stackCounter = columns[0].stackHeight - 1;
-135:     const view = createMatrixRenderer({
-136:       ctx: mockCtx,
-137:       canvas: mockCanvas,
-138:       columns,
-139:       ...defaultConfig,
-140:     });
-141:     // Act
-142:     view.draw();
-143:     // Assert
-144:     expect(mockCtx.save).toHaveBeenCalled();
-145:     expect(mockCtx.shadowColor).toBe("#00ff00");
-146:     expect(mockCtx.shadowBlur).toBe(10);
-147:     expect(mockCtx.restore).toHaveBeenCalled();
-148:   });
-149:   it("skips drawing for columns with negative stack counter", () => {
-150:     // Arrange
-151:     columns[0].stackCounter = -1;
-152:     const view = createMatrixRenderer({
-153:       ctx: mockCtx,
-154:       canvas: mockCanvas,
-155:       columns,
-156:       ...defaultConfig,
-157:     });
-158:     // Act
-159:     view.draw();
-160:     // Assert
-161:     expect(mockCtx.fillText).not.toHaveBeenCalled();
-162:   });
-163: });
-````
-
 ## File: src/__tests__/Animations/Matrix.test.tsx
 ````typescript
   1: import React from "react";
@@ -16258,75 +16452,6 @@ tsconfig.json
 114: });
 ````
 
-## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
- 3: import Pill from "../../components/UI/Pill.component";
- 4: interface ErrorFallbackProps {
- 5:   error: Error;
- 6:   compact?: boolean;
- 7: }
- 8: /**
- 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
-10:  * It shows a Matrix-themed error message with the option to reload the page.
-11:  *
-12:  * @param {Object} props - The component props
-13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
-14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
-15:  * @returns {JSX.Element} A React component displaying the error message and reload option
-16:  */
-17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-18:   error,
-19:   compact = false,
-20: }) => {
-21:   if (compact) {
-22:     return (
-23:       <div 
-24:         data-testid="error-fallback-container"
-25:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
-26:       >
-27:         <div className="absolute inset-0 opacity-30">
-28:           <ReactMatrixAnimation />
-29:         </div>
-30:         <div className="relative z-10 flex flex-col items-center text-center">
-31:           <h2 className="text-white text-lg mb-2">
-32:             Har du funnet en feil i Matrix?
-33:           </h2>
-34:           <p className="text-white text-sm mb-3">
-35:             {error.message || "En uventet feil har oppstått."}
-36:           </p>
-37:           <button
-38:             onClick={() => window.location.reload()}
-39:             className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
-40:           >
-41:             Returner til Matrix
-42:           </button>
-43:         </div>
-44:       </div>
-45:     );
-46:   }
-47:   return (
-48:     <div data-testid="error-fallback-container" className="absolute w-full h-full">
-49:       <ReactMatrixAnimation />
-50:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-51:         <h1 className="text-white text-5xl m-6">
-52:           Har du funnet en feil i Matrix?
-53:         </h1>
-54:         <p className="text-white text-xl mb-6">
-55:           {error.message || "En uventet feil har oppstått."}
-56:         </p>
-57:         <Pill
-58:           text="Returner til Matrix"
-59:           onClick={() => window.location.reload()}
-60:         />
-61:       </div>
-62:     </div>
-63:   );
-64: };
-65: export default ErrorFallback;
-````
-
 ## File: src/components/Index/IndexContent.component.tsx
 ````typescript
  1: "use client";
@@ -16356,131 +16481,6 @@ tsconfig.json
 25:   );
 26: };
 27: export default IndexContent;
-````
-
-## File: src/stories/components/Index/MobileBackground.stories.tsx
-````typescript
-  1: import React from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import MobileBackground from "@/components/Index/MobileBackground.component";
-  4: import "@/app/globals.css";
-  5: export default {
-  6:   title: "Index/MobileBackground",
-  7:   component: MobileBackground,
-  8:   parameters: {
-  9:     docs: {
- 10:       description: {
- 11:         component:
- 12:           "Mobile background component that is only visible on mobile screens (md:hidden). In desktop view, this component will not be displayed.",
- 13:       },
- 14:     },
- 15:   },
- 16: } as Meta;
- 17: // Default mobile background (note: only visible on mobile screens)
- 18: export const Default = () => (
- 19:   <div className="relative h-[32rem] overflow-hidden w-full bg-gray-800 p-4">
- 20:     <p className="text-white text-center mb-4">
- 21:       Note: This component has md:hidden class so it&apos;s not visible on
- 22:       desktop/Ladle. Use the &quot;Visible&quot; story below to see how it looks.
- 23:     </p>
- 24:     <MobileBackground />
- 25:     <div className="relative z-10 flex items-center justify-center h-full">
- 26:       <p className="text-white p-2 border border-white">Component location</p>
- 27:     </div>
- 28:   </div>
- 29: );
- 30: // Modified version with the md:hidden class removed to make it visible in Ladle
- 31: export const Visible = () => (
- 32:   <div className="relative h-[32rem] overflow-hidden w-full">
- 33:     <div
- 34:       className="absolute inset-0 bg-cover bg-center bg-no-repeat pb-4"
- 35:       style={{
- 36:         backgroundImage: "url('/images/mobilbg.webp')",
- 37:         top: "-0.5rem",
- 38:         marginBottom: "0.5rem",
- 39:       }}
- 40:     />
- 41:     <div className="relative z-10 flex flex-col items-center justify-center h-full p-4">
- 42:       <div className="bg-black/50 p-4 rounded-lg max-w-md">
- 43:         <h1 className="text-white text-2xl font-bold text-center mb-2">
- 44:           Mobile Background
- 45:         </h1>
- 46:         <p className="text-white text-md text-center">
- 47:           This is how the component looks on mobile screens, with the md:hidden
- 48:           class removed so it&apos;s visible in Ladle.
- 49:         </p>
- 50:       </div>
- 51:     </div>
- 52:   </div>
- 53: );
- 54: // With content overlay
- 55: export const WithContent = () => (
- 56:   <div className="relative h-[32rem] overflow-hidden w-full">
- 57:     <div
- 58:       className="absolute inset-0 bg-cover bg-center bg-no-repeat pb-4"
- 59:       style={{
- 60:         backgroundImage: "url('/images/mobilbg.webp')",
- 61:         top: "-0.5rem",
- 62:         marginBottom: "0.5rem",
- 63:       }}
- 64:     />
- 65:     <div className="relative z-10 flex flex-col items-center justify-center h-full p-4">
- 66:       <div className="bg-black/50 p-6 rounded-lg max-w-md text-center">
- 67:         <h1 className="text-white text-4xl font-bold mb-4">Welcome</h1>
- 68:         <p className="text-white text-xl">
- 69:           This content is displayed over the mobile background. The background
- 70:           is only visible on mobile devices.
- 71:         </p>
- 72:         <button className="mt-6 bg-white text-black px-4 py-2 rounded">
- 73:           Get Started
- 74:         </button>
- 75:       </div>
- 76:     </div>
- 77:   </div>
- 78: );
- 79: // Dark vs light content comparison
- 80: export const ContentComparison = () => (
- 81:   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- 82:     <div className="p-2 border border-gray-500 rounded">
- 83:       <h2 className="text-center mb-2">Dark Overlay</h2>
- 84:       <div className="relative h-[16rem] overflow-hidden w-full">
- 85:         <div
- 86:           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
- 87:           style={{
- 88:             backgroundImage: "url('/images/mobilbg.webp')",
- 89:             top: "-0.5rem",
- 90:             marginBottom: "0.5rem",
- 91:           }}
- 92:         />
- 93:         <div className="relative z-10 flex flex-col items-center justify-center h-full">
- 94:           <div className="bg-black/70 p-4 rounded-lg">
- 95:             <p className="text-white text-center">
- 96:               Dark overlay for better contrast
- 97:             </p>
- 98:           </div>
- 99:         </div>
-100:       </div>
-101:     </div>
-102:     <div className="p-2 border border-gray-500 rounded">
-103:       <h2 className="text-center mb-2">Light Text</h2>
-104:       <div className="relative h-[16rem] overflow-hidden w-full">
-105:         <div
-106:           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-107:           style={{
-108:             backgroundImage: "url('/images/mobilbg.webp')",
-109:             top: "-0.5rem",
-110:             marginBottom: "0.5rem",
-111:           }}
-112:         />
-113:         <div className="relative z-10 flex flex-col items-center justify-center h-full">
-114:           <p className="text-white text-center font-bold text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-115:             Text with drop shadow
-116:           </p>
-117:         </div>
-118:       </div>
-119:     </div>
-120:   </div>
-121: );
 ````
 
 ## File: src/stories/components/Kontakt/KontaktWithMocks.tsx
@@ -17483,7 +17483,7 @@ tsconfig.json
 83:     "eslint-plugin-testing-library": "^7.1.1",
 84:     "expect": "^29.7.0",
 85:     "jest-environment-jsdom": "^29.7.0",
-86:     "jest-extended": "^4.0.2",
+86:     "jest-extended": "^6.0.0",
 87:     "jsdom-testing-mocks": "^1.13.1",
 88:     "postcss": "^8.5.5",
 89:     "prettier": "3.5.3",
