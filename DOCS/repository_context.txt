@@ -2847,6 +2847,115 @@ tsconfig.json
 37: ]
 ````
 
+## File: src/__mocks__/motion.ts
+````typescript
+ 1: import React, { ReactNode, ComponentType } from "react";
+ 2: /**
+ 3:  * This mocks the 'motion/react' module for Ladle stories
+ 4:  */
+ 5: // Define types for the motion component props
+ 6: type MotionProps = {
+ 7:   children?: ReactNode;
+ 8:   className?: string;
+ 9:   animate?: string | Record<string, unknown>;
+10:   initial?: string | Record<string, unknown>;
+11:   variants?: Record<string, unknown>;
+12:   whileInView?: string | Record<string, unknown>;
+13:   viewport?: Record<string, unknown>;
+14:   [key: string]: unknown;
+15: };
+16: const createMotionComponent = (
+17:   component = "div",
+18: ): ComponentType<MotionProps> => {
+19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
+20:     // Extract the className from variants if present
+21:     const {
+22:       className = "",
+23:       animate,
+24:       whileInView,
+25:       initial,
+26:       ...rest
+27:     } = props;
+28:     // Add a class to indicate this is a mocked motion component
+29:     const combinedClassName = `${className} mock-motion-component`;
+30:     return React.createElement(
+31:       component,
+32:       {
+33:         ...rest,
+34:         className: combinedClassName,
+35:         "data-mock-motion": true,
+36:         "data-mock-initial": initial,
+37:         "data-mock-animate": animate,
+38:         "data-mock-while-in-view": whileInView,
+39:       },
+40:       children,
+41:     );
+42:   };
+43:   return MotionComponent;
+44: };
+45: // Export the mock components
+46: export const motion = {
+47:   div: createMotionComponent("div"),
+48:   span: createMotionComponent("span"),
+49:   ul: createMotionComponent("ul"),
+50:   li: createMotionComponent("li"),
+51:   p: createMotionComponent("p"),
+52:   section: createMotionComponent("section"),
+53:   nav: createMotionComponent("nav"),
+54:   header: createMotionComponent("header"),
+55:   footer: createMotionComponent("footer"),
+56:   button: createMotionComponent("button"),
+57:   a: createMotionComponent("a"),
+58: };
+59: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
+60:   children,
+61: }) => {
+62:   return React.createElement(React.Fragment, null, children);
+63: };
+64: // Basic animations for use in stories
+65: export const useAnimation = () => ({
+66:   start: () => Promise.resolve(),
+67:   stop: () => Promise.resolve(),
+68:   set: () => {},
+69: });
+70: // Mock variants for animations
+71: export type Variants = Record<string, Record<string, unknown>>;
+72: const motionMock = { motion, AnimatePresence, useAnimation };
+73: export default motionMock;
+````
+
+## File: src/__mocks__/next-navigation.ts
+````typescript
+ 1: /**
+ 2:  * Mock for next/navigation module for use in Ladle stories
+ 3:  */
+ 4: let currentPathname = "/";
+ 5: export const usePathname = () => currentPathname;
+ 6: // Helper function to change the mock pathname for stories
+ 7: export const setMockPathname = (path: string) => {
+ 8:   currentPathname = path;
+ 9:   return currentPathname;
+10: };
+11: export const useRouter = () => ({
+12:   push: (path: string) => {
+13:     currentPathname = path;
+14:   },
+15:   back: () => {},
+16:   forward: () => {},
+17: });
+18: export const useSearchParams = () => {
+19:   return {
+20:     get: () => null,
+21:     getAll: () => [],
+22:     has: () => false,
+23:     forEach: () => {},
+24:     entries: () => [],
+25:     keys: () => [],
+26:     values: () => [],
+27:   };
+28: };
+````
+
 ## File: src/__mocks__/next-sanity.ts
 ````typescript
 1: export const defineQuery = (query: string) => query;
@@ -4087,6 +4196,58 @@ tsconfig.json
 110:     expect(window.location.reload).toHaveBeenCalledTimes(1);
 111:   });
 112: });
+````
+
+## File: src/__tests__/Index/fixtures/hero.json
+````json
+ 1: {
+ 2:   "content": [
+ 3:     { "_key": "123", "_type": "herocontent", "text": "Hei!" },
+ 4:     {
+ 5:       "_key": "456",
+ 6:       "_type": "herocontent",
+ 7:       "text": "Jeg heter Daniel Fjeldstad og er en webutvikler."
+ 8:     },
+ 9:     {
+10:       "_key": "678",
+11:       "_type": "herocontent",
+12:       "text": "Jeg kan PHP, Wordpress, Javascript, Typescript, React, Vue, Docker, Photoshop og mye mer."
+13:     }
+14:   ]
+15: }
+````
+
+## File: src/__tests__/Index/Hero.test.tsx
+````typescript
+ 1: /**
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import { render, screen } from "@testing-library/react";
+ 5: import "@testing-library/jest-dom";
+ 6: import Hero from "@/components/Index/Hero.component";
+ 7: import type { Herocontent } from "@/types/sanity.types";
+ 8: import heromock from "./fixtures/hero.json";
+ 9: describe("Hero", () => {
+10:   it("Hero loads and displays content from mock", () => {
+11:     // Arrange
+12:     const mockContent = heromock.content as ({ _key: string } & Herocontent)[];
+13:     // Act
+14:     render(<Hero content={mockContent} />);
+15:     const hero = screen.getByText(/hei!/i);
+16:     // Assert
+17:     expect(hero).toBeInTheDocument();
+18:   });
+19:   it("renders default text when content array is empty", () => {
+20:     // Arrange
+21:     const emptyContent: ({ _key: string } & Herocontent)[] = [];
+22:     const expectedText = "Hei!";
+23:     // Act
+24:     render(<Hero content={emptyContent} />);
+25:     const hero = screen.getByText(expectedText);
+26:     // Assert
+27:     expect(hero).toBeInTheDocument();
+28:   });
+29: });
 ````
 
 ## File: src/__tests__/Index/Icons.test.tsx
@@ -15894,115 +16055,6 @@ tsconfig.json
 35: }
 ````
 
-## File: src/__mocks__/motion.ts
-````typescript
- 1: import React, { ReactNode, ComponentType } from "react";
- 2: /**
- 3:  * This mocks the 'motion/react' module for Ladle stories
- 4:  */
- 5: // Define types for the motion component props
- 6: type MotionProps = {
- 7:   children?: ReactNode;
- 8:   className?: string;
- 9:   animate?: string | Record<string, unknown>;
-10:   initial?: string | Record<string, unknown>;
-11:   variants?: Record<string, unknown>;
-12:   whileInView?: string | Record<string, unknown>;
-13:   viewport?: Record<string, unknown>;
-14:   [key: string]: unknown;
-15: };
-16: const createMotionComponent = (
-17:   component = "div",
-18: ): ComponentType<MotionProps> => {
-19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
-20:     // Extract the className from variants if present
-21:     const {
-22:       className = "",
-23:       animate,
-24:       whileInView,
-25:       initial,
-26:       ...rest
-27:     } = props;
-28:     // Add a class to indicate this is a mocked motion component
-29:     const combinedClassName = `${className} mock-motion-component`;
-30:     return React.createElement(
-31:       component,
-32:       {
-33:         ...rest,
-34:         className: combinedClassName,
-35:         "data-mock-motion": true,
-36:         "data-mock-initial": initial,
-37:         "data-mock-animate": animate,
-38:         "data-mock-while-in-view": whileInView,
-39:       },
-40:       children,
-41:     );
-42:   };
-43:   return MotionComponent;
-44: };
-45: // Export the mock components
-46: export const motion = {
-47:   div: createMotionComponent("div"),
-48:   span: createMotionComponent("span"),
-49:   ul: createMotionComponent("ul"),
-50:   li: createMotionComponent("li"),
-51:   p: createMotionComponent("p"),
-52:   section: createMotionComponent("section"),
-53:   nav: createMotionComponent("nav"),
-54:   header: createMotionComponent("header"),
-55:   footer: createMotionComponent("footer"),
-56:   button: createMotionComponent("button"),
-57:   a: createMotionComponent("a"),
-58: };
-59: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
-60:   children,
-61: }) => {
-62:   return React.createElement(React.Fragment, null, children);
-63: };
-64: // Basic animations for use in stories
-65: export const useAnimation = () => ({
-66:   start: () => Promise.resolve(),
-67:   stop: () => Promise.resolve(),
-68:   set: () => {},
-69: });
-70: // Mock variants for animations
-71: export type Variants = Record<string, Record<string, unknown>>;
-72: const motionMock = { motion, AnimatePresence, useAnimation };
-73: export default motionMock;
-````
-
-## File: src/__mocks__/next-navigation.ts
-````typescript
- 1: /**
- 2:  * Mock for next/navigation module for use in Ladle stories
- 3:  */
- 4: let currentPathname = "/";
- 5: export const usePathname = () => currentPathname;
- 6: // Helper function to change the mock pathname for stories
- 7: export const setMockPathname = (path: string) => {
- 8:   currentPathname = path;
- 9:   return currentPathname;
-10: };
-11: export const useRouter = () => ({
-12:   push: (path: string) => {
-13:     currentPathname = path;
-14:   },
-15:   back: () => {},
-16:   forward: () => {},
-17: });
-18: export const useSearchParams = () => {
-19:   return {
-20:     get: () => null,
-21:     getAll: () => [],
-22:     has: () => false,
-23:     forEach: () => {},
-24:     entries: () => [],
-25:     keys: () => [],
-26:     values: () => [],
-27:   };
-28: };
-````
-
 ## File: src/__tests__/Animations/BounceInScroll.test.tsx
 ````typescript
   1: import { render, screen } from "@testing-library/react";
@@ -16360,58 +16412,6 @@ tsconfig.json
 53: testAnimationComponent(FadeDown, "fadedown", "translateY");
 54: testAnimationComponent(FadeUp, "fadeup", "translateY");
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
-````
-
-## File: src/__tests__/Index/fixtures/hero.json
-````json
- 1: {
- 2:   "content": [
- 3:     { "_key": "123", "_type": "herocontent", "text": "Hei!" },
- 4:     {
- 5:       "_key": "456",
- 6:       "_type": "herocontent",
- 7:       "text": "Jeg heter Daniel Fjeldstad og er en webutvikler."
- 8:     },
- 9:     {
-10:       "_key": "678",
-11:       "_type": "herocontent",
-12:       "text": "Jeg kan PHP, Wordpress, Javascript, Typescript, React, Vue, Docker, Photoshop og mye mer."
-13:     }
-14:   ]
-15: }
-````
-
-## File: src/__tests__/Index/Hero.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import { render, screen } from "@testing-library/react";
- 5: import "@testing-library/jest-dom";
- 6: import Hero from "@/components/Index/Hero.component";
- 7: import type { Herocontent } from "@/types/sanity.types";
- 8: import heromock from "./fixtures/hero.json";
- 9: describe("Hero", () => {
-10:   it("Hero loads and displays content from mock", () => {
-11:     // Arrange
-12:     const mockContent = heromock.content as ({ _key: string } & Herocontent)[];
-13:     // Act
-14:     render(<Hero content={mockContent} />);
-15:     const hero = screen.getByText(/hei!/i);
-16:     // Assert
-17:     expect(hero).toBeInTheDocument();
-18:   });
-19:   it("renders default text when content array is empty", () => {
-20:     // Arrange
-21:     const emptyContent: ({ _key: string } & Herocontent)[] = [];
-22:     const expectedText = "Hei!";
-23:     // Act
-24:     render(<Hero content={emptyContent} />);
-25:     const hero = screen.getByText(expectedText);
-26:     // Assert
-27:     expect(hero).toBeInTheDocument();
-28:   });
-29: });
 ````
 
 ## File: src/__tests__/Layout/Header.test.tsx
@@ -17452,7 +17452,7 @@ tsconfig.json
 52:     "tar-fs": ">=3.0.9"
 53:   },
 54:   "devDependencies": {
-55:     "@tailwindcss/postcss": "^4.1.8",
+55:     "@tailwindcss/postcss": "^4.1.10",
 56:     "@jest/expect": "^29.7.0",
 57:     "@jest/globals": "^29.7.0",
 58:     "@ladle/react": "^5.0.3",
@@ -17487,7 +17487,7 @@ tsconfig.json
 87:     "jsdom-testing-mocks": "^1.13.1",
 88:     "postcss": "^8.5.5",
 89:     "prettier": "3.5.3",
-90:     "tailwindcss": "^4.1.8",
+90:     "tailwindcss": "^4.1.10",
 91:     "ts-jest": "^29.3.4",
 92:     "typescript": "^5.8.3",
 93:     "wait-on": "^8.0.3"
