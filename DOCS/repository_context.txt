@@ -3311,6 +3311,116 @@ tsconfig.json
 163: });
 ````
 
+## File: src/__tests__/Animations/Matrix.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+  5: const mockFillRect = jest.fn();
+  6: const mockFillText = jest.fn();
+  7: const mock2DContext = {
+  8:   fillRect: mockFillRect,
+  9:   fillText: mockFillText,
+ 10:   canvas: document.createElement("canvas"),
+ 11:   getContextAttributes: () => ({}),
+ 12:   globalAlpha: 1,
+ 13:   globalCompositeOperation: "source-over",
+ 14:   save: jest.fn(),
+ 15:   restore: jest.fn(),
+ 16:   font: "",
+ 17:   fillStyle: "",
+ 18:   shadowColor: "",
+ 19:   shadowBlur: 0,
+ 20: } as unknown as CanvasRenderingContext2D;
+ 21: const mockBitmapContext = {
+ 22:   canvas: document.createElement("canvas"),
+ 23:   transferFromImageBitmap: jest.fn(),
+ 24: } as unknown as ImageBitmapRenderingContext;
+ 25: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
+ 26:   switch (contextId) {
+ 27:     case "2d":
+ 28:       return mock2DContext;
+ 29:     case "bitmaprenderer":
+ 30:       return mockBitmapContext;
+ 31:     case "webgl":
+ 32:     case "webgl2":
+ 33:       return null;
+ 34:     default:
+ 35:       return null;
+ 36:   }
+ 37: } as typeof HTMLCanvasElement.prototype.getContext;
+ 38: jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb) => setTimeout(cb, 0));
+ 39: describe("ReactMatrixAnimation", () => {
+ 40:   beforeEach(() => {
+ 41:     jest.useFakeTimers();
+ 42:     jest
+ 43:       .spyOn(window, "requestAnimationFrame")
+ 44:       .mockImplementation((cb) => setTimeout(cb, 0));
+ 45:   });
+ 46:   afterEach(() => {
+ 47:     jest.useRealTimers();
+ 48:     jest.restoreAllMocks();
+ 49:   });
+ 50:   describe("rendering", () => {
+ 51:     it("renders canvas element with default props", () => {
+ 52:       // Arrange
+ 53:       const expectedTestId = "matrix-canvas";
+ 54:       // Act
+ 55:       render(<ReactMatrixAnimation />);
+ 56:       const canvas = screen.getByTestId(expectedTestId);
+ 57:       // Assert
+ 58:       expect(canvas).toBeInTheDocument();
+ 59:       expect(canvas).toHaveStyle({
+ 60:         width: "100%",
+ 61:         height: "100%",
+ 62:       });
+ 63:     });
+ 64:     it("renders canvas element with custom props", () => {
+ 65:       // Arrange
+ 66:       const customProps = {
+ 67:         tileSize: 30,
+ 68:         fadeFactor: 0.7,
+ 69:         backgroundColor: "#000000",
+ 70:         fontColor: "#ffffff",
+ 71:         tileSet: ["A", "B", "C"],
+ 72:       };
+ 73:       const expectedTestId = "matrix-canvas";
+ 74:       // Act
+ 75:       render(<ReactMatrixAnimation {...customProps} />);
+ 76:       const canvas = screen.getByTestId(expectedTestId);
+ 77:       // Assert
+ 78:       expect(canvas).toBeInTheDocument();
+ 79:     });
+ 80:   });
+ 81:   describe("validation", () => {
+ 82:     beforeEach(() => {
+ 83:       // Arrange - Suppress console.error for validation tests
+ 84:       jest.spyOn(console, 'error').mockImplementation(() => {});
+ 85:     });
+ 86:     it("throws error for invalid background color", () => {
+ 87:       // Arrange
+ 88:       const invalidProps = { backgroundColor: "invalid" };
+ 89:       const expectedError =
+ 90:         "Invalid background color. Use a hex value e.g. #030303";
+ 91:       // Act & Assert
+ 92:       expect(() => {
+ 93:         render(<ReactMatrixAnimation {...invalidProps} />);
+ 94:       }).toThrow(expectedError);
+ 95:     });
+ 96:     it("throws error for invalid font color", () => {
+ 97:       // Arrange
+ 98:       const invalidProps = { fontColor: "invalid" };
+ 99:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
+100:       // Act & Assert
+101:       expect(() => {
+102:         render(<ReactMatrixAnimation {...invalidProps} />);
+103:       }).toThrow(expectedError);
+104:     });
+105:   });
+106: });
+````
+
 ## File: src/__tests__/Animations/MatrixCursor.test.tsx
 ````typescript
   1: import React, { useRef } from "react";
@@ -10022,6 +10132,86 @@ tsconfig.json
 121: );
 ````
 
+## File: src/stories/components/Index/Section.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import Section from "@/components/Index/Section.component";
+ 4: // This is Ladle, not Jest, so mocking with __mocks__ is OK
+ 5: // eslint-disable-next-line jest/no-mocks-import
+ 6: import pagecontent from "@/__mocks__/pagecontent.json";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: import "@/app/globals.css";
+ 9: export default {
+10:   title: "Index/Section",
+11:   component: Section,
+12: } as Meta;
+13: const mockPortableText = pagecontent[0].content[0].text as Pagecontent["text"];
+14: const longContent = pagecontent[0].content[1].text as Pagecontent["text"];
+15: // Default section
+16: export const Default = () => (
+17:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+18: );
+19: // Section with alternate styling
+20: export const Alternate = () => (
+21:   <div className="bg-[#121c30] p-4">
+22:     <Section
+23:       _type="pagecontent"
+24:       title="My Projects"
+25:       text={mockPortableText}
+26:       variant="alternate"
+27:     />
+28:   </div>
+29: );
+30: // Section with longer content
+31: export const LongContent = () => (
+32:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
+33: );
+34: // Multiple sections together
+35: export const MultipleSections = () => (
+36:   <div>
+37:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
+38:     <div className="bg-[#121c30]">
+39:       <Section
+40:         _type="pagecontent"
+41:         title="My Skills"
+42:         text={longContent}
+43:         variant="alternate"
+44:       />
+45:     </div>
+46:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
+47:   </div>
+48: );
+49: // Section in a narrower container
+50: export const NarrowContainer = () => (
+51:   <div className="max-w-xl mx-auto border border-gray-700">
+52:     <Section
+53:       _type="pagecontent"
+54:       title="Narrow Section"
+55:       text={mockPortableText}
+56:     />
+57:   </div>
+58: );
+59: // Section with debug button hidden
+60: export const DebugButtonHidden = () => (
+61:   <Section
+62:     _type="pagecontent"
+63:     title="No Debug Button"
+64:     text={mockPortableText}
+65:     showDebugButton={false}
+66:   />
+67: );
+68: // Section with debug button explicitly shown (default behavior)
+69: export const DebugButtonVisible = () => (
+70:   <Section
+71:     _type="pagecontent"
+72:     title="Debug Button Visible"
+73:     text={mockPortableText}
+74:     showDebugButton={true}
+75:   />
+76: );
+````
+
 ## File: src/stories/components/Kontakt/KontaktContent.stories.tsx
 ````typescript
  1: import React from "react";
@@ -15994,116 +16184,6 @@ tsconfig.json
 62: });
 ````
 
-## File: src/__tests__/Animations/Matrix.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
-  5: const mockFillRect = jest.fn();
-  6: const mockFillText = jest.fn();
-  7: const mock2DContext = {
-  8:   fillRect: mockFillRect,
-  9:   fillText: mockFillText,
- 10:   canvas: document.createElement("canvas"),
- 11:   getContextAttributes: () => ({}),
- 12:   globalAlpha: 1,
- 13:   globalCompositeOperation: "source-over",
- 14:   save: jest.fn(),
- 15:   restore: jest.fn(),
- 16:   font: "",
- 17:   fillStyle: "",
- 18:   shadowColor: "",
- 19:   shadowBlur: 0,
- 20: } as unknown as CanvasRenderingContext2D;
- 21: const mockBitmapContext = {
- 22:   canvas: document.createElement("canvas"),
- 23:   transferFromImageBitmap: jest.fn(),
- 24: } as unknown as ImageBitmapRenderingContext;
- 25: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
- 26:   switch (contextId) {
- 27:     case "2d":
- 28:       return mock2DContext;
- 29:     case "bitmaprenderer":
- 30:       return mockBitmapContext;
- 31:     case "webgl":
- 32:     case "webgl2":
- 33:       return null;
- 34:     default:
- 35:       return null;
- 36:   }
- 37: } as typeof HTMLCanvasElement.prototype.getContext;
- 38: jest.spyOn(global, 'requestAnimationFrame').mockImplementation((cb) => setTimeout(cb, 0));
- 39: describe("ReactMatrixAnimation", () => {
- 40:   beforeEach(() => {
- 41:     jest.useFakeTimers();
- 42:     jest
- 43:       .spyOn(window, "requestAnimationFrame")
- 44:       .mockImplementation((cb) => setTimeout(cb, 0));
- 45:   });
- 46:   afterEach(() => {
- 47:     jest.useRealTimers();
- 48:     jest.restoreAllMocks();
- 49:   });
- 50:   describe("rendering", () => {
- 51:     it("renders canvas element with default props", () => {
- 52:       // Arrange
- 53:       const expectedTestId = "matrix-canvas";
- 54:       // Act
- 55:       render(<ReactMatrixAnimation />);
- 56:       const canvas = screen.getByTestId(expectedTestId);
- 57:       // Assert
- 58:       expect(canvas).toBeInTheDocument();
- 59:       expect(canvas).toHaveStyle({
- 60:         width: "100%",
- 61:         height: "100%",
- 62:       });
- 63:     });
- 64:     it("renders canvas element with custom props", () => {
- 65:       // Arrange
- 66:       const customProps = {
- 67:         tileSize: 30,
- 68:         fadeFactor: 0.7,
- 69:         backgroundColor: "#000000",
- 70:         fontColor: "#ffffff",
- 71:         tileSet: ["A", "B", "C"],
- 72:       };
- 73:       const expectedTestId = "matrix-canvas";
- 74:       // Act
- 75:       render(<ReactMatrixAnimation {...customProps} />);
- 76:       const canvas = screen.getByTestId(expectedTestId);
- 77:       // Assert
- 78:       expect(canvas).toBeInTheDocument();
- 79:     });
- 80:   });
- 81:   describe("validation", () => {
- 82:     beforeEach(() => {
- 83:       // Arrange - Suppress console.error for validation tests
- 84:       jest.spyOn(console, 'error').mockImplementation(() => {});
- 85:     });
- 86:     it("throws error for invalid background color", () => {
- 87:       // Arrange
- 88:       const invalidProps = { backgroundColor: "invalid" };
- 89:       const expectedError =
- 90:         "Invalid background color. Use a hex value e.g. #030303";
- 91:       // Act & Assert
- 92:       expect(() => {
- 93:         render(<ReactMatrixAnimation {...invalidProps} />);
- 94:       }).toThrow(expectedError);
- 95:     });
- 96:     it("throws error for invalid font color", () => {
- 97:       // Arrange
- 98:       const invalidProps = { fontColor: "invalid" };
- 99:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
-100:       // Act & Assert
-101:       expect(() => {
-102:         render(<ReactMatrixAnimation {...invalidProps} />);
-103:       }).toThrow(expectedError);
-104:     });
-105:   });
-106: });
-````
-
 ## File: src/__tests__/Animations/Matrix.utils.test.ts
 ````typescript
   1: import {
@@ -16989,86 +17069,6 @@ tsconfig.json
 219: );
 ````
 
-## File: src/stories/components/Index/Section.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import Section from "@/components/Index/Section.component";
- 4: // This is Ladle, not Jest, so mocking with __mocks__ is OK
- 5: // eslint-disable-next-line jest/no-mocks-import
- 6: import pagecontent from "@/__mocks__/pagecontent.json";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: import "@/app/globals.css";
- 9: export default {
-10:   title: "Index/Section",
-11:   component: Section,
-12: } as Meta;
-13: const mockPortableText = pagecontent[0].content[0].text as Pagecontent["text"];
-14: const longContent = pagecontent[0].content[1].text as Pagecontent["text"];
-15: // Default section
-16: export const Default = () => (
-17:   <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-18: );
-19: // Section with alternate styling
-20: export const Alternate = () => (
-21:   <div className="bg-[#121c30] p-4">
-22:     <Section
-23:       _type="pagecontent"
-24:       title="My Projects"
-25:       text={mockPortableText}
-26:       variant="alternate"
-27:     />
-28:   </div>
-29: );
-30: // Section with longer content
-31: export const LongContent = () => (
-32:   <Section _type="pagecontent" title="Skills & Experience" text={longContent} />
-33: );
-34: // Multiple sections together
-35: export const MultipleSections = () => (
-36:   <div>
-37:     <Section _type="pagecontent" title="About Me" text={mockPortableText} />
-38:     <div className="bg-[#121c30]">
-39:       <Section
-40:         _type="pagecontent"
-41:         title="My Skills"
-42:         text={longContent}
-43:         variant="alternate"
-44:       />
-45:     </div>
-46:     <Section _type="pagecontent" title="Contact" text={mockPortableText} />
-47:   </div>
-48: );
-49: // Section in a narrower container
-50: export const NarrowContainer = () => (
-51:   <div className="max-w-xl mx-auto border border-gray-700">
-52:     <Section
-53:       _type="pagecontent"
-54:       title="Narrow Section"
-55:       text={mockPortableText}
-56:     />
-57:   </div>
-58: );
-59: // Section with debug button hidden
-60: export const DebugButtonHidden = () => (
-61:   <Section
-62:     _type="pagecontent"
-63:     title="No Debug Button"
-64:     text={mockPortableText}
-65:     showDebugButton={false}
-66:   />
-67: );
-68: // Section with debug button explicitly shown (default behavior)
-69: export const DebugButtonVisible = () => (
-70:   <Section
-71:     _type="pagecontent"
-72:     title="Debug Button Visible"
-73:     text={mockPortableText}
-74:     showDebugButton={true}
-75:   />
-76: );
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -17436,7 +17436,7 @@ tsconfig.json
 36:     "envalid": "^8.0.0",
 37:     "jest": "^29.7.0",
 38:     "motion": "^12.17.0",
-39:     "next": "15.3.0",
+39:     "next": "15.3.3",
 40:     "next-sanity": "^9.12.0",
 41:     "path-to-regexp": "^8.2.0",
 42:     "react": "^19.1.0",
