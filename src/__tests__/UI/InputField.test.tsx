@@ -109,7 +109,9 @@ describe("InputField", () => {
 
       // Assert
       expect(options.pattern).toBeDefined();
-      expect((options.pattern as { value: RegExp }).value).toStrictEqual(pattern);
+      expect((options.pattern as { value: RegExp }).value).toStrictEqual(
+        pattern,
+      );
     });
   });
 });

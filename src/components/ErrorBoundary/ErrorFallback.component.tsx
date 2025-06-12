@@ -23,7 +23,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
 }) => {
   if (compact) {
     return (
-      <div 
+      <div
         data-testid="error-fallback-container"
         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
       >
@@ -49,7 +49,10 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
   }
 
   return (
-    <div data-testid="error-fallback-container" className="absolute w-full h-full">
+    <div
+      data-testid="error-fallback-container"
+      className="absolute w-full h-full"
+    >
       <ReactMatrixAnimation />
       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
         <h1 className="text-white text-5xl m-6">

@@ -43,12 +43,12 @@ describe("SkipLink", () => {
 
       // Act
       render(<SkipLink />);
-      
+
       // Assert - Check that the skip link has the expected accessibility structure
       const skipLink = screen.getByRole("link", { name: expectedProps.text });
       expect(skipLink).toBeInTheDocument();
       expect(skipLink).toHaveAttribute("href", expectedProps.href);
-      
+
       // Verify the component renders without errors (implicit test of CSS classes)
       expect(screen.getByText(expectedProps.text)).toBeInTheDocument();
     });

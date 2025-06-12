@@ -21,13 +21,7 @@ const createMotionComponent = (
 ): ComponentType<MotionProps> => {
   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
     // Extract the className from variants if present
-    const {
-      className = "",
-      animate,
-      whileInView,
-      initial,
-      ...rest
-    } = props;
+    const { className = "", animate, whileInView, initial, ...rest } = props;
 
     // Add a class to indicate this is a mocked motion component
     const combinedClassName = `${className} mock-motion-component`;

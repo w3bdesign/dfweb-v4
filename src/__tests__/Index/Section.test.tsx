@@ -7,8 +7,10 @@ import { myPortableTextComponents } from "@/utils/portableTextComponents";
 
 // Mock the BounceInScroll component
 jest.mock("@/components/Animations/BounceInScroll.component", () => {
-  const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
-  MockBounceInScroll.displayName = 'MockBounceInScroll';
+  const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  );
+  MockBounceInScroll.displayName = "MockBounceInScroll";
   return MockBounceInScroll;
 });
 
@@ -68,12 +70,10 @@ describe("Section Component", () => {
       .mockImplementation(() => {});
 
     // Act - Perform the action being tested
-    render(
-      <Section _type="pagecontent" title="" text={[]} />,
-    );
+    render(<Section _type="pagecontent" title="" text={[]} />);
 
     // Assert - Verify the results
-    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.queryByRole("article")).not.toBeInTheDocument();
     expect(consoleErrorSpy).toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
   });

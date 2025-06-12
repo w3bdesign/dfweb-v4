@@ -93,6 +93,7 @@ strong focus on performance and accessibility."
 "The comprehensive testing stack was chosen for complete coverage:
 
 1. Jest & React Testing Library
+
    - Fast unit and integration tests
    - Encourages testing user behavior over implementation
    - Great async testing capabilities
@@ -100,6 +101,7 @@ strong focus on performance and accessibility."
    - 100% test coverage requirement enforced
 
 2. Cypress
+
    - Reliable end-to-end testing
    - Built-in accessibility testing with Cypress Axe
    - Real browser testing environment
@@ -118,6 +120,7 @@ strong focus on performance and accessibility."
 "Multiple code quality tools were chosen for comprehensive analysis:
 
 1. Codacy
+
    - Automated code reviews
    - Security vulnerability scanning
    - Code duplication detection
@@ -125,6 +128,7 @@ strong focus on performance and accessibility."
    - Continuous code quality monitoring
 
 2. Sonarcloud
+
    - Deep code analysis
    - Security hotspot detection
    - Technical debt tracking
@@ -143,6 +147,7 @@ strong focus on performance and accessibility."
 "The CI/CD setup was carefully chosen:
 
 1. CircleCI
+
    - Fast build times
    - Parallel test execution
    - Custom workflow configuration
@@ -187,6 +192,7 @@ strong focus on performance and accessibility."
 "Carefully selected development tools for optimal DX:
 
 1. Turbopack
+
    - Significantly faster development builds
    - Incremental compilation
    - Better memory usage
@@ -194,6 +200,7 @@ strong focus on performance and accessibility."
    - Integrated with Next.js
 
 2. Prettier & ESLint
+
    - Consistent code formatting
    - Custom ESLint plugins for:
      - Jest testing standards
@@ -215,6 +222,7 @@ strong focus on performance and accessibility."
 "Comprehensive performance tracking setup:
 
 1. Vercel Speed Insights
+
    - Real user monitoring
    - Performance metrics tracking
    - Core Web Vitals monitoring
@@ -233,6 +241,7 @@ strong focus on performance and accessibility."
 "Carefully chosen utility libraries:
 
 1. clsx
+
    - Type-safe className handling
    - Conditional class application
    - Better performance than alternatives
@@ -240,6 +249,7 @@ strong focus on performance and accessibility."
    - Great TypeScript support
 
 2. react-use
+
    - Battle-tested React hooks
    - Performance optimized
    - Reduces boilerplate
@@ -247,6 +257,7 @@ strong focus on performance and accessibility."
    - Active maintenance
 
 3. Portable Text
+
    - Rich text rendering
    - Custom components
    - Sanity.io integration
@@ -265,6 +276,7 @@ strong focus on performance and accessibility."
 "Comprehensive accessibility testing setup:
 
 1. Cypress Axe
+
    - Automated accessibility testing
    - WCAG compliance checking
    - Integration with CI/CD
@@ -272,6 +284,7 @@ strong focus on performance and accessibility."
    - Prevents accessibility regressions
 
 2. ESLint jsx-a11y
+
    - Static accessibility checks
    - Best practice enforcement
    - Early error detection
@@ -300,6 +313,7 @@ strong focus on performance and accessibility."
 improvements:
 
 1. Automated Performance Monitoring
+
    - Implemented Lighthouse CI for continuous monitoring (commit 4a79a89)
    - Added performance budgets and thresholds
    - Set up Vercel Speed Insights for real user monitoring
@@ -307,6 +321,7 @@ improvements:
    - Achieved and maintained 100/100 Lighthouse scores
 
 2. Server-Side Optimization
+
    - Implemented Server Components for data-heavy pages (commit 4fa7629)
    - Added intelligent caching strategies
    - Optimized API response times
@@ -314,6 +329,7 @@ improvements:
    - Enhanced static generation with revalidation
 
 3. Frontend Optimization
+
    - Optimized Matrix animation rendering (commit bcc379b)
    - Implemented efficient code splitting
    - Added responsive image optimization
@@ -321,6 +337,7 @@ improvements:
    - Optimized critical rendering path
 
 4. Mobile Performance
+
    - Added device-specific optimizations (commit 0812552)
    - Implemented responsive loading strategies
    - Optimized animations for mobile devices
@@ -340,6 +357,7 @@ improvements:
 coverage:
 
 1. Unit Testing Evolution
+
    - Implemented AAA pattern for all tests (commit c48c612)
    - Added comprehensive error boundary tests (commit 75bc7b7)
    - Created custom test utilities for Canvas (commit cc7c821)
@@ -347,6 +365,7 @@ coverage:
    - Maintained strict testing standards
 
 2. End-to-End Testing
+
    - Implemented Cypress for critical flows
    - Added accessibility testing with Cypress Axe
    - Created comprehensive test suites
@@ -354,6 +373,7 @@ coverage:
    - Integrated with CI/CD pipeline
 
 3. Cross-Browser Testing
+
    - Added Playwright for browser coverage
    - Implemented parallel test execution
    - Added visual regression testing
@@ -361,6 +381,7 @@ coverage:
    - Automated cross-browser validation
 
 4. Performance Testing
+
    - Integrated Lighthouse CI (commit 4a79a89)
    - Added performance budgets
    - Implemented Core Web Vitals monitoring
@@ -379,6 +400,7 @@ coverage:
 "Based on the project's evolution, we faced and solved several key challenges:
 
 1. Error Handling Architecture
+
    - Challenge: Complex error handling across different components
    - Solution:
      - Extracted reusable error fallback components
@@ -388,6 +410,7 @@ coverage:
      - Better separation of error handling logic
 
 2. Component Organization
+
    - Challenge: Growing complexity in component structure
    - Solution:
      - Moved configuration to separate files
@@ -397,6 +420,7 @@ coverage:
      - Standardized component patterns
 
 3. Testing Infrastructure
+
    - Challenge: Maintaining comprehensive test coverage
    - Solution:
      - Enhanced test suite organization
@@ -406,6 +430,7 @@ coverage:
      - More consistent testing patterns
 
 4. Matrix Animation System
+
    - Challenge: Complex cursor and animation management
    - Solution:
      - Refactored cursor implementation
@@ -441,24 +466,28 @@ coverage:
 multiple iterations and improvements throughout the project:
 
 1. Initial Implementation Challenges
+
    - Creating smooth canvas animations without impacting performance
    - Implementing efficient rendering techniques (commit bcc379b)
    - Managing memory usage for long-running animations
    - Ensuring consistent frame rates across devices
 
 2. Mobile Optimization
+
    - Adding device-specific optimizations (commit 0812552)
    - Implementing responsive canvas sizing
    - Optimizing for touch devices
    - Managing battery life impact
 
 3. Accessibility Considerations
+
    - Creating reduced motion alternatives
    - Ensuring keyboard navigation support
    - Providing screen reader descriptions
    - Implementing fallback content
 
 4. Performance Optimization
+
    - Refactoring for better modularity (commit ac87f0a)
    - Optimizing render cycles
    - Implementing efficient state management
@@ -489,6 +518,7 @@ performance and accessibility, while maintaining clean, testable code."
 implement differently from the start:
 
 1. Testing Strategy
+
    - Implement AAA pattern testing from the beginning (added in commit
      c48c612)
    - Set up Lighthouse CI monitoring earlier (added in commit 4a79a89)
@@ -498,6 +528,7 @@ implement differently from the start:
    - Implement visual regression testing earlier
 
 2. Architecture & Organization
+
    - Start with modular Matrix component structure (refactored in commit
      bcc379b)
    - Use standardized import paths from beginning (added in commit 4ab1ee3)
@@ -506,6 +537,7 @@ implement differently from the start:
    - More consistent component organization
 
 3. Type Safety & Validation
+
    - Start with stricter TypeScript configuration (gradually improved)
    - Implement environment validation earlier (added in commit 91bfe1f)
    - Add Zod validation from beginning
@@ -513,6 +545,7 @@ implement differently from the start:
    - Better error boundary typing (improved in commit 3452cce)
 
 4. Performance & Monitoring
+
    - Set up Lighthouse CI at project start (added in commit 60ae483)
    - Implement performance budgets earlier
    - Add Vercel Speed Insights from beginning
