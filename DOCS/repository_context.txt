@@ -3144,6 +3144,181 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/Animations/MatrixCursor.test.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { render, fireEvent, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+  5: import { useMobile } from "@/hooks/useMobile";
+  6: // Mock useMobile hook
+  7: jest.mock("@/hooks/useMobile");
+  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
+  9: // Wrapper component to provide ref
+ 10: const TestWrapper = () => {
+ 11:   const heroRef = useRef<HTMLDivElement>(null);
+ 12:   return (
+ 13:     <>
+ 14:       <div ref={heroRef} data-testid="hero-section" />
+ 15:       <MatrixCursor heroRef={heroRef} />
+ 16:     </>
+ 17:   );
+ 18: };
+ 19: describe("MatrixCursor", () => {
+ 20:   beforeEach(() => {
+ 21:     // Default to desktop view
+ 22:     mockUseMobile.mockReturnValue(false);
+ 23:   });
+ 24:   afterEach(() => {
+ 25:     jest.clearAllMocks();
+ 26:   });
+ 27:   test("should not render when heroRef is null", () => {
+ 28:     // Arrange
+ 29:     const NullRefWrapper = () => {
+ 30:       const heroRef = useRef<HTMLDivElement>(null);
+ 31:       // Don't render the div, so heroRef.current will be null
+ 32:       return <MatrixCursor heroRef={heroRef} />;
+ 33:     };
+ 34:     // Act
+ 35:     render(<NullRefWrapper />);
+ 36:     // Assert
+ 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 38:   });
+ 39:   test("should not render on mobile devices", () => {
+ 40:     // Arrange
+ 41:     mockUseMobile.mockReturnValue(true);
+ 42:     // Act
+ 43:     render(<TestWrapper />);
+ 44:     // Assert
+ 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 46:   });
+ 47:   test("should update cursor position and styles on mousemove", () => {
+ 48:     // Arrange
+ 49:     render(<TestWrapper />);
+ 50:     const heroSection = screen.getByTestId("hero-section");
+ 51:     const expectedPosition = { x: 100, y: 200 };
+ 52:     // Act
+ 53:     fireEvent.mouseEnter(heroSection);
+ 54:     fireEvent.mouseMove(heroSection, {
+ 55:       clientX: expectedPosition.x,
+ 56:       clientY: expectedPosition.y,
+ 57:     });
+ 58:     const cursor = screen.getByTestId("matrix-cursor");
+ 59:     // Assert
+ 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
+ 61:       `${expectedPosition.x}px`,
+ 62:     );
+ 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
+ 64:       `${expectedPosition.y}px`,
+ 65:     );
+ 66:   });
+ 67:   test("should add matrix-cursor class on mouseenter", () => {
+ 68:     // Arrange
+ 69:     render(<TestWrapper />);
+ 70:     const heroSection = screen.getByTestId("hero-section");
+ 71:     // Act
+ 72:     fireEvent.mouseEnter(heroSection);
+ 73:     const cursor = screen.getByTestId("matrix-cursor");
+ 74:     // Assert
+ 75:     expect(cursor).toHaveClass("matrix-cursor");
+ 76:     expect(heroSection.style.cursor).toBe("none");
+ 77:   });
+ 78:   test("should remove matrix-cursor class on mouseleave", () => {
+ 79:     // Arrange
+ 80:     render(<TestWrapper />);
+ 81:     const heroSection = screen.getByTestId("hero-section");
+ 82:     // Act - First add the class
+ 83:     fireEvent.mouseEnter(heroSection);
+ 84:     const cursor = screen.getByTestId("matrix-cursor");
+ 85:     // Assert initial state
+ 86:     expect(cursor).toHaveClass("matrix-cursor");
+ 87:     // Act - Then remove it
+ 88:     fireEvent.mouseLeave(heroSection);
+ 89:     // Assert final state
+ 90:     expect(cursor).not.toHaveClass("matrix-cursor");
+ 91:     expect(heroSection.style.cursor).toBe("");
+ 92:   });
+ 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
+ 94:     // Arrange
+ 95:     const { unmount } = render(<TestWrapper />);
+ 96:     const heroSection = screen.getByTestId("hero-section");
+ 97:     // Act - Set initial state
+ 98:     fireEvent.mouseEnter(heroSection);
+ 99:     // Assert initial state
+100:     expect(heroSection.style.cursor).toBe("none");
+101:     // Act - Unmount component
+102:     unmount();
+103:     // Assert cleanup
+104:     expect(heroSection.style.cursor).toBe("");
+105:   });
+106:   test("should create trail elements on mousemove when hovered", () => {
+107:     // Arrange
+108:     render(<TestWrapper />);
+109:     const heroSection = screen.getByTestId("hero-section");
+110:     const movePositions = [
+111:       { x: 100, y: 100 },
+112:       { x: 110, y: 110 },
+113:       { x: 120, y: 120 },
+114:     ];
+115:     // Act - Enable trail creation
+116:     fireEvent.mouseEnter(heroSection);
+117:     // Act & Assert - Create and verify trails
+118:     movePositions.forEach((pos, index) => {
+119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
+120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
+121:     });
+122:   });
+123:   test("should limit the number of trail elements", () => {
+124:     // Arrange
+125:     render(<TestWrapper />);
+126:     const heroSection = screen.getByTestId("hero-section");
+127:     const maxTrails = 20;
+128:     const totalMoves = 25;
+129:     // Act
+130:     fireEvent.mouseEnter(heroSection);
+131:     for (let i = 0; i < totalMoves; i++) {
+132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+133:     }
+134:     // Assert
+135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
+136:       maxTrails,
+137:     );
+138:   });
+139:   test("should cleanup trail elements on mouseleave", () => {
+140:     // Arrange
+141:     render(<TestWrapper />);
+142:     const heroSection = screen.getByTestId("hero-section");
+143:     const trailCount = 5;
+144:     // Act - Create trails
+145:     fireEvent.mouseEnter(heroSection);
+146:     for (let i = 0; i < trailCount; i++) {
+147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+148:     }
+149:     // Assert trails were created
+150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
+151:     // Act - Leave hero section
+152:     fireEvent.mouseLeave(heroSection);
+153:     // Assert trails were cleaned up
+154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+155:   });
+156:   test("should remove trail element when animation ends", () => {
+157:     // Arrange
+158:     render(<TestWrapper />);
+159:     const heroSection = screen.getByTestId("hero-section");
+160:     // Act - Create trail
+161:     fireEvent.mouseEnter(heroSection);
+162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
+163:     // Assert trail was created
+164:     const trailElements = screen.getAllByTestId("matrix-trail");
+165:     expect(trailElements).toHaveLength(1);
+166:     // Act - Trigger animation end
+167:     fireEvent.animationEnd(trailElements[0]);
+168:     // Assert trail was removed
+169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+170:   });
+171: });
+````
+
 ## File: src/__tests__/Animations/RotatingLoader.test.tsx
 ````typescript
  1: import React from "react";
@@ -3519,6 +3694,122 @@ tsconfig.json
 64:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
 65:   });
 66: });
+````
+
+## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
+  5: // Mock the Matrix component to avoid rendering issues in tests
+  6: jest.mock("@/components/Animations/Matrix.component", () => {
+  7:   return function DummyMatrix() {
+  8:     return <div data-testid="matrix-animation" />;
+  9:   };
+ 10: });
+ 11: describe("ErrorFallback", () => {
+ 12:   const mockError = new Error("Test error message");
+ 13:   beforeEach(() => {
+ 14:     // Mock window.location.reload
+ 15:     Object.defineProperty(window, "location", {
+ 16:       configurable: true,
+ 17:       value: { reload: jest.fn() },
+ 18:     });
+ 19:   });
+ 20:   it("renders error message and reload button", () => {
+ 21:     // Arrange
+ 22:     const expectedTexts = {
+ 23:       heading: "Har du funnet en feil i Matrix?",
+ 24:       error: "Test error message",
+ 25:       button: "Returner til Matrix",
+ 26:     };
+ 27:     // Act
+ 28:     render(<ErrorFallback error={mockError} />);
+ 29:     // Assert
+ 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+ 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+ 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
+ 33:   });
+ 34:   it("displays default error message when error.message is undefined in full version", () => {
+ 35:     // Arrange
+ 36:     const errorWithoutMessage = new Error();
+ 37:     const expectedMessage = "En uventet feil har oppstått.";
+ 38:     // Act
+ 39:     render(<ErrorFallback error={errorWithoutMessage} />);
+ 40:     // Assert
+ 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 42:   });
+ 43:   it("displays default error message when error.message is undefined in compact version", () => {
+ 44:     // Arrange
+ 45:     const errorWithoutMessage = new Error();
+ 46:     const expectedMessage = "En uventet feil har oppstått.";
+ 47:     // Act
+ 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
+ 49:     // Assert
+ 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+ 51:   });
+ 52:   it("renders compact version with correct styling", () => {
+ 53:     // Arrange
+ 54:     const expectedTexts = {
+ 55:       heading: "Har du funnet en feil i Matrix?",
+ 56:       error: "Test error message",
+ 57:       button: "Returner til Matrix",
+ 58:     };
+ 59:     // Act
+ 60:     render(<ErrorFallback error={mockError} compact={true} />);
+ 61:     // Assert
+ 62:     const container = screen.getByTestId("error-fallback-container");
+ 63:     expect(container).toHaveClass("bg-gray-900");
+ 64:     expect(container).toHaveClass("p-4");
+ 65:     expect(container).toHaveClass("rounded-lg");
+ 66:     expect(container).toHaveClass("overflow-hidden");
+ 67:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
+ 68:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
+ 69:     const button = screen.getByRole("button");
+ 70:     expect(button).toHaveClass("bg-matrix-light");
+ 71:     expect(button).toHaveClass("text-black");
+ 72:     expect(button).toHaveClass("rounded-sm");
+ 73:     expect(button).toHaveClass("text-sm");
+ 74:   });
+ 75:   it("renders full version with correct styling", () => {
+ 76:     // Arrange
+ 77:     const expectedTexts = {
+ 78:       heading: "Har du funnet en feil i Matrix?",
+ 79:       error: "Test error message",
+ 80:       button: "Returner til Matrix",
+ 81:     };
+ 82:     // Act
+ 83:     render(<ErrorFallback error={mockError} compact={false} />);
+ 84:     // Assert
+ 85:     const container = screen.getByTestId("error-fallback-container");
+ 86:     expect(container).toHaveClass("absolute", "w-full", "h-full");
+ 87:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
+ 88:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
+ 89:   });
+ 90:   it("reloads the page when reload button is clicked in compact mode", () => {
+ 91:     // Arrange
+ 92:     render(<ErrorFallback error={mockError} compact={true} />);
+ 93:     const reloadButton = screen.getByRole("button", {
+ 94:       name: "Returner til Matrix",
+ 95:     });
+ 96:     // Act
+ 97:     fireEvent.click(reloadButton);
+ 98:     // Assert
+ 99:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+100:   });
+101:   it("reloads the page when reload button is clicked in full mode", () => {
+102:     // Arrange
+103:     render(<ErrorFallback error={mockError} compact={false} />);
+104:     const reloadButton = screen.getByRole("button", {
+105:       name: "Returner til Matrix",
+106:     });
+107:     // Act
+108:     fireEvent.click(reloadButton);
+109:     // Assert
+110:     expect(window.location.reload).toHaveBeenCalledTimes(1);
+111:   });
+112: });
 ````
 
 ## File: src/__tests__/Index/Icons.test.tsx
@@ -15738,181 +16029,6 @@ tsconfig.json
 115: });
 ````
 
-## File: src/__tests__/Animations/MatrixCursor.test.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { render, fireEvent, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-  5: import { useMobile } from "@/hooks/useMobile";
-  6: // Mock useMobile hook
-  7: jest.mock("@/hooks/useMobile");
-  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
-  9: // Wrapper component to provide ref
- 10: const TestWrapper = () => {
- 11:   const heroRef = useRef<HTMLDivElement>(null);
- 12:   return (
- 13:     <>
- 14:       <div ref={heroRef} data-testid="hero-section" />
- 15:       <MatrixCursor heroRef={heroRef} />
- 16:     </>
- 17:   );
- 18: };
- 19: describe("MatrixCursor", () => {
- 20:   beforeEach(() => {
- 21:     // Default to desktop view
- 22:     mockUseMobile.mockReturnValue(false);
- 23:   });
- 24:   afterEach(() => {
- 25:     jest.clearAllMocks();
- 26:   });
- 27:   test("should not render when heroRef is null", () => {
- 28:     // Arrange
- 29:     const NullRefWrapper = () => {
- 30:       const heroRef = useRef<HTMLDivElement>(null);
- 31:       // Don't render the div, so heroRef.current will be null
- 32:       return <MatrixCursor heroRef={heroRef} />;
- 33:     };
- 34:     // Act
- 35:     render(<NullRefWrapper />);
- 36:     // Assert
- 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 38:   });
- 39:   test("should not render on mobile devices", () => {
- 40:     // Arrange
- 41:     mockUseMobile.mockReturnValue(true);
- 42:     // Act
- 43:     render(<TestWrapper />);
- 44:     // Assert
- 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 46:   });
- 47:   test("should update cursor position and styles on mousemove", () => {
- 48:     // Arrange
- 49:     render(<TestWrapper />);
- 50:     const heroSection = screen.getByTestId("hero-section");
- 51:     const expectedPosition = { x: 100, y: 200 };
- 52:     // Act
- 53:     fireEvent.mouseEnter(heroSection);
- 54:     fireEvent.mouseMove(heroSection, {
- 55:       clientX: expectedPosition.x,
- 56:       clientY: expectedPosition.y,
- 57:     });
- 58:     const cursor = screen.getByTestId("matrix-cursor");
- 59:     // Assert
- 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
- 61:       `${expectedPosition.x}px`,
- 62:     );
- 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
- 64:       `${expectedPosition.y}px`,
- 65:     );
- 66:   });
- 67:   test("should add matrix-cursor class on mouseenter", () => {
- 68:     // Arrange
- 69:     render(<TestWrapper />);
- 70:     const heroSection = screen.getByTestId("hero-section");
- 71:     // Act
- 72:     fireEvent.mouseEnter(heroSection);
- 73:     const cursor = screen.getByTestId("matrix-cursor");
- 74:     // Assert
- 75:     expect(cursor).toHaveClass("matrix-cursor");
- 76:     expect(heroSection.style.cursor).toBe("none");
- 77:   });
- 78:   test("should remove matrix-cursor class on mouseleave", () => {
- 79:     // Arrange
- 80:     render(<TestWrapper />);
- 81:     const heroSection = screen.getByTestId("hero-section");
- 82:     // Act - First add the class
- 83:     fireEvent.mouseEnter(heroSection);
- 84:     const cursor = screen.getByTestId("matrix-cursor");
- 85:     // Assert initial state
- 86:     expect(cursor).toHaveClass("matrix-cursor");
- 87:     // Act - Then remove it
- 88:     fireEvent.mouseLeave(heroSection);
- 89:     // Assert final state
- 90:     expect(cursor).not.toHaveClass("matrix-cursor");
- 91:     expect(heroSection.style.cursor).toBe("");
- 92:   });
- 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
- 94:     // Arrange
- 95:     const { unmount } = render(<TestWrapper />);
- 96:     const heroSection = screen.getByTestId("hero-section");
- 97:     // Act - Set initial state
- 98:     fireEvent.mouseEnter(heroSection);
- 99:     // Assert initial state
-100:     expect(heroSection.style.cursor).toBe("none");
-101:     // Act - Unmount component
-102:     unmount();
-103:     // Assert cleanup
-104:     expect(heroSection.style.cursor).toBe("");
-105:   });
-106:   test("should create trail elements on mousemove when hovered", () => {
-107:     // Arrange
-108:     render(<TestWrapper />);
-109:     const heroSection = screen.getByTestId("hero-section");
-110:     const movePositions = [
-111:       { x: 100, y: 100 },
-112:       { x: 110, y: 110 },
-113:       { x: 120, y: 120 },
-114:     ];
-115:     // Act - Enable trail creation
-116:     fireEvent.mouseEnter(heroSection);
-117:     // Act & Assert - Create and verify trails
-118:     movePositions.forEach((pos, index) => {
-119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
-120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
-121:     });
-122:   });
-123:   test("should limit the number of trail elements", () => {
-124:     // Arrange
-125:     render(<TestWrapper />);
-126:     const heroSection = screen.getByTestId("hero-section");
-127:     const maxTrails = 20;
-128:     const totalMoves = 25;
-129:     // Act
-130:     fireEvent.mouseEnter(heroSection);
-131:     for (let i = 0; i < totalMoves; i++) {
-132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-133:     }
-134:     // Assert
-135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
-136:       maxTrails,
-137:     );
-138:   });
-139:   test("should cleanup trail elements on mouseleave", () => {
-140:     // Arrange
-141:     render(<TestWrapper />);
-142:     const heroSection = screen.getByTestId("hero-section");
-143:     const trailCount = 5;
-144:     // Act - Create trails
-145:     fireEvent.mouseEnter(heroSection);
-146:     for (let i = 0; i < trailCount; i++) {
-147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-148:     }
-149:     // Assert trails were created
-150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
-151:     // Act - Leave hero section
-152:     fireEvent.mouseLeave(heroSection);
-153:     // Assert trails were cleaned up
-154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-155:   });
-156:   test("should remove trail element when animation ends", () => {
-157:     // Arrange
-158:     render(<TestWrapper />);
-159:     const heroSection = screen.getByTestId("hero-section");
-160:     // Act - Create trail
-161:     fireEvent.mouseEnter(heroSection);
-162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
-163:     // Assert trail was created
-164:     const trailElements = screen.getAllByTestId("matrix-trail");
-165:     expect(trailElements).toHaveLength(1);
-166:     // Act - Trigger animation end
-167:     fireEvent.animationEnd(trailElements[0]);
-168:     // Assert trail was removed
-169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-170:   });
-171: });
-````
-
 ## File: src/__tests__/Animations/TestAnimation.test.tsx
 ````typescript
  1: /**
@@ -15970,122 +16086,6 @@ tsconfig.json
 53: testAnimationComponent(FadeDown, "fadedown", "translateY");
 54: testAnimationComponent(FadeUp, "fadeup", "translateY");
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
-````
-
-## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
-  5: // Mock the Matrix component to avoid rendering issues in tests
-  6: jest.mock("@/components/Animations/Matrix.component", () => {
-  7:   return function DummyMatrix() {
-  8:     return <div data-testid="matrix-animation" />;
-  9:   };
- 10: });
- 11: describe("ErrorFallback", () => {
- 12:   const mockError = new Error("Test error message");
- 13:   beforeEach(() => {
- 14:     // Mock window.location.reload
- 15:     Object.defineProperty(window, "location", {
- 16:       configurable: true,
- 17:       value: { reload: jest.fn() },
- 18:     });
- 19:   });
- 20:   it("renders error message and reload button", () => {
- 21:     // Arrange
- 22:     const expectedTexts = {
- 23:       heading: "Har du funnet en feil i Matrix?",
- 24:       error: "Test error message",
- 25:       button: "Returner til Matrix",
- 26:     };
- 27:     // Act
- 28:     render(<ErrorFallback error={mockError} />);
- 29:     // Assert
- 30:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
- 31:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
- 32:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
- 33:   });
- 34:   it("displays default error message when error.message is undefined in full version", () => {
- 35:     // Arrange
- 36:     const errorWithoutMessage = new Error();
- 37:     const expectedMessage = "En uventet feil har oppstått.";
- 38:     // Act
- 39:     render(<ErrorFallback error={errorWithoutMessage} />);
- 40:     // Assert
- 41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 42:   });
- 43:   it("displays default error message when error.message is undefined in compact version", () => {
- 44:     // Arrange
- 45:     const errorWithoutMessage = new Error();
- 46:     const expectedMessage = "En uventet feil har oppstått.";
- 47:     // Act
- 48:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
- 49:     // Assert
- 50:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 51:   });
- 52:   it("renders compact version with correct styling", () => {
- 53:     // Arrange
- 54:     const expectedTexts = {
- 55:       heading: "Har du funnet en feil i Matrix?",
- 56:       error: "Test error message",
- 57:       button: "Returner til Matrix",
- 58:     };
- 59:     // Act
- 60:     render(<ErrorFallback error={mockError} compact={true} />);
- 61:     // Assert
- 62:     const container = screen.getByTestId("error-fallback-container");
- 63:     expect(container).toHaveClass("bg-gray-900");
- 64:     expect(container).toHaveClass("p-4");
- 65:     expect(container).toHaveClass("rounded-lg");
- 66:     expect(container).toHaveClass("overflow-hidden");
- 67:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
- 68:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
- 69:     const button = screen.getByRole("button");
- 70:     expect(button).toHaveClass("bg-matrix-light");
- 71:     expect(button).toHaveClass("text-black");
- 72:     expect(button).toHaveClass("rounded-sm");
- 73:     expect(button).toHaveClass("text-sm");
- 74:   });
- 75:   it("renders full version with correct styling", () => {
- 76:     // Arrange
- 77:     const expectedTexts = {
- 78:       heading: "Har du funnet en feil i Matrix?",
- 79:       error: "Test error message",
- 80:       button: "Returner til Matrix",
- 81:     };
- 82:     // Act
- 83:     render(<ErrorFallback error={mockError} compact={false} />);
- 84:     // Assert
- 85:     const container = screen.getByTestId("error-fallback-container");
- 86:     expect(container).toHaveClass("absolute", "w-full", "h-full");
- 87:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
- 88:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
- 89:   });
- 90:   it("reloads the page when reload button is clicked in compact mode", () => {
- 91:     // Arrange
- 92:     render(<ErrorFallback error={mockError} compact={true} />);
- 93:     const reloadButton = screen.getByRole("button", {
- 94:       name: "Returner til Matrix",
- 95:     });
- 96:     // Act
- 97:     fireEvent.click(reloadButton);
- 98:     // Assert
- 99:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-100:   });
-101:   it("reloads the page when reload button is clicked in full mode", () => {
-102:     // Arrange
-103:     render(<ErrorFallback error={mockError} compact={false} />);
-104:     const reloadButton = screen.getByRole("button", {
-105:       name: "Returner til Matrix",
-106:     });
-107:     // Act
-108:     fireEvent.click(reloadButton);
-109:     // Assert
-110:     expect(window.location.reload).toHaveBeenCalledTimes(1);
-111:   });
-112: });
 ````
 
 ## File: src/__tests__/Index/fixtures/hero.json
@@ -17485,7 +17485,7 @@ tsconfig.json
 85:     "jest-environment-jsdom": "^29.7.0",
 86:     "jest-extended": "^4.0.2",
 87:     "jsdom-testing-mocks": "^1.13.1",
-88:     "postcss": "^8.5.4",
+88:     "postcss": "^8.5.5",
 89:     "prettier": "3.5.3",
 90:     "tailwindcss": "^4.1.8",
 91:     "ts-jest": "^29.3.4",
