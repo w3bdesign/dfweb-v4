@@ -40,7 +40,7 @@ describe("getProjects", () => {
     expect(client.fetch).toHaveBeenCalledWith(
       projectsQuery,
       {},
-      expectedFetchOptions
+      expectedFetchOptions,
     );
   });
 
@@ -104,7 +104,7 @@ describe("getProjects", () => {
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow(
-        "Sanity API error: Invalid GROQ query"
+        "Sanity API error: Invalid GROQ query",
       );
     });
 

@@ -219,5 +219,5 @@ with ISTQB best practices.
 
 ---
 
-*This test strategy is a living document and should be updated as project
-requirements evolve.*
+_This test strategy is a living document and should be updated as project
+requirements evolve._

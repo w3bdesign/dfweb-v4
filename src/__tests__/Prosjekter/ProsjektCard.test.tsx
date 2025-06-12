@@ -105,9 +105,13 @@ describe("ProsjektCard", () => {
       render(<ProsjektCard {...mockProjectProps} />);
 
       // Assert
-      const visitLink = screen.getByRole("link", { name: expectedLinks.visit.text });
-      const githubLink = screen.getByRole("link", { name: expectedLinks.github.text });
-      
+      const visitLink = screen.getByRole("link", {
+        name: expectedLinks.visit.text,
+      });
+      const githubLink = screen.getByRole("link", {
+        name: expectedLinks.github.text,
+      });
+
       expect(visitLink).toBeInTheDocument();
       expect(visitLink).toHaveAttribute("href", expectedLinks.visit.href);
       expect(githubLink).toBeInTheDocument();

@@ -1,10 +1,13 @@
 # DFWeb v4 - Copilot Instructions
 
 ## Project Overview
+
 DFWeb v4 is a portfolio website built with Next.js 15, React 19, and TypeScript, featuring a Matrix-inspired design with custom animations and a strong focus on performance and accessibility.
 
 ## Tech Stack
+
 - **Frontend Core**
+
   - Next.js 15 with App Router and Server Components
   - React 19 with latest features
   - TypeScript with strict mode
@@ -13,6 +16,7 @@ DFWeb v4 is a portfolio website built with Next.js 15, React 19, and TypeScript,
   - Sanity.io as headless CMS
 
 - **Testing**
+
   - Jest & React Testing Library for unit tests
   - Cypress for E2E testing with accessibility checks
   - Playwright for cross-browser testing
@@ -25,6 +29,7 @@ DFWeb v4 is a portfolio website built with Next.js 15, React 19, and TypeScript,
   - Performance budgets
 
 ## Code Organization
+
 ```
 src/
 ├── app/                 # Next.js App Router pages
@@ -49,6 +54,7 @@ src/
 ## Coding Standards
 
 ### TypeScript
+
 - Use strict type checking
 - Avoid `any` types
 - Create proper interfaces/types for all data structures
@@ -56,6 +62,7 @@ src/
 - Leverage TypeScript's utility types
 
 ### Components
+
 - Use functional components with hooks
 - Follow naming convention: `ComponentName.component.tsx`
 - Keep components focused and modular
@@ -64,6 +71,7 @@ src/
 - Prefer Server Components where possible
 
 ### Testing
+
 - Follow AAA (Arrange-Act-Assert) pattern
 - Include comments for each section:
   ```typescript
@@ -77,6 +85,7 @@ src/
 - Maintain 100% test coverage
 
 ### State Management
+
 - Use React hooks for local state
 - Implement proper loading states
 - Handle errors with ErrorBoundary
@@ -84,6 +93,7 @@ src/
 - Avoid prop drilling
 
 ### Performance
+
 - Use Server Components for data-heavy pages
 - Implement proper caching strategies
 - Optimize images with next/image
@@ -92,6 +102,7 @@ src/
 - Keep bundle size minimal
 
 ### Accessibility
+
 - Follow WCAG guidelines
 - Use semantic HTML
 - Implement proper ARIA attributes
@@ -100,6 +111,7 @@ src/
 - Support reduced motion
 
 ### Error Handling
+
 - Use ErrorBoundary components
 - Provide meaningful error messages
 - Include fallback UI
@@ -107,6 +119,7 @@ src/
 - Handle edge cases
 
 ### CSS/Styling
+
 - Use Tailwind CSS classes
 - Follow mobile-first approach
 - Maintain consistent spacing
@@ -116,6 +129,7 @@ src/
 ## Best Practices
 
 ### Git Workflow
+
 - Use descriptive commit messages
 - Follow conventional commits specification
 - Create focused PRs
@@ -123,6 +137,7 @@ src/
 - Update documentation
 
 ### Development Process
+
 - Start with Server Components
 - Implement proper error handling
 - Add comprehensive tests
@@ -131,7 +146,9 @@ src/
 - Document changes
 
 ### Environment Variables
+
 Required variables:
+
 ```env
 # Email Configuration (client-side)
 NEXT_PUBLIC_EMAIL_API_KEY=user_xxx
@@ -145,6 +162,7 @@ MODEL_NAME=claude-3.7-sonnet@anthropic
 ```
 
 ## Important Notes
+
 - Always handle loading and error states
 - Implement proper TypeScript types
 - Follow existing patterns in the codebase

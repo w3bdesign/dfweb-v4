@@ -134,7 +134,7 @@ describe("MobileMenu - elementer eksisterer", () => {
     // Assert - Test active link styling
     const activeLink = screen.getByTestId("mobil-Prosjekter");
     expect(activeLink).toHaveClass("text-green-400");
-    
+
     // Assert - Test non-active link styling
     const inactiveLink = screen.getByTestId("mobil-Hjem");
     expect(inactiveLink).not.toHaveClass("text-green-400");
