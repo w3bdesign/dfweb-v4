@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, useCycle, motion } from "motion/react";
+import { AnimatePresence, useCycle, motion, Variants } from "motion/react";
 
 import Hamburger from "./Hamburger.component";
 
@@ -23,7 +23,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
 
   const pathname = usePathname();
 
-  const menuVariants = {
+  const menuVariants: Variants = {
     closed: {
       x: "125%",
       transition: {
@@ -43,7 +43,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     closed: (i: number) => ({
       x: i % 2 === 0 ? "-50%" : "50%",
       opacity: 0,
