@@ -25,7 +25,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
 
   const menuVariants = {
     closed: {
-      x: "125%",
+      x: 500,
       transition: {
         type: "spring",
         stiffness: 60,
@@ -45,7 +45,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
 
   const itemVariants = {
     closed: (i: number) => ({
-      x: i % 2 === 0 ? "-50%" : "50%",
+      x: i % 2 === 0 ? -100 : 100,
       opacity: 0,
       transition: {
         type: "spring",
