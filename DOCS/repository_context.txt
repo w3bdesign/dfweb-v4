@@ -1396,6 +1396,121 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/Animations/BounceInScroll.test.tsx
+````typescript
+  1: import { render, screen } from "@testing-library/react";
+  2: import "@testing-library/jest-dom";
+  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+  4: import React from "react";
+  5: // Mock framer-motion
+  6: jest.mock("motion/react", () => ({
+  7:   motion: {
+  8:     div: ({
+  9:       children,
+ 10:       className,
+ 11:       "data-testid": testId,
+ 12:     }: {
+ 13:       children: React.ReactNode;
+ 14:       className: string;
+ 15:       "data-testid": string;
+ 16:     }) => (
+ 17:       <div className={className} data-testid={testId}>
+ 18:         {children}
+ 19:       </div>
+ 20:     ),
+ 21:   },
+ 22:   Variants: {},
+ 23: }));
+ 24: describe("BounceInScroll", () => {
+ 25:   it("renders children content", () => {
+ 26:     // Arrange
+ 27:     const testContent = "Test content";
+ 28:     // Act
+ 29:     render(
+ 30:       <BounceInScroll>
+ 31:         <div>{testContent}</div>
+ 32:       </BounceInScroll>,
+ 33:     );
+ 34:     // Assert
+ 35:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 36:   });
+ 37:   it("applies custom CSS class", () => {
+ 38:     // Arrange
+ 39:     const testClass = "test-class";
+ 40:     // Act
+ 41:     render(
+ 42:       <BounceInScroll cssClass={testClass}>
+ 43:         <div>Test content</div>
+ 44:       </BounceInScroll>,
+ 45:     );
+ 46:     // Assert
+ 47:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
+ 48:   });
+ 49:   it("configures viewport with default amount when viewAmount not provided", () => {
+ 50:     // Arrange
+ 51:     const testContent = "Test content";
+ 52:     // Act
+ 53:     render(
+ 54:       <BounceInScroll>
+ 55:         <div>{testContent}</div>
+ 56:       </BounceInScroll>,
+ 57:     );
+ 58:     // Assert
+ 59:     const element = screen.getByTestId("bounceinscroll");
+ 60:     expect(element).toBeInTheDocument();
+ 61:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 62:   });
+ 63:   it("configures viewport with custom amount when viewAmount provided", () => {
+ 64:     // Arrange
+ 65:     const testContent = "Test content";
+ 66:     const viewAmount = 0.5;
+ 67:     // Act
+ 68:     render(
+ 69:       <BounceInScroll viewAmount={viewAmount}>
+ 70:         <div>{testContent}</div>
+ 71:       </BounceInScroll>,
+ 72:     );
+ 73:     // Assert
+ 74:     const element = screen.getByTestId("bounceinscroll");
+ 75:     expect(element).toBeInTheDocument();
+ 76:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 77:   });
+ 78:   it("configures for instant animation when instant prop is true", () => {
+ 79:     // Arrange
+ 80:     const testContent = "Test content";
+ 81:     // Act
+ 82:     render(
+ 83:       <BounceInScroll instant={true}>
+ 84:         <div>{testContent}</div>
+ 85:       </BounceInScroll>,
+ 86:     );
+ 87:     // Assert
+ 88:     const element = screen.getByTestId("bounceinscroll");
+ 89:     expect(element).toBeInTheDocument();
+ 90:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 91:   });
+ 92:   it("handles all viewport amount types", () => {
+ 93:     // Arrange
+ 94:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
+ 95:     const testContent = "Test content";
+ 96:     amounts.forEach((amount) => {
+ 97:       // Act
+ 98:       const { unmount } = render(
+ 99:         <BounceInScroll viewAmount={amount}>
+100:           <div>{testContent}</div>
+101:         </BounceInScroll>,
+102:       );
+103:       // Assert
+104:       const element = screen.getByTestId("bounceinscroll");
+105:       expect(element).toBeInTheDocument();
+106:       expect(screen.getByText(testContent)).toBeInTheDocument();
+107:       // Cleanup
+108:       unmount();
+109:     });
+110:   });
+111: });
+````
+
 ## File: src/__tests__/Animations/Grow.test.tsx
 ````typescript
  1: /**
@@ -1627,6 +1742,125 @@ tsconfig.json
 161:     expect(mockCtx.fillText).not.toHaveBeenCalled();
 162:   });
 163: });
+````
+
+## File: src/__tests__/Animations/Matrix.utils.test.ts
+````typescript
+  1: import {
+  2:   hexToRgb,
+  3:   getRandomInt,
+  4:   getRandomCharacter,
+  5:   debounce,
+  6: } from "@/components/Animations/Matrix.utils";
+  7: describe("Matrix Utils", () => {
+  8:   describe("hexToRgb", () => {
+  9:     it("converts valid hex color to RGB", () => {
+ 10:       // Arrange
+ 11:       const hexColors = ["#ff0000", "#00ff00", "#0000ff", "#ffffff"];
+ 12:       const expectedResults = [
+ 13:         { r: 255, g: 0, b: 0 },
+ 14:         { r: 0, g: 255, b: 0 },
+ 15:         { r: 0, g: 0, b: 255 },
+ 16:         { r: 255, g: 255, b: 255 },
+ 17:       ];
+ 18:       // Act & Assert
+ 19:       hexColors.forEach((hex, index) => {
+ 20:         expect(hexToRgb(hex)).toStrictEqual(expectedResults[index]);
+ 21:       });
+ 22:     });
+ 23:     it("returns null for invalid hex colors", () => {
+ 24:       // Arrange
+ 25:       const invalidHexColors = ["invalid", "#12", "#1234", "#12345"];
+ 26:       // Act & Assert
+ 27:       invalidHexColors.forEach((hex) => {
+ 28:         expect(hexToRgb(hex)).toBeNull();
+ 29:       });
+ 30:     });
+ 31:   });
+ 32:   describe("getRandomInt", () => {
+ 33:     it("returns a random integer within the range", () => {
+ 34:       // Arrange
+ 35:       const max = 10;
+ 36:       const mockGetRandomValues = jest
+ 37:         .spyOn(window.crypto, "getRandomValues")
+ 38:         .mockImplementation((array) => {
+ 39:           if (array instanceof Uint32Array) {
+ 40:             array[0] = 123456789;
+ 41:           }
+ 42:           return array as Uint32Array;
+ 43:         });
+ 44:       // Act
+ 45:       const result = getRandomInt(max);
+ 46:       // Assert
+ 47:       expect(result).toBe(9); // 123456789 % 10 = 9
+ 48:       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint32Array));
+ 49:       // Cleanup
+ 50:       mockGetRandomValues.mockRestore();
+ 51:     });
+ 52:   });
+ 53:   describe("getRandomCharacter", () => {
+ 54:     it("returns a character from the provided tileSet", () => {
+ 55:       // Arrange
+ 56:       const tileSet = ["A", "B", "C"];
+ 57:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+ 58:       // Act
+ 59:       const result = getRandomCharacter(tileSet);
+ 60:       // Assert
+ 61:       expect(tileSet).toContain(result);
+ 62:       mockGetRandomInt.mockRestore();
+ 63:     });
+ 64:     it("returns a random ASCII character when tileSet is null", () => {
+ 65:       // Arrange
+ 66:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+ 67:       // Act
+ 68:       const result = getRandomCharacter(null);
+ 69:       // Assert
+ 70:       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
+ 71:       mockGetRandomInt.mockRestore();
+ 72:     });
+ 73:     it("returns a random ASCII character when tileSet is empty", () => {
+ 74:       // Arrange
+ 75:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+ 76:       // Act
+ 77:       const result = getRandomCharacter([]);
+ 78:       // Assert
+ 79:       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
+ 80:       mockGetRandomInt.mockRestore();
+ 81:     });
+ 82:   });
+ 83:   describe("debounce", () => {
+ 84:     beforeEach(() => {
+ 85:       jest.useFakeTimers();
+ 86:     });
+ 87:     afterEach(() => {
+ 88:       jest.useRealTimers();
+ 89:     });
+ 90:     it("debounces function calls", () => {
+ 91:       // Arrange
+ 92:       const func = jest.fn();
+ 93:       const debouncedFunc = debounce(func, 100);
+ 94:       // Act
+ 95:       debouncedFunc();
+ 96:       debouncedFunc();
+ 97:       debouncedFunc();
+ 98:       expect(func).not.toHaveBeenCalled();
+ 99:       jest.runAllTimers();
+100:       // Assert
+101:       expect(func).toHaveBeenCalledTimes(1);
+102:     });
+103:     it("calls function with correct arguments", () => {
+104:       // Arrange
+105:       const func = jest.fn();
+106:       const debouncedFunc = debounce(func, 100);
+107:       const args = ["test", 123];
+108:       // Act
+109:       debouncedFunc(...args);
+110:       jest.runAllTimers();
+111:       // Assert
+112:       expect(func).toHaveBeenCalledWith(...args);
+113:     });
+114:   });
+115: });
 ````
 
 ## File: src/__tests__/Animations/MatrixCursor.test.tsx
@@ -6406,35 +6640,6 @@ tsconfig.json
 38: export {};
 ````
 
-## File: src/e2e/cypress/support/component.ts
-````typescript
- 1: // ***********************************************************
- 2: // This example support/component.ts is processed and
- 3: // loaded automatically before your test files.
- 4: //
- 5: // This is a great place to put global configuration and
- 6: // behavior that modifies Cypress.
- 7: //
- 8: // You can change the location of this file or turn off
- 9: // automatically serving support files with the
-10: // 'supportFile' configuration option.
-11: //
-12: // You can read more here:
-13: // https://on.cypress.io/configuration
-14: // ***********************************************************
-15: // Import commands.js using ES2015 syntax:
-16: import "./commands";
-17: import "@/styles/globals.css";
-18: import { mount } from "cypress/react";
-19: // Augment the Cypress namespace to include type definitions for
-20: // your custom command.
-21: // Alternatively, can be defined in cypress/support/component.d.ts
-22: // with a <reference path="./component" /> at the top of your spec.
-23: Cypress.Commands.add("mount", mount);
-24: // Example use:
-25: // cy.mount(<MyComponent />)
-````
-
 ## File: src/e2e/cypress/support/e2e.ts
 ````typescript
  1: // ***********************************************************
@@ -7805,6 +8010,49 @@ tsconfig.json
 46:     </div>
 47:   </div>
 48: );
+````
+
+## File: src/stories/components/Kontakt/KontaktWithMocks.tsx
+````typescript
+ 1: import React from "react";
+ 2: // Assuming @/ resolves to src/ as seen in KontaktContent.component.tsx
+ 3: import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+ 4: import { FormData } from "@/components/Kontakt/config/formConfig";
+ 5: /**
+ 6:  * Props for the KontaktWithMocks story.
+ 7:  */
+ 8: type StoryProps = {
+ 9:   simulateError?: boolean;
+10:   initialResponse?: string;
+11: };
+12: /**
+13:  * A special version of KontaktContent for stories.
+14:  * This renders the actual KontaktContent component but provides a mock
+15:  * onSubmit handler to prevent real email submissions and simulate responses.
+16:  */
+17: const KontaktWithMocks: React.FC<StoryProps> = ({
+18:   simulateError = false,
+19:   initialResponse = "",
+20: }) => {
+21:   /**
+22:    * Simulated form submission that doesn't make any actual API calls.
+23:    * It returns a promise that resolves to a message string, which KontaktContent will use.
+24:    */
+25:   const mockOnSubmit = async (data: FormData): Promise<string> => {
+26:     console.warn("Story mock: Form submitted with data:", data);
+27:     // Simulate API call delay
+28:     await new Promise((resolve) => setTimeout(resolve, 500));
+29:     if (simulateError) {
+30:       return "Feil under sending av skjema"; // Story mock: Simulate error
+31:     } else {
+32:       return "Takk for din beskjed"; // Story mock: Simulate success
+33:     }
+34:   };
+35:   return (
+36:     <KontaktContent onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+37:   );
+38: };
+39: export default KontaktWithMocks;
 ````
 
 ## File: src/stories/components/Layout/Footer.stories.tsx
@@ -12098,18 +12346,6 @@ tsconfig.json
 33: });
 ````
 
-## File: cypress.d.ts
-````typescript
-1: import { mount } from "cypress/react";
-2: declare global {
-3:   namespace Cypress {
-4:     interface Chainable {
-5:       mount: typeof mount;
-6:     }
-7:   }
-8: }
-````
-
 ## File: gitmojis.json
 ````json
   1: {
@@ -15229,121 +15465,6 @@ tsconfig.json
 67: export default motionMock;
 ````
 
-## File: src/__tests__/Animations/BounceInScroll.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import "@testing-library/jest-dom";
-  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-  4: import React from "react";
-  5: // Mock framer-motion
-  6: jest.mock("motion/react", () => ({
-  7:   motion: {
-  8:     div: ({
-  9:       children,
- 10:       className,
- 11:       "data-testid": testId,
- 12:     }: {
- 13:       children: React.ReactNode;
- 14:       className: string;
- 15:       "data-testid": string;
- 16:     }) => (
- 17:       <div className={className} data-testid={testId}>
- 18:         {children}
- 19:       </div>
- 20:     ),
- 21:   },
- 22:   Variants: {},
- 23: }));
- 24: describe("BounceInScroll", () => {
- 25:   it("renders children content", () => {
- 26:     // Arrange
- 27:     const testContent = "Test content";
- 28:     // Act
- 29:     render(
- 30:       <BounceInScroll>
- 31:         <div>{testContent}</div>
- 32:       </BounceInScroll>,
- 33:     );
- 34:     // Assert
- 35:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 36:   });
- 37:   it("applies custom CSS class", () => {
- 38:     // Arrange
- 39:     const testClass = "test-class";
- 40:     // Act
- 41:     render(
- 42:       <BounceInScroll cssClass={testClass}>
- 43:         <div>Test content</div>
- 44:       </BounceInScroll>,
- 45:     );
- 46:     // Assert
- 47:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
- 48:   });
- 49:   it("configures viewport with default amount when viewAmount not provided", () => {
- 50:     // Arrange
- 51:     const testContent = "Test content";
- 52:     // Act
- 53:     render(
- 54:       <BounceInScroll>
- 55:         <div>{testContent}</div>
- 56:       </BounceInScroll>,
- 57:     );
- 58:     // Assert
- 59:     const element = screen.getByTestId("bounceinscroll");
- 60:     expect(element).toBeInTheDocument();
- 61:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 62:   });
- 63:   it("configures viewport with custom amount when viewAmount provided", () => {
- 64:     // Arrange
- 65:     const testContent = "Test content";
- 66:     const viewAmount = 0.5;
- 67:     // Act
- 68:     render(
- 69:       <BounceInScroll viewAmount={viewAmount}>
- 70:         <div>{testContent}</div>
- 71:       </BounceInScroll>,
- 72:     );
- 73:     // Assert
- 74:     const element = screen.getByTestId("bounceinscroll");
- 75:     expect(element).toBeInTheDocument();
- 76:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 77:   });
- 78:   it("configures for instant animation when instant prop is true", () => {
- 79:     // Arrange
- 80:     const testContent = "Test content";
- 81:     // Act
- 82:     render(
- 83:       <BounceInScroll instant={true}>
- 84:         <div>{testContent}</div>
- 85:       </BounceInScroll>,
- 86:     );
- 87:     // Assert
- 88:     const element = screen.getByTestId("bounceinscroll");
- 89:     expect(element).toBeInTheDocument();
- 90:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 91:   });
- 92:   it("handles all viewport amount types", () => {
- 93:     // Arrange
- 94:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
- 95:     const testContent = "Test content";
- 96:     amounts.forEach((amount) => {
- 97:       // Act
- 98:       const { unmount } = render(
- 99:         <BounceInScroll viewAmount={amount}>
-100:           <div>{testContent}</div>
-101:         </BounceInScroll>,
-102:       );
-103:       // Assert
-104:       const element = screen.getByTestId("bounceinscroll");
-105:       expect(element).toBeInTheDocument();
-106:       expect(screen.getByText(testContent)).toBeInTheDocument();
-107:       // Cleanup
-108:       unmount();
-109:     });
-110:   });
-111: });
-````
-
 ## File: src/__tests__/Animations/Matrix.test.tsx
 ````typescript
   1: import React from "react";
@@ -15454,125 +15575,6 @@ tsconfig.json
 106:     });
 107:   });
 108: });
-````
-
-## File: src/__tests__/Animations/Matrix.utils.test.ts
-````typescript
-  1: import {
-  2:   hexToRgb,
-  3:   getRandomInt,
-  4:   getRandomCharacter,
-  5:   debounce,
-  6: } from "@/components/Animations/Matrix.utils";
-  7: describe("Matrix Utils", () => {
-  8:   describe("hexToRgb", () => {
-  9:     it("converts valid hex color to RGB", () => {
- 10:       // Arrange
- 11:       const hexColors = ["#ff0000", "#00ff00", "#0000ff", "#ffffff"];
- 12:       const expectedResults = [
- 13:         { r: 255, g: 0, b: 0 },
- 14:         { r: 0, g: 255, b: 0 },
- 15:         { r: 0, g: 0, b: 255 },
- 16:         { r: 255, g: 255, b: 255 },
- 17:       ];
- 18:       // Act & Assert
- 19:       hexColors.forEach((hex, index) => {
- 20:         expect(hexToRgb(hex)).toStrictEqual(expectedResults[index]);
- 21:       });
- 22:     });
- 23:     it("returns null for invalid hex colors", () => {
- 24:       // Arrange
- 25:       const invalidHexColors = ["invalid", "#12", "#1234", "#12345"];
- 26:       // Act & Assert
- 27:       invalidHexColors.forEach((hex) => {
- 28:         expect(hexToRgb(hex)).toBeNull();
- 29:       });
- 30:     });
- 31:   });
- 32:   describe("getRandomInt", () => {
- 33:     it("returns a random integer within the range", () => {
- 34:       // Arrange
- 35:       const max = 10;
- 36:       const mockGetRandomValues = jest
- 37:         .spyOn(window.crypto, "getRandomValues")
- 38:         .mockImplementation((array) => {
- 39:           if (array instanceof Uint32Array) {
- 40:             array[0] = 123456789;
- 41:           }
- 42:           return array as Uint32Array;
- 43:         });
- 44:       // Act
- 45:       const result = getRandomInt(max);
- 46:       // Assert
- 47:       expect(result).toBe(9); // 123456789 % 10 = 9
- 48:       expect(mockGetRandomValues).toHaveBeenCalledWith(expect.any(Uint32Array));
- 49:       // Cleanup
- 50:       mockGetRandomValues.mockRestore();
- 51:     });
- 52:   });
- 53:   describe("getRandomCharacter", () => {
- 54:     it("returns a character from the provided tileSet", () => {
- 55:       // Arrange
- 56:       const tileSet = ["A", "B", "C"];
- 57:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
- 58:       // Act
- 59:       const result = getRandomCharacter(tileSet);
- 60:       // Assert
- 61:       expect(tileSet).toContain(result);
- 62:       mockGetRandomInt.mockRestore();
- 63:     });
- 64:     it("returns a random ASCII character when tileSet is null", () => {
- 65:       // Arrange
- 66:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
- 67:       // Act
- 68:       const result = getRandomCharacter(null);
- 69:       // Assert
- 70:       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
- 71:       mockGetRandomInt.mockRestore();
- 72:     });
- 73:     it("returns a random ASCII character when tileSet is empty", () => {
- 74:       // Arrange
- 75:       const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
- 76:       // Act
- 77:       const result = getRandomCharacter([]);
- 78:       // Assert
- 79:       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
- 80:       mockGetRandomInt.mockRestore();
- 81:     });
- 82:   });
- 83:   describe("debounce", () => {
- 84:     beforeEach(() => {
- 85:       jest.useFakeTimers();
- 86:     });
- 87:     afterEach(() => {
- 88:       jest.useRealTimers();
- 89:     });
- 90:     it("debounces function calls", () => {
- 91:       // Arrange
- 92:       const func = jest.fn();
- 93:       const debouncedFunc = debounce(func, 100);
- 94:       // Act
- 95:       debouncedFunc();
- 96:       debouncedFunc();
- 97:       debouncedFunc();
- 98:       expect(func).not.toHaveBeenCalled();
- 99:       jest.runAllTimers();
-100:       // Assert
-101:       expect(func).toHaveBeenCalledTimes(1);
-102:     });
-103:     it("calls function with correct arguments", () => {
-104:       // Arrange
-105:       const func = jest.fn();
-106:       const debouncedFunc = debounce(func, 100);
-107:       const args = ["test", 123];
-108:       // Act
-109:       debouncedFunc(...args);
-110:       jest.runAllTimers();
-111:       // Assert
-112:       expect(func).toHaveBeenCalledWith(...args);
-113:     });
-114:   });
-115: });
 ````
 
 ## File: src/__tests__/Index/Section.test.tsx
@@ -16501,6 +16503,229 @@ tsconfig.json
 14: </html>
 ````
 
+## File: src/stories/components/Index/IndexContent.stories.tsx
+````typescript
+  1: import React from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import IndexContent from "@/components/Index/IndexContent.component";
+  4: import type { Pagecontent } from "@/types/sanity.types";
+  5: import "@/app/globals.css";
+  6: interface PageContentWithKey extends Pagecontent {
+  7:   _key: string;
+  8: }
+  9: export default {
+ 10:   title: "Index/IndexContent",
+ 11:   component: IndexContent,
+ 12: } as Meta;
+ 13: const mockPageContentSingle: PageContentWithKey[] = [
+ 14:   {
+ 15:     _key: "1",
+ 16:     _type: "pagecontent",
+ 17:     id: 1,
+ 18:     title: "Velkommen til min portefølje",
+ 19:     text: [
+ 20:       {
+ 21:         _key: "block1",
+ 22:         _type: "block",
+ 23:         style: "normal",
+ 24:         children: [
+ 25:           {
+ 26:             _key: "span1",
+ 27:             _type: "span",
+ 28:             text: "Dette er en introduksjon til porteføljen. Her finner du informasjon om mine prosjekter, ferdigheter og erfaringer. ",
+ 29:           },
+ 30:           {
+ 31:             _key: "span2",
+ 32:             _type: "span",
+ 33:             text: "Utforsk gjerne sidene for å lære mer om meg.",
+ 34:             marks: ["strong"],
+ 35:           },
+ 36:         ],
+ 37:       },
+ 38:       {
+ 39:         _key: "block2",
+ 40:         _type: "block",
+ 41:         style: "normal",
+ 42:         children: [
+ 43:           {
+ 44:             _key: "span1",
+ 45:             _type: "span",
+ 46:             text: "Jeg har jobbet med en rekke teknologier, inkludert React, Next.js, TypeScript, og Sanity.",
+ 47:           },
+ 48:         ],
+ 49:       },
+ 50:     ],
+ 51:   },
+ 52: ];
+ 53: const mockPageContentMultiple: PageContentWithKey[] = [
+ 54:   {
+ 55:     _key: "1",
+ 56:     _type: "pagecontent",
+ 57:     id: 1,
+ 58:     title: "Om Meg",
+ 59:     text: [
+ 60:       {
+ 61:         _key: "block1",
+ 62:         _type: "block",
+ 63:         style: "normal",
+ 64:         children: [
+ 65:           {
+ 66:             _key: "span1",
+ 67:             _type: "span",
+ 68:             text: "Jeg er en engasjert frontend-utvikler med lidenskap for å skape intuitive og brukervennlige nettopplevelser. Med solid erfaring innen moderne webteknologier, trives jeg med å løse komplekse problemer og levere kode av høy kvalitet.",
+ 69:           },
+ 70:         ],
+ 71:       },
+ 72:     ],
+ 73:   },
+ 74:   {
+ 75:     _key: "2",
+ 76:     _type: "pagecontent",
+ 77:     id: 2,
+ 78:     title: "Mine Ferdigheter",
+ 79:     text: [
+ 80:       {
+ 81:         _key: "block1",
+ 82:         _type: "block",
+ 83:         style: "h3",
+ 84:         children: [{ _key: "span1", _type: "span", text: "Frontend" }],
+ 85:       },
+ 86:       {
+ 87:         _key: "block2",
+ 88:         _type: "block",
+ 89:         listItem: "bullet",
+ 90:         level: 1,
+ 91:         children: [
+ 92:           {
+ 93:             _key: "span1",
+ 94:             _type: "span",
+ 95:             text: "React, Next.js, TypeScript, JavaScript (ES6+)",
+ 96:           },
+ 97:         ],
+ 98:       },
+ 99:       {
+100:         _key: "block3",
+101:         _type: "block",
+102:         listItem: "bullet",
+103:         level: 1,
+104:         children: [
+105:           {
+106:             _key: "span1",
+107:             _type: "span",
+108:             text: "HTML5, CSS3, Tailwind CSS, Styled Components",
+109:           },
+110:         ],
+111:       },
+112:       {
+113:         _key: "block4",
+114:         _type: "block",
+115:         style: "h3",
+116:         children: [{ _key: "span1", _type: "span", text: "Backend & CMS" }],
+117:       },
+118:       {
+119:         _key: "block5",
+120:         _type: "block",
+121:         listItem: "bullet",
+122:         level: 1,
+123:         children: [
+124:           {
+125:             _key: "span1",
+126:             _type: "span",
+127:             text: "Sanity.io, Node.js (grunnleggende)",
+128:           },
+129:         ],
+130:       },
+131:     ],
+132:   },
+133:   {
+134:     _key: "3",
+135:     _type: "pagecontent",
+136:     id: 3,
+137:     title: "Prosjekterfaring",
+138:     text: [
+139:       {
+140:         _key: "block1",
+141:         _type: "block",
+142:         style: "normal",
+143:         children: [
+144:           {
+145:             _key: "span1",
+146:             _type: "span",
+147:             text: "Jeg har jobbet på diverse prosjekter, fra små nettsider til større applikasjoner. Se 'Prosjekter'-siden for detaljer.",
+148:           },
+149:         ],
+150:       },
+151:     ],
+152:   },
+153: ];
+154: const mockPageContentMany: PageContentWithKey[] = [
+155:   ...mockPageContentMultiple,
+156:   {
+157:     _key: "4",
+158:     _type: "pagecontent",
+159:     id: 4,
+160:     title: "Interesser",
+161:     text: [
+162:       {
+163:         _key: "block1",
+164:         _type: "block",
+165:         style: "normal",
+166:         children: [
+167:           {
+168:             _key: "span1",
+169:             _type: "span",
+170:             text: "Utenom koding liker jeg å holde meg oppdatert på nye teknologier, bidra til open source-prosjekter, og gå turer i naturen.",
+171:           },
+172:         ],
+173:       },
+174:     ],
+175:   },
+176:   {
+177:     _key: "5",
+178:     _type: "pagecontent",
+179:     id: 5,
+180:     title: "Kontaktinformasjon",
+181:     text: [
+182:       {
+183:         _key: "block1",
+184:         _type: "block",
+185:         style: "normal",
+186:         children: [
+187:           {
+188:             _key: "span1",
+189:             _type: "span",
+190:             text: "Ta gjerne kontakt via kontaktskjemaet eller finn meg på LinkedIn.",
+191:           },
+192:         ],
+193:       },
+194:     ],
+195:   },
+196: ];
+197: export const Default = () => (
+198:   <div className="bg-gray-900">
+199:     <IndexContent pageContent={mockPageContentMultiple} />
+200:   </div>
+201: );
+202: export const SingleSection = () => (
+203:   <div className="bg-gray-900">
+204:     <IndexContent pageContent={mockPageContentSingle} />
+205:   </div>
+206: );
+207: export const ManySections = () => (
+208:   <div className="bg-gray-900">
+209:     <IndexContent pageContent={mockPageContentMany} />
+210:   </div>
+211: );
+212: export const AlternatingVariants = () => (
+213:   <div className="bg-gray-900">
+214:     <IndexContent pageContent={mockPageContentMany} />
+215:     <div className="p-4 mt-8 bg-slate-700 text-white text-center">
+216:       <p>Observer hvordan bakgrunnsfargen på seksjonene alternerer.</p>
+217:     </div>
+218:   </div>
+219: );
+````
+
 ## File: src/stories/components/Index/MobileBackground.stories.tsx
 ````typescript
   1: import React from "react";
@@ -16627,47 +16852,82 @@ tsconfig.json
 122: );
 ````
 
-## File: src/stories/components/Kontakt/KontaktWithMocks.tsx
-````typescript
- 1: import React from "react";
- 2: // Assuming @/ resolves to src/ as seen in KontaktContent.component.tsx
- 3: import KontaktContent from "@/components/Kontakt/KontaktContent.component";
- 4: import { FormData } from "@/components/Kontakt/config/formConfig";
- 5: /**
- 6:  * Props for the KontaktWithMocks story.
- 7:  */
- 8: type StoryProps = {
- 9:   simulateError?: boolean;
-10:   initialResponse?: string;
+## File: src/utils/eslint/dist/index.js
+````javascript
+ 1: /* eslint-disable @typescript-eslint/no-require-imports */
+ 2: "use strict";
+ 3: Object.defineProperty(exports, "__esModule", { value: true });
+ 4: const utils_1 = require("@typescript-eslint/utils");
+ 5: const isTestFunction = (node) => {
+ 6:   const testNames = ["it", "test"];
+ 7:   return (
+ 8:     node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
+ 9:     testNames.includes(node.callee.name)
+10:   );
 11: };
-12: /**
-13:  * A special version of KontaktContent for stories.
-14:  * This renders the actual KontaktContent component but provides a mock
-15:  * onSubmit handler to prevent real email submissions and simulate responses.
-16:  */
-17: const KontaktWithMocks: React.FC<StoryProps> = ({
-18:   simulateError = false,
-19:   initialResponse = "",
-20: }) => {
-21:   /**
-22:    * Simulated form submission that doesn't make any actual API calls.
-23:    * It returns a promise that resolves to a message string, which KontaktContent will use.
-24:    */
-25:   const mockOnSubmit = async (data: FormData): Promise<string> => {
-26:     console.warn("Story mock: Form submitted with data:", data);
-27:     // Simulate API call delay
-28:     await new Promise((resolve) => setTimeout(resolve, 500));
-29:     if (simulateError) {
-30:       return "Feil under sending av skjema"; // Story mock: Simulate error
-31:     } else {
-32:       return "Takk for din beskjed"; // Story mock: Simulate success
-33:     }
-34:   };
-35:   return (
-36:     <KontaktContent onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+12: const isArrowFunction = (node) => {
+13:   return (
+14:     (node === null || node === void 0 ? void 0 : node.type) ===
+15:     utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression
+16:   );
+17: };
+18: const validateAAAPattern = (context, node) => {
+19:   const testFn = node.arguments[1];
+20:   if (!isArrowFunction(testFn)) return;
+21:   if (!hasAAAComments(context, testFn)) {
+22:     context.report({
+23:       node,
+24:       messageId: "missingAAAPattern",
+25:     });
+26:   }
+27: };
+28: const validateTestCase = (context, node) => {
+29:   if (!isTestFunction(node)) return;
+30:   validateAAAPattern(context, node);
+31: };
+32: const hasAAAComments = (context, testFn) => {
+33:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
+34:   const patterns = ["Arrange", "Act", "Assert"];
+35:   return comments.some((comment) =>
+36:     patterns.some((pattern) => comment.value.includes(pattern)),
 37:   );
 38: };
-39: export default KontaktWithMocks;
+39: const createRule = utils_1.ESLintUtils.RuleCreator(
+40:   (name) =>
+41:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
+42: );
+43: const rule = createRule({
+44:   name: "arrange-act-assert",
+45:   meta: {
+46:     type: "suggestion",
+47:     docs: {
+48:       description: "enforce AAA pattern in tests",
+49:     },
+50:     messages: {
+51:       missingAAAPattern: "Test should follow AAA pattern with comments",
+52:     },
+53:     schema: [],
+54:   },
+55:   defaultOptions: [],
+56:   create(context) {
+57:     return {
+58:       CallExpression: (node) => validateTestCase(context, node),
+59:     };
+60:   },
+61: });
+62: module.exports = {
+63:   configs: {
+64:     recommended: {
+65:       plugins: ["test-rules"],
+66:       rules: {
+67:         "test-rules/arrange-act-assert": "error",
+68:       },
+69:     },
+70:   },
+71:   rules: {
+72:     "arrange-act-assert": rule,
+73:   },
+74: };
 ````
 
 ## File: .eslintrc.json
@@ -16962,305 +17222,33 @@ tsconfig.json
 58: });
 ````
 
-## File: src/stories/components/Index/IndexContent.stories.tsx
+## File: src/e2e/cypress/support/component.ts
 ````typescript
-  1: import React from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import IndexContent from "@/components/Index/IndexContent.component";
-  4: import type { Pagecontent } from "@/types/sanity.types";
-  5: import "@/app/globals.css";
-  6: interface PageContentWithKey extends Pagecontent {
-  7:   _key: string;
-  8: }
-  9: export default {
- 10:   title: "Index/IndexContent",
- 11:   component: IndexContent,
- 12: } as Meta;
- 13: const mockPageContentSingle: PageContentWithKey[] = [
- 14:   {
- 15:     _key: "1",
- 16:     _type: "pagecontent",
- 17:     id: 1,
- 18:     title: "Velkommen til min portefølje",
- 19:     text: [
- 20:       {
- 21:         _key: "block1",
- 22:         _type: "block",
- 23:         style: "normal",
- 24:         children: [
- 25:           {
- 26:             _key: "span1",
- 27:             _type: "span",
- 28:             text: "Dette er en introduksjon til porteføljen. Her finner du informasjon om mine prosjekter, ferdigheter og erfaringer. ",
- 29:           },
- 30:           {
- 31:             _key: "span2",
- 32:             _type: "span",
- 33:             text: "Utforsk gjerne sidene for å lære mer om meg.",
- 34:             marks: ["strong"],
- 35:           },
- 36:         ],
- 37:       },
- 38:       {
- 39:         _key: "block2",
- 40:         _type: "block",
- 41:         style: "normal",
- 42:         children: [
- 43:           {
- 44:             _key: "span1",
- 45:             _type: "span",
- 46:             text: "Jeg har jobbet med en rekke teknologier, inkludert React, Next.js, TypeScript, og Sanity.",
- 47:           },
- 48:         ],
- 49:       },
- 50:     ],
- 51:   },
- 52: ];
- 53: const mockPageContentMultiple: PageContentWithKey[] = [
- 54:   {
- 55:     _key: "1",
- 56:     _type: "pagecontent",
- 57:     id: 1,
- 58:     title: "Om Meg",
- 59:     text: [
- 60:       {
- 61:         _key: "block1",
- 62:         _type: "block",
- 63:         style: "normal",
- 64:         children: [
- 65:           {
- 66:             _key: "span1",
- 67:             _type: "span",
- 68:             text: "Jeg er en engasjert frontend-utvikler med lidenskap for å skape intuitive og brukervennlige nettopplevelser. Med solid erfaring innen moderne webteknologier, trives jeg med å løse komplekse problemer og levere kode av høy kvalitet.",
- 69:           },
- 70:         ],
- 71:       },
- 72:     ],
- 73:   },
- 74:   {
- 75:     _key: "2",
- 76:     _type: "pagecontent",
- 77:     id: 2,
- 78:     title: "Mine Ferdigheter",
- 79:     text: [
- 80:       {
- 81:         _key: "block1",
- 82:         _type: "block",
- 83:         style: "h3",
- 84:         children: [{ _key: "span1", _type: "span", text: "Frontend" }],
- 85:       },
- 86:       {
- 87:         _key: "block2",
- 88:         _type: "block",
- 89:         listItem: "bullet",
- 90:         level: 1,
- 91:         children: [
- 92:           {
- 93:             _key: "span1",
- 94:             _type: "span",
- 95:             text: "React, Next.js, TypeScript, JavaScript (ES6+)",
- 96:           },
- 97:         ],
- 98:       },
- 99:       {
-100:         _key: "block3",
-101:         _type: "block",
-102:         listItem: "bullet",
-103:         level: 1,
-104:         children: [
-105:           {
-106:             _key: "span1",
-107:             _type: "span",
-108:             text: "HTML5, CSS3, Tailwind CSS, Styled Components",
-109:           },
-110:         ],
-111:       },
-112:       {
-113:         _key: "block4",
-114:         _type: "block",
-115:         style: "h3",
-116:         children: [{ _key: "span1", _type: "span", text: "Backend & CMS" }],
-117:       },
-118:       {
-119:         _key: "block5",
-120:         _type: "block",
-121:         listItem: "bullet",
-122:         level: 1,
-123:         children: [
-124:           {
-125:             _key: "span1",
-126:             _type: "span",
-127:             text: "Sanity.io, Node.js (grunnleggende)",
-128:           },
-129:         ],
-130:       },
-131:     ],
-132:   },
-133:   {
-134:     _key: "3",
-135:     _type: "pagecontent",
-136:     id: 3,
-137:     title: "Prosjekterfaring",
-138:     text: [
-139:       {
-140:         _key: "block1",
-141:         _type: "block",
-142:         style: "normal",
-143:         children: [
-144:           {
-145:             _key: "span1",
-146:             _type: "span",
-147:             text: "Jeg har jobbet på diverse prosjekter, fra små nettsider til større applikasjoner. Se 'Prosjekter'-siden for detaljer.",
-148:           },
-149:         ],
-150:       },
-151:     ],
-152:   },
-153: ];
-154: const mockPageContentMany: PageContentWithKey[] = [
-155:   ...mockPageContentMultiple,
-156:   {
-157:     _key: "4",
-158:     _type: "pagecontent",
-159:     id: 4,
-160:     title: "Interesser",
-161:     text: [
-162:       {
-163:         _key: "block1",
-164:         _type: "block",
-165:         style: "normal",
-166:         children: [
-167:           {
-168:             _key: "span1",
-169:             _type: "span",
-170:             text: "Utenom koding liker jeg å holde meg oppdatert på nye teknologier, bidra til open source-prosjekter, og gå turer i naturen.",
-171:           },
-172:         ],
-173:       },
-174:     ],
-175:   },
-176:   {
-177:     _key: "5",
-178:     _type: "pagecontent",
-179:     id: 5,
-180:     title: "Kontaktinformasjon",
-181:     text: [
-182:       {
-183:         _key: "block1",
-184:         _type: "block",
-185:         style: "normal",
-186:         children: [
-187:           {
-188:             _key: "span1",
-189:             _type: "span",
-190:             text: "Ta gjerne kontakt via kontaktskjemaet eller finn meg på LinkedIn.",
-191:           },
-192:         ],
-193:       },
-194:     ],
-195:   },
-196: ];
-197: export const Default = () => (
-198:   <div className="bg-gray-900">
-199:     <IndexContent pageContent={mockPageContentMultiple} />
-200:   </div>
-201: );
-202: export const SingleSection = () => (
-203:   <div className="bg-gray-900">
-204:     <IndexContent pageContent={mockPageContentSingle} />
-205:   </div>
-206: );
-207: export const ManySections = () => (
-208:   <div className="bg-gray-900">
-209:     <IndexContent pageContent={mockPageContentMany} />
-210:   </div>
-211: );
-212: export const AlternatingVariants = () => (
-213:   <div className="bg-gray-900">
-214:     <IndexContent pageContent={mockPageContentMany} />
-215:     <div className="p-4 mt-8 bg-slate-700 text-white text-center">
-216:       <p>Observer hvordan bakgrunnsfargen på seksjonene alternerer.</p>
-217:     </div>
-218:   </div>
-219: );
-````
-
-## File: src/utils/eslint/dist/index.js
-````javascript
- 1: /* eslint-disable @typescript-eslint/no-require-imports */
- 2: "use strict";
- 3: Object.defineProperty(exports, "__esModule", { value: true });
- 4: const utils_1 = require("@typescript-eslint/utils");
- 5: const isTestFunction = (node) => {
- 6:   const testNames = ["it", "test"];
- 7:   return (
- 8:     node.callee.type === utils_1.TSESTree.AST_NODE_TYPES.Identifier &&
- 9:     testNames.includes(node.callee.name)
-10:   );
-11: };
-12: const isArrowFunction = (node) => {
-13:   return (
-14:     (node === null || node === void 0 ? void 0 : node.type) ===
-15:     utils_1.TSESTree.AST_NODE_TYPES.ArrowFunctionExpression
-16:   );
-17: };
-18: const validateAAAPattern = (context, node) => {
-19:   const testFn = node.arguments[1];
-20:   if (!isArrowFunction(testFn)) return;
-21:   if (!hasAAAComments(context, testFn)) {
-22:     context.report({
-23:       node,
-24:       messageId: "missingAAAPattern",
-25:     });
-26:   }
-27: };
-28: const validateTestCase = (context, node) => {
-29:   if (!isTestFunction(node)) return;
-30:   validateAAAPattern(context, node);
-31: };
-32: const hasAAAComments = (context, testFn) => {
-33:   const comments = context.getSourceCode().getCommentsInside(testFn.body);
-34:   const patterns = ["Arrange", "Act", "Assert"];
-35:   return comments.some((comment) =>
-36:     patterns.some((pattern) => comment.value.includes(pattern)),
-37:   );
-38: };
-39: const createRule = utils_1.ESLintUtils.RuleCreator(
-40:   (name) =>
-41:     `https://github.com/your-repo/eslint-plugin/blob/main/docs/rules/${name}.md`,
-42: );
-43: const rule = createRule({
-44:   name: "arrange-act-assert",
-45:   meta: {
-46:     type: "suggestion",
-47:     docs: {
-48:       description: "enforce AAA pattern in tests",
-49:     },
-50:     messages: {
-51:       missingAAAPattern: "Test should follow AAA pattern with comments",
-52:     },
-53:     schema: [],
-54:   },
-55:   defaultOptions: [],
-56:   create(context) {
-57:     return {
-58:       CallExpression: (node) => validateTestCase(context, node),
-59:     };
-60:   },
-61: });
-62: module.exports = {
-63:   configs: {
-64:     recommended: {
-65:       plugins: ["test-rules"],
-66:       rules: {
-67:         "test-rules/arrange-act-assert": "error",
-68:       },
-69:     },
-70:   },
-71:   rules: {
-72:     "arrange-act-assert": rule,
-73:   },
-74: };
+ 1: // ***********************************************************
+ 2: // This example support/component.ts is processed and
+ 3: // loaded automatically before your test files.
+ 4: //
+ 5: // This is a great place to put global configuration and
+ 6: // behavior that modifies Cypress.
+ 7: //
+ 8: // You can change the location of this file or turn off
+ 9: // automatically serving support files with the
+10: // 'supportFile' configuration option.
+11: //
+12: // You can read more here:
+13: // https://on.cypress.io/configuration
+14: // ***********************************************************
+15: // Import commands.js using ES2015 syntax:
+16: import "./commands";
+17: import "@/styles/globals.css";
+18: import { mount } from "cypress/react";
+19: // Augment the Cypress namespace to include type definitions for
+20: // your custom command.
+21: // Alternatively, can be defined in cypress/support/component.d.ts
+22: // with a <reference path="./component" /> at the top of your spec.
+23: Cypress.Commands.add("mount", mount);
+24: // Example use:
+25: // cy.mount(<MyComponent />)
 ````
 
 ## File: studio/package.json
@@ -17301,6 +17289,18 @@ tsconfig.json
 34:     "singleQuote": true
 35:   }
 36: }
+````
+
+## File: cypress.d.ts
+````typescript
+1: import { mount } from "cypress/react";
+2: declare global {
+3:   namespace Cypress {
+4:     interface Chainable {
+5:       mount: typeof mount;
+6:     }
+7:   }
+8: }
 ````
 
 ## File: src/e2e/cypress/e2e/layout.cy.ts
@@ -17575,7 +17575,7 @@ tsconfig.json
 90:     "postcss": "^8.5.5",
 91:     "prettier": "3.5.3",
 92:     "tailwindcss": "^4.1.10",
-93:     "ts-jest": "^29.3.4",
+93:     "ts-jest": "^29.4.0",
 94:     "typescript": "^5.8.3",
 95:     "wait-on": "^8.0.3"
 96:   }
