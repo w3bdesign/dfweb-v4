@@ -29,6 +29,10 @@ type Props = {
    * Optional initial response message to display.
    */
   initialResponse?: string;
+  /**
+   * CSRF token for form security
+   */
+  csrfToken?: string;
 };
 
 /**
@@ -41,6 +45,7 @@ type Props = {
 const KontaktContent: React.FC<Props> = ({
   onSubmit: onSubmitProp,
   initialResponse = "",
+  csrfToken = "",
 }) => {
   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
 
@@ -96,6 +101,7 @@ const KontaktContent: React.FC<Props> = ({
                       onSubmit={handleFormSubmit}
                       fields={formFields}
                       submitButtonText="Send skjema"
+                      csrfToken={csrfToken}
                     />
                   </div>
                 )}
