@@ -2,13 +2,15 @@ name: OWASP Scan
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  # Allow manual triggering for security testing
+  workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
+  security-events: write
 
 jobs:
   zap_scan:
@@ -23,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -38,14 +40,17 @@ jobs:
 
       - name: Start application
         run: pnpm start &
-        
+
       - name: Wait for application to start
         run: npx wait-on http://localhost:3000 --timeout 60000
-        
+
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          target: 'http://localhost:3000'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          target: "http://localhost:3000"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a"
+          allow_issue_writing: false
+          fail_action: true
+          artifact_name: zap_scan_report
