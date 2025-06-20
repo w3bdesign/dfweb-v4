@@ -128,7 +128,6 @@ Sanity.io and Typescript.
   - Automated security vulnerability scanning with Snyk
     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
     - Integrates with GitHub Security tab for vulnerability tracking
-  - Automated web application security testing with OWASP ZAP baseline scans on every PR and push to main
 
 ### Environment Variables
 
