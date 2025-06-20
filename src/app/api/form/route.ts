@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     // Log the form submission (in production, you might want to save to database)
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
-    const clientIp = forwardedFor?.split(",")[0] || realIp || "unknown";
+    const clientIp = forwardedFor?.split(",")[0] ?? realIp ?? "unknown";
 
     console.log("Form submission received:", {
       navn,
