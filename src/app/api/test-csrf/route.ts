@@ -10,16 +10,19 @@ export async function GET() {
     const testData = {
       navn: "Test User",
       telefon: "12345678",
-      tekst: "This is a test submission without CSRF token"
+      tekst: "This is a test submission without CSRF token",
     };
 
-    const response = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/form`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${process.env.VERCEL_URL ? "https://" + process.env.VERCEL_URL : "http://localhost:3000"}/api/form`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(testData),
       },
-      body: JSON.stringify(testData)
-    });
+    );
 
     const result = await response.json();
 
@@ -28,14 +31,16 @@ export async function GET() {
       testWithoutToken: {
         status: response.status,
         response: result,
-        expected: "Should be blocked with 403 status"
-      }
+        expected: "Should be blocked with 403 status",
+      },
     });
-
   } catch (error) {
-    return NextResponse.json({
-      error: "Test failed",
-      details: error instanceof Error ? error.message : "Unknown error"
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Test failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
   }
 }
