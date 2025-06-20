@@ -6,7 +6,7 @@ interface TestResult {
   type: string;
   status?: number;
   response?: any;
-  expected: string;
+  expected?: string;
   error?: string;
 }
 
