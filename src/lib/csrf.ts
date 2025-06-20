@@ -63,7 +63,7 @@ export function validateCSRFToken(token: string): boolean {
     }
 
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
