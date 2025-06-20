@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 
+interface TestResult {
+  type: string;
+  status?: number;
+  response?: any;
+  expected: string;
+  error?: string;
+}
+
 export default function TestCSRFPage() {
-  const [testResults, setTestResults] = useState<any>(null);
+  const [testResults, setTestResults] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const testWithoutCSRF = async () => {
