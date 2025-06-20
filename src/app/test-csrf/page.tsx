@@ -5,7 +5,7 @@ import { useState } from "react";
 interface TestResult {
   type: string;
   status?: number;
-  response?: any;
+  response?: Record<string, unknown>;
   expected?: string;
   error?: string;
 }
@@ -156,11 +156,10 @@ export default function TestCSRFPage() {
           <ul className="list-disc list-inside space-y-1">
             <li>
               <strong>Without CSRF Token:</strong> Should return status 403 with
-              "CSRF token missing" error
             </li>
             <li>
               <strong>With CSRF Token:</strong> Should return status 200 with
-              "Form submitted successfully" message
+              Form submitted successfully
             </li>
           </ul>
         </div>
