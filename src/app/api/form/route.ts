@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     } else {
       return NextResponse.json(
         { error: "Unsupported content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,14 +32,14 @@ export async function POST(request: NextRequest) {
     if (!csrfToken) {
       return NextResponse.json(
         { error: "CSRF token missing" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!validateCSRFToken(csrfToken)) {
       return NextResponse.json(
         { error: "Invalid or expired CSRF token" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!navn || !telefon || !tekst) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
     if (navn.length < 2 || navn.length > 100) {
       return NextResponse.json(
         { error: "Name must be between 2 and 100 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (tekst.length < 10 || tekst.length > 1000) {
       return NextResponse.json(
         { error: "Message must be between 10 and 1000 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -78,13 +78,13 @@ export async function POST(request: NextRequest) {
         message: "Form submitted successfully",
         success: true,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error processing form submission:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
