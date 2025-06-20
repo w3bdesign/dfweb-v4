@@ -64,7 +64,7 @@ Sanity.io and Typescript.
 - React testing library for unit testing
 - Cypress for E2E testing
 - Playwright for cross-browser E2E testing
-- Contact form with Email.js
+- Contact form with Email.js and CSRF protection
 - Polymorphic components
 - Automatic sitemap generation (see /api/siteMapGenerator.ts)
 - Google rich results for each individual page
