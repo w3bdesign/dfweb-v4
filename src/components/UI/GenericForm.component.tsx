@@ -21,6 +21,7 @@ interface GenericFormProps<T extends z.ZodRawShape> {
   readonly onSubmit: (data: z.infer<z.ZodObject<T>>) => Promise<void>;
   readonly fields: ReadonlyArray<FieldConfig<z.infer<z.ZodObject<T>>>>;
   readonly submitButtonText: string;
+  readonly csrfToken?: string;
 }
 
 /**
@@ -36,6 +37,7 @@ function GenericForm<T extends z.ZodRawShape>({
   onSubmit,
   fields,
   submitButtonText,
+  csrfToken,
 }: Readonly<GenericFormProps<T>>) {
   type FormData = z.infer<typeof formSchema>;
 
@@ -56,6 +58,7 @@ function GenericForm<T extends z.ZodRawShape>({
       action="/api/form"
       aria-label="Contact Form"
     >
+      {csrfToken && <input type="hidden" name="_csrf" value={csrfToken} />}
       <fieldset>
         <legend className="text-center mx-auto text-xl mt-4 sr-only">
           Kontaktskjema
