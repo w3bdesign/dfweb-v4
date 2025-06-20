@@ -58,9 +58,7 @@ function GenericForm<T extends z.ZodRawShape>({
       action="/api/form"
       aria-label="Contact Form"
     >
-      {csrfToken && (
-        <input type="hidden" name="_csrf" value={csrfToken} />
-      )}
+      {csrfToken && <input type="hidden" name="_csrf" value={csrfToken} />}
       <fieldset>
         <legend className="text-center mx-auto text-xl mt-4 sr-only">
           Kontaktskjema
