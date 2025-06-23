@@ -7112,6 +7112,144 @@ tsconfig.json
 25: export default Grow;
 ````
 
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: export interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrixCanvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 39:   }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useCallback(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:     [
+ 95:       fadeFactor,
+ 96:       rgbBackground,
+ 97:       rgbFont,
+ 98:       tileSize,
+ 99:       glowColor,
+100:       tileSet,
+101:       frameInterval,
+102:     ],
+103:   );
+104:   useEffect(() => {
+105:     const canvas = canvasRef.current;
+106:     if (!canvas) return;
+107:     const ctx = canvas.getContext("2d");
+108:     if (!ctx) return;
+109:     const handleResize = () => {
+110:       const boundingClientRect = canvas.getBoundingClientRect();
+111:       canvas.width = boundingClientRect.width;
+112:       canvas.height = boundingClientRect.height;
+113:       initMatrix(canvas);
+114:       isInitializedRef.current = true;
+115:     };
+116:     const debouncedResize = debounce(handleResize, 100);
+117:     window.addEventListener("resize", debouncedResize);
+118:     handleResize();
+119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+120:     return () => {
+121:       window.removeEventListener("resize", debouncedResize);
+122:     };
+123:   }, [initMatrix, tick]);
+124:   return (
+125:     <canvas
+126:       ref={canvasRef}
+127:       id={CANVAS_ID}
+128:       style={{ width: "100%", height: "100%" }}
+129:       data-testid="matrix-canvas"
+130:       className="absolute inset-0"
+131:     />
+132:   );
+133: };
+134: export default ReactMatrixAnimation;
+````
+
 ## File: src/components/Animations/Matrix.renderer.ts
 ````typescript
   1: import { RGB, Column, getRandomCharacter } from "./Matrix.utils";
@@ -16929,144 +17067,6 @@ tsconfig.json
 17: }
 ````
 
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: export interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrixCanvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     const canvas = canvasRef.current;
-106:     if (!canvas) return;
-107:     const ctx = canvas.getContext("2d");
-108:     if (!ctx) return;
-109:     const handleResize = () => {
-110:       const boundingClientRect = canvas.getBoundingClientRect();
-111:       canvas.width = boundingClientRect.width;
-112:       canvas.height = boundingClientRect.height;
-113:       initMatrix(canvas);
-114:       isInitializedRef.current = true;
-115:     };
-116:     const debouncedResize = debounce(handleResize, 100);
-117:     window.addEventListener("resize", debouncedResize);
-118:     handleResize();
-119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-120:     return () => {
-121:       window.removeEventListener("resize", debouncedResize);
-122:     };
-123:   }, [initMatrix, tick]);
-124:   return (
-125:     <canvas
-126:       ref={canvasRef}
-127:       id={CANVAS_ID}
-128:       style={{ width: "100%", height: "100%" }}
-129:       data-testid="matrix-canvas"
-130:       className="absolute inset-0"
-131:     />
-132:   );
-133: };
-134: export default ReactMatrixAnimation;
-````
-
 ## File: src/components/Kontakt/KontaktContent.component.tsx
 ````typescript
   1: "use client";
@@ -17355,7 +17355,7 @@ tsconfig.json
 24:     "@sanity/eslint-config-studio": "^5.0.2",
 25:     "@types/react": "^19.1.8",
 26:     "eslint": "^9.29.0",
-27:     "prettier": "^3.5.3",
+27:     "prettier": "^3.6.0",
 28:     "typescript": "^5.8.3"
 29:   },
 30:   "prettier": {
@@ -17748,67 +17748,68 @@ tsconfig.json
 32:     "@sanity/image-url": "^1.1.0",
 33:     "@vercel/speed-insights": "^1.2.0",
 34:     "autoprefixer": "^10.4.21",
-35:     "clsx": "^2.1.1",
-36:     "cookie": ">=1.0.2",
-37:     "envalid": "^8.0.0",
-38:     "jest": "^29.7.0",
-39:     "motion": "^12.18.1",
-40:     "next": "15.3.4",
-41:     "next-sanity": "^9.12.0",
-42:     "path-to-regexp": "^8.2.0",
-43:     "react": "^19.1.0",
-44:     "react-dom": "^19.1.0",
-45:     "react-error-boundary": "^5.0.0",
-46:     "react-hook-form": "^7.58.1",
-47:     "react-icons": "^5.5.0",
-48:     "sanity": "^3.93.0",
-49:     "sitemap": "^8.0.0",
-50:     "tar-fs": ">=3.0.10",
-51:     "ts-node": "^10.9.2",
-52:     "zod": "^3.25.67"
-53:   },
-54:   "devDependencies": {
-55:     "@jest/expect": "^29.7.0",
-56:     "@jest/globals": "^29.7.0",
-57:     "@ladle/react": "^5.0.3",
-58:     "@lhci/cli": "^0.15.0",
-59:     "@playwright/test": "^1.53.1",
-60:     "@portabletext/types": "^2.0.13",
-61:     "@tailwindcss/postcss": "^4.1.10",
-62:     "@testing-library/cypress": "^10.0.3",
-63:     "@testing-library/jest-dom": "^6.6.3",
-64:     "@testing-library/react": "^16.3.0",
-65:     "@testing-library/user-event": "^14.6.1",
-66:     "@types/jest": "^29.5.14",
-67:     "@types/node": "^22.15.32",
-68:     "@types/react": "^19.1.8",
-69:     "@types/react-dom": "^19.1.6",
-70:     "@typescript-eslint/eslint-plugin": "^8.34.1",
-71:     "@typescript-eslint/parser": "^8.34.1",
-72:     "@typescript-eslint/utils": "^8.34.1",
-73:     "axe-core": "^4.10.3",
-74:     "cypress": "14.5.0",
-75:     "cypress-axe": "^1.6.0",
-76:     "eslint": "9.29.0",
-77:     "eslint-config-next": "15.3.4",
-78:     "eslint-config-prettier": "^10.1.5",
-79:     "eslint-plugin-jest": "^29.0.1",
-80:     "eslint-plugin-jsx-a11y": "^6.10.2",
-81:     "eslint-plugin-prettier": "^5.5.0",
-82:     "eslint-plugin-react": "^7.37.5",
-83:     "eslint-plugin-react-hooks": "^5.2.0",
-84:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-85:     "eslint-plugin-testing-library": "^7.5.3",
-86:     "expect": "^29.7.0",
-87:     "jest-environment-jsdom": "^29.7.0",
-88:     "jest-extended": "^6.0.0",
-89:     "jsdom-testing-mocks": "^1.13.1",
-90:     "postcss": "^8.5.6",
-91:     "prettier": "3.5.3",
-92:     "tailwindcss": "^4.1.10",
-93:     "ts-jest": "^29.4.0",
-94:     "typescript": "^5.8.3",
-95:     "wait-on": "^8.0.3"
-96:   }
-97: }
+35:     "babel-jest": "^30.0.2",
+36:     "clsx": "^2.1.1",
+37:     "cookie": ">=1.0.2",
+38:     "envalid": "^8.0.0",
+39:     "jest": "^29.7.0",
+40:     "motion": "^12.18.1",
+41:     "next": "15.3.4",
+42:     "next-sanity": "^9.12.0",
+43:     "path-to-regexp": "^8.2.0",
+44:     "react": "^19.1.0",
+45:     "react-dom": "^19.1.0",
+46:     "react-error-boundary": "^5.0.0",
+47:     "react-hook-form": "^7.58.1",
+48:     "react-icons": "^5.5.0",
+49:     "sanity": "^3.93.0",
+50:     "sitemap": "^8.0.0",
+51:     "tar-fs": ">=3.0.10",
+52:     "ts-node": "^10.9.2",
+53:     "zod": "^3.25.67"
+54:   },
+55:   "devDependencies": {
+56:     "@jest/expect": "^29.7.0",
+57:     "@jest/globals": "^29.7.0",
+58:     "@ladle/react": "^5.0.3",
+59:     "@lhci/cli": "^0.15.0",
+60:     "@playwright/test": "^1.53.1",
+61:     "@portabletext/types": "^2.0.13",
+62:     "@tailwindcss/postcss": "^4.1.10",
+63:     "@testing-library/cypress": "^10.0.3",
+64:     "@testing-library/jest-dom": "^6.6.3",
+65:     "@testing-library/react": "^16.3.0",
+66:     "@testing-library/user-event": "^14.6.1",
+67:     "@types/jest": "^29.5.14",
+68:     "@types/node": "^22.15.32",
+69:     "@types/react": "^19.1.8",
+70:     "@types/react-dom": "^19.1.6",
+71:     "@typescript-eslint/eslint-plugin": "^8.34.1",
+72:     "@typescript-eslint/parser": "^8.34.1",
+73:     "@typescript-eslint/utils": "^8.34.1",
+74:     "axe-core": "^4.10.3",
+75:     "cypress": "14.5.0",
+76:     "cypress-axe": "^1.6.0",
+77:     "eslint": "9.29.0",
+78:     "eslint-config-next": "15.3.4",
+79:     "eslint-config-prettier": "^10.1.5",
+80:     "eslint-plugin-jest": "^29.0.1",
+81:     "eslint-plugin-jsx-a11y": "^6.10.2",
+82:     "eslint-plugin-prettier": "^5.5.0",
+83:     "eslint-plugin-react": "^7.37.5",
+84:     "eslint-plugin-react-hooks": "^5.2.0",
+85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+86:     "eslint-plugin-testing-library": "^7.5.3",
+87:     "expect": "^29.7.0",
+88:     "jest-environment-jsdom": "^29.7.0",
+89:     "jest-extended": "^6.0.0",
+90:     "jsdom-testing-mocks": "^1.13.1",
+91:     "postcss": "^8.5.6",
+92:     "prettier": "3.6.0",
+93:     "tailwindcss": "^4.1.10",
+94:     "ts-jest": "^29.4.0",
+95:     "typescript": "^5.8.3",
+96:     "wait-on": "^8.0.3"
+97:   }
+98: }
 ````
