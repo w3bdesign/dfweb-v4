@@ -10308,6 +10308,65 @@ tsconfig.json
 72: `);
 ````
 
+## File: src/lib/csrf.ts
+````typescript
+ 1: import { randomBytes, createHmac, timingSafeEqual } from "crypto";
+ 2: const CSRF_SECRET =
+ 3:   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
+ 4: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
+ 5: /**
+ 6:  * Generates a CSRF token with timestamp
+ 7:  * @returns {string} Base64 encoded CSRF token
+ 8:  */
+ 9: export function generateCSRFToken(): string {
+10:   const timestamp = Date.now().toString();
+11:   const randomValue = randomBytes(32).toString("hex");
+12:   const payload = `${timestamp}:${randomValue}`;
+13:   const signature = createHmac("sha256", CSRF_SECRET)
+14:     .update(payload)
+15:     .digest("hex");
+16:   const token = `${payload}:${signature}`;
+17:   return Buffer.from(token).toString("base64");
+18: }
+19: /**
+20:  * Validates a CSRF token
+21:  * @param {string} token - Base64 encoded CSRF token
+22:  * @returns {boolean} True if token is valid and not expired
+23:  */
+24: export function validateCSRFToken(token: string): boolean {
+25:   try {
+26:     const decoded = Buffer.from(token, "base64").toString("utf-8");
+27:     const parts = decoded.split(":");
+28:     if (parts.length !== 3) {
+29:       return false;
+30:     }
+31:     const [timestamp, randomValue, signature] = parts;
+32:     const payload = `${timestamp}:${randomValue}`;
+33:     // Verify signature
+34:     const expectedSignature = createHmac("sha256", CSRF_SECRET)
+35:       .update(payload)
+36:       .digest("hex");
+37:     const signatureBuffer = Buffer.from(signature, "hex");
+38:     const expectedBuffer = Buffer.from(expectedSignature, "hex");
+39:     if (signatureBuffer.length !== expectedBuffer.length) {
+40:       return false;
+41:     }
+42:     if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
+43:       return false;
+44:     }
+45:     // Check if token is expired
+46:     const tokenTime = parseInt(timestamp, 10);
+47:     const currentTime = Date.now();
+48:     if (currentTime - tokenTime > TOKEN_EXPIRY) {
+49:       return false;
+50:     }
+51:     return true;
+52:   } catch {
+53:     return false;
+54:   }
+55: }
+````
+
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -17395,65 +17454,6 @@ tsconfig.json
 91: }
 ````
 
-## File: src/lib/csrf.ts
-````typescript
- 1: import { randomBytes, createHmac, timingSafeEqual } from "crypto";
- 2: const CSRF_SECRET =
- 3:   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
- 4: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
- 5: /**
- 6:  * Generates a CSRF token with timestamp
- 7:  * @returns {string} Base64 encoded CSRF token
- 8:  */
- 9: export function generateCSRFToken(): string {
-10:   const timestamp = Date.now().toString();
-11:   const randomValue = randomBytes(32).toString("hex");
-12:   const payload = `${timestamp}:${randomValue}`;
-13:   const signature = createHmac("sha256", CSRF_SECRET)
-14:     .update(payload)
-15:     .digest("hex");
-16:   const token = `${payload}:${signature}`;
-17:   return Buffer.from(token).toString("base64");
-18: }
-19: /**
-20:  * Validates a CSRF token
-21:  * @param {string} token - Base64 encoded CSRF token
-22:  * @returns {boolean} True if token is valid and not expired
-23:  */
-24: export function validateCSRFToken(token: string): boolean {
-25:   try {
-26:     const decoded = Buffer.from(token, "base64").toString("utf-8");
-27:     const parts = decoded.split(":");
-28:     if (parts.length !== 3) {
-29:       return false;
-30:     }
-31:     const [timestamp, randomValue, signature] = parts;
-32:     const payload = `${timestamp}:${randomValue}`;
-33:     // Verify signature
-34:     const expectedSignature = createHmac("sha256", CSRF_SECRET)
-35:       .update(payload)
-36:       .digest("hex");
-37:     const signatureBuffer = Buffer.from(signature, "hex");
-38:     const expectedBuffer = Buffer.from(expectedSignature, "hex");
-39:     if (signatureBuffer.length !== expectedBuffer.length) {
-40:       return false;
-41:     }
-42:     if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
-43:       return false;
-44:     }
-45:     // Check if token is expired
-46:     const tokenTime = parseInt(timestamp, 10);
-47:     const currentTime = Date.now();
-48:     if (currentTime - tokenTime > TOKEN_EXPIRY) {
-49:       return false;
-50:     }
-51:     return true;
-52:   } catch {
-53:     return false;
-54:   }
-55: }
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -17766,7 +17766,7 @@ tsconfig.json
 50:     "sitemap": "^8.0.0",
 51:     "tar-fs": ">=3.1.0",
 52:     "ts-node": "^10.9.2",
-53:     "zod": "^3.25.73"
+53:     "zod": "^3.25.74"
 54:   },
 55:   "devDependencies": {
 56:     "@jest/expect": "^29.7.0",
