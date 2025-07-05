@@ -6395,6 +6395,101 @@ tsconfig.json
 29: }
 ````
 
+## File: src/app/api/form/route.ts
+````typescript
+ 1: import { NextRequest, NextResponse } from "next/server";
+ 2: import { validateCSRFToken } from "@/lib/csrf";
+ 3: /**
+ 4:  * POST handler for form submissions with CSRF protection
+ 5:  * @param {NextRequest} request - The incoming request
+ 6:  * @returns {NextResponse} JSON response
+ 7:  */
+ 8: export async function POST(request: NextRequest) {
+ 9:   try {
+10:     const contentType = request.headers.get("content-type");
+11:     let formData: Record<string, string> = {};
+12:     // Parse form data based on content type
+13:     if (contentType?.includes("application/x-www-form-urlencoded")) {
+14:       const body = await request.formData();
+15:       for (const [key, value] of body.entries()) {
+16:         formData[key] = value.toString();
+17:       }
+18:     } else if (contentType?.includes("application/json")) {
+19:       formData = await request.json();
+20:     } else {
+21:       return NextResponse.json(
+22:         { error: "Unsupported content type" },
+23:         { status: 400 },
+24:       );
+25:     }
+26:     // Extract and validate CSRF token
+27:     const csrfToken = formData._csrf || formData.csrfToken;
+28:     if (!csrfToken) {
+29:       return NextResponse.json(
+30:         { error: "CSRF token missing" },
+31:         { status: 403 },
+32:       );
+33:     }
+34:     if (!validateCSRFToken(csrfToken)) {
+35:       return NextResponse.json(
+36:         { error: "Invalid or expired CSRF token" },
+37:         { status: 403 },
+38:       );
+39:     }
+40:     // Remove CSRF token from form data before processing
+41:     delete formData._csrf;
+42:     delete formData.csrfToken;
+43:     // Validate required fields
+44:     const { navn, telefon, tekst } = formData;
+45:     if (!navn || !telefon || !tekst) {
+46:       return NextResponse.json(
+47:         { error: "Missing required fields" },
+48:         { status: 400 },
+49:       );
+50:     }
+51:     // Basic validation
+52:     if (navn.length < 2 || navn.length > 100) {
+53:       return NextResponse.json(
+54:         { error: "Name must be between 2 and 100 characters" },
+55:         { status: 400 },
+56:       );
+57:     }
+58:     if (tekst.length < 10 || tekst.length > 1000) {
+59:       return NextResponse.json(
+60:         { error: "Message must be between 10 and 1000 characters" },
+61:         { status: 400 },
+62:       );
+63:     }
+64:     // Return success response
+65:     return NextResponse.json(
+66:       {
+67:         message: "Form submitted successfully",
+68:         success: true,
+69:       },
+70:       { status: 200 },
+71:     );
+72:   } catch (error) {
+73:     console.error("Error processing form submission:", error);
+74:     return NextResponse.json(
+75:       { error: "Internal server error" },
+76:       { status: 500 },
+77:     );
+78:   }
+79: }
+80: /**
+81:  * Handle other HTTP methods
+82:  */
+83: export async function GET() {
+84:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+85: }
+86: export async function PUT() {
+87:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+88: }
+89: export async function DELETE() {
+90:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+91: }
+````
+
 ## File: src/app/api/siteMapGenerator.ts
 ````typescript
  1: import { SitemapStream, streamToPromise } from "sitemap";
@@ -17359,101 +17454,6 @@ tsconfig.json
 35: }
 ````
 
-## File: src/app/api/form/route.ts
-````typescript
- 1: import { NextRequest, NextResponse } from "next/server";
- 2: import { validateCSRFToken } from "@/lib/csrf";
- 3: /**
- 4:  * POST handler for form submissions with CSRF protection
- 5:  * @param {NextRequest} request - The incoming request
- 6:  * @returns {NextResponse} JSON response
- 7:  */
- 8: export async function POST(request: NextRequest) {
- 9:   try {
-10:     const contentType = request.headers.get("content-type");
-11:     let formData: Record<string, string> = {};
-12:     // Parse form data based on content type
-13:     if (contentType?.includes("application/x-www-form-urlencoded")) {
-14:       const body = await request.formData();
-15:       for (const [key, value] of body.entries()) {
-16:         formData[key] = value.toString();
-17:       }
-18:     } else if (contentType?.includes("application/json")) {
-19:       formData = await request.json();
-20:     } else {
-21:       return NextResponse.json(
-22:         { error: "Unsupported content type" },
-23:         { status: 400 },
-24:       );
-25:     }
-26:     // Extract and validate CSRF token
-27:     const csrfToken = formData._csrf || formData.csrfToken;
-28:     if (!csrfToken) {
-29:       return NextResponse.json(
-30:         { error: "CSRF token missing" },
-31:         { status: 403 },
-32:       );
-33:     }
-34:     if (!validateCSRFToken(csrfToken)) {
-35:       return NextResponse.json(
-36:         { error: "Invalid or expired CSRF token" },
-37:         { status: 403 },
-38:       );
-39:     }
-40:     // Remove CSRF token from form data before processing
-41:     delete formData._csrf;
-42:     delete formData.csrfToken;
-43:     // Validate required fields
-44:     const { navn, telefon, tekst } = formData;
-45:     if (!navn || !telefon || !tekst) {
-46:       return NextResponse.json(
-47:         { error: "Missing required fields" },
-48:         { status: 400 },
-49:       );
-50:     }
-51:     // Basic validation
-52:     if (navn.length < 2 || navn.length > 100) {
-53:       return NextResponse.json(
-54:         { error: "Name must be between 2 and 100 characters" },
-55:         { status: 400 },
-56:       );
-57:     }
-58:     if (tekst.length < 10 || tekst.length > 1000) {
-59:       return NextResponse.json(
-60:         { error: "Message must be between 10 and 1000 characters" },
-61:         { status: 400 },
-62:       );
-63:     }
-64:     // Return success response
-65:     return NextResponse.json(
-66:       {
-67:         message: "Form submitted successfully",
-68:         success: true,
-69:       },
-70:       { status: 200 },
-71:     );
-72:   } catch (error) {
-73:     console.error("Error processing form submission:", error);
-74:     return NextResponse.json(
-75:       { error: "Internal server error" },
-76:       { status: 500 },
-77:     );
-78:   }
-79: }
-80: /**
-81:  * Handle other HTTP methods
-82:  */
-83: export async function GET() {
-84:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-85: }
-86: export async function PUT() {
-87:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-88: }
-89: export async function DELETE() {
-90:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-91: }
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -17760,7 +17760,7 @@ tsconfig.json
 44:     "react": "^19.1.0",
 45:     "react-dom": "^19.1.0",
 46:     "react-error-boundary": "^5.0.0",
-47:     "react-hook-form": "^7.59.0",
+47:     "react-hook-form": "^7.60.0",
 48:     "react-icons": "^5.5.0",
 49:     "sanity": "^3.97.1",
 50:     "sitemap": "^8.0.0",
