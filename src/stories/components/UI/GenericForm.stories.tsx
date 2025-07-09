@@ -10,20 +10,20 @@ export default {
 
 // Example schemas
 const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  name: z.string().min(2, { error: "Name must be at least 2 characters" }),
+  email: z.email({ error: "Invalid email address" }),
+  message: z.string().min(10, { error: "Message must be at least 10 characters" }),
 });
 
 const subscribeSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  preferences: z.string().min(1, "Please select your preferences"),
+  email: z.email({ error: "Invalid email address" }),
+  preferences: z.string().min(1, { error: "Please select your preferences" }),
 });
 
 const feedbackSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  rating: z.string().regex(/^[1-5]$/, "Rating must be between 1 and 5"),
-  feedback: z.string().min(20, "Feedback must be at least 20 characters"),
+  title: z.string().min(3, { error: "Title must be at least 3 characters" }),
+  rating: z.string().regex(/^[1-5]$/, { error: "Rating must be between 1 and 5" }),
+  feedback: z.string().min(20, { error: "Feedback must be at least 20 characters" }),
 });
 
 type FormData =

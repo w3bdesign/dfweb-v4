@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { z } from "zod";
+
 import emailjs from "@emailjs/browser";
 
 import PageHeader from "@/components/UI/PageHeader.component";
@@ -9,11 +9,6 @@ import GenericForm from "@/components/UI/GenericForm.component";
 
 import { formSchema, formFields, FormData } from "./config/formConfig";
 
-type KontaktFormShape = {
-  navn: z.ZodString;
-  telefon: z.ZodString;
-  tekst: z.ZodString;
-};
 
 /**
  * Props for the KontaktContent component.
@@ -96,7 +91,7 @@ const KontaktContent: React.FC<Props> = ({
                   </h3>
                 ) : (
                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
-                    <GenericForm<KontaktFormShape>
+                    <GenericForm
                       formSchema={formSchema}
                       onSubmit={handleFormSubmit}
                       fields={formFields}
