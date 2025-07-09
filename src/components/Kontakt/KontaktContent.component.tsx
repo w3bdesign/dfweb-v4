@@ -9,7 +9,6 @@ import GenericForm from "@/components/UI/GenericForm.component";
 
 import { formSchema, formFields, FormData } from "./config/formConfig";
 
-
 /**
  * Props for the KontaktContent component.
  */
