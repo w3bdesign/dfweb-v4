@@ -12,7 +12,9 @@ export default {
 const contactSchema = z.object({
   name: z.string().min(2, { error: "Name must be at least 2 characters" }),
   email: z.email({ error: "Invalid email address" }),
-  message: z.string().min(10, { error: "Message must be at least 10 characters" }),
+  message: z
+    .string()
+    .min(10, { error: "Message must be at least 10 characters" }),
 });
 
 const subscribeSchema = z.object({
@@ -22,8 +24,12 @@ const subscribeSchema = z.object({
 
 const feedbackSchema = z.object({
   title: z.string().min(3, { error: "Title must be at least 3 characters" }),
-  rating: z.string().regex(/^[1-5]$/, { error: "Rating must be between 1 and 5" }),
-  feedback: z.string().min(20, { error: "Feedback must be at least 20 characters" }),
+  rating: z
+    .string()
+    .regex(/^[1-5]$/, { error: "Rating must be between 1 and 5" }),
+  feedback: z
+    .string()
+    .min(20, { error: "Feedback must be at least 20 characters" }),
 });
 
 type FormData =
