@@ -1,4 +1,5 @@
 /// <reference types="cypress"/>
+import "@testing-library/cypress/add-commands";
 
 describe("Layout", () => {
   beforeEach(() => {
@@ -9,16 +10,16 @@ describe("Layout", () => {
   describe("Mobile Menu", () => {
     it("should close when clicking a link", () => {
       // Open the mobile menu
-      cy.get('[data-testid="mobilemenu"]').click();
+      cy.findByTestId("mobilemenu").click();
 
       // Verify menu is visible
-      cy.get('[data-testid="mobile-menu"]').should("be.visible");
+      cy.findByTestId("mobile-menu").should("be.visible");
 
       // Click a link in the menu
-      cy.get('[data-testid="mobil-Prosjekter"]').click();
+      cy.findByTestId("mobil-Prosjekter").click();
 
       // Menu should not be visible after clicking a link
-      cy.get('[data-testid="mobile-menu"]').should("not.exist");
+      cy.findByTestId("mobile-menu").should("not.exist");
     });
   });
 });
