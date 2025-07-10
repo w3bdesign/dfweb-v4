@@ -16,7 +16,7 @@ test.describe("CV page", () => {
     await page.goto("/cv");
 
     // Click on 'Erfaring' tab
-    await page.getByRole("tab", { name: "Erfaring" }).click();
+    await page.getByText("Erfaring").click();
 
     // Check if a specific experience entry is visible
     await expect(
@@ -28,7 +28,7 @@ test.describe("CV page", () => {
     await page.goto("/cv");
 
     // Click on 'Erfaring' tab
-    await page.getByRole("tab", { name: "Utdanning" }).click();
+    await page.getByText("Utdanning").click();
 
     // Check if education information is present
     await expect(page.getByLabel("Utdanning")).toContainText(
