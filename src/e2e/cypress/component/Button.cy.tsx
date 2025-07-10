@@ -1,6 +1,8 @@
 /// <reference types="cypress" />
+/// <reference types="@testing-library/cypress" />
 
 import Button from "@/components/UI/Button.component";
+import "@testing-library/cypress/add-commands";
 
 // https://larsmagnus.co/blog/component-testing-with-cypress-in-next-js
 
@@ -13,7 +15,7 @@ describe("<Button>", () => {
   // Test href prop
   it("navigates when clicked if href provided", () => {
     cy.mount(<Button href="https://example.com">Button</Button>);
-    cy.get("a").click();
+    cy.findByRole("link", { name: "Button" }).click();
     cy.url().should("include", "example.com");
   });
 
