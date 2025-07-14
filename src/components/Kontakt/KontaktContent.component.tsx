@@ -90,7 +90,7 @@ const KontaktContent: React.FC<Props> = ({
   const handleSubmit = onSubmitProp ?? defaultOnSubmit;
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
