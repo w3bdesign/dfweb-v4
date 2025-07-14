@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const formSchema = z.object({
+/** Zod schema for contact form */
+export const contactSchema = z.object({
   navn: z
     .string()
     .min(1, "Fullt navn er påkrevd")
@@ -12,24 +13,28 @@ export const formSchema = z.object({
   tekst: z.string().min(1, "Beskjed er påkrevd"),
 });
 
-export type FormData = z.infer<typeof formSchema>;
+/** Type inferred from schema */
+export type ContactFormData = z.infer<typeof contactSchema>;
 
-export const formFields = [
+/** Simple field config for rendering the form */
+export const contactFields = [
   {
-    name: "navn" as const,
+    name: "navn",
     label: "Fullt navn",
-    inputPattern: /^[a-zA-ZæøåÆØÅ ]+$/,
-    title: "Vennligst bruk norske bokstaver",
+    type: "input",
+    pattern: /^[a-zA-ZæøåÆØÅ ]+$/,
+    validationMessage: "Vennligst bruk norske bokstaver",
   },
   {
-    name: "telefon" as const,
+    name: "telefon",
     label: "Telefonnummer",
-    inputPattern: /^\d{8}$/,
-    title: "Vennligst oppgi et gyldig telefonnummer",
+    type: "input",
+    pattern: /^\d{8}$/,
+    validationMessage: "Vennligst oppgi et gyldig telefonnummer",
   },
   {
-    name: "tekst" as const,
+    name: "tekst",
     label: "Hva ønsker du å si?",
-    type: "textarea" as const,
+    type: "textarea",
   },
-] as const;
+];
