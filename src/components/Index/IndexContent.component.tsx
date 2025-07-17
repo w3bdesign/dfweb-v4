@@ -16,7 +16,7 @@ const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
   }
 
   return (
-    <div className="w-screen md:w-full overflow-hidden -mb-8">
+    <div className="w-full overflow-hidden -mb-8">
       {pageContent.map((page, index) => (
         <Section
           key={page._key}
