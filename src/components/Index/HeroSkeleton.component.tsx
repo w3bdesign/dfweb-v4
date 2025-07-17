@@ -11,27 +11,27 @@ const HeroSkeleton = () => {
     >
       {/* Mobile background placeholder */}
       <div className="absolute inset-0 md:hidden bg-slate-800 animate-pulse -top-2 mb-2" />
-      
+
       {/* Desktop background placeholder */}
       <div className="hidden md:block absolute inset-0 w-full h-full bg-slate-900 animate-pulse" />
-      
+
       <div className="relative z-10">
         <section className="text-left md:text-center px-4 md:px-0">
           {/* Main heading skeleton */}
           <div className="flex justify-center">
             <div className="h-14 bg-slate-700 rounded w-32 animate-pulse" />
           </div>
-          
+
           {/* Secondary heading skeleton */}
           <div className="mt-4 flex justify-center">
             <div className="h-7 bg-slate-700 rounded w-96 max-w-full animate-pulse" />
           </div>
-          
+
           {/* Description skeleton */}
           <div className="mt-4 flex justify-center">
             <div className="h-6 bg-slate-700 rounded w-80 max-w-full animate-pulse" />
           </div>
-          
+
           {/* Icons skeleton */}
           <div className="mt-4 flex justify-center">
             <div className="flex space-x-4">
