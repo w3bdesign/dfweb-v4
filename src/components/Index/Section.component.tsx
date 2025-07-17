@@ -50,10 +50,11 @@ const Section = ({
       aria-label={title}
       data-testid="sanity-section"
       className={`
-        md:py-6 
+        md:py-6
         relative
         transition-colors
         duration-300
+        contain-layout
         ${sectionStyles[variant]}
       `}
     >
