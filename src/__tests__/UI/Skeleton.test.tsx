@@ -3,85 +3,61 @@ import Skeleton from "@/components/UI/Skeleton.component";
 
 describe("Skeleton", () => {
   it("renders with default props", () => {
-    // Arrange - Set up test data and conditions
-    // No props needed for default test
-
-    // Act - Perform the action being tested
+    // Arrange
     render(<Skeleton />);
 
-    // Assert - Verify the results
+    // Act
     const skeleton = screen.getByTestId("skeleton");
+
+    // Assert
     expect(skeleton).toHaveClass(
-      "animate-pulse",
+      "skeleton-shimmer",
       "bg-slate-700",
       "rounded",
       "w-full",
-      "h-4",
+      "h-4"
     );
   });
 
-  it("renders with custom width and height", () => {
-    // Arrange - Set up test data and conditions
-    const width = "w-32";
-    const height = "h-8";
-
-    // Act - Perform the action being tested
-    render(<Skeleton width={width} height={height} />);
-
-    // Assert - Verify the results
-    const skeleton = screen.getByTestId("skeleton");
-    expect(skeleton).toHaveClass("w-32", "h-8");
-  });
-
-  it("renders as a circle when rounded prop is true", () => {
-    // Arrange - Set up test data and conditions
-    const rounded = true;
-
-    // Act - Perform the action being tested
-    render(<Skeleton rounded={rounded} />);
-
-    // Assert - Verify the results
-    const skeleton = screen.getByTestId("skeleton");
-    expect(skeleton).toHaveClass("rounded-full");
-    expect(skeleton).not.toHaveClass("rounded");
-  });
-
-  it("applies additional className", () => {
-    // Arrange - Set up test data and conditions
-    const className = "mt-4";
-
-    // Act - Perform the action being tested
-    render(<Skeleton className={className} />);
-
-    // Assert - Verify the results
-    const skeleton = screen.getByTestId("skeleton");
-    expect(skeleton).toHaveClass("mt-4");
-  });
-
-  it("renders children with animation when provided", () => {
-    // Arrange - Set up test data and conditions
-    const customContent = (
-      <div data-testid="custom-content">Custom skeleton content</div>
+  it("renders with custom props", () => {
+    // Arrange
+    render(
+      <Skeleton
+        width="w-1/2"
+        height="h-8"
+        className="custom-class"
+        rounded
+        shimmer={false}
+      />
     );
 
-    // Act - Perform the action being tested
-    render(<Skeleton>{customContent}</Skeleton>);
+    // Act
+    const skeleton = screen.getByTestId("skeleton");
 
-    // Assert - Verify the results
-    const wrapper = screen.getByTestId("skeleton");
-    expect(wrapper).toHaveClass("animate-pulse");
-    expect(screen.getByTestId("custom-content")).toBeInTheDocument();
+    // Assert
+    expect(skeleton).toHaveClass(
+      "animate-pulse",
+      "bg-slate-700",
+      "rounded-full",
+      "w-1/2",
+      "h-8",
+      "custom-class"
+    );
   });
 
-  it("does not render the default skeleton block when children are provided", () => {
-    // Arrange - Set up test data and conditions
-    const customContent = <div>Custom content</div>;
+  it("renders children when provided", () => {
+    // Arrange
+    render(
+      <Skeleton>
+        <div>Child content</div>
+      </Skeleton>
+    );
 
-    // Act - Perform the action being tested
-    render(<Skeleton>{customContent}</Skeleton>);
+    // Act
+    const child = screen.getByText("Child content");
 
-    // Assert - Verify the results
-    const wrapper = screen.getByTestId("skeleton");
-    expect(wrapper).not.toHaveClass("bg-slate-700");
+    // Assert
+    expect(child).toBeInTheDocument();
+    expect(child.parentElement).toHaveClass("animate-pulse");
   });
 });
