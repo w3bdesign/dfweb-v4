@@ -188,6 +188,7 @@ src/
     Kontakt/
       config/
         formConfig.ts
+      ContactForm.component.tsx
       KontaktContent.component.tsx
     Layout/
       DesktopNavigation.component.tsx
@@ -200,7 +201,6 @@ src/
       ProsjektCard.component.tsx
     UI/
       Button.component.tsx
-      GenericForm.component.tsx
       InputField.component.tsx
       PageHeader.component.tsx
       Pill.component.tsx
@@ -277,7 +277,6 @@ src/
         ProsjektCard.stories.tsx
       UI/
         Button.stories.tsx
-        GenericForm.stories.tsx
         InputField.stories.tsx
         PageHeader.stories.tsx
         Pill.stories.tsx
@@ -8554,151 +8553,6 @@ tsconfig.json
 80: export default Section;
 ````
 
-## File: src/components/Kontakt/config/formConfig.ts
-````typescript
- 1: import { z } from "zod";
- 2: export const formSchema = z.object({
- 3:   navn: z
- 4:     .string()
- 5:     .min(1, "Fullt navn er påkrevd")
- 6:     .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
- 7:   telefon: z
- 8:     .string()
- 9:     .min(1, "Telefonnummer er påkrevd")
-10:     .regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
-11:   tekst: z.string().min(1, "Beskjed er påkrevd"),
-12: });
-13: export type FormData = z.infer<typeof formSchema>;
-14: export const formFields = [
-15:   {
-16:     name: "navn" as const,
-17:     label: "Fullt navn",
-18:     inputPattern: /^[a-zA-ZæøåÆØÅ ]+$/,
-19:     title: "Vennligst bruk norske bokstaver",
-20:   },
-21:   {
-22:     name: "telefon" as const,
-23:     label: "Telefonnummer",
-24:     inputPattern: /^\d{8}$/,
-25:     title: "Vennligst oppgi et gyldig telefonnummer",
-26:   },
-27:   {
-28:     name: "tekst" as const,
-29:     label: "Hva ønsker du å si?",
-30:     type: "textarea" as const,
-31:   },
-32: ] as const;
-````
-
-## File: src/components/Kontakt/KontaktContent.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { z } from "zod";
-  4: import emailjs from "@emailjs/browser";
-  5: import PageHeader from "@/components/UI/PageHeader.component";
-  6: import GenericForm from "@/components/UI/GenericForm.component";
-  7: import { formSchema, formFields, FormData } from "./config/formConfig";
-  8: type KontaktFormShape = {
-  9:   navn: z.ZodString;
- 10:   telefon: z.ZodString;
- 11:   tekst: z.ZodString;
- 12: };
- 13: /**
- 14:  * Props for the KontaktContent component.
- 15:  */
- 16: type Props = {
- 17:   /**
- 18:    * Optional custom submit handler. If provided, this function will be called
- 19:    * instead of the default emailjs submission. It should handle the submission
- 20:    * logic and return a promise that resolves to a message string.
- 21:    */
- 22:   onSubmit?: (data: FormData) => Promise<string>;
- 23:   /**
- 24:    * Optional initial response message to display.
- 25:    */
- 26:   initialResponse?: string;
- 27:   /**
- 28:    * CSRF token for form security
- 29:    */
- 30:   csrfToken?: string;
- 31: };
- 32: /**
- 33:  * Renders the contact form.
- 34:  * Uses EmailJS to send emails by default, but can accept a custom onSubmit handler.
- 35:  * @function KontaktContent
- 36:  * @param {Props} props - The component props.
- 37:  * @returns {JSX.Element} - Rendered component
- 38:  */
- 39: const KontaktContent: React.FC<Props> = ({
- 40:   onSubmit: onSubmitProp,
- 41:   initialResponse = "",
- 42:   csrfToken = "",
- 43: }) => {
- 44:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
- 45:   /**
- 46:    * Default form submission handler using EmailJS.
- 47:    * Sends an email using the provided API keys.
- 48:    * @param {FormData} data - The form data.
- 49:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 50:    */
- 51:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 52:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 53:     const TEMPLATE_KEY =
- 54:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 55:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 56:     try {
- 57:       emailjs.init(EMAIL_API_KEY);
- 58:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 59:       return "Takk for din beskjed";
- 60:     } catch {
- 61:       return "Feil under sending av skjema";
- 62:     }
- 63:   };
- 64:   const handleSubmit = onSubmitProp ?? defaultOnSubmit;
- 65:   /**
- 66:    * Handles the actual form submission, calling the appropriate submit handler
- 67:    * (either the provided prop or the default) and updates the server response.
- 68:    * @param {FormData} data - The form data.
- 69:    */
- 70:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 71:     const message = await handleSubmit(data);
- 72:     setServerResponse(message);
- 73:   };
- 74:   return (
- 75:     <main data-testid="kontaktcontent" id="maincontent">
- 76:       <div className="mt-32 bg-graybg">
- 77:         <PageHeader>Kontakt</PageHeader>
- 78:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 79:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 80:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 81:               <div className="p-2 md:p-6 pt-8">
- 82:                 {serverResponse ? (
- 83:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 84:                     {serverResponse}
- 85:                   </h3>
- 86:                 ) : (
- 87:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 88:                     <GenericForm<KontaktFormShape>
- 89:                       formSchema={formSchema}
- 90:                       onSubmit={handleFormSubmit}
- 91:                       fields={formFields}
- 92:                       submitButtonText="Send skjema"
- 93:                       csrfToken={csrfToken}
- 94:                     />
- 95:                   </div>
- 96:                 )}
- 97:               </div>
- 98:             </div>
- 99:           </div>
-100:         </div>
-101:       </div>
-102:     </main>
-103:   );
-104: };
-105: export default KontaktContent;
-````
-
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -9229,97 +9083,6 @@ tsconfig.json
 51:   );
 52: };
 53: export default Button;
-````
-
-## File: src/components/UI/GenericForm.component.tsx
-````typescript
- 1: import React from "react";
- 2: import { useForm, Path, FieldValues } from "react-hook-form";
- 3: import { z } from "zod";
- 4: import { zodResolver } from "@hookform/resolvers/zod";
- 5: import Button from "./Button.component";
- 6: import InputField from "./InputField.component";
- 7: type InputType = "input" | "textarea";
- 8: type FieldConfig<T extends FieldValues> = {
- 9:   readonly name: Path<T>;
-10:   readonly label: string;
-11:   readonly type?: InputType;
-12:   readonly inputPattern?: RegExp;
-13:   readonly title?: string;
-14: };
-15: interface GenericFormProps<T extends z.ZodRawShape> {
-16:   readonly formSchema: z.ZodObject<T>;
-17:   readonly onSubmit: (data: z.infer<z.ZodObject<T>>) => Promise<void>;
-18:   readonly fields: ReadonlyArray<FieldConfig<z.infer<z.ZodObject<T>>>>;
-19:   readonly submitButtonText: string;
-20:   readonly csrfToken?: string;
-21: }
-22: /**
-23:  * A generic, reusable form component that can be easily customized and extended.
-24:  * It uses Zod for schema validation and react-hook-form for form handling.
-25:  *
-26:  * @template T - The Zod object shape.
-27:  * @param {Readonly<GenericFormProps<T>>} props - The props for the GenericForm component.
-28:  * @returns {JSX.Element} The rendered form.
-29:  */
-30: function GenericForm<T extends z.ZodRawShape>({
-31:   formSchema,
-32:   onSubmit,
-33:   fields,
-34:   submitButtonText,
-35:   csrfToken,
-36: }: Readonly<GenericFormProps<T>>) {
-37:   type FormData = z.infer<typeof formSchema>;
-38:   const {
-39:     register,
-40:     handleSubmit,
-41:     formState: { errors, isSubmitting },
-42:   } = useForm<FormData>({
-43:     resolver: zodResolver(formSchema),
-44:   });
-45:   return (
-46:     <form
-47:       id="contact-form"
-48:       className="text-center"
-49:       onSubmit={handleSubmit(onSubmit)}
-50:       method="POST"
-51:       action="/api/form"
-52:       aria-label="Contact Form"
-53:     >
-54:       {csrfToken && <input type="hidden" name="_csrf" value={csrfToken} />}
-55:       <fieldset>
-56:         <legend className="text-center mx-auto text-xl mt-4 sr-only">
-57:           Kontaktskjema
-58:         </legend>
-59:         {fields.map((field) => (
-60:           <React.Fragment key={field.name}>
-61:             <InputField<FormData>
-62:               name={field.name}
-63:               label={field.label}
-64:               htmlFor={field.name}
-65:               register={register}
-66:               error={
-67:                 (errors[field.name] as { message?: string })?.message ??
-68:                 undefined
-69:               }
-70:               isRequired
-71:               type={field.type}
-72:               inputPattern={field.inputPattern}
-73:               title={field.title}
-74:             />
-75:             <br />
-76:           </React.Fragment>
-77:         ))}
-78:       </fieldset>
-79:       <div className="-mt-4">
-80:         <Button disabled={isSubmitting} data-testid="submit-button">
-81:           {submitButtonText}
-82:         </Button>
-83:       </div>
-84:     </form>
-85:   );
-86: }
-87: export default GenericForm;
 ````
 
 ## File: src/components/UI/InputField.component.tsx
@@ -12351,152 +12114,6 @@ tsconfig.json
 49:     </span>
 50:   </Button>
 51: );
-````
-
-## File: src/stories/components/UI/GenericForm.stories.tsx
-````typescript
-  1: import React from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import { z } from "zod";
-  4: import GenericForm from "@/components/UI/GenericForm.component";
-  5: export default {
-  6:   title: "UI/GenericForm",
-  7:   component: GenericForm,
-  8: } as Meta;
-  9: // Example schemas
- 10: const contactSchema = z.object({
- 11:   name: z.string().min(2, "Name must be at least 2 characters"),
- 12:   email: z.string().email("Invalid email address"),
- 13:   message: z.string().min(10, "Message must be at least 10 characters"),
- 14: });
- 15: const subscribeSchema = z.object({
- 16:   email: z.string().email("Invalid email address"),
- 17:   preferences: z.string().min(1, "Please select your preferences"),
- 18: });
- 19: const feedbackSchema = z.object({
- 20:   title: z.string().min(3, "Title must be at least 3 characters"),
- 21:   rating: z.string().regex(/^[1-5]$/, "Rating must be between 1 and 5"),
- 22:   feedback: z.string().min(20, "Feedback must be at least 20 characters"),
- 23: });
- 24: type FormData =
- 25:   | z.infer<typeof contactSchema>
- 26:   | z.infer<typeof subscribeSchema>
- 27:   | z.infer<typeof feedbackSchema>
- 28:   | { email: string };
- 29: // Example async submit handlers
- 30: const mockSubmit = async (data: FormData) => {
- 31:   await new Promise((resolve) => setTimeout(resolve, 1000));
- 32:   console.warn("Form submitted:", data);
- 33: };
- 34: // Contact Form Story
- 35: export const ContactForm = () => (
- 36:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 37:     <h2 className="text-2xl text-white mb-6">Contact Us</h2>
- 38:     <GenericForm
- 39:       formSchema={contactSchema}
- 40:       onSubmit={mockSubmit}
- 41:       submitButtonText="Send Message"
- 42:       fields={[
- 43:         {
- 44:           name: "name",
- 45:           label: "Your Name",
- 46:           type: "input",
- 47:         },
- 48:         {
- 49:           name: "email",
- 50:           label: "Email Address",
- 51:           type: "input",
- 52:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
- 53:           title: "Please enter a valid email address",
- 54:         },
- 55:         {
- 56:           name: "message",
- 57:           label: "Your Message",
- 58:           type: "textarea",
- 59:         },
- 60:       ]}
- 61:     />
- 62:   </div>
- 63: );
- 64: // Subscribe Form Story
- 65: export const SubscribeForm = () => (
- 66:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 67:     <h2 className="text-2xl text-white mb-6 text-center">
- 68:       Subscribe to Newsletter
- 69:     </h2>
- 70:     <GenericForm
- 71:       formSchema={subscribeSchema}
- 72:       onSubmit={mockSubmit}
- 73:       submitButtonText="Subscribe"
- 74:       fields={[
- 75:         {
- 76:           name: "email",
- 77:           label: "Email Address",
- 78:           type: "input",
- 79:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
- 80:           title: "Please enter a valid email address",
- 81:         },
- 82:         {
- 83:           name: "preferences",
- 84:           label: "Newsletter Preferences",
- 85:           type: "textarea",
- 86:         },
- 87:       ]}
- 88:     />
- 89:   </div>
- 90: );
- 91: // Feedback Form Story
- 92: export const FeedbackForm = () => (
- 93:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
- 94:     <h2 className="text-2xl text-white mb-6 text-center">Provide Feedback</h2>
- 95:     <GenericForm
- 96:       formSchema={feedbackSchema}
- 97:       onSubmit={mockSubmit}
- 98:       submitButtonText="Submit Feedback"
- 99:       fields={[
-100:         {
-101:           name: "title",
-102:           label: "Feedback Title",
-103:           type: "input",
-104:         },
-105:         {
-106:           name: "rating",
-107:           label: "Rating (1-5)",
-108:           type: "input",
-109:           inputPattern: /^[1-5]$/,
-110:           title: "Please enter a number between 1 and 5",
-111:         },
-112:         {
-113:           name: "feedback",
-114:           label: "Detailed Feedback",
-115:           type: "textarea",
-116:         },
-117:       ]}
-118:     />
-119:   </div>
-120: );
-121: // Simple Form Story
-122: export const SimpleForm = () => (
-123:   <div className="max-w-md mx-auto p-6 bg-gray-800 rounded-lg">
-124:     <h2 className="text-2xl text-white mb-6 text-center">Quick Contact</h2>
-125:     <GenericForm
-126:       formSchema={z.object({
-127:         email: z.string().email("Invalid email address"),
-128:       })}
-129:       onSubmit={mockSubmit}
-130:       submitButtonText="Contact"
-131:       fields={[
-132:         {
-133:           name: "email",
-134:           label: "Email Address",
-135:           type: "input",
-136:           inputPattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-137:           title: "Please enter a valid email address",
-138:         },
-139:       ]}
-140:     />
-141:   </div>
-142: );
 ````
 
 ## File: src/stories/components/UI/InputField.stories.tsx
@@ -17493,6 +17110,209 @@ tsconfig.json
 33:   ],
 34:   "exclude": ["node_modules"]
 35: }
+````
+
+## File: src/components/Kontakt/config/formConfig.ts
+````typescript
+ 1: import { z } from "zod";
+ 2: export const formSchema = z.object({
+ 3:   navn: z
+ 4:     .string()
+ 5:     .min(1, "Fullt navn er påkrevd")
+ 6:     .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
+ 7:   telefon: z
+ 8:     .string()
+ 9:     .min(1, "Telefonnummer er påkrevd")
+10:     .regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
+11:   tekst: z.string().min(1, "Beskjed er påkrevd"),
+12: });
+13: export type FormData = z.infer<typeof formSchema>;
+````
+
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import { useForm } from "react-hook-form";
+ 4: import { zodResolver } from "@hookform/resolvers/zod";
+ 5: import Button from "@/components/UI/Button.component";
+ 6: import InputField from "@/components/UI/InputField.component";
+ 7: import { formSchema, FormData } from "./config/formConfig";
+ 8: interface ContactFormProps {
+ 9:   onSubmit: (data: FormData) => Promise<void>;
+10:   csrfToken?: string;
+11: }
+12: /**
+13:  * A simplified contact form component that directly uses the form schema
+14:  * without complex generic abstractions.
+15:  */
+16: const ContactForm: React.FC<ContactFormProps> = ({ onSubmit, csrfToken }) => {
+17:   const {
+18:     register,
+19:     handleSubmit,
+20:     formState: { errors, isSubmitting },
+21:   } = useForm<FormData>({
+22:     resolver: zodResolver(formSchema),
+23:   });
+24:   return (
+25:     <form
+26:       id="contact-form"
+27:       className="text-center"
+28:       onSubmit={handleSubmit(onSubmit)}
+29:       method="POST"
+30:       action="/api/form"
+31:       aria-label="Contact Form"
+32:     >
+33:       {csrfToken && <input type="hidden" name="_csrf" value={csrfToken} />}
+34:       <fieldset>
+35:         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+36:           Kontaktskjema
+37:         </legend>
+38:         {/* Navn field */}
+39:         <InputField<FormData>
+40:           name="navn"
+41:           label="Fullt navn"
+42:           htmlFor="navn"
+43:           register={register}
+44:           error={errors.navn?.message}
+45:           isRequired
+46:           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+47:           title="Vennligst bruk norske bokstaver"
+48:         />
+49:         <br />
+50:         {/* Telefon field */}
+51:         <InputField<FormData>
+52:           name="telefon"
+53:           label="Telefonnummer"
+54:           htmlFor="telefon"
+55:           register={register}
+56:           error={errors.telefon?.message}
+57:           isRequired
+58:           inputPattern={/^\d{8}$/}
+59:           title="Vennligst oppgi et gyldig telefonnummer"
+60:         />
+61:         <br />
+62:         {/* Tekst field */}
+63:         <InputField<FormData>
+64:           name="tekst"
+65:           label="Hva ønsker du å si?"
+66:           htmlFor="tekst"
+67:           register={register}
+68:           error={errors.tekst?.message}
+69:           isRequired
+70:           type="textarea"
+71:         />
+72:         <br />
+73:       </fieldset>
+74:       <div className="-mt-4">
+75:         <Button disabled={isSubmitting} data-testid="submit-button">
+76:           Send skjema
+77:         </Button>
+78:       </div>
+79:     </form>
+80:   );
+81: };
+82: export default ContactForm;
+````
+
+## File: src/components/Kontakt/KontaktContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { useState } from "react";
+ 3: import emailjs from "@emailjs/browser";
+ 4: import PageHeader from "@/components/UI/PageHeader.component";
+ 5: import ContactForm from "./ContactForm.component";
+ 6: import { FormData } from "./config/formConfig";
+ 7: /**
+ 8:  * Props for the KontaktContent component.
+ 9:  */
+10: type Props = {
+11:   /**
+12:    * Optional custom submit handler. If provided, this function will be called
+13:    * instead of the default emailjs submission. It should handle the submission
+14:    * logic and return a promise that resolves to a message string.
+15:    */
+16:   onSubmit?: (data: FormData) => Promise<string>;
+17:   /**
+18:    * Optional initial response message to display.
+19:    */
+20:   initialResponse?: string;
+21:   /**
+22:    * CSRF token for form security
+23:    */
+24:   csrfToken?: string;
+25: };
+26: /**
+27:  * Renders the contact form.
+28:  * Uses EmailJS to send emails by default, but can accept a custom onSubmit handler.
+29:  * @function KontaktContent
+30:  * @param {Props} props - The component props.
+31:  * @returns {JSX.Element} - Rendered component
+32:  */
+33: const KontaktContent: React.FC<Props> = ({
+34:   onSubmit: onSubmitProp,
+35:   initialResponse = "",
+36:   csrfToken = "",
+37: }) => {
+38:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+39:   /**
+40:    * Default form submission handler using EmailJS.
+41:    * Sends an email using the provided API keys.
+42:    * @param {FormData} data - The form data.
+43:    * @return {Promise<string>} A promise that resolves to a success or error message.
+44:    */
+45:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+46:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+47:     const TEMPLATE_KEY =
+48:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+49:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+50:     try {
+51:       emailjs.init(EMAIL_API_KEY);
+52:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+53:       return "Takk for din beskjed";
+54:     } catch {
+55:       return "Feil under sending av skjema";
+56:     }
+57:   };
+58:   const handleSubmit = onSubmitProp ?? defaultOnSubmit;
+59:   /**
+60:    * Handles the actual form submission, calling the appropriate submit handler
+61:    * (either the provided prop or the default) and updates the server response.
+62:    * @param {FormData} data - The form data.
+63:    */
+64:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+65:     const message = await handleSubmit(data);
+66:     setServerResponse(message);
+67:   };
+68:   return (
+69:     <main data-testid="kontaktcontent" id="maincontent">
+70:       <div className="mt-32 bg-graybg">
+71:         <PageHeader>Kontakt</PageHeader>
+72:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+73:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+74:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+75:               <div className="p-2 md:p-6 pt-8">
+76:                 {serverResponse ? (
+77:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+78:                     {serverResponse}
+79:                   </h3>
+80:                 ) : (
+81:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+82:                     <ContactForm
+83:                       onSubmit={handleFormSubmit}
+84:                       csrfToken={csrfToken}
+85:                     />
+86:                   </div>
+87:                 )}
+88:               </div>
+89:             </div>
+90:           </div>
+91:         </div>
+92:       </div>
+93:     </main>
+94:   );
+95: };
+96: export default KontaktContent;
 ````
 
 ## File: .eslintrc.json
