@@ -6,6 +6,7 @@ interface SkeletonProps {
   className?: string;
   rounded?: boolean;
   children?: ReactNode;
+  shimmer?: boolean;
 }
 
 const Skeleton = ({
@@ -14,6 +15,7 @@ const Skeleton = ({
   className = "",
   rounded = false,
   children,
+  shimmer = true,
 }: SkeletonProps) => {
   if (children) {
     return (
@@ -23,13 +25,18 @@ const Skeleton = ({
     );
   }
 
-  const baseClasses = "animate-pulse bg-slate-700";
+  const baseClasses = shimmer
+    ? "relative overflow-hidden bg-slate-700 skeleton-shimmer"
+    : "animate-pulse bg-slate-700";
   const shapeClasses = rounded ? "rounded-full" : "rounded";
 
   return (
     <div
       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
       data-testid="skeleton"
+      style={{
+        contain: "layout style paint",
+      }}
     />
   );
 };
