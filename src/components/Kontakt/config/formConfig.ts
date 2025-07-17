@@ -13,23 +13,3 @@ export const formSchema = z.object({
 });
 
 export type FormData = z.infer<typeof formSchema>;
-
-export const formFields = [
-  {
-    name: "navn" as const,
-    label: "Fullt navn",
-    inputPattern: /^[a-zA-ZæøåÆØÅ ]+$/,
-    title: "Vennligst bruk norske bokstaver",
-  },
-  {
-    name: "telefon" as const,
-    label: "Telefonnummer",
-    inputPattern: /^\d{8}$/,
-    title: "Vennligst oppgi et gyldig telefonnummer",
-  },
-  {
-    name: "tekst" as const,
-    label: "Hva ønsker du å si?",
-    type: "textarea" as const,
-  },
-] as const;
