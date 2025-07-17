@@ -126,8 +126,10 @@ src/
       ProsjektCard.test.tsx
     UI/
       Button.test.tsx
+      ContentLoader.test.tsx
       InputField.test.tsx
       Pill.test.tsx
+      Skeleton.test.tsx
       SkipLink.test.tsx
       Tabs.test.tsx
   app/
@@ -201,9 +203,11 @@ src/
       ProsjektCard.component.tsx
     UI/
       Button.component.tsx
+      ContentLoader.component.tsx
       InputField.component.tsx
       PageHeader.component.tsx
       Pill.component.tsx
+      Skeleton.component.tsx
       SkipLink.component.tsx
       Tabs.component.tsx
   config/
@@ -7114,38 +7118,6 @@ tsconfig.json
 13: }
 ````
 
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import RootLayout from "@/app/RootLayout";
- 3: import { client } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 6:   loading: () => <div>Loading hero...</div>,
- 7: });
- 8: const DynamicIndexContent = dynamic(
- 9:   () => import("@/components/Index/IndexContent.component"),
-10:   {
-11:     loading: () => <div>Loading content...</div>,
-12:   },
-13: );
-14: export default async function HomePage() {
-15:   const pageContent = await client.fetch(pageContentQuery);
-16:   return (
-17:     <RootLayout>
-18:       <main>
-19:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-20:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-21:         </div>
-22:         {pageContent?.content && (
-23:           <DynamicIndexContent pageContent={pageContent.content} />
-24:         )}
-25:       </main>
-26:     </RootLayout>
-27:   );
-28: }
-````
-
 ## File: src/app/RootLayout.tsx
 ````typescript
  1: import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -8419,37 +8391,6 @@ tsconfig.json
 69: export default Icons;
 ````
 
-## File: src/components/Index/IndexContent.component.tsx
-````typescript
- 1: "use client";
- 2: import Section from "./Section.component";
- 3: import type { Page } from "@/types/sanity.types";
- 4: /**
- 5:  * IndexContent component that renders multiple content sections with alternating visual styles
- 6:  * @param {Object} props - The props for the IndexContent component
- 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
- 8:  * @returns {JSX.Element} The rendered IndexContent component
- 9:  * @throws {Error} Throws an error if no content is available
-10:  */
-11: const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
-12:   if (!pageContent || pageContent.length === 0) {
-13:     throw new Error("Ingen innhold tilgjengelig");
-14:   }
-15:   return (
-16:     <div className="w-screen md:w-full overflow-hidden -mb-8">
-17:       {pageContent.map((page, index) => (
-18:         <Section
-19:           key={page._key}
-20:           {...page}
-21:           variant={index % 2 === 0 ? "default" : "alternate"}
-22:         />
-23:       ))}
-24:     </div>
-25:   );
-26: };
-27: export default IndexContent;
-````
-
 ## File: src/components/Index/MobileBackground.component.tsx
 ````typescript
  1: /**
@@ -8467,90 +8408,6 @@ tsconfig.json
 13:   />
 14: );
 15: export default MobileBackground;
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import BounceInScroll from "../Animations/BounceInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11: }
-12: /**
-13:  * Section component that renders a single content section
-14:  * @param {SectionProps} props - The props for the Section component
-15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-16:  * @param {string} props.title - The title of the section
-17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-20:  */
-21: const Section = ({
-22:   text,
-23:   title,
-24:   variant = "default",
-25:   showDebugButton = true,
-26: }: SectionProps) => {
-27:   const [shouldError, setShouldError] = useState(false);
-28:   if (!title || !text) {
-29:     console.error(
-30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-31:     );
-32:     return null;
-33:   }
-34:   if (shouldError) {
-35:     throw new Error("En uventet feil har oppstått");
-36:   }
-37:   const sectionStyles = {
-38:     default: "bg-slate-900",
-39:     alternate: "bg-slate-800/30",
-40:   };
-41:   return (
-42:     <section
-43:       aria-label={title}
-44:       data-testid="sanity-section"
-45:       className={`
-46:         md:py-6 
-47:         relative
-48:         transition-colors
-49:         duration-300
-50:         ${sectionStyles[variant]}
-51:       `}
-52:     >
-53:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-54:         <BounceInScroll viewAmount={0}>
-55:           <h2
-56:             data-testid="sanity-title"
-57:             data-cy={title}
-58:             className="text-3xl text-center text-slate-100"
-59:           >
-60:             {title}
-61:           </h2>
-62:           <div className="flex justify-center">
-63:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-64:               <PortableText
-65:                 value={text}
-66:                 components={myPortableTextComponents}
-67:               />
-68:             </div>
-69:           </div>
-70:           {process.env.NODE_ENV === "development" && showDebugButton && (
-71:             <Button onClick={() => setShouldError(true)} type="button">
-72:               Utløs Testfeil
-73:             </Button>
-74:           )}
-75:         </BounceInScroll>
-76:       </div>
-77:     </section>
-78:   );
-79: };
-80: export default Section;
 ````
 
 ## File: src/components/Layout/DesktopNavigation.component.tsx
@@ -17112,6 +16969,122 @@ tsconfig.json
 35: }
 ````
 
+## File: src/components/Index/IndexContent.component.tsx
+````typescript
+ 1: "use client";
+ 2: import Section from "./Section.component";
+ 3: import type { Page } from "@/types/sanity.types";
+ 4: /**
+ 5:  * IndexContent component that renders multiple content sections with alternating visual styles
+ 6:  * @param {Object} props - The props for the IndexContent component
+ 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
+ 8:  * @returns {JSX.Element} The rendered IndexContent component
+ 9:  * @throws {Error} Throws an error if no content is available
+10:  */
+11: const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
+12:   if (!pageContent || pageContent.length === 0) {
+13:     throw new Error("Ingen innhold tilgjengelig");
+14:   }
+15:   return (
+16:     <div className="w-full overflow-hidden -mb-8">
+17:       {pageContent.map((page, index) => (
+18:         <Section
+19:           key={page._key}
+20:           {...page}
+21:           variant={index % 2 === 0 ? "default" : "alternate"}
+22:         />
+23:       ))}
+24:     </div>
+25:   );
+26: };
+27: export default IndexContent;
+````
+
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import BounceInScroll from "../Animations/BounceInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11: }
+12: /**
+13:  * Section component that renders a single content section
+14:  * @param {SectionProps} props - The props for the Section component
+15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+16:  * @param {string} props.title - The title of the section
+17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+20:  */
+21: const Section = ({
+22:   text,
+23:   title,
+24:   variant = "default",
+25:   showDebugButton = true,
+26: }: SectionProps) => {
+27:   const [shouldError, setShouldError] = useState(false);
+28:   if (!title || !text) {
+29:     console.error(
+30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+31:     );
+32:     return null;
+33:   }
+34:   if (shouldError) {
+35:     throw new Error("En uventet feil har oppstått");
+36:   }
+37:   const sectionStyles = {
+38:     default: "bg-slate-900",
+39:     alternate: "bg-slate-800/30",
+40:   };
+41:   return (
+42:     <section
+43:       aria-label={title}
+44:       data-testid="sanity-section"
+45:       className={`
+46:         md:py-6
+47:         relative
+48:         transition-colors
+49:         duration-300
+50:         contain-layout
+51:         ${sectionStyles[variant]}
+52:       `}
+53:     >
+54:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+55:         <BounceInScroll viewAmount={0}>
+56:           <h2
+57:             data-testid="sanity-title"
+58:             data-cy={title}
+59:             className="text-3xl text-center text-slate-100"
+60:           >
+61:             {title}
+62:           </h2>
+63:           <div className="flex justify-center">
+64:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+65:               <PortableText
+66:                 value={text}
+67:                 components={myPortableTextComponents}
+68:               />
+69:             </div>
+70:           </div>
+71:           {process.env.NODE_ENV === "development" && showDebugButton && (
+72:             <Button onClick={() => setShouldError(true)} type="button">
+73:               Utløs Testfeil
+74:             </Button>
+75:           )}
+76:         </BounceInScroll>
+77:       </div>
+78:     </section>
+79:   );
+80: };
+81: export default Section;
+````
+
 ## File: src/components/Kontakt/config/formConfig.ts
 ````typescript
  1: import { z } from "zod";
@@ -17315,6 +17288,33 @@ tsconfig.json
 96: export default KontaktContent;
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.31.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.8.3"
+22:   }
+23: }
+````
+
 ## File: .eslintrc.json
 ````json
   1: {
@@ -17466,31 +17466,302 @@ tsconfig.json
 36: }
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.31.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.8.3"
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import RootLayout from "@/app/RootLayout";
+ 3: import { client } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 6: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 7:   loading: () => <ContentLoader type="hero" />,
+ 8: });
+ 9: const DynamicIndexContent = dynamic(
+10:   () => import("@/components/Index/IndexContent.component"),
+11:   {
+12:     loading: () => <ContentLoader type="section" sections={3} />,
+13:   },
+14: );
+15: export default async function HomePage() {
+16:   const pageContent = await client.fetch(pageContentQuery);
+17:   return (
+18:     <RootLayout>
+19:       <main>
+20:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+21:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+22:         </div>
+23:         {pageContent?.content && (
+24:           <DynamicIndexContent pageContent={pageContent.content} />
+25:         )}
+26:       </main>
+27:     </RootLayout>
+28:   );
+29: }
+````
+
+## File: src/components/UI/ContentLoader.component.tsx
+````typescript
+ 1: import Skeleton from "./Skeleton.component";
+ 2: interface ContentLoaderProps {
+ 3:   /** Type of content being loaded */
+ 4:   type?: "hero" | "section" | "custom";
+ 5:   /** Number of sections to show (for section type) */
+ 6:   sections?: number;
+ 7:   /** Custom content for flexibility */
+ 8:   children?: React.ReactNode;
+ 9: }
+10: const ContentLoader = ({
+11:   type = "section",
+12:   sections = 1,
+13:   children,
+14: }: ContentLoaderProps) => {
+15:   if (type === "custom" && children) {
+16:     return <>{children}</>;
+17:   }
+18:   if (type === "hero") {
+19:     return (
+20:       <article className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
+21:         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900 animate-pulse" />
+22:         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
+23:           <Skeleton height="h-14" width="w-32 mx-auto" />
+24:           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" />
+25:           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" />
+26:           <div className="flex justify-center space-x-4">
+27:             {[1, 2, 3].map((i) => (
+28:               <Skeleton key={i} height="h-10 w-10" rounded />
+29:             ))}
+30:           </div>
+31:         </div>
+32:       </article>
+33:     );
+34:   }
+35:   // Default to section loader
+36:   return (
+37:     <div className="w-full overflow-hidden -mb-8">
+38:       {Array.from({ length: sections }, (_, index) => (
+39:         <section
+40:           key={index}
+41:           data-testid="content-section"
+42:           className={`md:py-6 relative contain-layout ${
+43:             index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"
+44:           }`}
+45:         >
+46:           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
+47:             <Skeleton height="h-9" width="w-48 mx-auto" />
+48:             <div className="max-w-3xl mx-auto space-y-3">
+49:               <Skeleton />
+50:               <Skeleton width="w-5/6" />
+51:               <Skeleton width="w-4/6" />
+52:               <Skeleton />
+53:               <Skeleton width="w-3/4" />
+54:             </div>
+55:           </div>
+56:         </section>
+57:       ))}
+58:     </div>
+59:   );
+60: };
+61: export default ContentLoader;
+````
+
+## File: src/components/UI/Skeleton.component.tsx
+````typescript
+ 1: import { type ReactNode } from "react";
+ 2: interface SkeletonProps {
+ 3:   width?: string;
+ 4:   height?: string;
+ 5:   className?: string;
+ 6:   rounded?: boolean;
+ 7:   children?: ReactNode;
+ 8: }
+ 9: const Skeleton = ({
+10:   width = "w-full",
+11:   height = "h-4",
+12:   className = "",
+13:   rounded = false,
+14:   children,
+15: }: SkeletonProps) => {
+16:   if (children) {
+17:     return (
+18:       <div className={`animate-pulse ${className}`} data-testid="skeleton">
+19:         {children}
+20:       </div>
+21:     );
 22:   }
-23: }
+23:   const baseClasses = "animate-pulse bg-slate-700";
+24:   const shapeClasses = rounded ? "rounded-full" : "rounded";
+25:   return (
+26:     <div
+27:       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
+28:       data-testid="skeleton"
+29:     />
+30:   );
+31: };
+32: export default Skeleton;
+````
+
+## File: src/__tests__/UI/ContentLoader.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 3: describe("ContentLoader", () => {
+ 4:   describe("Hero type", () => {
+ 5:     it("renders hero skeleton with correct structure", () => {
+ 6:       // Arrange - Set up test data and conditions
+ 7:       const props = { type: "hero" as const };
+ 8:       // Act - Perform the action being tested
+ 9:       render(<ContentLoader {...props} />);
+10:       // Assert - Verify the results
+11:       const article = screen.getByRole("article");
+12:       expect(article).toHaveClass(
+13:         "relative",
+14:         "flex",
+15:         "flex-col",
+16:         "justify-center",
+17:         "h-[32rem]",
+18:         "md:h-[30rem]",
+19:       );
+20:     });
+21:     it("renders hero content skeletons", () => {
+22:       // Arrange - Set up test data and conditions
+23:       const props = { type: "hero" as const };
+24:       // Act - Perform the action being tested
+25:       render(<ContentLoader {...props} />);
+26:       // Assert - Verify the results
+27:       // Should have 1 title + 1 subtitle + 1 description + 3 icons = 6 skeletons
+28:       const skeletons = screen.getAllByRole("generic", {
+29:         name: (_, element) =>
+30:           element?.classList.contains("animate-pulse") &&
+31:           element?.classList.contains("bg-slate-700"),
+32:       });
+33:       expect(skeletons).toHaveLength(6);
+34:     });
+35:   });
+36:   describe("Section type", () => {
+37:     it("renders single section by default", () => {
+38:       // Arrange - Set up test data and conditions
+39:       const props = { type: "section" as const };
+40:       // Act - Perform the action being tested
+41:       render(<ContentLoader {...props} />);
+42:       // Assert - Verify the results
+43:       const sections = screen.getAllByTestId("content-section");
+44:       expect(sections).toHaveLength(1);
+45:     });
+46:     it("renders multiple sections when specified", () => {
+47:       // Arrange - Set up test data and conditions
+48:       const props = { type: "section" as const, sections: 3 };
+49:       // Act - Perform the action being tested
+50:       render(<ContentLoader {...props} />);
+51:       // Assert - Verify the results
+52:       const sections = screen.getAllByTestId("content-section");
+53:       expect(sections).toHaveLength(3);
+54:     });
+55:     it("alternates section backgrounds", () => {
+56:       // Arrange - Set up test data and conditions
+57:       const props = { type: "section" as const, sections: 2 };
+58:       // Act - Perform the action being tested
+59:       render(<ContentLoader {...props} />);
+60:       // Assert - Verify the results
+61:       const sections = screen.getAllByTestId("content-section");
+62:       expect(sections[0]).toHaveClass("bg-slate-900");
+63:       expect(sections[1]).toHaveClass("bg-slate-800/30");
+64:     });
+65:     it("sections have contain-layout class", () => {
+66:       // Arrange - Set up test data and conditions
+67:       const props = { type: "section" as const };
+68:       // Act - Perform the action being tested
+69:       render(<ContentLoader {...props} />);
+70:       // Assert - Verify the results
+71:       const section = screen.getByTestId("content-section");
+72:       expect(section).toHaveClass("contain-layout");
+73:     });
+74:   });
+75:   describe("Custom type", () => {
+76:     it("renders custom children", () => {
+77:       // Arrange - Set up test data and conditions
+78:       const customContent = (
+79:         <div data-testid="custom-content">Custom loading content</div>
+80:       );
+81:       // Act - Perform the action being tested
+82:       render(<ContentLoader type="custom">{customContent}</ContentLoader>);
+83:       // Assert - Verify the results
+84:       expect(screen.getByTestId("custom-content")).toBeInTheDocument();
+85:     });
+86:   });
+87: });
+````
+
+## File: src/__tests__/UI/Skeleton.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import Skeleton from "@/components/UI/Skeleton.component";
+ 3: describe("Skeleton", () => {
+ 4:   it("renders with default props", () => {
+ 5:     // Arrange - Set up test data and conditions
+ 6:     // No props needed for default test
+ 7:     // Act - Perform the action being tested
+ 8:     render(<Skeleton />);
+ 9:     // Assert - Verify the results
+10:     const skeleton = screen.getByTestId("skeleton");
+11:     expect(skeleton).toHaveClass(
+12:       "animate-pulse",
+13:       "bg-slate-700",
+14:       "rounded",
+15:       "w-full",
+16:       "h-4",
+17:     );
+18:   });
+19:   it("renders with custom width and height", () => {
+20:     // Arrange - Set up test data and conditions
+21:     const width = "w-32";
+22:     const height = "h-8";
+23:     // Act - Perform the action being tested
+24:     render(<Skeleton width={width} height={height} />);
+25:     // Assert - Verify the results
+26:     const skeleton = screen.getByTestId("skeleton");
+27:     expect(skeleton).toHaveClass("w-32", "h-8");
+28:   });
+29:   it("renders as a circle when rounded prop is true", () => {
+30:     // Arrange - Set up test data and conditions
+31:     const rounded = true;
+32:     // Act - Perform the action being tested
+33:     render(<Skeleton rounded={rounded} />);
+34:     // Assert - Verify the results
+35:     const skeleton = screen.getByTestId("skeleton");
+36:     expect(skeleton).toHaveClass("rounded-full");
+37:     expect(skeleton).not.toHaveClass("rounded");
+38:   });
+39:   it("applies additional className", () => {
+40:     // Arrange - Set up test data and conditions
+41:     const className = "mt-4";
+42:     // Act - Perform the action being tested
+43:     render(<Skeleton className={className} />);
+44:     // Assert - Verify the results
+45:     const skeleton = screen.getByTestId("skeleton");
+46:     expect(skeleton).toHaveClass("mt-4");
+47:   });
+48:   it("renders children with animation when provided", () => {
+49:     // Arrange - Set up test data and conditions
+50:     const customContent = (
+51:       <div data-testid="custom-content">Custom skeleton content</div>
+52:     );
+53:     // Act - Perform the action being tested
+54:     render(<Skeleton>{customContent}</Skeleton>);
+55:     // Assert - Verify the results
+56:     const wrapper = screen.getByTestId("skeleton");
+57:     expect(wrapper).toHaveClass("animate-pulse");
+58:     expect(screen.getByTestId("custom-content")).toBeInTheDocument();
+59:   });
+60:   it("does not render the default skeleton block when children are provided", () => {
+61:     // Arrange - Set up test data and conditions
+62:     const customContent = <div>Custom content</div>;
+63:     // Act - Perform the action being tested
+64:     render(<Skeleton>{customContent}</Skeleton>);
+65:     // Assert - Verify the results
+66:     const wrapper = screen.getByTestId("skeleton");
+67:     expect(wrapper).not.toHaveClass("bg-slate-700");
+68:   });
+69: });
 ````
 
 ## File: studio/package.json
