@@ -10,7 +10,7 @@ describe("Skeleton", () => {
     render(<Skeleton />);
     
     // Assert - Verify the results
-    const skeleton = screen.getByRole("generic");
+    const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveClass(
       "animate-pulse",
       "bg-slate-700",
@@ -29,7 +29,7 @@ describe("Skeleton", () => {
     render(<Skeleton width={width} height={height} />);
 
     // Assert - Verify the results
-    const skeleton = screen.getByRole("generic");
+    const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveClass("w-32", "h-8");
   });
 
@@ -41,7 +41,7 @@ describe("Skeleton", () => {
     render(<Skeleton rounded={rounded} />);
 
     // Assert - Verify the results
-    const skeleton = screen.getByRole("generic");
+    const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveClass("rounded-full");
     expect(skeleton).not.toHaveClass("rounded");
   });
@@ -54,7 +54,7 @@ describe("Skeleton", () => {
     render(<Skeleton className={className} />);
 
     // Assert - Verify the results
-    const skeleton = screen.getByRole("generic");
+    const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveClass("mt-4");
   });
 
@@ -70,7 +70,7 @@ describe("Skeleton", () => {
     );
     
     // Assert - Verify the results
-    const wrapper = screen.getByRole("generic");
+    const wrapper = screen.getByTestId("skeleton");
     expect(wrapper).toHaveClass("animate-pulse");
     expect(screen.getByTestId("custom-content")).toBeInTheDocument();
   });
@@ -87,7 +87,7 @@ describe("Skeleton", () => {
     );
     
     // Assert - Verify the results
-    const wrapper = screen.getByRole("generic");
+    const wrapper = screen.getByTestId("skeleton");
     expect(wrapper).not.toHaveClass("bg-slate-700");
   });
 });

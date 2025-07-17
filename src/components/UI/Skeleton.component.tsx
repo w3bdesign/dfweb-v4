@@ -16,7 +16,11 @@ const Skeleton = ({
   children,
 }: SkeletonProps) => {
   if (children) {
-    return <div className={`animate-pulse ${className}`}>{children}</div>;
+    return (
+      <div className={`animate-pulse ${className}`} data-testid="skeleton">
+        {children}
+      </div>
+    );
   }
 
   const baseClasses = "animate-pulse bg-slate-700";
@@ -25,6 +29,7 @@ const Skeleton = ({
   return (
     <div
       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
+      data-testid="skeleton"
     />
   );
 };

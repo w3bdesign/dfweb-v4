@@ -42,6 +42,7 @@ const ContentLoader = ({
       {Array.from({ length: sections }, (_, index) => (
         <section
           key={index}
+          data-testid="content-section"
           className={`md:py-6 relative contain-layout ${
             index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"
           }`}
