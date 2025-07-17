@@ -5,8 +5,7 @@ import dynamic from "next/dynamic";
 import type { Herocontent } from "@/types/sanity.types";
 
 import Icons from "./Icons.component";
-import FadeDown from "../Animations/FadeDown.component";
-import FadeUp from "../Animations/FadeUp.component";
+import FadeIn from "../Animations/FadeIn.component";
 import RotatingLoader from "../Animations/RotatingLoader.component";
 import MobileBackground from "./MobileBackground.component";
 import MatrixCursor from "../Animations/MatrixCursor.component";
@@ -20,7 +19,7 @@ const ReactMatrixAnimation = dynamic(
         <RotatingLoader />
       </div>
     ),
-  },
+  }
 );
 
 /**
@@ -47,30 +46,26 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
       </div>
       <div className="relative z-10">
         <section className="text-left md:text-center px-4 md:px-0">
-          <FadeDown delay={0.5}>
+          <FadeIn delay={0.1}>
             <h1
               data-cy="hei"
               className="text-6xl font-bold text-[#00ff62] text-center"
             >
               {content?.length > 0 ? content[0]?.text : "Hei!"}
             </h1>
-          </FadeDown>
 
-          <FadeUp delay={0.9} cssClass="mt-4">
-            <h2 className="text-2xl text-slate-300 text-left md:text-center  ">
+            <h2 className="mt-4 text-2xl text-slate-300 text-left md:text-center  ">
               {content?.length > 0 && content[1]?.text}
             </h2>
-          </FadeUp>
 
-          <FadeDown delay={1.4} cssClass="mt-4">
-            <p className="text-xl text-slate-300 text-left md:text-center ">
+            <p className="mt-4 text-xl text-slate-300 text-left md:text-center ">
               {content?.length > 0 && content[2]?.text}
             </p>
-          </FadeDown>
 
-          <div className="mt-4">
-            <Icons />
-          </div>
+            <div className="mt-4">
+              <Icons />
+            </div>
+          </FadeIn>
         </section>
       </div>
     </article>
