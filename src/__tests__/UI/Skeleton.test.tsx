@@ -5,10 +5,10 @@ describe("Skeleton", () => {
   it("renders with default props", () => {
     // Arrange - Set up test data and conditions
     // No props needed for default test
-    
+
     // Act - Perform the action being tested
     render(<Skeleton />);
-    
+
     // Assert - Verify the results
     const skeleton = screen.getByTestId("skeleton");
     expect(skeleton).toHaveClass(
@@ -24,7 +24,7 @@ describe("Skeleton", () => {
     // Arrange - Set up test data and conditions
     const width = "w-32";
     const height = "h-8";
-    
+
     // Act - Perform the action being tested
     render(<Skeleton width={width} height={height} />);
 
@@ -36,7 +36,7 @@ describe("Skeleton", () => {
   it("renders as a circle when rounded prop is true", () => {
     // Arrange - Set up test data and conditions
     const rounded = true;
-    
+
     // Act - Perform the action being tested
     render(<Skeleton rounded={rounded} />);
 
@@ -49,7 +49,7 @@ describe("Skeleton", () => {
   it("applies additional className", () => {
     // Arrange - Set up test data and conditions
     const className = "mt-4";
-    
+
     // Act - Perform the action being tested
     render(<Skeleton className={className} />);
 
@@ -60,15 +60,13 @@ describe("Skeleton", () => {
 
   it("renders children with animation when provided", () => {
     // Arrange - Set up test data and conditions
-    const customContent = <div data-testid="custom-content">Custom skeleton content</div>;
-    
-    // Act - Perform the action being tested
-    render(
-      <Skeleton>
-        {customContent}
-      </Skeleton>,
+    const customContent = (
+      <div data-testid="custom-content">Custom skeleton content</div>
     );
-    
+
+    // Act - Perform the action being tested
+    render(<Skeleton>{customContent}</Skeleton>);
+
     // Assert - Verify the results
     const wrapper = screen.getByTestId("skeleton");
     expect(wrapper).toHaveClass("animate-pulse");
@@ -78,14 +76,10 @@ describe("Skeleton", () => {
   it("does not render the default skeleton block when children are provided", () => {
     // Arrange - Set up test data and conditions
     const customContent = <div>Custom content</div>;
-    
+
     // Act - Perform the action being tested
-    render(
-      <Skeleton>
-        {customContent}
-      </Skeleton>,
-    );
-    
+    render(<Skeleton>{customContent}</Skeleton>);
+
     // Assert - Verify the results
     const wrapper = screen.getByTestId("skeleton");
     expect(wrapper).not.toHaveClass("bg-slate-700");

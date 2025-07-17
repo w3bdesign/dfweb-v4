@@ -6,7 +6,7 @@ describe("ContentLoader", () => {
     it("renders hero skeleton with correct structure", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "hero" as const };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -25,7 +25,7 @@ describe("ContentLoader", () => {
     it("renders hero content skeletons", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "hero" as const };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -45,7 +45,7 @@ describe("ContentLoader", () => {
     it("renders single section by default", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "section" as const };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -57,7 +57,7 @@ describe("ContentLoader", () => {
     it("renders multiple sections when specified", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "section" as const, sections: 3 };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -69,7 +69,7 @@ describe("ContentLoader", () => {
     it("alternates section backgrounds", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "section" as const, sections: 2 };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -82,7 +82,7 @@ describe("ContentLoader", () => {
     it("sections have contain-layout class", () => {
       // Arrange - Set up test data and conditions
       const props = { type: "section" as const };
-      
+
       // Act - Perform the action being tested
       render(<ContentLoader {...props} />);
 
@@ -95,14 +95,12 @@ describe("ContentLoader", () => {
   describe("Custom type", () => {
     it("renders custom children", () => {
       // Arrange - Set up test data and conditions
-      const customContent = <div data-testid="custom-content">Custom loading content</div>;
-      
-      // Act - Perform the action being tested
-      render(
-        <ContentLoader type="custom">
-          {customContent}
-        </ContentLoader>,
+      const customContent = (
+        <div data-testid="custom-content">Custom loading content</div>
       );
+
+      // Act - Perform the action being tested
+      render(<ContentLoader type="custom">{customContent}</ContentLoader>);
 
       // Assert - Verify the results
       expect(screen.getByTestId("custom-content")).toBeInTheDocument();
