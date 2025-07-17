@@ -2,17 +2,16 @@ import dynamic from "next/dynamic";
 import RootLayout from "@/app/RootLayout";
 import { client } from "@/lib/sanity/client";
 import { pageContentQuery } from "@/lib/sanity/queries";
-import IndexContentLoader from "@/components/Index/IndexContentLoader.component";
-import HeroSkeleton from "@/components/Index/HeroSkeleton.component";
+import ContentLoader from "@/components/UI/ContentLoader.component";
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
-  loading: () => <HeroSkeleton />,
+  loading: () => <ContentLoader type="hero" />,
 });
 
 const DynamicIndexContent = dynamic(
   () => import("@/components/Index/IndexContent.component"),
   {
-    loading: () => <IndexContentLoader />,
+    loading: () => <ContentLoader type="section" sections={3} />,
   },
 );
 
