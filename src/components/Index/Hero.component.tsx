@@ -70,11 +70,9 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
             </p>
           </FadeIn>
 
-          <FadeIn delay={3}>
-            <div className="mt-4">
-              <Icons />
-            </div>
-          </FadeIn>
+          <div className="mt-4">
+            <Icons />
+          </div>
         </section>
       </div>
     </article>

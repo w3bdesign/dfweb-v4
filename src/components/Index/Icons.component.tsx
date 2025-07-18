@@ -50,7 +50,7 @@ const Icons = () => (
   >
     {AnimateIcons.map(({ Icon, id, iconName }) => (
       <span className="relative" key={id}>
-        <Grow delay={1.8 + id * 0.2}>
+        <Grow delay={2.5 + id * 0.2}>
           <div className="relative group">
             <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-[#00ff62]/30 group-hover:bg-slate-900/70">
               <Icon
