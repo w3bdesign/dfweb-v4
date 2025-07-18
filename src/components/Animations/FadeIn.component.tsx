@@ -1,11 +1,12 @@
 import { motion } from "motion/react";
 import { ReactNode } from "react";
 
-interface FadeInProps {
+export interface FadeInProps {
   children: ReactNode;
   className?: string;
   duration?: number;
   delay?: number;
+  "data-testid"?: string;
 }
 
 /**
@@ -17,10 +18,12 @@ const FadeIn = ({
   className = "",
   duration = 0.3,
   delay = 0,
+  "data-testid": dataTestId,
 }: FadeInProps) => {
   return (
     <motion.div
       className={className}
+      data-testid={dataTestId}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{

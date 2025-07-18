@@ -20,13 +20,13 @@ describe("FadeIn", () => {
   it("applies custom className", () => {
     // Arrange
     render(
-      <FadeIn className="custom-class">
+      <FadeIn className="custom-class" data-testid="fade-in">
         <div>Test content</div>
       </FadeIn>,
     );
 
     // Act
-    const container = screen.getByText("Test content").parentElement;
+    const container = screen.getByTestId("fade-in");
 
     // Assert
     expect(container).toHaveClass("custom-class");
@@ -34,14 +34,14 @@ describe("FadeIn", () => {
 
   it("has initial opacity of 0", () => {
     // Arrange
-    const { container } = render(
-      <FadeIn>
+    render(
+      <FadeIn data-testid="fade-in">
         <div>Test content</div>
       </FadeIn>,
     );
 
     // Act
-    const fadeInElement = container.firstChild as HTMLElement;
+    const fadeInElement = screen.getByTestId("fade-in");
 
     // Assert
     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
