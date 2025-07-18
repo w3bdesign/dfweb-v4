@@ -52,9 +52,7 @@ test.describe("Home page", () => {
     const prosjekterSection = page.getByLabel("Prosjekter");
 
     // Check section content
-    await expect(
-      prosjekterSection.getByTestId("fade-in-scroll"),
-    ).toContainText(
+    await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
       { timeout: 10000 },
     );
