@@ -41,7 +41,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ onSubmit, csrfToken }) => {
           Kontaktskjema
         </legend>
 
-        {/* Navn field */}
         <InputField<FormData>
           name="navn"
           label="Fullt navn"
@@ -54,7 +53,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ onSubmit, csrfToken }) => {
         />
         <br />
 
-        {/* Telefon field */}
         <InputField<FormData>
           name="telefon"
           label="Telefonnummer"
@@ -67,7 +65,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ onSubmit, csrfToken }) => {
         />
         <br />
 
-        {/* Tekst field */}
         <InputField<FormData>
           name="tekst"
           label="Hva ønsker du å si?"
