@@ -16,7 +16,7 @@ export interface FadeInProps {
 const FadeIn = ({
   children,
   className = "",
-  duration = 0.3,
+  duration = 1,
   delay = 0,
   "data-testid": dataTestId,
 }: FadeInProps) => {

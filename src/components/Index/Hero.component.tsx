@@ -19,7 +19,7 @@ const ReactMatrixAnimation = dynamic(
         <RotatingLoader />
       </div>
     ),
-  },
+  }
 );
 
 /**
@@ -45,23 +45,32 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
         <ReactMatrixAnimation />
       </div>
       <div className="relative z-10">
-        <section className="text-left md:text-center px-4 md:px-0">
-          <FadeIn delay={0.1} data-testid="fade-in">
+        <section
+          className="text-left md:text-center px-4 md:px-0"
+          data-testid="fade-in"
+        >
+          <FadeIn delay={0.2}>
             <h1
               data-cy="hei"
               className="text-6xl font-bold text-[#00ff62] text-center"
             >
               {content?.length > 0 ? content[0]?.text : "Hei!"}
             </h1>
+          </FadeIn>
 
+          <FadeIn delay={1}>
             <h2 className="mt-4 text-2xl text-slate-300 text-left md:text-center  ">
               {content?.length > 0 && content[1]?.text}
             </h2>
+          </FadeIn>
 
+          <FadeIn delay={2}>
             <p className="mt-4 text-xl text-slate-300 text-left md:text-center ">
               {content?.length > 0 && content[2]?.text}
             </p>
+          </FadeIn>
 
+          <FadeIn delay={3}>
             <div className="mt-4">
               <Icons />
             </div>
