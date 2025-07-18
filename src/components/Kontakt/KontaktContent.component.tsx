@@ -12,19 +12,8 @@ import { FormData } from "./config/formConfig";
  * Props for the KontaktContent component.
  */
 type Props = {
-  /**
-   * Optional custom submit handler. If provided, this function will be called
-   * instead of the default emailjs submission. It should handle the submission
-   * logic and return a promise that resolves to a message string.
-   */
   onSubmit?: (data: FormData) => Promise<string>;
-  /**
-   * Optional initial response message to display.
-   */
   initialResponse?: string;
-  /**
-   * CSRF token for form security
-   */
   csrfToken?: string;
 };
 
