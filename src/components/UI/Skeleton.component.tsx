@@ -6,6 +6,8 @@ interface SkeletonProps {
   className?: string;
   rounded?: boolean;
   children?: ReactNode;
+  shimmer?: boolean;
+  "data-testid"?: string;
 }
 
 const Skeleton = ({
@@ -14,22 +16,32 @@ const Skeleton = ({
   className = "",
   rounded = false,
   children,
+  shimmer = true,
+  "data-testid": dataTestId,
 }: SkeletonProps) => {
   if (children) {
     return (
-      <div className={`animate-pulse ${className}`} data-testid="skeleton">
+      <div
+        className={`animate-pulse ${className}`}
+        data-testid={dataTestId || "skeleton"}
+      >
         {children}
       </div>
     );
   }
 
-  const baseClasses = "animate-pulse bg-slate-700";
+  const baseClasses = shimmer
+    ? "relative overflow-hidden bg-slate-700 skeleton-shimmer"
+    : "animate-pulse bg-slate-700";
   const shapeClasses = rounded ? "rounded-full" : "rounded";
 
   return (
     <div
       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
-      data-testid="skeleton"
+      data-testid={dataTestId || "skeleton"}
+      style={{
+        contain: "layout style paint",
+      }}
     />
   );
 };

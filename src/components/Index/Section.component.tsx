@@ -2,7 +2,7 @@
 
 import { PortableText } from "@portabletext/react";
 import { useState } from "react";
-import BounceInScroll from "../Animations/BounceInScroll.component";
+import FadeInScroll from "../Animations/FadeInScroll.component";
 import Button from "../UI/Button.component";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
 import type { Pagecontent } from "@/types/sanity.types";
@@ -59,7 +59,7 @@ const Section = ({
       `}
     >
       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-        <BounceInScroll viewAmount={0}>
+        <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
           <h2
             data-testid="sanity-title"
             data-cy={title}
@@ -80,7 +80,7 @@ const Section = ({
               Utløs Testfeil
             </Button>
           )}
-        </BounceInScroll>
+        </FadeInScroll>
       </div>
     </section>
   );

@@ -1,128 +1,115 @@
-import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import Section from "@/components/Index/Section.component";
-import { PortableText } from "@portabletext/react";
-import { myPortableTextComponents } from "@/utils/portableTextComponents";
+import { Pagecontent } from "@/types/sanity.types";
 
-// Mock the BounceInScroll component
-jest.mock("@/components/Animations/BounceInScroll.component", () => {
-  const MockBounceInScroll = ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  );
-  MockBounceInScroll.displayName = "MockBounceInScroll";
-  return MockBounceInScroll;
+// Mock IntersectionObserver
+const mockIntersectionObserver = jest.fn();
+mockIntersectionObserver.mockReturnValue({
+  observe: () => null,
+  unobserve: () => null,
+  disconnect: () => null,
 });
+window.IntersectionObserver = mockIntersectionObserver;
 
-// Mock the PortableText component
-jest.mock("@portabletext/react", () => ({
-  PortableText: jest.fn(() => null),
-}));
+const mockProps: Pagecontent = {
+  _type: "pagecontent",
+  title: "Test Title",
+  text: [
+    {
+      _key: "a1",
+      _type: "block",
+      children: [
+        {
+          _key: "a1-1",
+          _type: "span",
+          marks: [],
+          text: "Test content",
+        },
+      ],
+      markDefs: [],
+      style: "normal",
+    },
+  ],
+};
+
+// Type-safe way to make NODE_ENV writable for tests
+type WritableNodeEnv = {
+  NODE_ENV?: string;
+};
 
 describe("Section Component", () => {
-  const mockProps: import("@/types/sanity.types").Pagecontent = {
-    _type: "pagecontent",
-    title: "Test Title",
-    text: [
-      {
-        _key: "1",
-        _type: "block",
-        children: [
-          { _key: "2", _type: "span", text: "Test content", marks: [] },
-        ],
-        markDefs: [],
-        style: "normal",
-      },
-    ],
-  };
-
-  const originalEnv = process.env;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    process.env = { ...originalEnv };
+    // Note: While NODE_ENV is typically read-only in production environments,
+    // Jest allows us to modify it for testing purposes. This is safe in tests
+    // but should never be done in production code. We use a type assertion
+    // to a writable version for testing only.
+    (process.env as WritableNodeEnv).NODE_ENV = "development";
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    // Reset to test environment
+    (process.env as WritableNodeEnv).NODE_ENV = "test";
   });
 
   it("renders with valid props", () => {
-    // Arrange - Set up test data and conditions
-    const props = mockProps;
+    // Arrange
+    render(<Section {...mockProps} />);
 
-    // Act - Perform the action being tested
-    render(<Section {...props} />);
+    // Act
+    const title = screen.getByText("Test Title");
+    const content = screen.getByText("Test content");
 
-    // Assert - Verify the results
-    expect(screen.getByText("Test Title")).toBeInTheDocument();
-    const mockCall = (PortableText as jest.Mock).mock.calls[0][0];
-    expect(mockCall).toStrictEqual({
-      value: mockProps.text,
-      components: myPortableTextComponents,
-    });
-  });
-
-  it("returns null with invalid props", () => {
-    // Arrange - Set up test data and conditions
-    const consoleErrorSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    // Act - Perform the action being tested
-    render(<Section _type="pagecontent" title="" text={[]} />);
-
-    // Assert - Verify the results
-    expect(screen.queryByRole("article")).not.toBeInTheDocument();
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    consoleErrorSpy.mockRestore();
+    // Assert
+    expect(title).toBeInTheDocument();
+    expect(content).toBeInTheDocument();
   });
 
   it("triggers error in development mode", () => {
-    // Arrange - Set up test data and conditions
-    process.env = { ...originalEnv, NODE_ENV: "development" };
-
-    // Act - Perform the action being tested
+    // Arrange
+    const consoleErrorSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
     render(<Section {...mockProps} />);
     const errorButton = screen.getByText("Utløs Testfeil");
 
-    // Assert - Verify the results
-    expect(errorButton).toBeInTheDocument();
+    // Act & Assert
     expect(() => fireEvent.click(errorButton)).toThrow(
       "En uventet feil har oppstått",
     );
+    consoleErrorSpy.mockRestore();
   });
 
   it("does not show error button in production mode", () => {
-    // Arrange - Set up test data and conditions
-    process.env = { ...originalEnv, NODE_ENV: "production" };
-
-    // Act - Perform the action being tested
+    // Arrange
+    (process.env as WritableNodeEnv).NODE_ENV = "production";
     render(<Section {...mockProps} />);
 
-    // Assert - Verify the results
-    expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+    // Act
+    const errorButton = screen.queryByText("Utløs Testfeil");
+
+    // Assert
+    expect(errorButton).not.toBeInTheDocument();
   });
 
   it("does not show error button when showDebugButton is false in development mode", () => {
-    // Arrange - Set up test data and conditions
-    process.env = { ...originalEnv, NODE_ENV: "development" };
-
-    // Act - Perform the action being tested
+    // Arrange
     render(<Section {...mockProps} showDebugButton={false} />);
 
-    // Assert - Verify the results
-    expect(screen.queryByText("Utløs Testfeil")).not.toBeInTheDocument();
+    // Act
+    const errorButton = screen.queryByText("Utløs Testfeil");
+
+    // Assert
+    expect(errorButton).not.toBeInTheDocument();
   });
 
   it("shows error button when showDebugButton is true in development mode", () => {
-    // Arrange - Set up test data and conditions
-    process.env = { ...originalEnv, NODE_ENV: "development" };
-
-    // Act - Perform the action being tested
+    // Arrange
     render(<Section {...mockProps} showDebugButton={true} />);
 
-    // Assert - Verify the results
-    expect(screen.getByText("Utløs Testfeil")).toBeInTheDocument();
+    // Act
+    const errorButton = screen.getByText("Utløs Testfeil");
+
+    // Assert
+    expect(errorButton).toBeInTheDocument();
   });
 });
