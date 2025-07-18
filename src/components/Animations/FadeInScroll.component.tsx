@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { ReactNode } from "react";
 
-interface FadeInScrollProps {
+export interface FadeInScrollProps {
   children: ReactNode;
   className?: string;
   duration?: number;

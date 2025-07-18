@@ -1,11 +1,15 @@
 import type { Story } from "@ladle/react";
-import FadeInScroll from "@/components/Animations/FadeInScroll.component";
+import FadeInScroll, {
+  FadeInScrollProps,
+} from "@/components/Animations/FadeInScroll.component";
 
-export default {
+const FadeInScrollStories = {
   title: "Animations/FadeInScroll",
 };
 
-export const Default: Story<{}> = () => (
+export default FadeInScrollStories;
+
+export const Default: Story<FadeInScrollProps> = () => (
   <div className="h-[200vh] pt-[100vh]">
     <FadeInScroll>
       <div className="p-4 bg-green-500 rounded">Fade In on Scroll</div>
@@ -13,7 +17,7 @@ export const Default: Story<{}> = () => (
   </div>
 );
 
-export const CustomViewAmount: Story<{}> = () => (
+export const CustomViewAmount: Story<FadeInScrollProps> = () => (
   <div className="h-[200vh] pt-[100vh]">
     <FadeInScroll viewAmount={0.8}>
       <div className="p-4 bg-green-500 rounded">Fade In with 80% visible</div>
