@@ -39,10 +39,6 @@ type WritableNodeEnv = {
 
 describe("Section Component", () => {
   beforeEach(() => {
-    // Note: While NODE_ENV is typically read-only in production environments,
-    // Jest allows us to modify it for testing purposes. This is safe in tests
-    // but should never be done in production code. We use a type assertion
-    // to a writable version for testing only.
     (process.env as WritableNodeEnv).NODE_ENV = "development";
   });
 
@@ -79,8 +75,8 @@ describe("Section Component", () => {
 
     // Type for testing invalid props
     type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
-      title?: string | null | undefined;
-      text?: Pagecontent["text"] | null | undefined;
+      title?: string | null;
+      text?: Pagecontent["text"] | null;
     };
 
     it("returns null and logs error when title is missing", () => {
@@ -92,13 +88,13 @@ describe("Section Component", () => {
 
       // Act
       const { container } = render(
-        <Section {...(propsWithoutTitle as Pagecontent)} />,
+        <Section {...(propsWithoutTitle as Pagecontent)} />
       );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+        'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]'
       );
     });
 
@@ -111,13 +107,13 @@ describe("Section Component", () => {
 
       // Act
       const { container } = render(
-        <Section {...(propsWithNullTitle as Pagecontent)} />,
+        <Section {...(propsWithNullTitle as Pagecontent)} />
       );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+        'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]'
       );
     });
 
@@ -131,7 +127,7 @@ describe("Section Component", () => {
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+        'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]'
       );
     });
 
@@ -144,13 +140,13 @@ describe("Section Component", () => {
 
       // Act
       const { container } = render(
-        <Section {...(propsWithoutText as Pagecontent)} />,
+        <Section {...(propsWithoutText as Pagecontent)} />
       );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
+        "Ugyldig seksjon data: tittel=Test Title, tekst=undefined"
       );
     });
 
@@ -163,13 +159,13 @@ describe("Section Component", () => {
 
       // Act
       const { container } = render(
-        <Section {...(propsWithNullText as Pagecontent)} />,
+        <Section {...(propsWithNullText as Pagecontent)} />
       );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=Test Title, tekst=null",
+        "Ugyldig seksjon data: tittel=Test Title, tekst=null"
       );
     });
 
@@ -198,13 +194,13 @@ describe("Section Component", () => {
 
       // Act
       const { container } = render(
-        <Section {...(propsWithoutBoth as Pagecontent)} />,
+        <Section {...(propsWithoutBoth as Pagecontent)} />
       );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
+        "Ugyldig seksjon data: tittel=undefined, tekst=undefined"
       );
     });
   });
@@ -219,7 +215,7 @@ describe("Section Component", () => {
 
     // Act & Assert
     expect(() => fireEvent.click(errorButton)).toThrow(
-      "En uventet feil har oppstått",
+      "En uventet feil har oppstått"
     );
     consoleErrorSpy.mockRestore();
   });
