@@ -76,13 +76,13 @@ describe("FadeInScroll", () => {
   it("applies custom className", () => {
     // Arrange
     render(
-      <FadeInScroll className="custom-class">
+      <FadeInScroll className="custom-class" data-testid="fade-in-scroll">
         <div>Test content</div>
       </FadeInScroll>,
     );
 
     // Act
-    const container = screen.getByText("Test content").parentElement;
+    const container = screen.getByTestId("fade-in-scroll");
 
     // Assert
     expect(container).toHaveClass("custom-class");
@@ -90,14 +90,14 @@ describe("FadeInScroll", () => {
 
   it("has initial opacity of 0", () => {
     // Arrange
-    const { container } = render(
-      <FadeInScroll>
+    render(
+      <FadeInScroll data-testid="fade-in-scroll">
         <div>Test content</div>
       </FadeInScroll>,
     );
 
     // Act
-    const fadeInElement = container.firstChild as HTMLElement;
+    const fadeInElement = screen.getByTestId("fade-in-scroll");
 
     // Assert
     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
@@ -107,13 +107,13 @@ describe("FadeInScroll", () => {
   it("configures viewport with custom viewAmount", () => {
     // Arrange
     render(
-      <FadeInScroll viewAmount={0.5}>
+      <FadeInScroll viewAmount={0.5} data-testid="fade-in-scroll">
         <div>Test content</div>
       </FadeInScroll>,
     );
 
     // Act
-    const container = screen.getByText("Test content").parentElement;
+    const container = screen.getByTestId("fade-in-scroll");
     const viewport = JSON.parse(
       container?.getAttribute("data-viewport") || "{}",
     );
@@ -126,13 +126,13 @@ describe("FadeInScroll", () => {
   it("uses default viewAmount when not provided", () => {
     // Arrange
     render(
-      <FadeInScroll>
+      <FadeInScroll data-testid="fade-in-scroll">
         <div>Test content</div>
       </FadeInScroll>,
     );
 
     // Act
-    const container = screen.getByText("Test content").parentElement;
+    const container = screen.getByTestId("fade-in-scroll");
     const viewport = JSON.parse(
       container?.getAttribute("data-viewport") || "{}",
     );
@@ -145,13 +145,13 @@ describe("FadeInScroll", () => {
   it("accepts custom duration", () => {
     // Arrange
     render(
-      <FadeInScroll duration={0.8}>
+      <FadeInScroll duration={0.8} data-testid="fade-in-scroll">
         <div>Test content</div>
       </FadeInScroll>,
     );
 
     // Act
-    const container = screen.getByText("Test content").parentElement;
+    const container = screen.getByTestId("fade-in-scroll");
     const transition = JSON.parse(
       container?.getAttribute("data-transition") || "{}",
     );

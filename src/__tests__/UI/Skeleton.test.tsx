@@ -48,16 +48,17 @@ describe("Skeleton", () => {
   it("renders children when provided", () => {
     // Arrange
     render(
-      <Skeleton>
+      <Skeleton data-testid="skeleton">
         <div>Child content</div>
       </Skeleton>,
     );
 
     // Act
     const child = screen.getByText("Child content");
+    const skeleton = screen.getByTestId("skeleton");
 
     // Assert
     expect(child).toBeInTheDocument();
-    expect(child.parentElement).toHaveClass("animate-pulse");
+    expect(skeleton).toHaveClass("animate-pulse");
   });
 });

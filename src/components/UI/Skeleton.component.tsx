@@ -7,6 +7,7 @@ interface SkeletonProps {
   rounded?: boolean;
   children?: ReactNode;
   shimmer?: boolean;
+  "data-testid"?: string;
 }
 
 const Skeleton = ({
@@ -16,10 +17,14 @@ const Skeleton = ({
   rounded = false,
   children,
   shimmer = true,
+  "data-testid": dataTestId,
 }: SkeletonProps) => {
   if (children) {
     return (
-      <div className={`animate-pulse ${className}`} data-testid="skeleton">
+      <div
+        className={`animate-pulse ${className}`}
+        data-testid={dataTestId || "skeleton"}
+      >
         {children}
       </div>
     );
@@ -33,7 +38,7 @@ const Skeleton = ({
   return (
     <div
       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
-      data-testid="skeleton"
+      data-testid={dataTestId || "skeleton"}
       style={{
         contain: "layout style paint",
       }}

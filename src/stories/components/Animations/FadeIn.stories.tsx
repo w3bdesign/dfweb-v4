@@ -1,7 +1,5 @@
 import type { Story } from "@ladle/react";
-import FadeIn, {
-  FadeInProps,
-} from "@/components/Animations/FadeIn.component";
+import FadeIn, { FadeInProps } from "@/components/Animations/FadeIn.component";
 
 const FadeInStories = {
   title: "Animations/FadeIn",

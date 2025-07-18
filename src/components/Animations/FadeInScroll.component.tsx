@@ -8,6 +8,7 @@ export interface FadeInScrollProps {
   className?: string;
   duration?: number;
   viewAmount?: "some" | "all" | number;
+  "data-testid"?: string;
 }
 
 /**
@@ -19,10 +20,12 @@ const FadeInScroll = ({
   className = "",
   duration = 0.4,
   viewAmount = 0.2,
+  "data-testid": dataTestId,
 }: FadeInScrollProps) => {
   return (
     <motion.div
       className={className}
+      data-testid={dataTestId}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: viewAmount }}
