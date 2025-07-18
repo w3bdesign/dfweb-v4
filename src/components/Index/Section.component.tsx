@@ -59,7 +59,7 @@ const Section = ({
       `}
     >
       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-        <FadeInScroll viewAmount={0.2}>
+        <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
           <h2
             data-testid="sanity-title"
             data-cy={title}
