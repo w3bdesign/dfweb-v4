@@ -64,6 +64,120 @@ describe("Section Component", () => {
     expect(content).toBeInTheDocument();
   });
 
+  describe("error handling for invalid data", () => {
+    let consoleErrorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("returns null and logs error when title is missing", () => {
+      // Arrange
+      const propsWithoutTitle = { ...mockProps, title: undefined as any };
+
+      // Act
+      const { container } = render(<Section {...propsWithoutTitle} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=undefined, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+      );
+    });
+
+    it("returns null and logs error when title is null", () => {
+      // Arrange
+      const propsWithNullTitle = { ...mockProps, title: null as any };
+
+      // Act
+      const { container } = render(<Section {...propsWithNullTitle} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=null, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+      );
+    });
+
+    it("returns null and logs error when title is empty string", () => {
+      // Arrange
+      const propsWithEmptyTitle = { ...mockProps, title: "" };
+
+      // Act
+      const { container } = render(<Section {...propsWithEmptyTitle} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+      );
+    });
+
+    it("returns null and logs error when text is missing", () => {
+      // Arrange
+      const propsWithoutText = { ...mockProps, text: undefined as any };
+
+      // Act
+      const { container } = render(<Section {...propsWithoutText} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=Test Title, tekst=undefined"
+      );
+    });
+
+    it("returns null and logs error when text is null", () => {
+      // Arrange
+      const propsWithNullText = { ...mockProps, text: null as any };
+
+      // Act
+      const { container } = render(<Section {...propsWithNullText} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=Test Title, tekst=null"
+      );
+    });
+
+    it("returns null and logs error when text is empty array", () => {
+      // Arrange
+      const propsWithEmptyText = { ...mockProps, text: [] };
+
+      // Act
+      const { container } = render(<Section {...propsWithEmptyText} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=Test Title, tekst=[]"
+      );
+    });
+
+    it("returns null and logs error when both title and text are missing", () => {
+      // Arrange
+      const propsWithoutBoth = {
+        ...mockProps,
+        title: undefined as any,
+        text: undefined as any
+      };
+
+      // Act
+      const { container } = render(<Section {...propsWithoutBoth} />);
+
+      // Assert
+      expect(container.firstChild).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Ugyldig seksjon data: tittel=undefined, tekst=undefined"
+      );
+    });
+  });
+
   it("triggers error in development mode", () => {
     // Arrange
     const consoleErrorSpy = jest
