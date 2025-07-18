@@ -31,6 +31,7 @@ jest.mock("motion/react", () => ({
       viewport,
       transition,
       style,
+      "data-testid": dataTestId,
     }: {
       children: React.ReactNode;
       className?: string;
@@ -39,6 +40,7 @@ jest.mock("motion/react", () => ({
       viewport?: ViewportProps;
       transition?: TransitionProps;
       style?: MotionStyle;
+      "data-testid"?: string;
     }) => {
       // Store props in data attributes for testing
       return (
@@ -49,6 +51,7 @@ jest.mock("motion/react", () => ({
           data-while-in-view={JSON.stringify(whileInView)}
           data-viewport={JSON.stringify(viewport)}
           data-transition={JSON.stringify(transition)}
+          data-testid={dataTestId}
         >
           {children}
         </div>
