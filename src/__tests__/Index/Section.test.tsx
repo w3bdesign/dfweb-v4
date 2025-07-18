@@ -68,44 +68,62 @@ describe("Section Component", () => {
     let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+      consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
     });
 
     afterEach(() => {
       consoleErrorSpy.mockRestore();
     });
 
+    // Type for testing invalid props
+    type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
+      title?: string | null | undefined;
+      text?: Pagecontent["text"] | null | undefined;
+    };
+
     it("returns null and logs error when title is missing", () => {
       // Arrange
-      const propsWithoutTitle = { ...mockProps, title: undefined as any };
+      const propsWithoutTitle: InvalidSectionProps = {
+        ...mockProps,
+        title: undefined,
+      };
 
       // Act
-      const { container } = render(<Section {...propsWithoutTitle} />);
+      const { container } = render(
+        <Section {...(propsWithoutTitle as Pagecontent)} />,
+      );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=undefined, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+        'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
       );
     });
 
     it("returns null and logs error when title is null", () => {
       // Arrange
-      const propsWithNullTitle = { ...mockProps, title: null as any };
+      const propsWithNullTitle: InvalidSectionProps = {
+        ...mockProps,
+        title: null,
+      };
 
       // Act
-      const { container } = render(<Section {...propsWithNullTitle} />);
+      const { container } = render(
+        <Section {...(propsWithNullTitle as Pagecontent)} />,
+      );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=null, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+        'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
       );
     });
 
     it("returns null and logs error when title is empty string", () => {
       // Arrange
-      const propsWithEmptyTitle = { ...mockProps, title: "" };
+      const propsWithEmptyTitle: Pagecontent = { ...mockProps, title: "" };
 
       // Act
       const { container } = render(<Section {...propsWithEmptyTitle} />);
@@ -113,41 +131,51 @@ describe("Section Component", () => {
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=, tekst=[{\"_key\":\"a1\",\"_type\":\"block\",\"children\":[{\"_key\":\"a1-1\",\"_type\":\"span\",\"marks\":[],\"text\":\"Test content\"}],\"markDefs\":[],\"style\":\"normal\"}]"
+        'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
       );
     });
 
     it("returns null and logs error when text is missing", () => {
       // Arrange
-      const propsWithoutText = { ...mockProps, text: undefined as any };
+      const propsWithoutText: InvalidSectionProps = {
+        ...mockProps,
+        text: undefined,
+      };
 
       // Act
-      const { container } = render(<Section {...propsWithoutText} />);
+      const { container } = render(
+        <Section {...(propsWithoutText as Pagecontent)} />,
+      );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=Test Title, tekst=undefined"
+        "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
       );
     });
 
     it("returns null and logs error when text is null", () => {
       // Arrange
-      const propsWithNullText = { ...mockProps, text: null as any };
+      const propsWithNullText: InvalidSectionProps = {
+        ...mockProps,
+        text: null,
+      };
 
       // Act
-      const { container } = render(<Section {...propsWithNullText} />);
+      const { container } = render(
+        <Section {...(propsWithNullText as Pagecontent)} />,
+      );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=Test Title, tekst=null"
+        "Ugyldig seksjon data: tittel=Test Title, tekst=null",
       );
     });
 
     it("returns null and logs error when text is empty array", () => {
       // Arrange
-      const propsWithEmptyText = { ...mockProps, text: [] };
+      const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
 
       // Act
       const { container } = render(<Section {...propsWithEmptyText} />);
@@ -155,25 +183,27 @@ describe("Section Component", () => {
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=Test Title, tekst=[]"
+        "Ugyldig seksjon data: tittel=Test Title, tekst=[]",
       );
     });
 
     it("returns null and logs error when both title and text are missing", () => {
       // Arrange
-      const propsWithoutBoth = {
+      const propsWithoutBoth: InvalidSectionProps = {
         ...mockProps,
-        title: undefined as any,
-        text: undefined as any
+        title: undefined,
+        text: undefined,
       };
 
       // Act
-      const { container } = render(<Section {...propsWithoutBoth} />);
+      const { container } = render(
+        <Section {...(propsWithoutBoth as Pagecontent)} />,
+      );
 
       // Assert
       expect(container.firstChild).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Ugyldig seksjon data: tittel=undefined, tekst=undefined"
+        "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
       );
     });
   });
