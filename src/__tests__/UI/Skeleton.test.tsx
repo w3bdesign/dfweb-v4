@@ -15,7 +15,7 @@ describe("Skeleton", () => {
       "bg-slate-700",
       "rounded",
       "w-full",
-      "h-4"
+      "h-4",
     );
   });
 
@@ -28,7 +28,7 @@ describe("Skeleton", () => {
         className="custom-class"
         rounded
         shimmer={false}
-      />
+      />,
     );
 
     // Act
@@ -41,7 +41,7 @@ describe("Skeleton", () => {
       "rounded-full",
       "w-1/2",
       "h-8",
-      "custom-class"
+      "custom-class",
     );
   });
 
@@ -50,7 +50,7 @@ describe("Skeleton", () => {
     render(
       <Skeleton>
         <div>Child content</div>
-      </Skeleton>
+      </Skeleton>,
     );
 
     // Act

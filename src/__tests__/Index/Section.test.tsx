@@ -74,7 +74,7 @@ describe("Section Component", () => {
 
     // Act & Assert
     expect(() => fireEvent.click(errorButton)).toThrow(
-      "En uventet feil har oppstått"
+      "En uventet feil har oppstått",
     );
     consoleErrorSpy.mockRestore();
   });

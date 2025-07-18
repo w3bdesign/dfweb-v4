@@ -28,10 +28,10 @@ const FadeInScroll = ({
       viewport={{ once: true, amount: viewAmount }}
       transition={{
         duration,
-        ease: "easeOut"
+        ease: "easeOut",
       }}
       style={{
-        willChange: "opacity"
+        willChange: "opacity",
       }}
     >
       {children}

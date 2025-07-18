@@ -63,7 +63,7 @@ describe("FadeInScroll", () => {
     render(
       <FadeInScroll>
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
@@ -78,7 +78,7 @@ describe("FadeInScroll", () => {
     render(
       <FadeInScroll className="custom-class">
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
@@ -93,7 +93,7 @@ describe("FadeInScroll", () => {
     const { container } = render(
       <FadeInScroll>
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
@@ -109,13 +109,13 @@ describe("FadeInScroll", () => {
     render(
       <FadeInScroll viewAmount={0.5}>
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
     const container = screen.getByText("Test content").parentElement;
     const viewport = JSON.parse(
-      container?.getAttribute("data-viewport") || "{}"
+      container?.getAttribute("data-viewport") || "{}",
     );
 
     // Assert
@@ -128,13 +128,13 @@ describe("FadeInScroll", () => {
     render(
       <FadeInScroll>
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
     const container = screen.getByText("Test content").parentElement;
     const viewport = JSON.parse(
-      container?.getAttribute("data-viewport") || "{}"
+      container?.getAttribute("data-viewport") || "{}",
     );
 
     // Assert
@@ -147,13 +147,13 @@ describe("FadeInScroll", () => {
     render(
       <FadeInScroll duration={0.8}>
         <div>Test content</div>
-      </FadeInScroll>
+      </FadeInScroll>,
     );
 
     // Act
     const container = screen.getByText("Test content").parentElement;
     const transition = JSON.parse(
-      container?.getAttribute("data-transition") || "{}"
+      container?.getAttribute("data-transition") || "{}",
     );
 
     // Assert

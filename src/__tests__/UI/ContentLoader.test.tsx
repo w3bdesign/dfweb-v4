@@ -45,7 +45,7 @@ describe("ContentLoader", () => {
       render(
         <ContentLoader type="custom">
           <div>Custom Content</div>
-        </ContentLoader>
+        </ContentLoader>,
       );
 
       // Act

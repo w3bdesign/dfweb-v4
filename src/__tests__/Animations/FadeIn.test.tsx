@@ -7,7 +7,7 @@ describe("FadeIn", () => {
     render(
       <FadeIn>
         <div>Test content</div>
-      </FadeIn>
+      </FadeIn>,
     );
 
     // Act
@@ -22,7 +22,7 @@ describe("FadeIn", () => {
     render(
       <FadeIn className="custom-class">
         <div>Test content</div>
-      </FadeIn>
+      </FadeIn>,
     );
 
     // Act
@@ -37,7 +37,7 @@ describe("FadeIn", () => {
     const { container } = render(
       <FadeIn>
         <div>Test content</div>
-      </FadeIn>
+      </FadeIn>,
     );
 
     // Act
@@ -52,7 +52,7 @@ describe("FadeIn", () => {
     render(
       <FadeIn duration={0.5}>
         <div>Test content</div>
-      </FadeIn>
+      </FadeIn>,
     );
 
     // Act
@@ -67,7 +67,7 @@ describe("FadeIn", () => {
     render(
       <FadeIn delay={0.2}>
         <div>Test content</div>
-      </FadeIn>
+      </FadeIn>,
     );
 
     // Act

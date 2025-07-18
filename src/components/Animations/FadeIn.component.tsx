@@ -12,24 +12,24 @@ interface FadeInProps {
  * Minimal fade-in animation component
  * Only uses opacity for zero CLS impact
  */
-const FadeIn = ({ 
-  children, 
-  className = "", 
+const FadeIn = ({
+  children,
+  className = "",
   duration = 0.3,
-  delay = 0 
+  delay = 0,
 }: FadeInProps) => {
   return (
     <motion.div
       className={className}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ 
-        duration, 
+      transition={{
+        duration,
         delay,
-        ease: "easeOut"
+        ease: "easeOut",
       }}
       style={{
-        willChange: "opacity"
+        willChange: "opacity",
       }}
     >
       {children}
