@@ -128,7 +128,10 @@ const ContactForm: React.FC<ContactFormProps> = ({
                       </fieldset>
 
                       <div className="-mt-4">
-                        <Button disabled={isSubmitting} data-testid="submit-button">
+                        <Button
+                          disabled={isSubmitting}
+                          data-testid="submit-button"
+                        >
                           Send skjema
                         </Button>
                       </div>
