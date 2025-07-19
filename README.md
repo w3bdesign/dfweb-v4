@@ -92,6 +92,7 @@ Sanity.io and Typescript.
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading
   Matrix characters
+- Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
 
 ### Accessibility
 
