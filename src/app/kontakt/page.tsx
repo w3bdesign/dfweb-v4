@@ -1,5 +1,5 @@
 import RootLayout from "../RootLayout";
-import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+import ContactForm from "@/components/Kontakt/ContactForm.component";
 import { generateCSRFToken } from "@/lib/csrf";
 
 import { Metadata } from "next/types";
@@ -15,7 +15,7 @@ export default async function PostIndex() {
 
   return (
     <RootLayout>
-      <KontaktContent csrfToken={csrfToken} />
+      <ContactForm csrfToken={csrfToken} />
     </RootLayout>
   );
 }

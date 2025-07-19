@@ -1,10 +1,9 @@
 import React from "react";
-// Assuming @/ resolves to src/ as seen in KontaktContent.component.tsx
-import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+import ContactForm from "@/components/Kontakt/ContactForm.component";
 import { FormData } from "@/components/Kontakt/config/formConfig";
 
 /**
- * Props for the KontaktWithMocks story.
+ * Props for the ContactFormWithMocks story.
  */
 type StoryProps = {
   simulateError?: boolean;
@@ -12,17 +11,17 @@ type StoryProps = {
 };
 
 /**
- * A special version of KontaktContent for stories.
- * This renders the actual KontaktContent component but provides a mock
+ * A special version of ContactForm for stories.
+ * This renders the actual ContactForm component but provides a mock
  * onSubmit handler to prevent real email submissions and simulate responses.
  */
-const KontaktWithMocks: React.FC<StoryProps> = ({
+const ContactFormWithMocks: React.FC<StoryProps> = ({
   simulateError = false,
   initialResponse = "",
 }) => {
   /**
    * Simulated form submission that doesn't make any actual API calls.
-   * It returns a promise that resolves to a message string, which KontaktContent will use.
+   * It returns a promise that resolves to a message string, which ContactForm will use.
    */
   const mockOnSubmit = async (data: FormData): Promise<string> => {
     console.warn("Story mock: Form submitted with data:", data);
@@ -38,8 +37,8 @@ const KontaktWithMocks: React.FC<StoryProps> = ({
   };
 
   return (
-    <KontaktContent onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+    <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
   );
 };
 
-export default KontaktWithMocks;
+export default ContactFormWithMocks;

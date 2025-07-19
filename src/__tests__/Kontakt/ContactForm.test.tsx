@@ -3,7 +3,7 @@
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import KontaktContent from "@/components/Kontakt/KontaktContent.component";
+import ContactForm from "@/components/Kontakt/ContactForm.component";
 import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
 
 type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
@@ -13,7 +13,7 @@ jest.mock("@emailjs/browser", () => ({
   init: jest.fn(),
 }));
 
-describe("KontaktContent", () => {
+describe("ContactForm", () => {
   const fulltNavn = "Fullt navn";
   const telefonNummer = "Telefonnummer";
   const hvaOnskerDu = "Hva ønsker du å si?";
@@ -40,7 +40,7 @@ describe("KontaktContent", () => {
     const expectedTestId = "kontaktcontent";
 
     // Act
-    render(<KontaktContent />);
+    render(<ContactForm />);
 
     // Assert
     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
@@ -48,7 +48,7 @@ describe("KontaktContent", () => {
 
   it("submits the form successfully and disables submit button while submitting", async () => {
     // Arrange
-    render(<KontaktContent />);
+    render(<ContactForm />);
     const submitButton = screen.getByText(sendSkjemaText);
 
     // Act
@@ -68,7 +68,7 @@ describe("KontaktContent", () => {
   it("displays error message on form submission failure", async () => {
     // Arrange
     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
-    render(<KontaktContent />);
+    render(<ContactForm />);
 
     // Act
     fillFormWithValidData();
@@ -85,7 +85,7 @@ describe("KontaktContent", () => {
 
   it("displays validation errors for empty fields", async () => {
     // Arrange
-    render(<KontaktContent />);
+    render(<ContactForm />);
     const expectedErrors = {
       name: "Fullt navn er påkrevd",
       phone: "Telefonnummer er påkrevd",
@@ -106,7 +106,7 @@ describe("KontaktContent", () => {
 
   it("displays validation errors for invalid inputs", async () => {
     // Arrange
-    render(<KontaktContent />);
+    render(<ContactForm />);
     const invalidInputs = {
       name: "User123", // Invalid name format
       phone: "123", // Invalid phone number
