@@ -37,26 +37,74 @@ jobs:
       - name: Install dependencies for studio
         run: cd studio && pnpm install --frozen-lockfile && cd ..
 
-      - name: Run Snyk to check for vulnerabilities
+      - name: Run Snyk to check main project vulnerabilities
         uses: snyk/actions/node@master
-
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: "test"
-          args: "--all-projects --sarif-file-output=snyk.sarif --severity-threshold=high"
+          args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
 
-      - name: Upload Snyk SARIF report to GitHub Security tab
+      - name: Run Snyk to check studio project vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: "test"
+          args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+
+      - name: Run Snyk to check eslint plugin vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: "test"
+          args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+
+      - name: Upload main project SARIF report to GitHub Security tab
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: snyk.sarif
+          sarif_file: snyk-main.sarif
+          category: snyk-main
 
-      - name: Snyk Monitor (only for pushes to main branch)
+      - name: Upload studio SARIF report to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-studio.sarif
+          category: snyk-studio
+
+      - name: Upload eslint plugin SARIF report to GitHub Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-eslint.sarif
+          category: snyk-eslint
+
+      - name: Snyk Monitor main project (only for pushes to main branch)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: "monitor"
-          args: "--all-projects"
+          args: ""
+
+      - name: Snyk Monitor studio project (only for pushes to main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: "monitor"
+          args: "--file=studio/package.json"
+
+      - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: "monitor"
+          args: "--file=src/utils/eslint/package.json"
