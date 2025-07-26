@@ -17755,6 +17755,56 @@ tsconfig.json
 143: });
 ````
 
+## File: src/__tests__/UI/ContentLoader.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 3: describe("ContentLoader", () => {
+ 4:   describe("Hero type", () => {
+ 5:     it("renders hero content skeletons", () => {
+ 6:       // Arrange
+ 7:       render(<ContentLoader type="hero" />);
+ 8:       // Act
+ 9:       const skeletons = screen.getAllByTestId("skeleton");
+10:       // Assert
+11:       expect(skeletons).toHaveLength(6);
+12:     });
+13:   });
+14:   describe("Section type", () => {
+15:     it("renders a single section by default", () => {
+16:       // Arrange
+17:       render(<ContentLoader type="section" />);
+18:       // Act
+19:       const sections = screen.getAllByTestId("content-section");
+20:       // Assert
+21:       expect(sections).toHaveLength(1);
+22:     });
+23:     it("renders multiple sections when specified", () => {
+24:       // Arrange
+25:       render(<ContentLoader type="section" sections={3} />);
+26:       // Act
+27:       const sections = screen.getAllByTestId("content-section");
+28:       // Assert
+29:       expect(sections).toHaveLength(3);
+30:     });
+31:   });
+32:   describe("Custom type", () => {
+33:     it("renders custom children", () => {
+34:       // Arrange
+35:       render(
+36:         <ContentLoader type="custom">
+37:           <div>Custom Content</div>
+38:         </ContentLoader>,
+39:       );
+40:       // Act
+41:       const customContent = screen.getByText("Custom Content");
+42:       // Assert
+43:       expect(customContent).toBeInTheDocument();
+44:     });
+45:   });
+46: });
+````
+
 ## File: src/components/Animations/FadeIn.component.tsx
 ````typescript
  1: import { motion } from "motion/react";
@@ -17869,54 +17919,63 @@ tsconfig.json
 21: );
 ````
 
-## File: src/__tests__/UI/ContentLoader.test.tsx
+## File: src/__tests__/UI/Skeleton.test.tsx
 ````typescript
  1: import { render, screen } from "@testing-library/react";
- 2: import ContentLoader from "@/components/UI/ContentLoader.component";
- 3: describe("ContentLoader", () => {
- 4:   describe("Hero type", () => {
- 5:     it("renders hero content skeletons", () => {
- 6:       // Arrange
- 7:       render(<ContentLoader type="hero" />);
- 8:       // Act
- 9:       const skeletons = screen.getAllByTestId("skeleton");
-10:       // Assert
-11:       expect(skeletons).toHaveLength(6);
-12:     });
-13:   });
-14:   describe("Section type", () => {
-15:     it("renders a single section by default", () => {
-16:       // Arrange
-17:       render(<ContentLoader type="section" />);
-18:       // Act
-19:       const sections = screen.getAllByTestId("content-section");
-20:       // Assert
-21:       expect(sections).toHaveLength(1);
-22:     });
-23:     it("renders multiple sections when specified", () => {
-24:       // Arrange
-25:       render(<ContentLoader type="section" sections={3} />);
-26:       // Act
-27:       const sections = screen.getAllByTestId("content-section");
-28:       // Assert
-29:       expect(sections).toHaveLength(3);
-30:     });
-31:   });
-32:   describe("Custom type", () => {
-33:     it("renders custom children", () => {
-34:       // Arrange
-35:       render(
-36:         <ContentLoader type="custom">
-37:           <div>Custom Content</div>
-38:         </ContentLoader>,
-39:       );
-40:       // Act
-41:       const customContent = screen.getByText("Custom Content");
-42:       // Assert
-43:       expect(customContent).toBeInTheDocument();
-44:     });
-45:   });
-46: });
+ 2: import Skeleton from "@/components/UI/Skeleton.component";
+ 3: describe("Skeleton", () => {
+ 4:   it("renders with default props", () => {
+ 5:     // Arrange
+ 6:     render(<Skeleton />);
+ 7:     // Act
+ 8:     const skeleton = screen.getByTestId("skeleton");
+ 9:     // Assert
+10:     expect(skeleton).toHaveClass(
+11:       "skeleton-shimmer",
+12:       "bg-slate-700",
+13:       "rounded",
+14:       "w-full",
+15:       "h-4",
+16:     );
+17:   });
+18:   it("renders with custom props", () => {
+19:     // Arrange
+20:     render(
+21:       <Skeleton
+22:         width="w-1/2"
+23:         height="h-8"
+24:         className="custom-class"
+25:         rounded
+26:         shimmer={false}
+27:       />,
+28:     );
+29:     // Act
+30:     const skeleton = screen.getByTestId("skeleton");
+31:     // Assert
+32:     expect(skeleton).toHaveClass(
+33:       "animate-pulse",
+34:       "bg-slate-700",
+35:       "rounded-full",
+36:       "w-1/2",
+37:       "h-8",
+38:       "custom-class",
+39:     );
+40:   });
+41:   it("renders children when provided", () => {
+42:     // Arrange
+43:     render(
+44:       <Skeleton data-testid="skeleton">
+45:         <div>Child content</div>
+46:       </Skeleton>,
+47:     );
+48:     // Act
+49:     const child = screen.getByText("Child content");
+50:     const skeleton = screen.getByTestId("skeleton");
+51:     // Assert
+52:     expect(child).toBeInTheDocument();
+53:     expect(skeleton).toHaveClass("animate-pulse");
+54:   });
+55: });
 ````
 
 ## File: src/components/Index/Hero.component.tsx
@@ -18212,65 +18271,6 @@ tsconfig.json
 212: });
 ````
 
-## File: src/__tests__/UI/Skeleton.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import Skeleton from "@/components/UI/Skeleton.component";
- 3: describe("Skeleton", () => {
- 4:   it("renders with default props", () => {
- 5:     // Arrange
- 6:     render(<Skeleton />);
- 7:     // Act
- 8:     const skeleton = screen.getByTestId("skeleton");
- 9:     // Assert
-10:     expect(skeleton).toHaveClass(
-11:       "skeleton-shimmer",
-12:       "bg-slate-700",
-13:       "rounded",
-14:       "w-full",
-15:       "h-4",
-16:     );
-17:   });
-18:   it("renders with custom props", () => {
-19:     // Arrange
-20:     render(
-21:       <Skeleton
-22:         width="w-1/2"
-23:         height="h-8"
-24:         className="custom-class"
-25:         rounded
-26:         shimmer={false}
-27:       />,
-28:     );
-29:     // Act
-30:     const skeleton = screen.getByTestId("skeleton");
-31:     // Assert
-32:     expect(skeleton).toHaveClass(
-33:       "animate-pulse",
-34:       "bg-slate-700",
-35:       "rounded-full",
-36:       "w-1/2",
-37:       "h-8",
-38:       "custom-class",
-39:     );
-40:   });
-41:   it("renders children when provided", () => {
-42:     // Arrange
-43:     render(
-44:       <Skeleton data-testid="skeleton">
-45:         <div>Child content</div>
-46:       </Skeleton>,
-47:     );
-48:     // Act
-49:     const child = screen.getByText("Child content");
-50:     const skeleton = screen.getByTestId("skeleton");
-51:     // Assert
-52:     expect(child).toBeInTheDocument();
-53:     expect(skeleton).toHaveClass("animate-pulse");
-54:   });
-55: });
-````
-
 ## File: package.json
 ````json
  1: {
@@ -18347,7 +18347,7 @@ tsconfig.json
 72:     "@typescript-eslint/parser": "^8.38.0",
 73:     "@typescript-eslint/utils": "^8.38.0",
 74:     "axe-core": "^4.10.3",
-75:     "cypress": "14.5.2",
+75:     "cypress": "14.5.3",
 76:     "cypress-axe": "^1.6.0",
 77:     "eslint": "9.32.0",
 78:     "eslint-config-next": "15.4.2",
