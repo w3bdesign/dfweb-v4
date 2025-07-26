@@ -16571,6 +16571,39 @@ tsconfig.json
 123: }
 ````
 
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import RootLayout from "@/app/RootLayout";
+ 3: import { client } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 6: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 7:   loading: () => <ContentLoader type="hero" />,
+ 8: });
+ 9: const DynamicIndexContent = dynamic(
+10:   () => import("@/components/Index/IndexContent.component"),
+11:   {
+12:     loading: () => <ContentLoader type="section" sections={3} />,
+13:   },
+14: );
+15: export default async function HomePage() {
+16:   const pageContent = await client.fetch(pageContentQuery);
+17:   return (
+18:     <RootLayout>
+19:       <main>
+20:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+21:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+22:         </div>
+23:         {pageContent?.content && (
+24:           <DynamicIndexContent pageContent={pageContent.content} />
+25:         )}
+26:       </main>
+27:     </RootLayout>
+28:   );
+29: }
+````
+
 ## File: src/components/Index/Icons.component.tsx
 ````typescript
  1: import { IconType } from "react-icons";
@@ -16997,37 +17030,89 @@ tsconfig.json
 117: });
 ````
 
-## File: src/app/page.tsx
+## File: src/components/Index/Section.component.tsx
 ````typescript
- 1: import dynamic from "next/dynamic";
- 2: import RootLayout from "@/app/RootLayout";
- 3: import { client } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: import ContentLoader from "@/components/UI/ContentLoader.component";
- 6: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 7:   loading: () => <ContentLoader type="hero" />,
- 8: });
- 9: const DynamicIndexContent = dynamic(
-10:   () => import("@/components/Index/IndexContent.component"),
-11:   {
-12:     loading: () => <ContentLoader type="section" sections={3} />,
-13:   },
-14: );
-15: export default async function HomePage() {
-16:   const pageContent = await client.fetch(pageContentQuery);
-17:   return (
-18:     <RootLayout>
-19:       <main>
-20:         <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-21:           {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-22:         </div>
-23:         {pageContent?.content && (
-24:           <DynamicIndexContent pageContent={pageContent.content} />
-25:         )}
-26:       </main>
-27:     </RootLayout>
-28:   );
-29: }
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import FadeInScroll from "../Animations/FadeInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11: }
+12: /**
+13:  * Section component that renders a single content section
+14:  * @param {SectionProps} props - The props for the Section component
+15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+16:  * @param {string} props.title - The title of the section
+17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+20:  */
+21: const Section = ({
+22:   text,
+23:   title,
+24:   variant = "default",
+25:   showDebugButton = true,
+26: }: SectionProps) => {
+27:   const [shouldError, setShouldError] = useState(false);
+28:   if (!title || !text) {
+29:     console.error(
+30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+31:     );
+32:     return null;
+33:   }
+34:   if (shouldError) {
+35:     throw new Error("En uventet feil har oppstått");
+36:   }
+37:   const sectionStyles = {
+38:     default: "bg-slate-900",
+39:     alternate: "bg-slate-800/30",
+40:   };
+41:   return (
+42:     <section
+43:       aria-label={title}
+44:       data-testid="sanity-section"
+45:       className={`
+46:         md:py-6
+47:         relative
+48:         transition-colors
+49:         duration-300
+50:         contain-layout
+51:         ${sectionStyles[variant]}
+52:       `}
+53:     >
+54:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+55:         <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
+56:           <h2
+57:             data-testid="sanity-title"
+58:             data-cy={title}
+59:             className="text-3xl text-center text-slate-100"
+60:           >
+61:             {title}
+62:           </h2>
+63:           <div className="flex justify-center">
+64:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+65:               <PortableText
+66:                 value={text}
+67:                 components={myPortableTextComponents}
+68:               />
+69:             </div>
+70:           </div>
+71:           {process.env.NODE_ENV === "development" && showDebugButton && (
+72:             <Button onClick={() => setShouldError(true)} type="button">
+73:               Utløs Testfeil
+74:             </Button>
+75:           )}
+76:         </FadeInScroll>
+77:       </div>
+78:     </section>
+79:   );
+80: };
+81: export default Section;
 ````
 
 ## File: src/e2e/playwright/index.spec.ts
@@ -17242,91 +17327,6 @@ tsconfig.json
 62:     expect(element).toBeInTheDocument();
 63:   });
 64: });
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import FadeInScroll from "../Animations/FadeInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11: }
-12: /**
-13:  * Section component that renders a single content section
-14:  * @param {SectionProps} props - The props for the Section component
-15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-16:  * @param {string} props.title - The title of the section
-17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-20:  */
-21: const Section = ({
-22:   text,
-23:   title,
-24:   variant = "default",
-25:   showDebugButton = true,
-26: }: SectionProps) => {
-27:   const [shouldError, setShouldError] = useState(false);
-28:   if (!title || !text) {
-29:     console.error(
-30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-31:     );
-32:     return null;
-33:   }
-34:   if (shouldError) {
-35:     throw new Error("En uventet feil har oppstått");
-36:   }
-37:   const sectionStyles = {
-38:     default: "bg-slate-900",
-39:     alternate: "bg-slate-800/30",
-40:   };
-41:   return (
-42:     <section
-43:       aria-label={title}
-44:       data-testid="sanity-section"
-45:       className={`
-46:         md:py-6
-47:         relative
-48:         transition-colors
-49:         duration-300
-50:         contain-layout
-51:         ${sectionStyles[variant]}
-52:       `}
-53:     >
-54:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-55:         <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
-56:           <h2
-57:             data-testid="sanity-title"
-58:             data-cy={title}
-59:             className="text-3xl text-center text-slate-100"
-60:           >
-61:             {title}
-62:           </h2>
-63:           <div className="flex justify-center">
-64:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-65:               <PortableText
-66:                 value={text}
-67:                 components={myPortableTextComponents}
-68:               />
-69:             </div>
-70:           </div>
-71:           {process.env.NODE_ENV === "development" && showDebugButton && (
-72:             <Button onClick={() => setShouldError(true)} type="button">
-73:               Utløs Testfeil
-74:             </Button>
-75:           )}
-76:         </FadeInScroll>
-77:       </div>
-78:     </section>
-79:   );
-80: };
-81: export default Section;
 ````
 
 ## File: src/components/Kontakt/ContactForm.component.tsx
@@ -18301,7 +18301,7 @@ tsconfig.json
 26:   "dependencies": {
 27:     "@babel/helpers": ">=7.28.2",
 28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.1.1",
+29:     "@hookform/resolvers": "^5.2.0",
 30:     "@portabletext/react": "^3.2.1",
 31:     "@sanity/client": "^7.8.1",
 32:     "@sanity/image-url": "^1.1.0",
