@@ -16621,6 +16621,56 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: src/__tests__/UI/ContentLoader.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 3: describe("ContentLoader", () => {
+ 4:   describe("Hero type", () => {
+ 5:     it("renders hero content skeletons", () => {
+ 6:       // Arrange
+ 7:       render(<ContentLoader type="hero" />);
+ 8:       // Act
+ 9:       const skeletons = screen.getAllByTestId("skeleton");
+10:       // Assert
+11:       expect(skeletons).toHaveLength(6);
+12:     });
+13:   });
+14:   describe("Section type", () => {
+15:     it("renders a single section by default", () => {
+16:       // Arrange
+17:       render(<ContentLoader type="section" />);
+18:       // Act
+19:       const sections = screen.getAllByTestId("content-section");
+20:       // Assert
+21:       expect(sections).toHaveLength(1);
+22:     });
+23:     it("renders multiple sections when specified", () => {
+24:       // Arrange
+25:       render(<ContentLoader type="section" sections={3} />);
+26:       // Act
+27:       const sections = screen.getAllByTestId("content-section");
+28:       // Assert
+29:       expect(sections).toHaveLength(3);
+30:     });
+31:   });
+32:   describe("Custom type", () => {
+33:     it("renders custom children", () => {
+34:       // Arrange
+35:       render(
+36:         <ContentLoader type="custom">
+37:           <div>Custom Content</div>
+38:         </ContentLoader>,
+39:       );
+40:       // Act
+41:       const customContent = screen.getByText("Custom Content");
+42:       // Assert
+43:       expect(customContent).toBeInTheDocument();
+44:     });
+45:   });
+46: });
+````
+
 ## File: src/app/kontakt/page.tsx
 ````typescript
  1: import RootLayout from "../RootLayout";
@@ -16798,6 +16848,54 @@ tsconfig.json
 79:   );
 80: };
 81: export default Section;
+````
+
+## File: src/components/UI/Skeleton.component.tsx
+````typescript
+ 1: import { type ReactNode } from "react";
+ 2: interface SkeletonProps {
+ 3:   width?: string;
+ 4:   height?: string;
+ 5:   className?: string;
+ 6:   rounded?: boolean;
+ 7:   children?: ReactNode;
+ 8:   shimmer?: boolean;
+ 9:   "data-testid"?: string;
+10: }
+11: const Skeleton = ({
+12:   width = "w-full",
+13:   height = "h-4",
+14:   className = "",
+15:   rounded = false,
+16:   children,
+17:   shimmer = true,
+18:   "data-testid": dataTestId,
+19: }: SkeletonProps) => {
+20:   if (children) {
+21:     return (
+22:       <div
+23:         className={`animate-pulse ${className}`}
+24:         data-testid={dataTestId || "skeleton"}
+25:       >
+26:         {children}
+27:       </div>
+28:     );
+29:   }
+30:   const baseClasses = shimmer
+31:     ? "relative overflow-hidden bg-slate-700 skeleton-shimmer"
+32:     : "animate-pulse bg-slate-700";
+33:   const shapeClasses = rounded ? "rounded-full" : "rounded";
+34:   return (
+35:     <div
+36:       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
+37:       data-testid={dataTestId || "skeleton"}
+38:       style={{
+39:         contain: "layout style paint",
+40:       }}
+41:     />
+42:   );
+43: };
+44: export default Skeleton;
 ````
 
 ## File: src/utils/eslint/package.json
@@ -17019,6 +17117,74 @@ tsconfig.json
 188:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: src/__tests__/Animations/FadeIn.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import FadeIn from "@/components/Animations/FadeIn.component";
+ 3: describe("FadeIn", () => {
+ 4:   it("renders children correctly", () => {
+ 5:     // Arrange
+ 6:     render(
+ 7:       <FadeIn>
+ 8:         <div>Test content</div>
+ 9:       </FadeIn>,
+10:     );
+11:     // Act
+12:     const element = screen.getByText("Test content");
+13:     // Assert
+14:     expect(element).toBeInTheDocument();
+15:   });
+16:   it("applies custom className", () => {
+17:     // Arrange
+18:     render(
+19:       <FadeIn className="custom-class" data-testid="fade-in">
+20:         <div>Test content</div>
+21:       </FadeIn>,
+22:     );
+23:     // Act
+24:     const container = screen.getByTestId("fade-in");
+25:     // Assert
+26:     expect(container).toHaveClass("custom-class");
+27:   });
+28:   it("has initial opacity of 0", () => {
+29:     // Arrange
+30:     render(
+31:       <FadeIn data-testid="fade-in">
+32:         <div>Test content</div>
+33:       </FadeIn>,
+34:     );
+35:     // Act
+36:     const fadeInElement = screen.getByTestId("fade-in");
+37:     // Assert
+38:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
+39:   });
+40:   it("accepts custom duration", () => {
+41:     // Arrange
+42:     render(
+43:       <FadeIn duration={0.5}>
+44:         <div>Test content</div>
+45:       </FadeIn>,
+46:     );
+47:     // Act
+48:     const element = screen.getByText("Test content");
+49:     // Assert
+50:     expect(element).toBeInTheDocument();
+51:   });
+52:   it("accepts custom delay", () => {
+53:     // Arrange
+54:     render(
+55:       <FadeIn delay={0.2}>
+56:         <div>Test content</div>
+57:       </FadeIn>,
+58:     );
+59:     // Act
+60:     const element = screen.getByText("Test content");
+61:     // Assert
+62:     expect(element).toBeInTheDocument();
+63:   });
+64: });
+````
+
 ## File: src/__tests__/Kontakt/ContactForm.test.tsx
 ````typescript
   1: /**
@@ -17140,102 +17306,63 @@ tsconfig.json
 117: });
 ````
 
-## File: src/__tests__/UI/ContentLoader.test.tsx
+## File: src/__tests__/UI/Skeleton.test.tsx
 ````typescript
  1: import { render, screen } from "@testing-library/react";
- 2: import ContentLoader from "@/components/UI/ContentLoader.component";
- 3: describe("ContentLoader", () => {
- 4:   describe("Hero type", () => {
- 5:     it("renders hero content skeletons", () => {
- 6:       // Arrange
- 7:       render(<ContentLoader type="hero" />);
- 8:       // Act
- 9:       const skeletons = screen.getAllByTestId("skeleton");
-10:       // Assert
-11:       expect(skeletons).toHaveLength(6);
-12:     });
-13:   });
-14:   describe("Section type", () => {
-15:     it("renders a single section by default", () => {
-16:       // Arrange
-17:       render(<ContentLoader type="section" />);
-18:       // Act
-19:       const sections = screen.getAllByTestId("content-section");
-20:       // Assert
-21:       expect(sections).toHaveLength(1);
-22:     });
-23:     it("renders multiple sections when specified", () => {
-24:       // Arrange
-25:       render(<ContentLoader type="section" sections={3} />);
-26:       // Act
-27:       const sections = screen.getAllByTestId("content-section");
-28:       // Assert
-29:       expect(sections).toHaveLength(3);
-30:     });
-31:   });
-32:   describe("Custom type", () => {
-33:     it("renders custom children", () => {
-34:       // Arrange
-35:       render(
-36:         <ContentLoader type="custom">
-37:           <div>Custom Content</div>
-38:         </ContentLoader>,
-39:       );
-40:       // Act
-41:       const customContent = screen.getByText("Custom Content");
-42:       // Assert
-43:       expect(customContent).toBeInTheDocument();
-44:     });
-45:   });
-46: });
-````
-
-## File: src/components/UI/Skeleton.component.tsx
-````typescript
- 1: import { type ReactNode } from "react";
- 2: interface SkeletonProps {
- 3:   width?: string;
- 4:   height?: string;
- 5:   className?: string;
- 6:   rounded?: boolean;
- 7:   children?: ReactNode;
- 8:   shimmer?: boolean;
- 9:   "data-testid"?: string;
-10: }
-11: const Skeleton = ({
-12:   width = "w-full",
-13:   height = "h-4",
-14:   className = "",
-15:   rounded = false,
-16:   children,
-17:   shimmer = true,
-18:   "data-testid": dataTestId,
-19: }: SkeletonProps) => {
-20:   if (children) {
-21:     return (
-22:       <div
-23:         className={`animate-pulse ${className}`}
-24:         data-testid={dataTestId || "skeleton"}
-25:       >
-26:         {children}
-27:       </div>
+ 2: import Skeleton from "@/components/UI/Skeleton.component";
+ 3: describe("Skeleton", () => {
+ 4:   it("renders with default props", () => {
+ 5:     // Arrange
+ 6:     render(<Skeleton />);
+ 7:     // Act
+ 8:     const skeleton = screen.getByTestId("skeleton");
+ 9:     // Assert
+10:     expect(skeleton).toHaveClass(
+11:       "skeleton-shimmer",
+12:       "bg-slate-700",
+13:       "rounded",
+14:       "w-full",
+15:       "h-4",
+16:     );
+17:   });
+18:   it("renders with custom props", () => {
+19:     // Arrange
+20:     render(
+21:       <Skeleton
+22:         width="w-1/2"
+23:         height="h-8"
+24:         className="custom-class"
+25:         rounded
+26:         shimmer={false}
+27:       />,
 28:     );
-29:   }
-30:   const baseClasses = shimmer
-31:     ? "relative overflow-hidden bg-slate-700 skeleton-shimmer"
-32:     : "animate-pulse bg-slate-700";
-33:   const shapeClasses = rounded ? "rounded-full" : "rounded";
-34:   return (
-35:     <div
-36:       className={`${baseClasses} ${shapeClasses} ${width} ${height} ${className}`}
-37:       data-testid={dataTestId || "skeleton"}
-38:       style={{
-39:         contain: "layout style paint",
-40:       }}
-41:     />
-42:   );
-43: };
-44: export default Skeleton;
+29:     // Act
+30:     const skeleton = screen.getByTestId("skeleton");
+31:     // Assert
+32:     expect(skeleton).toHaveClass(
+33:       "animate-pulse",
+34:       "bg-slate-700",
+35:       "rounded-full",
+36:       "w-1/2",
+37:       "h-8",
+38:       "custom-class",
+39:     );
+40:   });
+41:   it("renders children when provided", () => {
+42:     // Arrange
+43:     render(
+44:       <Skeleton data-testid="skeleton">
+45:         <div>Child content</div>
+46:       </Skeleton>,
+47:     );
+48:     // Act
+49:     const child = screen.getByText("Child content");
+50:     const skeleton = screen.getByTestId("skeleton");
+51:     // Assert
+52:     expect(child).toBeInTheDocument();
+53:     expect(skeleton).toHaveClass("animate-pulse");
+54:   });
+55: });
 ````
 
 ## File: src/e2e/playwright/index.spec.ts
@@ -17288,6 +17415,32 @@ tsconfig.json
 46:     );
 47:   });
 48: });
+````
+
+## File: src/stories/components/Animations/FadeInScroll.stories.tsx
+````typescript
+ 1: import type { Story } from "@ladle/react";
+ 2: import FadeInScroll, {
+ 3:   FadeInScrollProps,
+ 4: } from "@/components/Animations/FadeInScroll.component";
+ 5: const FadeInScrollStories = {
+ 6:   title: "Animations/FadeInScroll",
+ 7: };
+ 8: export default FadeInScrollStories;
+ 9: export const Default: Story<FadeInScrollProps> = () => (
+10:   <div className="h-[200vh] pt-[100vh]">
+11:     <FadeInScroll>
+12:       <div className="p-4 bg-green-500 rounded">Fade In on Scroll</div>
+13:     </FadeInScroll>
+14:   </div>
+15: );
+16: export const CustomViewAmount: Story<FadeInScrollProps> = () => (
+17:   <div className="h-[200vh] pt-[100vh]">
+18:     <FadeInScroll viewAmount={0.8}>
+19:       <div className="p-4 bg-green-500 rounded">Fade In with 80% visible</div>
+20:     </FadeInScroll>
+21:   </div>
+22: );
 ````
 
 ## File: src/stories/components/Kontakt/ContactForm.stories.tsx
@@ -17384,131 +17537,151 @@ tsconfig.json
 38: export default ContactFormWithMocks;
 ````
 
-## File: src/__tests__/Animations/FadeIn.test.tsx
+## File: src/__tests__/Animations/FadeInScroll.test.tsx
 ````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import FadeIn from "@/components/Animations/FadeIn.component";
- 3: describe("FadeIn", () => {
- 4:   it("renders children correctly", () => {
- 5:     // Arrange
- 6:     render(
- 7:       <FadeIn>
- 8:         <div>Test content</div>
- 9:       </FadeIn>,
-10:     );
-11:     // Act
-12:     const element = screen.getByText("Test content");
-13:     // Assert
-14:     expect(element).toBeInTheDocument();
-15:   });
-16:   it("applies custom className", () => {
-17:     // Arrange
-18:     render(
-19:       <FadeIn className="custom-class" data-testid="fade-in">
-20:         <div>Test content</div>
-21:       </FadeIn>,
-22:     );
-23:     // Act
-24:     const container = screen.getByTestId("fade-in");
-25:     // Assert
-26:     expect(container).toHaveClass("custom-class");
-27:   });
-28:   it("has initial opacity of 0", () => {
-29:     // Arrange
-30:     render(
-31:       <FadeIn data-testid="fade-in">
-32:         <div>Test content</div>
-33:       </FadeIn>,
-34:     );
-35:     // Act
-36:     const fadeInElement = screen.getByTestId("fade-in");
-37:     // Assert
-38:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
-39:   });
-40:   it("accepts custom duration", () => {
-41:     // Arrange
-42:     render(
-43:       <FadeIn duration={0.5}>
-44:         <div>Test content</div>
-45:       </FadeIn>,
-46:     );
-47:     // Act
-48:     const element = screen.getByText("Test content");
-49:     // Assert
-50:     expect(element).toBeInTheDocument();
-51:   });
-52:   it("accepts custom delay", () => {
-53:     // Arrange
-54:     render(
-55:       <FadeIn delay={0.2}>
-56:         <div>Test content</div>
-57:       </FadeIn>,
-58:     );
-59:     // Act
-60:     const element = screen.getByText("Test content");
-61:     // Assert
-62:     expect(element).toBeInTheDocument();
-63:   });
-64: });
-````
-
-## File: src/__tests__/UI/Skeleton.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import Skeleton from "@/components/UI/Skeleton.component";
- 3: describe("Skeleton", () => {
- 4:   it("renders with default props", () => {
- 5:     // Arrange
- 6:     render(<Skeleton />);
- 7:     // Act
- 8:     const skeleton = screen.getByTestId("skeleton");
- 9:     // Assert
-10:     expect(skeleton).toHaveClass(
-11:       "skeleton-shimmer",
-12:       "bg-slate-700",
-13:       "rounded",
-14:       "w-full",
-15:       "h-4",
-16:     );
-17:   });
-18:   it("renders with custom props", () => {
-19:     // Arrange
-20:     render(
-21:       <Skeleton
-22:         width="w-1/2"
-23:         height="h-8"
-24:         className="custom-class"
-25:         rounded
-26:         shimmer={false}
-27:       />,
-28:     );
-29:     // Act
-30:     const skeleton = screen.getByTestId("skeleton");
-31:     // Assert
-32:     expect(skeleton).toHaveClass(
-33:       "animate-pulse",
-34:       "bg-slate-700",
-35:       "rounded-full",
-36:       "w-1/2",
-37:       "h-8",
-38:       "custom-class",
-39:     );
-40:   });
-41:   it("renders children when provided", () => {
-42:     // Arrange
-43:     render(
-44:       <Skeleton data-testid="skeleton">
-45:         <div>Child content</div>
-46:       </Skeleton>,
-47:     );
-48:     // Act
-49:     const child = screen.getByText("Child content");
-50:     const skeleton = screen.getByTestId("skeleton");
-51:     // Assert
-52:     expect(child).toBeInTheDocument();
-53:     expect(skeleton).toHaveClass("animate-pulse");
-54:   });
-55: });
+  1: import { render, screen } from "@testing-library/react";
+  2: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
+  3: import React from "react";
+  4: type MotionStyle = React.CSSProperties & {
+  5:   willChange?: string;
+  6: };
+  7: type AnimationProps = {
+  8:   opacity?: number;
+  9: };
+ 10: type ViewportProps = {
+ 11:   once?: boolean;
+ 12:   amount?: "some" | "all" | number;
+ 13: };
+ 14: type TransitionProps = {
+ 15:   duration?: number;
+ 16:   ease?: string;
+ 17: };
+ 18: // Mock framer-motion
+ 19: jest.mock("motion/react", () => ({
+ 20:   motion: {
+ 21:     div: ({
+ 22:       children,
+ 23:       className,
+ 24:       initial,
+ 25:       whileInView,
+ 26:       viewport,
+ 27:       transition,
+ 28:       style,
+ 29:       "data-testid": dataTestId,
+ 30:     }: {
+ 31:       children: React.ReactNode;
+ 32:       className?: string;
+ 33:       initial?: AnimationProps;
+ 34:       whileInView?: AnimationProps;
+ 35:       viewport?: ViewportProps;
+ 36:       transition?: TransitionProps;
+ 37:       style?: MotionStyle;
+ 38:       "data-testid"?: string;
+ 39:     }) => {
+ 40:       // Store props in data attributes for testing
+ 41:       return (
+ 42:         <div
+ 43:           className={className}
+ 44:           style={style}
+ 45:           data-initial={JSON.stringify(initial)}
+ 46:           data-while-in-view={JSON.stringify(whileInView)}
+ 47:           data-viewport={JSON.stringify(viewport)}
+ 48:           data-transition={JSON.stringify(transition)}
+ 49:           data-testid={dataTestId}
+ 50:         >
+ 51:           {children}
+ 52:         </div>
+ 53:       );
+ 54:     },
+ 55:   },
+ 56: }));
+ 57: describe("FadeInScroll", () => {
+ 58:   it("renders children correctly", () => {
+ 59:     // Arrange
+ 60:     render(
+ 61:       <FadeInScroll>
+ 62:         <div>Test content</div>
+ 63:       </FadeInScroll>,
+ 64:     );
+ 65:     // Act
+ 66:     const element = screen.getByText("Test content");
+ 67:     // Assert
+ 68:     expect(element).toBeInTheDocument();
+ 69:   });
+ 70:   it("applies custom className", () => {
+ 71:     // Arrange
+ 72:     render(
+ 73:       <FadeInScroll className="custom-class" data-testid="fade-in-scroll">
+ 74:         <div>Test content</div>
+ 75:       </FadeInScroll>,
+ 76:     );
+ 77:     // Act
+ 78:     const container = screen.getByTestId("fade-in-scroll");
+ 79:     // Assert
+ 80:     expect(container).toHaveClass("custom-class");
+ 81:   });
+ 82:   it("has initial opacity of 0", () => {
+ 83:     // Arrange
+ 84:     render(
+ 85:       <FadeInScroll data-testid="fade-in-scroll">
+ 86:         <div>Test content</div>
+ 87:       </FadeInScroll>,
+ 88:     );
+ 89:     // Act
+ 90:     const fadeInElement = screen.getByTestId("fade-in-scroll");
+ 91:     // Assert
+ 92:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
+ 93:     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
+ 94:   });
+ 95:   it("configures viewport with custom viewAmount", () => {
+ 96:     // Arrange
+ 97:     render(
+ 98:       <FadeInScroll viewAmount={0.5} data-testid="fade-in-scroll">
+ 99:         <div>Test content</div>
+100:       </FadeInScroll>,
+101:     );
+102:     // Act
+103:     const container = screen.getByTestId("fade-in-scroll");
+104:     const viewport = JSON.parse(
+105:       container?.getAttribute("data-viewport") || "{}",
+106:     );
+107:     // Assert
+108:     expect(viewport.once).toBe(true);
+109:     expect(viewport.amount).toBe(0.5);
+110:   });
+111:   it("uses default viewAmount when not provided", () => {
+112:     // Arrange
+113:     render(
+114:       <FadeInScroll data-testid="fade-in-scroll">
+115:         <div>Test content</div>
+116:       </FadeInScroll>,
+117:     );
+118:     // Act
+119:     const container = screen.getByTestId("fade-in-scroll");
+120:     const viewport = JSON.parse(
+121:       container?.getAttribute("data-viewport") || "{}",
+122:     );
+123:     // Assert
+124:     expect(viewport.once).toBe(true);
+125:     expect(viewport.amount).toBe(0.2);
+126:   });
+127:   it("accepts custom duration", () => {
+128:     // Arrange
+129:     render(
+130:       <FadeInScroll duration={0.8} data-testid="fade-in-scroll">
+131:         <div>Test content</div>
+132:       </FadeInScroll>,
+133:     );
+134:     // Act
+135:     const container = screen.getByTestId("fade-in-scroll");
+136:     const transition = JSON.parse(
+137:       container?.getAttribute("data-transition") || "{}",
+138:     );
+139:     // Assert
+140:     expect(transition.duration).toBe(0.8);
+141:     expect(transition.ease).toBe("easeOut");
+142:   });
+143: });
 ````
 
 ## File: src/components/Animations/FadeIn.component.tsx
@@ -17740,30 +17913,29 @@ tsconfig.json
 136: export default ContactForm;
 ````
 
-## File: src/stories/components/Animations/FadeInScroll.stories.tsx
+## File: src/stories/components/Animations/FadeIn.stories.tsx
 ````typescript
  1: import type { Story } from "@ladle/react";
- 2: import FadeInScroll, {
- 3:   FadeInScrollProps,
- 4: } from "@/components/Animations/FadeInScroll.component";
- 5: const FadeInScrollStories = {
- 6:   title: "Animations/FadeInScroll",
- 7: };
- 8: export default FadeInScrollStories;
- 9: export const Default: Story<FadeInScrollProps> = () => (
-10:   <div className="h-[200vh] pt-[100vh]">
-11:     <FadeInScroll>
-12:       <div className="p-4 bg-green-500 rounded">Fade In on Scroll</div>
-13:     </FadeInScroll>
-14:   </div>
-15: );
-16: export const CustomViewAmount: Story<FadeInScrollProps> = () => (
-17:   <div className="h-[200vh] pt-[100vh]">
-18:     <FadeInScroll viewAmount={0.8}>
-19:       <div className="p-4 bg-green-500 rounded">Fade In with 80% visible</div>
-20:     </FadeInScroll>
-21:   </div>
-22: );
+ 2: import FadeIn, { FadeInProps } from "@/components/Animations/FadeIn.component";
+ 3: const FadeInStories = {
+ 4:   title: "Animations/FadeIn",
+ 5: };
+ 6: export default FadeInStories;
+ 7: export const Default: Story<FadeInProps> = () => (
+ 8:   <FadeIn>
+ 9:     <div className="p-4 bg-blue-500 rounded">Fade In</div>
+10:   </FadeIn>
+11: );
+12: export const WithDelay: Story<FadeInProps> = () => (
+13:   <FadeIn delay={1}>
+14:     <div className="p-4 bg-blue-500 rounded">Fade In with Delay</div>
+15:   </FadeIn>
+16: );
+17: export const LongDuration: Story<FadeInProps> = () => (
+18:   <FadeIn duration={1.5}>
+19:     <div className="p-4 bg-blue-500 rounded">Long Duration Fade In</div>
+20:   </FadeIn>
+21: );
 ````
 
 ## File: studio/package.json
@@ -17804,178 +17976,6 @@ tsconfig.json
 34:     "singleQuote": true
 35:   }
 36: }
-````
-
-## File: src/__tests__/Animations/FadeInScroll.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
-  3: import React from "react";
-  4: type MotionStyle = React.CSSProperties & {
-  5:   willChange?: string;
-  6: };
-  7: type AnimationProps = {
-  8:   opacity?: number;
-  9: };
- 10: type ViewportProps = {
- 11:   once?: boolean;
- 12:   amount?: "some" | "all" | number;
- 13: };
- 14: type TransitionProps = {
- 15:   duration?: number;
- 16:   ease?: string;
- 17: };
- 18: // Mock framer-motion
- 19: jest.mock("motion/react", () => ({
- 20:   motion: {
- 21:     div: ({
- 22:       children,
- 23:       className,
- 24:       initial,
- 25:       whileInView,
- 26:       viewport,
- 27:       transition,
- 28:       style,
- 29:       "data-testid": dataTestId,
- 30:     }: {
- 31:       children: React.ReactNode;
- 32:       className?: string;
- 33:       initial?: AnimationProps;
- 34:       whileInView?: AnimationProps;
- 35:       viewport?: ViewportProps;
- 36:       transition?: TransitionProps;
- 37:       style?: MotionStyle;
- 38:       "data-testid"?: string;
- 39:     }) => {
- 40:       // Store props in data attributes for testing
- 41:       return (
- 42:         <div
- 43:           className={className}
- 44:           style={style}
- 45:           data-initial={JSON.stringify(initial)}
- 46:           data-while-in-view={JSON.stringify(whileInView)}
- 47:           data-viewport={JSON.stringify(viewport)}
- 48:           data-transition={JSON.stringify(transition)}
- 49:           data-testid={dataTestId}
- 50:         >
- 51:           {children}
- 52:         </div>
- 53:       );
- 54:     },
- 55:   },
- 56: }));
- 57: describe("FadeInScroll", () => {
- 58:   it("renders children correctly", () => {
- 59:     // Arrange
- 60:     render(
- 61:       <FadeInScroll>
- 62:         <div>Test content</div>
- 63:       </FadeInScroll>,
- 64:     );
- 65:     // Act
- 66:     const element = screen.getByText("Test content");
- 67:     // Assert
- 68:     expect(element).toBeInTheDocument();
- 69:   });
- 70:   it("applies custom className", () => {
- 71:     // Arrange
- 72:     render(
- 73:       <FadeInScroll className="custom-class" data-testid="fade-in-scroll">
- 74:         <div>Test content</div>
- 75:       </FadeInScroll>,
- 76:     );
- 77:     // Act
- 78:     const container = screen.getByTestId("fade-in-scroll");
- 79:     // Assert
- 80:     expect(container).toHaveClass("custom-class");
- 81:   });
- 82:   it("has initial opacity of 0", () => {
- 83:     // Arrange
- 84:     render(
- 85:       <FadeInScroll data-testid="fade-in-scroll">
- 86:         <div>Test content</div>
- 87:       </FadeInScroll>,
- 88:     );
- 89:     // Act
- 90:     const fadeInElement = screen.getByTestId("fade-in-scroll");
- 91:     // Assert
- 92:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
- 93:     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
- 94:   });
- 95:   it("configures viewport with custom viewAmount", () => {
- 96:     // Arrange
- 97:     render(
- 98:       <FadeInScroll viewAmount={0.5} data-testid="fade-in-scroll">
- 99:         <div>Test content</div>
-100:       </FadeInScroll>,
-101:     );
-102:     // Act
-103:     const container = screen.getByTestId("fade-in-scroll");
-104:     const viewport = JSON.parse(
-105:       container?.getAttribute("data-viewport") || "{}",
-106:     );
-107:     // Assert
-108:     expect(viewport.once).toBe(true);
-109:     expect(viewport.amount).toBe(0.5);
-110:   });
-111:   it("uses default viewAmount when not provided", () => {
-112:     // Arrange
-113:     render(
-114:       <FadeInScroll data-testid="fade-in-scroll">
-115:         <div>Test content</div>
-116:       </FadeInScroll>,
-117:     );
-118:     // Act
-119:     const container = screen.getByTestId("fade-in-scroll");
-120:     const viewport = JSON.parse(
-121:       container?.getAttribute("data-viewport") || "{}",
-122:     );
-123:     // Assert
-124:     expect(viewport.once).toBe(true);
-125:     expect(viewport.amount).toBe(0.2);
-126:   });
-127:   it("accepts custom duration", () => {
-128:     // Arrange
-129:     render(
-130:       <FadeInScroll duration={0.8} data-testid="fade-in-scroll">
-131:         <div>Test content</div>
-132:       </FadeInScroll>,
-133:     );
-134:     // Act
-135:     const container = screen.getByTestId("fade-in-scroll");
-136:     const transition = JSON.parse(
-137:       container?.getAttribute("data-transition") || "{}",
-138:     );
-139:     // Assert
-140:     expect(transition.duration).toBe(0.8);
-141:     expect(transition.ease).toBe("easeOut");
-142:   });
-143: });
-````
-
-## File: src/stories/components/Animations/FadeIn.stories.tsx
-````typescript
- 1: import type { Story } from "@ladle/react";
- 2: import FadeIn, { FadeInProps } from "@/components/Animations/FadeIn.component";
- 3: const FadeInStories = {
- 4:   title: "Animations/FadeIn",
- 5: };
- 6: export default FadeInStories;
- 7: export const Default: Story<FadeInProps> = () => (
- 8:   <FadeIn>
- 9:     <div className="p-4 bg-blue-500 rounded">Fade In</div>
-10:   </FadeIn>
-11: );
-12: export const WithDelay: Story<FadeInProps> = () => (
-13:   <FadeIn delay={1}>
-14:     <div className="p-4 bg-blue-500 rounded">Fade In with Delay</div>
-15:   </FadeIn>
-16: );
-17: export const LongDuration: Story<FadeInProps> = () => (
-18:   <FadeIn duration={1.5}>
-19:     <div className="p-4 bg-blue-500 rounded">Long Duration Fade In</div>
-20:   </FadeIn>
-21: );
 ````
 
 ## File: src/components/Index/Hero.component.tsx
@@ -18312,7 +18312,7 @@ tsconfig.json
 37:     "cookie": ">=1.0.2",
 38:     "envalid": "^8.1.0",
 39:     "jest": "^29.7.0",
-40:     "motion": "^12.23.9",
+40:     "motion": "^12.23.11",
 41:     "next": "15.4.4",
 42:     "next-sanity": "^10.0.4",
 43:     "path-to-regexp": "^8.2.0",
