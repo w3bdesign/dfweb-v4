@@ -8576,6 +8576,71 @@ tsconfig.json
 53: export default Button;
 ````
 
+## File: src/components/UI/ContentLoader.component.tsx
+````typescript
+ 1: import Skeleton from "./Skeleton.component";
+ 2: interface ContentLoaderProps {
+ 3:   /** Type of content being loaded */
+ 4:   type?: "hero" | "section" | "custom";
+ 5:   /** Number of sections to show (for section type) */
+ 6:   sections?: number;
+ 7:   /** Custom content for flexibility */
+ 8:   children?: React.ReactNode;
+ 9: }
+10: const ContentLoader = ({
+11:   type = "section",
+12:   sections = 1,
+13:   children,
+14: }: ContentLoaderProps) => {
+15:   if (type === "custom" && children) {
+16:     return <>{children}</>;
+17:   }
+18:   if (type === "hero") {
+19:     return (
+20:       <article className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
+21:         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900" />
+22:         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
+23:           <Skeleton height="h-14" width="w-32 mx-auto" shimmer />
+24:           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" shimmer />
+25:           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
+26:           <div className="flex justify-center space-x-4 mt-4">
+27:             {[1, 2, 3].map((i) => (
+28:               <Skeleton key={i} height="h-10 w-10" rounded shimmer />
+29:             ))}
+30:           </div>
+31:         </div>
+32:       </article>
+33:     );
+34:   }
+35:   // Default to section loader
+36:   return (
+37:     <div className="w-full overflow-hidden -mb-8">
+38:       {Array.from({ length: sections }, (_, index) => (
+39:         <section
+40:           key={index}
+41:           data-testid="content-section"
+42:           className={`md:py-6 relative contain-layout ${
+43:             index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"
+44:           }`}
+45:         >
+46:           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
+47:             <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
+48:             <div className="max-w-3xl mx-auto space-y-3 mt-4">
+49:               <Skeleton shimmer />
+50:               <Skeleton width="w-5/6" shimmer />
+51:               <Skeleton width="w-4/6" shimmer />
+52:               <Skeleton shimmer />
+53:               <Skeleton width="w-3/4" shimmer />
+54:             </div>
+55:           </div>
+56:         </section>
+57:       ))}
+58:     </div>
+59:   );
+60: };
+61: export default ContentLoader;
+````
+
 ## File: src/components/UI/InputField.component.tsx
 ````typescript
  1: import React from "react";
@@ -16650,69 +16715,89 @@ tsconfig.json
 69: export default Icons;
 ````
 
-## File: src/components/UI/ContentLoader.component.tsx
+## File: src/components/Index/Section.component.tsx
 ````typescript
- 1: import Skeleton from "./Skeleton.component";
- 2: interface ContentLoaderProps {
- 3:   /** Type of content being loaded */
- 4:   type?: "hero" | "section" | "custom";
- 5:   /** Number of sections to show (for section type) */
- 6:   sections?: number;
- 7:   /** Custom content for flexibility */
- 8:   children?: React.ReactNode;
- 9: }
-10: const ContentLoader = ({
-11:   type = "section",
-12:   sections = 1,
-13:   children,
-14: }: ContentLoaderProps) => {
-15:   if (type === "custom" && children) {
-16:     return <>{children}</>;
-17:   }
-18:   if (type === "hero") {
-19:     return (
-20:       <article className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
-21:         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900" />
-22:         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
-23:           <Skeleton height="h-14" width="w-32 mx-auto" shimmer />
-24:           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" shimmer />
-25:           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
-26:           <div className="flex justify-center space-x-4 mt-4">
-27:             {[1, 2, 3].map((i) => (
-28:               <Skeleton key={i} height="h-10 w-10" rounded shimmer />
-29:             ))}
-30:           </div>
-31:         </div>
-32:       </article>
-33:     );
-34:   }
-35:   // Default to section loader
-36:   return (
-37:     <div className="w-full overflow-hidden -mb-8">
-38:       {Array.from({ length: sections }, (_, index) => (
-39:         <section
-40:           key={index}
-41:           data-testid="content-section"
-42:           className={`md:py-6 relative contain-layout ${
-43:             index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"
-44:           }`}
-45:         >
-46:           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
-47:             <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
-48:             <div className="max-w-3xl mx-auto space-y-3 mt-4">
-49:               <Skeleton shimmer />
-50:               <Skeleton width="w-5/6" shimmer />
-51:               <Skeleton width="w-4/6" shimmer />
-52:               <Skeleton shimmer />
-53:               <Skeleton width="w-3/4" shimmer />
-54:             </div>
-55:           </div>
-56:         </section>
-57:       ))}
-58:     </div>
-59:   );
-60: };
-61: export default ContentLoader;
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import FadeInScroll from "../Animations/FadeInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11: }
+12: /**
+13:  * Section component that renders a single content section
+14:  * @param {SectionProps} props - The props for the Section component
+15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+16:  * @param {string} props.title - The title of the section
+17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+20:  */
+21: const Section = ({
+22:   text,
+23:   title,
+24:   variant = "default",
+25:   showDebugButton = true,
+26: }: SectionProps) => {
+27:   const [shouldError, setShouldError] = useState(false);
+28:   if (!title || !text) {
+29:     console.error(
+30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+31:     );
+32:     return null;
+33:   }
+34:   if (shouldError) {
+35:     throw new Error("En uventet feil har oppstått");
+36:   }
+37:   const sectionStyles = {
+38:     default: "bg-slate-900",
+39:     alternate: "bg-slate-800/30",
+40:   };
+41:   return (
+42:     <section
+43:       aria-label={title}
+44:       data-testid="sanity-section"
+45:       className={`
+46:         md:py-6
+47:         relative
+48:         transition-colors
+49:         duration-300
+50:         contain-layout
+51:         ${sectionStyles[variant]}
+52:       `}
+53:     >
+54:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+55:         <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
+56:           <h2
+57:             data-testid="sanity-title"
+58:             data-cy={title}
+59:             className="text-3xl text-center text-slate-100"
+60:           >
+61:             {title}
+62:           </h2>
+63:           <div className="flex justify-center">
+64:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+65:               <PortableText
+66:                 value={text}
+67:                 components={myPortableTextComponents}
+68:               />
+69:             </div>
+70:           </div>
+71:           {process.env.NODE_ENV === "development" && showDebugButton && (
+72:             <Button onClick={() => setShouldError(true)} type="button">
+73:               Utløs Testfeil
+74:             </Button>
+75:           )}
+76:         </FadeInScroll>
+77:       </div>
+78:     </section>
+79:   );
+80: };
+81: export default Section;
 ````
 
 ## File: src/utils/eslint/package.json
@@ -17103,91 +17188,6 @@ tsconfig.json
 44:     });
 45:   });
 46: });
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import FadeInScroll from "../Animations/FadeInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11: }
-12: /**
-13:  * Section component that renders a single content section
-14:  * @param {SectionProps} props - The props for the Section component
-15:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-16:  * @param {string} props.title - The title of the section
-17:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-18:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-19:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-20:  */
-21: const Section = ({
-22:   text,
-23:   title,
-24:   variant = "default",
-25:   showDebugButton = true,
-26: }: SectionProps) => {
-27:   const [shouldError, setShouldError] = useState(false);
-28:   if (!title || !text) {
-29:     console.error(
-30:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-31:     );
-32:     return null;
-33:   }
-34:   if (shouldError) {
-35:     throw new Error("En uventet feil har oppstått");
-36:   }
-37:   const sectionStyles = {
-38:     default: "bg-slate-900",
-39:     alternate: "bg-slate-800/30",
-40:   };
-41:   return (
-42:     <section
-43:       aria-label={title}
-44:       data-testid="sanity-section"
-45:       className={`
-46:         md:py-6
-47:         relative
-48:         transition-colors
-49:         duration-300
-50:         contain-layout
-51:         ${sectionStyles[variant]}
-52:       `}
-53:     >
-54:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-55:         <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
-56:           <h2
-57:             data-testid="sanity-title"
-58:             data-cy={title}
-59:             className="text-3xl text-center text-slate-100"
-60:           >
-61:             {title}
-62:           </h2>
-63:           <div className="flex justify-center">
-64:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-65:               <PortableText
-66:                 value={text}
-67:                 components={myPortableTextComponents}
-68:               />
-69:             </div>
-70:           </div>
-71:           {process.env.NODE_ENV === "development" && showDebugButton && (
-72:             <Button onClick={() => setShouldError(true)} type="button">
-73:               Utløs Testfeil
-74:             </Button>
-75:           )}
-76:         </FadeInScroll>
-77:       </div>
-78:     </section>
-79:   );
-80: };
-81: export default Section;
 ````
 
 ## File: src/components/UI/Skeleton.component.tsx
@@ -18362,7 +18362,7 @@ tsconfig.json
 87:     "expect": "^29.7.0",
 88:     "jest-environment-jsdom": "^29.7.0",
 89:     "jest-extended": "^6.0.0",
-90:     "jsdom-testing-mocks": "^1.13.1",
+90:     "jsdom-testing-mocks": "^1.14.0",
 91:     "postcss": "^8.5.6",
 92:     "prettier": "3.6.2",
 93:     "tailwindcss": "^4.1.11",
