@@ -5659,6 +5659,56 @@ tsconfig.json
 58: });
 ````
 
+## File: src/__tests__/UI/ContentLoader.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 3: describe("ContentLoader", () => {
+ 4:   describe("Hero type", () => {
+ 5:     it("renders hero content skeletons", () => {
+ 6:       // Arrange
+ 7:       render(<ContentLoader type="hero" />);
+ 8:       // Act
+ 9:       const skeletons = screen.getAllByTestId("skeleton");
+10:       // Assert
+11:       expect(skeletons).toHaveLength(6);
+12:     });
+13:   });
+14:   describe("Section type", () => {
+15:     it("renders a single section by default", () => {
+16:       // Arrange
+17:       render(<ContentLoader type="section" />);
+18:       // Act
+19:       const sections = screen.getAllByTestId("content-section");
+20:       // Assert
+21:       expect(sections).toHaveLength(1);
+22:     });
+23:     it("renders multiple sections when specified", () => {
+24:       // Arrange
+25:       render(<ContentLoader type="section" sections={3} />);
+26:       // Act
+27:       const sections = screen.getAllByTestId("content-section");
+28:       // Assert
+29:       expect(sections).toHaveLength(3);
+30:     });
+31:   });
+32:   describe("Custom type", () => {
+33:     it("renders custom children", () => {
+34:       // Arrange
+35:       render(
+36:         <ContentLoader type="custom">
+37:           <div>Custom Content</div>
+38:         </ContentLoader>,
+39:       );
+40:       // Act
+41:       const customContent = screen.getByText("Custom Content");
+42:       // Assert
+43:       expect(customContent).toBeInTheDocument();
+44:     });
+45:   });
+46: });
+````
+
 ## File: src/__tests__/UI/InputField.test.tsx
 ````typescript
  1: import React from "react";
@@ -9846,6 +9896,32 @@ tsconfig.json
 30:     Fade Down with Custom Styles
 31:   </FadeDown>
 32: );
+````
+
+## File: src/stories/components/Animations/FadeInScroll.stories.tsx
+````typescript
+ 1: import type { Story } from "@ladle/react";
+ 2: import FadeInScroll, {
+ 3:   FadeInScrollProps,
+ 4: } from "@/components/Animations/FadeInScroll.component";
+ 5: const FadeInScrollStories = {
+ 6:   title: "Animations/FadeInScroll",
+ 7: };
+ 8: export default FadeInScrollStories;
+ 9: export const Default: Story<FadeInScrollProps> = () => (
+10:   <div className="h-[200vh] pt-[100vh]">
+11:     <FadeInScroll>
+12:       <div className="p-4 bg-green-500 rounded">Fade In on Scroll</div>
+13:     </FadeInScroll>
+14:   </div>
+15: );
+16: export const CustomViewAmount: Story<FadeInScrollProps> = () => (
+17:   <div className="h-[200vh] pt-[100vh]">
+18:     <FadeInScroll viewAmount={0.8}>
+19:       <div className="p-4 bg-green-500 rounded">Fade In with 80% visible</div>
+20:     </FadeInScroll>
+21:   </div>
+22: );
 ````
 
 ## File: src/stories/components/Animations/FadeUp.stories.tsx
@@ -16621,54 +16697,131 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/UI/ContentLoader.test.tsx
+## File: src/__tests__/Animations/FadeIn.test.tsx
 ````typescript
  1: import { render, screen } from "@testing-library/react";
- 2: import ContentLoader from "@/components/UI/ContentLoader.component";
- 3: describe("ContentLoader", () => {
- 4:   describe("Hero type", () => {
- 5:     it("renders hero content skeletons", () => {
- 6:       // Arrange
- 7:       render(<ContentLoader type="hero" />);
- 8:       // Act
- 9:       const skeletons = screen.getAllByTestId("skeleton");
-10:       // Assert
-11:       expect(skeletons).toHaveLength(6);
-12:     });
-13:   });
-14:   describe("Section type", () => {
-15:     it("renders a single section by default", () => {
-16:       // Arrange
-17:       render(<ContentLoader type="section" />);
-18:       // Act
-19:       const sections = screen.getAllByTestId("content-section");
-20:       // Assert
-21:       expect(sections).toHaveLength(1);
-22:     });
-23:     it("renders multiple sections when specified", () => {
-24:       // Arrange
-25:       render(<ContentLoader type="section" sections={3} />);
-26:       // Act
-27:       const sections = screen.getAllByTestId("content-section");
-28:       // Assert
-29:       expect(sections).toHaveLength(3);
-30:     });
-31:   });
-32:   describe("Custom type", () => {
-33:     it("renders custom children", () => {
-34:       // Arrange
-35:       render(
-36:         <ContentLoader type="custom">
-37:           <div>Custom Content</div>
-38:         </ContentLoader>,
-39:       );
-40:       // Act
-41:       const customContent = screen.getByText("Custom Content");
-42:       // Assert
-43:       expect(customContent).toBeInTheDocument();
-44:     });
-45:   });
-46: });
+ 2: import FadeIn from "@/components/Animations/FadeIn.component";
+ 3: describe("FadeIn", () => {
+ 4:   it("renders children correctly", () => {
+ 5:     // Arrange
+ 6:     render(
+ 7:       <FadeIn>
+ 8:         <div>Test content</div>
+ 9:       </FadeIn>,
+10:     );
+11:     // Act
+12:     const element = screen.getByText("Test content");
+13:     // Assert
+14:     expect(element).toBeInTheDocument();
+15:   });
+16:   it("applies custom className", () => {
+17:     // Arrange
+18:     render(
+19:       <FadeIn className="custom-class" data-testid="fade-in">
+20:         <div>Test content</div>
+21:       </FadeIn>,
+22:     );
+23:     // Act
+24:     const container = screen.getByTestId("fade-in");
+25:     // Assert
+26:     expect(container).toHaveClass("custom-class");
+27:   });
+28:   it("has initial opacity of 0", () => {
+29:     // Arrange
+30:     render(
+31:       <FadeIn data-testid="fade-in">
+32:         <div>Test content</div>
+33:       </FadeIn>,
+34:     );
+35:     // Act
+36:     const fadeInElement = screen.getByTestId("fade-in");
+37:     // Assert
+38:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
+39:   });
+40:   it("accepts custom duration", () => {
+41:     // Arrange
+42:     render(
+43:       <FadeIn duration={0.5}>
+44:         <div>Test content</div>
+45:       </FadeIn>,
+46:     );
+47:     // Act
+48:     const element = screen.getByText("Test content");
+49:     // Assert
+50:     expect(element).toBeInTheDocument();
+51:   });
+52:   it("accepts custom delay", () => {
+53:     // Arrange
+54:     render(
+55:       <FadeIn delay={0.2}>
+56:         <div>Test content</div>
+57:       </FadeIn>,
+58:     );
+59:     // Act
+60:     const element = screen.getByText("Test content");
+61:     // Assert
+62:     expect(element).toBeInTheDocument();
+63:   });
+64: });
+````
+
+## File: src/__tests__/UI/Skeleton.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import Skeleton from "@/components/UI/Skeleton.component";
+ 3: describe("Skeleton", () => {
+ 4:   it("renders with default props", () => {
+ 5:     // Arrange
+ 6:     render(<Skeleton />);
+ 7:     // Act
+ 8:     const skeleton = screen.getByTestId("skeleton");
+ 9:     // Assert
+10:     expect(skeleton).toHaveClass(
+11:       "skeleton-shimmer",
+12:       "bg-slate-700",
+13:       "rounded",
+14:       "w-full",
+15:       "h-4",
+16:     );
+17:   });
+18:   it("renders with custom props", () => {
+19:     // Arrange
+20:     render(
+21:       <Skeleton
+22:         width="w-1/2"
+23:         height="h-8"
+24:         className="custom-class"
+25:         rounded
+26:         shimmer={false}
+27:       />,
+28:     );
+29:     // Act
+30:     const skeleton = screen.getByTestId("skeleton");
+31:     // Assert
+32:     expect(skeleton).toHaveClass(
+33:       "animate-pulse",
+34:       "bg-slate-700",
+35:       "rounded-full",
+36:       "w-1/2",
+37:       "h-8",
+38:       "custom-class",
+39:     );
+40:   });
+41:   it("renders children when provided", () => {
+42:     // Arrange
+43:     render(
+44:       <Skeleton data-testid="skeleton">
+45:         <div>Child content</div>
+46:       </Skeleton>,
+47:     );
+48:     // Act
+49:     const child = screen.getByText("Child content");
+50:     const skeleton = screen.getByTestId("skeleton");
+51:     // Assert
+52:     expect(child).toBeInTheDocument();
+53:     expect(skeleton).toHaveClass("animate-pulse");
+54:   });
+55: });
 ````
 
 ## File: src/app/kontakt/page.tsx
@@ -16690,6 +16843,51 @@ tsconfig.json
 15:     </RootLayout>
 16:   );
 17: }
+````
+
+## File: src/components/Animations/FadeInScroll.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { motion } from "motion/react";
+ 3: import { ReactNode } from "react";
+ 4: export interface FadeInScrollProps {
+ 5:   children: ReactNode;
+ 6:   className?: string;
+ 7:   duration?: number;
+ 8:   viewAmount?: "some" | "all" | number;
+ 9:   "data-testid"?: string;
+10: }
+11: /**
+12:  * Minimal fade-in animation triggered on scroll
+13:  * Only uses opacity for zero CLS impact
+14:  */
+15: const FadeInScroll = ({
+16:   children,
+17:   className = "",
+18:   duration = 0.4,
+19:   viewAmount = 0.2,
+20:   "data-testid": dataTestId,
+21: }: FadeInScrollProps) => {
+22:   return (
+23:     <motion.div
+24:       className={className}
+25:       data-testid={dataTestId}
+26:       initial={{ opacity: 0 }}
+27:       whileInView={{ opacity: 1 }}
+28:       viewport={{ once: true, amount: viewAmount }}
+29:       transition={{
+30:         duration,
+31:         ease: "easeOut",
+32:       }}
+33:       style={{
+34:         willChange: "opacity",
+35:       }}
+36:     >
+37:       {children}
+38:     </motion.div>
+39:   );
+40: };
+41: export default FadeInScroll;
 ````
 
 ## File: src/components/Index/Icons.component.tsx
@@ -16896,6 +17094,31 @@ tsconfig.json
 42:   );
 43: };
 44: export default Skeleton;
+````
+
+## File: src/stories/components/Animations/FadeIn.stories.tsx
+````typescript
+ 1: import type { Story } from "@ladle/react";
+ 2: import FadeIn, { FadeInProps } from "@/components/Animations/FadeIn.component";
+ 3: const FadeInStories = {
+ 4:   title: "Animations/FadeIn",
+ 5: };
+ 6: export default FadeInStories;
+ 7: export const Default: Story<FadeInProps> = () => (
+ 8:   <FadeIn>
+ 9:     <div className="p-4 bg-blue-500 rounded">Fade In</div>
+10:   </FadeIn>
+11: );
+12: export const WithDelay: Story<FadeInProps> = () => (
+13:   <FadeIn delay={1}>
+14:     <div className="p-4 bg-blue-500 rounded">Fade In with Delay</div>
+15:   </FadeIn>
+16: );
+17: export const LongDuration: Story<FadeInProps> = () => (
+18:   <FadeIn duration={1.5}>
+19:     <div className="p-4 bg-blue-500 rounded">Long Duration Fade In</div>
+20:   </FadeIn>
+21: );
 ````
 
 ## File: src/utils/eslint/package.json
@@ -17117,426 +17340,6 @@ tsconfig.json
 188:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/__tests__/Animations/FadeIn.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import FadeIn from "@/components/Animations/FadeIn.component";
- 3: describe("FadeIn", () => {
- 4:   it("renders children correctly", () => {
- 5:     // Arrange
- 6:     render(
- 7:       <FadeIn>
- 8:         <div>Test content</div>
- 9:       </FadeIn>,
-10:     );
-11:     // Act
-12:     const element = screen.getByText("Test content");
-13:     // Assert
-14:     expect(element).toBeInTheDocument();
-15:   });
-16:   it("applies custom className", () => {
-17:     // Arrange
-18:     render(
-19:       <FadeIn className="custom-class" data-testid="fade-in">
-20:         <div>Test content</div>
-21:       </FadeIn>,
-22:     );
-23:     // Act
-24:     const container = screen.getByTestId("fade-in");
-25:     // Assert
-26:     expect(container).toHaveClass("custom-class");
-27:   });
-28:   it("has initial opacity of 0", () => {
-29:     // Arrange
-30:     render(
-31:       <FadeIn data-testid="fade-in">
-32:         <div>Test content</div>
-33:       </FadeIn>,
-34:     );
-35:     // Act
-36:     const fadeInElement = screen.getByTestId("fade-in");
-37:     // Assert
-38:     expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
-39:   });
-40:   it("accepts custom duration", () => {
-41:     // Arrange
-42:     render(
-43:       <FadeIn duration={0.5}>
-44:         <div>Test content</div>
-45:       </FadeIn>,
-46:     );
-47:     // Act
-48:     const element = screen.getByText("Test content");
-49:     // Assert
-50:     expect(element).toBeInTheDocument();
-51:   });
-52:   it("accepts custom delay", () => {
-53:     // Arrange
-54:     render(
-55:       <FadeIn delay={0.2}>
-56:         <div>Test content</div>
-57:       </FadeIn>,
-58:     );
-59:     // Act
-60:     const element = screen.getByText("Test content");
-61:     // Assert
-62:     expect(element).toBeInTheDocument();
-63:   });
-64: });
-````
-
-## File: src/__tests__/Kontakt/ContactForm.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
-  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
-  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
-  8: jest.mock("@emailjs/browser", () => ({
-  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
- 10:   init: jest.fn(),
- 11: }));
- 12: describe("ContactForm", () => {
- 13:   const fulltNavn = "Fullt navn";
- 14:   const telefonNummer = "Telefonnummer";
- 15:   const hvaOnskerDu = "Hva ønsker du å si?";
- 16:   const sendSkjemaText = "Send skjema";
- 17:   beforeEach(() => {
- 18:     jest.clearAllMocks();
- 19:   });
- 20:   const fillFormWithValidData = () => {
- 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
- 22:       target: { value: "Bruker Test" },
- 23:     });
- 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
- 25:       target: { value: "12345678" },
- 26:     });
- 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
- 28:       target: { value: "Test melding" },
- 29:     });
- 30:   };
- 31:   it("renders the component", () => {
- 32:     // Arrange
- 33:     const expectedTestId = "kontaktcontent";
- 34:     // Act
- 35:     render(<ContactForm />);
- 36:     // Assert
- 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
- 38:   });
- 39:   it("submits the form successfully and disables submit button while submitting", async () => {
- 40:     // Arrange
- 41:     render(<ContactForm />);
- 42:     const submitButton = screen.getByText(sendSkjemaText);
- 43:     // Act
- 44:     fillFormWithValidData();
- 45:     fireEvent.click(submitButton);
- 46:     // Assert - Initial state
- 47:     expect(submitButton).toBeDisabled();
- 48:     // Assert - Final state
- 49:     await waitFor(() => {
- 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
- 51:     });
- 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 53:   });
- 54:   it("displays error message on form submission failure", async () => {
- 55:     // Arrange
- 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
- 57:     render(<ContactForm />);
- 58:     // Act
- 59:     fillFormWithValidData();
- 60:     fireEvent.click(screen.getByText(sendSkjemaText));
- 61:     // Assert
- 62:     await waitFor(() => {
- 63:       expect(
- 64:         screen.getByText("Feil under sending av skjema"),
- 65:       ).toBeInTheDocument();
- 66:     });
- 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 68:   });
- 69:   it("displays validation errors for empty fields", async () => {
- 70:     // Arrange
- 71:     render(<ContactForm />);
- 72:     const expectedErrors = {
- 73:       name: "Fullt navn er påkrevd",
- 74:       phone: "Telefonnummer er påkrevd",
- 75:       message: "Beskjed er påkrevd",
- 76:     };
- 77:     // Act
- 78:     fireEvent.click(screen.getByText(sendSkjemaText));
- 79:     // Assert
- 80:     await waitFor(() => {
- 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
- 82:     });
- 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
- 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
- 85:     expect(emailjs.send).not.toHaveBeenCalled();
- 86:   });
- 87:   it("displays validation errors for invalid inputs", async () => {
- 88:     // Arrange
- 89:     render(<ContactForm />);
- 90:     const invalidInputs = {
- 91:       name: "User123", // Invalid name format
- 92:       phone: "123", // Invalid phone number
- 93:       message: "Test melding",
- 94:     };
- 95:     const expectedErrors = {
- 96:       name: "Vennligst bruk norske bokstaver",
- 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
- 98:     };
- 99:     // Act
-100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
-101:       target: { value: invalidInputs.name },
-102:     });
-103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
-104:       target: { value: invalidInputs.phone },
-105:     });
-106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-107:       target: { value: invalidInputs.message },
-108:     });
-109:     fireEvent.click(screen.getByText(sendSkjemaText));
-110:     // Assert
-111:     await waitFor(() => {
-112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-113:     });
-114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-115:     expect(emailjs.send).not.toHaveBeenCalled();
-116:   });
-117: });
-````
-
-## File: src/__tests__/UI/Skeleton.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import Skeleton from "@/components/UI/Skeleton.component";
- 3: describe("Skeleton", () => {
- 4:   it("renders with default props", () => {
- 5:     // Arrange
- 6:     render(<Skeleton />);
- 7:     // Act
- 8:     const skeleton = screen.getByTestId("skeleton");
- 9:     // Assert
-10:     expect(skeleton).toHaveClass(
-11:       "skeleton-shimmer",
-12:       "bg-slate-700",
-13:       "rounded",
-14:       "w-full",
-15:       "h-4",
-16:     );
-17:   });
-18:   it("renders with custom props", () => {
-19:     // Arrange
-20:     render(
-21:       <Skeleton
-22:         width="w-1/2"
-23:         height="h-8"
-24:         className="custom-class"
-25:         rounded
-26:         shimmer={false}
-27:       />,
-28:     );
-29:     // Act
-30:     const skeleton = screen.getByTestId("skeleton");
-31:     // Assert
-32:     expect(skeleton).toHaveClass(
-33:       "animate-pulse",
-34:       "bg-slate-700",
-35:       "rounded-full",
-36:       "w-1/2",
-37:       "h-8",
-38:       "custom-class",
-39:     );
-40:   });
-41:   it("renders children when provided", () => {
-42:     // Arrange
-43:     render(
-44:       <Skeleton data-testid="skeleton">
-45:         <div>Child content</div>
-46:       </Skeleton>,
-47:     );
-48:     // Act
-49:     const child = screen.getByText("Child content");
-50:     const skeleton = screen.getByTestId("skeleton");
-51:     // Assert
-52:     expect(child).toBeInTheDocument();
-53:     expect(skeleton).toHaveClass("animate-pulse");
-54:   });
-55: });
-````
-
-## File: src/e2e/playwright/index.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("Home page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/");
- 5:     // Check main heading
- 6:     await expect(page.locator("h1")).toContainText("Hei!");
- 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
- 8:       timeout: 10000,
- 9:     });
-10:     // Check subheading
-11:     await expect(
-12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
-13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
-14:     await expect(
-15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
-16:     ).toBeVisible();
-17:     // Check skills text
-18:     await expect(
-19:       page.getByText(
-20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-21:       ),
-22:     ).toBeVisible();
-23:     // Check if icons are visible
-24:     await expect(page.getByTestId("icons")).toBeVisible();
-25:   });
-26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
-27:     await page.goto("/");
-28:     const omMegSection = page.getByLabel("Om Meg");
-29:     // Check section title
-30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-31:       "Om Meg",
-32:       { timeout: 10000 },
-33:     );
-34:     // Check section content
-35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
-36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
-37:     );
-38:   });
-39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
-40:     await page.goto("/");
-41:     const prosjekterSection = page.getByLabel("Prosjekter");
-42:     // Check section content
-43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
-44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
-45:       { timeout: 10000 },
-46:     );
-47:   });
-48: });
-````
-
-## File: src/stories/components/Animations/FadeInScroll.stories.tsx
-````typescript
- 1: import type { Story } from "@ladle/react";
- 2: import FadeInScroll, {
- 3:   FadeInScrollProps,
- 4: } from "@/components/Animations/FadeInScroll.component";
- 5: const FadeInScrollStories = {
- 6:   title: "Animations/FadeInScroll",
- 7: };
- 8: export default FadeInScrollStories;
- 9: export const Default: Story<FadeInScrollProps> = () => (
-10:   <div className="h-[200vh] pt-[100vh]">
-11:     <FadeInScroll>
-12:       <div className="p-4 bg-green-500 rounded">Fade In on Scroll</div>
-13:     </FadeInScroll>
-14:   </div>
-15: );
-16: export const CustomViewAmount: Story<FadeInScrollProps> = () => (
-17:   <div className="h-[200vh] pt-[100vh]">
-18:     <FadeInScroll viewAmount={0.8}>
-19:       <div className="p-4 bg-green-500 rounded">Fade In with 80% visible</div>
-20:     </FadeInScroll>
-21:   </div>
-22: );
-````
-
-## File: src/stories/components/Kontakt/ContactForm.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import ContactFormWithMocks from "./ContactFormWithMocks";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "Kontakt/ContactForm",
- 7:   component: ContactFormWithMocks,
- 8: } as Meta;
- 9: // Default form view
-10: export const Default = () => <ContactFormWithMocks />;
-11: // Success response view
-12: export const SuccessResponse = () => (
-13:   <div className="bg-slate-800 min-h-screen py-16">
-14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
-15:   </div>
-16: );
-17: // Error response view
-18: export const ErrorResponse = () => (
-19:   <div className="bg-slate-800 min-h-screen py-16">
-20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
-21:   </div>
-22: );
-23: // Simulated success on form submission
-24: export const SubmissionSuccess = () => (
-25:   <div className="bg-slate-800 min-h-screen py-16">
-26:     <ContactFormWithMocks simulateError={false} />
-27:     <div className="mt-8 text-center text-gray-400">
-28:       <p>(Note: Fill in the form and submit to see a success message)</p>
-29:     </div>
-30:   </div>
-31: );
-32: // Simulated error on form submission
-33: export const SubmissionError = () => (
-34:   <div className="bg-slate-800 min-h-screen py-16">
-35:     <ContactFormWithMocks simulateError={true} />
-36:     <div className="mt-8 text-center text-gray-400">
-37:       <p>(Note: Fill in the form and submit to see an error message)</p>
-38:     </div>
-39:   </div>
-40: );
-41: // Form in narrow container
-42: export const NarrowContainer = () => (
-43:   <div className="bg-slate-800 min-h-screen py-16">
-44:     <div className="max-w-md mx-auto">
-45:       <ContactFormWithMocks />
-46:     </div>
-47:   </div>
-48: );
-````
-
-## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
-````typescript
- 1: import React from "react";
- 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
- 3: import { FormData } from "@/components/Kontakt/config/formConfig";
- 4: /**
- 5:  * Props for the ContactFormWithMocks story.
- 6:  */
- 7: type StoryProps = {
- 8:   simulateError?: boolean;
- 9:   initialResponse?: string;
-10: };
-11: /**
-12:  * A special version of ContactForm for stories.
-13:  * This renders the actual ContactForm component but provides a mock
-14:  * onSubmit handler to prevent real email submissions and simulate responses.
-15:  */
-16: const ContactFormWithMocks: React.FC<StoryProps> = ({
-17:   simulateError = false,
-18:   initialResponse = "",
-19: }) => {
-20:   /**
-21:    * Simulated form submission that doesn't make any actual API calls.
-22:    * It returns a promise that resolves to a message string, which ContactForm will use.
-23:    */
-24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
-25:     console.warn("Story mock: Form submitted with data:", data);
-26:     // Simulate API call delay
-27:     await new Promise((resolve) => setTimeout(resolve, 500));
-28:     if (simulateError) {
-29:       return "Feil under sending av skjema"; // Story mock: Simulate error
-30:     } else {
-31:       return "Takk for din beskjed"; // Story mock: Simulate success
-32:     }
-33:   };
-34:   return (
-35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
-36:   );
-37: };
-38: export default ContactFormWithMocks;
-````
-
 ## File: src/__tests__/Animations/FadeInScroll.test.tsx
 ````typescript
   1: import { render, screen } from "@testing-library/react";
@@ -17684,6 +17487,127 @@ tsconfig.json
 143: });
 ````
 
+## File: src/__tests__/Kontakt/ContactForm.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
+  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+  8: jest.mock("@emailjs/browser", () => ({
+  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
+ 10:   init: jest.fn(),
+ 11: }));
+ 12: describe("ContactForm", () => {
+ 13:   const fulltNavn = "Fullt navn";
+ 14:   const telefonNummer = "Telefonnummer";
+ 15:   const hvaOnskerDu = "Hva ønsker du å si?";
+ 16:   const sendSkjemaText = "Send skjema";
+ 17:   beforeEach(() => {
+ 18:     jest.clearAllMocks();
+ 19:   });
+ 20:   const fillFormWithValidData = () => {
+ 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+ 22:       target: { value: "Bruker Test" },
+ 23:     });
+ 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+ 25:       target: { value: "12345678" },
+ 26:     });
+ 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+ 28:       target: { value: "Test melding" },
+ 29:     });
+ 30:   };
+ 31:   it("renders the component", () => {
+ 32:     // Arrange
+ 33:     const expectedTestId = "kontaktcontent";
+ 34:     // Act
+ 35:     render(<ContactForm />);
+ 36:     // Assert
+ 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
+ 38:   });
+ 39:   it("submits the form successfully and disables submit button while submitting", async () => {
+ 40:     // Arrange
+ 41:     render(<ContactForm />);
+ 42:     const submitButton = screen.getByText(sendSkjemaText);
+ 43:     // Act
+ 44:     fillFormWithValidData();
+ 45:     fireEvent.click(submitButton);
+ 46:     // Assert - Initial state
+ 47:     expect(submitButton).toBeDisabled();
+ 48:     // Assert - Final state
+ 49:     await waitFor(() => {
+ 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
+ 51:     });
+ 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 53:   });
+ 54:   it("displays error message on form submission failure", async () => {
+ 55:     // Arrange
+ 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+ 57:     render(<ContactForm />);
+ 58:     // Act
+ 59:     fillFormWithValidData();
+ 60:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 61:     // Assert
+ 62:     await waitFor(() => {
+ 63:       expect(
+ 64:         screen.getByText("Feil under sending av skjema"),
+ 65:       ).toBeInTheDocument();
+ 66:     });
+ 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 68:   });
+ 69:   it("displays validation errors for empty fields", async () => {
+ 70:     // Arrange
+ 71:     render(<ContactForm />);
+ 72:     const expectedErrors = {
+ 73:       name: "Fullt navn er påkrevd",
+ 74:       phone: "Telefonnummer er påkrevd",
+ 75:       message: "Beskjed er påkrevd",
+ 76:     };
+ 77:     // Act
+ 78:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 79:     // Assert
+ 80:     await waitFor(() => {
+ 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+ 82:     });
+ 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+ 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
+ 85:     expect(emailjs.send).not.toHaveBeenCalled();
+ 86:   });
+ 87:   it("displays validation errors for invalid inputs", async () => {
+ 88:     // Arrange
+ 89:     render(<ContactForm />);
+ 90:     const invalidInputs = {
+ 91:       name: "User123", // Invalid name format
+ 92:       phone: "123", // Invalid phone number
+ 93:       message: "Test melding",
+ 94:     };
+ 95:     const expectedErrors = {
+ 96:       name: "Vennligst bruk norske bokstaver",
+ 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
+ 98:     };
+ 99:     // Act
+100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+101:       target: { value: invalidInputs.name },
+102:     });
+103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+104:       target: { value: invalidInputs.phone },
+105:     });
+106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+107:       target: { value: invalidInputs.message },
+108:     });
+109:     fireEvent.click(screen.getByText(sendSkjemaText));
+110:     // Assert
+111:     await waitFor(() => {
+112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+113:     });
+114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+115:     expect(emailjs.send).not.toHaveBeenCalled();
+116:   });
+117: });
+````
+
 ## File: src/components/Animations/FadeIn.component.tsx
 ````typescript
  1: import { motion } from "motion/react";
@@ -17728,49 +17652,150 @@ tsconfig.json
 40: export default FadeIn;
 ````
 
-## File: src/components/Animations/FadeInScroll.component.tsx
+## File: src/e2e/playwright/index.spec.ts
 ````typescript
- 1: "use client";
- 2: import { motion } from "motion/react";
- 3: import { ReactNode } from "react";
- 4: export interface FadeInScrollProps {
- 5:   children: ReactNode;
- 6:   className?: string;
- 7:   duration?: number;
- 8:   viewAmount?: "some" | "all" | number;
- 9:   "data-testid"?: string;
-10: }
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("Home page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/");
+ 5:     // Check main heading
+ 6:     await expect(page.locator("h1")).toContainText("Hei!");
+ 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
+ 8:       timeout: 10000,
+ 9:     });
+10:     // Check subheading
+11:     await expect(
+12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
+13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
+14:     await expect(
+15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
+16:     ).toBeVisible();
+17:     // Check skills text
+18:     await expect(
+19:       page.getByText(
+20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+21:       ),
+22:     ).toBeVisible();
+23:     // Check if icons are visible
+24:     await expect(page.getByTestId("icons")).toBeVisible();
+25:   });
+26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
+27:     await page.goto("/");
+28:     const omMegSection = page.getByLabel("Om Meg");
+29:     // Check section title
+30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
+31:       "Om Meg",
+32:       { timeout: 10000 },
+33:     );
+34:     // Check section content
+35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
+36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
+37:     );
+38:   });
+39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
+40:     await page.goto("/");
+41:     const prosjekterSection = page.getByLabel("Prosjekter");
+42:     // Check section content
+43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
+44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
+45:       { timeout: 10000 },
+46:     );
+47:   });
+48: });
+````
+
+## File: src/stories/components/Kontakt/ContactForm.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import ContactFormWithMocks from "./ContactFormWithMocks";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "Kontakt/ContactForm",
+ 7:   component: ContactFormWithMocks,
+ 8: } as Meta;
+ 9: // Default form view
+10: export const Default = () => <ContactFormWithMocks />;
+11: // Success response view
+12: export const SuccessResponse = () => (
+13:   <div className="bg-slate-800 min-h-screen py-16">
+14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
+15:   </div>
+16: );
+17: // Error response view
+18: export const ErrorResponse = () => (
+19:   <div className="bg-slate-800 min-h-screen py-16">
+20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
+21:   </div>
+22: );
+23: // Simulated success on form submission
+24: export const SubmissionSuccess = () => (
+25:   <div className="bg-slate-800 min-h-screen py-16">
+26:     <ContactFormWithMocks simulateError={false} />
+27:     <div className="mt-8 text-center text-gray-400">
+28:       <p>(Note: Fill in the form and submit to see a success message)</p>
+29:     </div>
+30:   </div>
+31: );
+32: // Simulated error on form submission
+33: export const SubmissionError = () => (
+34:   <div className="bg-slate-800 min-h-screen py-16">
+35:     <ContactFormWithMocks simulateError={true} />
+36:     <div className="mt-8 text-center text-gray-400">
+37:       <p>(Note: Fill in the form and submit to see an error message)</p>
+38:     </div>
+39:   </div>
+40: );
+41: // Form in narrow container
+42: export const NarrowContainer = () => (
+43:   <div className="bg-slate-800 min-h-screen py-16">
+44:     <div className="max-w-md mx-auto">
+45:       <ContactFormWithMocks />
+46:     </div>
+47:   </div>
+48: );
+````
+
+## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
+ 3: import { FormData } from "@/components/Kontakt/config/formConfig";
+ 4: /**
+ 5:  * Props for the ContactFormWithMocks story.
+ 6:  */
+ 7: type StoryProps = {
+ 8:   simulateError?: boolean;
+ 9:   initialResponse?: string;
+10: };
 11: /**
-12:  * Minimal fade-in animation triggered on scroll
-13:  * Only uses opacity for zero CLS impact
-14:  */
-15: const FadeInScroll = ({
-16:   children,
-17:   className = "",
-18:   duration = 0.4,
-19:   viewAmount = 0.2,
-20:   "data-testid": dataTestId,
-21: }: FadeInScrollProps) => {
-22:   return (
-23:     <motion.div
-24:       className={className}
-25:       data-testid={dataTestId}
-26:       initial={{ opacity: 0 }}
-27:       whileInView={{ opacity: 1 }}
-28:       viewport={{ once: true, amount: viewAmount }}
-29:       transition={{
-30:         duration,
-31:         ease: "easeOut",
-32:       }}
-33:       style={{
-34:         willChange: "opacity",
-35:       }}
-36:     >
-37:       {children}
-38:     </motion.div>
-39:   );
-40: };
-41: export default FadeInScroll;
+12:  * A special version of ContactForm for stories.
+13:  * This renders the actual ContactForm component but provides a mock
+14:  * onSubmit handler to prevent real email submissions and simulate responses.
+15:  */
+16: const ContactFormWithMocks: React.FC<StoryProps> = ({
+17:   simulateError = false,
+18:   initialResponse = "",
+19: }) => {
+20:   /**
+21:    * Simulated form submission that doesn't make any actual API calls.
+22:    * It returns a promise that resolves to a message string, which ContactForm will use.
+23:    */
+24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
+25:     console.warn("Story mock: Form submitted with data:", data);
+26:     // Simulate API call delay
+27:     await new Promise((resolve) => setTimeout(resolve, 500));
+28:     if (simulateError) {
+29:       return "Feil under sending av skjema"; // Story mock: Simulate error
+30:     } else {
+31:       return "Takk for din beskjed"; // Story mock: Simulate success
+32:     }
+33:   };
+34:   return (
+35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+36:   );
+37: };
+38: export default ContactFormWithMocks;
 ````
 
 ## File: src/components/Kontakt/ContactForm.component.tsx
@@ -17911,31 +17936,6 @@ tsconfig.json
 134:   );
 135: };
 136: export default ContactForm;
-````
-
-## File: src/stories/components/Animations/FadeIn.stories.tsx
-````typescript
- 1: import type { Story } from "@ladle/react";
- 2: import FadeIn, { FadeInProps } from "@/components/Animations/FadeIn.component";
- 3: const FadeInStories = {
- 4:   title: "Animations/FadeIn",
- 5: };
- 6: export default FadeInStories;
- 7: export const Default: Story<FadeInProps> = () => (
- 8:   <FadeIn>
- 9:     <div className="p-4 bg-blue-500 rounded">Fade In</div>
-10:   </FadeIn>
-11: );
-12: export const WithDelay: Story<FadeInProps> = () => (
-13:   <FadeIn delay={1}>
-14:     <div className="p-4 bg-blue-500 rounded">Fade In with Delay</div>
-15:   </FadeIn>
-16: );
-17: export const LongDuration: Story<FadeInProps> = () => (
-18:   <FadeIn duration={1.5}>
-19:     <div className="p-4 bg-blue-500 rounded">Long Duration Fade In</div>
-20:   </FadeIn>
-21: );
 ````
 
 ## File: studio/package.json
@@ -18362,7 +18362,7 @@ tsconfig.json
 87:     "expect": "^29.7.0",
 88:     "jest-environment-jsdom": "^29.7.0",
 89:     "jest-extended": "^6.0.0",
-90:     "jsdom-testing-mocks": "^1.14.0",
+90:     "jsdom-testing-mocks": "^1.15.0",
 91:     "postcss": "^8.5.6",
 92:     "prettier": "3.6.2",
 93:     "tailwindcss": "^4.1.11",
