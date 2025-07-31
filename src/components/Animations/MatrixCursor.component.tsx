@@ -2,7 +2,7 @@
 
 import { useEffect, RefObject, useState, useCallback } from "react";
 import "@/app/cursor.css";
-import { useMobile } from "../../hooks/useMobile"; // Pb51b
+import { useMobile } from "../../hooks/useMobile";
 
 interface MatrixCursorProps {
   heroRef: RefObject<HTMLElement | null>;
@@ -20,14 +20,8 @@ interface MatrixTrail {
   char: string;
 }
 
-/**
- * MatrixCursor component that renders a custom cursor with a matrix trail effect
- * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
-  const isMobile = useMobile(); // Pd528
+  const isMobile = useMobile();
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [trails, setTrails] = useState<MatrixTrail[]>([]);
@@ -35,7 +29,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   const getRandomChar = useCallback(() => {
     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
     const index = Math.floor(Math.random() * matrixChars.length);
-    return matrixChars[index] ?? matrixChars[0] ?? "X";
+    return matrixChars[index] ?? "X";
   }, []);
 
   const createTrail = useCallback(
@@ -62,7 +56,6 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     const heroSection = heroRef.current;
     if (!heroSection) return;
 
-    // Add cursor: none to the hero section when hovered
     if (isHovered) {
       heroSection.style.cursor = "none";
     } else {
@@ -106,7 +99,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     );
   }, []);
 
-  if (!heroRef.current || isMobile) return null; // P6ecf
+  if (!heroRef.current || isMobile) return null;
 
   const cursorStyles: CursorStyles = {
     position: "fixed",
