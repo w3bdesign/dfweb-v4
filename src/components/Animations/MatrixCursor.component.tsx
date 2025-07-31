@@ -55,7 +55,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
         return updatedTrails;
       });
     },
-    [getRandomChar]
+    [getRandomChar],
   );
 
   useEffect(() => {
