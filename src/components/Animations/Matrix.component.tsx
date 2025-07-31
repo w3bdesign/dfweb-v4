@@ -35,6 +35,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   const maxStackHeightRef = useRef<number>(0);
   const lastFrameTimeRef = useRef<number>(0);
   const isInitializedRef = useRef<boolean>(false);
+  const mousePosRef = useRef<{ x: number; y: number } | null>(null);
   const fps = 10;
   const frameInterval = 1000 / fps;
 
@@ -98,6 +99,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
           glowColor,
           tileSet,
           getRandomInt,
+          mousePos: mousePosRef.current,
         });
         view.draw();
         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
@@ -134,13 +136,29 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
     const debouncedResize = debounce(handleResize, 100);
 
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      mousePosRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+    };
+
+    const handleMouseLeave = () => {
+      mousePosRef.current = null;
+    };
+
     window.addEventListener("resize", debouncedResize);
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
     handleResize();
 
     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
 
     return () => {
       window.removeEventListener("resize", debouncedResize);
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [initMatrix, tick]);
 
