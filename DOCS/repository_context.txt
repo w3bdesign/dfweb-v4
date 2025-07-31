@@ -17441,33 +17441,6 @@ tsconfig.json
 17: }
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.32.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.8.3"
-22:   }
-23: }
-````
-
 ## File: README.md
 ````markdown
   1: # Dfweb.no Portfolio Version 4
@@ -17875,184 +17848,31 @@ tsconfig.json
 38: export default ContactFormWithMocks;
 ````
 
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import emailjs from "@emailjs/browser";
-  6: import PageHeader from "@/components/UI/PageHeader.component";
-  7: import Button from "@/components/UI/Button.component";
-  8: import InputField from "@/components/UI/InputField.component";
-  9: import { formSchema, FormData } from "./config/formConfig";
- 10: interface ContactFormProps {
- 11:   csrfToken?: string;
- 12:   onSubmit?: (data: FormData) => Promise<string>;
- 13:   initialResponse?: string;
- 14: }
- 15: /**
- 16:  * ContactForm component - A complete contact form with EmailJS integration
- 17:  * Handles both the form UI and submission logic in a single, clear component
- 18:  */
- 19: const ContactForm: React.FC<ContactFormProps> = ({
- 20:   csrfToken = "",
- 21:   onSubmit: onSubmitProp,
- 22:   initialResponse = "",
- 23: }) => {
- 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
- 25:   const {
- 26:     register,
- 27:     handleSubmit,
- 28:     formState: { errors, isSubmitting },
- 29:   } = useForm<FormData>({
- 30:     resolver: zodResolver(formSchema),
- 31:   });
- 32:   /**
- 33:    * Default form submission handler using EmailJS.
- 34:    * @param {FormData} data - The form data.
- 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 36:    */
- 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 39:     const TEMPLATE_KEY =
- 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 42:     try {
- 43:       emailjs.init(EMAIL_API_KEY);
- 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 45:       return "Takk for din beskjed";
- 46:     } catch {
- 47:       return "Feil under sending av skjema";
- 48:     }
- 49:   };
- 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 52:     const message = await submitHandler(data);
- 53:     setServerResponse(message);
- 54:   };
- 55:   return (
- 56:     <main data-testid="kontaktcontent" id="maincontent">
- 57:       <div className="mt-32 bg-graybg">
- 58:         <PageHeader>Kontakt</PageHeader>
- 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 62:               <div className="p-2 md:p-6 pt-8">
- 63:                 {serverResponse ? (
- 64:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 65:                     {serverResponse}
- 66:                   </h3>
- 67:                 ) : (
- 68:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 69:                     <form
- 70:                       id="contact-form"
- 71:                       className="text-center"
- 72:                       onSubmit={handleSubmit(handleFormSubmit)}
- 73:                       method="POST"
- 74:                       action="/api/form"
- 75:                       aria-label="Contact Form"
- 76:                     >
- 77:                       {csrfToken && (
- 78:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 79:                       )}
- 80:                       <fieldset>
- 81:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 82:                           Kontaktskjema
- 83:                         </legend>
- 84:                         <InputField<FormData>
- 85:                           name="navn"
- 86:                           label="Fullt navn"
- 87:                           htmlFor="navn"
- 88:                           register={register}
- 89:                           error={errors.navn?.message}
- 90:                           isRequired
- 91:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
- 92:                           title="Vennligst bruk norske bokstaver"
- 93:                         />
- 94:                         <br />
- 95:                         <InputField<FormData>
- 96:                           name="telefon"
- 97:                           label="Telefonnummer"
- 98:                           htmlFor="telefon"
- 99:                           register={register}
-100:                           error={errors.telefon?.message}
-101:                           isRequired
-102:                           inputPattern={/^\d{8}$/}
-103:                           title="Vennligst oppgi et gyldig telefonnummer"
-104:                         />
-105:                         <br />
-106:                         <InputField<FormData>
-107:                           name="tekst"
-108:                           label="Hva ønsker du å si?"
-109:                           htmlFor="tekst"
-110:                           register={register}
-111:                           error={errors.tekst?.message}
-112:                           isRequired
-113:                           type="textarea"
-114:                         />
-115:                         <br />
-116:                       </fieldset>
-117:                       <div className="-mt-4">
-118:                         <Button
-119:                           disabled={isSubmitting}
-120:                           data-testid="submit-button"
-121:                         >
-122:                           Send skjema
-123:                         </Button>
-124:                       </div>
-125:                     </form>
-126:                   </div>
-127:                 )}
-128:               </div>
-129:             </div>
-130:           </div>
-131:         </div>
-132:       </div>
-133:     </main>
-134:   );
-135: };
-136: export default ContactForm;
-````
-
-## File: studio/package.json
+## File: src/utils/eslint/package.json
 ````json
  1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
  6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.1.0",
-18:     "react-dom": "^19.1.0",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.2.0",
-21:     "styled-components": "^6.1.19"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.8",
-26:     "eslint": "^9.32.0",
-27:     "prettier": "^3.6.2",
-28:     "typescript": "^5.8.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.32.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.2"
+22:   }
+23: }
 ````
 
 ## File: src/__tests__/Index/Section.test.tsx
@@ -18271,6 +18091,186 @@ tsconfig.json
 212: });
 ````
 
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import emailjs from "@emailjs/browser";
+  6: import PageHeader from "@/components/UI/PageHeader.component";
+  7: import Button from "@/components/UI/Button.component";
+  8: import InputField from "@/components/UI/InputField.component";
+  9: import { formSchema, FormData } from "./config/formConfig";
+ 10: interface ContactFormProps {
+ 11:   csrfToken?: string;
+ 12:   onSubmit?: (data: FormData) => Promise<string>;
+ 13:   initialResponse?: string;
+ 14: }
+ 15: /**
+ 16:  * ContactForm component - A complete contact form with EmailJS integration
+ 17:  * Handles both the form UI and submission logic in a single, clear component
+ 18:  */
+ 19: const ContactForm: React.FC<ContactFormProps> = ({
+ 20:   csrfToken = "",
+ 21:   onSubmit: onSubmitProp,
+ 22:   initialResponse = "",
+ 23: }) => {
+ 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+ 25:   const {
+ 26:     register,
+ 27:     handleSubmit,
+ 28:     formState: { errors, isSubmitting },
+ 29:   } = useForm<FormData>({
+ 30:     resolver: zodResolver(formSchema),
+ 31:   });
+ 32:   /**
+ 33:    * Default form submission handler using EmailJS.
+ 34:    * @param {FormData} data - The form data.
+ 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
+ 36:    */
+ 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 39:     const TEMPLATE_KEY =
+ 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 42:     try {
+ 43:       emailjs.init(EMAIL_API_KEY);
+ 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 45:       return "Takk for din beskjed";
+ 46:     } catch {
+ 47:       return "Feil under sending av skjema";
+ 48:     }
+ 49:   };
+ 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 52:     const message = await submitHandler(data);
+ 53:     setServerResponse(message);
+ 54:   };
+ 55:   return (
+ 56:     <main data-testid="kontaktcontent" id="maincontent">
+ 57:       <div className="mt-32 bg-graybg">
+ 58:         <PageHeader>Kontakt</PageHeader>
+ 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 62:               <div className="p-2 md:p-6 pt-8">
+ 63:                 {serverResponse ? (
+ 64:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 65:                     {serverResponse}
+ 66:                   </h3>
+ 67:                 ) : (
+ 68:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 69:                     <form
+ 70:                       id="contact-form"
+ 71:                       className="text-center"
+ 72:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 73:                       method="POST"
+ 74:                       action="/api/form"
+ 75:                       aria-label="Contact Form"
+ 76:                     >
+ 77:                       {csrfToken && (
+ 78:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 79:                       )}
+ 80:                       <fieldset>
+ 81:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 82:                           Kontaktskjema
+ 83:                         </legend>
+ 84:                         <InputField<FormData>
+ 85:                           name="navn"
+ 86:                           label="Fullt navn"
+ 87:                           htmlFor="navn"
+ 88:                           register={register}
+ 89:                           error={errors.navn?.message}
+ 90:                           isRequired
+ 91:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+ 92:                           title="Vennligst bruk norske bokstaver"
+ 93:                         />
+ 94:                         <br />
+ 95:                         <InputField<FormData>
+ 96:                           name="telefon"
+ 97:                           label="Telefonnummer"
+ 98:                           htmlFor="telefon"
+ 99:                           register={register}
+100:                           error={errors.telefon?.message}
+101:                           isRequired
+102:                           inputPattern={/^\d{8}$/}
+103:                           title="Vennligst oppgi et gyldig telefonnummer"
+104:                         />
+105:                         <br />
+106:                         <InputField<FormData>
+107:                           name="tekst"
+108:                           label="Hva ønsker du å si?"
+109:                           htmlFor="tekst"
+110:                           register={register}
+111:                           error={errors.tekst?.message}
+112:                           isRequired
+113:                           type="textarea"
+114:                         />
+115:                         <br />
+116:                       </fieldset>
+117:                       <div className="-mt-4">
+118:                         <Button
+119:                           disabled={isSubmitting}
+120:                           data-testid="submit-button"
+121:                         >
+122:                           Send skjema
+123:                         </Button>
+124:                       </div>
+125:                     </form>
+126:                   </div>
+127:                 )}
+128:               </div>
+129:             </div>
+130:           </div>
+131:         </div>
+132:       </div>
+133:     </main>
+134:   );
+135: };
+136: export default ContactForm;
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.1.0",
+18:     "react-dom": "^19.1.0",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^4.2.0",
+21:     "styled-components": "^6.1.19"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.1.8",
+26:     "eslint": "^9.32.0",
+27:     "prettier": "^3.6.2",
+28:     "typescript": "^5.9.2"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: package.json
 ````json
  1: {
@@ -18301,7 +18301,7 @@ tsconfig.json
 26:   "dependencies": {
 27:     "@babel/helpers": ">=7.28.2",
 28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.2.0",
+29:     "@hookform/resolvers": "^5.2.1",
 30:     "@portabletext/react": "^3.2.1",
 31:     "@sanity/client": "^7.8.1",
 32:     "@sanity/image-url": "^1.1.0",
@@ -18367,7 +18367,7 @@ tsconfig.json
 92:     "prettier": "3.6.2",
 93:     "tailwindcss": "^4.1.11",
 94:     "ts-jest": "^29.4.0",
-95:     "typescript": "^5.8.3",
+95:     "typescript": "^5.9.2",
 96:     "wait-on": "^8.0.4"
 97:   }
 98: }
