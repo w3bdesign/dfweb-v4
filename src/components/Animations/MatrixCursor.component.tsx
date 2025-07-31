@@ -20,6 +20,12 @@ interface MatrixTrail {
   char: string;
 }
 
+/**
+ * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   const isMobile = useMobile();
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
@@ -49,7 +55,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
         return updatedTrails;
       });
     },
-    [getRandomChar],
+    [getRandomChar]
   );
 
   useEffect(() => {
@@ -95,7 +101,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
 
   const handleAnimationEnd = useCallback((trailId: string) => {
     setTrails((currentTrails) =>
-      currentTrails.filter((trail) => trail.id !== trailId),
+      currentTrails.filter((trail) => trail.id !== trailId)
     );
   }, []);
 
