@@ -7328,6 +7328,50 @@ tsconfig.json
 32: export default FadeDown;
 ````
 
+## File: src/components/Animations/FadeIn.component.tsx
+````typescript
+ 1: import { motion } from "motion/react";
+ 2: import { ReactNode } from "react";
+ 3: export interface FadeInProps {
+ 4:   children: ReactNode;
+ 5:   className?: string;
+ 6:   duration?: number;
+ 7:   delay?: number;
+ 8:   "data-testid"?: string;
+ 9: }
+10: /**
+11:  * Minimal fade-in animation component
+12:  * Only uses opacity for zero CLS impact
+13:  */
+14: const FadeIn = ({
+15:   children,
+16:   className = "",
+17:   duration = 1,
+18:   delay = 0,
+19:   "data-testid": dataTestId,
+20: }: FadeInProps) => {
+21:   return (
+22:     <motion.div
+23:       className={className}
+24:       data-testid={dataTestId}
+25:       initial={{ opacity: 0 }}
+26:       animate={{ opacity: 1 }}
+27:       transition={{
+28:         duration,
+29:         delay,
+30:         ease: "easeOut",
+31:       }}
+32:       style={{
+33:         willChange: "opacity",
+34:       }}
+35:     >
+36:       {children}
+37:     </motion.div>
+38:   );
+39: };
+40: export default FadeIn;
+````
+
 ## File: src/components/Animations/FadeInScroll.component.tsx
 ````typescript
  1: "use client";
@@ -8344,6 +8388,156 @@ tsconfig.json
  8:   return <ErrorFallbackWrapper error={error} compact={compact} />;
  9: };
 10: export default Fallback;
+````
+
+## File: src/components/Index/Hero.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { useRef } from "react";
+ 3: import dynamic from "next/dynamic";
+ 4: import type { Herocontent } from "@/types/sanity.types";
+ 5: import Icons from "./Icons.component";
+ 6: import FadeIn from "../Animations/FadeIn.component";
+ 7: import RotatingLoader from "../Animations/RotatingLoader.component";
+ 8: import MobileBackground from "./MobileBackground.component";
+ 9: import MatrixCursor from "../Animations/MatrixCursor.component";
+10: const ReactMatrixAnimation = dynamic(
+11:   () => import("../Animations/Matrix.component"),
+12:   {
+13:     ssr: false,
+14:     loading: () => (
+15:       <div className="text-center">
+16:         <RotatingLoader />
+17:       </div>
+18:     ),
+19:   },
+20: );
+21: /**
+22:  * Hero component for rendering the main hero section of the page
+23:  * @param {Object} props - The props for the Hero component
+24:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
+25:  * @returns {JSX.Element} The rendered Hero component
+26:  */
+27: const Hero = ({ content }: { content: Herocontent[] }) => {
+28:   const heroRef = useRef<HTMLElement>(null);
+29:   return (
+30:     <article
+31:       aria-label="Kontainer for animasjoner av introtekst"
+32:       id="main-hero"
+33:       data-testid="main-hero"
+34:       ref={heroRef}
+35:       className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full"
+36:     >
+37:       <MatrixCursor heroRef={heroRef} />
+38:       <MobileBackground />
+39:       <div className="hidden md:block absolute inset-0 w-full h-full">
+40:         <ReactMatrixAnimation />
+41:       </div>
+42:       <div className="relative z-10">
+43:         <section
+44:           className="text-left md:text-center px-4 md:px-0"
+45:           data-testid="fade-in"
+46:         >
+47:           <FadeIn delay={0.2}>
+48:             <h1
+49:               data-cy="hei"
+50:               className="text-6xl font-bold text-[#00ff62] text-center"
+51:             >
+52:               {content?.length > 0 ? content[0]?.text : "Hei!"}
+53:             </h1>
+54:           </FadeIn>
+55:           <FadeIn delay={1}>
+56:             <h2 className="mt-4 text-2xl text-slate-300 text-left md:text-center  ">
+57:               {content?.length > 0 && content[1]?.text}
+58:             </h2>
+59:           </FadeIn>
+60:           <FadeIn delay={2}>
+61:             <p className="mt-4 text-xl text-slate-300 text-left md:text-center ">
+62:               {content?.length > 0 && content[2]?.text}
+63:             </p>
+64:           </FadeIn>
+65:           <div className="mt-4">
+66:             <Icons />
+67:           </div>
+68:         </section>
+69:       </div>
+70:     </article>
+71:   );
+72: };
+73: export default Hero;
+````
+
+## File: src/components/Index/Icons.component.tsx
+````typescript
+ 1: import { IconType } from "react-icons";
+ 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
+ 3: import { SiTypescript, SiWordpress } from "react-icons/si";
+ 4: import Grow from "../Animations/Grow.component";
+ 5: interface IAnimateIcons {
+ 6:   id: number;
+ 7:   Icon: IconType;
+ 8:   iconName: string;
+ 9: }
+10: const AnimateIcons: IAnimateIcons[] = [
+11:   {
+12:     id: 0,
+13:     Icon: FaReact,
+14:     iconName: "React",
+15:   },
+16:   {
+17:     id: 1,
+18:     Icon: FaVuejs,
+19:     iconName: "VueJS",
+20:   },
+21:   {
+22:     id: 2,
+23:     Icon: SiTypescript,
+24:     iconName: "TypeScript",
+25:   },
+26:   {
+27:     id: 3,
+28:     Icon: SiWordpress,
+29:     iconName: "WordPress",
+30:   },
+31:   {
+32:     id: 4,
+33:     Icon: FaPhp,
+34:     iconName: "PHP",
+35:   },
+36: ];
+37: /**
+38:  * Icons component that renders SVG icons used on the front page
+39:  * Uses Framer Motion for animations to show the SVGs
+40:  * @returns {JSX.Element} The rendered Icons component
+41:  */
+42: const Icons = () => (
+43:   <div
+44:     data-testid="icons"
+45:     className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
+46:   >
+47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
+48:       <span className="relative" key={id}>
+49:         <Grow delay={2.5 + id * 0.2}>
+50:           <div className="relative group">
+51:             <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-[#00ff62]/30 group-hover:bg-slate-900/70">
+52:               <Icon
+53:                 data-testid={iconName}
+54:                 aria-label={`${iconName} ikon`}
+55:                 title={`${iconName} ikon`}
+56:                 size="2.5em"
+57:                 className="transition-all duration-300 group-hover:text-[#00ff62]"
+58:               />
+59:             </div>
+60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[#00ff62]">
+61:               {iconName}
+62:             </span>
+63:           </div>
+64:         </Grow>
+65:       </span>
+66:     ))}
+67:   </div>
+68: );
+69: export default Icons;
 ````
 
 ## File: src/components/Index/IndexContent.component.tsx
@@ -9955,6 +10149,58 @@ tsconfig.json
 28:     );
 29:   });
 30: });
+````
+
+## File: src/e2e/playwright/index.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("Home page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/");
+ 5:     // Check main heading
+ 6:     await expect(page.locator("h1")).toContainText("Hei!");
+ 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
+ 8:       timeout: 10000,
+ 9:     });
+10:     // Check subheading
+11:     await expect(
+12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
+13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
+14:     await expect(
+15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
+16:     ).toBeVisible();
+17:     // Check skills text
+18:     await expect(
+19:       page.getByText(
+20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+21:       ),
+22:     ).toBeVisible();
+23:     // Check if icons are visible
+24:     await expect(page.getByTestId("icons")).toBeVisible();
+25:   });
+26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
+27:     await page.goto("/");
+28:     const omMegSection = page.getByLabel("Om Meg");
+29:     // Check section title
+30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
+31:       "Om Meg",
+32:       { timeout: 10000 },
+33:     );
+34:     // Check section content
+35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
+36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
+37:     );
+38:   });
+39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
+40:     await page.goto("/");
+41:     const prosjekterSection = page.getByLabel("Prosjekter");
+42:     // Check section content
+43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
+44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
+45:       { timeout: 10000 },
+46:     );
+47:   });
+48: });
 ````
 
 ## File: src/e2e/playwright/kontakt.spec.ts
@@ -17195,175 +17441,6 @@ tsconfig.json
 17: }
 ````
 
-## File: src/components/Animations/FadeIn.component.tsx
-````typescript
- 1: import { motion } from "motion/react";
- 2: import { ReactNode } from "react";
- 3: export interface FadeInProps {
- 4:   children: ReactNode;
- 5:   className?: string;
- 6:   duration?: number;
- 7:   delay?: number;
- 8:   "data-testid"?: string;
- 9: }
-10: /**
-11:  * Minimal fade-in animation component
-12:  * Only uses opacity for zero CLS impact
-13:  */
-14: const FadeIn = ({
-15:   children,
-16:   className = "",
-17:   duration = 1,
-18:   delay = 0,
-19:   "data-testid": dataTestId,
-20: }: FadeInProps) => {
-21:   return (
-22:     <motion.div
-23:       className={className}
-24:       data-testid={dataTestId}
-25:       initial={{ opacity: 0 }}
-26:       animate={{ opacity: 1 }}
-27:       transition={{
-28:         duration,
-29:         delay,
-30:         ease: "easeOut",
-31:       }}
-32:       style={{
-33:         willChange: "opacity",
-34:       }}
-35:     >
-36:       {children}
-37:     </motion.div>
-38:   );
-39: };
-40: export default FadeIn;
-````
-
-## File: src/components/Index/Icons.component.tsx
-````typescript
- 1: import { IconType } from "react-icons";
- 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
- 3: import { SiTypescript, SiWordpress } from "react-icons/si";
- 4: import Grow from "../Animations/Grow.component";
- 5: interface IAnimateIcons {
- 6:   id: number;
- 7:   Icon: IconType;
- 8:   iconName: string;
- 9: }
-10: const AnimateIcons: IAnimateIcons[] = [
-11:   {
-12:     id: 0,
-13:     Icon: FaReact,
-14:     iconName: "React",
-15:   },
-16:   {
-17:     id: 1,
-18:     Icon: FaVuejs,
-19:     iconName: "VueJS",
-20:   },
-21:   {
-22:     id: 2,
-23:     Icon: SiTypescript,
-24:     iconName: "TypeScript",
-25:   },
-26:   {
-27:     id: 3,
-28:     Icon: SiWordpress,
-29:     iconName: "WordPress",
-30:   },
-31:   {
-32:     id: 4,
-33:     Icon: FaPhp,
-34:     iconName: "PHP",
-35:   },
-36: ];
-37: /**
-38:  * Icons component that renders SVG icons used on the front page
-39:  * Uses Framer Motion for animations to show the SVGs
-40:  * @returns {JSX.Element} The rendered Icons component
-41:  */
-42: const Icons = () => (
-43:   <div
-44:     data-testid="icons"
-45:     className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
-46:   >
-47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
-48:       <span className="relative" key={id}>
-49:         <Grow delay={2.5 + id * 0.2}>
-50:           <div className="relative group">
-51:             <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-[#00ff62]/30 group-hover:bg-slate-900/70">
-52:               <Icon
-53:                 data-testid={iconName}
-54:                 aria-label={`${iconName} ikon`}
-55:                 title={`${iconName} ikon`}
-56:                 size="2.5em"
-57:                 className="transition-all duration-300 group-hover:text-[#00ff62]"
-58:               />
-59:             </div>
-60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[#00ff62]">
-61:               {iconName}
-62:             </span>
-63:           </div>
-64:         </Grow>
-65:       </span>
-66:     ))}
-67:   </div>
-68: );
-69: export default Icons;
-````
-
-## File: src/e2e/playwright/index.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("Home page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/");
- 5:     // Check main heading
- 6:     await expect(page.locator("h1")).toContainText("Hei!");
- 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
- 8:       timeout: 10000,
- 9:     });
-10:     // Check subheading
-11:     await expect(
-12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
-13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
-14:     await expect(
-15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
-16:     ).toBeVisible();
-17:     // Check skills text
-18:     await expect(
-19:       page.getByText(
-20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-21:       ),
-22:     ).toBeVisible();
-23:     // Check if icons are visible
-24:     await expect(page.getByTestId("icons")).toBeVisible();
-25:   });
-26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
-27:     await page.goto("/");
-28:     const omMegSection = page.getByLabel("Om Meg");
-29:     // Check section title
-30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-31:       "Om Meg",
-32:       { timeout: 10000 },
-33:     );
-34:     // Check section content
-35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
-36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
-37:     );
-38:   });
-39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
-40:     await page.goto("/");
-41:     const prosjekterSection = page.getByLabel("Prosjekter");
-42:     // Check section content
-43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
-44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
-45:       { timeout: 10000 },
-46:     );
-47:   });
-48: });
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -17798,83 +17875,6 @@ tsconfig.json
 38: export default ContactFormWithMocks;
 ````
 
-## File: src/components/Index/Hero.component.tsx
-````typescript
- 1: "use client";
- 2: import React, { useRef } from "react";
- 3: import dynamic from "next/dynamic";
- 4: import type { Herocontent } from "@/types/sanity.types";
- 5: import Icons from "./Icons.component";
- 6: import FadeIn from "../Animations/FadeIn.component";
- 7: import RotatingLoader from "../Animations/RotatingLoader.component";
- 8: import MobileBackground from "./MobileBackground.component";
- 9: import MatrixCursor from "../Animations/MatrixCursor.component";
-10: const ReactMatrixAnimation = dynamic(
-11:   () => import("../Animations/Matrix.component"),
-12:   {
-13:     ssr: false,
-14:     loading: () => (
-15:       <div className="text-center">
-16:         <RotatingLoader />
-17:       </div>
-18:     ),
-19:   },
-20: );
-21: /**
-22:  * Hero component for rendering the main hero section of the page
-23:  * @param {Object} props - The props for the Hero component
-24:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
-25:  * @returns {JSX.Element} The rendered Hero component
-26:  */
-27: const Hero = ({ content }: { content: Herocontent[] }) => {
-28:   const heroRef = useRef<HTMLElement>(null);
-29:   return (
-30:     <article
-31:       aria-label="Kontainer for animasjoner av introtekst"
-32:       id="main-hero"
-33:       data-testid="main-hero"
-34:       ref={heroRef}
-35:       className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full"
-36:     >
-37:       <MatrixCursor heroRef={heroRef} />
-38:       <MobileBackground />
-39:       <div className="hidden md:block absolute inset-0 w-full h-full">
-40:         <ReactMatrixAnimation />
-41:       </div>
-42:       <div className="relative z-10">
-43:         <section
-44:           className="text-left md:text-center px-4 md:px-0"
-45:           data-testid="fade-in"
-46:         >
-47:           <FadeIn delay={0.2}>
-48:             <h1
-49:               data-cy="hei"
-50:               className="text-6xl font-bold text-[#00ff62] text-center"
-51:             >
-52:               {content?.length > 0 ? content[0]?.text : "Hei!"}
-53:             </h1>
-54:           </FadeIn>
-55:           <FadeIn delay={1}>
-56:             <h2 className="mt-4 text-2xl text-slate-300 text-left md:text-center  ">
-57:               {content?.length > 0 && content[1]?.text}
-58:             </h2>
-59:           </FadeIn>
-60:           <FadeIn delay={2}>
-61:             <p className="mt-4 text-xl text-slate-300 text-left md:text-center ">
-62:               {content?.length > 0 && content[2]?.text}
-63:             </p>
-64:           </FadeIn>
-65:           <div className="mt-4">
-66:             <Icons />
-67:           </div>
-68:         </section>
-69:       </div>
-70:     </article>
-71:   );
-72: };
-73: export default Hero;
-````
-
 ## File: src/components/Kontakt/ContactForm.component.tsx
 ````typescript
   1: "use client";
@@ -18036,7 +18036,7 @@ tsconfig.json
 17:     "react": "^19.1.0",
 18:     "react-dom": "^19.1.0",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.1.1",
+20:     "sanity": "^4.2.0",
 21:     "styled-components": "^6.1.19"
 22:   },
 23:   "devDependencies": {
@@ -18321,7 +18321,7 @@ tsconfig.json
 46:     "react-error-boundary": "^5.0.0",
 47:     "react-hook-form": "^7.61.1",
 48:     "react-icons": "^5.5.0",
-49:     "sanity": "^4.1.1",
+49:     "sanity": "^4.2.0",
 50:     "sitemap": "^8.0.0",
 51:     "tar-fs": ">=3.1.0",
 52:     "ts-node": "^10.9.2",
