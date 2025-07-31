@@ -12,6 +12,7 @@ interface MatrixRendererProps {
   glowColor: string;
   tileSet: string[] | null;
   getRandomInt: (max: number) => number;
+  mousePos: { x: number; y: number } | null;
 }
 
 interface MatrixRenderer {
@@ -84,6 +85,7 @@ export const createMatrixRenderer = ({
   glowColor,
   tileSet,
   getRandomInt,
+  mousePos,
 }: MatrixRendererProps): MatrixRenderer => {
   const { drawBackground, drawCharacter, drawGlowEffect } = createDrawFunctions(
     ctx,
@@ -107,9 +109,20 @@ export const createMatrixRenderer = ({
     const randomCharacter = getRandomCharacter(tileSet);
     const { y, isLastCharacter } = getCharacterPosition(column);
 
-    drawCharacter(randomCharacter, column.x, y);
-    if (isLastCharacter) {
+    let distance = 9999;
+    if (mousePos) {
+      const dx = mousePos.x - column.x;
+      const dy = mousePos.y - y;
+      distance = Math.sqrt(dx * dx + dy * dy);
+    }
+
+    if (distance < 100) {
       drawGlowEffect(randomCharacter, column.x, y);
+    } else {
+      drawCharacter(randomCharacter, column.x, y);
+      if (isLastCharacter) {
+        drawGlowEffect(randomCharacter, column.x, y);
+      }
     }
   };
 
