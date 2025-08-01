@@ -4973,6 +4973,222 @@ tsconfig.json
 105: });
 ````
 
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+  1: import { render, screen, fireEvent } from "@testing-library/react";
+  2: import Section from "@/components/Index/Section.component";
+  3: import { Pagecontent } from "@/types/sanity.types";
+  4: // Mock IntersectionObserver
+  5: const mockIntersectionObserver = jest.fn();
+  6: mockIntersectionObserver.mockReturnValue({
+  7:   observe: () => null,
+  8:   unobserve: () => null,
+  9:   disconnect: () => null,
+ 10: });
+ 11: window.IntersectionObserver = mockIntersectionObserver;
+ 12: const mockProps: Pagecontent = {
+ 13:   _type: "pagecontent",
+ 14:   title: "Test Title",
+ 15:   text: [
+ 16:     {
+ 17:       _key: "a1",
+ 18:       _type: "block",
+ 19:       children: [
+ 20:         {
+ 21:           _key: "a1-1",
+ 22:           _type: "span",
+ 23:           marks: [],
+ 24:           text: "Test content",
+ 25:         },
+ 26:       ],
+ 27:       markDefs: [],
+ 28:       style: "normal",
+ 29:     },
+ 30:   ],
+ 31: };
+ 32: // Type-safe way to make NODE_ENV writable for tests
+ 33: type WritableNodeEnv = {
+ 34:   NODE_ENV?: string;
+ 35: };
+ 36: describe("Section Component", () => {
+ 37:   beforeEach(() => {
+ 38:     (process.env as WritableNodeEnv).NODE_ENV = "development";
+ 39:   });
+ 40:   afterEach(() => {
+ 41:     // Reset to test environment
+ 42:     (process.env as WritableNodeEnv).NODE_ENV = "test";
+ 43:   });
+ 44:   it("renders with valid props", () => {
+ 45:     // Arrange
+ 46:     render(<Section {...mockProps} />);
+ 47:     // Act
+ 48:     const title = screen.getByText("Test Title");
+ 49:     const content = screen.getByText("Test content");
+ 50:     // Assert
+ 51:     expect(title).toBeInTheDocument();
+ 52:     expect(content).toBeInTheDocument();
+ 53:   });
+ 54:   describe("error handling for invalid data", () => {
+ 55:     let consoleErrorSpy: jest.SpyInstance;
+ 56:     beforeEach(() => {
+ 57:       consoleErrorSpy = jest
+ 58:         .spyOn(console, "error")
+ 59:         .mockImplementation(() => {});
+ 60:     });
+ 61:     afterEach(() => {
+ 62:       consoleErrorSpy.mockRestore();
+ 63:     });
+ 64:     // Type for testing invalid props
+ 65:     type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
+ 66:       title?: string | null;
+ 67:       text?: Pagecontent["text"] | null;
+ 68:     };
+ 69:     it("returns null and logs error when title is missing", () => {
+ 70:       // Arrange
+ 71:       const propsWithoutTitle: InvalidSectionProps = {
+ 72:         ...mockProps,
+ 73:         title: undefined,
+ 74:       };
+ 75:       // Act
+ 76:       const { container } = render(
+ 77:         <Section {...(propsWithoutTitle as Pagecontent)} />,
+ 78:       );
+ 79:       // Assert
+ 80:       expect(container.firstChild).toBeNull();
+ 81:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+ 82:         'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+ 83:       );
+ 84:     });
+ 85:     it("returns null and logs error when title is null", () => {
+ 86:       // Arrange
+ 87:       const propsWithNullTitle: InvalidSectionProps = {
+ 88:         ...mockProps,
+ 89:         title: null,
+ 90:       };
+ 91:       // Act
+ 92:       const { container } = render(
+ 93:         <Section {...(propsWithNullTitle as Pagecontent)} />,
+ 94:       );
+ 95:       // Assert
+ 96:       expect(container.firstChild).toBeNull();
+ 97:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+ 98:         'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+ 99:       );
+100:     });
+101:     it("returns null and logs error when title is empty string", () => {
+102:       // Arrange
+103:       const propsWithEmptyTitle: Pagecontent = { ...mockProps, title: "" };
+104:       // Act
+105:       const { container } = render(<Section {...propsWithEmptyTitle} />);
+106:       // Assert
+107:       expect(container.firstChild).toBeNull();
+108:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+109:         'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
+110:       );
+111:     });
+112:     it("returns null and logs error when text is missing", () => {
+113:       // Arrange
+114:       const propsWithoutText: InvalidSectionProps = {
+115:         ...mockProps,
+116:         text: undefined,
+117:       };
+118:       // Act
+119:       const { container } = render(
+120:         <Section {...(propsWithoutText as Pagecontent)} />,
+121:       );
+122:       // Assert
+123:       expect(container.firstChild).toBeNull();
+124:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+125:         "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
+126:       );
+127:     });
+128:     it("returns null and logs error when text is null", () => {
+129:       // Arrange
+130:       const propsWithNullText: InvalidSectionProps = {
+131:         ...mockProps,
+132:         text: null,
+133:       };
+134:       // Act
+135:       const { container } = render(
+136:         <Section {...(propsWithNullText as Pagecontent)} />,
+137:       );
+138:       // Assert
+139:       expect(container.firstChild).toBeNull();
+140:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+141:         "Ugyldig seksjon data: tittel=Test Title, tekst=null",
+142:       );
+143:     });
+144:     it("renders normally when text is empty array", () => {
+145:       // Arrange
+146:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
+147:       // Act
+148:       const { container } = render(<Section {...propsWithEmptyText} />);
+149:       // Assert
+150:       // Empty array is truthy in JavaScript, so the component renders
+151:       expect(container.firstChild).not.toBeNull();
+152:       expect(consoleErrorSpy).not.toHaveBeenCalled();
+153:       // The title should still be rendered
+154:       expect(screen.getByText("Test Title")).toBeInTheDocument();
+155:     });
+156:     it("returns null and logs error when both title and text are missing", () => {
+157:       // Arrange
+158:       const propsWithoutBoth: InvalidSectionProps = {
+159:         ...mockProps,
+160:         title: undefined,
+161:         text: undefined,
+162:       };
+163:       // Act
+164:       const { container } = render(
+165:         <Section {...(propsWithoutBoth as Pagecontent)} />,
+166:       );
+167:       // Assert
+168:       expect(container.firstChild).toBeNull();
+169:       expect(consoleErrorSpy).toHaveBeenCalledWith(
+170:         "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
+171:       );
+172:     });
+173:   });
+174:   it("triggers error in development mode", () => {
+175:     // Arrange
+176:     const consoleErrorSpy = jest
+177:       .spyOn(console, "error")
+178:       .mockImplementation(() => {});
+179:     render(<Section {...mockProps} />);
+180:     const errorButton = screen.getByText("Utløs Testfeil");
+181:     // Act & Assert
+182:     expect(() => fireEvent.click(errorButton)).toThrow(
+183:       "En uventet feil har oppstått",
+184:     );
+185:     consoleErrorSpy.mockRestore();
+186:   });
+187:   it("does not show error button in production mode", () => {
+188:     // Arrange
+189:     (process.env as WritableNodeEnv).NODE_ENV = "production";
+190:     render(<Section {...mockProps} />);
+191:     // Act
+192:     const errorButton = screen.queryByText("Utløs Testfeil");
+193:     // Assert
+194:     expect(errorButton).not.toBeInTheDocument();
+195:   });
+196:   it("does not show error button when showDebugButton is false in development mode", () => {
+197:     // Arrange
+198:     render(<Section {...mockProps} showDebugButton={false} />);
+199:     // Act
+200:     const errorButton = screen.queryByText("Utløs Testfeil");
+201:     // Assert
+202:     expect(errorButton).not.toBeInTheDocument();
+203:   });
+204:   it("shows error button when showDebugButton is true in development mode", () => {
+205:     // Arrange
+206:     render(<Section {...mockProps} showDebugButton={true} />);
+207:     // Act
+208:     const errorButton = screen.getByText("Utløs Testfeil");
+209:     // Assert
+210:     expect(errorButton).toBeInTheDocument();
+211:   });
+212: });
+````
+
 ## File: src/__tests__/Layout/Footer.test.tsx
 ````typescript
  1: /**
@@ -17420,222 +17636,6 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import { render, screen, fireEvent } from "@testing-library/react";
-  2: import Section from "@/components/Index/Section.component";
-  3: import { Pagecontent } from "@/types/sanity.types";
-  4: // Mock IntersectionObserver
-  5: const mockIntersectionObserver = jest.fn();
-  6: mockIntersectionObserver.mockReturnValue({
-  7:   observe: () => null,
-  8:   unobserve: () => null,
-  9:   disconnect: () => null,
- 10: });
- 11: window.IntersectionObserver = mockIntersectionObserver;
- 12: const mockProps: Pagecontent = {
- 13:   _type: "pagecontent",
- 14:   title: "Test Title",
- 15:   text: [
- 16:     {
- 17:       _key: "a1",
- 18:       _type: "block",
- 19:       children: [
- 20:         {
- 21:           _key: "a1-1",
- 22:           _type: "span",
- 23:           marks: [],
- 24:           text: "Test content",
- 25:         },
- 26:       ],
- 27:       markDefs: [],
- 28:       style: "normal",
- 29:     },
- 30:   ],
- 31: };
- 32: // Type-safe way to make NODE_ENV writable for tests
- 33: type WritableNodeEnv = {
- 34:   NODE_ENV?: string;
- 35: };
- 36: describe("Section Component", () => {
- 37:   beforeEach(() => {
- 38:     (process.env as WritableNodeEnv).NODE_ENV = "development";
- 39:   });
- 40:   afterEach(() => {
- 41:     // Reset to test environment
- 42:     (process.env as WritableNodeEnv).NODE_ENV = "test";
- 43:   });
- 44:   it("renders with valid props", () => {
- 45:     // Arrange
- 46:     render(<Section {...mockProps} />);
- 47:     // Act
- 48:     const title = screen.getByText("Test Title");
- 49:     const content = screen.getByText("Test content");
- 50:     // Assert
- 51:     expect(title).toBeInTheDocument();
- 52:     expect(content).toBeInTheDocument();
- 53:   });
- 54:   describe("error handling for invalid data", () => {
- 55:     let consoleErrorSpy: jest.SpyInstance;
- 56:     beforeEach(() => {
- 57:       consoleErrorSpy = jest
- 58:         .spyOn(console, "error")
- 59:         .mockImplementation(() => {});
- 60:     });
- 61:     afterEach(() => {
- 62:       consoleErrorSpy.mockRestore();
- 63:     });
- 64:     // Type for testing invalid props
- 65:     type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
- 66:       title?: string | null;
- 67:       text?: Pagecontent["text"] | null;
- 68:     };
- 69:     it("returns null and logs error when title is missing", () => {
- 70:       // Arrange
- 71:       const propsWithoutTitle: InvalidSectionProps = {
- 72:         ...mockProps,
- 73:         title: undefined,
- 74:       };
- 75:       // Act
- 76:       const { container } = render(
- 77:         <Section {...(propsWithoutTitle as Pagecontent)} />,
- 78:       );
- 79:       // Assert
- 80:       expect(container.firstChild).toBeNull();
- 81:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 82:         'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 83:       );
- 84:     });
- 85:     it("returns null and logs error when title is null", () => {
- 86:       // Arrange
- 87:       const propsWithNullTitle: InvalidSectionProps = {
- 88:         ...mockProps,
- 89:         title: null,
- 90:       };
- 91:       // Act
- 92:       const { container } = render(
- 93:         <Section {...(propsWithNullTitle as Pagecontent)} />,
- 94:       );
- 95:       // Assert
- 96:       expect(container.firstChild).toBeNull();
- 97:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 98:         'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 99:       );
-100:     });
-101:     it("returns null and logs error when title is empty string", () => {
-102:       // Arrange
-103:       const propsWithEmptyTitle: Pagecontent = { ...mockProps, title: "" };
-104:       // Act
-105:       const { container } = render(<Section {...propsWithEmptyTitle} />);
-106:       // Assert
-107:       expect(container.firstChild).toBeNull();
-108:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-109:         'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
-110:       );
-111:     });
-112:     it("returns null and logs error when text is missing", () => {
-113:       // Arrange
-114:       const propsWithoutText: InvalidSectionProps = {
-115:         ...mockProps,
-116:         text: undefined,
-117:       };
-118:       // Act
-119:       const { container } = render(
-120:         <Section {...(propsWithoutText as Pagecontent)} />,
-121:       );
-122:       // Assert
-123:       expect(container.firstChild).toBeNull();
-124:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-125:         "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
-126:       );
-127:     });
-128:     it("returns null and logs error when text is null", () => {
-129:       // Arrange
-130:       const propsWithNullText: InvalidSectionProps = {
-131:         ...mockProps,
-132:         text: null,
-133:       };
-134:       // Act
-135:       const { container } = render(
-136:         <Section {...(propsWithNullText as Pagecontent)} />,
-137:       );
-138:       // Assert
-139:       expect(container.firstChild).toBeNull();
-140:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-141:         "Ugyldig seksjon data: tittel=Test Title, tekst=null",
-142:       );
-143:     });
-144:     it("renders normally when text is empty array", () => {
-145:       // Arrange
-146:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
-147:       // Act
-148:       const { container } = render(<Section {...propsWithEmptyText} />);
-149:       // Assert
-150:       // Empty array is truthy in JavaScript, so the component renders
-151:       expect(container.firstChild).not.toBeNull();
-152:       expect(consoleErrorSpy).not.toHaveBeenCalled();
-153:       // The title should still be rendered
-154:       expect(screen.getByText("Test Title")).toBeInTheDocument();
-155:     });
-156:     it("returns null and logs error when both title and text are missing", () => {
-157:       // Arrange
-158:       const propsWithoutBoth: InvalidSectionProps = {
-159:         ...mockProps,
-160:         title: undefined,
-161:         text: undefined,
-162:       };
-163:       // Act
-164:       const { container } = render(
-165:         <Section {...(propsWithoutBoth as Pagecontent)} />,
-166:       );
-167:       // Assert
-168:       expect(container.firstChild).toBeNull();
-169:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-170:         "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
-171:       );
-172:     });
-173:   });
-174:   it("triggers error in development mode", () => {
-175:     // Arrange
-176:     const consoleErrorSpy = jest
-177:       .spyOn(console, "error")
-178:       .mockImplementation(() => {});
-179:     render(<Section {...mockProps} />);
-180:     const errorButton = screen.getByText("Utløs Testfeil");
-181:     // Act & Assert
-182:     expect(() => fireEvent.click(errorButton)).toThrow(
-183:       "En uventet feil har oppstått",
-184:     );
-185:     consoleErrorSpy.mockRestore();
-186:   });
-187:   it("does not show error button in production mode", () => {
-188:     // Arrange
-189:     (process.env as WritableNodeEnv).NODE_ENV = "production";
-190:     render(<Section {...mockProps} />);
-191:     // Act
-192:     const errorButton = screen.queryByText("Utløs Testfeil");
-193:     // Assert
-194:     expect(errorButton).not.toBeInTheDocument();
-195:   });
-196:   it("does not show error button when showDebugButton is false in development mode", () => {
-197:     // Arrange
-198:     render(<Section {...mockProps} showDebugButton={false} />);
-199:     // Act
-200:     const errorButton = screen.queryByText("Utløs Testfeil");
-201:     // Assert
-202:     expect(errorButton).not.toBeInTheDocument();
-203:   });
-204:   it("shows error button when showDebugButton is true in development mode", () => {
-205:     // Arrange
-206:     render(<Section {...mockProps} showDebugButton={true} />);
-207:     // Act
-208:     const errorButton = screen.getByText("Utløs Testfeil");
-209:     // Assert
-210:     expect(errorButton).toBeInTheDocument();
-211:   });
-212: });
-````
-
 ## File: src/app/kontakt/page.tsx
 ````typescript
  1: import RootLayout from "../RootLayout";
@@ -18332,7 +18332,7 @@ tsconfig.json
 57:     "@jest/globals": "^29.7.0",
 58:     "@ladle/react": "^5.0.3",
 59:     "@lhci/cli": "^0.15.1",
-60:     "@playwright/test": "^1.54.1",
+60:     "@playwright/test": "^1.54.2",
 61:     "@portabletext/types": "^2.0.13",
 62:     "@tailwindcss/postcss": "^4.1.11",
 63:     "@testing-library/cypress": "^10.0.3",
