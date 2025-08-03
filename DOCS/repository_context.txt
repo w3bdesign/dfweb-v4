@@ -17918,6 +17918,100 @@ tsconfig.json
 136: export default ContactForm;
 ````
 
+## File: src/stories/components/Kontakt/ContactForm.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import ContactFormWithMocks from "./ContactFormWithMocks";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "Kontakt/ContactForm",
+ 7:   component: ContactFormWithMocks,
+ 8: } as Meta;
+ 9: // Default form view
+10: export const Default = () => <ContactFormWithMocks />;
+11: // Success response view
+12: export const SuccessResponse = () => (
+13:   <div className="bg-slate-800 min-h-screen py-16">
+14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
+15:   </div>
+16: );
+17: // Error response view
+18: export const ErrorResponse = () => (
+19:   <div className="bg-slate-800 min-h-screen py-16">
+20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
+21:   </div>
+22: );
+23: // Simulated success on form submission
+24: export const SubmissionSuccess = () => (
+25:   <div className="bg-slate-800 min-h-screen py-16">
+26:     <ContactFormWithMocks simulateError={false} />
+27:     <div className="mt-8 text-center text-gray-400">
+28:       <p>(Note: Fill in the form and submit to see a success message)</p>
+29:     </div>
+30:   </div>
+31: );
+32: // Simulated error on form submission
+33: export const SubmissionError = () => (
+34:   <div className="bg-slate-800 min-h-screen py-16">
+35:     <ContactFormWithMocks simulateError={true} />
+36:     <div className="mt-8 text-center text-gray-400">
+37:       <p>(Note: Fill in the form and submit to see an error message)</p>
+38:     </div>
+39:   </div>
+40: );
+41: // Form in narrow container
+42: export const NarrowContainer = () => (
+43:   <div className="bg-slate-800 min-h-screen py-16">
+44:     <div className="max-w-md mx-auto">
+45:       <ContactFormWithMocks />
+46:     </div>
+47:   </div>
+48: );
+````
+
+## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
+ 3: import { FormData } from "@/components/Kontakt/config/formConfig";
+ 4: /**
+ 5:  * Props for the ContactFormWithMocks story.
+ 6:  */
+ 7: type StoryProps = {
+ 8:   simulateError?: boolean;
+ 9:   initialResponse?: string;
+10: };
+11: /**
+12:  * A special version of ContactForm for stories.
+13:  * This renders the actual ContactForm component but provides a mock
+14:  * onSubmit handler to prevent real email submissions and simulate responses.
+15:  */
+16: const ContactFormWithMocks: React.FC<StoryProps> = ({
+17:   simulateError = false,
+18:   initialResponse = "",
+19: }) => {
+20:   /**
+21:    * Simulated form submission that doesn't make any actual API calls.
+22:    * It returns a promise that resolves to a message string, which ContactForm will use.
+23:    */
+24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
+25:     console.warn("Story mock: Form submitted with data:", data);
+26:     // Simulate API call delay
+27:     await new Promise((resolve) => setTimeout(resolve, 500));
+28:     if (simulateError) {
+29:       return "Feil under sending av skjema"; // Story mock: Simulate error
+30:     } else {
+31:       return "Takk for din beskjed"; // Story mock: Simulate success
+32:     }
+33:   };
+34:   return (
+35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+36:   );
+37: };
+38: export default ContactFormWithMocks;
+````
+
 ## File: README.md
 ````markdown
   1: # Dfweb.no Portfolio Version 4
@@ -18110,100 +18204,6 @@ tsconfig.json
 188:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/stories/components/Kontakt/ContactForm.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import ContactFormWithMocks from "./ContactFormWithMocks";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "Kontakt/ContactForm",
- 7:   component: ContactFormWithMocks,
- 8: } as Meta;
- 9: // Default form view
-10: export const Default = () => <ContactFormWithMocks />;
-11: // Success response view
-12: export const SuccessResponse = () => (
-13:   <div className="bg-slate-800 min-h-screen py-16">
-14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
-15:   </div>
-16: );
-17: // Error response view
-18: export const ErrorResponse = () => (
-19:   <div className="bg-slate-800 min-h-screen py-16">
-20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
-21:   </div>
-22: );
-23: // Simulated success on form submission
-24: export const SubmissionSuccess = () => (
-25:   <div className="bg-slate-800 min-h-screen py-16">
-26:     <ContactFormWithMocks simulateError={false} />
-27:     <div className="mt-8 text-center text-gray-400">
-28:       <p>(Note: Fill in the form and submit to see a success message)</p>
-29:     </div>
-30:   </div>
-31: );
-32: // Simulated error on form submission
-33: export const SubmissionError = () => (
-34:   <div className="bg-slate-800 min-h-screen py-16">
-35:     <ContactFormWithMocks simulateError={true} />
-36:     <div className="mt-8 text-center text-gray-400">
-37:       <p>(Note: Fill in the form and submit to see an error message)</p>
-38:     </div>
-39:   </div>
-40: );
-41: // Form in narrow container
-42: export const NarrowContainer = () => (
-43:   <div className="bg-slate-800 min-h-screen py-16">
-44:     <div className="max-w-md mx-auto">
-45:       <ContactFormWithMocks />
-46:     </div>
-47:   </div>
-48: );
-````
-
-## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
-````typescript
- 1: import React from "react";
- 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
- 3: import { FormData } from "@/components/Kontakt/config/formConfig";
- 4: /**
- 5:  * Props for the ContactFormWithMocks story.
- 6:  */
- 7: type StoryProps = {
- 8:   simulateError?: boolean;
- 9:   initialResponse?: string;
-10: };
-11: /**
-12:  * A special version of ContactForm for stories.
-13:  * This renders the actual ContactForm component but provides a mock
-14:  * onSubmit handler to prevent real email submissions and simulate responses.
-15:  */
-16: const ContactFormWithMocks: React.FC<StoryProps> = ({
-17:   simulateError = false,
-18:   initialResponse = "",
-19: }) => {
-20:   /**
-21:    * Simulated form submission that doesn't make any actual API calls.
-22:    * It returns a promise that resolves to a message string, which ContactForm will use.
-23:    */
-24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
-25:     console.warn("Story mock: Form submitted with data:", data);
-26:     // Simulate API call delay
-27:     await new Promise((resolve) => setTimeout(resolve, 500));
-28:     if (simulateError) {
-29:       return "Feil under sending av skjema"; // Story mock: Simulate error
-30:     } else {
-31:       return "Takk for din beskjed"; // Story mock: Simulate success
-32:     }
-33:   };
-34:   return (
-35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
-36:   );
-37: };
-38: export default ContactFormWithMocks;
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -18249,15 +18249,15 @@ tsconfig.json
 14:     "sanity"
 15:   ],
 16:   "dependencies": {
-17:     "react": "^19.1.0",
-18:     "react-dom": "^19.1.0",
+17:     "react": "^19.1.1",
+18:     "react-dom": "^19.1.1",
 19:     "react-icons": "^5.5.0",
 20:     "sanity": "^4.2.0",
 21:     "styled-components": "^6.1.19"
 22:   },
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.8",
+25:     "@types/react": "^19.1.9",
 26:     "eslint": "^9.32.0",
 27:     "prettier": "^3.6.2",
 28:     "typescript": "^5.9.2"
@@ -18316,8 +18316,8 @@ tsconfig.json
 41:     "next": "15.4.5",
 42:     "next-sanity": "^10.0.6",
 43:     "path-to-regexp": "^8.2.0",
-44:     "react": "^19.1.0",
-45:     "react-dom": "^19.1.0",
+44:     "react": "^19.1.1",
+45:     "react-dom": "^19.1.1",
 46:     "react-error-boundary": "^5.0.0",
 47:     "react-hook-form": "^7.62.0",
 48:     "react-icons": "^5.5.0",
@@ -18341,8 +18341,8 @@ tsconfig.json
 66:     "@testing-library/user-event": "^14.6.1",
 67:     "@types/jest": "^29.5.14",
 68:     "@types/node": "^22.17.0",
-69:     "@types/react": "^19.1.8",
-70:     "@types/react-dom": "^19.1.6",
+69:     "@types/react": "^19.1.9",
+70:     "@types/react-dom": "^19.1.7",
 71:     "@typescript-eslint/eslint-plugin": "^8.38.0",
 72:     "@typescript-eslint/parser": "^8.38.0",
 73:     "@typescript-eslint/utils": "^8.38.0",
