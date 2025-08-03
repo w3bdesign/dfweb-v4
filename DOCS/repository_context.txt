@@ -17657,6 +17657,127 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: src/__tests__/Kontakt/ContactForm.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
+  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+  8: jest.mock("@emailjs/browser", () => ({
+  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
+ 10:   init: jest.fn(),
+ 11: }));
+ 12: describe("ContactForm", () => {
+ 13:   const fulltNavn = "Fullt navn";
+ 14:   const telefonNummer = "Telefonnummer";
+ 15:   const hvaOnskerDu = "Hva ønsker du å si?";
+ 16:   const sendSkjemaText = "Send skjema";
+ 17:   beforeEach(() => {
+ 18:     jest.clearAllMocks();
+ 19:   });
+ 20:   const fillFormWithValidData = () => {
+ 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+ 22:       target: { value: "Bruker Test" },
+ 23:     });
+ 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+ 25:       target: { value: "12345678" },
+ 26:     });
+ 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+ 28:       target: { value: "Test melding" },
+ 29:     });
+ 30:   };
+ 31:   it("renders the component", () => {
+ 32:     // Arrange
+ 33:     const expectedTestId = "kontaktcontent";
+ 34:     // Act
+ 35:     render(<ContactForm />);
+ 36:     // Assert
+ 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
+ 38:   });
+ 39:   it("submits the form successfully and disables submit button while submitting", async () => {
+ 40:     // Arrange
+ 41:     render(<ContactForm />);
+ 42:     const submitButton = screen.getByText(sendSkjemaText);
+ 43:     // Act
+ 44:     fillFormWithValidData();
+ 45:     fireEvent.click(submitButton);
+ 46:     // Assert - Initial state
+ 47:     expect(submitButton).toBeDisabled();
+ 48:     // Assert - Final state
+ 49:     await waitFor(() => {
+ 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
+ 51:     });
+ 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 53:   });
+ 54:   it("displays error message on form submission failure", async () => {
+ 55:     // Arrange
+ 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+ 57:     render(<ContactForm />);
+ 58:     // Act
+ 59:     fillFormWithValidData();
+ 60:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 61:     // Assert
+ 62:     await waitFor(() => {
+ 63:       expect(
+ 64:         screen.getByText("Feil under sending av skjema"),
+ 65:       ).toBeInTheDocument();
+ 66:     });
+ 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 68:   });
+ 69:   it("displays validation errors for empty fields", async () => {
+ 70:     // Arrange
+ 71:     render(<ContactForm />);
+ 72:     const expectedErrors = {
+ 73:       name: "Fullt navn er påkrevd",
+ 74:       phone: "Telefonnummer er påkrevd",
+ 75:       message: "Beskjed er påkrevd",
+ 76:     };
+ 77:     // Act
+ 78:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 79:     // Assert
+ 80:     await waitFor(() => {
+ 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+ 82:     });
+ 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+ 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
+ 85:     expect(emailjs.send).not.toHaveBeenCalled();
+ 86:   });
+ 87:   it("displays validation errors for invalid inputs", async () => {
+ 88:     // Arrange
+ 89:     render(<ContactForm />);
+ 90:     const invalidInputs = {
+ 91:       name: "User123", // Invalid name format
+ 92:       phone: "123", // Invalid phone number
+ 93:       message: "Test melding",
+ 94:     };
+ 95:     const expectedErrors = {
+ 96:       name: "Vennligst bruk norske bokstaver",
+ 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
+ 98:     };
+ 99:     // Act
+100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+101:       target: { value: invalidInputs.name },
+102:     });
+103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+104:       target: { value: invalidInputs.phone },
+105:     });
+106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+107:       target: { value: invalidInputs.message },
+108:     });
+109:     fireEvent.click(screen.getByText(sendSkjemaText));
+110:     // Assert
+111:     await waitFor(() => {
+112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+113:     });
+114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+115:     expect(emailjs.send).not.toHaveBeenCalled();
+116:   });
+117: });
+````
+
 ## File: src/components/Kontakt/ContactForm.component.tsx
 ````typescript
   1: "use client";
@@ -17989,127 +18110,6 @@ tsconfig.json
 188:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/__tests__/Kontakt/ContactForm.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
-  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
-  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
-  8: jest.mock("@emailjs/browser", () => ({
-  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
- 10:   init: jest.fn(),
- 11: }));
- 12: describe("ContactForm", () => {
- 13:   const fulltNavn = "Fullt navn";
- 14:   const telefonNummer = "Telefonnummer";
- 15:   const hvaOnskerDu = "Hva ønsker du å si?";
- 16:   const sendSkjemaText = "Send skjema";
- 17:   beforeEach(() => {
- 18:     jest.clearAllMocks();
- 19:   });
- 20:   const fillFormWithValidData = () => {
- 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
- 22:       target: { value: "Bruker Test" },
- 23:     });
- 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
- 25:       target: { value: "12345678" },
- 26:     });
- 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
- 28:       target: { value: "Test melding" },
- 29:     });
- 30:   };
- 31:   it("renders the component", () => {
- 32:     // Arrange
- 33:     const expectedTestId = "kontaktcontent";
- 34:     // Act
- 35:     render(<ContactForm />);
- 36:     // Assert
- 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
- 38:   });
- 39:   it("submits the form successfully and disables submit button while submitting", async () => {
- 40:     // Arrange
- 41:     render(<ContactForm />);
- 42:     const submitButton = screen.getByText(sendSkjemaText);
- 43:     // Act
- 44:     fillFormWithValidData();
- 45:     fireEvent.click(submitButton);
- 46:     // Assert - Initial state
- 47:     expect(submitButton).toBeDisabled();
- 48:     // Assert - Final state
- 49:     await waitFor(() => {
- 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
- 51:     });
- 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 53:   });
- 54:   it("displays error message on form submission failure", async () => {
- 55:     // Arrange
- 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
- 57:     render(<ContactForm />);
- 58:     // Act
- 59:     fillFormWithValidData();
- 60:     fireEvent.click(screen.getByText(sendSkjemaText));
- 61:     // Assert
- 62:     await waitFor(() => {
- 63:       expect(
- 64:         screen.getByText("Feil under sending av skjema"),
- 65:       ).toBeInTheDocument();
- 66:     });
- 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 68:   });
- 69:   it("displays validation errors for empty fields", async () => {
- 70:     // Arrange
- 71:     render(<ContactForm />);
- 72:     const expectedErrors = {
- 73:       name: "Fullt navn er påkrevd",
- 74:       phone: "Telefonnummer er påkrevd",
- 75:       message: "Beskjed er påkrevd",
- 76:     };
- 77:     // Act
- 78:     fireEvent.click(screen.getByText(sendSkjemaText));
- 79:     // Assert
- 80:     await waitFor(() => {
- 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
- 82:     });
- 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
- 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
- 85:     expect(emailjs.send).not.toHaveBeenCalled();
- 86:   });
- 87:   it("displays validation errors for invalid inputs", async () => {
- 88:     // Arrange
- 89:     render(<ContactForm />);
- 90:     const invalidInputs = {
- 91:       name: "User123", // Invalid name format
- 92:       phone: "123", // Invalid phone number
- 93:       message: "Test melding",
- 94:     };
- 95:     const expectedErrors = {
- 96:       name: "Vennligst bruk norske bokstaver",
- 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
- 98:     };
- 99:     // Act
-100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
-101:       target: { value: invalidInputs.name },
-102:     });
-103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
-104:       target: { value: invalidInputs.phone },
-105:     });
-106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-107:       target: { value: invalidInputs.message },
-108:     });
-109:     fireEvent.click(screen.getByText(sendSkjemaText));
-110:     // Assert
-111:     await waitFor(() => {
-112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-113:     });
-114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-115:     expect(emailjs.send).not.toHaveBeenCalled();
-116:   });
-117: });
-````
-
 ## File: src/stories/components/Kontakt/ContactForm.stories.tsx
 ````typescript
  1: import React from "react";
@@ -18313,7 +18313,7 @@ tsconfig.json
 38:     "envalid": "^8.1.0",
 39:     "jest": "^29.7.0",
 40:     "motion": "^12.23.12",
-41:     "next": "15.4.4",
+41:     "next": "15.4.5",
 42:     "next-sanity": "^10.0.6",
 43:     "path-to-regexp": "^8.2.0",
 44:     "react": "^19.1.0",
@@ -18350,7 +18350,7 @@ tsconfig.json
 75:     "cypress": "14.5.3",
 76:     "cypress-axe": "^1.6.0",
 77:     "eslint": "9.32.0",
-78:     "eslint-config-next": "15.4.4",
+78:     "eslint-config-next": "15.4.5",
 79:     "eslint-config-prettier": "^10.1.8",
 80:     "eslint-plugin-jest": "^29.0.1",
 81:     "eslint-plugin-jsx-a11y": "^6.10.2",
