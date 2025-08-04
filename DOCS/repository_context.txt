@@ -5189,6 +5189,127 @@ tsconfig.json
 212: });
 ````
 
+## File: src/__tests__/Kontakt/ContactForm.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
+  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+  8: jest.mock("@emailjs/browser", () => ({
+  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
+ 10:   init: jest.fn(),
+ 11: }));
+ 12: describe("ContactForm", () => {
+ 13:   const fulltNavn = "Fullt navn";
+ 14:   const telefonNummer = "Telefonnummer";
+ 15:   const hvaOnskerDu = "Hva ønsker du å si?";
+ 16:   const sendSkjemaText = "Send skjema";
+ 17:   beforeEach(() => {
+ 18:     jest.clearAllMocks();
+ 19:   });
+ 20:   const fillFormWithValidData = () => {
+ 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+ 22:       target: { value: "Bruker Test" },
+ 23:     });
+ 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+ 25:       target: { value: "12345678" },
+ 26:     });
+ 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+ 28:       target: { value: "Test melding" },
+ 29:     });
+ 30:   };
+ 31:   it("renders the component", () => {
+ 32:     // Arrange
+ 33:     const expectedTestId = "kontaktcontent";
+ 34:     // Act
+ 35:     render(<ContactForm />);
+ 36:     // Assert
+ 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
+ 38:   });
+ 39:   it("submits the form successfully and disables submit button while submitting", async () => {
+ 40:     // Arrange
+ 41:     render(<ContactForm />);
+ 42:     const submitButton = screen.getByText(sendSkjemaText);
+ 43:     // Act
+ 44:     fillFormWithValidData();
+ 45:     fireEvent.click(submitButton);
+ 46:     // Assert - Initial state
+ 47:     expect(submitButton).toBeDisabled();
+ 48:     // Assert - Final state
+ 49:     await waitFor(() => {
+ 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
+ 51:     });
+ 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 53:   });
+ 54:   it("displays error message on form submission failure", async () => {
+ 55:     // Arrange
+ 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+ 57:     render(<ContactForm />);
+ 58:     // Act
+ 59:     fillFormWithValidData();
+ 60:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 61:     // Assert
+ 62:     await waitFor(() => {
+ 63:       expect(
+ 64:         screen.getByText("Feil under sending av skjema"),
+ 65:       ).toBeInTheDocument();
+ 66:     });
+ 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
+ 68:   });
+ 69:   it("displays validation errors for empty fields", async () => {
+ 70:     // Arrange
+ 71:     render(<ContactForm />);
+ 72:     const expectedErrors = {
+ 73:       name: "Fullt navn er påkrevd",
+ 74:       phone: "Telefonnummer er påkrevd",
+ 75:       message: "Beskjed er påkrevd",
+ 76:     };
+ 77:     // Act
+ 78:     fireEvent.click(screen.getByText(sendSkjemaText));
+ 79:     // Assert
+ 80:     await waitFor(() => {
+ 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+ 82:     });
+ 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+ 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
+ 85:     expect(emailjs.send).not.toHaveBeenCalled();
+ 86:   });
+ 87:   it("displays validation errors for invalid inputs", async () => {
+ 88:     // Arrange
+ 89:     render(<ContactForm />);
+ 90:     const invalidInputs = {
+ 91:       name: "User123", // Invalid name format
+ 92:       phone: "123", // Invalid phone number
+ 93:       message: "Test melding",
+ 94:     };
+ 95:     const expectedErrors = {
+ 96:       name: "Vennligst bruk norske bokstaver",
+ 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
+ 98:     };
+ 99:     // Act
+100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
+101:       target: { value: invalidInputs.name },
+102:     });
+103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
+104:       target: { value: invalidInputs.phone },
+105:     });
+106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
+107:       target: { value: invalidInputs.message },
+108:     });
+109:     fireEvent.click(screen.getByText(sendSkjemaText));
+110:     // Assert
+111:     await waitFor(() => {
+112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
+113:     });
+114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
+115:     expect(emailjs.send).not.toHaveBeenCalled();
+116:   });
+117: });
+````
+
 ## File: src/__tests__/Layout/Footer.test.tsx
 ````typescript
  1: /**
@@ -8929,6 +9050,146 @@ tsconfig.json
 13: export type FormData = z.infer<typeof formSchema>;
 ````
 
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import emailjs from "@emailjs/browser";
+  6: import PageHeader from "@/components/UI/PageHeader.component";
+  7: import Button from "@/components/UI/Button.component";
+  8: import InputField from "@/components/UI/InputField.component";
+  9: import { formSchema, FormData } from "./config/formConfig";
+ 10: interface ContactFormProps {
+ 11:   csrfToken?: string;
+ 12:   onSubmit?: (data: FormData) => Promise<string>;
+ 13:   initialResponse?: string;
+ 14: }
+ 15: /**
+ 16:  * ContactForm component - A complete contact form with EmailJS integration
+ 17:  * Handles both the form UI and submission logic in a single, clear component
+ 18:  */
+ 19: const ContactForm: React.FC<ContactFormProps> = ({
+ 20:   csrfToken = "",
+ 21:   onSubmit: onSubmitProp,
+ 22:   initialResponse = "",
+ 23: }) => {
+ 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+ 25:   const {
+ 26:     register,
+ 27:     handleSubmit,
+ 28:     formState: { errors, isSubmitting },
+ 29:   } = useForm<FormData>({
+ 30:     resolver: zodResolver(formSchema),
+ 31:   });
+ 32:   /**
+ 33:    * Default form submission handler using EmailJS.
+ 34:    * @param {FormData} data - The form data.
+ 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
+ 36:    */
+ 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 39:     const TEMPLATE_KEY =
+ 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 42:     try {
+ 43:       emailjs.init(EMAIL_API_KEY);
+ 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 45:       return "Takk for din beskjed";
+ 46:     } catch {
+ 47:       return "Feil under sending av skjema";
+ 48:     }
+ 49:   };
+ 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 52:     const message = await submitHandler(data);
+ 53:     setServerResponse(message);
+ 54:   };
+ 55:   return (
+ 56:     <main data-testid="kontaktcontent" id="maincontent">
+ 57:       <div className="mt-32 bg-graybg">
+ 58:         <PageHeader>Kontakt</PageHeader>
+ 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 62:               <div className="p-2 md:p-6 pt-8">
+ 63:                 {serverResponse ? (
+ 64:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 65:                     {serverResponse}
+ 66:                   </h3>
+ 67:                 ) : (
+ 68:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 69:                     <form
+ 70:                       id="contact-form"
+ 71:                       className="text-center"
+ 72:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 73:                       method="POST"
+ 74:                       action="/api/form"
+ 75:                       aria-label="Contact Form"
+ 76:                     >
+ 77:                       {csrfToken && (
+ 78:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 79:                       )}
+ 80:                       <fieldset>
+ 81:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 82:                           Kontaktskjema
+ 83:                         </legend>
+ 84:                         <InputField<FormData>
+ 85:                           name="navn"
+ 86:                           label="Fullt navn"
+ 87:                           htmlFor="navn"
+ 88:                           register={register}
+ 89:                           error={errors.navn?.message}
+ 90:                           isRequired
+ 91:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+ 92:                           title="Vennligst bruk norske bokstaver"
+ 93:                         />
+ 94:                         <br />
+ 95:                         <InputField<FormData>
+ 96:                           name="telefon"
+ 97:                           label="Telefonnummer"
+ 98:                           htmlFor="telefon"
+ 99:                           register={register}
+100:                           error={errors.telefon?.message}
+101:                           isRequired
+102:                           inputPattern={/^\d{8}$/}
+103:                           title="Vennligst oppgi et gyldig telefonnummer"
+104:                         />
+105:                         <br />
+106:                         <InputField<FormData>
+107:                           name="tekst"
+108:                           label="Hva ønsker du å si?"
+109:                           htmlFor="tekst"
+110:                           register={register}
+111:                           error={errors.tekst?.message}
+112:                           isRequired
+113:                           type="textarea"
+114:                         />
+115:                         <br />
+116:                       </fieldset>
+117:                       <div className="-mt-4">
+118:                         <Button
+119:                           disabled={isSubmitting}
+120:                           data-testid="submit-button"
+121:                         >
+122:                           Send skjema
+123:                         </Button>
+124:                       </div>
+125:                     </form>
+126:                   </div>
+127:                 )}
+128:               </div>
+129:             </div>
+130:           </div>
+131:         </div>
+132:       </div>
+133:     </main>
+134:   );
+135: };
+136: export default ContactForm;
+````
+
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -12063,6 +12324,100 @@ tsconfig.json
 74:     showDebugButton={true}
 75:   />
 76: );
+````
+
+## File: src/stories/components/Kontakt/ContactForm.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import ContactFormWithMocks from "./ContactFormWithMocks";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "Kontakt/ContactForm",
+ 7:   component: ContactFormWithMocks,
+ 8: } as Meta;
+ 9: // Default form view
+10: export const Default = () => <ContactFormWithMocks />;
+11: // Success response view
+12: export const SuccessResponse = () => (
+13:   <div className="bg-slate-800 min-h-screen py-16">
+14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
+15:   </div>
+16: );
+17: // Error response view
+18: export const ErrorResponse = () => (
+19:   <div className="bg-slate-800 min-h-screen py-16">
+20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
+21:   </div>
+22: );
+23: // Simulated success on form submission
+24: export const SubmissionSuccess = () => (
+25:   <div className="bg-slate-800 min-h-screen py-16">
+26:     <ContactFormWithMocks simulateError={false} />
+27:     <div className="mt-8 text-center text-gray-400">
+28:       <p>(Note: Fill in the form and submit to see a success message)</p>
+29:     </div>
+30:   </div>
+31: );
+32: // Simulated error on form submission
+33: export const SubmissionError = () => (
+34:   <div className="bg-slate-800 min-h-screen py-16">
+35:     <ContactFormWithMocks simulateError={true} />
+36:     <div className="mt-8 text-center text-gray-400">
+37:       <p>(Note: Fill in the form and submit to see an error message)</p>
+38:     </div>
+39:   </div>
+40: );
+41: // Form in narrow container
+42: export const NarrowContainer = () => (
+43:   <div className="bg-slate-800 min-h-screen py-16">
+44:     <div className="max-w-md mx-auto">
+45:       <ContactFormWithMocks />
+46:     </div>
+47:   </div>
+48: );
+````
+
+## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
+ 3: import { FormData } from "@/components/Kontakt/config/formConfig";
+ 4: /**
+ 5:  * Props for the ContactFormWithMocks story.
+ 6:  */
+ 7: type StoryProps = {
+ 8:   simulateError?: boolean;
+ 9:   initialResponse?: string;
+10: };
+11: /**
+12:  * A special version of ContactForm for stories.
+13:  * This renders the actual ContactForm component but provides a mock
+14:  * onSubmit handler to prevent real email submissions and simulate responses.
+15:  */
+16: const ContactFormWithMocks: React.FC<StoryProps> = ({
+17:   simulateError = false,
+18:   initialResponse = "",
+19: }) => {
+20:   /**
+21:    * Simulated form submission that doesn't make any actual API calls.
+22:    * It returns a promise that resolves to a message string, which ContactForm will use.
+23:    */
+24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
+25:     console.warn("Story mock: Form submitted with data:", data);
+26:     // Simulate API call delay
+27:     await new Promise((resolve) => setTimeout(resolve, 500));
+28:     if (simulateError) {
+29:       return "Feil under sending av skjema"; // Story mock: Simulate error
+30:     } else {
+31:       return "Takk for din beskjed"; // Story mock: Simulate success
+32:     }
+33:   };
+34:   return (
+35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
+36:   );
+37: };
+38: export default ContactFormWithMocks;
 ````
 
 ## File: src/stories/components/Layout/Footer.stories.tsx
@@ -17288,6 +17643,198 @@ tsconfig.json
 8: export default config;
 ````
 
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+  4: [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
+  5: [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [
+  6: ![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+  7: [![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
+  8: 
+  9: Fourth version of my personal portfolio website with Next.js, Motion,
+ 10: Sanity.io and Typescript.
+ 11: 
+ 12: ## Table of Contents
+ 13: 
+ 14: - [Live URL](#live-url)
+ 15: - [Frontend (Next.js)](#frontend-nextjs)
+ 16: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 17: - [Google Lighthouse](#google-lighthouse)
+ 18: - [Features](#features)
+ 19:   - [General](#general)
+ 20:   - [Design](#design)
+ 21:   - [Accessibility](#accessibility)
+ 22:   - [Devops and Code quality](#devops-and-code-quality)
+ 23:   - [Environment Variables](#environment-variables)
+ 24:   - [Testing Standards](#testing-standards)
+ 25: 
+ 26: ## Live URL
+ 27: 
+ 28: <https://www.dfweb.no>
+ 29: 
+ 30: ## Frontend (Next.js)
+ 31: 
+ 32: ![Frontend Image](public/images/frontend.png)
+ 33: 
+ 34: ---
+ 35: 
+ 36: ## Backend (Sanity headless CMS)
+ 37: 
+ 38: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 39: 
+ 40: ---
+ 41: 
+ 42: ## Google Lighthouse
+ 43: 
+ 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 45: 
+ 46: ## Features
+ 47: 
+ 48: ### General
+ 49: 
+ 50: - Clean, modern, responsive and Matrix-inspired design
+ 51: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 52: - Matrix canvas rain effect on front page
+ 53: - Custom 404 page with Matrix rain effect
+ 54: - Next.js 15 with Typescript and App router
+ 55:   - Server Components implementation for improved performance
+ 56:   - Streaming with Suspense boundaries
+ 57:   - Automatic static optimization with revalidation
+ 58:   - Server-side data fetching with proper error handling
+ 59: - React 19
+ 60: - Sanity headless CMS for all of the content, projects and navigation links
+ 61: - Ladle for component documentation
+ 62: - Animations with Motion
+ 63: - React testing library for unit testing
+ 64: - Cypress for E2E testing
+ 65: - Playwright for cross-browser E2E testing
+ 66: - Contact form with Email.js and CSRF protection
+ 67: - Polymorphic components
+ 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 69: - Google rich results for each individual page
+ 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 71: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 73: - Reusable GenericForm component for easy form creation and management
+ 74: - Error handling with react-error-boundary for improved user experience and
+ 75:   easier debugging
+ 76: - AI-friendly repository documentation with automated updates (Repomix with
+ 77:   Github action workflow)
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: - Recommended:
+ 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+ 84:   for enhanced GROQ query development, including syntax highlighting when using
+ 85:   `defineQuery`.
+ 86: 
+ 87: ### Design
+ 88: 
+ 89: - Fully responsive design tested on all devices
+ 90: - React Icons for project icons
+ 91: - Tailwind 14 for styling
+ 92: - Animated reusable input fields
+ 93: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 94:   Matrix characters
+ 95: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 96: 
+ 97: ### Accessibility
+ 98: 
+ 99: - WCAG accessibility tested
+100: - Accessibility testing with Cypress Axe and Pa11y
+101: - Automated Pa11y accessibility testing on every PR and push to main
+102:   - Tests all main pages against WCAG2AA standards
+103:   - Captures screenshots for visual reference
+104:   - Detailed reports available as GitHub Actions artifacts
+105: - Builds will fail if any a11y errors are found
+106: 
+107: ### Devops and Code quality
+108: 
+109: - Continuous Integration with CircleCI
+110: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+111: - Github action workflow for Cypress
+112: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+113: - E2E testing with Cypress and Playwright integrated with Github actions
+114: - Unit testing with Jest and React Testing Library integrated with CircleCI
+115: - Test coverage setup with Codecov
+116: - 100% test coverage with Jest and React testing library
+117: - AI-powered commit message generation following Conventional Commits with
+118:   gitmojis
+119: - Automated performance monitoring with Lighthouse CI
+120:   - Performance, accessibility, best practices, and SEO checks on every PR
+121:   - Configurable thresholds for quality metrics
+122:   - Both desktop and performance-focused testing
+123: - Automated repository documentation with Repomix
+124:   - AI-friendly documentation generation on every push to main
+125:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+126:   - Automated PR analysis with repository structure insights
+127:   - Security-focused documentation with sensitive information filtering
+128:   - Markdown formatting for improved readability
+129:   - Automated security vulnerability scanning with Snyk
+130:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+131:     - Integrates with GitHub Security tab for vulnerability tracking
+132: 
+133: ### Environment Variables
+134: 
+135: - Type-safe environment variable validation with envalid
+136: 
+137:   - Runtime validation of required environment variables
+138:   - Clear error messages with examples for missing variables
+139:   - Separate handling of client-side and server-side variables
+140:   - Default values where appropriate
+141:   - Required variables:
+142: 
+143:     ```env
+144:     # Email Configuration (client-side)
+145:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+146:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+147:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+148: 
+149:     # Security Configuration (server-side)
+150:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+151: 
+152:     # AI Configuration (server-side)
+153:     AI_API_KEY=xxx                            # AI service API key
+154:     AI_BASE_URL=https://xxx                   # AI service base URL
+155:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
+156:     ```
+157: 
+158:   - Validation prevents application startup if required variables are missing
+159:   - TypeScript integration for type-safe access to environment variables
+160: 
+161: ### Testing Standards
+162: 
+163: - ISTQB-aligned comprehensive test strategy
+164: 
+165:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+166:   - Multi-level test approach (Unit, Component, E2E)
+167:   - Risk-based testing methodology
+168:   - Defined test metrics and reporting
+169:   - Clear roles and responsibilities
+170:   - Structured defect management process
+171: 
+172: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+173: 
+174:   - Each test must include the following comments:
+175: 
+176:     ```typescript
+177:     // Arrange - Set up test data and conditions
+178:     // Act - Perform the action being tested
+179:     // Assert - Verify the results
+180:     ```
+181: 
+182:   - This pattern ensures:
+183:     - Clear test structure and readability
+184:     - Consistent test organization across the codebase
+185:     - Easy identification of test setup, execution, and verification
+186:   - Simplified test maintenance and debugging
+187:   - Automated validation through custom ESLint rules
+188:   - Tests will fail if AAA pattern is not followed
+````
+
 ## File: renovate.json
 ````json
  1: {
@@ -17657,553 +18204,6 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/Kontakt/ContactForm.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-  5: import ContactForm from "@/components/Kontakt/ContactForm.component";
-  6: import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
-  7: type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
-  8: jest.mock("@emailjs/browser", () => ({
-  9:   send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
- 10:   init: jest.fn(),
- 11: }));
- 12: describe("ContactForm", () => {
- 13:   const fulltNavn = "Fullt navn";
- 14:   const telefonNummer = "Telefonnummer";
- 15:   const hvaOnskerDu = "Hva ønsker du å si?";
- 16:   const sendSkjemaText = "Send skjema";
- 17:   beforeEach(() => {
- 18:     jest.clearAllMocks();
- 19:   });
- 20:   const fillFormWithValidData = () => {
- 21:     fireEvent.change(screen.getByLabelText(fulltNavn), {
- 22:       target: { value: "Bruker Test" },
- 23:     });
- 24:     fireEvent.change(screen.getByLabelText(telefonNummer), {
- 25:       target: { value: "12345678" },
- 26:     });
- 27:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
- 28:       target: { value: "Test melding" },
- 29:     });
- 30:   };
- 31:   it("renders the component", () => {
- 32:     // Arrange
- 33:     const expectedTestId = "kontaktcontent";
- 34:     // Act
- 35:     render(<ContactForm />);
- 36:     // Assert
- 37:     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
- 38:   });
- 39:   it("submits the form successfully and disables submit button while submitting", async () => {
- 40:     // Arrange
- 41:     render(<ContactForm />);
- 42:     const submitButton = screen.getByText(sendSkjemaText);
- 43:     // Act
- 44:     fillFormWithValidData();
- 45:     fireEvent.click(submitButton);
- 46:     // Assert - Initial state
- 47:     expect(submitButton).toBeDisabled();
- 48:     // Assert - Final state
- 49:     await waitFor(() => {
- 50:       expect(screen.getByText("Takk for din beskjed")).toBeInTheDocument();
- 51:     });
- 52:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 53:   });
- 54:   it("displays error message on form submission failure", async () => {
- 55:     // Arrange
- 56:     (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
- 57:     render(<ContactForm />);
- 58:     // Act
- 59:     fillFormWithValidData();
- 60:     fireEvent.click(screen.getByText(sendSkjemaText));
- 61:     // Assert
- 62:     await waitFor(() => {
- 63:       expect(
- 64:         screen.getByText("Feil under sending av skjema"),
- 65:       ).toBeInTheDocument();
- 66:     });
- 67:     expect(emailjs.send).toHaveBeenCalledTimes(1);
- 68:   });
- 69:   it("displays validation errors for empty fields", async () => {
- 70:     // Arrange
- 71:     render(<ContactForm />);
- 72:     const expectedErrors = {
- 73:       name: "Fullt navn er påkrevd",
- 74:       phone: "Telefonnummer er påkrevd",
- 75:       message: "Beskjed er påkrevd",
- 76:     };
- 77:     // Act
- 78:     fireEvent.click(screen.getByText(sendSkjemaText));
- 79:     // Assert
- 80:     await waitFor(() => {
- 81:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
- 82:     });
- 83:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
- 84:     expect(screen.getByText(expectedErrors.message)).toBeInTheDocument();
- 85:     expect(emailjs.send).not.toHaveBeenCalled();
- 86:   });
- 87:   it("displays validation errors for invalid inputs", async () => {
- 88:     // Arrange
- 89:     render(<ContactForm />);
- 90:     const invalidInputs = {
- 91:       name: "User123", // Invalid name format
- 92:       phone: "123", // Invalid phone number
- 93:       message: "Test melding",
- 94:     };
- 95:     const expectedErrors = {
- 96:       name: "Vennligst bruk norske bokstaver",
- 97:       phone: "Vennligst oppgi et gyldig telefonnummer",
- 98:     };
- 99:     // Act
-100:     fireEvent.change(screen.getByLabelText(fulltNavn), {
-101:       target: { value: invalidInputs.name },
-102:     });
-103:     fireEvent.change(screen.getByLabelText(telefonNummer), {
-104:       target: { value: invalidInputs.phone },
-105:     });
-106:     fireEvent.change(screen.getByLabelText(hvaOnskerDu), {
-107:       target: { value: invalidInputs.message },
-108:     });
-109:     fireEvent.click(screen.getByText(sendSkjemaText));
-110:     // Assert
-111:     await waitFor(() => {
-112:       expect(screen.getByText(expectedErrors.name)).toBeInTheDocument();
-113:     });
-114:     expect(screen.getByText(expectedErrors.phone)).toBeInTheDocument();
-115:     expect(emailjs.send).not.toHaveBeenCalled();
-116:   });
-117: });
-````
-
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import emailjs from "@emailjs/browser";
-  6: import PageHeader from "@/components/UI/PageHeader.component";
-  7: import Button from "@/components/UI/Button.component";
-  8: import InputField from "@/components/UI/InputField.component";
-  9: import { formSchema, FormData } from "./config/formConfig";
- 10: interface ContactFormProps {
- 11:   csrfToken?: string;
- 12:   onSubmit?: (data: FormData) => Promise<string>;
- 13:   initialResponse?: string;
- 14: }
- 15: /**
- 16:  * ContactForm component - A complete contact form with EmailJS integration
- 17:  * Handles both the form UI and submission logic in a single, clear component
- 18:  */
- 19: const ContactForm: React.FC<ContactFormProps> = ({
- 20:   csrfToken = "",
- 21:   onSubmit: onSubmitProp,
- 22:   initialResponse = "",
- 23: }) => {
- 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
- 25:   const {
- 26:     register,
- 27:     handleSubmit,
- 28:     formState: { errors, isSubmitting },
- 29:   } = useForm<FormData>({
- 30:     resolver: zodResolver(formSchema),
- 31:   });
- 32:   /**
- 33:    * Default form submission handler using EmailJS.
- 34:    * @param {FormData} data - The form data.
- 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 36:    */
- 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 39:     const TEMPLATE_KEY =
- 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 42:     try {
- 43:       emailjs.init(EMAIL_API_KEY);
- 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 45:       return "Takk for din beskjed";
- 46:     } catch {
- 47:       return "Feil under sending av skjema";
- 48:     }
- 49:   };
- 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 52:     const message = await submitHandler(data);
- 53:     setServerResponse(message);
- 54:   };
- 55:   return (
- 56:     <main data-testid="kontaktcontent" id="maincontent">
- 57:       <div className="mt-32 bg-graybg">
- 58:         <PageHeader>Kontakt</PageHeader>
- 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 62:               <div className="p-2 md:p-6 pt-8">
- 63:                 {serverResponse ? (
- 64:                   <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 65:                     {serverResponse}
- 66:                   </h3>
- 67:                 ) : (
- 68:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 69:                     <form
- 70:                       id="contact-form"
- 71:                       className="text-center"
- 72:                       onSubmit={handleSubmit(handleFormSubmit)}
- 73:                       method="POST"
- 74:                       action="/api/form"
- 75:                       aria-label="Contact Form"
- 76:                     >
- 77:                       {csrfToken && (
- 78:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 79:                       )}
- 80:                       <fieldset>
- 81:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 82:                           Kontaktskjema
- 83:                         </legend>
- 84:                         <InputField<FormData>
- 85:                           name="navn"
- 86:                           label="Fullt navn"
- 87:                           htmlFor="navn"
- 88:                           register={register}
- 89:                           error={errors.navn?.message}
- 90:                           isRequired
- 91:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
- 92:                           title="Vennligst bruk norske bokstaver"
- 93:                         />
- 94:                         <br />
- 95:                         <InputField<FormData>
- 96:                           name="telefon"
- 97:                           label="Telefonnummer"
- 98:                           htmlFor="telefon"
- 99:                           register={register}
-100:                           error={errors.telefon?.message}
-101:                           isRequired
-102:                           inputPattern={/^\d{8}$/}
-103:                           title="Vennligst oppgi et gyldig telefonnummer"
-104:                         />
-105:                         <br />
-106:                         <InputField<FormData>
-107:                           name="tekst"
-108:                           label="Hva ønsker du å si?"
-109:                           htmlFor="tekst"
-110:                           register={register}
-111:                           error={errors.tekst?.message}
-112:                           isRequired
-113:                           type="textarea"
-114:                         />
-115:                         <br />
-116:                       </fieldset>
-117:                       <div className="-mt-4">
-118:                         <Button
-119:                           disabled={isSubmitting}
-120:                           data-testid="submit-button"
-121:                         >
-122:                           Send skjema
-123:                         </Button>
-124:                       </div>
-125:                     </form>
-126:                   </div>
-127:                 )}
-128:               </div>
-129:             </div>
-130:           </div>
-131:         </div>
-132:       </div>
-133:     </main>
-134:   );
-135: };
-136: export default ContactForm;
-````
-
-## File: src/stories/components/Kontakt/ContactForm.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import ContactFormWithMocks from "./ContactFormWithMocks";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "Kontakt/ContactForm",
- 7:   component: ContactFormWithMocks,
- 8: } as Meta;
- 9: // Default form view
-10: export const Default = () => <ContactFormWithMocks />;
-11: // Success response view
-12: export const SuccessResponse = () => (
-13:   <div className="bg-slate-800 min-h-screen py-16">
-14:     <ContactFormWithMocks initialResponse="Takk for din beskjed" />
-15:   </div>
-16: );
-17: // Error response view
-18: export const ErrorResponse = () => (
-19:   <div className="bg-slate-800 min-h-screen py-16">
-20:     <ContactFormWithMocks initialResponse="Feil under sending av skjema" />
-21:   </div>
-22: );
-23: // Simulated success on form submission
-24: export const SubmissionSuccess = () => (
-25:   <div className="bg-slate-800 min-h-screen py-16">
-26:     <ContactFormWithMocks simulateError={false} />
-27:     <div className="mt-8 text-center text-gray-400">
-28:       <p>(Note: Fill in the form and submit to see a success message)</p>
-29:     </div>
-30:   </div>
-31: );
-32: // Simulated error on form submission
-33: export const SubmissionError = () => (
-34:   <div className="bg-slate-800 min-h-screen py-16">
-35:     <ContactFormWithMocks simulateError={true} />
-36:     <div className="mt-8 text-center text-gray-400">
-37:       <p>(Note: Fill in the form and submit to see an error message)</p>
-38:     </div>
-39:   </div>
-40: );
-41: // Form in narrow container
-42: export const NarrowContainer = () => (
-43:   <div className="bg-slate-800 min-h-screen py-16">
-44:     <div className="max-w-md mx-auto">
-45:       <ContactFormWithMocks />
-46:     </div>
-47:   </div>
-48: );
-````
-
-## File: src/stories/components/Kontakt/ContactFormWithMocks.tsx
-````typescript
- 1: import React from "react";
- 2: import ContactForm from "@/components/Kontakt/ContactForm.component";
- 3: import { FormData } from "@/components/Kontakt/config/formConfig";
- 4: /**
- 5:  * Props for the ContactFormWithMocks story.
- 6:  */
- 7: type StoryProps = {
- 8:   simulateError?: boolean;
- 9:   initialResponse?: string;
-10: };
-11: /**
-12:  * A special version of ContactForm for stories.
-13:  * This renders the actual ContactForm component but provides a mock
-14:  * onSubmit handler to prevent real email submissions and simulate responses.
-15:  */
-16: const ContactFormWithMocks: React.FC<StoryProps> = ({
-17:   simulateError = false,
-18:   initialResponse = "",
-19: }) => {
-20:   /**
-21:    * Simulated form submission that doesn't make any actual API calls.
-22:    * It returns a promise that resolves to a message string, which ContactForm will use.
-23:    */
-24:   const mockOnSubmit = async (data: FormData): Promise<string> => {
-25:     console.warn("Story mock: Form submitted with data:", data);
-26:     // Simulate API call delay
-27:     await new Promise((resolve) => setTimeout(resolve, 500));
-28:     if (simulateError) {
-29:       return "Feil under sending av skjema"; // Story mock: Simulate error
-30:     } else {
-31:       return "Takk for din beskjed"; // Story mock: Simulate success
-32:     }
-33:   };
-34:   return (
-35:     <ContactForm onSubmit={mockOnSubmit} initialResponse={initialResponse} />
-36:   );
-37: };
-38: export default ContactFormWithMocks;
-````
-
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
-  4: [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
-  5: [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [
-  6: ![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
-  7: [![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-  8: 
-  9: Fourth version of my personal portfolio website with Next.js, Motion,
- 10: Sanity.io and Typescript.
- 11: 
- 12: ## Table of Contents
- 13: 
- 14: - [Live URL](#live-url)
- 15: - [Frontend (Next.js)](#frontend-nextjs)
- 16: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 17: - [Google Lighthouse](#google-lighthouse)
- 18: - [Features](#features)
- 19:   - [General](#general)
- 20:   - [Design](#design)
- 21:   - [Accessibility](#accessibility)
- 22:   - [Devops and Code quality](#devops-and-code-quality)
- 23:   - [Environment Variables](#environment-variables)
- 24:   - [Testing Standards](#testing-standards)
- 25: 
- 26: ## Live URL
- 27: 
- 28: <https://www.dfweb.no>
- 29: 
- 30: ## Frontend (Next.js)
- 31: 
- 32: ![Frontend Image](public/images/frontend.png)
- 33: 
- 34: ---
- 35: 
- 36: ## Backend (Sanity headless CMS)
- 37: 
- 38: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 39: 
- 40: ---
- 41: 
- 42: ## Google Lighthouse
- 43: 
- 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 45: 
- 46: ## Features
- 47: 
- 48: ### General
- 49: 
- 50: - Clean, modern, responsive and Matrix-inspired design
- 51: - The application is 100% typescript (the types are generated from Sanity typegen)
- 52: - Matrix canvas rain effect on front page
- 53: - Custom 404 page with Matrix rain effect
- 54: - Next.js 15 with Typescript and App router
- 55:   - Server Components implementation for improved performance
- 56:   - Streaming with Suspense boundaries
- 57:   - Automatic static optimization with revalidation
- 58:   - Server-side data fetching with proper error handling
- 59: - React 19
- 60: - Sanity headless CMS for all of the content, projects and navigation links
- 61: - Ladle for component documentation
- 62: - Animations with Motion
- 63: - React testing library for unit testing
- 64: - Cypress for E2E testing
- 65: - Playwright for cross-browser E2E testing
- 66: - Contact form with Email.js and CSRF protection
- 67: - Polymorphic components
- 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 69: - Google rich results for each individual page
- 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 71: - Automated Lighthouse CI testing integrated with GitHub Actions
- 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 73: - Reusable GenericForm component for easy form creation and management
- 74: - Error handling with react-error-boundary for improved user experience and
- 75:   easier debugging
- 76: - AI-friendly repository documentation with automated updates (Repomix with
- 77:   Github action workflow)
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 14 for styling
- 92: - Animated reusable input fields
- 93: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 94:   Matrix characters
- 95: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 96: 
- 97: ### Accessibility
- 98: 
- 99: - WCAG accessibility tested
-100: - Accessibility testing with Cypress Axe and Pa11y
-101: - Automated Pa11y accessibility testing on every PR and push to main
-102:   - Tests all main pages against WCAG2AA standards
-103:   - Captures screenshots for visual reference
-104:   - Detailed reports available as GitHub Actions artifacts
-105: - Builds will fail if any a11y errors are found
-106: 
-107: ### Devops and Code quality
-108: 
-109: - Continuous Integration with CircleCI
-110: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-111: - Github action workflow for Cypress
-112: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-113: - E2E testing with Cypress and Playwright integrated with Github actions
-114: - Unit testing with Jest and React Testing Library integrated with CircleCI
-115: - Test coverage setup with Codecov
-116: - 100% test coverage with Jest and React testing library
-117: - AI-powered commit message generation following Conventional Commits with
-118:   gitmojis
-119: - Automated performance monitoring with Lighthouse CI
-120:   - Performance, accessibility, best practices, and SEO checks on every PR
-121:   - Configurable thresholds for quality metrics
-122:   - Both desktop and performance-focused testing
-123: - Automated repository documentation with Repomix
-124:   - AI-friendly documentation generation on every push to main
-125:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-126:   - Automated PR analysis with repository structure insights
-127:   - Security-focused documentation with sensitive information filtering
-128:   - Markdown formatting for improved readability
-129:   - Automated security vulnerability scanning with Snyk
-130:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-131:     - Integrates with GitHub Security tab for vulnerability tracking
-132: 
-133: ### Environment Variables
-134: 
-135: - Type-safe environment variable validation with envalid
-136: 
-137:   - Runtime validation of required environment variables
-138:   - Clear error messages with examples for missing variables
-139:   - Separate handling of client-side and server-side variables
-140:   - Default values where appropriate
-141:   - Required variables:
-142: 
-143:     ```env
-144:     # Email Configuration (client-side)
-145:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-146:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-147:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-148: 
-149:     # Security Configuration (server-side)
-150:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-151: 
-152:     # AI Configuration (server-side)
-153:     AI_API_KEY=xxx                            # AI service API key
-154:     AI_BASE_URL=https://xxx                   # AI service base URL
-155:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
-156:     ```
-157: 
-158:   - Validation prevents application startup if required variables are missing
-159:   - TypeScript integration for type-safe access to environment variables
-160: 
-161: ### Testing Standards
-162: 
-163: - ISTQB-aligned comprehensive test strategy
-164: 
-165:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-166:   - Multi-level test approach (Unit, Component, E2E)
-167:   - Risk-based testing methodology
-168:   - Defined test metrics and reporting
-169:   - Clear roles and responsibilities
-170:   - Structured defect management process
-171: 
-172: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-173: 
-174:   - Each test must include the following comments:
-175: 
-176:     ```typescript
-177:     // Arrange - Set up test data and conditions
-178:     // Act - Perform the action being tested
-179:     // Assert - Verify the results
-180:     ```
-181: 
-182:   - This pattern ensures:
-183:     - Clear test structure and readability
-184:     - Consistent test organization across the codebase
-185:     - Easy identification of test setup, execution, and verification
-186:   - Simplified test maintenance and debugging
-187:   - Automated validation through custom ESLint rules
-188:   - Tests will fail if AAA pattern is not followed
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -18303,7 +18303,7 @@ tsconfig.json
 28:     "@emailjs/browser": "^4.4.1",
 29:     "@hookform/resolvers": "^5.2.1",
 30:     "@portabletext/react": "^3.2.1",
-31:     "@sanity/client": "^7.8.1",
+31:     "@sanity/client": "^7.8.2",
 32:     "@sanity/image-url": "^1.1.0",
 33:     "@vercel/speed-insights": "^1.2.0",
 34:     "autoprefixer": "^10.4.21",
