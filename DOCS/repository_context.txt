@@ -17906,39 +17906,6 @@ tsconfig.json
 82:           fi
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     container:
-11:       image: cypress/browsers:node-20.17.0-chrome-128.0.6613.119-1-ff-130.0-edge-128.0.2739.63-1
-12:       options: --user 1001
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@v5
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@v4
-18:         with:
-19:           version: 10
-20:       - name: Install dependencies
-21:         run: pnpm install
-22:       - name: Cypress run
-23:         uses: cypress-io/github-action@v6
-24:         with:
-25:           build: pnpm build
-26:           start: pnpm dev
-27:           wait-on: "http://localhost:3000"
-28:           wait-on-timeout: 120
-29:           browser: ${{ matrix.browser }}
-````
-
 ## File: .github/workflows/lighthouse.yml
 ````yaml
  1: name: Lighthouse CI
@@ -18187,6 +18154,56 @@ tsconfig.json
 21:     "typescript": "^5.9.2"
 22:   }
 23: }
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     container:
+11:       image: cypress/browsers:node-20.17.0-chrome-128.0.6613.119-1-ff-130.0-edge-128.0.2739.63-1
+12:       options: --user 1001
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@v5
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@v4
+18:         with:
+19:           version: 10
+20:       - name: Setup Node.js
+21:         uses: actions/setup-node@v5
+22:         with:
+23:           node-version: 20
+24:           cache: 'pnpm'
+25:       - name: Cache Cypress binary
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ~/.cache/Cypress
+29:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-cypress-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Install Cypress binary
+35:         run: pnpm exec cypress install
+36:       - name: Verify Cypress installation
+37:         run: pnpm exec cypress verify
+38:       - name: Cypress run
+39:         uses: cypress-io/github-action@v6
+40:         with:
+41:           build: pnpm build
+42:           start: pnpm dev
+43:           wait-on: "http://localhost:3000"
+44:           wait-on-timeout: 120
+45:           browser: ${{ matrix.browser }}
+46:           install: false
 ````
 
 ## File: .github/workflows/playwright.yml
