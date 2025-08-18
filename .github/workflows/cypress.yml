@@ -20,8 +20,28 @@ jobs:
         with:
           version: 10
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-cypress-
+
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Cypress binary
+        run: pnpm exec cypress install
+
+      - name: Verify Cypress installation
+        run: pnpm exec cypress verify
 
       - name: Cypress run
         uses: cypress-io/github-action@v6
@@ -31,3 +51,4 @@ jobs:
           wait-on: "http://localhost:3000"
           wait-on-timeout: 120
           browser: ${{ matrix.browser }}
+          install: false
