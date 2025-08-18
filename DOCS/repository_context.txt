@@ -420,44 +420,6 @@ tsconfig.json
 15: ]
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@8edcb1bdb4e267140fa742c62e395cd74f332709
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v3
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v3
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v3
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
-````
-
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -17738,6 +17700,44 @@ tsconfig.json
 35: }
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     permissions:
+14:       actions: read
+15:       contents: read
+16:       security-events: write
+17:     strategy:
+18:       fail-fast: false
+19:       matrix:
+20:         language: [javascript]
+21:     steps:
+22:       - name: Checkout
+23:         uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+24:       - name: Initialize CodeQL
+25:         uses: github/codeql-action/init@v3
+26:         with:
+27:           languages: ${{ matrix.language }}
+28:           queries: +security-and-quality
+29:       - name: Autobuild
+30:         uses: github/codeql-action/autobuild@v3
+31:       - name: Perform CodeQL Analysis
+32:         uses: github/codeql-action/analyze@v3
+33:         with:
+34:           category: "/language:${{ matrix.language }}"
+````
+
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -18198,56 +18198,6 @@ tsconfig.json
 38:           retention-days: 30
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     container:
-11:       image: cypress/browsers:node-20.17.0-chrome-128.0.6613.119-1-ff-130.0-edge-128.0.2739.63-1
-12:       options: --user 1001
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@v5
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@36de12bed180fa130ed56a35e7344f2fa7a820ab
-18:         with:
-19:           version: 10
-20:       - name: Setup Node.js
-21:         uses: actions/setup-node@v4
-22:         with:
-23:           node-version: 20
-24:           cache: 'pnpm'
-25:       - name: Cache Cypress binary
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ~/.cache/Cypress
-29:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-cypress-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Install Cypress binary
-35:         run: pnpm exec cypress install
-36:       - name: Verify Cypress installation
-37:         run: pnpm exec cypress verify
-38:       - name: Cypress run
-39:         uses: cypress-io/github-action@b8ba51a856ba5f4c15cf39007636d4ab04f23e3c
-40:         with:
-41:           build: pnpm build
-42:           start: pnpm dev
-43:           wait-on: "http://localhost:3000"
-44:           wait-on-timeout: 120
-45:           browser: ${{ matrix.browser }}
-46:           install: false
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -18286,6 +18236,56 @@ tsconfig.json
 34:     "singleQuote": true
 35:   }
 36: }
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     container:
+11:       image: cypress/browsers:node-20.17.0-chrome-128.0.6613.119-1-ff-130.0-edge-128.0.2739.63-1
+12:       options: --user 1001
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@v5
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@36de12bed180fa130ed56a35e7344f2fa7a820ab
+18:         with:
+19:           version: 10
+20:       - name: Setup Node.js
+21:         uses: actions/setup-node@v4
+22:         with:
+23:           node-version: 22
+24:           cache: 'pnpm'
+25:       - name: Cache Cypress binary
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ~/.cache/Cypress
+29:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-cypress-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Install Cypress binary
+35:         run: pnpm exec cypress install
+36:       - name: Verify Cypress installation
+37:         run: pnpm exec cypress verify
+38:       - name: Cypress run
+39:         uses: cypress-io/github-action@b8ba51a856ba5f4c15cf39007636d4ab04f23e3c
+40:         with:
+41:           build: pnpm build
+42:           start: pnpm dev
+43:           wait-on: "http://localhost:3000"
+44:           wait-on-timeout: 120
+45:           browser: ${{ matrix.browser }}
+46:           install: false
 ````
 
 ## File: package.json
