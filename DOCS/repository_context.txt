@@ -502,6 +502,92 @@ tsconfig.json
 15: ]
 ````
 
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - name: Checkout repository
+15:         uses: actions/checkout@v5
+16:         with:
+17:           fetch-depth: 0 # fetch all history for better context
+18:       - name: Wait for other checks
+19:         run: |
+20:           echo "Waiting for 5 minutes to allow other checks to complete..."
+21:           sleep 300
+22:       - name: Setup Node.js
+23:         uses: actions/setup-node@v4
+24:         with:
+25:           node-version: "22"
+26:       - name: Install Repomix
+27:         run: npm install -g repomix
+28:       - name: Generate Repository Documentation
+29:         run: |
+30:           echo "Creating DOCS directory..."
+31:           mkdir -p DOCS
+32:           echo "Running Repomix..."
+33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+34:             echo "Error: Repomix command failed"
+35:             # Print directory contents for debugging
+36:             echo "DOCS directory contents:"
+37:             ls -la DOCS/
+38:             exit 1
+39:           fi
+40:           echo "Verifying output file..."
+41:           if [ ! -f "DOCS/repository_context.txt" ]; then
+42:             echo "Error: repository_context.txt was not created"
+43:             # Print directory contents for debugging
+44:             echo "DOCS directory contents:"
+45:             ls -la DOCS/
+46:             exit 1
+47:           fi
+48:           if [ ! -s "DOCS/repository_context.txt" ]; then
+49:             echo "Error: repository_context.txt is empty"
+50:             exit 1
+51:           fi
+52:           echo "Repository context file generated successfully"
+53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+54:           echo "First few lines of the file:"
+55:           head -n 5 "DOCS/repository_context.txt"
+56:       # Update Documentation
+57:       - name: Commit and Push Changes
+58:         run: |
+59:           echo "Configuring git..."
+60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+61:           git config --local user.name "github-actions[bot]"
+62:           echo "Checking for changes..."
+63:           if [[ -n "$(git status --porcelain)" ]]; then
+64:             echo "Changes detected, committing..."
+65:             # Stage only repository_context.txt to avoid unintended changes
+66:             if ! git add DOCS/repository_context.txt; then
+67:               echo "Error: Failed to stage repository_context.txt"
+68:               exit 1
+69:             fi
+70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+71:               echo "Error: Failed to create commit"
+72:               exit 1
+73:             fi
+74:             echo "Pushing to main branch..."
+75:             if ! git push; then
+76:               echo "Error: Failed to push changes"
+77:               exit 1
+78:             fi
+79:             echo "Successfully updated repository context"
+80:           else
+81:             echo "No changes detected in repository_context.txt"
+82:           fi
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -13635,33 +13721,6 @@ tsconfig.json
 82: };
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.33.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.2"
-22:   }
-23: }
-````
-
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -17847,90 +17906,31 @@ tsconfig.json
 34:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - name: Checkout repository
-15:         uses: actions/checkout@v5
-16:         with:
-17:           fetch-depth: 0 # fetch all history for better context
-18:       - name: Wait for other checks
-19:         run: |
-20:           echo "Waiting for 5 minutes to allow other checks to complete..."
-21:           sleep 300
-22:       - name: Setup Node.js
-23:         uses: actions/setup-node@v4
-24:         with:
-25:           node-version: "22"
-26:       - name: Install Repomix
-27:         run: npm install -g repomix
-28:       - name: Generate Repository Documentation
-29:         run: |
-30:           echo "Creating DOCS directory..."
-31:           mkdir -p DOCS
-32:           echo "Running Repomix..."
-33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-34:             echo "Error: Repomix command failed"
-35:             # Print directory contents for debugging
-36:             echo "DOCS directory contents:"
-37:             ls -la DOCS/
-38:             exit 1
-39:           fi
-40:           echo "Verifying output file..."
-41:           if [ ! -f "DOCS/repository_context.txt" ]; then
-42:             echo "Error: repository_context.txt was not created"
-43:             # Print directory contents for debugging
-44:             echo "DOCS directory contents:"
-45:             ls -la DOCS/
-46:             exit 1
-47:           fi
-48:           if [ ! -s "DOCS/repository_context.txt" ]; then
-49:             echo "Error: repository_context.txt is empty"
-50:             exit 1
-51:           fi
-52:           echo "Repository context file generated successfully"
-53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-54:           echo "First few lines of the file:"
-55:           head -n 5 "DOCS/repository_context.txt"
-56:       # Update Documentation
-57:       - name: Commit and Push Changes
-58:         run: |
-59:           echo "Configuring git..."
-60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-61:           git config --local user.name "github-actions[bot]"
-62:           echo "Checking for changes..."
-63:           if [[ -n "$(git status --porcelain)" ]]; then
-64:             echo "Changes detected, committing..."
-65:             # Stage only repository_context.txt to avoid unintended changes
-66:             if ! git add DOCS/repository_context.txt; then
-67:               echo "Error: Failed to stage repository_context.txt"
-68:               exit 1
-69:             fi
-70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-71:               echo "Error: Failed to create commit"
-72:               exit 1
-73:             fi
-74:             echo "Pushing to main branch..."
-75:             if ! git push; then
-76:               echo "Error: Failed to push changes"
-77:               exit 1
-78:             fi
-79:             echo "Successfully updated repository context"
-80:           else
-81:             echo "No changes detected in repository_context.txt"
-82:           fi
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.34.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.2"
+22:   }
+23: }
 ````
 
 ## File: .github/workflows/lighthouse.yml
@@ -18225,7 +18225,7 @@ tsconfig.json
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
 25:     "@types/react": "^19.1.11",
-26:     "eslint": "^9.33.0",
+26:     "eslint": "^9.34.0",
 27:     "prettier": "^3.6.2",
 28:     "typescript": "^5.9.2"
 29:   },
@@ -18366,7 +18366,7 @@ tsconfig.json
 74:     "axe-core": "^4.10.3",
 75:     "cypress": "15.0.0",
 76:     "cypress-axe": "^1.6.0",
-77:     "eslint": "9.33.0",
+77:     "eslint": "9.34.0",
 78:     "eslint-config-next": "15.5.0",
 79:     "eslint-config-prettier": "^10.1.8",
 80:     "eslint-plugin-jest": "^29.0.1",
