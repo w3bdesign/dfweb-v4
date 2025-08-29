@@ -75,6 +75,9 @@ Sanity.io and Typescript.
   easier debugging
 - AI-friendly repository documentation with automated updates (Repomix with
   Github action workflow)
+- AI assistant guidance with AGENTS.md files for immediate productivity
+  - Main AGENTS.md with project-specific patterns and gotchas
+  - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
 - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
 - Efficient data fetching in `/prosjekter` using Next.js preloading,
   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
