@@ -22,7 +22,7 @@ const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
           key={page._key}
           {...page}
           variant={index % 2 === 0 ? "default" : "alternate"}
-          viewAmount={index === 0 ? 0.05 : 0.2}
+          viewAmount={index === 0 ? 0.1 : 0.2}
         />
       ))}
     </div>
