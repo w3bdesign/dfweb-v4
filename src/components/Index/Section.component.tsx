@@ -10,6 +10,7 @@ import type { Pagecontent } from "@/types/sanity.types";
 interface SectionProps extends Pagecontent {
   variant?: "default" | "alternate";
   showDebugButton?: boolean;
+  viewAmount?: number;
 }
 
 /**
@@ -19,6 +20,7 @@ interface SectionProps extends Pagecontent {
  * @param {string} props.title - The title of the section
  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+ * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
  */
 const Section = ({
@@ -26,6 +28,7 @@ const Section = ({
   title,
   variant = "default",
   showDebugButton = true,
+  viewAmount = 0.2,
 }: SectionProps) => {
   const [shouldError, setShouldError] = useState(false);
 
@@ -59,7 +62,7 @@ const Section = ({
       `}
     >
       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-        <FadeInScroll viewAmount={0.2} data-testid="fade-in-scroll">
+        <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
           <h2
             data-testid="sanity-title"
             data-cy={title}
