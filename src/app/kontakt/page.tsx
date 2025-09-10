@@ -6,7 +6,6 @@ import { Metadata } from "next/types";
 
 export const metadata: Metadata = {
   title: "Kontakt - Dfweb",
-  description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
 
 export default async function PostIndex() {
