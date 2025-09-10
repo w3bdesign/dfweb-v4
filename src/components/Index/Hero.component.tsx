@@ -45,7 +45,7 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
         <ReactMatrixAnimation />
       </div>
       <div className="relative z-10">
-        <section
+        <div
           className="text-left md:text-center px-4 md:px-0"
           data-testid="fade-in"
         >
@@ -73,7 +73,7 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
           <div className="mt-4">
             <Icons />
           </div>
-        </section>
+        </div>
       </div>
     </article>
   );
