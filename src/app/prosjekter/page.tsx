@@ -10,7 +10,6 @@ import { getProjects, preloadProjects } from "./actions";
 
 export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",
-  description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
 
 async function ProjectList() {

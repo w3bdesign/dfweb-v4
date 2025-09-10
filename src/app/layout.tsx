@@ -28,10 +28,6 @@ export default function RootLayout({
         <meta name="author" content="Daniel Fjeldstad" />
         <meta property="og:locale" content="nb_NO" />
         <meta
-          name="description"
-          content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-        />
-        <meta
           property="og:description"
           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
         />

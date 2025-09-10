@@ -22,8 +22,8 @@ describe("Prosjekter Page", () => {
     cy.get('[data-testid="project-card"]')
       .first()
       .within(() => {
-        cy.get("h1").should("have.class", "text-xl").and("not.be.empty");
-        cy.get("h2").should("have.class", "text-md").and("not.be.empty");
+        cy.get("h2").should("have.class", "text-xl").and("not.be.empty");
+        cy.get("h3").should("have.class", "text-md").and("not.be.empty");
         cy.get("p").should("have.class", "text-sm").and("not.be.empty");
       });
   });
