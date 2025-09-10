@@ -1,0 +1,87 @@
+name: HTML Validator
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  html-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+        with:
+          version: 10
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install wait-on
+        run: |
+          pnpm add -D wait-on
+
+      - name: Build Next.js app
+        run: pnpm build
+
+      - name: Start Next.js app
+        run: pnpm start &
+
+      - name: Wait for the application to be ready
+        run: pnpm exec wait-on http://localhost:3000
+
+      - name: Validate HTML - Home page
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: http://localhost:3000
+          css: true
+          also-check-css: true
+
+      - name: Validate HTML - CV page
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: http://localhost:3000/cv
+          css: true
+          also-check-css: true
+
+      - name: Validate HTML - Prosjekter page
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: http://localhost:3000/prosjekter
+          css: true
+          also-check-css: true
+
+      - name: Validate HTML - Kontakt page
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: http://localhost:3000/kontakt
+          css: true
+          also-check-css: true
+
+      - name: Stop server
+        if: always()
+        run: |
+          pkill -f "next start" || true
