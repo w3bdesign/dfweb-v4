@@ -20,7 +20,7 @@ const ContentLoader = ({
 
   if (type === "hero") {
     return (
-      <article className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
+      <div className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900" />
         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
           <Skeleton height="h-14" width="w-32 mx-auto" shimmer />
@@ -32,7 +32,7 @@ const ContentLoader = ({
             ))}
           </div>
         </div>
-      </article>
+      </div>
     );
   }
 
@@ -40,7 +40,7 @@ const ContentLoader = ({
   return (
     <div className="w-full overflow-hidden -mb-8">
       {Array.from({ length: sections }, (_, index) => (
-        <section
+        <div
           key={index}
           data-testid="content-section"
           className={`md:py-6 relative contain-layout ${
@@ -57,7 +57,7 @@ const ContentLoader = ({
               <Skeleton width="w-3/4" shimmer />
             </div>
           </div>
-        </section>
+        </div>
       ))}
     </div>
   );
