@@ -10,7 +10,7 @@ describe("Test at CV vises og laster", () => {
   });
 
   it("Se at CV vises", () => {
-    cy.get("main#maincontent").should("be.visible");
+    cy.get("#maincontent").should("be.visible");
     cy.get("#tab-qualifications").should("have.length", 1).and("be.visible");
   });
 
