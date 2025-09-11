@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 type TabOrientation = "horizontal" | "vertical";
 
@@ -29,7 +29,7 @@ const getTabButtonClassName = (
   isActive: boolean,
   isVertical: boolean,
   index: number,
-  totalTabs: number,
+  totalTabs: number
 ) => {
   const baseClasses = "px-4 py-3 text-sm font-medium relative";
   const activeClasses = isActive
@@ -88,7 +88,7 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
       id={`tabpanel-${tab.id}`}
       aria-labelledby={`tab-${tab.id}`}
       aria-hidden={!isActive}
-      className={`px-8 ${isActive ? 'block' : 'hidden'}`}
+      className={`px-8 ${isActive ? "block" : "hidden"}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 20 }}
       transition={{ duration: 0.3 }}
@@ -145,11 +145,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
           } bg-gray-800 overflow-y-auto`}
         >
           {tabs.map((tab) => (
-            <TabPanel
-              key={tab.id}
-              tab={tab}
-              isActive={activeTab === tab.id}
-            />
+            <TabPanel key={tab.id} tab={tab} isActive={activeTab === tab.id} />
           ))}
         </div>
       </div>
