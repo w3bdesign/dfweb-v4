@@ -64,11 +64,11 @@ const TabButton: React.FC<TabButtonProps> = ({
     id={`tab-${tab.id}`}
   >
     {isActive && (
-      <motion.div
+      <motion.span
         layoutId="active-tab"
         className={`absolute ${
           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
-        } bg-[var(--matrix-dark)]`}
+        } bg-[var(--matrix-dark)] block`}
         initial={false}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />
