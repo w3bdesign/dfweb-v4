@@ -5,11 +5,7 @@ import RotatingLoader from "@/components/Animations/RotatingLoader.component";
 export default function Loading() {
   return (
     <RootLayout>
-      <main
-        role="main"
-        aria-label="Laster portefølje"
-        className="mt-32 bg-graybg"
-      >
+      <main aria-label="Laster portefølje" className="mt-32 bg-graybg">
         <PageHeader>Prosjekter</PageHeader>
         <div className="container mx-auto flex justify-center items-center min-h-[400px]">
           <RotatingLoader />
