@@ -141,9 +141,9 @@ describe("ProsjekterPage", () => {
     expect(projectCards[1]).toHaveTextContent("Test Project 2");
 
     // Test that projects are rendered within the main content area
-    const main = screen.getByRole("main");
-    expect(main).toContainElement(projectCards[0]);
-    expect(main).toContainElement(projectCards[1]);
+    const mainContent = screen.getByLabelText("Innhold portefølje");
+    expect(mainContent).toContainElement(projectCards[0]);
+    expect(mainContent).toContainElement(projectCards[1]);
   });
 
   it("uses Suspense boundary for loading state", async () => {
@@ -158,9 +158,9 @@ describe("ProsjekterPage", () => {
     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
 
-    const main = screen.getByRole("main");
-    expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-    expect(main).toContainElement(screen.getByText("Prosjekter"));
+    const mainContent = screen.getByLabelText("Innhold portefølje");
+    expect(mainContent).toHaveAttribute("aria-label", "Innhold portefølje");
+    expect(mainContent).toContainElement(screen.getByText("Prosjekter"));
 
     // Wait for loading to complete
     await waitFor(() => {

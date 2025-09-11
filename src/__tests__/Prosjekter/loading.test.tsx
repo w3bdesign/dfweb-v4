@@ -37,7 +37,9 @@ describe("Loading", () => {
 
       // Act
       render(<Loading />);
-      const loadingContainer = screen.getByLabelText(expected.mainAttributes.ariaLabel);
+      const loadingContainer = screen.getByLabelText(
+        expected.mainAttributes.ariaLabel,
+      );
 
       // Assert
       expect(screen.getByText(expected.header)).toBeInTheDocument();
