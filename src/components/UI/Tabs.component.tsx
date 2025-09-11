@@ -81,21 +81,19 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
   tab,
   isActive,
 }) => {
-  if (!isActive) return null;
-
   return (
     <motion.div
       key={tab.id}
       role="tabpanel"
       id={`tabpanel-${tab.id}`}
       aria-labelledby={`tab-${tab.id}`}
-      className="px-8"
+      aria-hidden={!isActive}
+      className={`px-8 ${isActive ? 'block' : 'hidden'}`}
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 20 }}
       transition={{ duration: 0.3 }}
     >
-      {tab.content}
+      {isActive ? tab.content : null}
     </motion.div>
   );
 };
@@ -146,15 +144,13 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
             isVertical ? "sm:w-3/4 w-full" : "w-full"
           } bg-gray-800 overflow-y-auto`}
         >
-          <AnimatePresence mode="wait">
-            {tabs.map((tab) => (
-              <TabPanel
-                key={tab.id}
-                tab={tab}
-                isActive={activeTab === tab.id}
-              />
-            ))}
-          </AnimatePresence>
+          {tabs.map((tab) => (
+            <TabPanel
+              key={tab.id}
+              tab={tab}
+              isActive={activeTab === tab.id}
+            />
+          ))}
         </div>
       </div>
     </div>
