@@ -32,7 +32,7 @@ export default function Prosjekter() {
 
   return (
     <RootLayout>
-      <main
+      <div
         role="main"
         aria-label="Innhold portefølje"
         className="mt-32 bg-graybg"
@@ -41,7 +41,7 @@ export default function Prosjekter() {
         <Suspense fallback={<RotatingLoader />}>
           <ProjectList />
         </Suspense>
-      </main>
+      </div>
     </RootLayout>
   );
 }
