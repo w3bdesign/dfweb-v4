@@ -42,27 +42,25 @@ const CVContent = ({ cvData }: { cvData: Cv }) => {
   ];
 
   return (
-    <main id="maincontent">
-      <div className="mt-32 bg-graybg">
-        <PageHeader>CV</PageHeader>
-        <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-          <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
-            <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
-              <div className="p-4 text-lg rounded-sm md:w-full">
-                <div className="md:flex md:justify-center hidden">
-                  <Tabs tabs={tabs} />
-                </div>
-                <div className="mx-auto text-center md:mt-8 md:hidden">
-                  <Button href="./cv2.pdf" renderAs="a" type="button">
-                    Last ned PDF
-                  </Button>
-                </div>
+    <div id="maincontent" className="mt-32 bg-graybg">
+      <PageHeader>CV</PageHeader>
+      <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+        <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+          <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center md:min-h-[600px] min-h-[400px]">
+            <div className="p-4 text-lg rounded-sm md:w-full">
+              <div className="md:flex md:justify-center hidden">
+                <Tabs tabs={tabs} />
+              </div>
+              <div className="mx-auto text-center md:mt-8 md:hidden">
+                <Button href="./cv2.pdf" renderAs="a" type="button">
+                  Last ned PDF
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 
