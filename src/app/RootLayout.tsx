@@ -22,7 +22,7 @@ export default async function RootLayout({
       <div className="flex flex-col grow">
         <Header navigation={navigation} />
         <SpeedInsights />
-        <div className="grow">{children}</div>
+        <main className="grow">{children}</main>
         <Footer
           footerCopyrightText={
             footerCopyrightText ?? "Copyright Daniel Fjeldstad"
