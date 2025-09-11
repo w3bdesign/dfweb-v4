@@ -37,17 +37,17 @@ describe("Loading", () => {
 
       // Act
       render(<Loading />);
-      const main = screen.getByRole("main");
+      const loadingContainer = screen.getByLabelText(expected.mainAttributes.ariaLabel);
 
       // Assert
       expect(screen.getByText(expected.header)).toBeInTheDocument();
       expect(screen.getByTestId(expected.testId)).toBeInTheDocument();
-      expect(main).toHaveAttribute(
+      expect(loadingContainer).toHaveAttribute(
         "aria-label",
         expected.mainAttributes.ariaLabel,
       );
       expected.mainAttributes.classes.forEach((className) => {
-        expect(main).toHaveClass(className);
+        expect(loadingContainer).toHaveClass(className);
       });
     });
   });
