@@ -58,11 +58,11 @@ const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
 jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
 jest.mock(
   "@/components/Prosjekter/ProsjektCard.component",
-  () => MockProsjektCard
+  () => MockProsjektCard,
 );
 jest.mock(
   "@/components/Animations/RotatingLoader.component",
-  () => MockRotatingLoader
+  () => MockRotatingLoader,
 );
 jest.mock("@/app/RootLayout", () => MockRootLayout);
 

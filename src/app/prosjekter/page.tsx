@@ -32,10 +32,7 @@ export default function Prosjekter() {
 
   return (
     <RootLayout>
-      <div
-        aria-label="Innhold portefølje"
-        className="mt-32 bg-graybg"
-      >
+      <div aria-label="Innhold portefølje" className="mt-32 bg-graybg">
         <PageHeader>Prosjekter</PageHeader>
         <Suspense fallback={<RotatingLoader />}>
           <ProjectList />
