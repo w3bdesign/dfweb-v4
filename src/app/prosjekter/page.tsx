@@ -33,7 +33,6 @@ export default function Prosjekter() {
   return (
     <RootLayout>
       <div
-        role="main"
         aria-label="Innhold portefølje"
         className="mt-32 bg-graybg"
       >
