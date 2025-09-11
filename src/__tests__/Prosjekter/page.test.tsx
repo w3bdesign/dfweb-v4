@@ -58,11 +58,11 @@ const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
 jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
 jest.mock(
   "@/components/Prosjekter/ProsjektCard.component",
-  () => MockProsjektCard,
+  () => MockProsjektCard
 );
 jest.mock(
   "@/components/Animations/RotatingLoader.component",
-  () => MockRotatingLoader,
+  () => MockRotatingLoader
 );
 jest.mock("@/app/RootLayout", () => MockRootLayout);
 
@@ -80,7 +80,7 @@ function TestProsjekterPage() {
 
   return (
     <MockRootLayout>
-      <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+      <div aria-label="Innhold portefølje" className="mt-32 bg-graybg">
         <MockPageHeader>Prosjekter</MockPageHeader>
         {loading ? (
           <MockRotatingLoader />
@@ -93,7 +93,7 @@ function TestProsjekterPage() {
             </div>
           </div>
         )}
-      </main>
+      </div>
     </MockRootLayout>
   );
 }

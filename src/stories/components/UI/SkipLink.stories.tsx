@@ -16,13 +16,13 @@ export const WithContext = () => (
     <header className="bg-gray-800 p-4 text-white">
       <nav>Navigation Content</nav>
     </header>
-    <main id="main-content" className="p-4">
+    <div id="main-content" className="p-4">
       <h1>Main Content</h1>
       <p>This story demonstrates the SkipLink in context with a page layout.</p>
       <p>
         Tab to focus on the SkipLink - it will appear at the top of the page.
       </p>
-    </main>
+    </div>
   </div>
 );
 
