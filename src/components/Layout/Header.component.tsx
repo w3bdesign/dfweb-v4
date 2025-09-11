@@ -39,7 +39,7 @@ const Header: React.FC<{ navigation: Navigation }> = ({
       />
       <nav className="flex fixed top-[0.65rem] left-1/2 h-12 -translate-x-1/2 py-2 sm:top-[1.7rem] sm:h-[initial] sm:py-0 w-full max-w-[370px] justify-end md:justify-between items-center">
         <DesktopNavigation navigationLinks={links ?? []} />
-        <div id="hamburger-div" data-cy="hamburger-div" className="md:hidden">
+        <div data-cy="hamburger-div" className="md:hidden">
           <MobileMenu links={links ?? []} />
         </div>
       </nav>
