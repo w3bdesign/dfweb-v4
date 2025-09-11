@@ -62,7 +62,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
   };
 
   return (
-    <div data-testid="kontaktcontent" id="maincontent" className="mt-32 bg-graybg">
+    <div
+      data-testid="kontaktcontent"
+      id="maincontent"
+      className="mt-32 bg-graybg"
+    >
       <PageHeader>Kontakt</PageHeader>
       <div className="px-4 lg:px-0 xl:px-0 md:px-0">
         <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
