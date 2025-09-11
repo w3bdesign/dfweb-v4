@@ -53,33 +53,39 @@ jobs:
       - name: Wait for the application to be ready
         run: pnpm exec wait-on http://localhost:3000
 
-      - name: Validate HTML - Home page
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: http://localhost:3000
-          css: true
-          also-check-css: true
+      - name: Download HTML pages for validation
+        run: |
+          # Create directory for downloaded HTML files
+          mkdir -p html-pages
+          
+          # Download HTML pages from the running server
+          echo "Downloading home page..."
+          curl -s http://localhost:3000 > html-pages/index.html
+          
+          echo "Downloading CV page..."
+          curl -s http://localhost:3000/cv > html-pages/cv.html
+          
+          echo "Downloading Prosjekter page..."
+          curl -s http://localhost:3000/prosjekter > html-pages/prosjekter.html
+          
+          echo "Downloading Kontakt page..."
+          curl -s http://localhost:3000/kontakt > html-pages/kontakt.html
+          
+          # Verify files were created
+          ls -la html-pages/
 
-      - name: Validate HTML - CV page
+      - name: Validate HTML files
         uses: Cyb3r-Jak3/html5validator-action@v7.2.0
         with:
-          root: http://localhost:3000/cv
+          root: html-pages/
           css: true
-          also-check-css: true
 
-      - name: Validate HTML - Prosjekter page
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+      - name: Upload HTML validation log
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          root: http://localhost:3000/prosjekter
-          css: true
-          also-check-css: true
-
-      - name: Validate HTML - Kontakt page
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: http://localhost:3000/kontakt
-          css: true
-          also-check-css: true
+          name: html-validation-log
+          path: log.log
 
       - name: Stop server
         if: always()
