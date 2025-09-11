@@ -29,7 +29,7 @@ const getTabButtonClassName = (
   isActive: boolean,
   isVertical: boolean,
   index: number,
-  totalTabs: number
+  totalTabs: number,
 ) => {
   const baseClasses = "px-4 py-3 text-sm font-medium relative";
   const activeClasses = isActive
