@@ -368,88 +368,6 @@ tsconfig.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@5.0.1
- 4:   codecov: codecov/codecov@5.4.3
- 5:   node: circleci/node@7.1.1
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.1
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.1-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run:
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -8798,6 +8716,94 @@ tsconfig.json
 13:   />
 14: );
 15: export default MobileBackground;
+````
+
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import FadeInScroll from "../Animations/FadeInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11:   viewAmount?: number;
+12: }
+13: /**
+14:  * Section component that renders a single content section
+15:  * @param {SectionProps} props - The props for the Section component
+16:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+17:  * @param {string} props.title - The title of the section
+18:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+19:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+20:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
+21:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+22:  */
+23: const Section = ({
+24:   text,
+25:   title,
+26:   variant = "default",
+27:   showDebugButton = true,
+28:   viewAmount = 0.2,
+29: }: SectionProps) => {
+30:   const [shouldError, setShouldError] = useState(false);
+31:   if (!title || !text) {
+32:     console.error(
+33:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+34:     );
+35:     return null;
+36:   }
+37:   if (shouldError) {
+38:     throw new Error("En uventet feil har oppstått");
+39:   }
+40:   const sectionStyles = {
+41:     default: "bg-slate-900",
+42:     alternate: "bg-slate-800/30",
+43:   };
+44:   return (
+45:     <section
+46:       aria-label={title}
+47:       data-testid="sanity-section"
+48:       className={`
+49:         md:py-6
+50:         relative
+51:         transition-colors
+52:         duration-300
+53:         contain-layout
+54:         ${sectionStyles[variant]}
+55:       `}
+56:     >
+57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
+59:           <h2
+60:             data-testid="sanity-title"
+61:             data-cy={title}
+62:             className="text-3xl text-center text-slate-100"
+63:           >
+64:             {title}
+65:           </h2>
+66:           <div className="flex justify-center">
+67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+68:               <PortableText
+69:                 value={text}
+70:                 components={myPortableTextComponents}
+71:               />
+72:             </div>
+73:           </div>
+74:           {process.env.NODE_ENV === "development" && showDebugButton && (
+75:             <Button onClick={() => setShouldError(true)} type="button">
+76:               Utløs Testfeil
+77:             </Button>
+78:           )}
+79:         </FadeInScroll>
+80:       </div>
+81:     </section>
+82:   );
+83: };
+84: export default Section;
 ````
 
 ## File: src/components/Kontakt/config/formConfig.ts
@@ -17663,6 +17669,88 @@ tsconfig.json
 35: }
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   cypress: cypress-io/cypress@5.0.1
+ 4:   codecov: codecov/codecov@5.4.3
+ 5:   node: circleci/node@7.2.0
+ 6: executors:
+ 7:   with-chrome-and-firefox:
+ 8:     docker:
+ 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
+10:     resource_class: large
+11: jobs:
+12:   chromatic-deployment:
+13:     docker:
+14:       - image: cimg/node:23.11.1
+15:     working_directory: ~/chromatic
+16:     steps:
+17:       - checkout
+18:       - restore_cache:
+19:           keys:
+20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+21:             - pnpm-packages-cache-v1
+22:       - run:
+23:           name: Install pnpm package manager
+24:           command: |
+25:             sudo corepack enable
+26:             sudo corepack prepare pnpm@latest-8 --activate
+27:       - run:
+28:           name: Install Dependencies
+29:           command: pnpm install --frozen-lockfile
+30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+31:       - save_cache:
+32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+33:           paths:
+34:             - ~/.pnpm-store
+35:   build:
+36:     working_directory: /home/circleci/dfweb
+37:     docker:
+38:       - image: cimg/node:23.11.1-browsers
+39:     steps:
+40:       - checkout
+41:       - restore_cache:
+42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+43:       - run:
+44:           name: Install pnpm package manager
+45:           command: |
+46:             sudo corepack enable
+47:             sudo corepack prepare pnpm@latest-8 --activate
+48:       - run:
+49:           name: Install Dependencies
+50:           command: pnpm install --no-frozen-lockfile
+51:       - run:
+52:           name: Chrome key start setup
+53:           command: sudo apt update -y
+54:       - run:
+55:           name: Chrome key finish setup
+56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+57:       - run:
+58:           name: Chrome package download
+59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+60:       - save_cache:
+61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+62:           paths:
+63:             - ~/.pnpm-store
+64:       - store_artifacts:
+65:           path: /root/.npm/_logs
+66:       - run:
+67:           name: Run Jest Tests
+68:           command: pnpm test
+69:       - run:
+70:           name: Make sure ~/.gnupg directory exists
+71:           command: mkdir -p ~/.gnupg
+72:       - codecov/upload
+73:     parallelism: 6
+74: workflows:
+75:   chromatic-deploy:
+76:     jobs:
+77:       - build:
+78:           name: Build Next.js project
+````
+
 ## File: src/app/cv/page.tsx
 ````typescript
  1: import RootLayout from "../RootLayout";
@@ -17943,92 +18031,36 @@ tsconfig.json
 69: export default Icons;
 ````
 
-## File: src/components/Index/Section.component.tsx
+## File: src/components/Index/IndexContent.component.tsx
 ````typescript
  1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import FadeInScroll from "../Animations/FadeInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11:   viewAmount?: number;
-12: }
-13: /**
-14:  * Section component that renders a single content section
-15:  * @param {SectionProps} props - The props for the Section component
-16:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-17:  * @param {string} props.title - The title of the section
-18:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-19:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-20:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
-21:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-22:  */
-23: const Section = ({
-24:   text,
-25:   title,
-26:   variant = "default",
-27:   showDebugButton = true,
-28:   viewAmount = 0.2,
-29: }: SectionProps) => {
-30:   const [shouldError, setShouldError] = useState(false);
-31:   if (!title || !text) {
-32:     console.error(
-33:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-34:     );
-35:     return null;
-36:   }
-37:   if (shouldError) {
-38:     throw new Error("En uventet feil har oppstått");
-39:   }
-40:   const sectionStyles = {
-41:     default: "bg-slate-900",
-42:     alternate: "bg-slate-800/30",
-43:   };
-44:   return (
-45:     <section
-46:       aria-label={title}
-47:       data-testid="sanity-section"
-48:       className={`
-49:         md:py-6
-50:         relative
-51:         transition-colors
-52:         duration-300
-53:         contain-layout
-54:         ${sectionStyles[variant]}
-55:       `}
-56:     >
-57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
-59:           <h2
-60:             data-testid="sanity-title"
-61:             data-cy={title}
-62:             className="text-3xl text-center text-slate-100"
-63:           >
-64:             {title}
-65:           </h2>
-66:           <div className="flex justify-center">
-67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-68:               <PortableText
-69:                 value={text}
-70:                 components={myPortableTextComponents}
-71:               />
-72:             </div>
-73:           </div>
-74:           {process.env.NODE_ENV === "development" && showDebugButton && (
-75:             <Button onClick={() => setShouldError(true)} type="button">
-76:               Utløs Testfeil
-77:             </Button>
-78:           )}
-79:         </FadeInScroll>
-80:       </div>
-81:     </section>
-82:   );
-83: };
-84: export default Section;
+ 2: import Section from "./Section.component";
+ 3: import type { Page } from "@/types/sanity.types";
+ 4: /**
+ 5:  * IndexContent component that renders multiple content sections with alternating visual styles
+ 6:  * @param {Object} props - The props for the IndexContent component
+ 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
+ 8:  * @returns {JSX.Element} The rendered IndexContent component
+ 9:  * @throws {Error} Throws an error if no content is available
+10:  */
+11: const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
+12:   if (!pageContent || pageContent.length === 0) {
+13:     throw new Error("Ingen innhold tilgjengelig");
+14:   }
+15:   return (
+16:     <div className="w-full overflow-hidden -mb-8">
+17:       {pageContent.map((page, index) => (
+18:         <Section
+19:           key={page._key}
+20:           {...page}
+21:           variant={index % 2 === 0 ? "default" : "alternate"}
+22:           viewAmount={index === 0 ? 0.1 : 0.2}
+23:         />
+24:       ))}
+25:     </div>
+26:   );
+27: };
+28: export default IndexContent;
 ````
 
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
@@ -18259,44 +18291,12 @@ tsconfig.json
 15:   "author": "",
 16:   "license": "ISC",
 17:   "peerDependencies": {
-18:     "eslint": ">=9.35.0"
+18:     "eslint": ">=9.36.0"
 19:   },
 20:   "devDependencies": {
 21:     "typescript": "^5.9.2"
 22:   }
 23: }
-````
-
-## File: src/components/Index/IndexContent.component.tsx
-````typescript
- 1: "use client";
- 2: import Section from "./Section.component";
- 3: import type { Page } from "@/types/sanity.types";
- 4: /**
- 5:  * IndexContent component that renders multiple content sections with alternating visual styles
- 6:  * @param {Object} props - The props for the IndexContent component
- 7:  * @param {Pagecontent[]} props.pageContent - Array of content sections from Sanity to render. Each section alternates between default and alternate variant
- 8:  * @returns {JSX.Element} The rendered IndexContent component
- 9:  * @throws {Error} Throws an error if no content is available
-10:  */
-11: const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
-12:   if (!pageContent || pageContent.length === 0) {
-13:     throw new Error("Ingen innhold tilgjengelig");
-14:   }
-15:   return (
-16:     <div className="w-full overflow-hidden -mb-8">
-17:       {pageContent.map((page, index) => (
-18:         <Section
-19:           key={page._key}
-20:           {...page}
-21:           variant={index % 2 === 0 ? "default" : "alternate"}
-22:           viewAmount={index === 0 ? 0.1 : 0.2}
-23:         />
-24:       ))}
-25:     </div>
-26:   );
-27: };
-28: export default IndexContent;
 ````
 
 ## File: .github/workflows/cypress.yml
@@ -18376,7 +18376,7 @@ tsconfig.json
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^5.0.2",
 25:     "@types/react": "^19.1.13",
-26:     "eslint": "^9.35.0",
+26:     "eslint": "^9.36.0",
 27:     "prettier": "^3.6.2",
 28:     "typescript": "^5.9.2"
 29:   },
@@ -18467,7 +18467,7 @@ tsconfig.json
 74:     "axe-core": "^4.10.3",
 75:     "cypress": "15.2.0",
 76:     "cypress-axe": "^1.7.0",
-77:     "eslint": "9.35.0",
+77:     "eslint": "9.36.0",
 78:     "eslint-config-next": "15.5.3",
 79:     "eslint-config-prettier": "^10.1.8",
 80:     "eslint-plugin-jest": "^29.0.1",
