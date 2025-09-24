@@ -64,7 +64,7 @@ function InputField<T extends FieldValues>({
   ...props
 }: InputProps<T>) {
   const sharedClasses =
-    "cursor-text peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
+    "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
 
   const registerOptions = createRegisterOptions<T>(
     isRequired,
@@ -105,9 +105,9 @@ function InputField<T extends FieldValues>({
         )}
         <label
           htmlFor={htmlFor}
-          className={`absolute cursor-pointer left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+          className={`absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
             // Removed peer-focus:text-primary
-            type === "textarea" ? "cursor-pointer peer-focus:-top-4" : ""
+            type === "textarea" ? "peer-focus:-top-4" : ""
           }`}
         >
           {label}
