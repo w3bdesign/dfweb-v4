@@ -8,6 +8,7 @@ export interface IButtonProps {
   disabled?: boolean;
   download?: boolean | string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
+  "aria-label"?: string;
 }
 
 /**
@@ -31,6 +32,7 @@ const Button = ({
   disabled = false,
   download,
   onClick,
+  "aria-label": ariaLabel,
   ...props
 }: IButtonProps) => {
   const Component = renderAs ?? "button";
@@ -41,13 +43,14 @@ const Button = ({
     <Component
       type={isLink ? undefined : type}
       data-cy="submit"
-      className="glitch p-3 m-3 text-white font-medium transition duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none"
+      className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
       href={href}
       target={targetLink}
       disabled={disabled}
       data-text={children}
       download={download}
       onClick={onClick}
+      aria-label={ariaLabel}
       {...props}
     >
       {children}

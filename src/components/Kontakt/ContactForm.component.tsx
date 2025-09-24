@@ -70,9 +70,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
               <div className="p-2 md:p-6 pt-8">
                 {serverResponse ? (
-                  <h3 className="m-2 h-32 text-xl text-center text-gray-300">
-                    {serverResponse}
-                  </h3>
+                  <div aria-live="polite" aria-atomic="true">
+                    <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+                      {serverResponse}
+                    </h3>
+                  </div>
                 ) : (
                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
                     <form
@@ -100,6 +102,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           isRequired
                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
                           title="Vennligst bruk norske bokstaver"
+                          autoComplete="name"
+                          spellCheck={false}
                         />
                         <br />
 
@@ -112,6 +116,9 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           isRequired
                           inputPattern={/^\d{8}$/}
                           title="Vennligst oppgi et gyldig telefonnummer"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          spellCheck={false}
                         />
                         <br />
 
@@ -123,6 +130,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           error={errors.tekst?.message}
                           isRequired
                           type="textarea"
+                          spellCheck={true}
                         />
                         <br />
                       </fieldset>
@@ -132,7 +140,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           disabled={isSubmitting}
                           data-testid="submit-button"
                         >
-                          Send skjema
+                          {isSubmitting ? "Sender..." : "Send skjema"}
                         </Button>
                       </div>
                     </form>

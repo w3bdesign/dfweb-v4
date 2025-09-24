@@ -86,25 +86,22 @@ describe("MobileMenu - elementer eksisterer", () => {
     const hamburger = screen.getByTestId("hamburger");
 
     // Assert - Initial state
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
-    ).toBeInTheDocument();
+    expect(hamburger).toHaveAttribute("aria-expanded", "false");
+    expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
 
     // Act - Open menu
     fireEvent.click(hamburger);
 
     // Assert - Open state
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: true }),
-    ).toBeInTheDocument();
+    expect(hamburger).toHaveAttribute("aria-expanded", "true");
+    expect(hamburger).toHaveAttribute("aria-label", "Lukk meny");
 
     // Act - Close menu
     fireEvent.click(hamburger);
 
     // Assert - Closed state
-    expect(
-      screen.getByRole("button", { name: /hamburger/i, expanded: false }),
-    ).toBeInTheDocument();
+    expect(hamburger).toHaveAttribute("aria-expanded", "false");
+    expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
   });
 
   it("displays correct number of navigation links", () => {
