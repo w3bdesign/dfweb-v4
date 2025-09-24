@@ -64,7 +64,7 @@ function InputField<T extends FieldValues>({
   ...props
 }: InputProps<T>) {
   const sharedClasses =
-    "cursor-pointer peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
+    "cursor-text peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
 
   const registerOptions = createRegisterOptions<T>(
     isRequired,
