@@ -26,9 +26,12 @@ const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
       data-testid="hamburger"
       onClick={onClick}
       aria-expanded={animatetoX}
+      aria-label={animatetoX ? "Lukk meny" : "Åpne meny"}
       type="button"
     >
-      <span className="sr-only text-white text-2xl">Hamburger</span>
+      <span className="sr-only text-white text-2xl">
+        {animatetoX ? "Lukk navigasjonsmeny" : "Åpne navigasjonsmeny"}
+      </span>
       <span
         data-testid="hamburgerline"
         className={`${hamburgerLine} ${
