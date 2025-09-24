@@ -86,7 +86,7 @@ function InputField<T extends FieldValues>({
             inputMode={inputMode}
             {...register(name, {
               ...registerOptions,
-              setValueAs: (v: string) => v?.trim() // Trim whitespace
+              setValueAs: (v: string) => v?.trim(), // Trim whitespace
             })}
             {...props}
           />
@@ -98,7 +98,7 @@ function InputField<T extends FieldValues>({
             spellCheck={spellCheck}
             {...register(name, {
               ...registerOptions,
-              setValueAs: (v: string) => v?.trim() // Trim whitespace
+              setValueAs: (v: string) => v?.trim(), // Trim whitespace
             })}
             {...props}
           ></textarea>
