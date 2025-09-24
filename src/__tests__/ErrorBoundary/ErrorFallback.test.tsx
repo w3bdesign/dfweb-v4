@@ -16,14 +16,8 @@ describe("ErrorFallback", () => {
   let mockReload: jest.SpyInstance;
 
   beforeEach(() => {
-    // Mock window.location.reload
-    mockReload = jest.fn();
-    Object.defineProperty(window, 'location', {
-      value: {
-        reload: mockReload,
-      },
-      writable: true,
-    });
+    // Mock window.location.reload using jest.spyOn
+    mockReload = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
   });
 
   afterEach(() => {
