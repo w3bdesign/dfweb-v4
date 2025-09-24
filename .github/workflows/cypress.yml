@@ -8,9 +8,6 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chrome, firefox, edge]
-    container:
-      image: cypress/browsers:node-22.18.0-chrome-139.0.7258.138-1-ff-142.0-edge-139.0.3405.102-1
-      options: --user 1001
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -24,7 +21,8 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Cache Cypress binary
         uses: actions/cache@v4
@@ -37,18 +35,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Cypress binary
-        run: pnpm exec cypress install
-
-      - name: Verify Cypress installation
-        run: pnpm exec cypress verify
-
       - name: Cypress run
-        uses: cypress-io/github-action@38f9a02ac2661ac1ee120f01dc9ad831e02decd6
+        uses: cypress-io/github-action@v6
         with:
+          install: false
           build: pnpm build
           start: pnpm dev
           wait-on: "http://localhost:3000"
           wait-on-timeout: 120
           browser: ${{ matrix.browser }}
-          install: false
