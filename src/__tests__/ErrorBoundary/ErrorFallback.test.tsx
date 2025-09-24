@@ -126,7 +126,7 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(mockReload).toHaveBeenCalledTimes(1);
   });
 
   it("reloads the page when reload button is clicked in full mode", () => {
@@ -140,6 +140,6 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(mockReload).toHaveBeenCalledTimes(1);
   });
 });
