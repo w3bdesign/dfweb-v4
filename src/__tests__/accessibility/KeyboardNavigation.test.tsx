@@ -24,12 +24,15 @@ describe("Keyboard Navigation Accessibility", () => {
 
     // Act & Assert
     it("should show focus indicator on Button when tabbed to", async () => {
+      // Arrange
       const user = userEvent.setup();
       render(<Button>Test Button</Button>);
 
+      // Act
       const button = screen.getByRole("button");
       await user.tab();
 
+      // Assert
       expect(document.activeElement).toBe(button);
     });
 
@@ -81,12 +84,13 @@ describe("Keyboard Navigation Accessibility", () => {
     it("should have appropriate padding for touch targets", () => {
       // Arrange
       render(<Button>Test Button</Button>);
+
+      // Act
       const button = screen.getByRole("button");
 
-      // Act - Check that button has appropriate padding classes
+      // Assert
       expect(button).toHaveClass("p-3"); // p-3 = 12px padding
-
-      // Assert - With padding and font size, effective touch target is adequate
+      // With padding and font size, effective touch target is adequate
       // p-3 (12px) * 2 + text height makes it touch-friendly
       expect(button.className).toContain("p-3");
     });
@@ -99,9 +103,13 @@ describe("ARIA Attributes", () => {
 
   // Act & Assert
   it("should have proper aria-label on icon-only buttons", () => {
+    // Arrange
     render(<Button aria-label="Open menu">☰</Button>);
 
+    // Act
     const button = screen.getByRole("button", { name: "Open menu" });
+
+    // Assert
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute("aria-label", "Open menu");
   });
@@ -156,9 +164,13 @@ describe("Form Accessibility", () => {
 
   // Act & Assert
   it("should have autocomplete attributes on form fields", () => {
+    // Arrange
     render(<TestForm />);
+
+    // Act
     const input = screen.getByLabelText("Phone Number");
 
+    // Assert
     expect(input).toHaveAttribute("autoComplete", "tel");
     expect(input).toHaveAttribute("inputMode", "tel");
     expect(input).toHaveAttribute("spellCheck", "false");
@@ -204,9 +216,12 @@ describe("Reduced Motion", () => {
   it("should have transition classes that respect prefers-reduced-motion", () => {
     // Arrange
     render(<Button>Test Button</Button>);
+
+    // Act
     const button = screen.getByRole("button");
 
-    // Act & Assert - Check that button has transition classes
+    // Assert
+    // Check that button has transition classes
     // The actual reduced motion is handled by CSS media queries
     expect(button.className).toContain("transition");
     // Our globals.css handles prefers-reduced-motion media query
