@@ -13,13 +13,21 @@ jest.mock("@/components/Animations/Matrix.component", () => {
 
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
+  let mockReload: jest.SpyInstance;
 
   beforeEach(() => {
     // Mock window.location.reload
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { reload: jest.fn() },
+    mockReload = jest.fn();
+    Object.defineProperty(window, 'location', {
+      value: {
+        reload: mockReload,
+      },
+      writable: true,
     });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("renders error message and reload button", () => {
