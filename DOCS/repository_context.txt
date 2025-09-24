@@ -13120,6 +13120,33 @@ tsconfig.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.36.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.2"
+22:   }
+23: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -17270,138 +17297,6 @@ tsconfig.json
 35: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   cypress: cypress-io/cypress@5.0.1
- 4:   codecov: codecov/codecov@5.4.3
- 5:   node: circleci/node@7.2.0
- 6: executors:
- 7:   with-chrome-and-firefox:
- 8:     docker:
- 9:       - image: "cypress/browsers:node16.14.2-slim-chrome100-ff99-edge"
-10:     resource_class: large
-11: jobs:
-12:   chromatic-deployment:
-13:     docker:
-14:       - image: cimg/node:23.11.1
-15:     working_directory: ~/chromatic
-16:     steps:
-17:       - checkout
-18:       - restore_cache:
-19:           keys:
-20:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-21:             - pnpm-packages-cache-v1
-22:       - run:
-23:           name: Install pnpm package manager
-24:           command: |
-25:             sudo corepack enable
-26:             sudo corepack prepare pnpm@latest-8 --activate
-27:       - run:
-28:           name: Install Dependencies
-29:           command: pnpm install --frozen-lockfile
-30:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-31:       - save_cache:
-32:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-33:           paths:
-34:             - ~/.pnpm-store
-35:   build:
-36:     working_directory: /home/circleci/dfweb
-37:     docker:
-38:       - image: cimg/node:23.11.1-browsers
-39:     steps:
-40:       - checkout
-41:       - restore_cache:
-42:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-43:       - run:
-44:           name: Install pnpm package manager
-45:           command: |
-46:             sudo corepack enable
-47:             sudo corepack prepare pnpm@latest-8 --activate
-48:       - run:
-49:           name: Install Dependencies
-50:           command: pnpm install --no-frozen-lockfile
-51:       - run:
-52:           name: Chrome key start setup
-53:           command: sudo apt update -y
-54:       - run:
-55:           name: Chrome key finish setup
-56:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-57:       - run:
-58:           name: Chrome package download
-59:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-60:       - save_cache:
-61:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-62:           paths:
-63:             - ~/.pnpm-store
-64:       - store_artifacts:
-65:           path: /root/.npm/_logs
-66:       - run:
-67:           name: Run Jest Tests
-68:           command: pnpm test
-69:       - run:
-70:           name: Make sure ~/.gnupg directory exists
-71:           command: mkdir -p ~/.gnupg
-72:       - codecov/upload
-73:     parallelism: 6
-74: workflows:
-75:   chromatic-deploy:
-76:     jobs:
-77:       - build:
-78:           name: Build Next.js project
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     container:
-11:       image: cypress/browsers:node-22.18.0-chrome-139.0.7258.138-1-ff-142.0-edge-139.0.3405.102-1
-12:       options: --user 1001
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@v5
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
-18:         with:
-19:           version: 10
-20:       - name: Setup Node.js
-21:         uses: actions/setup-node@v5
-22:         with:
-23:           node-version: 22
-24:           cache: 'pnpm'
-25:       - name: Cache Cypress binary
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ~/.cache/Cypress
-29:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-cypress-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Install Cypress binary
-35:         run: pnpm exec cypress install
-36:       - name: Verify Cypress installation
-37:         run: pnpm exec cypress verify
-38:       - name: Cypress run
-39:         uses: cypress-io/github-action@38f9a02ac2661ac1ee120f01dc9ad831e02decd6
-40:         with:
-41:           build: pnpm build
-42:           start: pnpm dev
-43:           wait-on: "http://localhost:3000"
-44:           wait-on-timeout: 120
-45:           browser: ${{ matrix.browser }}
-46:           install: false
-````
-
 ## File: src/__tests__/Layout/MobileMenu.test.tsx
 ````typescript
   1: /**
@@ -17701,31 +17596,44 @@ tsconfig.json
 78: export default ProsjektCard;
 ````
 
-## File: src/utils/eslint/package.json
+## File: studio/package.json
 ````json
  1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
  6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.36.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.2"
-22:   }
-23: }
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.1.1",
+18:     "react-dom": "^19.1.1",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^4.10.0",
+21:     "styled-components": "^6.1.19"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.1.13",
+26:     "eslint": "^9.36.0",
+27:     "prettier": "^3.6.2",
+28:     "typescript": "^5.9.2"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
 ````
 
 ## File: AGENTS.md
@@ -17883,6 +17791,82 @@ tsconfig.json
 151: - MUST: Increase contrast on `:hover/:active/:focus`
 152: - SHOULD: Match browser UI to bg
 153: - SHOULD: Avoid gradient banding (use masks when needed)
+````
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.0
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:23.11.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:23.11.1-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --no-frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
 ````
 
 ## File: src/app/layout.tsx
@@ -18081,46 +18065,6 @@ tsconfig.json
 142:   );
 143: };
 144: export default ContactForm;
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.1.1",
-18:     "react-dom": "^19.1.1",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.10.0",
-21:     "styled-components": "^6.1.19"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.13",
-26:     "eslint": "^9.36.0",
-27:     "prettier": "^3.6.2",
-28:     "typescript": "^5.9.2"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: src/__tests__/accessibility/KeyboardNavigation.test.tsx
@@ -18485,6 +18429,50 @@ tsconfig.json
 54:   );
 55: };
 56: export default Button;
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v5
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v5
+19:         with:
+20:           node-version: 22
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Cypress run
+33:         uses: cypress-io/github-action@v6
+34:         with:
+35:           install: false
+36:           build: pnpm build
+37:           start: pnpm dev
+38:           wait-on: "http://localhost:3000"
+39:           wait-on-timeout: 120
+40:           browser: ${{ matrix.browser }}
 ````
 
 ## File: src/components/UI/InputField.component.tsx
@@ -18879,7 +18867,7 @@ tsconfig.json
 83:     "eslint-plugin-react": "^7.37.5",
 84:     "eslint-plugin-react-hooks": "^5.2.0",
 85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-86:     "eslint-plugin-testing-library": "^7.8.1",
+86:     "eslint-plugin-testing-library": "^7.9.2",
 87:     "expect": "^30.1.2",
 88:     "jest-environment-jsdom": "^30.1.2",
 89:     "jest-extended": "^6.0.0",
