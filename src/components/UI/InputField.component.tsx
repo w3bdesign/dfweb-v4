@@ -16,6 +16,9 @@ export interface InputProps<T extends FieldValues> {
   readonly type?: "input" | "textarea";
   readonly register: UseFormRegister<T>;
   readonly error?: string;
+  readonly autoComplete?: string;
+  readonly spellCheck?: boolean;
+  readonly inputMode?: "text" | "tel" | "email" | "numeric";
 }
 
 /**
@@ -55,10 +58,13 @@ function InputField<T extends FieldValues>({
   type = "input",
   register,
   error,
+  autoComplete,
+  spellCheck,
+  inputMode,
   ...props
 }: InputProps<T>) {
   const sharedClasses =
-    "cursor-pointer peer block text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
+    "cursor-pointer peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-slate-200 placeholder-gray-300/0 transition duration-200";
 
   const registerOptions = createRegisterOptions<T>(
     isRequired,
@@ -75,7 +81,13 @@ function InputField<T extends FieldValues>({
             type="text"
             placeholder={label}
             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-            {...register(name, registerOptions)}
+            autoComplete={autoComplete}
+            spellCheck={spellCheck}
+            inputMode={inputMode}
+            {...register(name, {
+              ...registerOptions,
+              setValueAs: (v: string) => v?.trim() // Trim whitespace
+            })}
             {...props}
           />
         ) : (
@@ -83,7 +95,11 @@ function InputField<T extends FieldValues>({
             id={htmlFor}
             placeholder={label}
             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-            {...register(name, registerOptions)}
+            spellCheck={spellCheck}
+            {...register(name, {
+              ...registerOptions,
+              setValueAs: (v: string) => v?.trim() // Trim whitespace
+            })}
             {...props}
           ></textarea>
         )}
