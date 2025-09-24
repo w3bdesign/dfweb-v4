@@ -100,6 +100,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           isRequired
                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
                           title="Vennligst bruk norske bokstaver"
+                          autoComplete="name"
+                          spellCheck={false}
                         />
                         <br />
 
@@ -112,6 +114,9 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           isRequired
                           inputPattern={/^\d{8}$/}
                           title="Vennligst oppgi et gyldig telefonnummer"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          spellCheck={false}
                         />
                         <br />
 
@@ -123,6 +128,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           error={errors.tekst?.message}
                           isRequired
                           type="textarea"
+                          spellCheck={true}
                         />
                         <br />
                       </fieldset>
