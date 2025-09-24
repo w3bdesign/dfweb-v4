@@ -8,6 +8,7 @@ export interface IButtonProps {
   disabled?: boolean;
   download?: boolean | string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
+  "aria-label"?: string;
 }
 
 /**
@@ -31,6 +32,7 @@ const Button = ({
   disabled = false,
   download,
   onClick,
+  "aria-label": ariaLabel,
   ...props
 }: IButtonProps) => {
   const Component = renderAs ?? "button";
@@ -48,6 +50,7 @@ const Button = ({
       data-text={children}
       download={download}
       onClick={onClick}
+      aria-label={ariaLabel}
       {...props}
     >
       {children}
