@@ -124,25 +124,9 @@ describe("ErrorFallback", () => {
   });
 
   describe("reload functionality", () => {
-    let originalLocation: Location;
-
-    beforeEach(() => {
-      originalLocation = globalThis.location;
-    });
-
-    afterEach(() => {
-      Object.defineProperty(globalThis, "location", {
-        value: originalLocation,
-        writable: true,
-        configurable: true,
-      });
-    });
-
     it("calls window.location.reload when compact mode reload button is clicked", () => {
       // Arrange
-      const mockReload = jest.fn();
-      delete (globalThis as any).location;
-      globalThis.location = { reload: mockReload } as any;
+      const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
 
       render(<ErrorFallback error={mockError} compact={true} />);
 
@@ -151,14 +135,15 @@ describe("ErrorFallback", () => {
       fireEvent.click(reloadButton);
 
       // Assert
-      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+      
+      // Cleanup
+      reloadSpy.mockRestore();
     });
 
     it("calls window.location.reload when full mode Pill is clicked", () => {
       // Arrange
-      const mockReload = jest.fn();
-      delete (globalThis as any).location;
-      globalThis.location = { reload: mockReload } as any;
+      const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
 
       render(<ErrorFallback error={mockError} />);
 
@@ -167,7 +152,10 @@ describe("ErrorFallback", () => {
       fireEvent.click(reloadButton);
 
       // Assert
-      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+      
+      // Cleanup
+      reloadSpy.mockRestore();
     });
   });
 });
