@@ -124,17 +124,8 @@ describe("ErrorFallback", () => {
   });
   it("calls window.location.reload when compact reload button is clicked", () => {
     // Arrange
-    const mockReload = jest.fn();
-    const originalLocation = globalThis.location;
-
-    Object.defineProperty(globalThis, "location", {
-      value: {
-        ...originalLocation,
-        reload: mockReload,
-      },
-      writable: true,
-    });
-
+    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+    
     render(<ErrorFallback error={mockError} compact={true} />);
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
@@ -144,28 +135,16 @@ describe("ErrorFallback", () => {
     reloadButton.click();
 
     // Assert
-    expect(mockReload).toHaveBeenCalled();
+    expect(reloadSpy).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(globalThis, "location", {
-      value: originalLocation,
-      writable: true,
-    });
+    reloadSpy.mockRestore();
   });
 
   it("calls window.location.reload when full reload button is clicked", () => {
     // Arrange
-    const mockReload = jest.fn();
-    const originalLocation = globalThis.location;
-
-    Object.defineProperty(globalThis, "location", {
-      value: {
-        ...originalLocation,
-        reload: mockReload,
-      },
-      writable: true,
-    });
-
+    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+    
     render(<ErrorFallback error={mockError} compact={false} />);
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
@@ -175,12 +154,9 @@ describe("ErrorFallback", () => {
     reloadButton.click();
 
     // Assert
-    expect(mockReload).toHaveBeenCalled();
+    expect(reloadSpy).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(globalThis, "location", {
-      value: originalLocation,
-      writable: true,
-    });
+    reloadSpy.mockRestore();
   });
 });
