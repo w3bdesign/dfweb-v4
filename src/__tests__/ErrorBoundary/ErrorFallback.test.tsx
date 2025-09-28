@@ -126,8 +126,8 @@ describe("ErrorFallback", () => {
     // Arrange
     const mockReload = jest.fn();
     const originalLocation = globalThis.location;
-    
-    Object.defineProperty(globalThis, 'location', {
+
+    Object.defineProperty(globalThis, "location", {
       value: {
         ...originalLocation,
         reload: mockReload,
@@ -147,7 +147,7 @@ describe("ErrorFallback", () => {
     expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(globalThis, 'location', {
+    Object.defineProperty(globalThis, "location", {
       value: originalLocation,
       writable: true,
     });
@@ -157,8 +157,8 @@ describe("ErrorFallback", () => {
     // Arrange
     const mockReload = jest.fn();
     const originalLocation = globalThis.location;
-    
-    Object.defineProperty(globalThis, 'location', {
+
+    Object.defineProperty(globalThis, "location", {
       value: {
         ...originalLocation,
         reload: mockReload,
@@ -178,7 +178,7 @@ describe("ErrorFallback", () => {
     expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(globalThis, 'location', {
+    Object.defineProperty(globalThis, "location", {
       value: originalLocation,
       writable: true,
     });
