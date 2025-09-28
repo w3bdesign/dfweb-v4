@@ -13,6 +13,23 @@ jest.mock("@/components/Animations/Matrix.component", () => {
 
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
+  
+  // Mock window.location.reload to prevent navigation errors in tests
+  const mockReload = jest.fn();
+  
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        reload: mockReload,
+      },
+      writable: true,
+    });
+  });
+  
+  beforeEach(() => {
+    mockReload.mockClear();
+  });
 
   it("renders error message and reload button", () => {
     // Arrange
