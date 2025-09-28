@@ -63,38 +63,100 @@ describe("Matrix Utils", () => {
     it("returns a character from the provided tileSet", () => {
       // Arrange
       const tileSet = ["A", "B", "C"];
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 1; // This will return index 1 % 3 = 1, so "B"
+          }
+          return array as Uint32Array;
+        });
 
       // Act
       const result = getRandomCharacter(tileSet);
 
       // Assert
-      expect(tileSet).toContain(result);
-      mockGetRandomInt.mockRestore();
+      expect(result).toBe("B");
+      mockGetRandomValues.mockRestore();
+    });
+
+    it("returns fallback character when tileSet access returns undefined", () => {
+      // Arrange
+      const tileSet = ["A"];
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 999; // This will cause out-of-bounds access
+          }
+          return array as Uint32Array;
+        });
+
+      // Act
+      const result = getRandomCharacter(tileSet);
+
+      // Assert
+      expect(result).toBe("A"); // Should fall back to tileSet[0]
+      mockGetRandomValues.mockRestore();
+    });
+
+    it("returns empty string when tileSet and fallbacks are undefined", () => {
+      // Arrange
+      const tileSet: string[] = [];
+      Object.defineProperty(tileSet, '0', { value: undefined });
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 0;
+          }
+          return array as Uint32Array;
+        });
+
+      // Act
+      const result = getRandomCharacter(tileSet);
+
+      // Assert
+      expect(result).toBe(""); // Should fall back to empty string
+      mockGetRandomValues.mockRestore();
     });
 
     it("returns a random ASCII character when tileSet is null", () => {
       // Arrange
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 50; // This will generate a specific ASCII character
+          }
+          return array as Uint32Array;
+        });
 
       // Act
       const result = getRandomCharacter(null);
 
       // Assert
       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
-      mockGetRandomInt.mockRestore();
+      mockGetRandomValues.mockRestore();
     });
 
     it("returns a random ASCII character when tileSet is empty", () => {
       // Arrange
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomValues = jest
+        .spyOn(window.crypto, "getRandomValues")
+        .mockImplementation((array) => {
+          if (array instanceof Uint32Array) {
+            array[0] = 25;
+          }
+          return array as Uint32Array;
+        });
 
       // Act
       const result = getRandomCharacter([]);
 
       // Assert
       expect(result).toMatch(/^[\x21-\x7E]$/); // ASCII printable characters
-      mockGetRandomInt.mockRestore();
+      mockGetRandomValues.mockRestore();
     });
   });
 
