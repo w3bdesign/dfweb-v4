@@ -16,14 +16,14 @@ describe("ErrorFallback", () => {
 
   // Mock window.location.reload
   const reloadSpy = jest.fn();
-  
+
   beforeAll(() => {
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(window, "location", {
       writable: true,
       value: {
         ...window.location,
-        reload: reloadSpy
-      }
+        reload: reloadSpy,
+      },
     });
   });
 
