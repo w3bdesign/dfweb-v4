@@ -152,7 +152,7 @@ describe("ErrorFallback", () => {
       fireEvent.click(reloadButton);
 
       // Assert
-      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
     });
 
     it("full mode Pill calls window.location.reload", () => {
@@ -164,7 +164,7 @@ describe("ErrorFallback", () => {
       fireEvent.click(reloadButton);
 
       // Assert
-      expect(mockReload).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
