@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
@@ -121,5 +121,43 @@ describe("ErrorFallback", () => {
 
     // Act & Assert
     expect(reloadButton).toBeInTheDocument();
+  });
+
+  describe("reload functionality", () => {
+    it("calls window.location.reload when compact mode reload button is clicked", () => {
+      // Arrange
+      const mockReload = jest.fn();
+      Object.defineProperty(globalThis, "location", {
+        value: { reload: mockReload },
+        writable: true,
+      });
+
+      render(<ErrorFallback error={mockError} compact={true} />);
+
+      // Act
+      const reloadButton = screen.getByText("Returner til Matrix");
+      fireEvent.click(reloadButton);
+
+      // Assert
+      expect(mockReload).toHaveBeenCalledTimes(1);
+    });
+
+    it("calls window.location.reload when full mode Pill is clicked", () => {
+      // Arrange
+      const mockReload = jest.fn();
+      Object.defineProperty(globalThis, "location", {
+        value: { reload: mockReload },
+        writable: true,
+      });
+
+      render(<ErrorFallback error={mockError} />);
+
+      // Act
+      const reloadButton = screen.getByText("Returner til Matrix");
+      fireEvent.click(reloadButton);
+
+      // Assert
+      expect(mockReload).toHaveBeenCalledTimes(1);
+    });
   });
 });
