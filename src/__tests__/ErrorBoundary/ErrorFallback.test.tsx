@@ -130,7 +130,7 @@ describe("ErrorFallback", () => {
     beforeAll(() => {
       originalLocation = window.location;
       mockReload = jest.fn();
-      
+
       // Replace the entire location object
       delete (window as any).location;
       window.location = {
