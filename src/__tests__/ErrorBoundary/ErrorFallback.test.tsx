@@ -16,16 +16,20 @@ describe("ErrorFallback", () => {
 
   // Mock window.location.reload to prevent navigation errors in tests
   const mockReload = jest.fn();
+  const originalLocation = window.location;
 
   beforeAll(() => {
-    Object.defineProperty(window, "location", {
-      value: {
-        ...window.location,
-        reload: mockReload,
-      },
-      writable: true,
-      configurable: true,
-    });
+    // Delete the location property first, then redefine it
+    delete (window as any).location;
+    window.location = {
+      ...originalLocation,
+      reload: mockReload,
+    } as Location;
+  });
+
+  afterAll(() => {
+    // Restore original location
+    window.location = originalLocation;
   });
 
   beforeEach(() => {
