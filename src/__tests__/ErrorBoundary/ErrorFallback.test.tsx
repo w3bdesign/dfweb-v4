@@ -124,13 +124,25 @@ describe("ErrorFallback", () => {
   });
 
   describe("reload functionality", () => {
+    let originalLocation: Location;
+
+    beforeEach(() => {
+      originalLocation = globalThis.location;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(globalThis, "location", {
+        value: originalLocation,
+        writable: true,
+        configurable: true,
+      });
+    });
+
     it("calls window.location.reload when compact mode reload button is clicked", () => {
       // Arrange
       const mockReload = jest.fn();
-      Object.defineProperty(globalThis, "location", {
-        value: { reload: mockReload },
-        writable: true,
-      });
+      delete (globalThis as any).location;
+      globalThis.location = { reload: mockReload } as any;
 
       render(<ErrorFallback error={mockError} compact={true} />);
 
@@ -145,10 +157,8 @@ describe("ErrorFallback", () => {
     it("calls window.location.reload when full mode Pill is clicked", () => {
       // Arrange
       const mockReload = jest.fn();
-      Object.defineProperty(globalThis, "location", {
-        value: { reload: mockReload },
-        writable: true,
-      });
+      delete (globalThis as any).location;
+      globalThis.location = { reload: mockReload } as any;
 
       render(<ErrorFallback error={mockError} />);
 
