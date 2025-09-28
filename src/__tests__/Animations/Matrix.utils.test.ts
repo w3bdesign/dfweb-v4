@@ -35,7 +35,7 @@ describe("Matrix Utils", () => {
 
     it("handles regex result with undefined elements", () => {
       // Arrange - Mock the regex exec to return an array with undefined elements
-      const execSpy = jest.spyOn(RegExp.prototype, 'exec').mockReturnValue([
+      const execSpy = jest.spyOn(RegExp.prototype, "exec").mockReturnValue([
         "#ff00gg", // match[0]
         undefined, // match[1] - should use fallback "0"
         undefined, // match[2] - should use fallback "0"
