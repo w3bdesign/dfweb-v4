@@ -124,8 +124,10 @@ describe("ErrorFallback", () => {
   });
   it("calls window.location.reload when compact reload button is clicked", () => {
     // Arrange
-    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
-    
+    const reloadSpy = jest
+      .spyOn(window.location, "reload")
+      .mockImplementation(() => {});
+
     render(<ErrorFallback error={mockError} compact={true} />);
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
@@ -143,8 +145,10 @@ describe("ErrorFallback", () => {
 
   it("calls window.location.reload when full reload button is clicked", () => {
     // Arrange
-    const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
-    
+    const reloadSpy = jest
+      .spyOn(window.location, "reload")
+      .mockImplementation(() => {});
+
     render(<ErrorFallback error={mockError} compact={false} />);
     const reloadButton = screen.getByRole("button", {
       name: "Returner til Matrix",
