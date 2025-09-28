@@ -15,19 +15,19 @@ describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
 
   // Mock window.location.reload to prevent navigation errors in tests
-  const mockReload = jest.fn();
+  let reloadSpy: jest.SpyInstance;
 
   beforeAll(() => {
-    // Use Object.defineProperty with a spy approach
-    Object.defineProperty(window.location, "reload", {
-      value: mockReload,
-      writable: true,
-      configurable: true,
-    });
+    // Use jest.spyOn to mock the reload method
+    reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    reloadSpy.mockRestore();
   });
 
   beforeEach(() => {
-    mockReload.mockClear();
+    reloadSpy.mockClear();
   });
 
   it("renders error message and reload button", () => {
