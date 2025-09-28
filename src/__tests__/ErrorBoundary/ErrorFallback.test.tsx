@@ -125,9 +125,9 @@ describe("ErrorFallback", () => {
   it("calls window.location.reload when compact reload button is clicked", () => {
     // Arrange
     const mockReload = jest.fn();
-    const originalLocation = window.location;
+    const originalLocation = globalThis.location;
     
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(globalThis, 'location', {
       value: {
         ...originalLocation,
         reload: mockReload,
@@ -147,7 +147,7 @@ describe("ErrorFallback", () => {
     expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(globalThis, 'location', {
       value: originalLocation,
       writable: true,
     });
@@ -156,9 +156,9 @@ describe("ErrorFallback", () => {
   it("calls window.location.reload when full reload button is clicked", () => {
     // Arrange
     const mockReload = jest.fn();
-    const originalLocation = window.location;
+    const originalLocation = globalThis.location;
     
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(globalThis, 'location', {
       value: {
         ...originalLocation,
         reload: mockReload,
@@ -178,7 +178,7 @@ describe("ErrorFallback", () => {
     expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(globalThis, 'location', {
       value: originalLocation,
       writable: true,
     });
