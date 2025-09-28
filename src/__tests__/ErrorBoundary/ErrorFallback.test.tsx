@@ -24,6 +24,7 @@ describe("ErrorFallback", () => {
         reload: mockReload,
       },
       writable: true,
+      configurable: true,
     });
   });
 
