@@ -144,46 +144,28 @@ describe("ErrorFallback", () => {
     // Note: window.location.reload() cannot be reliably mocked across all test environments
     // These tests verify that the onClick handlers are attached and don't throw errors
 
-    it("compact mode reload button has onClick handler that executes without error", () => {
+    it("compact mode reload button calls window.location.reload", () => {
       // Arrange
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
       render(<ErrorFallback error={mockError} compact={true} />);
 
-      // Act & Assert - Button click should not throw an error
+      // Act
       const reloadButton = screen.getByText("Returner til Matrix");
-      expect(() => {
-        fireEvent.click(reloadButton);
-      }).not.toThrow();
+      fireEvent.click(reloadButton);
 
-      // Should not log any console errors during the click
-      expect(consoleErrorSpy).not.toHaveBeenCalled();
-
-      // Cleanup
-      consoleErrorSpy.mockRestore();
+      // Assert
+      expect(mockReload).toHaveBeenCalledTimes(1);
     });
 
-    it("full mode Pill has onClick handler that executes without error", () => {
+    it("full mode Pill calls window.location.reload", () => {
       // Arrange
-      const consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
       render(<ErrorFallback error={mockError} />);
 
-      // Act & Assert - Button click should not throw an error
+      // Act
       const reloadButton = screen.getByText("Returner til Matrix");
-      expect(() => {
-        fireEvent.click(reloadButton);
-      }).not.toThrow();
+      fireEvent.click(reloadButton);
 
-      // Should not log any console errors during the click
-      expect(consoleErrorSpy).not.toHaveBeenCalled();
-
-      // Cleanup
-      consoleErrorSpy.mockRestore();
+      // Assert
+      expect(mockReload).toHaveBeenCalledTimes(1);
     });
   });
 });
