@@ -122,4 +122,45 @@ describe("ErrorFallback", () => {
     // Act & Assert
     expect(reloadButton).toBeInTheDocument();
   });
+  it("calls window.location.reload when compact reload button is clicked", () => {
+    // Arrange
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = { ...originalLocation, reload: jest.fn() };
+
+    render(<ErrorFallback error={mockError} compact={true} />);
+    const reloadButton = screen.getByRole("button", {
+      name: "Returner til Matrix",
+    });
+
+    // Act
+    reloadButton.click();
+
+    // Assert
+    expect(window.location.reload).toHaveBeenCalled();
+
+    // Cleanup
+    window.location = originalLocation;
+  });
+
+  it("calls window.location.reload when full reload button is clicked", () => {
+    // Arrange
+    const originalLocation = window.location;
+    delete (window as any).location;
+    window.location = { ...originalLocation, reload: jest.fn() };
+
+    render(<ErrorFallback error={mockError} compact={false} />);
+    const reloadButton = screen.getByRole("button", {
+      name: "Returner til Matrix",
+    });
+
+    // Act
+    reloadButton.click();
+
+    // Assert
+    expect(window.location.reload).toHaveBeenCalled();
+
+    // Cleanup
+    window.location = originalLocation;
+  });
 });
