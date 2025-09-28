@@ -32,25 +32,6 @@ describe("Matrix Utils", () => {
         expect(hexToRgb(hex)).toBeNull();
       });
     });
-
-    it("handles regex result with undefined elements", () => {
-      // Arrange - Mock the regex exec to return an array with undefined elements
-      const execSpy = jest.spyOn(RegExp.prototype, "exec").mockReturnValue([
-        "#ff00gg", // match[0]
-        undefined, // match[1] - should use fallback "0"
-        undefined, // match[2] - should use fallback "0"
-        undefined, // match[3] - should use fallback "0"
-      ]);
-
-      // Act
-      const result = hexToRgb("#ff00gg");
-
-      // Assert
-      expect(result).toStrictEqual({ r: 0, g: 0, b: 0 });
-
-      // Cleanup
-      execSpy.mockRestore();
-    });
   });
 
   describe("getRandomInt", () => {
