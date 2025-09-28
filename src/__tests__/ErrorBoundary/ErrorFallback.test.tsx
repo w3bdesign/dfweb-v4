@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
@@ -13,6 +13,19 @@ jest.mock("@/components/Animations/Matrix.component", () => {
 
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
+  const mockReload = jest.fn();
+
+  // Mock window.location.reload
+  beforeEach(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { reload: mockReload }
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it("renders error message and reload button", () => {
     // Arrange
@@ -121,5 +134,33 @@ describe("ErrorFallback", () => {
 
     // Act & Assert
     expect(reloadButton).toBeInTheDocument();
+  });
+
+  it("calls window.location.reload when clicking reload button in compact mode", () => {
+    // Arrange
+    render(<ErrorFallback error={mockError} compact={true} />);
+    const reloadButton = screen.getByRole("button", {
+      name: "Returner til Matrix",
+    });
+
+    // Act
+    fireEvent.click(reloadButton);
+
+    // Assert
+    expect(mockReload).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls window.location.reload when clicking Pill in full mode", () => {
+    // Arrange
+    render(<ErrorFallback error={mockError} compact={false} />);
+    const reloadButton = screen.getByRole("button", {
+      name: "Returner til Matrix",
+    });
+
+    // Act
+    fireEvent.click(reloadButton);
+
+    // Assert
+    expect(mockReload).toHaveBeenCalledTimes(1);
   });
 });
