@@ -126,7 +126,9 @@ describe("ErrorFallback", () => {
   describe("reload functionality", () => {
     it("calls window.location.reload when compact mode reload button is clicked", () => {
       // Arrange
-      const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+      const reloadSpy = jest
+        .spyOn(window.location, "reload")
+        .mockImplementation(() => {});
 
       render(<ErrorFallback error={mockError} compact={true} />);
 
@@ -136,14 +138,16 @@ describe("ErrorFallback", () => {
 
       // Assert
       expect(reloadSpy).toHaveBeenCalledTimes(1);
-      
+
       // Cleanup
       reloadSpy.mockRestore();
     });
 
     it("calls window.location.reload when full mode Pill is clicked", () => {
       // Arrange
-      const reloadSpy = jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+      const reloadSpy = jest
+        .spyOn(window.location, "reload")
+        .mockImplementation(() => {});
 
       render(<ErrorFallback error={mockError} />);
 
@@ -153,7 +157,7 @@ describe("ErrorFallback", () => {
 
       // Assert
       expect(reloadSpy).toHaveBeenCalledTimes(1);
-      
+
       // Cleanup
       reloadSpy.mockRestore();
     });
