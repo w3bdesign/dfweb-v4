@@ -17,9 +17,9 @@ describe("ErrorFallback", () => {
 
   // Mock window.location.reload
   beforeEach(() => {
-    Object.defineProperty(window, 'location', {
+    Object.defineProperty(window, "location", {
       configurable: true,
-      value: { reload: mockReload }
+      value: { reload: mockReload },
     });
   });
 
