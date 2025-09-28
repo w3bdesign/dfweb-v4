@@ -122,45 +122,57 @@ describe("ErrorFallback", () => {
     // Act & Assert
     expect(reloadButton).toBeInTheDocument();
   });
-  it("calls window.location.reload when compact reload button is clicked", () => {
-    // Arrange
-    const reloadSpy = jest
-      .spyOn(window.location, "reload")
-      .mockImplementation(() => {});
 
-    render(<ErrorFallback error={mockError} compact={true} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
+  describe("window.location.reload functionality", () => {
+    let mockReload: jest.Mock;
+    let originalLocation: Location;
+
+    beforeAll(() => {
+      originalLocation = window.location;
+      mockReload = jest.fn();
+      
+      // Replace the entire location object
+      delete (window as any).location;
+      window.location = {
+        ...originalLocation,
+        reload: mockReload,
+      } as Location;
     });
 
-    // Act
-    reloadButton.click();
-
-    // Assert
-    expect(reloadSpy).toHaveBeenCalled();
-
-    // Cleanup
-    reloadSpy.mockRestore();
-  });
-
-  it("calls window.location.reload when full reload button is clicked", () => {
-    // Arrange
-    const reloadSpy = jest
-      .spyOn(window.location, "reload")
-      .mockImplementation(() => {});
-
-    render(<ErrorFallback error={mockError} compact={false} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
+    afterAll(() => {
+      window.location = originalLocation;
     });
 
-    // Act
-    reloadButton.click();
+    beforeEach(() => {
+      mockReload.mockClear();
+    });
 
-    // Assert
-    expect(reloadSpy).toHaveBeenCalled();
+    it("calls window.location.reload when compact reload button is clicked", () => {
+      // Arrange
+      render(<ErrorFallback error={mockError} compact={true} />);
+      const reloadButton = screen.getByRole("button", {
+        name: "Returner til Matrix",
+      });
 
-    // Cleanup
-    reloadSpy.mockRestore();
+      // Act
+      reloadButton.click();
+
+      // Assert
+      expect(mockReload).toHaveBeenCalled();
+    });
+
+    it("calls window.location.reload when full reload button is clicked", () => {
+      // Arrange
+      render(<ErrorFallback error={mockError} compact={false} />);
+      const reloadButton = screen.getByRole("button", {
+        name: "Returner til Matrix",
+      });
+
+      // Act
+      reloadButton.click();
+
+      // Assert
+      expect(mockReload).toHaveBeenCalled();
+    });
   });
 });
