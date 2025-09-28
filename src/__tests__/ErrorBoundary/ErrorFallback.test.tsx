@@ -124,9 +124,16 @@ describe("ErrorFallback", () => {
   });
   it("calls window.location.reload when compact reload button is clicked", () => {
     // Arrange
+    const mockReload = jest.fn();
     const originalLocation = window.location;
-    delete (window as any).location;
-    window.location = { ...originalLocation, reload: jest.fn() };
+    
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        reload: mockReload,
+      },
+      writable: true,
+    });
 
     render(<ErrorFallback error={mockError} compact={true} />);
     const reloadButton = screen.getByRole("button", {
@@ -137,17 +144,27 @@ describe("ErrorFallback", () => {
     reloadButton.click();
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalled();
+    expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   it("calls window.location.reload when full reload button is clicked", () => {
     // Arrange
+    const mockReload = jest.fn();
     const originalLocation = window.location;
-    delete (window as any).location;
-    window.location = { ...originalLocation, reload: jest.fn() };
+    
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...originalLocation,
+        reload: mockReload,
+      },
+      writable: true,
+    });
 
     render(<ErrorFallback error={mockError} compact={false} />);
     const reloadButton = screen.getByRole("button", {
@@ -158,9 +175,12 @@ describe("ErrorFallback", () => {
     reloadButton.click();
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalled();
+    expect(mockReload).toHaveBeenCalled();
 
     // Cleanup
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+    });
   });
 });
