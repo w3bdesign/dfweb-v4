@@ -10,7 +10,7 @@ interface ErrorFallbackProps {
 
 /**
  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
- * It shows a Matrix-themed error message with the option to reload the page.
+ * It shows a Matrix-themed error message.
  *
  * @param {Object} props - The component props
  * @param {Error} props.error - The error object caught by the ErrorBoundary
@@ -37,12 +37,6 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
           <p className="text-white text-sm mb-3">
             {error.message || "En uventet feil har oppstått."}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
-          >
-            Returner til Matrix
-          </button>
         </div>
       </div>
     );
@@ -61,10 +55,6 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({
         <p className="text-white text-xl mb-6">
           {error.message || "En uventet feil har oppstått."}
         </p>
-        <Pill
-          text="Returner til Matrix"
-          onClick={() => window.location.reload()}
-        />
       </div>
     </div>
   );
