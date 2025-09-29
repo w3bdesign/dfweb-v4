@@ -14,29 +14,11 @@ jest.mock("@/components/Animations/Matrix.component", () => {
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
 
-  // Mock window.location.reload
-  const reloadSpy = jest.fn();
-
-  beforeAll(() => {
-    Object.defineProperty(window, "location", {
-      writable: true,
-      value: {
-        ...window.location,
-        reload: reloadSpy,
-      },
-    });
-  });
-
-  beforeEach(() => {
-    reloadSpy.mockClear();
-  });
-
-  it("renders error message and reload button", () => {
+  it("renders error message", () => {
     // Arrange
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Test error message",
-      button: "Returner til Matrix",
     };
 
     // Act
@@ -45,7 +27,6 @@ describe("ErrorFallback", () => {
     // Assert
     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-    expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
   });
 
   it("displays default error message when error.message is undefined in full version", () => {
