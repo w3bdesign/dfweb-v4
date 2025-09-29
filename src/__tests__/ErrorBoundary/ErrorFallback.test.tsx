@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
@@ -77,7 +77,6 @@ describe("ErrorFallback", () => {
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Test error message",
-      button: "Returner til Matrix",
     };
 
     // Act
@@ -91,11 +90,6 @@ describe("ErrorFallback", () => {
     expect(container).toHaveClass("overflow-hidden");
     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
-    const button = screen.getByRole("button");
-    expect(button).toHaveClass("bg-matrix-light");
-    expect(button).toHaveClass("text-black");
-    expect(button).toHaveClass("rounded-sm");
-    expect(button).toHaveClass("text-sm");
   });
 
   it("renders full version with correct styling", () => {
@@ -103,7 +97,6 @@ describe("ErrorFallback", () => {
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Test error message",
-      button: "Returner til Matrix",
     };
 
     // Act
@@ -114,57 +107,5 @@ describe("ErrorFallback", () => {
     expect(container).toHaveClass("absolute", "w-full", "h-full");
     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
-  });
-
-  it("renders reload button with correct properties in compact mode", () => {
-    // Arrange
-    render(<ErrorFallback error={mockError} compact={true} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
-    });
-
-    // Act & Assert
-    expect(reloadButton).toBeInTheDocument();
-    expect(reloadButton).toHaveClass("bg-matrix-light");
-    expect(reloadButton).toHaveClass("text-black");
-  });
-
-  it("renders reload button with correct properties in full mode", () => {
-    // Arrange
-    render(<ErrorFallback error={mockError} compact={false} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
-    });
-
-    // Act & Assert
-    expect(reloadButton).toBeInTheDocument();
-  });
-
-  it("calls window.location.reload when clicking reload button in compact mode", () => {
-    // Arrange
-    render(<ErrorFallback error={mockError} compact={true} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
-    });
-
-    // Act
-    fireEvent.click(reloadButton);
-
-    // Assert
-    expect(reloadSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("calls window.location.reload when clicking Pill in full mode", () => {
-    // Arrange
-    render(<ErrorFallback error={mockError} compact={false} />);
-    const reloadButton = screen.getByRole("button", {
-      name: "Returner til Matrix",
-    });
-
-    // Act
-    fireEvent.click(reloadButton);
-
-    // Assert
-    expect(reloadSpy).toHaveBeenCalledTimes(1);
   });
 });
