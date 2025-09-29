@@ -14,14 +14,21 @@ jest.mock("@/components/Animations/Matrix.component", () => {
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");
 
-  beforeEach(() => {
-    // Use jest.spyOn to mock window.location.reload
-    jest.spyOn(window.location, 'reload').mockImplementation(() => {});
+  // Mock window.location.reload
+  const reloadSpy = jest.fn();
+  
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: {
+        ...window.location,
+        reload: reloadSpy
+      }
+    });
   });
 
-  afterEach(() => {
-    // Restore all mocks
-    jest.restoreAllMocks();
+  beforeEach(() => {
+    reloadSpy.mockClear();
   });
 
   it("renders error message and reload button", () => {
@@ -144,7 +151,7 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
   });
 
   it("calls window.location.reload when clicking Pill in full mode", () => {
@@ -158,6 +165,6 @@ describe("ErrorFallback", () => {
     fireEvent.click(reloadButton);
 
     // Assert
-    expect(window.location.reload).toHaveBeenCalledTimes(1);
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
   });
 });
