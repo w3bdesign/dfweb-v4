@@ -134,7 +134,7 @@ def generate_commit_message(diff):
         client = OpenAI(**client_kwargs)
 
         # Get model from environment variable or use default
-        model = os.getenv("MODEL_NAME", "claude-4-sonnet@anthropic")
+        model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
 
         # Load gitmojis
         # gitmojis = load_gitmojis()
