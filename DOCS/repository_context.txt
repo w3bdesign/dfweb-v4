@@ -1084,222 +1084,6 @@ tsconfig.json
 17: # and false positives you encounter during scanning.
 ````
 
-## File: commit/commit_analyzer.py
-````python
-  1: import subprocess
-  2: import os
-  3: import sys
-  4: import json
-  5: import codecs
-  6: import shlex
-  7: from openai import OpenAI
-  8: from pathlib import Path
-  9: from dotenv import load_dotenv
- 10: def read_config_file():
- 11:     """Read configuration from local config file."""
- 12:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 13:     try:
- 14:         if os.path.exists(config_path):
- 15:             with open(config_path, "r") as f:
- 16:                 return json.load(f)
- 17:     except Exception as e:
- 18:         print(f"Error reading config file: {e}")
- 19:     return {}
- 20: def get_api_config():
- 21:     """Get API configuration from environment variables or config file."""
- 22:     load_dotenv()
- 23:     # Try environment variables first
- 24:     api_key = os.getenv("AI_API_KEY")
- 25:     base_url = os.getenv("AI_BASE_URL")
- 26:     # If no API key in env, try config file
- 27:     if not api_key:
- 28:         config = read_config_file()
- 29:         api_key = config.get("api_key")
- 30:         base_url = config.get("base_url", base_url)
- 31:     if not api_key:
- 32:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 33:         raise ValueError(
- 34:             "No API key found. Please either:\n"
- 35:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
- 36:             "2. Set AI_API_KEY environment variable, or\n"
- 37:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
- 38:         )
- 39:     return api_key, base_url
- 40: def get_staged_diff():
- 41:     """Get the diff of staged changes and list of changed files"""
- 42:     try:
- 43:         # Get list of staged files
- 44:         files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
- 45:         staged_files = files_output.splitlines()
- 46:         # Check if any staged files are lock files
- 47:         lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 48:         if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 49:             return None, True  # Indicate lock file presence
- 50:         # Get the actual diff
- 51:         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
- 52:         if not diff:
- 53:             # If no staged changes, get diff of last commit
- 54:             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
- 55:             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
- 56:             staged_files = files_output.splitlines()
- 57:             lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 58:             if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 59:                 return None, True
- 60:         return diff, False  # No lock files found
- 61:     except subprocess.CalledProcessError as e:
- 62:         print(f"Error getting git diff: {e}")
- 63:         return None, False
- 64: def load_gitmojis():
- 65:     """Load gitmojis from gitmojis.json"""
- 66:     try:
- 67:         with open("gitmojis.json", "r", encoding="utf-8") as f:
- 68:             data = json.load(f)
- 69:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
- 70:     except Exception as e:
- 71:         print(f"Error loading gitmojis: {e}")
- 72:         return {}
- 73: def get_emoji_for_type(commit_type, gitmojis):
- 74:     """Map commit type to appropriate emoji"""
- 75:     type_to_emoji = {
- 76:         # Core conventional commit types
- 77:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
- 78:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
- 79:         "docs": gitmojis.get("memo", "📝"),  # Documentation
- 80:         "style": gitmojis.get("art", "🎨"),  # Style/format
- 81:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
- 82:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
- 83:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
- 84:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
- 85:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
- 86:         # Additional commit types with specific emojis
- 87:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
- 88:         "deps": gitmojis.get("package", "📦"),  # Dependencies
- 89:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
- 90:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
- 91:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
- 92:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
- 93:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
- 94:         "license": gitmojis.get("page-facing-up", "📄"),  # License
- 95:         "docker": gitmojis.get("whale", "🐳"),  # Docker
- 96:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
- 97:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
- 98:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
- 99:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
-100:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
-101:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
-102:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
-103:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
-104:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
-105:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
-106:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
-107:     }
-108:     return type_to_emoji.get(commit_type, "")
-109: def generate_commit_message(diff):
-110:     """Generate commit message using OpenAI API"""
-111:     try:
-112:         api_key, base_url = get_api_config()
-113:         client_kwargs = {"api_key": api_key}
-114:         if base_url:
-115:             client_kwargs["base_url"] = base_url
-116:         client = OpenAI(**client_kwargs)
-117:         # Get model from environment variable or use default
-118:         model = os.getenv("MODEL_NAME", "claude-4-sonnet@anthropic")
-119:         # Load gitmojis
-120:         # gitmojis = load_gitmojis()
-121:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
-122:         The commit message MUST follow this format:
-123:         <emoji> <type>[optional scope]: <description>
-124:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-125:         [optional footer(s)]
-126:         Where:
-127:         1. Type MUST be one of (with corresponding emoji):
-128:            Core types:
-129:            - ✨ feat: A new feature
-130:            - 🐛 fix: A bug fix
-131:            - 📝 docs: Documentation only changes
-132:            - 🎨 style: Changes that don't affect the meaning of the code
-133:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-134:            - ⚡️ perf: A code change that improves performance
-135:            - ✅ test: Adding missing tests or correcting existing tests
-136:            - 🔧 chore: Changes to build process or auxiliary tools
-137:            - 👷 ci: Changes to CI configuration files and scripts
-138:            Additional specific types:
-139:            - 🔒 security: Security fixes
-140:            - 📦 deps: Dependencies
-141:            - 💥 breaking: Breaking changes
-142:            - 💄 ui: UI/style changes
-143:            - 🌐 i18n: Internationalization
-144:            - ✏️ typo: Fix typos
-145:            - 🎉 init: Initial commit
-146:            - 📄 license: License
-147:            - 🐳 docker: Docker
-148:            - ♿️ access: Accessibility
-149:            - 🔊 logs: Logging
-150:            - 🗃️ db: Database
-151:            - 🔥 cleanup: Remove code/files
-152:            - 🚧 wip: Work in progress
-153:            - 🚚 move: Move/rename files
-154:            - ⏪ revert: Revert changes
-155:            - 🔀 merge: Merge branches
-156:            - 📱 responsive: Responsive design
-157:            - 🚑 hotfix: Critical hotfix
-158:         2. Description MUST:
-159:            - Be 50 characters or less
-160:            - Start with lowercase
-161:            - Use imperative mood ("add" not "adds/added")
-162:            - No period at end
-163:            - Be clear and descriptive
-164:         3. Body (if included) MUST:
-165:            - Be separated from title by blank line
-166:            - Wrap at 72 characters
-167:            - Explain what and why vs. how
-168:            - Use proper punctuation
-169:         Git diff to analyze:
-170:         {diff}
-171:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-172:         response = client.chat.completions.create(
-173:             model=model,
-174:             messages=[{"role": "user", "content": prompt}],
-175:             stream=False,
-176:         )
-177:         # Get the message and clean any potential explanatory text
-178:         message = response.choices[0].message.content.strip()
-179:         if "Based on the diff" in message:
-180:             message = message.split("\n")[-1].strip()
-181:         return message
-182:     except Exception as e:
-183:         print(f"Error generating commit message: {e}")
-184:         return None
-185: def main():
-186:     # Get the diff and check for lock files
-187:     diff, has_lock_files = get_staged_diff()
-188:     if has_lock_files:
-189:         # Use hardcoded message for lock files
-190:         commit_message = "📦 deps: update dependencies"
-191:     elif not diff:
-192:         print("No changes to analyze")
-193:         sys.exit(1)
-194:     else:
-195:         # Generate commit message for non-lock files
-196:         commit_message = generate_commit_message(diff)
-197:     if not commit_message:
-198:         print("Failed to generate commit message")
-199:         sys.exit(1)
-200:     # Print the commit message
-201:     print("\nGenerated commit message:")
-202:     print("------------------------")
-203:     # Use sys.stdout.buffer.write for Unicode support in console
-204:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-205:     print("\n------------------------")
-206:     # If running as a hook, save the message
-207:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-208:         # Use UTF-8 encoding when writing the commit message
-209:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-210:             f.write(commit_message)
-211: if __name__ == "__main__":
-212:     main()
-````
-
 ## File: DOCS/EXPLANATION.md
 ````markdown
   1: # DFWeb v4 - Interview Discussion Guide
@@ -9762,6 +9546,66 @@ tsconfig.json
 78: export default ProsjektCard;
 ````
 
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10:   "aria-label"?: string;
+11: }
+12: /**
+13:  * Button component that can be rendered as various HTML elements
+14:  * @param {Object} props
+15:  * @param {ReactNode} props.children - The content of the button
+16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+22:  * @returns {JSX.Element} The rendered Button component
+23:  */
+24: const Button = ({
+25:   children,
+26:   href,
+27:   renderAs,
+28:   type = "submit",
+29:   disabled = false,
+30:   download,
+31:   onClick,
+32:   "aria-label": ariaLabel,
+33:   ...props
+34: }: IButtonProps) => {
+35:   const Component = renderAs ?? "button";
+36:   const isLink = renderAs === "a";
+37:   const targetLink = isLink ? "_blank" : undefined;
+38:   return (
+39:     <Component
+40:       type={isLink ? undefined : type}
+41:       data-cy="submit"
+42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
+43:       href={href}
+44:       target={targetLink}
+45:       disabled={disabled}
+46:       data-text={children}
+47:       download={download}
+48:       onClick={onClick}
+49:       aria-label={ariaLabel}
+50:       {...props}
+51:     >
+52:       {children}
+53:     </Component>
+54:   );
+55: };
+56: export default Button;
+````
+
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -9825,6 +9669,125 @@ tsconfig.json
 59:   );
 60: };
 61: export default ContentLoader;
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+  1: import React from "react";
+  2: import {
+  3:   UseFormRegister,
+  4:   FieldValues,
+  5:   RegisterOptions,
+  6:   Path,
+  7: } from "react-hook-form";
+  8: export interface InputProps<T extends FieldValues> {
+  9:   readonly name: Path<T>;
+ 10:   readonly label: string;
+ 11:   readonly htmlFor: string;
+ 12:   readonly isRequired?: boolean;
+ 13:   readonly inputPattern?: RegExp;
+ 14:   readonly title?: string;
+ 15:   readonly type?: "input" | "textarea";
+ 16:   readonly register: UseFormRegister<T>;
+ 17:   readonly error?: string;
+ 18:   readonly autoComplete?: string;
+ 19:   readonly spellCheck?: boolean;
+ 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
+ 21: }
+ 22: /**
+ 23:  * Creates register options for react-hook-form
+ 24:  * @template T - Type extending FieldValues
+ 25:  * @param {boolean} [isRequired] - Whether the field is required
+ 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ 27:  * @param {string} [title] - Title for the input field
+ 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+ 29:  */
+ 30: export function createRegisterOptions<T extends FieldValues>(
+ 31:   isRequired?: boolean,
+ 32:   inputPattern?: RegExp,
+ 33:   title?: string,
+ 34: ): RegisterOptions<T, Path<T>> {
+ 35:   return {
+ 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
+ 37:     ...(inputPattern
+ 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+ 39:       : {}),
+ 40:   };
+ 41: }
+ 42: /**
+ 43:  * InputField component for rendering form inputs
+ 44:  * @template T - Type extending FieldValues
+ 45:  * @param {InputProps<T>} props - The props for the InputField component
+ 46:  * @returns {JSX.Element} The rendered InputField component
+ 47:  */
+ 48: function InputField<T extends FieldValues>({
+ 49:   name,
+ 50:   label,
+ 51:   inputPattern,
+ 52:   isRequired,
+ 53:   htmlFor,
+ 54:   title,
+ 55:   type = "input",
+ 56:   register,
+ 57:   error,
+ 58:   autoComplete,
+ 59:   spellCheck,
+ 60:   inputMode,
+ 61:   ...props
+ 62: }: InputProps<T>) {
+ 63:   const sharedClasses =
+ 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
+ 65:   const registerOptions = createRegisterOptions<T>(
+ 66:     isRequired,
+ 67:     inputPattern,
+ 68:     title,
+ 69:   );
+ 70:   return (
+ 71:     <div className="relative my-2 flex flex-col items-center">
+ 72:       <div className="relative">
+ 73:         {type === "input" ? (
+ 74:           <input
+ 75:             id={htmlFor}
+ 76:             type="text"
+ 77:             placeholder={label}
+ 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 79:             autoComplete={autoComplete}
+ 80:             spellCheck={spellCheck}
+ 81:             inputMode={inputMode}
+ 82:             {...register(name, {
+ 83:               ...registerOptions,
+ 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 85:             })}
+ 86:             {...props}
+ 87:           />
+ 88:         ) : (
+ 89:           <textarea
+ 90:             id={htmlFor}
+ 91:             placeholder={label}
+ 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 93:             spellCheck={spellCheck}
+ 94:             {...register(name, {
+ 95:               ...registerOptions,
+ 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 97:             })}
+ 98:             {...props}
+ 99:           ></textarea>
+100:         )}
+101:         <label
+102:           htmlFor={htmlFor}
+103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+104:             // Removed peer-focus:text-primary
+105:             type === "textarea" ? "peer-focus:-top-4" : ""
+106:           }`}
+107:         >
+108:           {label}
+109:         </label>
+110:       </div>
+111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+112:     </div>
+113:   );
+114: }
+115: export default InputField;
 ````
 
 ## File: src/components/UI/PageHeader.component.tsx
@@ -18073,6 +18036,222 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: import subprocess
+  2: import os
+  3: import sys
+  4: import json
+  5: import codecs
+  6: import shlex
+  7: from openai import OpenAI
+  8: from pathlib import Path
+  9: from dotenv import load_dotenv
+ 10: def read_config_file():
+ 11:     """Read configuration from local config file."""
+ 12:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 13:     try:
+ 14:         if os.path.exists(config_path):
+ 15:             with open(config_path, "r") as f:
+ 16:                 return json.load(f)
+ 17:     except Exception as e:
+ 18:         print(f"Error reading config file: {e}")
+ 19:     return {}
+ 20: def get_api_config():
+ 21:     """Get API configuration from environment variables or config file."""
+ 22:     load_dotenv()
+ 23:     # Try environment variables first
+ 24:     api_key = os.getenv("AI_API_KEY")
+ 25:     base_url = os.getenv("AI_BASE_URL")
+ 26:     # If no API key in env, try config file
+ 27:     if not api_key:
+ 28:         config = read_config_file()
+ 29:         api_key = config.get("api_key")
+ 30:         base_url = config.get("base_url", base_url)
+ 31:     if not api_key:
+ 32:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 33:         raise ValueError(
+ 34:             "No API key found. Please either:\n"
+ 35:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
+ 36:             "2. Set AI_API_KEY environment variable, or\n"
+ 37:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
+ 38:         )
+ 39:     return api_key, base_url
+ 40: def get_staged_diff():
+ 41:     """Get the diff of staged changes and list of changed files"""
+ 42:     try:
+ 43:         # Get list of staged files
+ 44:         files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
+ 45:         staged_files = files_output.splitlines()
+ 46:         # Check if any staged files are lock files
+ 47:         lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+ 48:         if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+ 49:             return None, True  # Indicate lock file presence
+ 50:         # Get the actual diff
+ 51:         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
+ 52:         if not diff:
+ 53:             # If no staged changes, get diff of last commit
+ 54:             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
+ 55:             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
+ 56:             staged_files = files_output.splitlines()
+ 57:             lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
+ 58:             if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+ 59:                 return None, True
+ 60:         return diff, False  # No lock files found
+ 61:     except subprocess.CalledProcessError as e:
+ 62:         print(f"Error getting git diff: {e}")
+ 63:         return None, False
+ 64: def load_gitmojis():
+ 65:     """Load gitmojis from gitmojis.json"""
+ 66:     try:
+ 67:         with open("gitmojis.json", "r", encoding="utf-8") as f:
+ 68:             data = json.load(f)
+ 69:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
+ 70:     except Exception as e:
+ 71:         print(f"Error loading gitmojis: {e}")
+ 72:         return {}
+ 73: def get_emoji_for_type(commit_type, gitmojis):
+ 74:     """Map commit type to appropriate emoji"""
+ 75:     type_to_emoji = {
+ 76:         # Core conventional commit types
+ 77:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
+ 78:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
+ 79:         "docs": gitmojis.get("memo", "📝"),  # Documentation
+ 80:         "style": gitmojis.get("art", "🎨"),  # Style/format
+ 81:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
+ 82:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
+ 83:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
+ 84:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
+ 85:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
+ 86:         # Additional commit types with specific emojis
+ 87:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
+ 88:         "deps": gitmojis.get("package", "📦"),  # Dependencies
+ 89:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
+ 90:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
+ 91:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
+ 92:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
+ 93:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
+ 94:         "license": gitmojis.get("page-facing-up", "📄"),  # License
+ 95:         "docker": gitmojis.get("whale", "🐳"),  # Docker
+ 96:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
+ 97:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
+ 98:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
+ 99:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
+100:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
+101:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
+102:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
+103:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
+104:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
+105:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
+106:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
+107:     }
+108:     return type_to_emoji.get(commit_type, "")
+109: def generate_commit_message(diff):
+110:     """Generate commit message using OpenAI API"""
+111:     try:
+112:         api_key, base_url = get_api_config()
+113:         client_kwargs = {"api_key": api_key}
+114:         if base_url:
+115:             client_kwargs["base_url"] = base_url
+116:         client = OpenAI(**client_kwargs)
+117:         # Get model from environment variable or use default
+118:         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
+119:         # Load gitmojis
+120:         # gitmojis = load_gitmojis()
+121:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+122:         The commit message MUST follow this format:
+123:         <emoji> <type>[optional scope]: <description>
+124:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+125:         [optional footer(s)]
+126:         Where:
+127:         1. Type MUST be one of (with corresponding emoji):
+128:            Core types:
+129:            - ✨ feat: A new feature
+130:            - 🐛 fix: A bug fix
+131:            - 📝 docs: Documentation only changes
+132:            - 🎨 style: Changes that don't affect the meaning of the code
+133:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+134:            - ⚡️ perf: A code change that improves performance
+135:            - ✅ test: Adding missing tests or correcting existing tests
+136:            - 🔧 chore: Changes to build process or auxiliary tools
+137:            - 👷 ci: Changes to CI configuration files and scripts
+138:            Additional specific types:
+139:            - 🔒 security: Security fixes
+140:            - 📦 deps: Dependencies
+141:            - 💥 breaking: Breaking changes
+142:            - 💄 ui: UI/style changes
+143:            - 🌐 i18n: Internationalization
+144:            - ✏️ typo: Fix typos
+145:            - 🎉 init: Initial commit
+146:            - 📄 license: License
+147:            - 🐳 docker: Docker
+148:            - ♿️ access: Accessibility
+149:            - 🔊 logs: Logging
+150:            - 🗃️ db: Database
+151:            - 🔥 cleanup: Remove code/files
+152:            - 🚧 wip: Work in progress
+153:            - 🚚 move: Move/rename files
+154:            - ⏪ revert: Revert changes
+155:            - 🔀 merge: Merge branches
+156:            - 📱 responsive: Responsive design
+157:            - 🚑 hotfix: Critical hotfix
+158:         2. Description MUST:
+159:            - Be 50 characters or less
+160:            - Start with lowercase
+161:            - Use imperative mood ("add" not "adds/added")
+162:            - No period at end
+163:            - Be clear and descriptive
+164:         3. Body (if included) MUST:
+165:            - Be separated from title by blank line
+166:            - Wrap at 72 characters
+167:            - Explain what and why vs. how
+168:            - Use proper punctuation
+169:         Git diff to analyze:
+170:         {diff}
+171:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+172:         response = client.chat.completions.create(
+173:             model=model,
+174:             messages=[{"role": "user", "content": prompt}],
+175:             stream=False,
+176:         )
+177:         # Get the message and clean any potential explanatory text
+178:         message = response.choices[0].message.content.strip()
+179:         if "Based on the diff" in message:
+180:             message = message.split("\n")[-1].strip()
+181:         return message
+182:     except Exception as e:
+183:         print(f"Error generating commit message: {e}")
+184:         return None
+185: def main():
+186:     # Get the diff and check for lock files
+187:     diff, has_lock_files = get_staged_diff()
+188:     if has_lock_files:
+189:         # Use hardcoded message for lock files
+190:         commit_message = "📦 deps: update dependencies"
+191:     elif not diff:
+192:         print("No changes to analyze")
+193:         sys.exit(1)
+194:     else:
+195:         # Generate commit message for non-lock files
+196:         commit_message = generate_commit_message(diff)
+197:     if not commit_message:
+198:         print("Failed to generate commit message")
+199:         sys.exit(1)
+200:     # Print the commit message
+201:     print("\nGenerated commit message:")
+202:     print("------------------------")
+203:     # Use sys.stdout.buffer.write for Unicode support in console
+204:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+205:     print("\n------------------------")
+206:     # If running as a hook, save the message
+207:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+208:         # Use UTF-8 encoding when writing the commit message
+209:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+210:             f.write(commit_message)
+211: if __name__ == "__main__":
+212:     main()
+````
+
 ## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
 ````typescript
  1: import React from "react";
@@ -18139,66 +18318,6 @@ tsconfig.json
 62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
 63:   });
 64: });
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10:   "aria-label"?: string;
-11: }
-12: /**
-13:  * Button component that can be rendered as various HTML elements
-14:  * @param {Object} props
-15:  * @param {ReactNode} props.children - The content of the button
-16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-22:  * @returns {JSX.Element} The rendered Button component
-23:  */
-24: const Button = ({
-25:   children,
-26:   href,
-27:   renderAs,
-28:   type = "submit",
-29:   disabled = false,
-30:   download,
-31:   onClick,
-32:   "aria-label": ariaLabel,
-33:   ...props
-34: }: IButtonProps) => {
-35:   const Component = renderAs ?? "button";
-36:   const isLink = renderAs === "a";
-37:   const targetLink = isLink ? "_blank" : undefined;
-38:   return (
-39:     <Component
-40:       type={isLink ? undefined : type}
-41:       data-cy="submit"
-42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
-43:       href={href}
-44:       target={targetLink}
-45:       disabled={disabled}
-46:       data-text={children}
-47:       download={download}
-48:       onClick={onClick}
-49:       aria-label={ariaLabel}
-50:       {...props}
-51:     >
-52:       {children}
-53:     </Component>
-54:   );
-55: };
-56: export default Button;
 ````
 
 ## File: README.md
@@ -18457,125 +18576,6 @@ tsconfig.json
 57: export default ErrorFallback;
 ````
 
-## File: src/components/UI/InputField.component.tsx
-````typescript
-  1: import React from "react";
-  2: import {
-  3:   UseFormRegister,
-  4:   FieldValues,
-  5:   RegisterOptions,
-  6:   Path,
-  7: } from "react-hook-form";
-  8: export interface InputProps<T extends FieldValues> {
-  9:   readonly name: Path<T>;
- 10:   readonly label: string;
- 11:   readonly htmlFor: string;
- 12:   readonly isRequired?: boolean;
- 13:   readonly inputPattern?: RegExp;
- 14:   readonly title?: string;
- 15:   readonly type?: "input" | "textarea";
- 16:   readonly register: UseFormRegister<T>;
- 17:   readonly error?: string;
- 18:   readonly autoComplete?: string;
- 19:   readonly spellCheck?: boolean;
- 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
- 21: }
- 22: /**
- 23:  * Creates register options for react-hook-form
- 24:  * @template T - Type extending FieldValues
- 25:  * @param {boolean} [isRequired] - Whether the field is required
- 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
- 27:  * @param {string} [title] - Title for the input field
- 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
- 29:  */
- 30: export function createRegisterOptions<T extends FieldValues>(
- 31:   isRequired?: boolean,
- 32:   inputPattern?: RegExp,
- 33:   title?: string,
- 34: ): RegisterOptions<T, Path<T>> {
- 35:   return {
- 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
- 37:     ...(inputPattern
- 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
- 39:       : {}),
- 40:   };
- 41: }
- 42: /**
- 43:  * InputField component for rendering form inputs
- 44:  * @template T - Type extending FieldValues
- 45:  * @param {InputProps<T>} props - The props for the InputField component
- 46:  * @returns {JSX.Element} The rendered InputField component
- 47:  */
- 48: function InputField<T extends FieldValues>({
- 49:   name,
- 50:   label,
- 51:   inputPattern,
- 52:   isRequired,
- 53:   htmlFor,
- 54:   title,
- 55:   type = "input",
- 56:   register,
- 57:   error,
- 58:   autoComplete,
- 59:   spellCheck,
- 60:   inputMode,
- 61:   ...props
- 62: }: InputProps<T>) {
- 63:   const sharedClasses =
- 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
- 65:   const registerOptions = createRegisterOptions<T>(
- 66:     isRequired,
- 67:     inputPattern,
- 68:     title,
- 69:   );
- 70:   return (
- 71:     <div className="relative my-2 flex flex-col items-center">
- 72:       <div className="relative">
- 73:         {type === "input" ? (
- 74:           <input
- 75:             id={htmlFor}
- 76:             type="text"
- 77:             placeholder={label}
- 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 79:             autoComplete={autoComplete}
- 80:             spellCheck={spellCheck}
- 81:             inputMode={inputMode}
- 82:             {...register(name, {
- 83:               ...registerOptions,
- 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 85:             })}
- 86:             {...props}
- 87:           />
- 88:         ) : (
- 89:           <textarea
- 90:             id={htmlFor}
- 91:             placeholder={label}
- 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 93:             spellCheck={spellCheck}
- 94:             {...register(name, {
- 95:               ...registerOptions,
- 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 97:             })}
- 98:             {...props}
- 99:           ></textarea>
-100:         )}
-101:         <label
-102:           htmlFor={htmlFor}
-103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
-104:             // Removed peer-focus:text-primary
-105:             type === "textarea" ? "peer-focus:-top-4" : ""
-106:           }`}
-107:         >
-108:           {label}
-109:         </label>
-110:       </div>
-111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-112:     </div>
-113:   );
-114: }
-115: export default InputField;
-````
-
 ## File: studio/package.json
 ````json
  1: {
@@ -18727,7 +18727,7 @@ tsconfig.json
 61:     "@portabletext/types": "^2.0.15",
 62:     "@tailwindcss/postcss": "^4.1.13",
 63:     "@testing-library/cypress": "^10.1.0",
-64:     "@testing-library/jest-dom": "^6.8.0",
+64:     "@testing-library/jest-dom": "^6.9.0",
 65:     "@testing-library/react": "^16.3.0",
 66:     "@testing-library/user-event": "^14.6.1",
 67:     "@types/jest": "^30.0.0",
