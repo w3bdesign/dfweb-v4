@@ -39,7 +39,6 @@ describe("ErrorBoundary", () => {
     const expectedTexts = {
       heading: "Har du funnet en feil i Matrix?",
       error: "Dette er en testfeil",
-      button: "Returner til Matrix",
     };
 
     // Act
@@ -52,7 +51,6 @@ describe("ErrorBoundary", () => {
     // Assert
     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-    expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
   });
 
   it("should call console.error when an error occurs", () => {

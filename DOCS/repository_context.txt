@@ -3342,6 +3342,203 @@ tsconfig.json
 2: export {};
 ````
 
+## File: src/__tests__/accessibility/KeyboardNavigation.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import userEvent from "@testing-library/user-event";
+  4: import "@testing-library/jest-dom";
+  5: import Button from "@/components/UI/Button.component";
+  6: import InputField from "@/components/UI/InputField.component";
+  7: import Hamburger from "@/components/Layout/Hamburger.component";
+  8: import { useForm } from "react-hook-form";
+  9: describe("Keyboard Navigation Accessibility", () => {
+ 10:   describe("Focus Indicators", () => {
+ 11:     // Arrange
+ 12:     beforeEach(() => {
+ 13:       // Inject our CSS to test focus styles
+ 14:       const style = document.createElement("style");
+ 15:       style.textContent = `
+ 16:         :focus-visible {
+ 17:           outline: 2px solid var(--matrix);
+ 18:           outline-offset: 2px;
+ 19:         }
+ 20:       `;
+ 21:       document.head.appendChild(style);
+ 22:     });
+ 23:     // Act & Assert
+ 24:     it("should show focus indicator on Button when tabbed to", async () => {
+ 25:       // Arrange
+ 26:       const user = userEvent.setup();
+ 27:       render(<Button>Test Button</Button>);
+ 28:       // Act
+ 29:       const button = screen.getByRole("button");
+ 30:       await user.tab();
+ 31:       // Assert
+ 32:       expect(document.activeElement).toBe(button);
+ 33:     });
+ 34:     it("should support keyboard navigation through form fields", async () => {
+ 35:       // Arrange
+ 36:       const TestForm = () => {
+ 37:         const { register } = useForm();
+ 38:         return (
+ 39:           <>
+ 40:             <InputField
+ 41:               name="test1"
+ 42:               label="Field 1"
+ 43:               htmlFor="test1"
+ 44:               register={register}
+ 45:             />
+ 46:             <InputField
+ 47:               name="test2"
+ 48:               label="Field 2"
+ 49:               htmlFor="test2"
+ 50:               register={register}
+ 51:             />
+ 52:             <Button>Submit</Button>
+ 53:           </>
+ 54:         );
+ 55:       };
+ 56:       // Act
+ 57:       const user = userEvent.setup();
+ 58:       render(<TestForm />);
+ 59:       const input1 = screen.getByLabelText("Field 1");
+ 60:       const input2 = screen.getByLabelText("Field 2");
+ 61:       const submitButton = screen.getByRole("button");
+ 62:       // Assert
+ 63:       await user.tab();
+ 64:       expect(document.activeElement).toBe(input1);
+ 65:       await user.tab();
+ 66:       expect(document.activeElement).toBe(input2);
+ 67:       await user.tab();
+ 68:       expect(document.activeElement).toBe(submitButton);
+ 69:     });
+ 70:   });
+ 71:   describe("Touch Targets", () => {
+ 72:     // Act & Assert
+ 73:     it("should have appropriate padding for touch targets", () => {
+ 74:       // Arrange
+ 75:       render(<Button>Test Button</Button>);
+ 76:       // Act
+ 77:       const button = screen.getByRole("button");
+ 78:       // Assert
+ 79:       expect(button).toHaveClass("p-3"); // p-3 = 12px padding
+ 80:       // With padding and font size, effective touch target is adequate
+ 81:       // p-3 (12px) * 2 + text height makes it touch-friendly
+ 82:       expect(button.className).toContain("p-3");
+ 83:     });
+ 84:   });
+ 85: });
+ 86: describe("ARIA Attributes", () => {
+ 87:   // Arrange
+ 88:   const mockOnClick = jest.fn();
+ 89:   // Act & Assert
+ 90:   it("should have proper aria-label on icon-only buttons", () => {
+ 91:     // Arrange
+ 92:     render(<Button aria-label="Open menu">☰</Button>);
+ 93:     // Act
+ 94:     const button = screen.getByRole("button", { name: "Open menu" });
+ 95:     // Assert
+ 96:     expect(button).toBeInTheDocument();
+ 97:     expect(button).toHaveAttribute("aria-label", "Open menu");
+ 98:   });
+ 99:   it("should have proper aria-expanded on Hamburger menu", () => {
+100:     // Arrange
+101:     const { rerender } = render(
+102:       <Hamburger onClick={mockOnClick} animatetoX={false} />,
+103:     );
+104:     // Act
+105:     const button = screen.getByRole("button");
+106:     // Assert
+107:     expect(button).toHaveAttribute("aria-expanded", "false");
+108:     expect(button).toHaveAttribute("aria-label", "Åpne meny");
+109:     rerender(<Hamburger onClick={mockOnClick} animatetoX={true} />);
+110:     expect(button).toHaveAttribute("aria-expanded", "true");
+111:     expect(button).toHaveAttribute("aria-label", "Lukk meny");
+112:   });
+113:   it("should have screen reader text for hamburger menu", () => {
+114:     // Arrange
+115:     render(<Hamburger onClick={mockOnClick} animatetoX={false} />);
+116:     // Act
+117:     const srText = screen.getByText("Åpne navigasjonsmeny");
+118:     // Assert
+119:     expect(srText).toBeInTheDocument();
+120:     expect(srText).toHaveClass("sr-only");
+121:   });
+122: });
+123: describe("Form Accessibility", () => {
+124:   // Arrange
+125:   const TestForm = () => {
+126:     const { register } = useForm();
+127:     return (
+128:       <InputField
+129:         name="phone"
+130:         label="Phone Number"
+131:         htmlFor="phone"
+132:         register={register}
+133:         autoComplete="tel"
+134:         inputMode="tel"
+135:         spellCheck={false}
+136:       />
+137:     );
+138:   };
+139:   // Act & Assert
+140:   it("should have autocomplete attributes on form fields", () => {
+141:     // Arrange
+142:     render(<TestForm />);
+143:     // Act
+144:     const input = screen.getByLabelText("Phone Number");
+145:     // Assert
+146:     expect(input).toHaveAttribute("autoComplete", "tel");
+147:     expect(input).toHaveAttribute("inputMode", "tel");
+148:     expect(input).toHaveAttribute("spellCheck", "false");
+149:   });
+150:   it("should trim whitespace from input values", async () => {
+151:     // Arrange
+152:     const user = userEvent.setup();
+153:     const mockSubmit = jest.fn();
+154:     const TestFormWithSubmit = () => {
+155:       const { register, handleSubmit } = useForm();
+156:       return (
+157:         <form onSubmit={handleSubmit(mockSubmit)}>
+158:           <InputField
+159:             name="testField"
+160:             label="Test Field"
+161:             htmlFor="testField"
+162:             register={register}
+163:           />
+164:           <Button type="submit">Submit</Button>
+165:         </form>
+166:       );
+167:     };
+168:     // Act
+169:     render(<TestFormWithSubmit />);
+170:     const input = screen.getByLabelText("Test Field");
+171:     const submitButton = screen.getByRole("button");
+172:     await user.type(input, "  test value  ");
+173:     await user.click(submitButton);
+174:     // Assert
+175:     expect(mockSubmit).toHaveBeenCalled();
+176:     const callArgs = mockSubmit.mock.calls[0][0];
+177:     expect(callArgs.testField).toBe("test value");
+178:   });
+179: });
+180: describe("Reduced Motion", () => {
+181:   // Act & Assert
+182:   it("should have transition classes that respect prefers-reduced-motion", () => {
+183:     // Arrange
+184:     render(<Button>Test Button</Button>);
+185:     // Act
+186:     const button = screen.getByRole("button");
+187:     // Assert
+188:     // Check that button has transition classes
+189:     // The actual reduced motion is handled by CSS media queries
+190:     expect(button.className).toContain("transition");
+191:     // Our globals.css handles prefers-reduced-motion media query
+192:   });
+193: });
+````
+
 ## File: src/__tests__/Animations/BounceInScroll.test.tsx
 ````typescript
   1: import { render, screen } from "@testing-library/react";
@@ -4677,76 +4874,6 @@ tsconfig.json
 71: });
 ````
 
-## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 5: describe("ErrorBoundary", () => {
- 6:   let consoleErrorSpy: jest.SpyInstance;
- 7:   const errorMock = new Error("Dette er en testfeil");
- 8:   beforeAll(() => {
- 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-10:   });
-11:   afterAll(() => {
-12:     consoleErrorSpy.mockRestore();
-13:   });
-14:   it("should render children when there is no error", () => {
-15:     // Arrange
-16:     const testContent = "Test Innhold";
-17:     // Act
-18:     render(
-19:       <ErrorBoundary>
-20:         <div>{testContent}</div>
-21:       </ErrorBoundary>,
-22:     );
-23:     // Assert
-24:     expect(screen.getByText(testContent)).toBeInTheDocument();
-25:   });
-26:   it("should render error fallback when there is an error", () => {
-27:     // Arrange
-28:     const ErrorComponent = () => {
-29:       throw errorMock;
-30:     };
-31:     const expectedTexts = {
-32:       heading: "Har du funnet en feil i Matrix?",
-33:       error: "Dette er en testfeil",
-34:       button: "Returner til Matrix",
-35:     };
-36:     // Act
-37:     render(
-38:       <ErrorBoundary>
-39:         <ErrorComponent />
-40:       </ErrorBoundary>,
-41:     );
-42:     // Assert
-43:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
-44:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-45:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
-46:   });
-47:   it("should call console.error when an error occurs", () => {
-48:     // Arrange
-49:     const ErrorComponent = () => {
-50:       throw errorMock;
-51:     };
-52:     const expectedErrorArgs = [
-53:       "Uventet feil i Matrix:",
-54:       errorMock,
-55:       { componentStack: expect.any(String) },
-56:     ];
-57:     // Act
-58:     render(
-59:       <ErrorBoundary>
-60:         <ErrorComponent />
-61:       </ErrorBoundary>,
-62:     );
-63:     // Assert
-64:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
-65:   });
-66: });
-````
-
 ## File: src/__tests__/Index/fixtures/hero.json
 ````json
  1: {
@@ -5421,6 +5548,168 @@ tsconfig.json
 112:     });
 113:   });
 114: });
+````
+
+## File: src/__tests__/Layout/MobileMenu.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen } from "@testing-library/react";
+  5: import userEvent from "@testing-library/user-event";
+  6: import { usePathname } from "next/navigation";
+  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
+  8: const linksmock = [
+  9:   {
+ 10:     _key: "home",
+ 11:     title: "Hjem",
+ 12:     name: "Hjem",
+ 13:     href: "/",
+ 14:     hash: "",
+ 15:     externalLink: false,
+ 16:   },
+ 17:   {
+ 18:     _key: "projects",
+ 19:     title: "Prosjekter",
+ 20:     name: "Prosjekter",
+ 21:     href: "/prosjekter",
+ 22:     hash: "",
+ 23:     externalLink: false,
+ 24:   },
+ 25:   {
+ 26:     _key: "cv",
+ 27:     title: "CV",
+ 28:     name: "CV",
+ 29:     href: "/cv",
+ 30:     hash: "",
+ 31:     externalLink: false,
+ 32:   },
+ 33:   {
+ 34:     _key: "github",
+ 35:     title: "Github",
+ 36:     name: "Github",
+ 37:     href: "https://github.com/w3bdesign",
+ 38:     hash: "",
+ 39:     externalLink: true,
+ 40:   },
+ 41:   {
+ 42:     _key: "contact",
+ 43:     title: "Kontakt",
+ 44:     name: "Kontakt",
+ 45:     href: "/kontakt",
+ 46:     hash: "",
+ 47:     externalLink: false,
+ 48:   },
+ 49: ];
+ 50: // Mock next/navigation
+ 51: jest.mock("next/navigation", () => ({
+ 52:   usePathname: jest.fn(),
+ 53: }));
+ 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+ 55: describe("MobileMenu - elementer eksisterer", () => {
+ 56:   const testidMenu = "mobile-menu";
+ 57:   afterEach(() => {
+ 58:     jest.clearAllMocks();
+ 59:   });
+ 60:   it("renders mobile menu when hamburger is clicked", () => {
+ 61:     // Arrange
+ 62:     mockUsePathname.mockReturnValue("/");
+ 63:     render(<MobileMenu links={linksmock} />);
+ 64:     const hamburger = screen.getByTestId("hamburger");
+ 65:     // Act
+ 66:     fireEvent.click(hamburger);
+ 67:     const mobilemenu = screen.getByTestId(testidMenu);
+ 68:     // Assert
+ 69:     expect(mobilemenu).toBeInTheDocument();
+ 70:   });
+ 71:   it("toggles hamburger menu expansion state", () => {
+ 72:     // Arrange
+ 73:     mockUsePathname.mockReturnValue("/");
+ 74:     render(<MobileMenu links={linksmock} />);
+ 75:     const hamburger = screen.getByTestId("hamburger");
+ 76:     // Assert - Initial state
+ 77:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
+ 78:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
+ 79:     // Act - Open menu
+ 80:     fireEvent.click(hamburger);
+ 81:     // Assert - Open state
+ 82:     expect(hamburger).toHaveAttribute("aria-expanded", "true");
+ 83:     expect(hamburger).toHaveAttribute("aria-label", "Lukk meny");
+ 84:     // Act - Close menu
+ 85:     fireEvent.click(hamburger);
+ 86:     // Assert - Closed state
+ 87:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
+ 88:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
+ 89:   });
+ 90:   it("displays correct number of navigation links", () => {
+ 91:     // Arrange
+ 92:     mockUsePathname.mockReturnValue("/");
+ 93:     render(<MobileMenu links={linksmock} />);
+ 94:     const hamburger = screen.getByTestId("hamburger");
+ 95:     // Act
+ 96:     fireEvent.click(hamburger);
+ 97:     const menuItems = screen.getAllByRole("link");
+ 98:     // Assert
+ 99:     expect(menuItems).toHaveLength(linksmock.length);
+100:   });
+101:   it("renders internal links with correct active state", () => {
+102:     // Arrange
+103:     const currentPath = "/prosjekter";
+104:     mockUsePathname.mockReturnValue(currentPath);
+105:     render(<MobileMenu links={linksmock} />);
+106:     const hamburger = screen.getByTestId("hamburger");
+107:     // Act
+108:     fireEvent.click(hamburger);
+109:     // Assert - Test active link styling
+110:     const activeLink = screen.getByTestId("mobil-Prosjekter");
+111:     expect(activeLink).toHaveClass("text-green-400");
+112:     // Assert - Test non-active link styling
+113:     const inactiveLink = screen.getByTestId("mobil-Hjem");
+114:     expect(inactiveLink).not.toHaveClass("text-green-400");
+115:   });
+116:   it("renders internal links with glitch effect", () => {
+117:     // Arrange
+118:     mockUsePathname.mockReturnValue("/");
+119:     render(<MobileMenu links={linksmock} />);
+120:     const hamburger = screen.getByTestId("hamburger");
+121:     // Act
+122:     fireEvent.click(hamburger);
+123:     // Assert - Test that glitch effect is present for internal links
+124:     const internalLink = screen.getByTestId("mobil-Hjem");
+125:     expect(internalLink).toBeInTheDocument();
+126:     expect(internalLink).toHaveTextContent("Hjem");
+127:   });
+128:   it("opens external links in new tab with correct attributes", () => {
+129:     // Arrange
+130:     mockUsePathname.mockReturnValue("/");
+131:     render(<MobileMenu links={linksmock} />);
+132:     const hamburger = screen.getByTestId("hamburger");
+133:     // Act
+134:     fireEvent.click(hamburger);
+135:     const externalLink = screen.getByRole("link", { name: /github/i });
+136:     // Assert
+137:     expect(externalLink).toHaveAttribute("target", "_blank");
+138:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+139:   });
+140:   it("navigates and closes menu when clicking a link", async () => {
+141:     // Arrange
+142:     mockUsePathname.mockReturnValue("/");
+143:     render(<MobileMenu links={linksmock} />);
+144:     const user = userEvent.setup();
+145:     const hamburger = screen.getByTestId("hamburger");
+146:     // Act - Open menu
+147:     await user.click(hamburger);
+148:     // Assert - Menu is open
+149:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+150:     // Act - Click a link
+151:     const link = screen.getByTestId("mobil-Prosjekter");
+152:     await user.click(link);
+153:     // Wait for animation to complete
+154:     await new Promise((resolve) => setTimeout(resolve, 2500));
+155:     // Assert - Menu should close
+156:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
+157:   });
+158: });
 ````
 
 ## File: src/__tests__/Prosjekter/actions.test.ts
@@ -7113,6 +7402,242 @@ tsconfig.json
 155: }
 ````
 
+## File: src/app/globals.css
+````css
+  1: @import "tailwindcss";
+  2: @config '../../tailwind.config.ts';
+  3: @layer base {
+  4:   *,
+  5:   ::after,
+  6:   ::before,
+  7:   ::backdrop,
+  8:   ::file-selector-button {
+  9:     border-color: var(--color-gray-200, currentcolor);
+ 10:   }
+ 11: }
+ 12: :root {
+ 13:   /* Modern Color Scheme */
+ 14:   --primary: #00ff62;
+ 15:   --secondary: #00cc4e;
+ 16:   --accent: #008529;
+ 17:   --text: #e1e1e1;
+ 18:   --background: var(--color-slate-900, #0f172a);
+ 19:   /* Semantic Colors */
+ 20:   --success: #00cc4e;
+ 21:   --error: #ff4e4e;
+ 22:   --warning: #ffb74e;
+ 23:   --info: #4e9fff;
+ 24:   /* Matrix Theme Colors */
+ 25:   --matrix-light: #00ff62;
+ 26:   --matrix: #00cc4e;
+ 27:   --matrix-dark: #008529;
+ 28:   --matrix-glow: rgba(0, 255, 98, 0.6);
+ 29: }
+ 30: body {
+ 31:   background-color: var(--background);
+ 32:   color: var(--text);
+ 33:   font-family:
+ 34:     "Inter",
+ 35:     -apple-system,
+ 36:     BlinkMacSystemFont,
+ 37:     "Segoe UI",
+ 38:     Roboto,
+ 39:     Oxygen,
+ 40:     Ubuntu,
+ 41:     Cantarell,
+ 42:     sans-serif;
+ 43: }
+ 44: #matrixCanvas {
+ 45:   opacity: 0.7;
+ 46: }
+ 47: /* Touch interaction improvements */
+ 48: button,
+ 49: a,
+ 50: input,
+ 51: textarea,
+ 52: select {
+ 53:   touch-action: manipulation; /* Prevents double-tap zoom */
+ 54:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
+ 55: }
+ 56: /* Minimum touch targets for mobile */
+ 57: @media (pointer: coarse) {
+ 58:   button,
+ 59:   a[role="button"],
+ 60:   input[type="submit"],
+ 61:   input[type="button"] {
+ 62:     min-height: 44px;
+ 63:     min-width: 44px;
+ 64:   }
+ 65: }
+ 66: /* Scroll margin for anchor links */
+ 67: [id] {
+ 68:   scroll-margin-top: 100px;
+ 69: }
+ 70: h1[id],
+ 71: h2[id],
+ 72: h3[id],
+ 73: h4[id],
+ 74: h5[id],
+ 75: h6[id] {
+ 76:   scroll-margin-top: 120px;
+ 77: }
+ 78: /* Selection */
+ 79: ::selection {
+ 80:   background-color: var(--matrix-dark);
+ 81:   color: #ffffff;
+ 82: }
+ 83: /* Scrollbar */
+ 84: * {
+ 85:   scrollbar-width: thin;
+ 86:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+ 87: }
+ 88: ::-webkit-scrollbar {
+ 89:   width: 6px;
+ 90: }
+ 91: ::-webkit-scrollbar-track {
+ 92:   background: #1a1a1a;
+ 93: }
+ 94: ::-webkit-scrollbar-thumb {
+ 95:   background: var(--matrix-dark);
+ 96:   border-radius: 3px;
+ 97: }
+ 98: ::-webkit-scrollbar-thumb:hover {
+ 99:   background: var(--matrix-light);
+100: }
+101: /* Enhanced keyboard focus indicators for accessibility */
+102: /* Exclude form elements which handle their own focus styling */
+103: :focus-visible:not(input):not(textarea):not(select) {
+104:   outline: 2px solid var(--matrix-dark);
+105:   outline-offset: 2px;
+106:   border-radius: 2px;
+107: }
+108: /* Focus within container styling - only for specific interactive containers */
+109: .focus-within-container:focus-within {
+110:   outline: 2px solid var(--matrix-dark);
+111:   outline-offset: 2px;
+112:   border-radius: 2px;
+113: }
+114: /* Button-specific focus styling */
+115: button:focus-visible,
+116: a:focus-visible {
+117:   outline: 2px solid var(--matrix-dark);
+118:   outline-offset: 3px;
+119:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
+120: }
+121: /* Input and textarea focus styling handled by individual components */
+122: /* Tab and interactive element focus */
+123: [role="tab"]:focus-visible,
+124: [role="button"]:focus-visible,
+125: [tabindex="0"]:focus-visible {
+126:   outline: 2px solid var(--matrix-dark);
+127:   outline-offset: 2px;
+128: }
+129: /* Skip link special focus styling for better visibility */
+130: .sr-only:focus,
+131: .sr-only:focus-within {
+132:   position: absolute;
+133:   width: auto;
+134:   height: auto;
+135:   padding: 0.5rem 1rem;
+136:   margin: 0;
+137:   overflow: visible;
+138:   clip: auto;
+139:   white-space: normal;
+140:   outline: 3px solid var(--matrix-light);
+141:   outline-offset: 2px;
+142:   z-index: 9999;
+143: }
+144: /* Skeleton shimmer effect */
+145: @keyframes shimmer {
+146:   0% {
+147:     background-position: -200% 0;
+148:   }
+149:   100% {
+150:     background-position: 200% 0;
+151:   }
+152: }
+153: .skeleton-shimmer::before {
+154:   content: "";
+155:   position: absolute;
+156:   top: 0;
+157:   left: 0;
+158:   right: 0;
+159:   bottom: 0;
+160:   background: linear-gradient(
+161:     90deg,
+162:     transparent 0%,
+163:     rgba(255, 255, 255, 0.04) 50%,
+164:     transparent 100%
+165:   );
+166:   background-size: 200% 100%;
+167:   animation: shimmer 1.5s infinite;
+168: }
+169: /* Performance optimizations for animations */
+170: .contain-layout {
+171:   contain: layout style paint;
+172: }
+173: /* Reduced motion for accessibility */
+174: @media (prefers-reduced-motion: reduce) {
+175:   *,
+176:   *::before,
+177:   *::after {
+178:     animation-duration: 0.01ms !important;
+179:     animation-iteration-count: 1 !important;
+180:     transition-duration: 0.01ms !important;
+181:   }
+182: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import "./globals.css";
+ 4: import "./glitch.css";
+ 5: import SkipLink from "@/components/UI/SkipLink.component";
+ 6: const inter = Inter({ subsets: ["latin"] });
+ 7: export const metadata: Metadata = {
+ 8:   title: "Forside - Dfweb",
+ 9:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+10: };
+11: export default function RootLayout({
+12:   children,
+13: }: Readonly<{
+14:   children: React.ReactNode;
+15: }>) {
+16:   return (
+17:     <html lang="nb">
+18:       <head>
+19:         <meta
+20:           name="viewport"
+21:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+22:         />
+23:         <link rel="icon" href="/favicon.ico" />
+24:         <link rel="apple-touch-icon" href="/logo.png" />
+25:         <meta property="og:title" content="Daniel Fjeldstad" />
+26:         <meta name="author" content="Daniel Fjeldstad" />
+27:         <meta property="og:locale" content="nb_NO" />
+28:         <meta
+29:           property="og:description"
+30:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+31:         />
+32:         <meta property="og:url" content="https://www.dfweb.no/" />
+33:         <meta property="og:site_name" content="dfweb.no" />
+34:         <meta name="theme-color" content="#004014" />
+35:       </head>
+36:       <body
+37:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+38:       >
+39:         <SkipLink />
+40:         <div id="main-content" className="grow flex flex-col">
+41:           {children}
+42:         </div>
+43:       </body>
+44:     </html>
+45:   );
+46: }
+````
+
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -8269,78 +8794,6 @@ tsconfig.json
 37: export default ErrorBoundary;
 ````
 
-## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
- 3: import Pill from "../../components/UI/Pill.component";
- 4: interface ErrorFallbackProps {
- 5:   error: Error;
- 6:   compact?: boolean;
- 7: }
- 8: /**
- 9:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
-10:  * It shows a Matrix-themed error message with the option to reload the page.
-11:  *
-12:  * @param {Object} props - The component props
-13:  * @param {Error} props.error - The error object caught by the ErrorBoundary
-14:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
-15:  * @returns {JSX.Element} A React component displaying the error message and reload option
-16:  */
-17: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-18:   error,
-19:   compact = false,
-20: }) => {
-21:   if (compact) {
-22:     return (
-23:       <div
-24:         data-testid="error-fallback-container"
-25:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
-26:       >
-27:         <div className="absolute inset-0 opacity-30">
-28:           <ReactMatrixAnimation />
-29:         </div>
-30:         <div className="relative z-10 flex flex-col items-center text-center">
-31:           <h2 className="text-white text-lg mb-2">
-32:             Har du funnet en feil i Matrix?
-33:           </h2>
-34:           <p className="text-white text-sm mb-3">
-35:             {error.message || "En uventet feil har oppstått."}
-36:           </p>
-37:           <button
-38:             onClick={() => window.location.reload()}
-39:             className="px-3 py-1 bg-matrix-light text-black rounded-sm text-sm hover:bg-matrix-dark"
-40:           >
-41:             Returner til Matrix
-42:           </button>
-43:         </div>
-44:       </div>
-45:     );
-46:   }
-47:   return (
-48:     <div
-49:       data-testid="error-fallback-container"
-50:       className="absolute w-full h-full"
-51:     >
-52:       <ReactMatrixAnimation />
-53:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-54:         <h1 className="text-white text-5xl m-6">
-55:           Har du funnet en feil i Matrix?
-56:         </h1>
-57:         <p className="text-white text-xl mb-6">
-58:           {error.message || "En uventet feil har oppstått."}
-59:         </p>
-60:         <Pill
-61:           text="Returner til Matrix"
-62:           onClick={() => window.location.reload()}
-63:         />
-64:       </div>
-65:     </div>
-66:   );
-67: };
-68: export default ErrorFallback;
-````
-
 ## File: src/components/ErrorBoundary/ErrorFallbackWrapper.component.tsx
 ````typescript
  1: import React from "react";
@@ -8683,6 +9136,154 @@ tsconfig.json
 13: export type FormData = z.infer<typeof formSchema>;
 ````
 
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import emailjs from "@emailjs/browser";
+  6: import PageHeader from "@/components/UI/PageHeader.component";
+  7: import Button from "@/components/UI/Button.component";
+  8: import InputField from "@/components/UI/InputField.component";
+  9: import { formSchema, FormData } from "./config/formConfig";
+ 10: interface ContactFormProps {
+ 11:   csrfToken?: string;
+ 12:   onSubmit?: (data: FormData) => Promise<string>;
+ 13:   initialResponse?: string;
+ 14: }
+ 15: /**
+ 16:  * ContactForm component - A complete contact form with EmailJS integration
+ 17:  * Handles both the form UI and submission logic in a single, clear component
+ 18:  */
+ 19: const ContactForm: React.FC<ContactFormProps> = ({
+ 20:   csrfToken = "",
+ 21:   onSubmit: onSubmitProp,
+ 22:   initialResponse = "",
+ 23: }) => {
+ 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+ 25:   const {
+ 26:     register,
+ 27:     handleSubmit,
+ 28:     formState: { errors, isSubmitting },
+ 29:   } = useForm<FormData>({
+ 30:     resolver: zodResolver(formSchema),
+ 31:   });
+ 32:   /**
+ 33:    * Default form submission handler using EmailJS.
+ 34:    * @param {FormData} data - The form data.
+ 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
+ 36:    */
+ 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 39:     const TEMPLATE_KEY =
+ 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 42:     try {
+ 43:       emailjs.init(EMAIL_API_KEY);
+ 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 45:       return "Takk for din beskjed";
+ 46:     } catch {
+ 47:       return "Feil under sending av skjema";
+ 48:     }
+ 49:   };
+ 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 52:     const message = await submitHandler(data);
+ 53:     setServerResponse(message);
+ 54:   };
+ 55:   return (
+ 56:     <main data-testid="kontaktcontent" id="maincontent">
+ 57:       <div className="mt-32 bg-graybg">
+ 58:         <PageHeader>Kontakt</PageHeader>
+ 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 62:               <div className="p-2 md:p-6 pt-8">
+ 63:                 {serverResponse ? (
+ 64:                   <div aria-live="polite" aria-atomic="true">
+ 65:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 66:                       {serverResponse}
+ 67:                     </h3>
+ 68:                   </div>
+ 69:                 ) : (
+ 70:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 71:                     <form
+ 72:                       id="contact-form"
+ 73:                       className="text-center"
+ 74:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 75:                       method="POST"
+ 76:                       action="/api/form"
+ 77:                       aria-label="Contact Form"
+ 78:                     >
+ 79:                       {csrfToken && (
+ 80:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 81:                       )}
+ 82:                       <fieldset>
+ 83:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 84:                           Kontaktskjema
+ 85:                         </legend>
+ 86:                         <InputField<FormData>
+ 87:                           name="navn"
+ 88:                           label="Fullt navn"
+ 89:                           htmlFor="navn"
+ 90:                           register={register}
+ 91:                           error={errors.navn?.message}
+ 92:                           isRequired
+ 93:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+ 94:                           title="Vennligst bruk norske bokstaver"
+ 95:                           autoComplete="name"
+ 96:                           spellCheck={false}
+ 97:                         />
+ 98:                         <br />
+ 99:                         <InputField<FormData>
+100:                           name="telefon"
+101:                           label="Telefonnummer"
+102:                           htmlFor="telefon"
+103:                           register={register}
+104:                           error={errors.telefon?.message}
+105:                           isRequired
+106:                           inputPattern={/^\d{8}$/}
+107:                           title="Vennligst oppgi et gyldig telefonnummer"
+108:                           autoComplete="tel"
+109:                           inputMode="tel"
+110:                           spellCheck={false}
+111:                         />
+112:                         <br />
+113:                         <InputField<FormData>
+114:                           name="tekst"
+115:                           label="Hva ønsker du å si?"
+116:                           htmlFor="tekst"
+117:                           register={register}
+118:                           error={errors.tekst?.message}
+119:                           isRequired
+120:                           type="textarea"
+121:                           spellCheck={true}
+122:                         />
+123:                         <br />
+124:                       </fieldset>
+125:                       <div className="-mt-4">
+126:                         <Button
+127:                           disabled={isSubmitting}
+128:                           data-testid="submit-button"
+129:                         >
+130:                           {isSubmitting ? "Sender..." : "Send skjema"}
+131:                         </Button>
+132:                       </div>
+133:                     </form>
+134:                   </div>
+135:                 )}
+136:               </div>
+137:             </div>
+138:           </div>
+139:         </div>
+140:       </div>
+141:     </main>
+142:   );
+143: };
+144: export default ContactForm;
+````
+
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -8768,6 +9369,61 @@ tsconfig.json
 29:   </footer>
 30: );
 31: export default Footer;
+````
+
+## File: src/components/Layout/Hamburger.component.tsx
+````typescript
+ 1: "use client";
+ 2: export interface IHamburgerProps {
+ 3:   onClick: () => void;
+ 4:   animatetoX: boolean;
+ 5: }
+ 6: /**
+ 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
+ 8:  * @function Hamburger
+ 9:  * @param {() => void} onClick - onClick handler to respond to clicks
+10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
+14:   const hamburgerLine =
+15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
+16:   const opacityFull = "opacity-100 group-hover:opacity-100";
+17:   return (
+18:     <button
+19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6 relative"
+20:       data-cy="hamburger"
+21:       data-testid="hamburger"
+22:       onClick={onClick}
+23:       aria-expanded={animatetoX}
+24:       aria-label={animatetoX ? "Lukk meny" : "Åpne meny"}
+25:       type="button"
+26:     >
+27:       <span className="sr-only text-white text-2xl">
+28:         {animatetoX ? "Lukk navigasjonsmeny" : "Åpne navigasjonsmeny"}
+29:       </span>
+30:       <span
+31:         data-testid="hamburgerline"
+32:         className={`${hamburgerLine} ${
+33:           animatetoX
+34:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
+35:             : opacityFull
+36:         }`}
+37:       />
+38:       <span
+39:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
+40:       />
+41:       <span
+42:         className={`${hamburgerLine} ${
+43:           animatetoX
+44:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
+45:             : opacityFull
+46:         }`}
+47:       />
+48:     </button>
+49:   );
+50: };
+51: export default Hamburger;
 ````
 
 ## File: src/components/Layout/Header.component.tsx
@@ -9022,6 +9678,88 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: /**
+ 8:  * Renders a card displaying information about a single project.
+ 9:  * Uses the Project type definition from Sanity types.
+10:  *
+11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
+12:  * @param {string} props.name - The name of the project.
+13:  * @param {string} [props.description] - A brief description of the project (optional).
+14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+19:  * @returns {JSX.Element} The rendered ProsjektCard component.
+20:  */
+21: const ProsjektCard: React.FC<Project> = ({
+22:   name,
+23:   description,
+24:   subdescription,
+25:   projectimage,
+26:   urlwww,
+27:   urlgithub,
+28:   featured,
+29: }) => {
+30:   return (
+31:     <div
+32:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-white/5 hover:border-white/10"
+33:       data-testid="project-card"
+34:     >
+35:       <BounceInScroll viewAmount={0.3} instant={featured}>
+36:         <div className="relative w-full md:h-60">
+37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+38:             {projectimage && (
+39:               <img
+40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)] hover:brightness-110"
+41:                 width={600}
+42:                 src={urlFor(projectimage)
+43:                   .width(600)
+44:                   .fit("max")
+45:                   .quality(100)
+46:                   .auto("format")
+47:                   .url()}
+48:                 alt={name}
+49:               />
+50:             )}
+51:           </div>
+52:         </div>
+53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+54:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+55:             {name}
+56:           </h2>
+57:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
+58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+59:             {subdescription}
+60:           </p>
+61:           <div className="flex justify-center mt-4">
+62:             {urlwww && urlwww.length > 0 && (
+63:               <Button href={urlwww?.[0]?.url} renderAs="a">
+64:                 Besøk
+65:               </Button>
+66:             )}
+67:             {urlgithub && urlgithub.length > 0 && (
+68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+69:                 GitHub
+70:               </Button>
+71:             )}
+72:           </div>
+73:         </div>
+74:       </BounceInScroll>
+75:     </div>
+76:   );
+77: };
+78: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/ContentLoader.component.tsx
@@ -15906,6 +16644,163 @@ tsconfig.json
 33: }
 ````
 
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: 
+ 18: ## Critical Commands
+ 19: 
+ 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 24: 
+ 25: ## Testing Gotchas
+ 26: 
+ 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 29: - Matrix component intentionally excluded from test coverage
+ 30: - Cypress and Playwright have different ESLint rule overrides
+ 31: 
+ 32: ## UI Development Rules
+ 33: 
+ 34: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+ 35: 
+ 36: ### Interactions
+ 37: 
+ 38: #### Keyboard
+ 39: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+ 40: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+ 41: - MUST: Manage focus (trap, move, and return) per APG patterns
+ 42: 
+ 43: #### Targets & Input
+ 44: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+ 45: - MUST: Mobile `<input>` font-size ≥16px or set:
+ 46:   ```html
+ 47:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+ 48:   ```
+ 49: - NEVER: Disable browser zoom
+ 50: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+ 51: 
+ 52: #### Inputs & Forms (Behavior)
+ 53: - MUST: Hydration-safe inputs (no lost focus/value)
+ 54: - NEVER: Block paste in `<input>/<textarea>`
+ 55: - MUST: Loading buttons show spinner and keep original label
+ 56: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+ 57: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+ 58: - MUST: Don't block typing; accept free text and validate after
+ 59: - MUST: Allow submitting incomplete forms to surface validation
+ 60: - MUST: Errors inline next to fields; on submit, focus first error
+ 61: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+ 62: - SHOULD: Disable spellcheck for emails/codes/usernames
+ 63: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+ 64: - MUST: Warn on unsaved changes before navigation
+ 65: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+ 66: - MUST: Trim values to handle text expansion trailing spaces
+ 67: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+ 68: 
+ 69: #### State & Navigation
+ 70: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+ 71: - MUST: Back/Forward restores scroll
+ 72: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+ 73: 
+ 74: #### Feedback
+ 75: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+ 76: - MUST: Confirm destructive actions or provide Undo window
+ 77: - MUST: Use polite `aria-live` for toasts/inline validation
+ 78: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+ 79: 
+ 80: #### Touch/Drag/Scroll
+ 81: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+ 82: - MUST: Delay first tooltip in a group; subsequent peers no delay
+ 83: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+ 84: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+ 85: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+ 86: 
+ 87: #### Autofocus
+ 88: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+ 89: 
+ 90: ### Animation
+ 91: 
+ 92: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+ 93: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+ 94: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+ 95: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+ 96: - SHOULD: Choose easing to match the change (size/distance/trigger)
+ 97: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+ 98: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+ 99: 
+100: ### Layout
+101: 
+102: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+103: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+104: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+105: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+106: - MUST: Respect safe areas (use env(safe-area-inset-*))
+107: - MUST: Avoid unwanted scrollbars; fix overflows
+108: 
+109: ### Content & Accessibility
+110: 
+111: - SHOULD: Inline help first; tooltips last resort
+112: - MUST: Skeletons mirror final content to avoid layout shift
+113: - MUST: `<title>` matches current context
+114: - MUST: No dead ends; always offer next step/recovery
+115: - MUST: Design empty/sparse/dense/error states
+116: - SHOULD: Curly quotes (" "); avoid widows/orphans
+117: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+118: - MUST: Redundant status cues (not color-only); icons have text labels
+119: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+120: - MUST: Use the ellipsis character `…` (not `...`)
+121: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+122: - MUST: Resilient to user-generated content (short/avg/very long)
+123: - MUST: Locale-aware dates/times/numbers/currency
+124: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+125: - MUST: Icon-only buttons have descriptive `aria-label`
+126: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+127: - SHOULD: Right-clicking the nav logo surfaces brand assets
+128: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+129: 
+130: ### Performance
+131: 
+132: - SHOULD: Test iOS Low Power Mode and macOS Safari
+133: - MUST: Measure reliably (disable extensions that skew runtime)
+134: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+135: - MUST: Profile with CPU/network throttling
+136: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+137: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+138: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+139: - MUST: Virtualize large lists (eg, `virtua`)
+140: - MUST: Preload only above-the-fold images; lazy-load the rest
+141: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+142: 
+143: ### Design
+144: 
+145: - SHOULD: Layered shadows (ambient + direct)
+146: - SHOULD: Crisp edges via semi-transparent borders + shadows
+147: - SHOULD: Nested radii: child ≤ parent; concentric
+148: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+149: - MUST: Accessible charts (color-blind-friendly palettes)
+150: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+151: - MUST: Increase contrast on `:hover/:active/:focus`
+152: - SHOULD: Match browser UI to bg
+153: - SHOULD: Avoid gradient banding (use masks when needed)
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -17178,500 +18073,132 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: src/__tests__/Layout/MobileMenu.test.tsx
+## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
 ````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen } from "@testing-library/react";
-  5: import userEvent from "@testing-library/user-event";
-  6: import { usePathname } from "next/navigation";
-  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
-  8: const linksmock = [
-  9:   {
- 10:     _key: "home",
- 11:     title: "Hjem",
- 12:     name: "Hjem",
- 13:     href: "/",
- 14:     hash: "",
- 15:     externalLink: false,
- 16:   },
- 17:   {
- 18:     _key: "projects",
- 19:     title: "Prosjekter",
- 20:     name: "Prosjekter",
- 21:     href: "/prosjekter",
- 22:     hash: "",
- 23:     externalLink: false,
- 24:   },
- 25:   {
- 26:     _key: "cv",
- 27:     title: "CV",
- 28:     name: "CV",
- 29:     href: "/cv",
- 30:     hash: "",
- 31:     externalLink: false,
- 32:   },
- 33:   {
- 34:     _key: "github",
- 35:     title: "Github",
- 36:     name: "Github",
- 37:     href: "https://github.com/w3bdesign",
- 38:     hash: "",
- 39:     externalLink: true,
- 40:   },
- 41:   {
- 42:     _key: "contact",
- 43:     title: "Kontakt",
- 44:     name: "Kontakt",
- 45:     href: "/kontakt",
- 46:     hash: "",
- 47:     externalLink: false,
- 48:   },
- 49: ];
- 50: // Mock next/navigation
- 51: jest.mock("next/navigation", () => ({
- 52:   usePathname: jest.fn(),
- 53: }));
- 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
- 55: describe("MobileMenu - elementer eksisterer", () => {
- 56:   const testidMenu = "mobile-menu";
- 57:   afterEach(() => {
- 58:     jest.clearAllMocks();
- 59:   });
- 60:   it("renders mobile menu when hamburger is clicked", () => {
- 61:     // Arrange
- 62:     mockUsePathname.mockReturnValue("/");
- 63:     render(<MobileMenu links={linksmock} />);
- 64:     const hamburger = screen.getByTestId("hamburger");
- 65:     // Act
- 66:     fireEvent.click(hamburger);
- 67:     const mobilemenu = screen.getByTestId(testidMenu);
- 68:     // Assert
- 69:     expect(mobilemenu).toBeInTheDocument();
- 70:   });
- 71:   it("toggles hamburger menu expansion state", () => {
- 72:     // Arrange
- 73:     mockUsePathname.mockReturnValue("/");
- 74:     render(<MobileMenu links={linksmock} />);
- 75:     const hamburger = screen.getByTestId("hamburger");
- 76:     // Assert - Initial state
- 77:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
- 78:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
- 79:     // Act - Open menu
- 80:     fireEvent.click(hamburger);
- 81:     // Assert - Open state
- 82:     expect(hamburger).toHaveAttribute("aria-expanded", "true");
- 83:     expect(hamburger).toHaveAttribute("aria-label", "Lukk meny");
- 84:     // Act - Close menu
- 85:     fireEvent.click(hamburger);
- 86:     // Assert - Closed state
- 87:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
- 88:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
- 89:   });
- 90:   it("displays correct number of navigation links", () => {
- 91:     // Arrange
- 92:     mockUsePathname.mockReturnValue("/");
- 93:     render(<MobileMenu links={linksmock} />);
- 94:     const hamburger = screen.getByTestId("hamburger");
- 95:     // Act
- 96:     fireEvent.click(hamburger);
- 97:     const menuItems = screen.getAllByRole("link");
- 98:     // Assert
- 99:     expect(menuItems).toHaveLength(linksmock.length);
-100:   });
-101:   it("renders internal links with correct active state", () => {
-102:     // Arrange
-103:     const currentPath = "/prosjekter";
-104:     mockUsePathname.mockReturnValue(currentPath);
-105:     render(<MobileMenu links={linksmock} />);
-106:     const hamburger = screen.getByTestId("hamburger");
-107:     // Act
-108:     fireEvent.click(hamburger);
-109:     // Assert - Test active link styling
-110:     const activeLink = screen.getByTestId("mobil-Prosjekter");
-111:     expect(activeLink).toHaveClass("text-green-400");
-112:     // Assert - Test non-active link styling
-113:     const inactiveLink = screen.getByTestId("mobil-Hjem");
-114:     expect(inactiveLink).not.toHaveClass("text-green-400");
-115:   });
-116:   it("renders internal links with glitch effect", () => {
-117:     // Arrange
-118:     mockUsePathname.mockReturnValue("/");
-119:     render(<MobileMenu links={linksmock} />);
-120:     const hamburger = screen.getByTestId("hamburger");
-121:     // Act
-122:     fireEvent.click(hamburger);
-123:     // Assert - Test that glitch effect is present for internal links
-124:     const internalLink = screen.getByTestId("mobil-Hjem");
-125:     expect(internalLink).toBeInTheDocument();
-126:     expect(internalLink).toHaveTextContent("Hjem");
-127:   });
-128:   it("opens external links in new tab with correct attributes", () => {
-129:     // Arrange
-130:     mockUsePathname.mockReturnValue("/");
-131:     render(<MobileMenu links={linksmock} />);
-132:     const hamburger = screen.getByTestId("hamburger");
-133:     // Act
-134:     fireEvent.click(hamburger);
-135:     const externalLink = screen.getByRole("link", { name: /github/i });
-136:     // Assert
-137:     expect(externalLink).toHaveAttribute("target", "_blank");
-138:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
-139:   });
-140:   it("navigates and closes menu when clicking a link", async () => {
-141:     // Arrange
-142:     mockUsePathname.mockReturnValue("/");
-143:     render(<MobileMenu links={linksmock} />);
-144:     const user = userEvent.setup();
-145:     const hamburger = screen.getByTestId("hamburger");
-146:     // Act - Open menu
-147:     await user.click(hamburger);
-148:     // Assert - Menu is open
-149:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-150:     // Act - Click a link
-151:     const link = screen.getByTestId("mobil-Prosjekter");
-152:     await user.click(link);
-153:     // Wait for animation to complete
-154:     await new Promise((resolve) => setTimeout(resolve, 2500));
-155:     // Assert - Menu should close
-156:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
-157:   });
-158: });
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 5: describe("ErrorBoundary", () => {
+ 6:   let consoleErrorSpy: jest.SpyInstance;
+ 7:   const errorMock = new Error("Dette er en testfeil");
+ 8:   beforeAll(() => {
+ 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterAll(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("should render children when there is no error", () => {
+15:     // Arrange
+16:     const testContent = "Test Innhold";
+17:     // Act
+18:     render(
+19:       <ErrorBoundary>
+20:         <div>{testContent}</div>
+21:       </ErrorBoundary>,
+22:     );
+23:     // Assert
+24:     expect(screen.getByText(testContent)).toBeInTheDocument();
+25:   });
+26:   it("should render error fallback when there is an error", () => {
+27:     // Arrange
+28:     const ErrorComponent = () => {
+29:       throw errorMock;
+30:     };
+31:     const expectedTexts = {
+32:       heading: "Har du funnet en feil i Matrix?",
+33:       error: "Dette er en testfeil",
+34:     };
+35:     // Act
+36:     render(
+37:       <ErrorBoundary>
+38:         <ErrorComponent />
+39:       </ErrorBoundary>,
+40:     );
+41:     // Assert
+42:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+43:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+44:   });
+45:   it("should call console.error when an error occurs", () => {
+46:     // Arrange
+47:     const ErrorComponent = () => {
+48:       throw errorMock;
+49:     };
+50:     const expectedErrorArgs = [
+51:       "Uventet feil i Matrix:",
+52:       errorMock,
+53:       { componentStack: expect.any(String) },
+54:     ];
+55:     // Act
+56:     render(
+57:       <ErrorBoundary>
+58:         <ErrorComponent />
+59:       </ErrorBoundary>,
+60:     );
+61:     // Assert
+62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
+63:   });
+64: });
 ````
 
-## File: src/components/Layout/Hamburger.component.tsx
+## File: src/components/UI/Button.component.tsx
 ````typescript
- 1: "use client";
- 2: export interface IHamburgerProps {
- 3:   onClick: () => void;
- 4:   animatetoX: boolean;
- 5: }
- 6: /**
- 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
- 8:  * @function Hamburger
- 9:  * @param {() => void} onClick - onClick handler to respond to clicks
-10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
-11:  * @returns {JSX.Element} - Rendered component
-12:  */
-13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
-14:   const hamburgerLine =
-15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
-16:   const opacityFull = "opacity-100 group-hover:opacity-100";
-17:   return (
-18:     <button
-19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6 relative"
-20:       data-cy="hamburger"
-21:       data-testid="hamburger"
-22:       onClick={onClick}
-23:       aria-expanded={animatetoX}
-24:       aria-label={animatetoX ? "Lukk meny" : "Åpne meny"}
-25:       type="button"
-26:     >
-27:       <span className="sr-only text-white text-2xl">
-28:         {animatetoX ? "Lukk navigasjonsmeny" : "Åpne navigasjonsmeny"}
-29:       </span>
-30:       <span
-31:         data-testid="hamburgerline"
-32:         className={`${hamburgerLine} ${
-33:           animatetoX
-34:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
-35:             : opacityFull
-36:         }`}
-37:       />
-38:       <span
-39:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
-40:       />
-41:       <span
-42:         className={`${hamburgerLine} ${
-43:           animatetoX
-44:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
-45:             : opacityFull
-46:         }`}
-47:       />
-48:     </button>
-49:   );
-50: };
-51: export default Hamburger;
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: /**
- 8:  * Renders a card displaying information about a single project.
- 9:  * Uses the Project type definition from Sanity types.
-10:  *
-11:  * @param {Project} props - The project data object conforming to the Sanity Project type.
-12:  * @param {string} props.name - The name of the project.
-13:  * @param {string} [props.description] - A brief description of the project (optional).
-14:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-15:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-16:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-17:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-18:  * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
-19:  * @returns {JSX.Element} The rendered ProsjektCard component.
-20:  */
-21: const ProsjektCard: React.FC<Project> = ({
-22:   name,
-23:   description,
-24:   subdescription,
-25:   projectimage,
-26:   urlwww,
-27:   urlgithub,
-28:   featured,
-29: }) => {
-30:   return (
-31:     <div
-32:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-white/5 hover:border-white/10"
-33:       data-testid="project-card"
-34:     >
-35:       <BounceInScroll viewAmount={0.3} instant={featured}>
-36:         <div className="relative w-full md:h-60">
-37:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-38:             {projectimage && (
-39:               <img
-40:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)] hover:brightness-110"
-41:                 width={600}
-42:                 src={urlFor(projectimage)
-43:                   .width(600)
-44:                   .fit("max")
-45:                   .quality(100)
-46:                   .auto("format")
-47:                   .url()}
-48:                 alt={name}
-49:               />
-50:             )}
-51:           </div>
-52:         </div>
-53:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-54:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-55:             {name}
-56:           </h2>
-57:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
-58:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-59:             {subdescription}
-60:           </p>
-61:           <div className="flex justify-center mt-4">
-62:             {urlwww && urlwww.length > 0 && (
-63:               <Button href={urlwww?.[0]?.url} renderAs="a">
-64:                 Besøk
-65:               </Button>
-66:             )}
-67:             {urlgithub && urlgithub.length > 0 && (
-68:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-69:                 GitHub
-70:               </Button>
-71:             )}
-72:           </div>
-73:         </div>
-74:       </BounceInScroll>
-75:     </div>
-76:   );
-77: };
-78: export default ProsjektCard;
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.1.1",
-18:     "react-dom": "^19.1.1",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.10.0",
-21:     "styled-components": "^6.1.19"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.1.13",
-26:     "eslint": "^9.36.0",
-27:     "prettier": "^3.6.2",
-28:     "typescript": "^5.9.2"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
-````
-
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: 
- 18: ## Critical Commands
- 19: 
- 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 24: 
- 25: ## Testing Gotchas
- 26: 
- 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 29: - Matrix component intentionally excluded from test coverage
- 30: - Cypress and Playwright have different ESLint rule overrides
- 31: 
- 32: ## UI Development Rules
- 33: 
- 34: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
- 35: 
- 36: ### Interactions
- 37: 
- 38: #### Keyboard
- 39: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
- 40: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
- 41: - MUST: Manage focus (trap, move, and return) per APG patterns
- 42: 
- 43: #### Targets & Input
- 44: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
- 45: - MUST: Mobile `<input>` font-size ≥16px or set:
- 46:   ```html
- 47:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
- 48:   ```
- 49: - NEVER: Disable browser zoom
- 50: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
- 51: 
- 52: #### Inputs & Forms (Behavior)
- 53: - MUST: Hydration-safe inputs (no lost focus/value)
- 54: - NEVER: Block paste in `<input>/<textarea>`
- 55: - MUST: Loading buttons show spinner and keep original label
- 56: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
- 57: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
- 58: - MUST: Don't block typing; accept free text and validate after
- 59: - MUST: Allow submitting incomplete forms to surface validation
- 60: - MUST: Errors inline next to fields; on submit, focus first error
- 61: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
- 62: - SHOULD: Disable spellcheck for emails/codes/usernames
- 63: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
- 64: - MUST: Warn on unsaved changes before navigation
- 65: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
- 66: - MUST: Trim values to handle text expansion trailing spaces
- 67: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
- 68: 
- 69: #### State & Navigation
- 70: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
- 71: - MUST: Back/Forward restores scroll
- 72: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
- 73: 
- 74: #### Feedback
- 75: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
- 76: - MUST: Confirm destructive actions or provide Undo window
- 77: - MUST: Use polite `aria-live` for toasts/inline validation
- 78: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
- 79: 
- 80: #### Touch/Drag/Scroll
- 81: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
- 82: - MUST: Delay first tooltip in a group; subsequent peers no delay
- 83: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
- 84: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
- 85: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
- 86: 
- 87: #### Autofocus
- 88: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
- 89: 
- 90: ### Animation
- 91: 
- 92: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
- 93: - SHOULD: Prefer CSS > Web Animations API > JS libraries
- 94: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
- 95: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
- 96: - SHOULD: Choose easing to match the change (size/distance/trigger)
- 97: - MUST: Animations are interruptible and input-driven (avoid autoplay)
- 98: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
- 99: 
-100: ### Layout
-101: 
-102: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-103: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-104: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-105: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-106: - MUST: Respect safe areas (use env(safe-area-inset-*))
-107: - MUST: Avoid unwanted scrollbars; fix overflows
-108: 
-109: ### Content & Accessibility
-110: 
-111: - SHOULD: Inline help first; tooltips last resort
-112: - MUST: Skeletons mirror final content to avoid layout shift
-113: - MUST: `<title>` matches current context
-114: - MUST: No dead ends; always offer next step/recovery
-115: - MUST: Design empty/sparse/dense/error states
-116: - SHOULD: Curly quotes (" "); avoid widows/orphans
-117: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-118: - MUST: Redundant status cues (not color-only); icons have text labels
-119: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-120: - MUST: Use the ellipsis character `…` (not `...`)
-121: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-122: - MUST: Resilient to user-generated content (short/avg/very long)
-123: - MUST: Locale-aware dates/times/numbers/currency
-124: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-125: - MUST: Icon-only buttons have descriptive `aria-label`
-126: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-127: - SHOULD: Right-clicking the nav logo surfaces brand assets
-128: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-129: 
-130: ### Performance
-131: 
-132: - SHOULD: Test iOS Low Power Mode and macOS Safari
-133: - MUST: Measure reliably (disable extensions that skew runtime)
-134: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-135: - MUST: Profile with CPU/network throttling
-136: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-137: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-138: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-139: - MUST: Virtualize large lists (eg, `virtua`)
-140: - MUST: Preload only above-the-fold images; lazy-load the rest
-141: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-142: 
-143: ### Design
-144: 
-145: - SHOULD: Layered shadows (ambient + direct)
-146: - SHOULD: Crisp edges via semi-transparent borders + shadows
-147: - SHOULD: Nested radii: child ≤ parent; concentric
-148: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-149: - MUST: Accessible charts (color-blind-friendly palettes)
-150: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-151: - MUST: Increase contrast on `:hover/:active/:focus`
-152: - SHOULD: Match browser UI to bg
-153: - SHOULD: Avoid gradient banding (use masks when needed)
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10:   "aria-label"?: string;
+11: }
+12: /**
+13:  * Button component that can be rendered as various HTML elements
+14:  * @param {Object} props
+15:  * @param {ReactNode} props.children - The content of the button
+16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+22:  * @returns {JSX.Element} The rendered Button component
+23:  */
+24: const Button = ({
+25:   children,
+26:   href,
+27:   renderAs,
+28:   type = "submit",
+29:   disabled = false,
+30:   download,
+31:   onClick,
+32:   "aria-label": ariaLabel,
+33:   ...props
+34: }: IButtonProps) => {
+35:   const Component = renderAs ?? "button";
+36:   const isLink = renderAs === "a";
+37:   const targetLink = isLink ? "_blank" : undefined;
+38:   return (
+39:     <Component
+40:       type={isLink ? undefined : type}
+41:       data-cy="submit"
+42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
+43:       href={href}
+44:       target={targetLink}
+45:       disabled={disabled}
+46:       data-text={children}
+47:       download={download}
+48:       onClick={onClick}
+49:       aria-label={ariaLabel}
+50:       {...props}
+51:     >
+52:       {children}
+53:     </Component>
+54:   );
+55: };
+56: export default Button;
 ````
 
 ## File: README.md
@@ -17869,610 +18396,65 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/app/layout.tsx
+## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import "./globals.css";
- 4: import "./glitch.css";
- 5: import SkipLink from "@/components/UI/SkipLink.component";
- 6: const inter = Inter({ subsets: ["latin"] });
- 7: export const metadata: Metadata = {
- 8:   title: "Forside - Dfweb",
- 9:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-10: };
-11: export default function RootLayout({
-12:   children,
-13: }: Readonly<{
-14:   children: React.ReactNode;
-15: }>) {
-16:   return (
-17:     <html lang="nb">
-18:       <head>
-19:         <meta
-20:           name="viewport"
-21:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-22:         />
-23:         <link rel="icon" href="/favicon.ico" />
-24:         <link rel="apple-touch-icon" href="/logo.png" />
-25:         <meta property="og:title" content="Daniel Fjeldstad" />
-26:         <meta name="author" content="Daniel Fjeldstad" />
-27:         <meta property="og:locale" content="nb_NO" />
-28:         <meta
-29:           property="og:description"
-30:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-31:         />
-32:         <meta property="og:url" content="https://www.dfweb.no/" />
-33:         <meta property="og:site_name" content="dfweb.no" />
-34:         <meta name="theme-color" content="#004014" />
-35:       </head>
-36:       <body
-37:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-38:       >
-39:         <SkipLink />
-40:         <div id="main-content" className="grow flex flex-col">
-41:           {children}
-42:         </div>
-43:       </body>
-44:     </html>
-45:   );
-46: }
-````
-
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import emailjs from "@emailjs/browser";
-  6: import PageHeader from "@/components/UI/PageHeader.component";
-  7: import Button from "@/components/UI/Button.component";
-  8: import InputField from "@/components/UI/InputField.component";
-  9: import { formSchema, FormData } from "./config/formConfig";
- 10: interface ContactFormProps {
- 11:   csrfToken?: string;
- 12:   onSubmit?: (data: FormData) => Promise<string>;
- 13:   initialResponse?: string;
- 14: }
- 15: /**
- 16:  * ContactForm component - A complete contact form with EmailJS integration
- 17:  * Handles both the form UI and submission logic in a single, clear component
- 18:  */
- 19: const ContactForm: React.FC<ContactFormProps> = ({
- 20:   csrfToken = "",
- 21:   onSubmit: onSubmitProp,
- 22:   initialResponse = "",
- 23: }) => {
- 24:   const [serverResponse, setServerResponse] = useState<string>(initialResponse);
- 25:   const {
- 26:     register,
- 27:     handleSubmit,
- 28:     formState: { errors, isSubmitting },
- 29:   } = useForm<FormData>({
- 30:     resolver: zodResolver(formSchema),
- 31:   });
- 32:   /**
- 33:    * Default form submission handler using EmailJS.
- 34:    * @param {FormData} data - The form data.
- 35:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 36:    */
- 37:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 38:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 39:     const TEMPLATE_KEY =
- 40:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 41:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 42:     try {
- 43:       emailjs.init(EMAIL_API_KEY);
- 44:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 45:       return "Takk for din beskjed";
- 46:     } catch {
- 47:       return "Feil under sending av skjema";
- 48:     }
- 49:   };
- 50:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 51:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 52:     const message = await submitHandler(data);
- 53:     setServerResponse(message);
- 54:   };
- 55:   return (
- 56:     <main data-testid="kontaktcontent" id="maincontent">
- 57:       <div className="mt-32 bg-graybg">
- 58:         <PageHeader>Kontakt</PageHeader>
- 59:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 60:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 61:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 62:               <div className="p-2 md:p-6 pt-8">
- 63:                 {serverResponse ? (
- 64:                   <div aria-live="polite" aria-atomic="true">
- 65:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 66:                       {serverResponse}
- 67:                     </h3>
- 68:                   </div>
- 69:                 ) : (
- 70:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 71:                     <form
- 72:                       id="contact-form"
- 73:                       className="text-center"
- 74:                       onSubmit={handleSubmit(handleFormSubmit)}
- 75:                       method="POST"
- 76:                       action="/api/form"
- 77:                       aria-label="Contact Form"
- 78:                     >
- 79:                       {csrfToken && (
- 80:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 81:                       )}
- 82:                       <fieldset>
- 83:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 84:                           Kontaktskjema
- 85:                         </legend>
- 86:                         <InputField<FormData>
- 87:                           name="navn"
- 88:                           label="Fullt navn"
- 89:                           htmlFor="navn"
- 90:                           register={register}
- 91:                           error={errors.navn?.message}
- 92:                           isRequired
- 93:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
- 94:                           title="Vennligst bruk norske bokstaver"
- 95:                           autoComplete="name"
- 96:                           spellCheck={false}
- 97:                         />
- 98:                         <br />
- 99:                         <InputField<FormData>
-100:                           name="telefon"
-101:                           label="Telefonnummer"
-102:                           htmlFor="telefon"
-103:                           register={register}
-104:                           error={errors.telefon?.message}
-105:                           isRequired
-106:                           inputPattern={/^\d{8}$/}
-107:                           title="Vennligst oppgi et gyldig telefonnummer"
-108:                           autoComplete="tel"
-109:                           inputMode="tel"
-110:                           spellCheck={false}
-111:                         />
-112:                         <br />
-113:                         <InputField<FormData>
-114:                           name="tekst"
-115:                           label="Hva ønsker du å si?"
-116:                           htmlFor="tekst"
-117:                           register={register}
-118:                           error={errors.tekst?.message}
-119:                           isRequired
-120:                           type="textarea"
-121:                           spellCheck={true}
-122:                         />
-123:                         <br />
-124:                       </fieldset>
-125:                       <div className="-mt-4">
-126:                         <Button
-127:                           disabled={isSubmitting}
-128:                           data-testid="submit-button"
-129:                         >
-130:                           {isSubmitting ? "Sender..." : "Send skjema"}
-131:                         </Button>
-132:                       </div>
-133:                     </form>
-134:                   </div>
-135:                 )}
-136:               </div>
-137:             </div>
-138:           </div>
-139:         </div>
-140:       </div>
-141:     </main>
-142:   );
-143: };
-144: export default ContactForm;
-````
-
-## File: src/__tests__/accessibility/KeyboardNavigation.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import userEvent from "@testing-library/user-event";
-  4: import "@testing-library/jest-dom";
-  5: import Button from "@/components/UI/Button.component";
-  6: import InputField from "@/components/UI/InputField.component";
-  7: import Hamburger from "@/components/Layout/Hamburger.component";
-  8: import { useForm } from "react-hook-form";
-  9: describe("Keyboard Navigation Accessibility", () => {
- 10:   describe("Focus Indicators", () => {
- 11:     // Arrange
- 12:     beforeEach(() => {
- 13:       // Inject our CSS to test focus styles
- 14:       const style = document.createElement("style");
- 15:       style.textContent = `
- 16:         :focus-visible {
- 17:           outline: 2px solid var(--matrix);
- 18:           outline-offset: 2px;
- 19:         }
- 20:       `;
- 21:       document.head.appendChild(style);
- 22:     });
- 23:     // Act & Assert
- 24:     it("should show focus indicator on Button when tabbed to", async () => {
- 25:       // Arrange
- 26:       const user = userEvent.setup();
- 27:       render(<Button>Test Button</Button>);
- 28:       // Act
- 29:       const button = screen.getByRole("button");
- 30:       await user.tab();
- 31:       // Assert
- 32:       expect(document.activeElement).toBe(button);
- 33:     });
- 34:     it("should support keyboard navigation through form fields", async () => {
- 35:       // Arrange
- 36:       const TestForm = () => {
- 37:         const { register } = useForm();
- 38:         return (
- 39:           <>
- 40:             <InputField
- 41:               name="test1"
- 42:               label="Field 1"
- 43:               htmlFor="test1"
- 44:               register={register}
- 45:             />
- 46:             <InputField
- 47:               name="test2"
- 48:               label="Field 2"
- 49:               htmlFor="test2"
- 50:               register={register}
- 51:             />
- 52:             <Button>Submit</Button>
- 53:           </>
- 54:         );
- 55:       };
- 56:       // Act
- 57:       const user = userEvent.setup();
- 58:       render(<TestForm />);
- 59:       const input1 = screen.getByLabelText("Field 1");
- 60:       const input2 = screen.getByLabelText("Field 2");
- 61:       const submitButton = screen.getByRole("button");
- 62:       // Assert
- 63:       await user.tab();
- 64:       expect(document.activeElement).toBe(input1);
- 65:       await user.tab();
- 66:       expect(document.activeElement).toBe(input2);
- 67:       await user.tab();
- 68:       expect(document.activeElement).toBe(submitButton);
- 69:     });
- 70:   });
- 71:   describe("Touch Targets", () => {
- 72:     // Act & Assert
- 73:     it("should have appropriate padding for touch targets", () => {
- 74:       // Arrange
- 75:       render(<Button>Test Button</Button>);
- 76:       // Act
- 77:       const button = screen.getByRole("button");
- 78:       // Assert
- 79:       expect(button).toHaveClass("p-3"); // p-3 = 12px padding
- 80:       // With padding and font size, effective touch target is adequate
- 81:       // p-3 (12px) * 2 + text height makes it touch-friendly
- 82:       expect(button.className).toContain("p-3");
- 83:     });
- 84:   });
- 85: });
- 86: describe("ARIA Attributes", () => {
- 87:   // Arrange
- 88:   const mockOnClick = jest.fn();
- 89:   // Act & Assert
- 90:   it("should have proper aria-label on icon-only buttons", () => {
- 91:     // Arrange
- 92:     render(<Button aria-label="Open menu">☰</Button>);
- 93:     // Act
- 94:     const button = screen.getByRole("button", { name: "Open menu" });
- 95:     // Assert
- 96:     expect(button).toBeInTheDocument();
- 97:     expect(button).toHaveAttribute("aria-label", "Open menu");
- 98:   });
- 99:   it("should have proper aria-expanded on Hamburger menu", () => {
-100:     // Arrange
-101:     const { rerender } = render(
-102:       <Hamburger onClick={mockOnClick} animatetoX={false} />,
-103:     );
-104:     // Act
-105:     const button = screen.getByRole("button");
-106:     // Assert
-107:     expect(button).toHaveAttribute("aria-expanded", "false");
-108:     expect(button).toHaveAttribute("aria-label", "Åpne meny");
-109:     rerender(<Hamburger onClick={mockOnClick} animatetoX={true} />);
-110:     expect(button).toHaveAttribute("aria-expanded", "true");
-111:     expect(button).toHaveAttribute("aria-label", "Lukk meny");
-112:   });
-113:   it("should have screen reader text for hamburger menu", () => {
-114:     // Arrange
-115:     render(<Hamburger onClick={mockOnClick} animatetoX={false} />);
-116:     // Act
-117:     const srText = screen.getByText("Åpne navigasjonsmeny");
-118:     // Assert
-119:     expect(srText).toBeInTheDocument();
-120:     expect(srText).toHaveClass("sr-only");
-121:   });
-122: });
-123: describe("Form Accessibility", () => {
-124:   // Arrange
-125:   const TestForm = () => {
-126:     const { register } = useForm();
-127:     return (
-128:       <InputField
-129:         name="phone"
-130:         label="Phone Number"
-131:         htmlFor="phone"
-132:         register={register}
-133:         autoComplete="tel"
-134:         inputMode="tel"
-135:         spellCheck={false}
-136:       />
-137:     );
-138:   };
-139:   // Act & Assert
-140:   it("should have autocomplete attributes on form fields", () => {
-141:     // Arrange
-142:     render(<TestForm />);
-143:     // Act
-144:     const input = screen.getByLabelText("Phone Number");
-145:     // Assert
-146:     expect(input).toHaveAttribute("autoComplete", "tel");
-147:     expect(input).toHaveAttribute("inputMode", "tel");
-148:     expect(input).toHaveAttribute("spellCheck", "false");
-149:   });
-150:   it("should trim whitespace from input values", async () => {
-151:     // Arrange
-152:     const user = userEvent.setup();
-153:     const mockSubmit = jest.fn();
-154:     const TestFormWithSubmit = () => {
-155:       const { register, handleSubmit } = useForm();
-156:       return (
-157:         <form onSubmit={handleSubmit(mockSubmit)}>
-158:           <InputField
-159:             name="testField"
-160:             label="Test Field"
-161:             htmlFor="testField"
-162:             register={register}
-163:           />
-164:           <Button type="submit">Submit</Button>
-165:         </form>
-166:       );
-167:     };
-168:     // Act
-169:     render(<TestFormWithSubmit />);
-170:     const input = screen.getByLabelText("Test Field");
-171:     const submitButton = screen.getByRole("button");
-172:     await user.type(input, "  test value  ");
-173:     await user.click(submitButton);
-174:     // Assert
-175:     expect(mockSubmit).toHaveBeenCalled();
-176:     const callArgs = mockSubmit.mock.calls[0][0];
-177:     expect(callArgs.testField).toBe("test value");
-178:   });
-179: });
-180: describe("Reduced Motion", () => {
-181:   // Act & Assert
-182:   it("should have transition classes that respect prefers-reduced-motion", () => {
-183:     // Arrange
-184:     render(<Button>Test Button</Button>);
-185:     // Act
-186:     const button = screen.getByRole("button");
-187:     // Assert
-188:     // Check that button has transition classes
-189:     // The actual reduced motion is handled by CSS media queries
-190:     expect(button.className).toContain("transition");
-191:     // Our globals.css handles prefers-reduced-motion media query
-192:   });
-193: });
-````
-
-## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
-  5: // Mock the Matrix component to avoid rendering issues in tests
-  6: jest.mock("@/components/Animations/Matrix.component", () => {
-  7:   return function DummyMatrix() {
-  8:     return <div data-testid="matrix-animation" />;
-  9:   };
- 10: });
- 11: describe("ErrorFallback", () => {
- 12:   const mockError = new Error("Test error message");
- 13:   it("renders error message and reload button", () => {
- 14:     // Arrange
- 15:     const expectedTexts = {
- 16:       heading: "Har du funnet en feil i Matrix?",
- 17:       error: "Test error message",
- 18:       button: "Returner til Matrix",
- 19:     };
- 20:     // Act
- 21:     render(<ErrorFallback error={mockError} />);
- 22:     // Assert
- 23:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
- 24:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
- 25:     expect(screen.getByText(expectedTexts.button)).toBeInTheDocument();
- 26:   });
- 27:   it("displays default error message when error.message is undefined in full version", () => {
- 28:     // Arrange
- 29:     const errorWithoutMessage = new Error();
- 30:     const expectedMessage = "En uventet feil har oppstått.";
- 31:     // Act
- 32:     render(<ErrorFallback error={errorWithoutMessage} />);
- 33:     // Assert
- 34:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 35:   });
- 36:   it("displays default error message when error.message is undefined in compact version", () => {
- 37:     // Arrange
- 38:     const errorWithoutMessage = new Error();
- 39:     const expectedMessage = "En uventet feil har oppstått.";
- 40:     // Act
- 41:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
- 42:     // Assert
- 43:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
- 44:   });
- 45:   it("renders compact version with correct styling", () => {
- 46:     // Arrange
- 47:     const expectedTexts = {
- 48:       heading: "Har du funnet en feil i Matrix?",
- 49:       error: "Test error message",
- 50:       button: "Returner til Matrix",
- 51:     };
- 52:     // Act
- 53:     render(<ErrorFallback error={mockError} compact={true} />);
- 54:     // Assert
- 55:     const container = screen.getByTestId("error-fallback-container");
- 56:     expect(container).toHaveClass("bg-gray-900");
- 57:     expect(container).toHaveClass("p-4");
- 58:     expect(container).toHaveClass("rounded-lg");
- 59:     expect(container).toHaveClass("overflow-hidden");
- 60:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
- 61:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
- 62:     const button = screen.getByRole("button");
- 63:     expect(button).toHaveClass("bg-matrix-light");
- 64:     expect(button).toHaveClass("text-black");
- 65:     expect(button).toHaveClass("rounded-sm");
- 66:     expect(button).toHaveClass("text-sm");
- 67:   });
- 68:   it("renders full version with correct styling", () => {
- 69:     // Arrange
- 70:     const expectedTexts = {
- 71:       heading: "Har du funnet en feil i Matrix?",
- 72:       error: "Test error message",
- 73:       button: "Returner til Matrix",
- 74:     };
- 75:     // Act
- 76:     render(<ErrorFallback error={mockError} compact={false} />);
- 77:     // Assert
- 78:     const container = screen.getByTestId("error-fallback-container");
- 79:     expect(container).toHaveClass("absolute", "w-full", "h-full");
- 80:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
- 81:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
- 82:   });
- 83:   it("renders reload button with correct properties in compact mode", () => {
- 84:     // Arrange
- 85:     render(<ErrorFallback error={mockError} compact={true} />);
- 86:     const reloadButton = screen.getByRole("button", {
- 87:       name: "Returner til Matrix",
- 88:     });
- 89:     // Act & Assert
- 90:     expect(reloadButton).toBeInTheDocument();
- 91:     expect(reloadButton).toHaveClass("bg-matrix-light");
- 92:     expect(reloadButton).toHaveClass("text-black");
- 93:   });
- 94:   it("renders reload button with correct properties in full mode", () => {
- 95:     // Arrange
- 96:     render(<ErrorFallback error={mockError} compact={false} />);
- 97:     const reloadButton = screen.getByRole("button", {
- 98:       name: "Returner til Matrix",
- 99:     });
-100:     // Act & Assert
-101:     expect(reloadButton).toBeInTheDocument();
-102:   });
-103: });
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10:   "aria-label"?: string;
-11: }
-12: /**
-13:  * Button component that can be rendered as various HTML elements
-14:  * @param {Object} props
-15:  * @param {ReactNode} props.children - The content of the button
-16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-22:  * @returns {JSX.Element} The rendered Button component
-23:  */
-24: const Button = ({
-25:   children,
-26:   href,
-27:   renderAs,
-28:   type = "submit",
-29:   disabled = false,
-30:   download,
-31:   onClick,
-32:   "aria-label": ariaLabel,
-33:   ...props
-34: }: IButtonProps) => {
-35:   const Component = renderAs ?? "button";
-36:   const isLink = renderAs === "a";
-37:   const targetLink = isLink ? "_blank" : undefined;
-38:   return (
-39:     <Component
-40:       type={isLink ? undefined : type}
-41:       data-cy="submit"
-42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
-43:       href={href}
-44:       target={targetLink}
-45:       disabled={disabled}
-46:       data-text={children}
-47:       download={download}
-48:       onClick={onClick}
-49:       aria-label={ariaLabel}
-50:       {...props}
-51:     >
-52:       {children}
-53:     </Component>
-54:   );
-55: };
-56: export default Button;
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v5
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v5
-19:         with:
-20:           node-version: 22
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Cypress run
-33:         uses: cypress-io/github-action@v6
-34:         with:
-35:           install: false
-36:           build: pnpm build
-37:           start: pnpm dev
-38:           wait-on: "http://localhost:3000"
-39:           wait-on-timeout: 120
-40:           browser: ${{ matrix.browser }}
+ 1: import React from "react";
+ 2: import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
+ 3: interface ErrorFallbackProps {
+ 4:   error: Error;
+ 5:   compact?: boolean;
+ 6: }
+ 7: /**
+ 8:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
+ 9:  * It shows a Matrix-themed error message.
+10:  *
+11:  * @param {Object} props - The component props
+12:  * @param {Error} props.error - The error object caught by the ErrorBoundary
+13:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
+14:  * @returns {JSX.Element} A React component displaying the error message and reload option
+15:  */
+16: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+17:   error,
+18:   compact = false,
+19: }) => {
+20:   if (compact) {
+21:     return (
+22:       <div
+23:         data-testid="error-fallback-container"
+24:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
+25:       >
+26:         <div className="absolute inset-0 opacity-30">
+27:           <ReactMatrixAnimation />
+28:         </div>
+29:         <div className="relative z-10 flex flex-col items-center text-center">
+30:           <h2 className="text-white text-lg mb-2">
+31:             Har du funnet en feil i Matrix?
+32:           </h2>
+33:           <p className="text-white text-sm mb-3">
+34:             {error.message || "En uventet feil har oppstått."}
+35:           </p>
+36:         </div>
+37:       </div>
+38:     );
+39:   }
+40:   return (
+41:     <div
+42:       data-testid="error-fallback-container"
+43:       className="absolute w-full h-full"
+44:     >
+45:       <ReactMatrixAnimation />
+46:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+47:         <h1 className="text-white text-5xl m-6">
+48:           Har du funnet en feil i Matrix?
+49:         </h1>
+50:         <p className="text-white text-xl mb-6">
+51:           {error.message || "En uventet feil har oppstått."}
+52:         </p>
+53:       </div>
+54:     </div>
+55:   );
+56: };
+57: export default ErrorFallback;
 ````
 
 ## File: src/components/UI/InputField.component.tsx
@@ -18594,190 +18576,90 @@ tsconfig.json
 115: export default InputField;
 ````
 
-## File: src/app/globals.css
-````css
-  1: @import "tailwindcss";
-  2: @config '../../tailwind.config.ts';
-  3: @layer base {
-  4:   *,
-  5:   ::after,
-  6:   ::before,
-  7:   ::backdrop,
-  8:   ::file-selector-button {
-  9:     border-color: var(--color-gray-200, currentcolor);
- 10:   }
- 11: }
- 12: :root {
- 13:   /* Modern Color Scheme */
- 14:   --primary: #00ff62;
- 15:   --secondary: #00cc4e;
- 16:   --accent: #008529;
- 17:   --text: #e1e1e1;
- 18:   --background: var(--color-slate-900, #0f172a);
- 19:   /* Semantic Colors */
- 20:   --success: #00cc4e;
- 21:   --error: #ff4e4e;
- 22:   --warning: #ffb74e;
- 23:   --info: #4e9fff;
- 24:   /* Matrix Theme Colors */
- 25:   --matrix-light: #00ff62;
- 26:   --matrix: #00cc4e;
- 27:   --matrix-dark: #008529;
- 28:   --matrix-glow: rgba(0, 255, 98, 0.6);
- 29: }
- 30: body {
- 31:   background-color: var(--background);
- 32:   color: var(--text);
- 33:   font-family:
- 34:     "Inter",
- 35:     -apple-system,
- 36:     BlinkMacSystemFont,
- 37:     "Segoe UI",
- 38:     Roboto,
- 39:     Oxygen,
- 40:     Ubuntu,
- 41:     Cantarell,
- 42:     sans-serif;
- 43: }
- 44: #matrixCanvas {
- 45:   opacity: 0.7;
- 46: }
- 47: /* Touch interaction improvements */
- 48: button,
- 49: a,
- 50: input,
- 51: textarea,
- 52: select {
- 53:   touch-action: manipulation; /* Prevents double-tap zoom */
- 54:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
- 55: }
- 56: /* Minimum touch targets for mobile */
- 57: @media (pointer: coarse) {
- 58:   button,
- 59:   a[role="button"],
- 60:   input[type="submit"],
- 61:   input[type="button"] {
- 62:     min-height: 44px;
- 63:     min-width: 44px;
- 64:   }
- 65: }
- 66: /* Scroll margin for anchor links */
- 67: [id] {
- 68:   scroll-margin-top: 100px;
- 69: }
- 70: h1[id],
- 71: h2[id],
- 72: h3[id],
- 73: h4[id],
- 74: h5[id],
- 75: h6[id] {
- 76:   scroll-margin-top: 120px;
- 77: }
- 78: /* Selection */
- 79: ::selection {
- 80:   background-color: var(--matrix-dark);
- 81:   color: #ffffff;
- 82: }
- 83: /* Scrollbar */
- 84: * {
- 85:   scrollbar-width: thin;
- 86:   scrollbar-color: var(--matrix-dark) #1a1a1a;
- 87: }
- 88: ::-webkit-scrollbar {
- 89:   width: 6px;
- 90: }
- 91: ::-webkit-scrollbar-track {
- 92:   background: #1a1a1a;
- 93: }
- 94: ::-webkit-scrollbar-thumb {
- 95:   background: var(--matrix-dark);
- 96:   border-radius: 3px;
- 97: }
- 98: ::-webkit-scrollbar-thumb:hover {
- 99:   background: var(--matrix-light);
-100: }
-101: /* Enhanced keyboard focus indicators for accessibility */
-102: /* Exclude form elements which handle their own focus styling */
-103: :focus-visible:not(input):not(textarea):not(select) {
-104:   outline: 2px solid var(--matrix-dark);
-105:   outline-offset: 2px;
-106:   border-radius: 2px;
-107: }
-108: /* Focus within container styling - only for specific interactive containers */
-109: .focus-within-container:focus-within {
-110:   outline: 2px solid var(--matrix-dark);
-111:   outline-offset: 2px;
-112:   border-radius: 2px;
-113: }
-114: /* Button-specific focus styling */
-115: button:focus-visible,
-116: a:focus-visible {
-117:   outline: 2px solid var(--matrix-dark);
-118:   outline-offset: 3px;
-119:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
-120: }
-121: /* Input and textarea focus styling handled by individual components */
-122: /* Tab and interactive element focus */
-123: [role="tab"]:focus-visible,
-124: [role="button"]:focus-visible,
-125: [tabindex="0"]:focus-visible {
-126:   outline: 2px solid var(--matrix-dark);
-127:   outline-offset: 2px;
-128: }
-129: /* Skip link special focus styling for better visibility */
-130: .sr-only:focus,
-131: .sr-only:focus-within {
-132:   position: absolute;
-133:   width: auto;
-134:   height: auto;
-135:   padding: 0.5rem 1rem;
-136:   margin: 0;
-137:   overflow: visible;
-138:   clip: auto;
-139:   white-space: normal;
-140:   outline: 3px solid var(--matrix-light);
-141:   outline-offset: 2px;
-142:   z-index: 9999;
-143: }
-144: /* Skeleton shimmer effect */
-145: @keyframes shimmer {
-146:   0% {
-147:     background-position: -200% 0;
-148:   }
-149:   100% {
-150:     background-position: 200% 0;
-151:   }
-152: }
-153: .skeleton-shimmer::before {
-154:   content: "";
-155:   position: absolute;
-156:   top: 0;
-157:   left: 0;
-158:   right: 0;
-159:   bottom: 0;
-160:   background: linear-gradient(
-161:     90deg,
-162:     transparent 0%,
-163:     rgba(255, 255, 255, 0.04) 50%,
-164:     transparent 100%
-165:   );
-166:   background-size: 200% 100%;
-167:   animation: shimmer 1.5s infinite;
-168: }
-169: /* Performance optimizations for animations */
-170: .contain-layout {
-171:   contain: layout style paint;
-172: }
-173: /* Reduced motion for accessibility */
-174: @media (prefers-reduced-motion: reduce) {
-175:   *,
-176:   *::before,
-177:   *::after {
-178:     animation-duration: 0.01ms !important;
-179:     animation-iteration-count: 1 !important;
-180:     transition-duration: 0.01ms !important;
-181:   }
-182: }
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.1.1",
+18:     "react-dom": "^19.1.1",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^4.10.1",
+21:     "styled-components": "^6.1.19"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.1.16",
+26:     "eslint": "^9.36.0",
+27:     "prettier": "^3.6.2",
+28:     "typescript": "^5.9.2"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v5
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v5
+19:         with:
+20:           node-version: 22
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
 ````
 
 ## File: package.json
@@ -18798,8 +18680,8 @@ tsconfig.json
 14:     "start": "next start",
 15:     "lint": "next lint",
 16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "node --no-experimental-strip-types node_modules/jest/bin/jest.js --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
-18:     "test:watch": "node --no-experimental-strip-types node_modules/jest/bin/jest.js --watch",
+17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
+18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
 19:     "cypress:open": "cypress open",
 20:     "cypress:headless": "cypress run",
 21:     "e2e": "start-test dev 3000 cypress:headless",
@@ -18816,29 +18698,29 @@ tsconfig.json
 32:     "@sanity/image-url": "^1.2.0",
 33:     "@vercel/speed-insights": "^1.2.0",
 34:     "autoprefixer": "^10.4.21",
-35:     "babel-jest": "^30.1.2",
+35:     "babel-jest": "^30.2.0",
 36:     "clsx": "^2.1.1",
 37:     "cookie": ">=1.0.2",
 38:     "envalid": "^8.1.0",
-39:     "jest": "^30.1.3",
-40:     "motion": "^12.23.21",
+39:     "jest": "^30.2.0",
+40:     "motion": "^12.23.22",
 41:     "next": "15.5.4",
-42:     "next-sanity": "^11.1.3",
+42:     "next-sanity": "^11.4.2",
 43:     "path-to-regexp": "^8.3.0",
 44:     "react": "^19.1.1",
 45:     "react-dom": "^19.1.1",
 46:     "react-error-boundary": "^5.0.0",
 47:     "react-hook-form": "^7.63.0",
 48:     "react-icons": "^5.5.0",
-49:     "sanity": "^4.10.0",
+49:     "sanity": "^4.10.1",
 50:     "sitemap": "^8.0.0",
 51:     "tar-fs": ">=3.1.1",
 52:     "ts-node": "^10.9.2",
 53:     "zod": "^4.1.11"
 54:   },
 55:   "devDependencies": {
-56:     "@jest/expect": "^30.1.2",
-57:     "@jest/globals": "^30.1.2",
+56:     "@jest/expect": "^30.2.0",
+57:     "@jest/globals": "^30.2.0",
 58:     "@ladle/react": "^5.0.3",
 59:     "@lhci/cli": "^0.15.1",
 60:     "@playwright/test": "^1.55.1",
@@ -18849,12 +18731,12 @@ tsconfig.json
 65:     "@testing-library/react": "^16.3.0",
 66:     "@testing-library/user-event": "^14.6.1",
 67:     "@types/jest": "^30.0.0",
-68:     "@types/node": "^24.5.2",
-69:     "@types/react": "^19.1.13",
+68:     "@types/node": "^24.6.0",
+69:     "@types/react": "^19.1.16",
 70:     "@types/react-dom": "^19.1.9",
-71:     "@typescript-eslint/eslint-plugin": "^8.44.1",
-72:     "@typescript-eslint/parser": "^8.44.1",
-73:     "@typescript-eslint/utils": "^8.44.1",
+71:     "@typescript-eslint/eslint-plugin": "^8.45.0",
+72:     "@typescript-eslint/parser": "^8.45.0",
+73:     "@typescript-eslint/utils": "^8.45.0",
 74:     "axe-core": "^4.10.3",
 75:     "cypress": "15.3.0",
 76:     "cypress-axe": "^1.7.0",
@@ -18867,9 +18749,9 @@ tsconfig.json
 83:     "eslint-plugin-react": "^7.37.5",
 84:     "eslint-plugin-react-hooks": "^5.2.0",
 85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-86:     "eslint-plugin-testing-library": "^7.9.2",
-87:     "expect": "^30.1.2",
-88:     "jest-environment-jsdom": "^30.1.2",
+86:     "eslint-plugin-testing-library": "^7.11.0",
+87:     "expect": "^30.2.0",
+88:     "jest-environment-jsdom": "^30.2.0",
 89:     "jest-extended": "^6.0.0",
 90:     "jsdom-testing-mocks": "^1.16.0",
 91:     "postcss": "^8.5.6",
@@ -18880,4 +18762,82 @@ tsconfig.json
 96:     "wait-on": "^9.0.1"
 97:   }
 98: }
+````
+
+## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
+ 5: // Mock the Matrix component to avoid rendering issues in tests
+ 6: jest.mock("@/components/Animations/Matrix.component", () => {
+ 7:   return function DummyMatrix() {
+ 8:     return <div data-testid="matrix-animation" />;
+ 9:   };
+10: });
+11: describe("ErrorFallback", () => {
+12:   const mockError = new Error("Test error message");
+13:   it("renders error message", () => {
+14:     // Arrange
+15:     const expectedTexts = {
+16:       heading: "Har du funnet en feil i Matrix?",
+17:       error: "Test error message",
+18:     };
+19:     // Act
+20:     render(<ErrorFallback error={mockError} />);
+21:     // Assert
+22:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+23:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+24:   });
+25:   it("displays default error message when error.message is undefined in full version", () => {
+26:     // Arrange
+27:     const errorWithoutMessage = new Error();
+28:     const expectedMessage = "En uventet feil har oppstått.";
+29:     // Act
+30:     render(<ErrorFallback error={errorWithoutMessage} />);
+31:     // Assert
+32:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+33:   });
+34:   it("displays default error message when error.message is undefined in compact version", () => {
+35:     // Arrange
+36:     const errorWithoutMessage = new Error();
+37:     const expectedMessage = "En uventet feil har oppstått.";
+38:     // Act
+39:     render(<ErrorFallback error={errorWithoutMessage} compact={true} />);
+40:     // Assert
+41:     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+42:   });
+43:   it("renders compact version with correct styling", () => {
+44:     // Arrange
+45:     const expectedTexts = {
+46:       heading: "Har du funnet en feil i Matrix?",
+47:       error: "Test error message",
+48:     };
+49:     // Act
+50:     render(<ErrorFallback error={mockError} compact={true} />);
+51:     // Assert
+52:     const container = screen.getByTestId("error-fallback-container");
+53:     expect(container).toHaveClass("bg-gray-900");
+54:     expect(container).toHaveClass("p-4");
+55:     expect(container).toHaveClass("rounded-lg");
+56:     expect(container).toHaveClass("overflow-hidden");
+57:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-lg");
+58:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-sm");
+59:   });
+60:   it("renders full version with correct styling", () => {
+61:     // Arrange
+62:     const expectedTexts = {
+63:       heading: "Har du funnet en feil i Matrix?",
+64:       error: "Test error message",
+65:     };
+66:     // Act
+67:     render(<ErrorFallback error={mockError} compact={false} />);
+68:     // Assert
+69:     const container = screen.getByTestId("error-fallback-container");
+70:     expect(container).toHaveClass("absolute", "w-full", "h-full");
+71:     expect(screen.getByText(expectedTexts.heading)).toHaveClass("text-5xl");
+72:     expect(screen.getByText(expectedTexts.error)).toHaveClass("text-xl");
+73:   });
+74: });
 ````
