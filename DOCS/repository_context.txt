@@ -18515,6 +18515,52 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v5
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v5
+19:         with:
+20:           node-version: 22
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
  1: import React from "react";
@@ -18574,52 +18620,6 @@ tsconfig.json
 55:   );
 56: };
 57: export default ErrorFallback;
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v5
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v5
-19:         with:
-20:           node-version: 22
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
 ````
 
 ## File: studio/package.json
@@ -18803,7 +18803,7 @@ tsconfig.json
 59:     "@lhci/cli": "^0.15.1",
 60:     "@playwright/test": "^1.55.1",
 61:     "@portabletext/types": "^2.0.15",
-62:     "@tailwindcss/postcss": "^4.1.13",
+62:     "@tailwindcss/postcss": "^4.1.14",
 63:     "@testing-library/cypress": "^10.1.0",
 64:     "@testing-library/jest-dom": "^6.9.1",
 65:     "@testing-library/react": "^16.3.0",
@@ -18834,7 +18834,7 @@ tsconfig.json
 90:     "jsdom-testing-mocks": "^1.16.0",
 91:     "postcss": "^8.5.6",
 92:     "prettier": "3.6.2",
-93:     "tailwindcss": "^4.1.13",
+93:     "tailwindcss": "^4.1.14",
 94:     "ts-jest": "^29.4.4",
 95:     "typescript": "^5.9.3",
 96:     "wait-on": "^9.0.1"
