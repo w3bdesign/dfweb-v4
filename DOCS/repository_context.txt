@@ -18009,6 +18009,52 @@ tsconfig.json
 35: }
 ````
 
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v5
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v5
+19:         with:
+20:           node-version: 22
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
 ## File: commit/commit_analyzer.py
 ````python
   1: import subprocess
@@ -18515,52 +18561,6 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v5
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@f2b2b233b538f500472c7274c7012f57857d8ce0
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v5
-19:         with:
-20:           node-version: 22
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
  1: import React from "react";
@@ -18825,7 +18825,7 @@ tsconfig.json
 81:     "eslint-plugin-jsx-a11y": "^6.10.2",
 82:     "eslint-plugin-prettier": "^5.5.4",
 83:     "eslint-plugin-react": "^7.37.5",
-84:     "eslint-plugin-react-hooks": "^5.2.0",
+84:     "eslint-plugin-react-hooks": "^6.1.0",
 85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
 86:     "eslint-plugin-testing-library": "^7.11.0",
 87:     "expect": "^30.2.0",
