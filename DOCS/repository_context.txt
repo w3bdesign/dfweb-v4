@@ -4366,6 +4366,74 @@ tsconfig.json
 71: });
 ````
 
+## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+ 5: describe("ErrorBoundary", () => {
+ 6:   let consoleErrorSpy: jest.SpyInstance;
+ 7:   const errorMock = new Error("Dette er en testfeil");
+ 8:   beforeAll(() => {
+ 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterAll(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("should render children when there is no error", () => {
+15:     // Arrange
+16:     const testContent = "Test Innhold";
+17:     // Act
+18:     render(
+19:       <ErrorBoundary>
+20:         <div>{testContent}</div>
+21:       </ErrorBoundary>,
+22:     );
+23:     // Assert
+24:     expect(screen.getByText(testContent)).toBeInTheDocument();
+25:   });
+26:   it("should render error fallback when there is an error", () => {
+27:     // Arrange
+28:     const ErrorComponent = () => {
+29:       throw errorMock;
+30:     };
+31:     const expectedTexts = {
+32:       heading: "Har du funnet en feil i Matrix?",
+33:       error: "Dette er en testfeil",
+34:     };
+35:     // Act
+36:     render(
+37:       <ErrorBoundary>
+38:         <ErrorComponent />
+39:       </ErrorBoundary>,
+40:     );
+41:     // Assert
+42:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+43:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+44:   });
+45:   it("should call console.error when an error occurs", () => {
+46:     // Arrange
+47:     const ErrorComponent = () => {
+48:       throw errorMock;
+49:     };
+50:     const expectedErrorArgs = [
+51:       "Uventet feil i Matrix:",
+52:       errorMock,
+53:       { componentStack: expect.any(String) },
+54:     ];
+55:     // Act
+56:     render(
+57:       <ErrorBoundary>
+58:         <ErrorComponent />
+59:       </ErrorBoundary>,
+60:     );
+61:     // Assert
+62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
+63:   });
+64: });
+````
+
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
 ````typescript
  1: import React from "react";
@@ -18315,74 +18383,6 @@ tsconfig.json
 212:     main()
 ````
 
-## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
- 5: describe("ErrorBoundary", () => {
- 6:   let consoleErrorSpy: jest.SpyInstance;
- 7:   const errorMock = new Error("Dette er en testfeil");
- 8:   beforeAll(() => {
- 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
-10:   });
-11:   afterAll(() => {
-12:     consoleErrorSpy.mockRestore();
-13:   });
-14:   it("should render children when there is no error", () => {
-15:     // Arrange
-16:     const testContent = "Test Innhold";
-17:     // Act
-18:     render(
-19:       <ErrorBoundary>
-20:         <div>{testContent}</div>
-21:       </ErrorBoundary>,
-22:     );
-23:     // Assert
-24:     expect(screen.getByText(testContent)).toBeInTheDocument();
-25:   });
-26:   it("should render error fallback when there is an error", () => {
-27:     // Arrange
-28:     const ErrorComponent = () => {
-29:       throw errorMock;
-30:     };
-31:     const expectedTexts = {
-32:       heading: "Har du funnet en feil i Matrix?",
-33:       error: "Dette er en testfeil",
-34:     };
-35:     // Act
-36:     render(
-37:       <ErrorBoundary>
-38:         <ErrorComponent />
-39:       </ErrorBoundary>,
-40:     );
-41:     // Assert
-42:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
-43:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-44:   });
-45:   it("should call console.error when an error occurs", () => {
-46:     // Arrange
-47:     const ErrorComponent = () => {
-48:       throw errorMock;
-49:     };
-50:     const expectedErrorArgs = [
-51:       "Uventet feil i Matrix:",
-52:       errorMock,
-53:       { componentStack: expect.any(String) },
-54:     ];
-55:     // Act
-56:     render(
-57:       <ErrorBoundary>
-58:         <ErrorComponent />
-59:       </ErrorBoundary>,
-60:     );
-61:     // Assert
-62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
-63:   });
-64: });
-````
-
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -18742,7 +18742,7 @@ tsconfig.json
 17:     "react": "^19.2.0",
 18:     "react-dom": "^19.2.0",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.10.2",
+20:     "sanity": "^4.10.3",
 21:     "styled-components": "^6.1.19"
 22:   },
 23:   "devDependencies": {
@@ -18811,7 +18811,7 @@ tsconfig.json
 46:     "react-error-boundary": "^5.0.0",
 47:     "react-hook-form": "^7.65.0",
 48:     "react-icons": "^5.5.0",
-49:     "sanity": "^4.10.2",
+49:     "sanity": "^4.10.3",
 50:     "sitemap": "^8.0.0",
 51:     "tar-fs": ">=3.1.1",
 52:     "ts-node": "^10.9.2",
