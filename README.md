@@ -51,7 +51,7 @@ Sanity.io and Typescript.
 - The application is 100% typescript (the types are generated from Sanity typegen)
 - Matrix canvas rain effect on front page
 - Custom 404 page with Matrix rain effect
-- Next.js 15 with Typescript and App Router
+- Next.js 16 with Typescript and App Router
   - Server Components implementation for improved performance
   - Streaming with Suspense boundaries
   - Automatic static optimization with revalidation
