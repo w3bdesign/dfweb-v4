@@ -17967,82 +17967,6 @@ tsconfig.json
 35: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:23.11.1
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:23.11.1-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --no-frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/workflows/codeql.yml
 ````yaml
  1: name: "CodeQL"
@@ -18079,6 +18003,108 @@ tsconfig.json
 32:         uses: github/codeql-action/analyze@v4
 33:         with:
 34:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v5
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v6
+19:         with:
+20:           node-version: 22
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v5
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v6
+10:         with:
+11:           node-version: "22"
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI (Mobile)
+42:         run: pnpm lhci:perf
+43:         env:
+44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+45:       - name: Run Lighthouse CI (Desktop)
+46:         run: pnpm lhci:desktop
+47:         env:
+48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+49:       - name: Stop server
+50:         if: always()
+51:         run: |
+52:           pkill -f "next start" || true
 ````
 
 ## File: .github/workflows/repomix.yml
@@ -18410,106 +18436,80 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/cypress.yml
+## File: .circleci/config.yml
 ````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.11.0
+ 9:     working_directory: ~/chromatic
 10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v5
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v6
-19:         with:
-20:           node-version: 22
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v5
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v6
-10:         with:
-11:           node-version: "22"
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.11.0-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --no-frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
 ````
 
 ## File: .github/workflows/pa11y.yml
