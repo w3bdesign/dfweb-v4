@@ -29,6 +29,77 @@ This file provides guidance to agents when working with code in this repository.
 - Matrix component intentionally excluded from test coverage
 - Cypress and Playwright have different ESLint rule overrides
 
+## Code Quality Principles
+
+### SOLID Principles
+
+#### Single Responsibility Principle (SRP)
+Each component/function should have one reason to change.
+- **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+- **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+- **Benefits**: Easier testing, clearer purpose, simpler maintenance
+
+#### Open/Closed Principle (OCP)
+Software should be open for extension, closed for modification.
+- Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+- Create generic components that can be customized without modifying source
+- **Benefits**: Reduces bugs in existing code, safer feature additions
+
+#### Liskov Substitution Principle (LSP)
+Components accepting a type should work with any subtype.
+- Ensure prop interfaces are respected by all implementations
+- Don't throw unexpected errors or require undocumented props
+- **Benefits**: Predictable behavior, safer component hierarchies
+
+#### Interface Segregation Principle (ISP)
+Don't force components to depend on props they don't use.
+- Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+- Split large prop types into smaller, composable ones
+- **Benefits**: More flexible components, easier to implement and test
+
+#### Dependency Inversion Principle (DIP)
+Depend on abstractions, not concrete implementations.
+- Use dependency injection for services (e.g., pass clients as props or use context)
+- Define abstract types/interfaces, inject implementations
+- **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+
+### DRY Principle (Don't Repeat Yourself)
+
+- Extract repeated UI patterns into reusable components
+- Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+- Use custom hooks for shared stateful logic
+- Avoid duplicating business logic across components
+- **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+
+### KISS Principle (Keep It Simple, Stupid)
+
+- Use React/Next.js built-in features before custom solutions
+- Write self-explanatory code with clear naming
+- Avoid over-engineering simple problems
+- Break complex components into smaller pieces (see `.component.tsx` pattern)
+- Minimize dependencies
+- Start simple, add complexity only when necessary
+- **Benefits**: Easier to understand, faster development, fewer bugs
+
+### YAGNI Principle (You Aren't Gonna Need It)
+
+Don't implement functionality until it's actually needed.
+- Focus on current requirements, not hypothetical future needs
+- Don't create abstraction layers for single implementations
+- Avoid premature optimization before measuring performance
+- Don't build configuration systems until configurability is required
+- Wait for actual use cases before adding flexibility
+- **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+
+### Code Quality Summary
+
+Following these principles results in:
+- Maintainable, extendable code
+- Fewer bugs and faster debugging
+- Better team collaboration
+- Professional quality standards
+- Easier testing and refactoring
+
 ## UI Development Rules
 
 Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
