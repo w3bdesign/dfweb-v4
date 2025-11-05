@@ -16614,163 +16614,6 @@ tsconfig.json
 33: }
 ````
 
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: 
- 18: ## Critical Commands
- 19: 
- 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 24: 
- 25: ## Testing Gotchas
- 26: 
- 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 29: - Matrix component intentionally excluded from test coverage
- 30: - Cypress and Playwright have different ESLint rule overrides
- 31: 
- 32: ## UI Development Rules
- 33: 
- 34: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
- 35: 
- 36: ### Interactions
- 37: 
- 38: #### Keyboard
- 39: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
- 40: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
- 41: - MUST: Manage focus (trap, move, and return) per APG patterns
- 42: 
- 43: #### Targets & Input
- 44: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
- 45: - MUST: Mobile `<input>` font-size ≥16px or set:
- 46:   ```html
- 47:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
- 48:   ```
- 49: - NEVER: Disable browser zoom
- 50: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
- 51: 
- 52: #### Inputs & Forms (Behavior)
- 53: - MUST: Hydration-safe inputs (no lost focus/value)
- 54: - NEVER: Block paste in `<input>/<textarea>`
- 55: - MUST: Loading buttons show spinner and keep original label
- 56: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
- 57: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
- 58: - MUST: Don't block typing; accept free text and validate after
- 59: - MUST: Allow submitting incomplete forms to surface validation
- 60: - MUST: Errors inline next to fields; on submit, focus first error
- 61: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
- 62: - SHOULD: Disable spellcheck for emails/codes/usernames
- 63: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
- 64: - MUST: Warn on unsaved changes before navigation
- 65: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
- 66: - MUST: Trim values to handle text expansion trailing spaces
- 67: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
- 68: 
- 69: #### State & Navigation
- 70: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
- 71: - MUST: Back/Forward restores scroll
- 72: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
- 73: 
- 74: #### Feedback
- 75: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
- 76: - MUST: Confirm destructive actions or provide Undo window
- 77: - MUST: Use polite `aria-live` for toasts/inline validation
- 78: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
- 79: 
- 80: #### Touch/Drag/Scroll
- 81: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
- 82: - MUST: Delay first tooltip in a group; subsequent peers no delay
- 83: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
- 84: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
- 85: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
- 86: 
- 87: #### Autofocus
- 88: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
- 89: 
- 90: ### Animation
- 91: 
- 92: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
- 93: - SHOULD: Prefer CSS > Web Animations API > JS libraries
- 94: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
- 95: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
- 96: - SHOULD: Choose easing to match the change (size/distance/trigger)
- 97: - MUST: Animations are interruptible and input-driven (avoid autoplay)
- 98: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
- 99: 
-100: ### Layout
-101: 
-102: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-103: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-104: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-105: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-106: - MUST: Respect safe areas (use env(safe-area-inset-*))
-107: - MUST: Avoid unwanted scrollbars; fix overflows
-108: 
-109: ### Content & Accessibility
-110: 
-111: - SHOULD: Inline help first; tooltips last resort
-112: - MUST: Skeletons mirror final content to avoid layout shift
-113: - MUST: `<title>` matches current context
-114: - MUST: No dead ends; always offer next step/recovery
-115: - MUST: Design empty/sparse/dense/error states
-116: - SHOULD: Curly quotes (" "); avoid widows/orphans
-117: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-118: - MUST: Redundant status cues (not color-only); icons have text labels
-119: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-120: - MUST: Use the ellipsis character `…` (not `...`)
-121: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-122: - MUST: Resilient to user-generated content (short/avg/very long)
-123: - MUST: Locale-aware dates/times/numbers/currency
-124: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-125: - MUST: Icon-only buttons have descriptive `aria-label`
-126: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-127: - SHOULD: Right-clicking the nav logo surfaces brand assets
-128: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-129: 
-130: ### Performance
-131: 
-132: - SHOULD: Test iOS Low Power Mode and macOS Safari
-133: - MUST: Measure reliably (disable extensions that skew runtime)
-134: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-135: - MUST: Profile with CPU/network throttling
-136: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-137: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-138: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-139: - MUST: Virtualize large lists (eg, `virtua`)
-140: - MUST: Preload only above-the-fold images; lazy-load the rest
-141: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-142: 
-143: ### Design
-144: 
-145: - SHOULD: Layered shadows (ambient + direct)
-146: - SHOULD: Crisp edges via semi-transparent borders + shadows
-147: - SHOULD: Nested radii: child ≤ parent; concentric
-148: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-149: - MUST: Accessible charts (color-blind-friendly palettes)
-150: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-151: - MUST: Increase contrast on `:hover/:active/:focus`
-152: - SHOULD: Match browser UI to bg
-153: - SHOULD: Avoid gradient banding (use masks when needed)
-````
-
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -17928,45 +17771,6 @@ tsconfig.json
 104: export default config;
 ````
 
-## File: tsconfig.json
-````json
- 1: {
- 2:   "compilerOptions": {
- 3:     "lib": ["dom", "dom.iterable", "esnext"],
- 4:     "allowJs": true,
- 5:     "skipLibCheck": true,
- 6:     "strict": true,
- 7:     "noEmit": true,
- 8:     "esModuleInterop": true,
- 9:     "module": "esnext",
-10:     "moduleResolution": "bundler",
-11:     "resolveJsonModule": true,
-12:     "isolatedModules": true,
-13:     "jsx": "preserve",
-14:     "incremental": true,
-15:     "plugins": [
-16:       {
-17:         "name": "next"
-18:       }
-19:     ],
-20:     "paths": {
-21:       "@/*": ["./src/*"]
-22:     },
-23:     "types": ["jest", "@testing-library/jest-dom"],
-24:     "target": "ES2022"
-25:   },
-26:   "include": [
-27:     "next-env.d.ts",
-28:     "**/*.ts",
-29:     "**/*.tsx",
-30:     ".next/types/**/*.ts",
-31:     "src",
-32:     "cypress"
-33:   ],
-34:   "exclude": ["node_modules"]
-35: }
-````
-
 ## File: .github/workflows/codeql.yml
 ````yaml
  1: name: "CodeQL"
@@ -18312,199 +18116,283 @@ tsconfig.json
 17: # and false positives you encounter during scanning.
 ````
 
-## File: README.md
+## File: AGENTS.md
 ````markdown
-  1: # Dfweb.no Portfolio Version 4
+  1: # AGENTS.md
   2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
-  4: [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
-  5: [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [
-  6: ![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
-  7: [![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
-  8: 
-  9: Fourth version of my personal portfolio website with Next.js, Motion,
- 10: Sanity.io and Typescript.
- 11: 
- 12: ## Table of Contents
- 13: 
- 14: - [Live URL](#live-url)
- 15: - [Frontend (Next.js)](#frontend-nextjs)
- 16: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 17: - [Google Lighthouse](#google-lighthouse)
- 18: - [Features](#features)
- 19:   - [General](#general)
- 20:   - [Design](#design)
- 21:   - [Accessibility](#accessibility)
- 22:   - [Devops and Code quality](#devops-and-code-quality)
- 23:   - [Environment Variables](#environment-variables)
- 24:   - [Testing Standards](#testing-standards)
- 25: 
- 26: ## Live URL
- 27: 
- 28: <https://www.dfweb.no>
- 29: 
- 30: ## Frontend (Next.js)
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: 
+ 18: ## Critical Commands
+ 19: 
+ 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 24: 
+ 25: ## Testing Gotchas
+ 26: 
+ 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 29: - Matrix component intentionally excluded from test coverage
+ 30: - Cypress and Playwright have different ESLint rule overrides
  31: 
- 32: ![Frontend Image](public/images/frontend.png)
+ 32: ## Code Quality Principles
  33: 
- 34: ---
+ 34: ### SOLID Principles
  35: 
- 36: ## Backend (Sanity headless CMS)
- 37: 
- 38: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 39: 
- 40: ---
+ 36: #### Single Responsibility Principle (SRP)
+ 37: Each component/function should have one reason to change.
+ 38: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 39: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 40: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
  41: 
- 42: ## Google Lighthouse
- 43: 
- 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 45: 
- 46: ## Features
+ 42: #### Open/Closed Principle (OCP)
+ 43: Software should be open for extension, closed for modification.
+ 44: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 45: - Create generic components that can be customized without modifying source
+ 46: - **Benefits**: Reduces bugs in existing code, safer feature additions
  47: 
- 48: ### General
- 49: 
- 50: - Clean, modern, responsive and Matrix-inspired design
- 51: - The application is 100% typescript (the types are generated from Sanity typegen)
- 52: - Matrix canvas rain effect on front page
- 53: - Custom 404 page with Matrix rain effect
- 54: - Next.js 16 with Typescript and App Router
- 55:   - Server Components implementation for improved performance
- 56:   - Streaming with Suspense boundaries
- 57:   - Automatic static optimization with revalidation
- 58:   - Server-side data fetching with proper error handling
- 59: - React 19
- 60: - Sanity headless CMS for all of the content, projects and navigation links
- 61: - Ladle for component documentation
- 62: - Animations with Motion
- 63: - React testing library for unit testing
- 64: - Cypress for E2E testing
- 65: - Playwright for cross-browser E2E testing
- 66: - Contact form with Email.js and CSRF protection
- 67: - Polymorphic components
- 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 69: - Google rich results for each individual page
- 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 71: - Automated Lighthouse CI testing integrated with GitHub Actions
- 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 73: - Reusable GenericForm component for easy form creation and management
- 74: - Error handling with react-error-boundary for improved user experience and
- 75:   easier debugging
- 76: - AI-friendly repository documentation with automated updates (Repomix with
- 77:   Github action workflow)
- 78: - AI assistant guidance with AGENTS.md files for immediate productivity
- 79:   - Main AGENTS.md with project-specific patterns and gotchas
- 80:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 81: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 82: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 83:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 84:   around 1 second.
- 85: - Recommended:
- 86:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 87:   for enhanced GROQ query development, including syntax highlighting when using
- 88:   `defineQuery`.
- 89: 
- 90: ### Design
- 91: 
- 92: - Fully responsive design tested on all devices
- 93: - React Icons for project icons
- 94: - Tailwind 14 for styling
- 95: - Animated reusable input fields
- 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 97:   Matrix characters
- 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 99: 
-100: ### Accessibility
-101: 
-102: - WCAG accessibility tested
-103: - Accessibility testing with Cypress Axe and Pa11y
-104: - Automated Pa11y accessibility testing on every PR and push to main
-105:   - Tests all main pages against WCAG2AA standards
-106:   - Captures screenshots for visual reference
-107:   - Detailed reports available as GitHub Actions artifacts
-108: - Builds will fail if any a11y errors are found
-109: 
-110: ### Devops and Code quality
-111: 
-112: - Continuous Integration with CircleCI
-113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-114: - Github action workflow for Cypress
-115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-116: - E2E testing with Cypress and Playwright integrated with Github actions
-117: - Unit testing with Jest and React Testing Library integrated with CircleCI
-118: - Test coverage setup with Codecov
-119: - 100% test coverage with Jest and React testing library
-120: - AI-powered commit message generation following Conventional Commits with
-121:   gitmojis
-122: - Automated performance monitoring with Lighthouse CI
-123:   - Performance, accessibility, best practices, and SEO checks on every PR
-124:   - Configurable thresholds for quality metrics
-125:   - Both desktop and performance-focused testing
-126: - Automated repository documentation with Repomix
-127:   - AI-friendly documentation generation on every push to main
-128:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-129:   - Automated PR analysis with repository structure insights
-130:   - Security-focused documentation with sensitive information filtering
-131:   - Markdown formatting for improved readability
-132:   - Automated security vulnerability scanning with Snyk
-133:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-134:     - Integrates with GitHub Security tab for vulnerability tracking
-135: 
-136: ### Environment Variables
-137: 
-138: - Type-safe environment variable validation with envalid
+ 48: #### Liskov Substitution Principle (LSP)
+ 49: Components accepting a type should work with any subtype.
+ 50: - Ensure prop interfaces are respected by all implementations
+ 51: - Don't throw unexpected errors or require undocumented props
+ 52: - **Benefits**: Predictable behavior, safer component hierarchies
+ 53: 
+ 54: #### Interface Segregation Principle (ISP)
+ 55: Don't force components to depend on props they don't use.
+ 56: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 57: - Split large prop types into smaller, composable ones
+ 58: - **Benefits**: More flexible components, easier to implement and test
+ 59: 
+ 60: #### Dependency Inversion Principle (DIP)
+ 61: Depend on abstractions, not concrete implementations.
+ 62: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 63: - Define abstract types/interfaces, inject implementations
+ 64: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 65: 
+ 66: ### DRY Principle (Don't Repeat Yourself)
+ 67: 
+ 68: - Extract repeated UI patterns into reusable components
+ 69: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 70: - Use custom hooks for shared stateful logic
+ 71: - Avoid duplicating business logic across components
+ 72: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 73: 
+ 74: ### KISS Principle (Keep It Simple, Stupid)
+ 75: 
+ 76: - Use React/Next.js built-in features before custom solutions
+ 77: - Write self-explanatory code with clear naming
+ 78: - Avoid over-engineering simple problems
+ 79: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 80: - Minimize dependencies
+ 81: - Start simple, add complexity only when necessary
+ 82: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 83: 
+ 84: ### YAGNI Principle (You Aren't Gonna Need It)
+ 85: 
+ 86: Don't implement functionality until it's actually needed.
+ 87: - Focus on current requirements, not hypothetical future needs
+ 88: - Don't create abstraction layers for single implementations
+ 89: - Avoid premature optimization before measuring performance
+ 90: - Don't build configuration systems until configurability is required
+ 91: - Wait for actual use cases before adding flexibility
+ 92: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+ 93: 
+ 94: ### Code Quality Summary
+ 95: 
+ 96: Following these principles results in:
+ 97: - Maintainable, extendable code
+ 98: - Fewer bugs and faster debugging
+ 99: - Better team collaboration
+100: - Professional quality standards
+101: - Easier testing and refactoring
+102: 
+103: ## UI Development Rules
+104: 
+105: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+106: 
+107: ### Interactions
+108: 
+109: #### Keyboard
+110: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+111: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+112: - MUST: Manage focus (trap, move, and return) per APG patterns
+113: 
+114: #### Targets & Input
+115: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+116: - MUST: Mobile `<input>` font-size ≥16px or set:
+117:   ```html
+118:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+119:   ```
+120: - NEVER: Disable browser zoom
+121: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+122: 
+123: #### Inputs & Forms (Behavior)
+124: - MUST: Hydration-safe inputs (no lost focus/value)
+125: - NEVER: Block paste in `<input>/<textarea>`
+126: - MUST: Loading buttons show spinner and keep original label
+127: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+128: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+129: - MUST: Don't block typing; accept free text and validate after
+130: - MUST: Allow submitting incomplete forms to surface validation
+131: - MUST: Errors inline next to fields; on submit, focus first error
+132: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+133: - SHOULD: Disable spellcheck for emails/codes/usernames
+134: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+135: - MUST: Warn on unsaved changes before navigation
+136: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+137: - MUST: Trim values to handle text expansion trailing spaces
+138: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
 139: 
-140:   - Runtime validation of required environment variables
-141:   - Clear error messages with examples for missing variables
-142:   - Separate handling of client-side and server-side variables
-143:   - Default values where appropriate
-144:   - Required variables:
-145: 
-146:     ```env
-147:     # Email Configuration (client-side)
-148:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-149:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-150:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-151: 
-152:     # Security Configuration (server-side)
-153:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-154: 
-155:     # AI Configuration (server-side)
-156:     AI_API_KEY=xxx                            # AI service API key
-157:     AI_BASE_URL=https://xxx                   # AI service base URL
-158:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
-159:     ```
+140: #### State & Navigation
+141: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+142: - MUST: Back/Forward restores scroll
+143: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+144: 
+145: #### Feedback
+146: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+147: - MUST: Confirm destructive actions or provide Undo window
+148: - MUST: Use polite `aria-live` for toasts/inline validation
+149: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+150: 
+151: #### Touch/Drag/Scroll
+152: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+153: - MUST: Delay first tooltip in a group; subsequent peers no delay
+154: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+155: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+156: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+157: 
+158: #### Autofocus
+159: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
 160: 
-161:   - Validation prevents application startup if required variables are missing
-162:   - TypeScript integration for type-safe access to environment variables
-163: 
-164: ### Testing Standards
-165: 
-166: - ISTQB-aligned comprehensive test strategy
-167: 
-168:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-169:   - Multi-level test approach (Unit, Component, E2E)
-170:   - Risk-based testing methodology
-171:   - Defined test metrics and reporting
-172:   - Clear roles and responsibilities
-173:   - Structured defect management process
-174: 
-175: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-176: 
-177:   - Each test must include the following comments:
-178: 
-179:     ```typescript
-180:     // Arrange - Set up test data and conditions
-181:     // Act - Perform the action being tested
-182:     // Assert - Verify the results
-183:     ```
-184: 
-185:   - This pattern ensures:
-186:     - Clear test structure and readability
-187:     - Consistent test organization across the codebase
-188:     - Easy identification of test setup, execution, and verification
-189:   - Simplified test maintenance and debugging
-190:   - Automated validation through custom ESLint rules
-191:   - Tests will fail if AAA pattern is not followed
+161: ### Animation
+162: 
+163: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+164: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+165: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+166: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+167: - SHOULD: Choose easing to match the change (size/distance/trigger)
+168: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+169: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+170: 
+171: ### Layout
+172: 
+173: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+174: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+175: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+176: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+177: - MUST: Respect safe areas (use env(safe-area-inset-*))
+178: - MUST: Avoid unwanted scrollbars; fix overflows
+179: 
+180: ### Content & Accessibility
+181: 
+182: - SHOULD: Inline help first; tooltips last resort
+183: - MUST: Skeletons mirror final content to avoid layout shift
+184: - MUST: `<title>` matches current context
+185: - MUST: No dead ends; always offer next step/recovery
+186: - MUST: Design empty/sparse/dense/error states
+187: - SHOULD: Curly quotes (" "); avoid widows/orphans
+188: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+189: - MUST: Redundant status cues (not color-only); icons have text labels
+190: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+191: - MUST: Use the ellipsis character `…` (not `...`)
+192: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+193: - MUST: Resilient to user-generated content (short/avg/very long)
+194: - MUST: Locale-aware dates/times/numbers/currency
+195: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+196: - MUST: Icon-only buttons have descriptive `aria-label`
+197: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+198: - SHOULD: Right-clicking the nav logo surfaces brand assets
+199: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+200: 
+201: ### Performance
+202: 
+203: - SHOULD: Test iOS Low Power Mode and macOS Safari
+204: - MUST: Measure reliably (disable extensions that skew runtime)
+205: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+206: - MUST: Profile with CPU/network throttling
+207: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+208: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+209: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+210: - MUST: Virtualize large lists (eg, `virtua`)
+211: - MUST: Preload only above-the-fold images; lazy-load the rest
+212: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+213: 
+214: ### Design
+215: 
+216: - SHOULD: Layered shadows (ambient + direct)
+217: - SHOULD: Crisp edges via semi-transparent borders + shadows
+218: - SHOULD: Nested radii: child ≤ parent; concentric
+219: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+220: - MUST: Accessible charts (color-blind-friendly palettes)
+221: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+222: - MUST: Increase contrast on `:hover/:active/:focus`
+223: - SHOULD: Match browser UI to bg
+224: - SHOULD: Avoid gradient banding (use masks when needed)
+````
+
+## File: tsconfig.json
+````json
+ 1: {
+ 2:   "compilerOptions": {
+ 3:     "lib": [
+ 4:       "dom",
+ 5:       "dom.iterable",
+ 6:       "esnext"
+ 7:     ],
+ 8:     "allowJs": true,
+ 9:     "skipLibCheck": true,
+10:     "strict": true,
+11:     "noEmit": true,
+12:     "esModuleInterop": true,
+13:     "module": "esnext",
+14:     "moduleResolution": "bundler",
+15:     "resolveJsonModule": true,
+16:     "isolatedModules": true,
+17:     "jsx": "react-jsx",
+18:     "incremental": true,
+19:     "plugins": [
+20:       {
+21:         "name": "next"
+22:       }
+23:     ],
+24:     "paths": {
+25:       "@/*": [
+26:         "./src/*"
+27:       ]
+28:     },
+29:     "types": [
+30:       "jest",
+31:       "@testing-library/jest-dom"
+32:     ],
+33:     "target": "ES2022"
+34:   },
+35:   "include": [
+36:     "next-env.d.ts",
+37:     "**/*.ts",
+38:     "**/*.tsx",
+39:     ".next/types/**/*.ts",
+40:     "src",
+41:     "cypress",
+42:     ".next/dev/types/**/*.ts"
+43:   ],
+44:   "exclude": [
+45:     "node_modules"
+46:   ]
+47: }
 ````
 
 ## File: .circleci/config.yml
@@ -18721,6 +18609,201 @@ tsconfig.json
 23: }
 ````
 
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml)
+  4: [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml)
+  5: [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [
+  6: ![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
+  7: [![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
+  8: 
+  9: Fourth version of my personal portfolio website with Next.js, Motion,
+ 10: Sanity.io and Typescript.
+ 11: 
+ 12: ## Table of Contents
+ 13: 
+ 14: - [Live URL](#live-url)
+ 15: - [Frontend (Next.js)](#frontend-nextjs)
+ 16: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 17: - [Google Lighthouse](#google-lighthouse)
+ 18: - [Features](#features)
+ 19:   - [General](#general)
+ 20:   - [Design](#design)
+ 21:   - [Accessibility](#accessibility)
+ 22:   - [Devops and Code quality](#devops-and-code-quality)
+ 23:   - [Environment Variables](#environment-variables)
+ 24:   - [Testing Standards](#testing-standards)
+ 25: 
+ 26: ## Live URL
+ 27: 
+ 28: - <https://www.dfweb.no>
+ 29: 
+ 30: ## Frontend (Next.js)
+ 31: 
+ 32: ![Frontend Image](public/images/frontend.png)
+ 33: 
+ 34: ---
+ 35: 
+ 36: ## Backend (Sanity headless CMS)
+ 37: 
+ 38: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 39: 
+ 40: ---
+ 41: 
+ 42: ## Google Lighthouse
+ 43: 
+ 44: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 45: 
+ 46: ## Features
+ 47: 
+ 48: ### General
+ 49: 
+ 50: - Clean, modern, responsive and Matrix-inspired design
+ 51: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 52: - Matrix canvas rain effect on front page
+ 53: - Custom 404 page with Matrix rain effect
+ 54: - Next.js 16 with Typescript and App Router
+ 55:   - Server Components implementation for improved performance
+ 56:   - Streaming with Suspense boundaries
+ 57:   - Automatic static optimization with revalidation
+ 58:   - Server-side data fetching with proper error handling
+ 59: - React 19
+ 60: - Sanity headless CMS for all of the content, projects and navigation links
+ 61: - Ladle for component documentation
+ 62: - Animations with Motion
+ 63: - React testing library for unit testing
+ 64: - Cypress for E2E testing
+ 65: - Playwright for cross-browser E2E testing
+ 66: - Contact form with Email.js and CSRF protection
+ 67: - Polymorphic components
+ 68: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 69: - Google rich results for each individual page
+ 70: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 71: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 72: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 73: - Reusable GenericForm component for easy form creation and management
+ 74: - Error handling with react-error-boundary for improved user experience and
+ 75:   easier debugging
+ 76: - AI-friendly repository documentation with automated updates (Repomix with
+ 77:   Github action workflow)
+ 78: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 79:   - Main AGENTS.md with project-specific patterns and gotchas
+ 80:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 81: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 82: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 83:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 84:   around 1 second.
+ 85: - Recommended:
+ 86:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+ 87:   for enhanced GROQ query development, including syntax highlighting when using
+ 88:   `defineQuery`.
+ 89: 
+ 90: ### Design
+ 91: 
+ 92: - Fully responsive design tested on all devices
+ 93: - React Icons for project icons
+ 94: - Tailwind 14 for styling
+ 95: - Animated reusable input fields
+ 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 97:   Matrix characters
+ 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 99: 
+100: ### Accessibility
+101: 
+102: - WCAG accessibility tested
+103: - Accessibility testing with Cypress Axe and Pa11y
+104: - Automated Pa11y accessibility testing on every PR and push to main
+105:   - Tests all main pages against WCAG2AA standards
+106:   - Captures screenshots for visual reference
+107:   - Detailed reports available as GitHub Actions artifacts
+108: - Builds will fail if any a11y errors are found
+109: 
+110: ### Devops and Code quality
+111: 
+112: - Continuous Integration with CircleCI
+113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+114: - Github action workflow for Cypress
+115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+116: - E2E testing with Cypress and Playwright integrated with Github actions
+117: - Unit testing with Jest and React Testing Library integrated with CircleCI
+118: - Test coverage setup with Codecov
+119: - 100% test coverage with Jest and React testing library
+120: - AI-powered commit message generation following Conventional Commits with
+121:   gitmojis
+122: - Automated performance monitoring with Lighthouse CI
+123:   - Performance, accessibility, best practices, and SEO checks on every PR
+124:   - Configurable thresholds for quality metrics
+125:   - Both desktop and performance-focused testing
+126: - Automated repository documentation with Repomix
+127:   - AI-friendly documentation generation on every push to main
+128:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+129:   - Automated PR analysis with repository structure insights
+130:   - Security-focused documentation with sensitive information filtering
+131:   - Markdown formatting for improved readability
+132:   - Automated security vulnerability scanning with Snyk
+133:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+134:     - Integrates with GitHub Security tab for vulnerability tracking
+135: 
+136: ### Environment Variables
+137: 
+138: - Type-safe environment variable validation with envalid
+139: 
+140:   - Runtime validation of required environment variables
+141:   - Clear error messages with examples for missing variables
+142:   - Separate handling of client-side and server-side variables
+143:   - Default values where appropriate
+144:   - Required variables:
+145: 
+146:     ```env
+147:     # Email Configuration (client-side)
+148:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+149:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+150:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+151: 
+152:     # Security Configuration (server-side)
+153:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+154: 
+155:     # AI Configuration (server-side)
+156:     AI_API_KEY=xxx                            # AI service API key
+157:     AI_BASE_URL=https://xxx                   # AI service base URL
+158:     MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
+159:     ```
+160: 
+161:   - Validation prevents application startup if required variables are missing
+162:   - TypeScript integration for type-safe access to environment variables
+163: 
+164: ### Testing Standards
+165: 
+166: - ISTQB-aligned comprehensive test strategy
+167: 
+168:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+169:   - Multi-level test approach (Unit, Component, E2E)
+170:   - Risk-based testing methodology
+171:   - Defined test metrics and reporting
+172:   - Clear roles and responsibilities
+173:   - Structured defect management process
+174: 
+175: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+176: 
+177:   - Each test must include the following comments:
+178: 
+179:     ```typescript
+180:     // Arrange - Set up test data and conditions
+181:     // Act - Perform the action being tested
+182:     // Assert - Verify the results
+183:     ```
+184: 
+185:   - This pattern ensures:
+186:     - Clear test structure and readability
+187:     - Consistent test organization across the codebase
+188:     - Easy identification of test setup, execution, and verification
+189:   - Simplified test maintenance and debugging
+190:   - Automated validation through custom ESLint rules
+191:   - Tests will fail if AAA pattern is not followed
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -18804,7 +18887,7 @@ tsconfig.json
 39:     "jest": "^30.2.0",
 40:     "motion": "^12.23.24",
 41:     "next": "16.0.1",
-42:     "next-sanity": "^11.6.3",
+42:     "next-sanity": "^11.6.5",
 43:     "path-to-regexp": "^8.3.0",
 44:     "react": "^19.2.0",
 45:     "react-dom": "^19.2.0",
@@ -18813,7 +18896,7 @@ tsconfig.json
 48:     "react-icons": "^5.5.0",
 49:     "sanity": "^4.13.0",
 50:     "sitemap": "^9.0.0",
-51:     "tar-fs": ">=3.1.1",
+51:     "tar-fs": "^3.1.1",
 52:     "ts-node": "^10.9.2",
 53:     "zod": "^4.1.12"
 54:   },
@@ -18851,7 +18934,7 @@ tsconfig.json
 86:     "eslint-plugin-testing-library": "^7.13.3",
 87:     "expect": "^30.2.0",
 88:     "jest-environment-jsdom": "^30.2.0",
-89:     "jest-extended": "^6.0.0",
+89:     "jest-extended": "^7.0.0",
 90:     "jsdom-testing-mocks": "^1.16.0",
 91:     "postcss": "^8.5.6",
 92:     "prettier": "3.6.2",
