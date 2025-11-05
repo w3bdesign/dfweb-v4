@@ -25,7 +25,7 @@ Sanity.io and Typescript.
 
 ## Live URL
 
-<https://www.dfweb.no>
+- <https://www.dfweb.no>
 
 ## Frontend (Next.js)
 
