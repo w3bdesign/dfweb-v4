@@ -18420,195 +18420,6 @@ tsconfig.json
 224: - SHOULD: Avoid gradient banding (use masks when needed)
 ````
 
-## File: tsconfig.json
-````json
- 1: {
- 2:   "compilerOptions": {
- 3:     "lib": [
- 4:       "dom",
- 5:       "dom.iterable",
- 6:       "esnext"
- 7:     ],
- 8:     "allowJs": true,
- 9:     "skipLibCheck": true,
-10:     "strict": true,
-11:     "noEmit": true,
-12:     "esModuleInterop": true,
-13:     "module": "esnext",
-14:     "moduleResolution": "bundler",
-15:     "resolveJsonModule": true,
-16:     "isolatedModules": true,
-17:     "jsx": "react-jsx",
-18:     "incremental": true,
-19:     "plugins": [
-20:       {
-21:         "name": "next"
-22:       }
-23:     ],
-24:     "paths": {
-25:       "@/*": [
-26:         "./src/*"
-27:       ]
-28:     },
-29:     "types": [
-30:       "jest",
-31:       "@testing-library/jest-dom"
-32:     ],
-33:     "target": "ES2022"
-34:   },
-35:   "include": [
-36:     "next-env.d.ts",
-37:     "**/*.ts",
-38:     "**/*.tsx",
-39:     ".next/types/**/*.ts",
-40:     "src",
-41:     "cypress",
-42:     ".next/dev/types/**/*.ts"
-43:   ],
-44:   "exclude": [
-45:     "node_modules"
-46:   ]
-47: }
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v5
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install
-34:       - name: Install dependencies and pa11y
-35:         run: |
-36:           pnpm add -D pa11y wait-on
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v5
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v5
-13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v5
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.39.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: README.md
 ````markdown
   1: # Dfweb.no Portfolio Version 4
@@ -18804,6 +18615,195 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: tsconfig.json
+````json
+ 1: {
+ 2:   "compilerOptions": {
+ 3:     "lib": [
+ 4:       "dom",
+ 5:       "dom.iterable",
+ 6:       "esnext"
+ 7:     ],
+ 8:     "allowJs": true,
+ 9:     "skipLibCheck": true,
+10:     "strict": true,
+11:     "noEmit": true,
+12:     "esModuleInterop": true,
+13:     "module": "esnext",
+14:     "moduleResolution": "bundler",
+15:     "resolveJsonModule": true,
+16:     "isolatedModules": true,
+17:     "jsx": "react-jsx",
+18:     "incremental": true,
+19:     "plugins": [
+20:       {
+21:         "name": "next"
+22:       }
+23:     ],
+24:     "paths": {
+25:       "@/*": [
+26:         "./src/*"
+27:       ]
+28:     },
+29:     "types": [
+30:       "jest",
+31:       "@testing-library/jest-dom"
+32:     ],
+33:     "target": "ES2022"
+34:   },
+35:   "include": [
+36:     "next-env.d.ts",
+37:     "**/*.ts",
+38:     "**/*.tsx",
+39:     ".next/types/**/*.ts",
+40:     "src",
+41:     "cypress",
+42:     ".next/dev/types/**/*.ts"
+43:   ],
+44:   "exclude": [
+45:     "node_modules"
+46:   ]
+47: }
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v5
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install
+34:       - name: Install dependencies and pa11y
+35:         run: |
+36:           pnpm add -D pa11y wait-on
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v5
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v5
+13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v5
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.39.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -18825,7 +18825,7 @@ tsconfig.json
 17:     "react": "^19.2.0",
 18:     "react-dom": "^19.2.0",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.14.2",
+20:     "sanity": "^4.15.0",
 21:     "styled-components": "^6.1.19"
 22:   },
 23:   "devDependencies": {
@@ -18894,7 +18894,7 @@ tsconfig.json
 46:     "react-error-boundary": "^5.0.0",
 47:     "react-hook-form": "^7.66.0",
 48:     "react-icons": "^5.5.0",
-49:     "sanity": "^4.14.2",
+49:     "sanity": "^4.15.0",
 50:     "sitemap": "^9.0.0",
 51:     "tar-fs": "^3.1.1",
 52:     "ts-node": "^10.9.2",
