@@ -74,6 +74,7 @@ commit/
   commit_analyzer.py
 DOCS/
   EXPLANATION.md
+  REACT_IMPROVEMENTS.md
   README.md
   TEST_STRATEGY.md
   TODO.md
@@ -18008,6 +18009,117 @@ tsconfig.json
 52:           pkill -f "next start" || true
 ````
 
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v5
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install
+34:       - name: Install dependencies and pa11y
+35:         run: |
+36:           pnpm add -D pa11y wait-on
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v5
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v5
+13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v5
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -18666,115 +18778,414 @@ tsconfig.json
 47: }
 ````
 
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v5
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install
-34:       - name: Install dependencies and pa11y
-35:         run: |
-36:           pnpm add -D pa11y wait-on
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v5
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v5
-13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v5
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
+## File: DOCS/REACT_IMPROVEMENTS.md
+````markdown
+  1: # React Improvements - Lessons from 10 Years of React Development
+  2: 
+  3: Based on analysis of the codebase and insights from Corey House's "Lessons from 10 Years of React Development" talk.
+  4: 
+  5: ***
+  6: 
+  7: ## Executive Summary
+  8: 
+  9: **Priority Recommendations (in order):**
+ 10: 
+ 11: 1. ✅ **HIGH PRIORITY**: Add Zod runtime validation for Sanity data
+ 12: 2. ✅ **MEDIUM PRIORITY**: Refactor error boundary placement in RootLayout
+ 13: 3. ℹ️ **LOW PRIORITY**: Consider URL-based state for future features
+ 14: 4. 📋 **FUTURE**: Keep TanStack Query + useErrorBoundary pattern in mind for client-heavy features
+ 15: 
+ 16: ***
+ 17: 
+ 18: ## 1. Runtime Validation with Zod for Sanity Data
+ 19: 
+ 20: ### Current State
+ 21: 
+ 22: * ✅ Already using Zod for contact form validation (`zodResolver(formSchema)`)
+ 23: * ❌ No runtime validation for Sanity CMS responses
+ 24: * ⚠️ Relying solely on TypeScript types (which don't exist at runtime)
+ 25: 
+ 26: ### Recommendation
+ 27: 
+ 28: Add Zod schemas to validate Sanity API responses, starting with the `Project` type.
+ 29: 
+ 30: ### Implementation Difficulty
+ 31: 
+ 32: **🟢 EASY** - Estimated time: 30-60 minutes
+ 33: 
+ 34: ### Pros
+ 35: 
+ 36: * ✅ **Fail fast**: Catch schema mismatches immediately instead of weird runtime bugs
+ 37: * ✅ **Better error messages**: Know exactly what field is wrong and why
+ 38: * ✅ **Production safety**: If Sanity content or schema drifts, you get explicit errors
+ 39: * ✅ **Existing pattern**: Already using Zod in the codebase
+ 40: * ✅ **Works with current error boundaries**: Validation errors bubble to existing error handling
+ 41: * ✅ **Type safety**: Zod can infer TypeScript types, keeping types and validation in sync
+ 42: 
+ 43: ### Cons
+ 44: 
+ 45: * ⚠️ **Slight performance overhead**: Validation runs on every fetch (minimal impact)
+ 46: * ⚠️ **Maintenance**: Need to keep Zod schemas in sync with Sanity schema
+ 47: * ⚠️ **Initial setup**: Requires defining schemas for all Sanity types you use
+ 48: 
+ 49: ### Code Example
+ 50: 
+ 51: ```typescript
+ 52: // src/lib/sanity/schemas.ts
+ 53: import { z } from "zod";
+ 54: 
+ 55: export const ProjectSchema = z.object({
+ 56:   _id: z.string(),
+ 57:   _type: z.literal("project"),
+ 58:   id: z.number().optional(),
+ 59:   name: z.string().optional(),
+ 60:   description: z.string().optional(),
+ 61:   subdescription: z.string().optional(),
+ 62:   urlwww: z.array(z.object({
+ 63:     title: z.string().optional(),
+ 64:     url: z.string().optional(),
+ 65:     external: z.boolean().optional(),
+ 66:     _key: z.string(),
+ 67:   })).optional(),
+ 68:   urlgithub: z.array(z.object({
+ 69:     title: z.string().optional(),
+ 70:     url: z.string().optional(),
+ 71:     external: z.boolean().optional(),
+ 72:     _key: z.string(),
+ 73:   })).optional(),
+ 74:   projectimage: z.object({
+ 75:     asset: z.object({
+ 76:       _ref: z.string(),
+ 77:       _type: z.literal("reference"),
+ 78:     }).optional(),
+ 79:   }).optional(),
+ 80:   featured: z.boolean().optional(),
+ 81:   featureOrder: z.number().optional(),
+ 82: });
+ 83: 
+ 84: export const ProjectsSchema = z.array(ProjectSchema);
+ 85: 
+ 86: // Infer TypeScript type from Zod schema
+ 87: export type ValidatedProject = z.infer<typeof ProjectSchema>;
+ 88: ```
+ 89: 
+ 90: ```typescript
+ 91: // src/app/prosjekter/actions.ts
+ 92: import { ProjectsSchema } from "@/lib/sanity/schemas";
+ 93: 
+ 94: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 95:   const rawData = await client.fetch(
+ 96:     projectsQuery,
+ 97:     {},
+ 98:     {
+ 99:       next: { revalidate: 3600 },
+100:     },
+101:   );
+102:   
+103:   // Validate runtime data - throws if invalid
+104:   const validatedData = ProjectsSchema.parse(rawData);
+105:   
+106:   return validatedData;
+107: }
+108: ```
+109: 
+110: ### Why This Matters
+111: 
+112: From the talk: *"TypeScript does not exist at runtime. If I want to make sure that some runtime data meets my types, TypeScript cannot help me."*
+113: 
+114: When Sanity returns unexpected data (schema changes, content issues, API problems), you want to know immediately with a clear error message, not discover it when a user reports a broken page.
+115: 
+116: ***
+117: 
+118: ## 2. Granular Error Boundary Placement
+119: 
+120: ### Current State
+121: 
+122: ```tsx
+123: // src/app/RootLayout.tsx
+124: return (
+125:   <ErrorBoundary>
+126:     <div className="flex flex-col grow">
+127:       <Header navigation={navigation} />
+128:       <SpeedInsights />
+129:       <div className="grow">{children}</div>
+130:       <Footer footerCopyrightText={...} />
+131:     </div>
+132:   </ErrorBoundary>
+133: );
+134: ```
+135: 
+136: **Problem**: If anything throws (including Header or Footer), the entire app shell disappears (white screen).
+137: 
+138: ### Recommendation
+139: 
+140: Move the error boundary to wrap only the page content, keeping navigation and footer visible.
+141: 
+142: ### Implementation Difficulty
+143: 
+144: **🟢 EASY** - Estimated time: 10-15 minutes
+145: 
+146: ### Pros
+147: 
+148: * ✅ **Better UX**: Users can still navigate even if a page crashes
+149: * ✅ **Debugging**: Easier to identify which part failed
+150: * ✅ **Resilience**: Critical UI (nav/footer) remains functional
+151: * ✅ **Minimal code change**: Just moving the boundary wrapper
+152: * ✅ **Aligns with best practices**: Matches the talk's "granular error boundaries" recommendation
+153: 
+154: ### Cons
+155: 
+156: * ⚠️ **Slightly more complex**: Need to think about boundary placement
+157: * ⚠️ **Header/Footer errors**: If these components fail, they'll crash the whole app (but they're simpler/less likely to fail)
+158: 
+159: ### Code Example
+160: 
+161: ```tsx
+162: // src/app/RootLayout.tsx
+163: export default async function RootLayout({
+164:   children,
+165: }: Readonly<{
+166:   children: React.ReactNode;
+167: }>) {
+168:   const [navigation, { footerCopyrightText }] = await Promise.all([
+169:     client.fetch(navigationQuery),
+170:     client.fetch(settingsQuery),
+171:   ]);
+172: 
+173:   return (
+174:     <div className="flex flex-col grow">
+175:       <Header navigation={navigation} />
+176:       <SpeedInsights />
+177:       
+178:       {/* Error boundary only around page content */}
+179:       <ErrorBoundary>
+180:         <div className="grow">{children}</div>
+181:       </ErrorBoundary>
+182:       
+183:       <Footer
+184:         footerCopyrightText={
+185:           footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+186:         }
+187:       />
+188:     </div>
+189:   );
+190: }
+191: ```
+192: 
+193: ### Why This Matters
+194: 
+195: From the talk: *"I very rarely see people putting error boundaries at granular levels. It's really useful to have an error boundary around every one of your pages... I would really like to still be able to see the navigation, the footer."*
+196: 
+197: Real example from the talk: A client had a production outage because a third-party weather API went down and they didn't have an error boundary around it - the whole app went white.
+198: 
+199: ***
+200: 
+201: ## 3. URL-Based State Management
+202: 
+203: ### Current State
+204: 
+205: * ✅ Good: Using Next.js routing for pages
+206: * ℹ️ Opportunity: No filtering/sorting/pagination on `/prosjekter` yet
+207: 
+208: ### Recommendation
+209: 
+210: When adding features like project filtering, sorting, or search, use URL query parameters instead of local React state.
+211: 
+212: ### Implementation Difficulty
+213: 
+214: **🟡 MEDIUM** - Only relevant when adding new features
+215: 
+216: ### Pros
+217: 
+218: * ✅ **Shareable**: Users can share filtered/sorted views via URL
+219: * ✅ **Back button works**: Browser history navigation works as expected
+220: * ✅ **Bookmarkable**: Users can bookmark specific views
+221: * ✅ **SEO friendly**: Search engines can index different views
+222: * ✅ **Deep linking**: Direct links to specific states
+223: 
+224: ### Cons
+225: 
+226: * ⚠️ **More complex**: Requires URL parsing and state synchronization
+227: * ⚠️ **Not always needed**: Overkill for truly ephemeral UI state (modals, tooltips)
+228: 
+229: ### Code Example (Future Reference)
+230: 
+231: ```tsx
+232: // Example: Project filtering with URL state
+233: "use client";
+234: 
+235: import { useSearchParams, useRouter } from 'next/navigation';
+236: 
+237: export default function ProjectsPage({ projects }: { projects: Project[] }) {
+238:   const searchParams = useSearchParams();
+239:   const router = useRouter();
+240:   
+241:   const category = searchParams.get('category') || 'all';
+242:   const sort = searchParams.get('sort') || 'name';
+243:   
+244:   const handleCategoryChange = (newCategory: string) => {
+245:     const params = new URLSearchParams(searchParams);
+246:     params.set('category', newCategory);
+247:     router.push(`/prosjekter?${params.toString()}`);
+248:   };
+249:   
+250:   const filteredProjects = projects.filter(p => 
+251:     category === 'all' || p.projectcategory === category
+252:   );
+253:   
+254:   return (
+255:     <div>
+256:       <select value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+257:         <option value="all">All Categories</option>
+258:         {/* ... */}
+259:       </select>
+260:       {/* Render filtered projects */}
+261:     </div>
+262:   );
+263: }
+264: ```
+265: 
+266: ### Why This Matters
+267: 
+268: From the talk: *"URL state is at the top of this flowchart for a reason - people underutilize URLs and should start there."*
+269: 
+270: ***
+271: 
+272: ## 4. TanStack Query + useErrorBoundary (Future Consideration)
+273: 
+274: ### Current State
+275: 
+276: * ✅ Server-side data fetching with Next.js
+277: * ✅ Using `react-error-boundary` for error handling
+278: * ❌ Not using TanStack Query (React Query)
+279: 
+280: ### Recommendation
+281: 
+282: **Keep this pattern in mind** for future client-heavy features, but don't retrofit it now.
+283: 
+284: ### Implementation Difficulty
+285: 
+286: **🔴 COMPLEX** - Would require architectural changes
+287: 
+288: ### When to Consider
+289: 
+290: * Adding real-time features (live updates, collaboration)
+291: * Heavy client-side data fetching (search, filters, infinite scroll)
+292: * Need for optimistic UI updates
+293: * Complex caching requirements
+294: 
+295: ### Pros
+296: 
+297: * ✅ **Automatic caching**: Reduces unnecessary API calls
+298: * ✅ **Background refetching**: Keeps data fresh automatically
+299: * ✅ **Optimistic updates**: Instant UI feedback
+300: * ✅ **Error handling**: `throwOnError` integrates with error boundaries
+301: * ✅ **Loading states**: Built-in loading/error/success states
+302: * ✅ **Retry logic**: Automatic retries on failure
+303: 
+304: ### Cons
+305: 
+306: * ⚠️ **Learning curve**: New API to learn
+307: * ⚠️ **Bundle size**: Adds ~13kb to client bundle
+308: * ⚠️ **Complexity**: Overkill for simple server-rendered apps
+309: * ⚠️ **Not needed now**: Current server-side approach works well
+310: 
+311: ### Why Not Now?
+312: 
+313: Your app is primarily server-rendered with minimal client-side data fetching. The current approach is simpler and more appropriate. TanStack Query shines when you have lots of client-side data operations.
+314: 
+315: From the talk: *"In my experience, 90-something percent of the data in your application is fetched from a server. When you get remote state management right, most of your application falls into place."*
+316: 
+317: ***
+318: 
+319: ## 5. Current State Assessment
+320: 
+321: ### What You're Already Doing Well ✅
+322: 
+323: 1. **Error Boundaries**
+324:    * ✅ Root-level error boundary with custom Matrix fallback
+325:    * ✅ Route-level error handling for `/prosjekter`
+326:    * ✅ Using `react-error-boundary` library
+327: 
+328: 2. **Form Validation**
+329:    * ✅ Using Zod with `react-hook-form` for contact form
+330:    * ✅ Proper error display and accessibility
+331: 
+332: 3. **State Management**
+333:    * ✅ Keeping state local and low in component tree
+334:    * ✅ Using `useState` appropriately
+335:    * ✅ Not over-engineering with unnecessary global state
+336: 
+337: 4. **TypeScript**
+338:    * ✅ Strong typing throughout
+339:    * ✅ Generated types from Sanity schema
+340: 
+341: ### What Could Be Improved 🔧
+342: 
+343: 1. **Runtime Validation** (HIGH PRIORITY)
+344:    * Add Zod validation for Sanity responses
+345: 
+346: 2. **Error Boundary Granularity** (MEDIUM PRIORITY)
+347:    * Adjust placement to preserve nav/footer on page errors
+348: 
+349: 3. **Future Features** (LOW PRIORITY)
+350:    * Remember URL-based state for filters/search
+351:    * Consider TanStack Query if adding heavy client features
+352: 
+353: ***
+354: 
+355: ## Implementation Priority
+356: 
+357: ### Phase 1: Quick Wins (1-2 hours)
+358: 
+359: 1. ✅ Add Zod validation for `Project` type
+360: 2. ✅ Refactor RootLayout error boundary placement
+361: 3. ✅ Test error scenarios to verify improvements
+362: 
+363: ### Phase 2: Future Features (As Needed)
+364: 
+365: 1. ℹ️ Use URL state when adding project filters/search
+366: 2. ℹ️ Evaluate TanStack Query if adding real-time features
+367: 
+368: ### Phase 3: Advanced (Optional)
+369: 
+370: 1. 📋 Add more granular error boundaries around complex widgets
+371: 2. 📋 Implement error monitoring/logging service integration
+372: 3. 📋 Add Zod validation for other Sanity types (Navigation, Page, CV)
+373: 
+374: ***
+375: 
+376: ## Patterns to Avoid
+377: 
+378: Based on the talk, here are patterns to avoid:
+379: 
+380: ❌ **Don't use Redux** - Zustand is simpler for the same use cases
+381: ❌ **Don't overuse Context** - Performance issues with frequently changing data
+382: ❌ **Don't ignore error boundaries** - Most React apps have inadequate error handling
+383: ❌ **Don't skip runtime validation** - TypeScript doesn't exist at runtime
+384: ❌ **Don't lift state too early** - Keep it local until you need to share it
+385: ❌ **Don't create derived state** - Calculate values during render instead
+386: 
+387: ***
+388: 
+389: ## Resources
+390: 
+391: * [React Error Boundary Docs](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+392: * [react-error-boundary Library](https://github.com/bvaughn/react-error-boundary)
+393: * [Zod Documentation](https://zod.dev/)
+394: * [TanStack Query](https://tanstack.com/query/latest)
+395: * [Corey House's Pluralsight Courses](https://www.pluralsight.com/authors/cory-house)
+396: 
+397: ***
+398: 
+399: ## Conclusion
+400: 
+401: Your codebase is already following many best practices from the talk. The two highest-impact improvements are:
+402: 
+403: 1. **Add Zod runtime validation** - Protects against unexpected API responses
+404: 2. **Refactor error boundary placement** - Better UX when errors occur
+405: 
+406: Both are easy to implement and provide immediate value. The other recommendations are good to keep in mind for future features but aren't urgent for the current application.
 ````
 
 ## File: src/utils/eslint/package.json
