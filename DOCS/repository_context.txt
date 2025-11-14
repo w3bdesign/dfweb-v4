@@ -74,6 +74,7 @@ commit/
   commit_analyzer.py
 DOCS/
   EXPLANATION.md
+  REACT_IMPROVEMENTS.md
   README.md
   TEST_STRATEGY.md
   TODO.md
@@ -18190,6 +18191,388 @@ tsconfig.json
 92:         with:
 93:           command: "monitor"
 94:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: DOCS/REACT_IMPROVEMENTS.md
+````markdown
+  1: # React Improvements - Lessons from 10 Years of React Development
+  2: 
+  3: Based on analysis of the codebase and insights from Corey House's "Lessons from 10 Years of React Development" talk.
+  4: 
+  5: ---
+  6: 
+  7: ## Executive Summary
+  8: 
+  9: **Priority Recommendations (in order):**
+ 10: 
+ 11: 1. ✅ **HIGH PRIORITY**: Add Zod runtime validation for Sanity data
+ 12: 2. ✅ **MEDIUM PRIORITY**: Refactor error boundary placement in RootLayout
+ 13: 3. ℹ️ **LOW PRIORITY**: Consider URL-based state for future features
+ 14: 4. 📋 **FUTURE**: Keep TanStack Query + useErrorBoundary pattern in mind for client-heavy features
+ 15: 
+ 16: ---
+ 17: 
+ 18: ## 1. Runtime Validation with Zod for Sanity Data
+ 19: 
+ 20: ### Current State
+ 21: - ✅ Already using Zod for contact form validation (`zodResolver(formSchema)`)
+ 22: - ❌ No runtime validation for Sanity CMS responses
+ 23: - ⚠️ Relying solely on TypeScript types (which don't exist at runtime)
+ 24: 
+ 25: ### Recommendation
+ 26: Add Zod schemas to validate Sanity API responses, starting with the `Project` type.
+ 27: 
+ 28: ### Implementation Difficulty
+ 29: **🟢 EASY** - Estimated time: 30-60 minutes
+ 30: 
+ 31: ### Pros
+ 32: - ✅ **Fail fast**: Catch schema mismatches immediately instead of weird runtime bugs
+ 33: - ✅ **Better error messages**: Know exactly what field is wrong and why
+ 34: - ✅ **Production safety**: If Sanity content or schema drifts, you get explicit errors
+ 35: - ✅ **Existing pattern**: Already using Zod in the codebase
+ 36: - ✅ **Works with current error boundaries**: Validation errors bubble to existing error handling
+ 37: - ✅ **Type safety**: Zod can infer TypeScript types, keeping types and validation in sync
+ 38: 
+ 39: ### Cons
+ 40: - ⚠️ **Slight performance overhead**: Validation runs on every fetch (minimal impact)
+ 41: - ⚠️ **Maintenance**: Need to keep Zod schemas in sync with Sanity schema
+ 42: - ⚠️ **Initial setup**: Requires defining schemas for all Sanity types you use
+ 43: 
+ 44: ### Code Example
+ 45: 
+ 46: ```typescript
+ 47: // src/lib/sanity/schemas.ts
+ 48: import { z } from "zod";
+ 49: 
+ 50: export const ProjectSchema = z.object({
+ 51:   _id: z.string(),
+ 52:   _type: z.literal("project"),
+ 53:   id: z.number().optional(),
+ 54:   name: z.string().optional(),
+ 55:   description: z.string().optional(),
+ 56:   subdescription: z.string().optional(),
+ 57:   urlwww: z.array(z.object({
+ 58:     title: z.string().optional(),
+ 59:     url: z.string().optional(),
+ 60:     external: z.boolean().optional(),
+ 61:     _key: z.string(),
+ 62:   })).optional(),
+ 63:   urlgithub: z.array(z.object({
+ 64:     title: z.string().optional(),
+ 65:     url: z.string().optional(),
+ 66:     external: z.boolean().optional(),
+ 67:     _key: z.string(),
+ 68:   })).optional(),
+ 69:   projectimage: z.object({
+ 70:     asset: z.object({
+ 71:       _ref: z.string(),
+ 72:       _type: z.literal("reference"),
+ 73:     }).optional(),
+ 74:   }).optional(),
+ 75:   featured: z.boolean().optional(),
+ 76:   featureOrder: z.number().optional(),
+ 77: });
+ 78: 
+ 79: export const ProjectsSchema = z.array(ProjectSchema);
+ 80: 
+ 81: // Infer TypeScript type from Zod schema
+ 82: export type ValidatedProject = z.infer<typeof ProjectSchema>;
+ 83: ```
+ 84: 
+ 85: ```typescript
+ 86: // src/app/prosjekter/actions.ts
+ 87: import { ProjectsSchema } from "@/lib/sanity/schemas";
+ 88: 
+ 89: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 90:   const rawData = await client.fetch(
+ 91:     projectsQuery,
+ 92:     {},
+ 93:     {
+ 94:       next: { revalidate: 3600 },
+ 95:     },
+ 96:   );
+ 97:   
+ 98:   // Validate runtime data - throws if invalid
+ 99:   const validatedData = ProjectsSchema.parse(rawData);
+100:   
+101:   return validatedData;
+102: }
+103: ```
+104: 
+105: ### Why This Matters
+106: From the talk: *"TypeScript does not exist at runtime. If I want to make sure that some runtime data meets my types, TypeScript cannot help me."*
+107: 
+108: When Sanity returns unexpected data (schema changes, content issues, API problems), you want to know immediately with a clear error message, not discover it when a user reports a broken page.
+109: 
+110: ---
+111: 
+112: ## 2. Granular Error Boundary Placement
+113: 
+114: ### Current State
+115: ```tsx
+116: // src/app/RootLayout.tsx
+117: return (
+118:   <ErrorBoundary>
+119:     <div className="flex flex-col grow">
+120:       <Header navigation={navigation} />
+121:       <SpeedInsights />
+122:       <div className="grow">{children}</div>
+123:       <Footer footerCopyrightText={...} />
+124:     </div>
+125:   </ErrorBoundary>
+126: );
+127: ```
+128: 
+129: **Problem**: If anything throws (including Header or Footer), the entire app shell disappears (white screen).
+130: 
+131: ### Recommendation
+132: Move the error boundary to wrap only the page content, keeping navigation and footer visible.
+133: 
+134: ### Implementation Difficulty
+135: **🟢 EASY** - Estimated time: 10-15 minutes
+136: 
+137: ### Pros
+138: - ✅ **Better UX**: Users can still navigate even if a page crashes
+139: - ✅ **Debugging**: Easier to identify which part failed
+140: - ✅ **Resilience**: Critical UI (nav/footer) remains functional
+141: - ✅ **Minimal code change**: Just moving the boundary wrapper
+142: - ✅ **Aligns with best practices**: Matches the talk's "granular error boundaries" recommendation
+143: 
+144: ### Cons
+145: - ⚠️ **Slightly more complex**: Need to think about boundary placement
+146: - ⚠️ **Header/Footer errors**: If these components fail, they'll crash the whole app (but they're simpler/less likely to fail)
+147: 
+148: ### Code Example
+149: 
+150: ```tsx
+151: // src/app/RootLayout.tsx
+152: export default async function RootLayout({
+153:   children,
+154: }: Readonly<{
+155:   children: React.ReactNode;
+156: }>) {
+157:   const [navigation, { footerCopyrightText }] = await Promise.all([
+158:     client.fetch(navigationQuery),
+159:     client.fetch(settingsQuery),
+160:   ]);
+161: 
+162:   return (
+163:     <div className="flex flex-col grow">
+164:       <Header navigation={navigation} />
+165:       <SpeedInsights />
+166:       
+167:       {/* Error boundary only around page content */}
+168:       <ErrorBoundary>
+169:         <div className="grow">{children}</div>
+170:       </ErrorBoundary>
+171:       
+172:       <Footer
+173:         footerCopyrightText={
+174:           footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+175:         }
+176:       />
+177:     </div>
+178:   );
+179: }
+180: ```
+181: 
+182: ### Why This Matters
+183: From the talk: *"I very rarely see people putting error boundaries at granular levels. It's really useful to have an error boundary around every one of your pages... I would really like to still be able to see the navigation, the footer."*
+184: 
+185: Real example from the talk: A client had a production outage because a third-party weather API went down and they didn't have an error boundary around it - the whole app went white.
+186: 
+187: ---
+188: 
+189: ## 3. URL-Based State Management
+190: 
+191: ### Current State
+192: - ✅ Good: Using Next.js routing for pages
+193: - ℹ️ Opportunity: No filtering/sorting/pagination on `/prosjekter` yet
+194: 
+195: ### Recommendation
+196: When adding features like project filtering, sorting, or search, use URL query parameters instead of local React state.
+197: 
+198: ### Implementation Difficulty
+199: **🟡 MEDIUM** - Only relevant when adding new features
+200: 
+201: ### Pros
+202: - ✅ **Shareable**: Users can share filtered/sorted views via URL
+203: - ✅ **Back button works**: Browser history navigation works as expected
+204: - ✅ **Bookmarkable**: Users can bookmark specific views
+205: - ✅ **SEO friendly**: Search engines can index different views
+206: - ✅ **Deep linking**: Direct links to specific states
+207: 
+208: ### Cons
+209: - ⚠️ **More complex**: Requires URL parsing and state synchronization
+210: - ⚠️ **Not always needed**: Overkill for truly ephemeral UI state (modals, tooltips)
+211: 
+212: ### Code Example (Future Reference)
+213: 
+214: ```tsx
+215: // Example: Project filtering with URL state
+216: "use client";
+217: 
+218: import { useSearchParams, useRouter } from 'next/navigation';
+219: 
+220: export default function ProjectsPage({ projects }: { projects: Project[] }) {
+221:   const searchParams = useSearchParams();
+222:   const router = useRouter();
+223:   
+224:   const category = searchParams.get('category') || 'all';
+225:   const sort = searchParams.get('sort') || 'name';
+226:   
+227:   const handleCategoryChange = (newCategory: string) => {
+228:     const params = new URLSearchParams(searchParams);
+229:     params.set('category', newCategory);
+230:     router.push(`/prosjekter?${params.toString()}`);
+231:   };
+232:   
+233:   const filteredProjects = projects.filter(p => 
+234:     category === 'all' || p.projectcategory === category
+235:   );
+236:   
+237:   return (
+238:     <div>
+239:       <select value={category} onChange={(e) => handleCategoryChange(e.target.value)}>
+240:         <option value="all">All Categories</option>
+241:         {/* ... */}
+242:       </select>
+243:       {/* Render filtered projects */}
+244:     </div>
+245:   );
+246: }
+247: ```
+248: 
+249: ### Why This Matters
+250: From the talk: *"URL state is at the top of this flowchart for a reason - people underutilize URLs and should start there."*
+251: 
+252: ---
+253: 
+254: ## 4. TanStack Query + useErrorBoundary (Future Consideration)
+255: 
+256: ### Current State
+257: - ✅ Server-side data fetching with Next.js
+258: - ✅ Using `react-error-boundary` for error handling
+259: - ❌ Not using TanStack Query (React Query)
+260: 
+261: ### Recommendation
+262: **Keep this pattern in mind** for future client-heavy features, but don't retrofit it now.
+263: 
+264: ### Implementation Difficulty
+265: **🔴 COMPLEX** - Would require architectural changes
+266: 
+267: ### When to Consider
+268: - Adding real-time features (live updates, collaboration)
+269: - Heavy client-side data fetching (search, filters, infinite scroll)
+270: - Need for optimistic UI updates
+271: - Complex caching requirements
+272: 
+273: ### Pros
+274: - ✅ **Automatic caching**: Reduces unnecessary API calls
+275: - ✅ **Background refetching**: Keeps data fresh automatically
+276: - ✅ **Optimistic updates**: Instant UI feedback
+277: - ✅ **Error handling**: `throwOnError` integrates with error boundaries
+278: - ✅ **Loading states**: Built-in loading/error/success states
+279: - ✅ **Retry logic**: Automatic retries on failure
+280: 
+281: ### Cons
+282: - ⚠️ **Learning curve**: New API to learn
+283: - ⚠️ **Bundle size**: Adds ~13kb to client bundle
+284: - ⚠️ **Complexity**: Overkill for simple server-rendered apps
+285: - ⚠️ **Not needed now**: Current server-side approach works well
+286: 
+287: ### Why Not Now?
+288: Your app is primarily server-rendered with minimal client-side data fetching. The current approach is simpler and more appropriate. TanStack Query shines when you have lots of client-side data operations.
+289: 
+290: From the talk: *"In my experience, 90-something percent of the data in your application is fetched from a server. When you get remote state management right, most of your application falls into place."*
+291: 
+292: ---
+293: 
+294: ## 5. Current State Assessment
+295: 
+296: ### What You're Already Doing Well ✅
+297: 
+298: 1. **Error Boundaries**
+299:    - ✅ Root-level error boundary with custom Matrix fallback
+300:    - ✅ Route-level error handling for `/prosjekter`
+301:    - ✅ Using `react-error-boundary` library
+302: 
+303: 2. **Form Validation**
+304:    - ✅ Using Zod with `react-hook-form` for contact form
+305:    - ✅ Proper error display and accessibility
+306: 
+307: 3. **State Management**
+308:    - ✅ Keeping state local and low in component tree
+309:    - ✅ Using `useState` appropriately
+310:    - ✅ Not over-engineering with unnecessary global state
+311: 
+312: 4. **TypeScript**
+313:    - ✅ Strong typing throughout
+314:    - ✅ Generated types from Sanity schema
+315: 
+316: ### What Could Be Improved 🔧
+317: 
+318: 1. **Runtime Validation** (HIGH PRIORITY)
+319:    - Add Zod validation for Sanity responses
+320: 
+321: 2. **Error Boundary Granularity** (MEDIUM PRIORITY)
+322:    - Adjust placement to preserve nav/footer on page errors
+323: 
+324: 3. **Future Features** (LOW PRIORITY)
+325:    - Remember URL-based state for filters/search
+326:    - Consider TanStack Query if adding heavy client features
+327: 
+328: ---
+329: 
+330: ## Implementation Priority
+331: 
+332: ### Phase 1: Quick Wins (1-2 hours)
+333: 1. ✅ Add Zod validation for `Project` type
+334: 2. ✅ Refactor RootLayout error boundary placement
+335: 3. ✅ Test error scenarios to verify improvements
+336: 
+337: ### Phase 2: Future Features (As Needed)
+338: 1. ℹ️ Use URL state when adding project filters/search
+339: 2. ℹ️ Evaluate TanStack Query if adding real-time features
+340: 
+341: ### Phase 3: Advanced (Optional)
+342: 1. 📋 Add more granular error boundaries around complex widgets
+343: 2. 📋 Implement error monitoring/logging service integration
+344: 3. 📋 Add Zod validation for other Sanity types (Navigation, Page, CV)
+345: 
+346: ---
+347: 
+348: ## Patterns to Avoid
+349: 
+350: Based on the talk, here are patterns to avoid:
+351: 
+352: ❌ **Don't use Redux** - Zustand is simpler for the same use cases
+353: ❌ **Don't overuse Context** - Performance issues with frequently changing data
+354: ❌ **Don't ignore error boundaries** - Most React apps have inadequate error handling
+355: ❌ **Don't skip runtime validation** - TypeScript doesn't exist at runtime
+356: ❌ **Don't lift state too early** - Keep it local until you need to share it
+357: ❌ **Don't create derived state** - Calculate values during render instead
+358: 
+359: ---
+360: 
+361: ## Resources
+362: 
+363: - [React Error Boundary Docs](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
+364: - [react-error-boundary Library](https://github.com/bvaughn/react-error-boundary)
+365: - [Zod Documentation](https://zod.dev/)
+366: - [TanStack Query](https://tanstack.com/query/latest)
+367: - [Corey House's Pluralsight Courses](https://www.pluralsight.com/authors/cory-house)
+368: 
+369: ---
+370: 
+371: ## Conclusion
+372: 
+373: Your codebase is already following many best practices from the talk. The two highest-impact improvements are:
+374: 
+375: 1. **Add Zod runtime validation** - Protects against unexpected API responses
+376: 2. **Refactor error boundary placement** - Better UX when errors occur
+377: 
+378: Both are easy to implement and provide immediate value. The other recommendations are good to keep in mind for future features but aren't urgent for the current application.
 ````
 
 ## File: AGENTS.md
