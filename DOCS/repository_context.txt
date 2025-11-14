@@ -74,6 +74,7 @@ commit/
   commit_analyzer.py
 DOCS/
   EXPLANATION.md
+  implementation_plan.md
   REACT_IMPROVEMENTS.md
   README.md
   TEST_STRATEGY.md
@@ -19213,6 +19214,313 @@ tsconfig.json
 21:     "typescript": "^5.9.3"
 22:   }
 23: }
+````
+
+## File: DOCS/implementation_plan.md
+````markdown
+  1: # Implementation Plan
+  2: 
+  3: \[Overview]
+  4: Introduce Zod-based runtime validation for all Sanity CMS responses, starting with the `Project` type, by adding a dedicated validation layer that is easy to reuse, extend, and keep in sync with Sanity schemas.
+  5: 
+  6: This implementation will add Zod schemas that mirror the Sanity content models and GROQ query projections, then integrate them at the data-fetching boundary (server actions and layout loaders) so invalid content fails fast in a controlled, observable way. The plan emphasizes a clear folder structure (`src/lib/sanity`) and shared helpers to minimize duplication and make it straightforward to add validation for new content types over time. We will default to **fail-fast behavior** (throwing on invalid data so error boundaries handle UI failures) while providing patterns for optional graceful degradation where appropriate.
+  7: 
+  8: \[Types]
+  9: Define a Zod-backed type layer for Sanity documents, using Zod inference as the single source of truth wherever feasible.
+ 10: 
+ 11: Detailed type definitions and structures:
+ 12: 
+ 13: 1. **Core Zod Schemas (Sanity shapes)**\
+ 14:    New file: `src/lib/sanity/schemas.ts`
+ 15: 
+ 16:    These schemas will closely mirror the existing generated types in `src/types/sanity.types.ts` but will be **manually curated** for fields actually used by the app. This keeps validation focused and easier to maintain.
+ 17: 
+ 18:    * `LinkSchema`
+ 19:      ```ts
+ 20:      const LinkSchema = z.object({
+ 21:        title: z.string().optional(),
+ 22:        url: z.string().url().optional(),
+ 23:        external: z.boolean().optional(),
+ 24:        _key: z.string().optional(),
+ 25:      });
+ 26:      ```
+ 27: 
+ 28:    * `ImageReferenceSchema` (for `projectimage` and similar)
+ 29:      ```ts
+ 30:      const ImageReferenceSchema = z.object({
+ 31:        asset: z
+ 32:          .object({
+ 33:            _ref: z.string(),
+ 34:            _type: z.literal("reference"),
+ 35:          })
+ 36:          .optional(),
+ 37:      });
+ 38:      ```
+ 39: 
+ 40:    * `ProjectSchema`
+ 41:      ```ts
+ 42:      export const ProjectSchema = z.object({
+ 43:        _id: z.string(),
+ 44:        _type: z.literal("project"),
+ 45:        id: z.number().optional(),
+ 46:        name: z.string().optional(),
+ 47:        description: z.string().optional(),
+ 48:        subdescription: z.string().optional(),
+ 49:        projectcategory: z
+ 50:          .object({
+ 51:            _id: z.string().optional(),
+ 52:            title: z.string().optional(),
+ 53:          })
+ 54:          .optional(),
+ 55:        urlwww: z.array(LinkSchema).optional(),
+ 56:        urlgithub: z.array(LinkSchema).optional(),
+ 57:        projectimage: ImageReferenceSchema.optional(),
+ 58:        featured: z.boolean().optional(),
+ 59:        featureOrder: z.number().optional(),
+ 60:      });
+ 61: 
+ 62:      export const ProjectsSchema = z.array(ProjectSchema);
+ 63:      ```
+ 64: 
+ 65:    * Future schemas (planned but not required in the first implementation slice):
+ 66:      * `NavigationSchema` (for `navigationQuery` response)
+ 67:      * `SettingsSchema` (for `settingsQuery`)
+ 68:      * `PageSchema` (for `pageContentQuery`)
+ 69:      * `CvSchema` (for `cvQuery`)
+ 70: 
+ 71: 2. **Inferred Types from Zod**\
+ 72:    We will use Zod's inference to define runtime-aligned TypeScript types for validated data:
+ 73: 
+ 74:    ```ts
+ 75:    export type ValidatedProject = z.infer<typeof ProjectSchema>;
+ 76:    export type ValidatedProjects = z.infer<typeof ProjectsSchema>;
+ 77:    ```
+ 78: 
+ 79:    For the initial implementation, we will:
+ 80: 
+ 81:    * Prefer using `ValidatedProject` / `ValidatedProjects` as return types from validation-aware fetch functions.
+ 82:    * Where existing code expects `Project[]` from `src/types/sanity.types.ts`, we will confirm structural compatibility and either:
+ 83:      * Update those usages to the new `ValidatedProject` type; or
+ 84:      * Keep the public signature as `Project[]` temporarily but internally assert via Zod.
+ 85: 
+ 86: 3. **Error Typing for Validation**
+ 87:    * We will treat Zod's `ZodError` as a distinct failure mode at the validation boundary but **rethrow** as a standard `Error` (or wrapped error) so existing error boundaries and `handleError` flow remain simple.
+ 88:    * Optionally, we can introduce a discriminated error type later (e.g., `SanityValidationError`) if we want finer-grained handling.
+ 89: 
+ 90: \[Files]
+ 91: Create a centralized Zod schema module and integrate it into existing Sanity-related files, minimizing touchpoints and duplication.
+ 92: 
+ 93: Detailed breakdown:
+ 94: 
+ 95: * **New files to be created**
+ 96: 
+ 97:   1. `src/lib/sanity/schemas.ts`
+ 98:      * Purpose: House all Zod schemas for Sanity documents used by the app (starting with `Project`).
+ 99:      * Contents:
+100:        * Shared primitives: `LinkSchema`, `ImageReferenceSchema`, and any other reusable fragments.
+101:        * Document schemas: `ProjectSchema`, `ProjectsSchema` (initially), with TODO blocks for `Navigation`, `Settings`, `Page`, and `Cv`.
+102:        * Exported inferred types: `ValidatedProject`, `ValidatedProjects`.
+103: 
+104:   2. `src/lib/sanity/validation.ts` (or extend existing `helpers.ts` if preferred)
+105:      * Purpose: Provide reusable helpers to validate Sanity responses with Zod in a consistent way.
+106:      * Contents (planned):
+107:        * `validateSanityData` generic helper that wraps `schema.parse` with contextual error messages.
+108:        * Optionally a `safeValidateSanityData` variant that uses `safeParse` for future graceful-degradation use cases.
+109: 
+110: * **Existing files to be modified**
+111: 
+112:   1. `src/app/prosjekter/actions.ts`
+113:      * Integrate Zod validation into `fetchProjectsFromSanity` (or into `getProjects`) by:
+114:        * Importing `ProjectsSchema` (and possibly `ValidatedProjects`).
+115:        * Parsing `client.fetch` results through `ProjectsSchema.parse(rawData)`.
+116:        * Adopting the default **fail-fast** strategy: throw on validation error so the route-level error boundary or app-level error boundary handles it.
+117:        * Ensuring the public API (`getProjects`) returns a strongly-typed array of validated projects.
+118: 
+119:   2. `src/lib/sanity/helpers.ts`
+120:      * If this file currently contains generic helpers (to be inspected in detail during implementation), either:
+121:        * Add a `validateSanityData` helper here; or
+122:        * Export from `validation.ts` and re-export here for a single public entrypoint.
+123: 
+124:   3. `src/app/RootLayout.tsx` and any other server components/direct loaders using `client.fetch`
+125:      * For this plan, we will **not** immediately retrofit all existing fetches, but we will:
+126:        * Identify each place that calls `client.fetch` directly with a Sanity query.
+127:        * Document a consistent pattern for later adoption (e.g., wrap in a `getNavigation`/`getSettings` function that validates data using their respective schemas).
+128: 
+129:   4. (Optional but recommended) Test files under `src/__tests__/Prosjekter/`
+130:      * Add tests verifying that:
+131:        * Valid Sanity data passes `ProjectsSchema` validation.
+132:        * Known-invalid shapes throw a validation error.
+133:        * `getProjects` surfaces validation failures through the existing error handling path.
+134: 
+135: * **Files to be deleted or moved**
+136: 
+137:   * None planned. All changes are additive and localized to keep risk low.
+138: 
+139: * **Configuration file updates**
+140: 
+141:   * None required for Zod itself (already present as a dependency).
+142:   * Optionally, add `src/lib/sanity/schemas.ts` and `validation.ts` to any path aliases or ESLint import rules if those exist, but this is unlikely to be necessary.
+143: 
+144: \[Functions]
+145: Introduce a thin validation layer around Sanity fetches and keep the integration minimal and composable.
+146: 
+147: Detailed breakdown:
+148: 
+149: * **New functions**
+150: 
+151:   1. `validateSanityData`
+152:      * **Signature** (in `src/lib/sanity/validation.ts`):
+153:        ```ts
+154:        import type { ZodSchema } from "zod";
+155: 
+156:        export function validateSanityData<T>(
+157:          schema: ZodSchema<T>,
+158:          data: unknown,
+159:          context: string,
+160:        ): T;
+161:        ```
+162:      * **Purpose**:
+163:        * Wrap `schema.parse(data)`.
+164:        * On success: return typed data `T`.
+165:        * On failure: log a concise, contextual message (including `context`, the error path(s), and possibly a redacted sample of the data) and rethrow the `ZodError` or a new `Error` summarizing the issue.
+166:        * This function centralizes logging and makes it trivial to adjust behavior later (e.g., integrate with an error monitoring service).
+167: 
+168:   2. (Optional) `safeValidateSanityData`
+169:      * **Signature**:
+170:        ```ts
+171:        export function safeValidateSanityData<T>(
+172:          schema: ZodSchema<T>,
+173:          data: unknown,
+174:        ): { success: true; data: T } | { success: false; error: ZodError };
+175:        ```
+176:      * **Purpose**:
+177:        * Use `schema.safeParse(data)`.
+178:        * Intended for future areas where graceful degradation (skipping bad items, showing partial data) is desired.
+179:        * Not required for the initial `Project` implementation, but designing for it now will simplify later improvements.
+180: 
+181: * **Modified functions**
+182: 
+183:   1. `fetchProjectsFromSanity` in `src/app/prosjekter/actions.ts`
+184:      * **Current**:
+185:        ```ts
+186:        async function fetchProjectsFromSanity(): Promise<Project[]> {
+187:          return client.fetch(
+188:            projectsQuery,
+189:            {},
+190:            {
+191:              next: { revalidate: 3600 },
+192:            },
+193:          );
+194:        }
+195:        ```
+196: 
+197:      * **Planned**:
+198:        ```ts
+199:        import { ProjectsSchema, type ValidatedProjects } from "@/lib/sanity/schemas";
+200:        import { validateSanityData } from "@/lib/sanity/validation";
+201: 
+202:        async function fetchProjectsFromSanity(): Promise<ValidatedProjects> {
+203:          const rawData = await client.fetch(
+204:            projectsQuery,
+205:            {},
+206:            {
+207:              next: { revalidate: 3600 },
+208:            },
+209:          );
+210: 
+211:          return validateSanityData(ProjectsSchema, rawData, "projectsQuery");
+212:        }
+213:        ```
+214: 
+215:      * **Behavior change**:
+216:        * If Sanity returns data that doesn't match `ProjectsSchema`, the function will throw a validation error, which will be caught by `getProjects`'s `try/catch` and handled by `handleError` / error boundaries.
+217: 
+218:   2. `getProjects` in `src/app/prosjekter/actions.ts`
+219:      * Keep the public API similar but consider adjusting the return type:
+220:        ```ts
+221:        export const getProjects = cache(async (): Promise<ValidatedProjects> => {
+222:          try {
+223:            return await fetchProjectsFromSanity();
+224:          } catch (error) {
+225:            handleError(error);
+226:          }
+227:        });
+228:        ```
+229: 
+230:      * If necessary for compatibility, we can:
+231:        * Alias `ValidatedProject` to `Project` if their shapes remain aligned; or
+232:        * Update consuming components to use `ValidatedProject` explicitly.
+233: 
+234:   3. `handleError` in `src/app/prosjekter/actions.ts`
+235:      * Optionally augment to treat Zod validation failures distinctly if desired:
+236:        * Detect `instanceof ZodError` and either:
+237:          * Wrap in a more descriptive `Error` (e.g., `new Error("Invalid Sanity data for projects")`), or
+238:          * Attach the original error as a `cause`.
+239:        * For the first iteration, we can keep the existing behavior and allow the thrown validation error to propagate as a generic failure; the key value is that the logs and stack trace will show the validation issue.
+240: 
+241: * **Removed functions**
+242: 
+243:   * None planned. The approach is strictly additive/modifying existing functions in place.
+244: 
+245: \[Classes]
+246: No new classes are required; this feature is implemented entirely via functions and types.
+247: 
+248: Detailed breakdown:
+249: 
+250: * **New classes**
+251:   * None.
+252: 
+253: * **Modified classes**
+254:   * None.
+255: 
+256: * **Removed classes**
+257:   * None.
+258: 
+259: \[Dependencies]
+260: No new external dependencies are required; Zod is already present.
+261: 
+262: Detailed breakdown:
+263: 
+264: * **New packages**
+265:   * None. We will reuse the existing `zod` dependency listed in `package.json`.
+266: 
+267: * **Version changes**
+268:   * None required for this feature.
+269: 
+270: * **Integration requirements**
+271:   * Ensure tree-shakable imports from `zod` (standard `import { z } from "zod";`).
+272:   * No additional configuration or plugins are necessary.
+273: 
+274: \[Implementation Order]
+275: Implement the Zod/Sanity integration in small, verifiable steps, starting with `Project` data and leaving clear extension points for other Sanity types.
+276: 
+277: 1. **Create core Zod schemas for Sanity data (Project-first)**
+278:    * Add `src/lib/sanity/schemas.ts` with `LinkSchema`, `ImageReferenceSchema`, `ProjectSchema`, `ProjectsSchema`, and `ValidatedProject`/`ValidatedProjects` types.
+279:    * Ensure the schema aligns with the `projectsQuery` projection and the existing `Project` usage in components.
+280: 
+281: 2. **Introduce a reusable validation helper**
+282:    * Add `src/lib/sanity/validation.ts` (or use `helpers.ts`) with `validateSanityData`.
+283:    * Implement logging and fail-fast behavior for invalid data.
+284: 
+285: 3. **Wire validation into project fetching**
+286:    * Update `fetchProjectsFromSanity` in `src/app/prosjekter/actions.ts` to:
+287:      * Fetch raw data from Sanity.
+288:      * Validate it via `validateSanityData(ProjectsSchema, rawData, "projectsQuery")`.
+289:    * Update `getProjects` to return the validated type and continue using `handleError` for error propagation.
+290: 
+291: 4. **Align consuming code with validated types**
+292:    * Review components/pages that consume `getProjects` (e.g., `/prosjekter` page and `ProsjektCard` components).
+293:    * Confirm type compatibility with `ValidatedProject` and adjust types if needed (most fields are optional already, so changes should be minimal).
+294: 
+295: 5. **Define patterns for future Sanity types**
+296:    * Add TODO comments or skeleton schemas in `schemas.ts` for `Navigation`, `Settings`, `Page`, and `Cv`.
+297:    * Document, in code comments, the pattern for adding validation when new queries are introduced: "Define a Zod schema that matches the GROQ projection, then validate inside the fetch helper before returning data to components."
+298: 
+299: 6. **(Optional) Add targeted tests for validation**
+300:    * Add unit tests under `src/__tests__/Prosjekter/` to validate:
+301:      * Good data passes `ProjectsSchema`.
+302:      * Bad data fails with clear errors.
+303:      * `getProjects` surfaces failures through existing error handling.
 ````
 
 ## File: studio/package.json
