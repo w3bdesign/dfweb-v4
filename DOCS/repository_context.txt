@@ -754,104 +754,6 @@ tsconfig.json
 82:           fi
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v5
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Install dependencies for studio
-31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
-32:       - name: Run Snyk to check main project vulnerabilities
-33:         uses: snyk/actions/node@master
-34:         env:
-35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-36:         with:
-37:           command: "test"
-38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-39:       - name: Run Snyk to check studio project vulnerabilities
-40:         uses: snyk/actions/node@master
-41:         env:
-42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-43:         with:
-44:           command: "test"
-45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-46:       - name: Run Snyk to check eslint plugin vulnerabilities
-47:         uses: snyk/actions/node@master
-48:         env:
-49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-50:         with:
-51:           command: "test"
-52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-53:       - name: Upload main project SARIF report to GitHub Security tab
-54:         if: always()
-55:         uses: github/codeql-action/upload-sarif@v4
-56:         with:
-57:           sarif_file: snyk-main.sarif
-58:           category: snyk-main
-59:       - name: Upload studio SARIF report to GitHub Security tab
-60:         if: always()
-61:         uses: github/codeql-action/upload-sarif@v4
-62:         with:
-63:           sarif_file: snyk-studio.sarif
-64:           category: snyk-studio
-65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-66:         if: always()
-67:         uses: github/codeql-action/upload-sarif@v4
-68:         with:
-69:           sarif_file: snyk-eslint.sarif
-70:           category: snyk-eslint
-71:       - name: Snyk Monitor main project (only for pushes to main branch)
-72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-73:         uses: snyk/actions/node@master
-74:         env:
-75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-76:         with:
-77:           command: "monitor"
-78:           args: ""
-79:       - name: Snyk Monitor studio project (only for pushes to main branch)
-80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-81:         uses: snyk/actions/node@master
-82:         env:
-83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-84:         with:
-85:           command: "monitor"
-86:           args: "--file=studio/package.json"
-87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-89:         uses: snyk/actions/node@master
-90:         env:
-91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-92:         with:
-93:           command: "monitor"
-94:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -18303,6 +18205,107 @@ tsconfig.json
 32:         uses: github/codeql-action/analyze@v4
 33:         with:
 34:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v5
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Install dependencies for studio
+31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@master
+34:         continue-on-error: true
+35:         env:
+36:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+37:         with:
+38:           command: "test"
+39:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+40:       - name: Run Snyk to check studio project vulnerabilities
+41:         uses: snyk/actions/node@master
+42:         continue-on-error: true
+43:         env:
+44:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+45:         with:
+46:           command: "test"
+47:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+48:       - name: Run Snyk to check eslint plugin vulnerabilities
+49:         uses: snyk/actions/node@master
+50:         continue-on-error: true
+51:         env:
+52:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+53:         with:
+54:           command: "test"
+55:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+56:       - name: Upload main project SARIF report to GitHub Security tab
+57:         if: always() && hashFiles('snyk-main.sarif') != ''
+58:         uses: github/codeql-action/upload-sarif@v4
+59:         with:
+60:           sarif_file: snyk-main.sarif
+61:           category: snyk-main
+62:       - name: Upload studio SARIF report to GitHub Security tab
+63:         if: always() && hashFiles('snyk-studio.sarif') != ''
+64:         uses: github/codeql-action/upload-sarif@v4
+65:         with:
+66:           sarif_file: snyk-studio.sarif
+67:           category: snyk-studio
+68:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+69:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+70:         uses: github/codeql-action/upload-sarif@v4
+71:         with:
+72:           sarif_file: snyk-eslint.sarif
+73:           category: snyk-eslint
+74:       - name: Snyk Monitor main project (only for pushes to main branch)
+75:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+76:         uses: snyk/actions/node@master
+77:         env:
+78:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+79:         with:
+80:           command: "monitor"
+81:           args: ""
+82:       - name: Snyk Monitor studio project (only for pushes to main branch)
+83:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+84:         uses: snyk/actions/node@master
+85:         env:
+86:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+87:         with:
+88:           command: "monitor"
+89:           args: "--file=studio/package.json"
+90:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+91:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+92:         uses: snyk/actions/node@master
+93:         env:
+94:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+95:         with:
+96:           command: "monitor"
+97:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/utils/eslint/package.json
