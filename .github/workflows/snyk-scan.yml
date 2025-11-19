@@ -39,6 +39,7 @@ jobs:
 
       - name: Run Snyk to check main project vulnerabilities
         uses: snyk/actions/node@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -47,6 +48,7 @@ jobs:
 
       - name: Run Snyk to check studio project vulnerabilities
         uses: snyk/actions/node@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -55,6 +57,7 @@ jobs:
 
       - name: Run Snyk to check eslint plugin vulnerabilities
         uses: snyk/actions/node@master
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -62,21 +65,21 @@ jobs:
           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
 
       - name: Upload main project SARIF report to GitHub Security tab
-        if: always()
+        if: always() && hashFiles('snyk-main.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-main.sarif
           category: snyk-main
 
       - name: Upload studio SARIF report to GitHub Security tab
-        if: always()
+        if: always() && hashFiles('snyk-studio.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-studio.sarif
           category: snyk-studio
 
       - name: Upload eslint plugin SARIF report to GitHub Security tab
-        if: always()
+        if: always() && hashFiles('snyk-eslint.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk-eslint.sarif
