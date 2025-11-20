@@ -14215,6 +14215,33 @@ tsconfig.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.39.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -17626,33 +17653,6 @@ tsconfig.json
 589: }
 ````
 
-## File: jest.config.ts
-````typescript
- 1: import type { Config } from "jest";
- 2: import nextJest from "next/jest";
- 3: const createJestConfig = nextJest({
- 4:   dir: "./",
- 5: });
- 6: const customJestConfig: Config = {
- 7:   preset: "ts-jest/presets/js-with-babel-esm",
- 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
- 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
-10:   testEnvironment: "jest-environment-jsdom",
-11:   moduleNameMapper: {
-12:     "@/(.*)": "<rootDir>/src/$1",
-13:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
-14:     "^src/(.*)$": "<rootDir>/src/$1",
-15:   },
-16:   collectCoverageFrom: [
-17:     "src/components/*.{js,jsx,ts,tsx}",
-18:     "!src/lib/**/*.*",
-19:     "!src/pages/**/*.*",
-20:     "!src/utils/**/*.*",
-21:   ],
-22: };
-23: export default createJestConfig(customJestConfig);
-````
-
 ## File: jest.setup.ts
 ````typescript
  1: /// <reference types="jest" />
@@ -17937,46 +17937,6 @@ tsconfig.json
 8: export default config;
 ````
 
-## File: renovate.json
-````json
- 1: {
- 2:   "extends": ["config:recommended"],
- 3:   "ignorePresets": [":prHourlyLimit2", ":prConcurrentLimit20"],
- 4:   "packageRules": [
- 5:     {
- 6:       "rangeStrategy": "bump",
- 7:       "matchDepTypes": [
- 8:         "dependencies",
- 9:         "devDependencies",
-10:         "optionalDependencies",
-11:         "peerDependencies"
-12:       ]
-13:     },
-14:     {
-15:       "matchUpdateTypes": ["minor", "pin", "digest"],
-16:       "automerge": true,
-17:       "matchDepTypes": [
-18:         "dependencies",
-19:         "devDependencies",
-20:         "optionalDependencies",
-21:         "peerDependencies"
-22:       ]
-23:     },
-24:     {
-25:       "matchUpdateTypes": ["patch", "lockFileMaintenance"],
-26:       "automerge": true,
-27:       "automergeType": "branch",
-28:       "matchDepTypes": [
-29:         "dependencies",
-30:         "devDependencies",
-31:         "optionalDependencies",
-32:         "peerDependencies"
-33:       ]
-34:     }
-35:   ]
-36: }
-````
-
 ## File: repomix.config.json
 ````json
  1: {
@@ -18207,134 +18167,6 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v5
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Install dependencies for studio
-31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
-32:       - name: Run Snyk to check main project vulnerabilities
-33:         uses: snyk/actions/node@master
-34:         continue-on-error: true
-35:         env:
-36:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-37:         with:
-38:           command: "test"
-39:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-40:       - name: Run Snyk to check studio project vulnerabilities
-41:         uses: snyk/actions/node@master
-42:         continue-on-error: true
-43:         env:
-44:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-45:         with:
-46:           command: "test"
-47:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-48:       - name: Run Snyk to check eslint plugin vulnerabilities
-49:         uses: snyk/actions/node@master
-50:         continue-on-error: true
-51:         env:
-52:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-53:         with:
-54:           command: "test"
-55:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-56:       - name: Upload main project SARIF report to GitHub Security tab
-57:         if: always() && hashFiles('snyk-main.sarif') != ''
-58:         uses: github/codeql-action/upload-sarif@v4
-59:         with:
-60:           sarif_file: snyk-main.sarif
-61:           category: snyk-main
-62:       - name: Upload studio SARIF report to GitHub Security tab
-63:         if: always() && hashFiles('snyk-studio.sarif') != ''
-64:         uses: github/codeql-action/upload-sarif@v4
-65:         with:
-66:           sarif_file: snyk-studio.sarif
-67:           category: snyk-studio
-68:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-69:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-70:         uses: github/codeql-action/upload-sarif@v4
-71:         with:
-72:           sarif_file: snyk-eslint.sarif
-73:           category: snyk-eslint
-74:       - name: Snyk Monitor main project (only for pushes to main branch)
-75:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-76:         uses: snyk/actions/node@master
-77:         env:
-78:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-79:         with:
-80:           command: "monitor"
-81:           args: ""
-82:       - name: Snyk Monitor studio project (only for pushes to main branch)
-83:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-84:         uses: snyk/actions/node@master
-85:         env:
-86:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-87:         with:
-88:           command: "monitor"
-89:           args: "--file=studio/package.json"
-90:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-91:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-92:         uses: snyk/actions/node@master
-93:         env:
-94:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-95:         with:
-96:           command: "monitor"
-97:           args: "--file=src/utils/eslint/package.json"
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.39.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: AGENTS.md
 ````markdown
   1: # AGENTS.md
@@ -18563,6 +18395,34 @@ tsconfig.json
 224: - SHOULD: Avoid gradient banding (use masks when needed)
 ````
 
+## File: jest.config.ts
+````typescript
+ 1: import type { Config } from "jest";
+ 2: import nextJest from "next/jest";
+ 3: const createJestConfig = nextJest({
+ 4:   dir: "./",
+ 5: });
+ 6: const customJestConfig: Config = {
+ 7:   preset: "ts-jest/presets/js-with-babel-esm",
+ 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+ 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
+10:   testEnvironment: "jest-environment-jsdom",
+11:   coverageProvider: "v8",
+12:   moduleNameMapper: {
+13:     "@/(.*)": "<rootDir>/src/$1",
+14:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
+15:     "^src/(.*)$": "<rootDir>/src/$1",
+16:   },
+17:   collectCoverageFrom: [
+18:     "src/components/*.{js,jsx,ts,tsx}",
+19:     "!src/lib/**/*.*",
+20:     "!src/pages/**/*.*",
+21:     "!src/utils/**/*.*",
+22:   ],
+23: };
+24: export default createJestConfig(customJestConfig);
+````
+
 ## File: README.md
 ````markdown
   1: # Dfweb.no Portfolio Version 4
@@ -18758,6 +18618,49 @@ tsconfig.json
 191:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: renovate.json
+````json
+ 1: {
+ 2:   "extends": ["config:recommended"],
+ 3:   "ignorePresets": [":prHourlyLimit2", ":prConcurrentLimit20"],
+ 4:   "requiredStatusChecks": null,
+ 5:   "packageRules": [
+ 6:     {
+ 7:       "rangeStrategy": "bump",
+ 8:       "matchDepTypes": [
+ 9:         "dependencies",
+10:         "devDependencies",
+11:         "optionalDependencies",
+12:         "peerDependencies"
+13:       ]
+14:     },
+15:     {
+16:       "matchUpdateTypes": ["minor", "pin", "digest"],
+17:       "automerge": true,
+18:       "ignoreTests": false,
+19:       "matchDepTypes": [
+20:         "dependencies",
+21:         "devDependencies",
+22:         "optionalDependencies",
+23:         "peerDependencies"
+24:       ]
+25:     },
+26:     {
+27:       "matchUpdateTypes": ["patch", "lockFileMaintenance"],
+28:       "automerge": true,
+29:       "automergeType": "branch",
+30:       "ignoreTests": false,
+31:       "matchDepTypes": [
+32:         "dependencies",
+33:         "devDependencies",
+34:         "optionalDependencies",
+35:         "peerDependencies"
+36:       ]
+37:     }
+38:   ]
+39: }
+````
+
 ## File: tsconfig.json
 ````json
  1: {
@@ -18807,6 +18710,104 @@ tsconfig.json
 45:     "node_modules"
 46:   ]
 47: }
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v5
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Install dependencies for studio
+31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@master
+34:         env:
+35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+36:         with:
+37:           command: "test"
+38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+39:       - name: Run Snyk to check studio project vulnerabilities
+40:         uses: snyk/actions/node@master
+41:         env:
+42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+43:         with:
+44:           command: "test"
+45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+46:       - name: Run Snyk to check eslint plugin vulnerabilities
+47:         uses: snyk/actions/node@master
+48:         env:
+49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+50:         with:
+51:           command: "test"
+52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+53:       - name: Upload main project SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-main.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@v4
+56:         with:
+57:           sarif_file: snyk-main.sarif
+58:           category: snyk-main
+59:       - name: Upload studio SARIF report to GitHub Security tab
+60:         if: always() && hashFiles('snyk-studio.sarif') != ''
+61:         uses: github/codeql-action/upload-sarif@v4
+62:         with:
+63:           sarif_file: snyk-studio.sarif
+64:           category: snyk-studio
+65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+67:         uses: github/codeql-action/upload-sarif@v4
+68:         with:
+69:           sarif_file: snyk-eslint.sarif
+70:           category: snyk-eslint
+71:       - name: Snyk Monitor main project (only for pushes to main branch)
+72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+73:         uses: snyk/actions/node@master
+74:         env:
+75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+76:         with:
+77:           command: "monitor"
+78:           args: ""
+79:       - name: Snyk Monitor studio project (only for pushes to main branch)
+80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+81:         uses: snyk/actions/node@master
+82:         env:
+83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+84:         with:
+85:           command: "monitor"
+86:           args: "--file=studio/package.json"
+87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+89:         uses: snyk/actions/node@master
+90:         env:
+91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+92:         with:
+93:           command: "monitor"
+94:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: DOCS/REACT_IMPROVEMENTS.md
@@ -19568,102 +19569,108 @@ tsconfig.json
 
 ## File: package.json
 ````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.0.8",
- 4:   "private": true,
- 5:   "engines": {
- 6:     "node": ">=20.19.5"
- 7:   },
- 8:   "scripts": {
- 9:     "dev": "next dev --turbopack",
-10:     "lhci": "lhci autorun",
-11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-13:     "build": "next build",
-14:     "start": "next start",
-15:     "lint": "next lint",
-16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
-18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
-19:     "cypress:open": "cypress open",
-20:     "cypress:headless": "cypress run",
-21:     "e2e": "start-test dev 3000 cypress:headless",
-22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-23:     "ladle": "ladle serve",
-24:     "typegen": "npx sanity typegen generate"
-25:   },
-26:   "dependencies": {
-27:     "@babel/helpers": ">=7.28.4",
-28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.2.2",
-30:     "@portabletext/react": "^4.0.3",
-31:     "@sanity/client": "^7.13.0",
-32:     "@sanity/image-url": "^1.2.0",
-33:     "@vercel/speed-insights": "^1.2.0",
-34:     "autoprefixer": "^10.4.22",
-35:     "babel-jest": "^30.2.0",
-36:     "clsx": "^2.1.1",
-37:     "cookie": ">=1.0.2",
-38:     "envalid": "^8.1.1",
-39:     "jest": "^30.2.0",
-40:     "motion": "^12.23.24",
-41:     "next": "16.0.3",
-42:     "next-sanity": "^11.6.8",
-43:     "path-to-regexp": "^8.3.0",
-44:     "react": "^19.2.0",
-45:     "react-dom": "^19.2.0",
-46:     "react-error-boundary": "^5.0.0",
-47:     "react-hook-form": "^7.66.1",
-48:     "react-icons": "^5.5.0",
-49:     "sanity": "^4.16.0",
-50:     "sitemap": "^9.0.0",
-51:     "tar-fs": "^3.1.1",
-52:     "ts-node": "^10.9.2",
-53:     "zod": "^4.1.12"
-54:   },
-55:   "devDependencies": {
-56:     "@jest/expect": "^30.2.0",
-57:     "@jest/globals": "^30.2.0",
-58:     "@ladle/react": "^5.1.1",
-59:     "@lhci/cli": "^0.15.1",
-60:     "@playwright/test": "^1.56.1",
-61:     "@portabletext/types": "^3.0.0",
-62:     "@tailwindcss/postcss": "^4.1.17",
-63:     "@testing-library/cypress": "^10.1.0",
-64:     "@testing-library/jest-dom": "^6.9.1",
-65:     "@testing-library/react": "^16.3.0",
-66:     "@testing-library/user-event": "^14.6.1",
-67:     "@types/jest": "^30.0.0",
-68:     "@types/node": "^24.10.1",
-69:     "@types/react": "^19.2.6",
-70:     "@types/react-dom": "^19.2.3",
-71:     "@typescript-eslint/eslint-plugin": "^8.47.0",
-72:     "@typescript-eslint/parser": "^8.47.0",
-73:     "@typescript-eslint/utils": "^8.47.0",
-74:     "axe-core": "^4.11.0",
-75:     "cypress": "15.7.0",
-76:     "cypress-axe": "^1.7.0",
-77:     "eslint": "9.39.1",
-78:     "eslint-config-next": "16.0.3",
-79:     "eslint-config-prettier": "^10.1.8",
-80:     "eslint-plugin-jest": "^29.1.0",
-81:     "eslint-plugin-jsx-a11y": "^6.10.2",
-82:     "eslint-plugin-prettier": "^5.5.4",
-83:     "eslint-plugin-react": "^7.37.5",
-84:     "eslint-plugin-react-hooks": "^7.0.1",
-85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-86:     "eslint-plugin-testing-library": "^7.13.4",
-87:     "expect": "^30.2.0",
-88:     "jest-environment-jsdom": "^30.2.0",
-89:     "jest-extended": "^7.0.0",
-90:     "jsdom-testing-mocks": "^1.16.0",
-91:     "postcss": "^8.5.6",
-92:     "prettier": "3.6.2",
-93:     "tailwindcss": "^4.1.17",
-94:     "ts-jest": "^29.4.5",
-95:     "typescript": "^5.9.3",
-96:     "wait-on": "^9.0.3"
-97:   }
-98: }
+  1: {
+  2:   "name": "dfweb-v4",
+  3:   "version": "1.0.8",
+  4:   "private": true,
+  5:   "engines": {
+  6:     "node": ">=20.19.5"
+  7:   },
+  8:   "pnpm": {
+  9:     "overrides": {
+ 10:       "glob@<10.5.0": ">=10.5.0",
+ 11:       "glob@>=11.0.0 <11.1.0": ">=11.1.0"
+ 12:     }
+ 13:   },
+ 14:   "scripts": {
+ 15:     "dev": "next dev --turbopack",
+ 16:     "lhci": "lhci autorun",
+ 17:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 18:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 19:     "build": "next build",
+ 20:     "start": "next start",
+ 21:     "lint": "next lint",
+ 22:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 23:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'",
+ 24:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 25:     "cypress:open": "cypress open",
+ 26:     "cypress:headless": "cypress run",
+ 27:     "e2e": "start-test dev 3000 cypress:headless",
+ 28:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 29:     "ladle": "ladle serve",
+ 30:     "typegen": "npx sanity typegen generate"
+ 31:   },
+ 32:   "dependencies": {
+ 33:     "@babel/helpers": ">=7.28.4",
+ 34:     "@emailjs/browser": "^4.4.1",
+ 35:     "@hookform/resolvers": "^5.2.2",
+ 36:     "@portabletext/react": "^4.0.3",
+ 37:     "@sanity/client": "^7.13.0",
+ 38:     "@sanity/image-url": "^1.2.0",
+ 39:     "@vercel/speed-insights": "^1.2.0",
+ 40:     "autoprefixer": "^10.4.22",
+ 41:     "babel-jest": "30.1.2",
+ 42:     "clsx": "^2.1.1",
+ 43:     "cookie": ">=1.0.2",
+ 44:     "envalid": "^8.1.1",
+ 45:     "jest": "30.1.3",
+ 46:     "motion": "^12.23.24",
+ 47:     "next": "16.0.3",
+ 48:     "next-sanity": "^11.6.8",
+ 49:     "path-to-regexp": "^8.3.0",
+ 50:     "react": "^19.2.0",
+ 51:     "react-dom": "^19.2.0",
+ 52:     "react-error-boundary": "^5.0.0",
+ 53:     "react-hook-form": "^7.66.1",
+ 54:     "react-icons": "^5.5.0",
+ 55:     "sanity": "4.15",
+ 56:     "sitemap": "^9.0.0",
+ 57:     "tar-fs": "^3.1.1",
+ 58:     "ts-node": "^10.9.2",
+ 59:     "zod": "^4.1.12"
+ 60:   },
+ 61:   "devDependencies": {
+ 62:     "@jest/expect": "^30.2.0",
+ 63:     "@jest/globals": "^30.2.0",
+ 64:     "@ladle/react": "^5.1.1",
+ 65:     "@lhci/cli": "^0.15.1",
+ 66:     "@playwright/test": "^1.56.1",
+ 67:     "@portabletext/types": "^3.0.0",
+ 68:     "@tailwindcss/postcss": "^4.1.17",
+ 69:     "@testing-library/cypress": "^10.1.0",
+ 70:     "@testing-library/jest-dom": "^6.9.1",
+ 71:     "@testing-library/react": "^16.3.0",
+ 72:     "@testing-library/user-event": "^14.6.1",
+ 73:     "@types/jest": "^30.0.0",
+ 74:     "@types/node": "^24.10.1",
+ 75:     "@types/react": "^19.2.6",
+ 76:     "@types/react-dom": "^19.2.3",
+ 77:     "@typescript-eslint/eslint-plugin": "^8.47.0",
+ 78:     "@typescript-eslint/parser": "^8.47.0",
+ 79:     "@typescript-eslint/utils": "^8.47.0",
+ 80:     "axe-core": "^4.11.0",
+ 81:     "cypress": "15.7.0",
+ 82:     "cypress-axe": "^1.7.0",
+ 83:     "eslint": "9.39.1",
+ 84:     "eslint-config-next": "16.0.3",
+ 85:     "eslint-config-prettier": "^10.1.8",
+ 86:     "eslint-plugin-jest": "^29.1.0",
+ 87:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 88:     "eslint-plugin-prettier": "^5.5.4",
+ 89:     "eslint-plugin-react": "^7.37.5",
+ 90:     "eslint-plugin-react-hooks": "^7.0.1",
+ 91:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 92:     "eslint-plugin-testing-library": "^7.13.4",
+ 93:     "expect": "^30.2.0",
+ 94:     "jest-environment-jsdom": "^30.2.0",
+ 95:     "jest-extended": "^7.0.0",
+ 96:     "jsdom-testing-mocks": "^1.16.0",
+ 97:     "postcss": "^8.5.6",
+ 98:     "prettier": "3.6.2",
+ 99:     "tailwindcss": "^4.1.17",
+100:     "ts-jest": "^29.4.5",
+101:     "typescript": "^5.9.3",
+102:     "wait-on": "^9.0.3"
+103:   }
+104: }
 ````
