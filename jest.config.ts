@@ -10,6 +10,7 @@ const customJestConfig: Config = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
   testEnvironment: "jest-environment-jsdom",
+  coverageProvider: "v8",
   moduleNameMapper: {
     "@/(.*)": "<rootDir>/src/$1",
     "^src/utils$": "<rootDir>/src/__mocks__/utils",
