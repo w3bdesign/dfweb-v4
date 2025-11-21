@@ -16664,6 +16664,234 @@ tsconfig.json
 33: }
 ````
 
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: 
+ 18: ## Critical Commands
+ 19: 
+ 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 24: 
+ 25: ## Testing Gotchas
+ 26: 
+ 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 29: - Matrix component intentionally excluded from test coverage
+ 30: - Cypress and Playwright have different ESLint rule overrides
+ 31: 
+ 32: ## Code Quality Principles
+ 33: 
+ 34: ### SOLID Principles
+ 35: 
+ 36: #### Single Responsibility Principle (SRP)
+ 37: Each component/function should have one reason to change.
+ 38: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 39: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 40: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 41: 
+ 42: #### Open/Closed Principle (OCP)
+ 43: Software should be open for extension, closed for modification.
+ 44: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 45: - Create generic components that can be customized without modifying source
+ 46: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 47: 
+ 48: #### Liskov Substitution Principle (LSP)
+ 49: Components accepting a type should work with any subtype.
+ 50: - Ensure prop interfaces are respected by all implementations
+ 51: - Don't throw unexpected errors or require undocumented props
+ 52: - **Benefits**: Predictable behavior, safer component hierarchies
+ 53: 
+ 54: #### Interface Segregation Principle (ISP)
+ 55: Don't force components to depend on props they don't use.
+ 56: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 57: - Split large prop types into smaller, composable ones
+ 58: - **Benefits**: More flexible components, easier to implement and test
+ 59: 
+ 60: #### Dependency Inversion Principle (DIP)
+ 61: Depend on abstractions, not concrete implementations.
+ 62: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 63: - Define abstract types/interfaces, inject implementations
+ 64: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 65: 
+ 66: ### DRY Principle (Don't Repeat Yourself)
+ 67: 
+ 68: - Extract repeated UI patterns into reusable components
+ 69: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 70: - Use custom hooks for shared stateful logic
+ 71: - Avoid duplicating business logic across components
+ 72: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 73: 
+ 74: ### KISS Principle (Keep It Simple, Stupid)
+ 75: 
+ 76: - Use React/Next.js built-in features before custom solutions
+ 77: - Write self-explanatory code with clear naming
+ 78: - Avoid over-engineering simple problems
+ 79: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 80: - Minimize dependencies
+ 81: - Start simple, add complexity only when necessary
+ 82: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 83: 
+ 84: ### YAGNI Principle (You Aren't Gonna Need It)
+ 85: 
+ 86: Don't implement functionality until it's actually needed.
+ 87: - Focus on current requirements, not hypothetical future needs
+ 88: - Don't create abstraction layers for single implementations
+ 89: - Avoid premature optimization before measuring performance
+ 90: - Don't build configuration systems until configurability is required
+ 91: - Wait for actual use cases before adding flexibility
+ 92: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+ 93: 
+ 94: ### Code Quality Summary
+ 95: 
+ 96: Following these principles results in:
+ 97: - Maintainable, extendable code
+ 98: - Fewer bugs and faster debugging
+ 99: - Better team collaboration
+100: - Professional quality standards
+101: - Easier testing and refactoring
+102: 
+103: ## UI Development Rules
+104: 
+105: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+106: 
+107: ### Interactions
+108: 
+109: #### Keyboard
+110: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+111: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+112: - MUST: Manage focus (trap, move, and return) per APG patterns
+113: 
+114: #### Targets & Input
+115: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+116: - MUST: Mobile `<input>` font-size ≥16px or set:
+117:   ```html
+118:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+119:   ```
+120: - NEVER: Disable browser zoom
+121: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+122: 
+123: #### Inputs & Forms (Behavior)
+124: - MUST: Hydration-safe inputs (no lost focus/value)
+125: - NEVER: Block paste in `<input>/<textarea>`
+126: - MUST: Loading buttons show spinner and keep original label
+127: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+128: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+129: - MUST: Don't block typing; accept free text and validate after
+130: - MUST: Allow submitting incomplete forms to surface validation
+131: - MUST: Errors inline next to fields; on submit, focus first error
+132: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+133: - SHOULD: Disable spellcheck for emails/codes/usernames
+134: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+135: - MUST: Warn on unsaved changes before navigation
+136: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+137: - MUST: Trim values to handle text expansion trailing spaces
+138: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+139: 
+140: #### State & Navigation
+141: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+142: - MUST: Back/Forward restores scroll
+143: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+144: 
+145: #### Feedback
+146: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+147: - MUST: Confirm destructive actions or provide Undo window
+148: - MUST: Use polite `aria-live` for toasts/inline validation
+149: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+150: 
+151: #### Touch/Drag/Scroll
+152: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+153: - MUST: Delay first tooltip in a group; subsequent peers no delay
+154: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+155: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+156: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+157: 
+158: #### Autofocus
+159: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+160: 
+161: ### Animation
+162: 
+163: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+164: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+165: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+166: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+167: - SHOULD: Choose easing to match the change (size/distance/trigger)
+168: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+169: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+170: 
+171: ### Layout
+172: 
+173: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+174: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+175: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+176: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+177: - MUST: Respect safe areas (use env(safe-area-inset-*))
+178: - MUST: Avoid unwanted scrollbars; fix overflows
+179: 
+180: ### Content & Accessibility
+181: 
+182: - SHOULD: Inline help first; tooltips last resort
+183: - MUST: Skeletons mirror final content to avoid layout shift
+184: - MUST: `<title>` matches current context
+185: - MUST: No dead ends; always offer next step/recovery
+186: - MUST: Design empty/sparse/dense/error states
+187: - SHOULD: Curly quotes (" "); avoid widows/orphans
+188: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+189: - MUST: Redundant status cues (not color-only); icons have text labels
+190: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+191: - MUST: Use the ellipsis character `…` (not `...`)
+192: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+193: - MUST: Resilient to user-generated content (short/avg/very long)
+194: - MUST: Locale-aware dates/times/numbers/currency
+195: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+196: - MUST: Icon-only buttons have descriptive `aria-label`
+197: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+198: - SHOULD: Right-clicking the nav logo surfaces brand assets
+199: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+200: 
+201: ### Performance
+202: 
+203: - SHOULD: Test iOS Low Power Mode and macOS Safari
+204: - MUST: Measure reliably (disable extensions that skew runtime)
+205: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+206: - MUST: Profile with CPU/network throttling
+207: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+208: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+209: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+210: - MUST: Virtualize large lists (eg, `virtua`)
+211: - MUST: Preload only above-the-fold images; lazy-load the rest
+212: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+213: 
+214: ### Design
+215: 
+216: - SHOULD: Layered shadows (ambient + direct)
+217: - SHOULD: Crisp edges via semi-transparent borders + shadows
+218: - SHOULD: Nested radii: child ≤ parent; concentric
+219: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+220: - MUST: Accessible charts (color-blind-friendly palettes)
+221: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+222: - MUST: Increase contrast on `:hover/:active/:focus`
+223: - SHOULD: Match browser UI to bg
+224: - SHOULD: Avoid gradient banding (use masks when needed)
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -18218,234 +18446,6 @@ tsconfig.json
 82:           fi
 ````
 
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: 
- 18: ## Critical Commands
- 19: 
- 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 24: 
- 25: ## Testing Gotchas
- 26: 
- 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 29: - Matrix component intentionally excluded from test coverage
- 30: - Cypress and Playwright have different ESLint rule overrides
- 31: 
- 32: ## Code Quality Principles
- 33: 
- 34: ### SOLID Principles
- 35: 
- 36: #### Single Responsibility Principle (SRP)
- 37: Each component/function should have one reason to change.
- 38: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 39: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
- 40: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 41: 
- 42: #### Open/Closed Principle (OCP)
- 43: Software should be open for extension, closed for modification.
- 44: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 45: - Create generic components that can be customized without modifying source
- 46: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 47: 
- 48: #### Liskov Substitution Principle (LSP)
- 49: Components accepting a type should work with any subtype.
- 50: - Ensure prop interfaces are respected by all implementations
- 51: - Don't throw unexpected errors or require undocumented props
- 52: - **Benefits**: Predictable behavior, safer component hierarchies
- 53: 
- 54: #### Interface Segregation Principle (ISP)
- 55: Don't force components to depend on props they don't use.
- 56: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 57: - Split large prop types into smaller, composable ones
- 58: - **Benefits**: More flexible components, easier to implement and test
- 59: 
- 60: #### Dependency Inversion Principle (DIP)
- 61: Depend on abstractions, not concrete implementations.
- 62: - Use dependency injection for services (e.g., pass clients as props or use context)
- 63: - Define abstract types/interfaces, inject implementations
- 64: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 65: 
- 66: ### DRY Principle (Don't Repeat Yourself)
- 67: 
- 68: - Extract repeated UI patterns into reusable components
- 69: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 70: - Use custom hooks for shared stateful logic
- 71: - Avoid duplicating business logic across components
- 72: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 73: 
- 74: ### KISS Principle (Keep It Simple, Stupid)
- 75: 
- 76: - Use React/Next.js built-in features before custom solutions
- 77: - Write self-explanatory code with clear naming
- 78: - Avoid over-engineering simple problems
- 79: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 80: - Minimize dependencies
- 81: - Start simple, add complexity only when necessary
- 82: - **Benefits**: Easier to understand, faster development, fewer bugs
- 83: 
- 84: ### YAGNI Principle (You Aren't Gonna Need It)
- 85: 
- 86: Don't implement functionality until it's actually needed.
- 87: - Focus on current requirements, not hypothetical future needs
- 88: - Don't create abstraction layers for single implementations
- 89: - Avoid premature optimization before measuring performance
- 90: - Don't build configuration systems until configurability is required
- 91: - Wait for actual use cases before adding flexibility
- 92: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
- 93: 
- 94: ### Code Quality Summary
- 95: 
- 96: Following these principles results in:
- 97: - Maintainable, extendable code
- 98: - Fewer bugs and faster debugging
- 99: - Better team collaboration
-100: - Professional quality standards
-101: - Easier testing and refactoring
-102: 
-103: ## UI Development Rules
-104: 
-105: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-106: 
-107: ### Interactions
-108: 
-109: #### Keyboard
-110: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-111: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-112: - MUST: Manage focus (trap, move, and return) per APG patterns
-113: 
-114: #### Targets & Input
-115: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-116: - MUST: Mobile `<input>` font-size ≥16px or set:
-117:   ```html
-118:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-119:   ```
-120: - NEVER: Disable browser zoom
-121: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-122: 
-123: #### Inputs & Forms (Behavior)
-124: - MUST: Hydration-safe inputs (no lost focus/value)
-125: - NEVER: Block paste in `<input>/<textarea>`
-126: - MUST: Loading buttons show spinner and keep original label
-127: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-128: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-129: - MUST: Don't block typing; accept free text and validate after
-130: - MUST: Allow submitting incomplete forms to surface validation
-131: - MUST: Errors inline next to fields; on submit, focus first error
-132: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-133: - SHOULD: Disable spellcheck for emails/codes/usernames
-134: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-135: - MUST: Warn on unsaved changes before navigation
-136: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-137: - MUST: Trim values to handle text expansion trailing spaces
-138: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-139: 
-140: #### State & Navigation
-141: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-142: - MUST: Back/Forward restores scroll
-143: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-144: 
-145: #### Feedback
-146: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-147: - MUST: Confirm destructive actions or provide Undo window
-148: - MUST: Use polite `aria-live` for toasts/inline validation
-149: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-150: 
-151: #### Touch/Drag/Scroll
-152: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-153: - MUST: Delay first tooltip in a group; subsequent peers no delay
-154: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-155: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-156: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-157: 
-158: #### Autofocus
-159: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-160: 
-161: ### Animation
-162: 
-163: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-164: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-165: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-166: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-167: - SHOULD: Choose easing to match the change (size/distance/trigger)
-168: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-169: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-170: 
-171: ### Layout
-172: 
-173: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-174: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-175: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-176: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-177: - MUST: Respect safe areas (use env(safe-area-inset-*))
-178: - MUST: Avoid unwanted scrollbars; fix overflows
-179: 
-180: ### Content & Accessibility
-181: 
-182: - SHOULD: Inline help first; tooltips last resort
-183: - MUST: Skeletons mirror final content to avoid layout shift
-184: - MUST: `<title>` matches current context
-185: - MUST: No dead ends; always offer next step/recovery
-186: - MUST: Design empty/sparse/dense/error states
-187: - SHOULD: Curly quotes (" "); avoid widows/orphans
-188: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-189: - MUST: Redundant status cues (not color-only); icons have text labels
-190: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-191: - MUST: Use the ellipsis character `…` (not `...`)
-192: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-193: - MUST: Resilient to user-generated content (short/avg/very long)
-194: - MUST: Locale-aware dates/times/numbers/currency
-195: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-196: - MUST: Icon-only buttons have descriptive `aria-label`
-197: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-198: - SHOULD: Right-clicking the nav logo surfaces brand assets
-199: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-200: 
-201: ### Performance
-202: 
-203: - SHOULD: Test iOS Low Power Mode and macOS Safari
-204: - MUST: Measure reliably (disable extensions that skew runtime)
-205: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-206: - MUST: Profile with CPU/network throttling
-207: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-208: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-209: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-210: - MUST: Virtualize large lists (eg, `virtua`)
-211: - MUST: Preload only above-the-fold images; lazy-load the rest
-212: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-213: 
-214: ### Design
-215: 
-216: - SHOULD: Layered shadows (ambient + direct)
-217: - SHOULD: Crisp edges via semi-transparent borders + shadows
-218: - SHOULD: Nested radii: child ≤ parent; concentric
-219: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-220: - MUST: Accessible charts (color-blind-friendly palettes)
-221: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-222: - MUST: Increase contrast on `:hover/:active/:focus`
-223: - SHOULD: Match browser UI to bg
-224: - SHOULD: Avoid gradient banding (use masks when needed)
-````
-
 ## File: jest.config.ts
 ````typescript
  1: import type { Config } from "jest";
@@ -19654,7 +19654,7 @@ tsconfig.json
  83:     "eslint": "9.39.1",
  84:     "eslint-config-next": "16.0.3",
  85:     "eslint-config-prettier": "^10.1.8",
- 86:     "eslint-plugin-jest": "^29.1.0",
+ 86:     "eslint-plugin-jest": "^29.2.0",
  87:     "eslint-plugin-jsx-a11y": "^6.10.2",
  88:     "eslint-plugin-prettier": "^5.5.4",
  89:     "eslint-plugin-react": "^7.37.5",
