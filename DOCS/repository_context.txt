@@ -19013,213 +19013,6 @@ tsconfig.json
 82:           fi
 ````
 
-## File: jest.config.ts
-````typescript
- 1: import type { Config } from "jest";
- 2: import nextJest from "next/jest";
- 3: const createJestConfig = nextJest({
- 4:   dir: "./",
- 5: });
- 6: const customJestConfig: Config = {
- 7:   preset: "ts-jest/presets/js-with-babel-esm",
- 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
- 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
-10:   testEnvironment: "jest-environment-jsdom",
-11:   coverageProvider: "v8",
-12:   moduleNameMapper: {
-13:     "@/(.*)": "<rootDir>/src/$1",
-14:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
-15:     "^src/(.*)$": "<rootDir>/src/$1",
-16:   },
-17:   collectCoverageFrom: [
-18:     "src/components/*.{js,jsx,ts,tsx}",
-19:     "!src/lib/**/*.*",
-20:     "!src/pages/**/*.*",
-21:     "!src/utils/**/*.*",
-22:   ],
-23: };
-24: export default createJestConfig(customJestConfig);
-````
-
-## File: renovate.json
-````json
- 1: {
- 2:   "extends": ["config:recommended"],
- 3:   "ignorePresets": [":prHourlyLimit2", ":prConcurrentLimit20"],
- 4:   "requiredStatusChecks": null,
- 5:   "packageRules": [
- 6:     {
- 7:       "rangeStrategy": "bump",
- 8:       "matchDepTypes": [
- 9:         "dependencies",
-10:         "devDependencies",
-11:         "optionalDependencies",
-12:         "peerDependencies"
-13:       ]
-14:     },
-15:     {
-16:       "matchUpdateTypes": ["minor", "pin", "digest"],
-17:       "automerge": true,
-18:       "ignoreTests": false,
-19:       "matchDepTypes": [
-20:         "dependencies",
-21:         "devDependencies",
-22:         "optionalDependencies",
-23:         "peerDependencies"
-24:       ]
-25:     },
-26:     {
-27:       "matchUpdateTypes": ["patch", "lockFileMaintenance"],
-28:       "automerge": true,
-29:       "automergeType": "branch",
-30:       "ignoreTests": false,
-31:       "matchDepTypes": [
-32:         "dependencies",
-33:         "devDependencies",
-34:         "optionalDependencies",
-35:         "peerDependencies"
-36:       ]
-37:     }
-38:   ]
-39: }
-````
-
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@c2d88d3ecc89a9ef08eebf45d9637801dcee7eb5
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v4
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v4
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v4
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v6
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Install dependencies for studio
-31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
-32:       - name: Run Snyk to check main project vulnerabilities
-33:         uses: snyk/actions/node@master
-34:         env:
-35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-36:         with:
-37:           command: "test"
-38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-39:       - name: Run Snyk to check studio project vulnerabilities
-40:         uses: snyk/actions/node@master
-41:         env:
-42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-43:         with:
-44:           command: "test"
-45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-46:       - name: Run Snyk to check eslint plugin vulnerabilities
-47:         uses: snyk/actions/node@master
-48:         env:
-49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-50:         with:
-51:           command: "test"
-52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-53:       - name: Upload main project SARIF report to GitHub Security tab
-54:         if: always() && hashFiles('snyk-main.sarif') != ''
-55:         uses: github/codeql-action/upload-sarif@v4
-56:         with:
-57:           sarif_file: snyk-main.sarif
-58:           category: snyk-main
-59:       - name: Upload studio SARIF report to GitHub Security tab
-60:         if: always() && hashFiles('snyk-studio.sarif') != ''
-61:         uses: github/codeql-action/upload-sarif@v4
-62:         with:
-63:           sarif_file: snyk-studio.sarif
-64:           category: snyk-studio
-65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-67:         uses: github/codeql-action/upload-sarif@v4
-68:         with:
-69:           sarif_file: snyk-eslint.sarif
-70:           category: snyk-eslint
-71:       - name: Snyk Monitor main project (only for pushes to main branch)
-72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-73:         uses: snyk/actions/node@master
-74:         env:
-75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-76:         with:
-77:           command: "monitor"
-78:           args: ""
-79:       - name: Snyk Monitor studio project (only for pushes to main branch)
-80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-81:         uses: snyk/actions/node@master
-82:         env:
-83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-84:         with:
-85:           command: "monitor"
-86:           args: "--file=studio/package.json"
-87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-89:         uses: snyk/actions/node@master
-90:         env:
-91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-92:         with:
-93:           command: "monitor"
-94:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: DOCS/implementation_plan.md
 ````markdown
   1: # Implementation Plan
@@ -19527,6 +19320,213 @@ tsconfig.json
 303:      * `getProjects` surfaces failures through existing error handling.
 ````
 
+## File: jest.config.ts
+````typescript
+ 1: import type { Config } from "jest";
+ 2: import nextJest from "next/jest";
+ 3: const createJestConfig = nextJest({
+ 4:   dir: "./",
+ 5: });
+ 6: const customJestConfig: Config = {
+ 7:   preset: "ts-jest/presets/js-with-babel-esm",
+ 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+ 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
+10:   testEnvironment: "jest-environment-jsdom",
+11:   coverageProvider: "v8",
+12:   moduleNameMapper: {
+13:     "@/(.*)": "<rootDir>/src/$1",
+14:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
+15:     "^src/(.*)$": "<rootDir>/src/$1",
+16:   },
+17:   collectCoverageFrom: [
+18:     "src/components/*.{js,jsx,ts,tsx}",
+19:     "!src/lib/**/*.*",
+20:     "!src/pages/**/*.*",
+21:     "!src/utils/**/*.*",
+22:   ],
+23: };
+24: export default createJestConfig(customJestConfig);
+````
+
+## File: renovate.json
+````json
+ 1: {
+ 2:   "extends": ["config:recommended"],
+ 3:   "ignorePresets": [":prHourlyLimit2", ":prConcurrentLimit20"],
+ 4:   "requiredStatusChecks": null,
+ 5:   "packageRules": [
+ 6:     {
+ 7:       "rangeStrategy": "bump",
+ 8:       "matchDepTypes": [
+ 9:         "dependencies",
+10:         "devDependencies",
+11:         "optionalDependencies",
+12:         "peerDependencies"
+13:       ]
+14:     },
+15:     {
+16:       "matchUpdateTypes": ["minor", "pin", "digest"],
+17:       "automerge": true,
+18:       "ignoreTests": false,
+19:       "matchDepTypes": [
+20:         "dependencies",
+21:         "devDependencies",
+22:         "optionalDependencies",
+23:         "peerDependencies"
+24:       ]
+25:     },
+26:     {
+27:       "matchUpdateTypes": ["patch", "lockFileMaintenance"],
+28:       "automerge": true,
+29:       "automergeType": "branch",
+30:       "ignoreTests": false,
+31:       "matchDepTypes": [
+32:         "dependencies",
+33:         "devDependencies",
+34:         "optionalDependencies",
+35:         "peerDependencies"
+36:       ]
+37:     }
+38:   ]
+39: }
+````
+
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     permissions:
+14:       actions: read
+15:       contents: read
+16:       security-events: write
+17:     strategy:
+18:       fail-fast: false
+19:       matrix:
+20:         language: [javascript]
+21:     steps:
+22:       - name: Checkout
+23:         uses: actions/checkout@c2d88d3ecc89a9ef08eebf45d9637801dcee7eb5
+24:       - name: Initialize CodeQL
+25:         uses: github/codeql-action/init@v4
+26:         with:
+27:           languages: ${{ matrix.language }}
+28:           queries: +security-and-quality
+29:       - name: Autobuild
+30:         uses: github/codeql-action/autobuild@v4
+31:       - name: Perform CodeQL Analysis
+32:         uses: github/codeql-action/analyze@v4
+33:         with:
+34:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v6
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Install dependencies for studio
+31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@master
+34:         env:
+35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+36:         with:
+37:           command: "test"
+38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+39:       - name: Run Snyk to check studio project vulnerabilities
+40:         uses: snyk/actions/node@master
+41:         env:
+42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+43:         with:
+44:           command: "test"
+45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+46:       - name: Run Snyk to check eslint plugin vulnerabilities
+47:         uses: snyk/actions/node@master
+48:         env:
+49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+50:         with:
+51:           command: "test"
+52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+53:       - name: Upload main project SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-main.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@v4
+56:         with:
+57:           sarif_file: snyk-main.sarif
+58:           category: snyk-main
+59:       - name: Upload studio SARIF report to GitHub Security tab
+60:         if: always() && hashFiles('snyk-studio.sarif') != ''
+61:         uses: github/codeql-action/upload-sarif@v4
+62:         with:
+63:           sarif_file: snyk-studio.sarif
+64:           category: snyk-studio
+65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+67:         uses: github/codeql-action/upload-sarif@v4
+68:         with:
+69:           sarif_file: snyk-eslint.sarif
+70:           category: snyk-eslint
+71:       - name: Snyk Monitor main project (only for pushes to main branch)
+72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+73:         uses: snyk/actions/node@master
+74:         env:
+75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+76:         with:
+77:           command: "monitor"
+78:           args: ""
+79:       - name: Snyk Monitor studio project (only for pushes to main branch)
+80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+81:         uses: snyk/actions/node@master
+82:         env:
+83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+84:         with:
+85:           command: "monitor"
+86:           args: "--file=studio/package.json"
+87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+89:         uses: snyk/actions/node@master
+90:         env:
+91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+92:         with:
+93:           command: "monitor"
+94:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -19616,7 +19616,7 @@ tsconfig.json
  45:     "jest": "30.2.0",
  46:     "motion": "^12.23.24",
  47:     "next": "16.0.4",
- 48:     "next-sanity": "^11.6.9",
+ 48:     "next-sanity": "^11.6.10",
  49:     "path-to-regexp": "^8.3.0",
  50:     "react": "^19.2.0",
  51:     "react-dom": "^19.2.0",
