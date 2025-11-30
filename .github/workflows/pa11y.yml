@@ -37,8 +37,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Install dependencies
+      - name: Install project dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install pa11y globally via npm
+        run: npm install -g pa11y wait-on
 
       - name: Create pa11y config
         run: |
@@ -52,18 +55,18 @@ jobs:
         run: pnpm start &
 
       - name: Wait for the application to be ready
-        run: pnpm exec wait-on http://localhost:3000
+        run: wait-on http://localhost:3000
 
       - name: Run pa11y
         run: |
           # Create a directory for the reports
           mkdir -p pa11y-reports
 
-          # Run pa11y on main pages with config
-          pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-          pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-          pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-          pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+          # Run pa11y on main pages with config (using global npm install)
+          pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+          pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+          pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+          pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
 
       - name: Upload pa11y results
         if: always()
