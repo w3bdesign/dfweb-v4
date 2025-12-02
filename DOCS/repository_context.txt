@@ -458,6 +458,236 @@ tsconfig.json
 15: ]
 ````
 
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v6
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v6
+19:         with:
+20:           node-version: 24
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - name: Checkout repository
+15:         uses: actions/checkout@v6
+16:         with:
+17:           fetch-depth: 0 # fetch all history for better context
+18:       - name: Wait for other checks
+19:         run: |
+20:           echo "Waiting for 5 minutes to allow other checks to complete..."
+21:           sleep 300
+22:       - name: Setup Node.js
+23:         uses: actions/setup-node@v6
+24:         with:
+25:           node-version: "24"
+26:       - name: Install Repomix
+27:         run: npm install -g repomix
+28:       - name: Generate Repository Documentation
+29:         run: |
+30:           echo "Creating DOCS directory..."
+31:           mkdir -p DOCS
+32:           echo "Running Repomix..."
+33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+34:             echo "Error: Repomix command failed"
+35:             # Print directory contents for debugging
+36:             echo "DOCS directory contents:"
+37:             ls -la DOCS/
+38:             exit 1
+39:           fi
+40:           echo "Verifying output file..."
+41:           if [ ! -f "DOCS/repository_context.txt" ]; then
+42:             echo "Error: repository_context.txt was not created"
+43:             # Print directory contents for debugging
+44:             echo "DOCS directory contents:"
+45:             ls -la DOCS/
+46:             exit 1
+47:           fi
+48:           if [ ! -s "DOCS/repository_context.txt" ]; then
+49:             echo "Error: repository_context.txt is empty"
+50:             exit 1
+51:           fi
+52:           echo "Repository context file generated successfully"
+53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+54:           echo "First few lines of the file:"
+55:           head -n 5 "DOCS/repository_context.txt"
+56:       # Update Documentation
+57:       - name: Commit and Push Changes
+58:         run: |
+59:           echo "Configuring git..."
+60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+61:           git config --local user.name "github-actions[bot]"
+62:           echo "Checking for changes..."
+63:           if [[ -n "$(git status --porcelain)" ]]; then
+64:             echo "Changes detected, committing..."
+65:             # Stage only repository_context.txt to avoid unintended changes
+66:             if ! git add DOCS/repository_context.txt; then
+67:               echo "Error: Failed to stage repository_context.txt"
+68:               exit 1
+69:             fi
+70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+71:               echo "Error: Failed to create commit"
+72:               exit 1
+73:             fi
+74:             echo "Pushing to main branch..."
+75:             if ! git push; then
+76:               echo "Error: Failed to push changes"
+77:               exit 1
+78:             fi
+79:             echo "Successfully updated repository context"
+80:           else
+81:             echo "No changes detected in repository_context.txt"
+82:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v6
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Install dependencies for studio
+31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@master
+34:         env:
+35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+36:         with:
+37:           command: "test"
+38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+39:       - name: Run Snyk to check studio project vulnerabilities
+40:         uses: snyk/actions/node@master
+41:         env:
+42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+43:         with:
+44:           command: "test"
+45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+46:       - name: Run Snyk to check eslint plugin vulnerabilities
+47:         uses: snyk/actions/node@master
+48:         env:
+49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+50:         with:
+51:           command: "test"
+52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+53:       - name: Upload main project SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-main.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@v4
+56:         with:
+57:           sarif_file: snyk-main.sarif
+58:           category: snyk-main
+59:       - name: Upload studio SARIF report to GitHub Security tab
+60:         if: always() && hashFiles('snyk-studio.sarif') != ''
+61:         uses: github/codeql-action/upload-sarif@v4
+62:         with:
+63:           sarif_file: snyk-studio.sarif
+64:           category: snyk-studio
+65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+67:         uses: github/codeql-action/upload-sarif@v4
+68:         with:
+69:           sarif_file: snyk-eslint.sarif
+70:           category: snyk-eslint
+71:       - name: Snyk Monitor main project (only for pushes to main branch)
+72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+73:         uses: snyk/actions/node@master
+74:         env:
+75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+76:         with:
+77:           command: "monitor"
+78:           args: ""
+79:       - name: Snyk Monitor studio project (only for pushes to main branch)
+80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+81:         uses: snyk/actions/node@master
+82:         env:
+83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+84:         with:
+85:           command: "monitor"
+86:           args: "--file=studio/package.json"
+87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+89:         uses: snyk/actions/node@master
+90:         env:
+91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+92:         with:
+93:           command: "monitor"
+94:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -719,222 +949,6 @@ tsconfig.json
 15: #
 16: # Uncomment the rules above as needed based on your security requirements
 17: # and false positives you encounter during scanning.
-````
-
-## File: commit/commit_analyzer.py
-````python
-  1: import subprocess
-  2: import os
-  3: import sys
-  4: import json
-  5: import codecs
-  6: import shlex
-  7: from openai import OpenAI
-  8: from pathlib import Path
-  9: from dotenv import load_dotenv
- 10: def read_config_file():
- 11:     """Read configuration from local config file."""
- 12:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 13:     try:
- 14:         if os.path.exists(config_path):
- 15:             with open(config_path, "r") as f:
- 16:                 return json.load(f)
- 17:     except Exception as e:
- 18:         print(f"Error reading config file: {e}")
- 19:     return {}
- 20: def get_api_config():
- 21:     """Get API configuration from environment variables or config file."""
- 22:     load_dotenv()
- 23:     # Try environment variables first
- 24:     api_key = os.getenv("AI_API_KEY")
- 25:     base_url = os.getenv("AI_BASE_URL")
- 26:     # If no API key in env, try config file
- 27:     if not api_key:
- 28:         config = read_config_file()
- 29:         api_key = config.get("api_key")
- 30:         base_url = config.get("base_url", base_url)
- 31:     if not api_key:
- 32:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 33:         raise ValueError(
- 34:             "No API key found. Please either:\n"
- 35:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
- 36:             "2. Set AI_API_KEY environment variable, or\n"
- 37:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
- 38:         )
- 39:     return api_key, base_url
- 40: def get_staged_diff():
- 41:     """Get the diff of staged changes and list of changed files"""
- 42:     try:
- 43:         # Get list of staged files
- 44:         files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
- 45:         staged_files = files_output.splitlines()
- 46:         # Check if any staged files are lock files
- 47:         lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 48:         if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 49:             return None, True  # Indicate lock file presence
- 50:         # Get the actual diff
- 51:         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
- 52:         if not diff:
- 53:             # If no staged changes, get diff of last commit
- 54:             diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
- 55:             files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
- 56:             staged_files = files_output.splitlines()
- 57:             lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
- 58:             if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
- 59:                 return None, True
- 60:         return diff, False  # No lock files found
- 61:     except subprocess.CalledProcessError as e:
- 62:         print(f"Error getting git diff: {e}")
- 63:         return None, False
- 64: def load_gitmojis():
- 65:     """Load gitmojis from gitmojis.json"""
- 66:     try:
- 67:         with open("gitmojis.json", "r", encoding="utf-8") as f:
- 68:             data = json.load(f)
- 69:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
- 70:     except Exception as e:
- 71:         print(f"Error loading gitmojis: {e}")
- 72:         return {}
- 73: def get_emoji_for_type(commit_type, gitmojis):
- 74:     """Map commit type to appropriate emoji"""
- 75:     type_to_emoji = {
- 76:         # Core conventional commit types
- 77:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
- 78:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
- 79:         "docs": gitmojis.get("memo", "📝"),  # Documentation
- 80:         "style": gitmojis.get("art", "🎨"),  # Style/format
- 81:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
- 82:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
- 83:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
- 84:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
- 85:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
- 86:         # Additional commit types with specific emojis
- 87:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
- 88:         "deps": gitmojis.get("package", "📦"),  # Dependencies
- 89:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
- 90:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
- 91:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
- 92:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
- 93:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
- 94:         "license": gitmojis.get("page-facing-up", "📄"),  # License
- 95:         "docker": gitmojis.get("whale", "🐳"),  # Docker
- 96:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
- 97:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
- 98:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
- 99:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
-100:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
-101:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
-102:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
-103:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
-104:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
-105:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
-106:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
-107:     }
-108:     return type_to_emoji.get(commit_type, "")
-109: def generate_commit_message(diff):
-110:     """Generate commit message using OpenAI API"""
-111:     try:
-112:         api_key, base_url = get_api_config()
-113:         client_kwargs = {"api_key": api_key}
-114:         if base_url:
-115:             client_kwargs["base_url"] = base_url
-116:         client = OpenAI(**client_kwargs)
-117:         # Get model from environment variable or use default
-118:         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
-119:         # Load gitmojis
-120:         # gitmojis = load_gitmojis()
-121:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
-122:         The commit message MUST follow this format:
-123:         <emoji> <type>[optional scope]: <description>
-124:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-125:         [optional footer(s)]
-126:         Where:
-127:         1. Type MUST be one of (with corresponding emoji):
-128:            Core types:
-129:            - ✨ feat: A new feature
-130:            - 🐛 fix: A bug fix
-131:            - 📝 docs: Documentation only changes
-132:            - 🎨 style: Changes that don't affect the meaning of the code
-133:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-134:            - ⚡️ perf: A code change that improves performance
-135:            - ✅ test: Adding missing tests or correcting existing tests
-136:            - 🔧 chore: Changes to build process or auxiliary tools
-137:            - 👷 ci: Changes to CI configuration files and scripts
-138:            Additional specific types:
-139:            - 🔒 security: Security fixes
-140:            - 📦 deps: Dependencies
-141:            - 💥 breaking: Breaking changes
-142:            - 💄 ui: UI/style changes
-143:            - 🌐 i18n: Internationalization
-144:            - ✏️ typo: Fix typos
-145:            - 🎉 init: Initial commit
-146:            - 📄 license: License
-147:            - 🐳 docker: Docker
-148:            - ♿️ access: Accessibility
-149:            - 🔊 logs: Logging
-150:            - 🗃️ db: Database
-151:            - 🔥 cleanup: Remove code/files
-152:            - 🚧 wip: Work in progress
-153:            - 🚚 move: Move/rename files
-154:            - ⏪ revert: Revert changes
-155:            - 🔀 merge: Merge branches
-156:            - 📱 responsive: Responsive design
-157:            - 🚑 hotfix: Critical hotfix
-158:         2. Description MUST:
-159:            - Be 50 characters or less
-160:            - Start with lowercase
-161:            - Use imperative mood ("add" not "adds/added")
-162:            - No period at end
-163:            - Be clear and descriptive
-164:         3. Body (if included) MUST:
-165:            - Be separated from title by blank line
-166:            - Wrap at 72 characters
-167:            - Explain what and why vs. how
-168:            - Use proper punctuation
-169:         Git diff to analyze:
-170:         {diff}
-171:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-172:         response = client.chat.completions.create(
-173:             model=model,
-174:             messages=[{"role": "user", "content": prompt}],
-175:             stream=False,
-176:         )
-177:         # Get the message and clean any potential explanatory text
-178:         message = response.choices[0].message.content.strip()
-179:         if "Based on the diff" in message:
-180:             message = message.split("\n")[-1].strip()
-181:         return message
-182:     except Exception as e:
-183:         print(f"Error generating commit message: {e}")
-184:         return None
-185: def main():
-186:     # Get the diff and check for lock files
-187:     diff, has_lock_files = get_staged_diff()
-188:     if has_lock_files:
-189:         # Use hardcoded message for lock files
-190:         commit_message = "📦 deps: update dependencies"
-191:     elif not diff:
-192:         print("No changes to analyze")
-193:         sys.exit(1)
-194:     else:
-195:         # Generate commit message for non-lock files
-196:         commit_message = generate_commit_message(diff)
-197:     if not commit_message:
-198:         print("Failed to generate commit message")
-199:         sys.exit(1)
-200:     # Print the commit message
-201:     print("\nGenerated commit message:")
-202:     print("------------------------")
-203:     # Use sys.stdout.buffer.write for Unicode support in console
-204:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-205:     print("\n------------------------")
-206:     # If running as a hook, save the message
-207:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-208:         # Use UTF-8 encoding when writing the commit message
-209:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-210:             f.write(commit_message)
-211: if __name__ == "__main__":
-212:     main()
 ````
 
 ## File: DOCS/EXPLANATION.md
@@ -18629,234 +18643,170 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/cypress.yml
+## File: .github/workflows/lighthouse.yml
 ````yaml
- 1: name: Cypress Tests
- 2: on: [push]
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
  3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v6
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - name: Checkout repository
-15:         uses: actions/checkout@v6
-16:         with:
-17:           fetch-depth: 0 # fetch all history for better context
-18:       - name: Wait for other checks
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v6
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v6
+10:         with:
+11:           node-version: "24"
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
 19:         run: |
-20:           echo "Waiting for 5 minutes to allow other checks to complete..."
-21:           sleep 300
-22:       - name: Setup Node.js
-23:         uses: actions/setup-node@v6
-24:         with:
-25:           node-version: "24"
-26:       - name: Install Repomix
-27:         run: npm install -g repomix
-28:       - name: Generate Repository Documentation
-29:         run: |
-30:           echo "Creating DOCS directory..."
-31:           mkdir -p DOCS
-32:           echo "Running Repomix..."
-33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-34:             echo "Error: Repomix command failed"
-35:             # Print directory contents for debugging
-36:             echo "DOCS directory contents:"
-37:             ls -la DOCS/
-38:             exit 1
-39:           fi
-40:           echo "Verifying output file..."
-41:           if [ ! -f "DOCS/repository_context.txt" ]; then
-42:             echo "Error: repository_context.txt was not created"
-43:             # Print directory contents for debugging
-44:             echo "DOCS directory contents:"
-45:             ls -la DOCS/
-46:             exit 1
-47:           fi
-48:           if [ ! -s "DOCS/repository_context.txt" ]; then
-49:             echo "Error: repository_context.txt is empty"
-50:             exit 1
-51:           fi
-52:           echo "Repository context file generated successfully"
-53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-54:           echo "First few lines of the file:"
-55:           head -n 5 "DOCS/repository_context.txt"
-56:       # Update Documentation
-57:       - name: Commit and Push Changes
-58:         run: |
-59:           echo "Configuring git..."
-60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-61:           git config --local user.name "github-actions[bot]"
-62:           echo "Checking for changes..."
-63:           if [[ -n "$(git status --porcelain)" ]]; then
-64:             echo "Changes detected, committing..."
-65:             # Stage only repository_context.txt to avoid unintended changes
-66:             if ! git add DOCS/repository_context.txt; then
-67:               echo "Error: Failed to stage repository_context.txt"
-68:               exit 1
-69:             fi
-70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-71:               echo "Error: Failed to create commit"
-72:               exit 1
-73:             fi
-74:             echo "Pushing to main branch..."
-75:             if ! git push; then
-76:               echo "Error: Failed to push changes"
-77:               exit 1
-78:             fi
-79:             echo "Successfully updated repository context"
-80:           else
-81:             echo "No changes detected in repository_context.txt"
-82:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v6
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
 28:       - name: Install dependencies
 29:         run: pnpm install --frozen-lockfile
-30:       - name: Install dependencies for studio
-31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
-32:       - name: Run Snyk to check main project vulnerabilities
-33:         uses: snyk/actions/node@master
-34:         env:
-35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-36:         with:
-37:           command: "test"
-38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-39:       - name: Run Snyk to check studio project vulnerabilities
-40:         uses: snyk/actions/node@master
-41:         env:
-42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-43:         with:
-44:           command: "test"
-45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-46:       - name: Run Snyk to check eslint plugin vulnerabilities
-47:         uses: snyk/actions/node@master
-48:         env:
-49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-50:         with:
-51:           command: "test"
-52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-53:       - name: Upload main project SARIF report to GitHub Security tab
-54:         if: always() && hashFiles('snyk-main.sarif') != ''
-55:         uses: github/codeql-action/upload-sarif@v4
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI (Mobile)
+42:         run: pnpm lhci:perf
+43:         env:
+44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+45:       - name: Run Lighthouse CI (Desktop)
+46:         run: pnpm lhci:desktop
+47:         env:
+48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+49:       - name: Stop server
+50:         if: always()
+51:         run: |
+52:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v6
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Create pa11y config
+35:         run: |
+36:           # Create pa11y config file
+37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+38:       - name: Build Next.js app
+39:         run: pnpm build
+40:       - name: Start Next.js app
+41:         run: pnpm start &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm exec wait-on http://localhost:3000
+44:       - name: Run pa11y
+45:         run: |
+46:           # Create a directory for the reports
+47:           mkdir -p pa11y-reports
+48:           # Run pa11y on main pages with config
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+53:       - name: Upload pa11y results
+54:         if: always()
+55:         uses: actions/upload-artifact@v5
 56:         with:
-57:           sarif_file: snyk-main.sarif
-58:           category: snyk-main
-59:       - name: Upload studio SARIF report to GitHub Security tab
-60:         if: always() && hashFiles('snyk-studio.sarif') != ''
-61:         uses: github/codeql-action/upload-sarif@v4
-62:         with:
-63:           sarif_file: snyk-studio.sarif
-64:           category: snyk-studio
-65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-67:         uses: github/codeql-action/upload-sarif@v4
-68:         with:
-69:           sarif_file: snyk-eslint.sarif
-70:           category: snyk-eslint
-71:       - name: Snyk Monitor main project (only for pushes to main branch)
-72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-73:         uses: snyk/actions/node@master
-74:         env:
-75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-76:         with:
-77:           command: "monitor"
-78:           args: ""
-79:       - name: Snyk Monitor studio project (only for pushes to main branch)
-80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-81:         uses: snyk/actions/node@master
-82:         env:
-83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-84:         with:
-85:           command: "monitor"
-86:           args: "--file=studio/package.json"
-87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-89:         uses: snyk/actions/node@master
-90:         env:
-91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-92:         with:
-93:           command: "monitor"
-94:           args: "--file=src/utils/eslint/package.json"
+57:           name: pa11y-reports
+58:           path: pa11y-reports/
+59:       - name: Check for accessibility issues
+60:         run: |
+61:           if grep -q "Error:" pa11y-reports/*.txt; then
+62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+63:             exit 1
+64:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v5
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
 ````
 
 ## File: .npmrc
@@ -19308,170 +19258,42 @@ tsconfig.json
 193:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/lighthouse.yml
+## File: .github/workflows/codeql.yml
 ````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v6
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v6
-10:         with:
-11:           node-version: "24"
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
+ 1: name: "CodeQL"
  2: on:
  3:   push:
- 4:     branches: [main]
+ 4:     branches: ["master"]
  5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v6
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Create pa11y config
-35:         run: |
-36:           # Create pa11y config file
-37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-38:       - name: Build Next.js app
-39:         run: pnpm build
-40:       - name: Start Next.js app
-41:         run: pnpm start &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm exec wait-on http://localhost:3000
-44:       - name: Run pa11y
-45:         run: |
-46:           # Create a directory for the reports
-47:           mkdir -p pa11y-reports
-48:           # Run pa11y on main pages with config
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-53:       - name: Upload pa11y results
-54:         if: always()
-55:         uses: actions/upload-artifact@v5
-56:         with:
-57:           name: pa11y-reports
-58:           path: pa11y-reports/
-59:       - name: Check for accessibility issues
-60:         run: |
-61:           if grep -q "Error:" pa11y-reports/*.txt; then
-62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-63:             exit 1
-64:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v5
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     permissions:
+14:       actions: read
+15:       contents: read
+16:       security-events: write
+17:     strategy:
+18:       fail-fast: false
+19:       matrix:
+20:         language: [javascript]
+21:     steps:
+22:       - name: Checkout
+23:         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+24:       - name: Initialize CodeQL
+25:         uses: github/codeql-action/init@v4
+26:         with:
+27:           languages: ${{ matrix.language }}
+28:           queries: +security-and-quality
+29:       - name: Autobuild
+30:         uses: github/codeql-action/autobuild@v4
+31:       - name: Perform CodeQL Analysis
+32:         uses: github/codeql-action/analyze@v4
+33:         with:
+34:           category: "/language:${{ matrix.language }}"
 ````
 
 ## File: renovate.json
@@ -19533,42 +19355,302 @@ tsconfig.json
 55: }
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v4
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v4
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v4
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
+## File: commit/commit_analyzer.py
+````python
+  1: import subprocess
+  2: import os
+  3: import sys
+  4: import json
+  5: import codecs
+  6: from typing import List, Tuple, Optional
+  7: from openai import OpenAI
+  8: from pathlib import Path
+  9: from dotenv import load_dotenv
+ 10: # Security: Whitelist of allowed git subcommands and arguments
+ 11: # This prevents any possibility of command injection by only allowing known-safe commands
+ 12: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+ 13: _GIT_ARG_CACHED = "--cached"
+ 14: _GIT_ARG_NAME_ONLY = "--name-only"
+ 15: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+ 16: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+ 17: def _run_git_command(args: List[str]) -> str:
+ 18:     """
+ 19:     Safely execute a git command with strict validation.
+ 20:     Security measures implemented:
+ 21:     - Whitelist validation: Only allows pre-approved git subcommands and arguments
+ 22:     - No shell execution: shell=False prevents shell injection attacks
+ 23:     - Explicit argument list: Prevents argument splitting vulnerabilities
+ 24:     - No user input: All allowed values are hardcoded constants
+ 25:     Args:
+ 26:         args: List of git command arguments (excluding 'git' itself).
+ 27:               Must only contain whitelisted subcommands and arguments.
+ 28:     Returns:
+ 29:         Command output as decoded UTF-8 string.
+ 30:     Raises:
+ 31:         ValueError: If any argument is not in the whitelist.
+ 32:         subprocess.CalledProcessError: If the git command fails.
+ 33:     """
+ 34:     if not args:
+ 35:         raise ValueError("Git command arguments cannot be empty")
+ 36:     # Validate subcommand against whitelist
+ 37:     subcommand = args[0]
+ 38:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+ 39:         raise ValueError(
+ 40:             f"Git subcommand '{subcommand}' is not allowed. "
+ 41:             f"Allowed: {_ALLOWED_GIT_SUBCOMMANDS}"
+ 42:         )
+ 43:     # Validate all additional arguments against whitelist
+ 44:     for arg in args[1:]:
+ 45:         if arg not in _ALLOWED_GIT_ARGS:
+ 46:             raise ValueError(
+ 47:                 f"Git argument '{arg}' is not allowed. Allowed: {_ALLOWED_GIT_ARGS}"
+ 48:             )
+ 49:     # Execute the validated command
+ 50:     # Security: All arguments have been validated against whitelist above
+ 51:     # shell=False ensures no shell interpretation of arguments
+ 52:     full_command = ["git"] + list(args)
+ 53:     result = subprocess.check_output(  # nosec B603 B607 - validated whitelist
+ 54:         full_command,
+ 55:         shell=False,
+ 56:         stderr=subprocess.DEVNULL,
+ 57:     )
+ 58:     return result.decode("utf-8")
+ 59: def read_config_file():
+ 60:     """Read configuration from local config file."""
+ 61:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 62:     try:
+ 63:         if os.path.exists(config_path):
+ 64:             with open(config_path, "r") as f:
+ 65:                 return json.load(f)
+ 66:     except Exception as e:
+ 67:         print(f"Error reading config file: {e}")
+ 68:     return {}
+ 69: def get_api_config():
+ 70:     """Get API configuration from environment variables or config file."""
+ 71:     load_dotenv()
+ 72:     # Try environment variables first
+ 73:     api_key = os.getenv("AI_API_KEY")
+ 74:     base_url = os.getenv("AI_BASE_URL")
+ 75:     # If no API key in env, try config file
+ 76:     if not api_key:
+ 77:         config = read_config_file()
+ 78:         api_key = config.get("api_key")
+ 79:         base_url = config.get("base_url", base_url)
+ 80:     if not api_key:
+ 81:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 82:         raise ValueError(
+ 83:             "No API key found. Please either:\n"
+ 84:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
+ 85:             "2. Set AI_API_KEY environment variable, or\n"
+ 86:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
+ 87:         )
+ 88:     return api_key, base_url
+ 89: def _is_lock_file(filename: str) -> bool:
+ 90:     """Check if a filename is a dependency lock file."""
+ 91:     lock_file_patterns = (
+ 92:         ".lock",
+ 93:         "lock.json",
+ 94:         "package-lock.json",
+ 95:         "yarn.lock",
+ 96:         "pnpm-lock.yaml",
+ 97:     )
+ 98:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+ 99: def get_staged_diff() -> Tuple[Optional[str], bool]:
+100:     """
+101:     Get the diff of staged changes and list of changed files.
+102:     Returns:
+103:         Tuple of (diff_content, has_lock_files):
+104:         - diff_content: The git diff output, or None if only lock files or error
+105:         - has_lock_files: True if lock files are present in the changes
+106:     """
+107:     try:
+108:         # Get list of staged files using validated git command
+109:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
+110:         staged_files = files_output.splitlines()
+111:         # Check if any staged files are lock files
+112:         if any(_is_lock_file(f) for f in staged_files):
+113:             return None, True  # Indicate lock file presence
+114:         # Get the actual diff using validated git command
+115:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+116:         if not diff:
+117:             # If no staged changes, get diff of last commit
+118:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+119:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
+120:             staged_files = files_output.splitlines()
+121:             if any(_is_lock_file(f) for f in staged_files):
+122:                 return None, True
+123:         return diff, False  # No lock files found
+124:     except subprocess.CalledProcessError as e:
+125:         print(f"Error getting git diff: {e}")
+126:         return None, False
+127:     except ValueError as e:
+128:         # This would indicate a programming error (invalid command)
+129:         print(f"Internal error - invalid git command: {e}")
+130:         return None, False
+131: def load_gitmojis():
+132:     """Load gitmojis from gitmojis.json"""
+133:     try:
+134:         with open("gitmojis.json", "r", encoding="utf-8") as f:
+135:             data = json.load(f)
+136:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
+137:     except Exception as e:
+138:         print(f"Error loading gitmojis: {e}")
+139:         return {}
+140: def get_emoji_for_type(commit_type, gitmojis):
+141:     """Map commit type to appropriate emoji"""
+142:     type_to_emoji = {
+143:         # Core conventional commit types
+144:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
+145:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
+146:         "docs": gitmojis.get("memo", "📝"),  # Documentation
+147:         "style": gitmojis.get("art", "🎨"),  # Style/format
+148:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
+149:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
+150:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
+151:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
+152:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
+153:         # Additional commit types with specific emojis
+154:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
+155:         "deps": gitmojis.get("package", "📦"),  # Dependencies
+156:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
+157:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
+158:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
+159:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
+160:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
+161:         "license": gitmojis.get("page-facing-up", "📄"),  # License
+162:         "docker": gitmojis.get("whale", "🐳"),  # Docker
+163:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
+164:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
+165:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
+166:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
+167:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
+168:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
+169:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
+170:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
+171:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
+172:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
+173:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
+174:     }
+175:     return type_to_emoji.get(commit_type, "")
+176: def generate_commit_message(diff):
+177:     """Generate commit message using OpenAI API"""
+178:     try:
+179:         api_key, base_url = get_api_config()
+180:         client_kwargs = {"api_key": api_key}
+181:         if base_url:
+182:             client_kwargs["base_url"] = base_url
+183:         client = OpenAI(**client_kwargs)
+184:         # Get model from environment variable or use default
+185:         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
+186:         # Load gitmojis
+187:         # gitmojis = load_gitmojis()
+188:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+189:         The commit message MUST follow this format:
+190:         <emoji> <type>[optional scope]: <description>
+191:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+192:         [optional footer(s)]
+193:         Where:
+194:         1. Type MUST be one of (with corresponding emoji):
+195:            Core types:
+196:            - ✨ feat: A new feature
+197:            - 🐛 fix: A bug fix
+198:            - 📝 docs: Documentation only changes
+199:            - 🎨 style: Changes that don't affect the meaning of the code
+200:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+201:            - ⚡️ perf: A code change that improves performance
+202:            - ✅ test: Adding missing tests or correcting existing tests
+203:            - 🔧 chore: Changes to build process or auxiliary tools
+204:            - 👷 ci: Changes to CI configuration files and scripts
+205:            Additional specific types:
+206:            - 🔒 security: Security fixes
+207:            - 📦 deps: Dependencies
+208:            - 💥 breaking: Breaking changes
+209:            - 💄 ui: UI/style changes
+210:            - 🌐 i18n: Internationalization
+211:            - ✏️ typo: Fix typos
+212:            - 🎉 init: Initial commit
+213:            - 📄 license: License
+214:            - 🐳 docker: Docker
+215:            - ♿️ access: Accessibility
+216:            - 🔊 logs: Logging
+217:            - 🗃️ db: Database
+218:            - 🔥 cleanup: Remove code/files
+219:            - 🚧 wip: Work in progress
+220:            - 🚚 move: Move/rename files
+221:            - ⏪ revert: Revert changes
+222:            - 🔀 merge: Merge branches
+223:            - 📱 responsive: Responsive design
+224:            - 🚑 hotfix: Critical hotfix
+225:         2. Description MUST:
+226:            - Be 50 characters or less
+227:            - Start with lowercase
+228:            - Use imperative mood ("add" not "adds/added")
+229:            - No period at end
+230:            - Be clear and descriptive
+231:         3. Body (if included) MUST:
+232:            - Be separated from title by blank line
+233:            - Wrap at 72 characters
+234:            - Explain what and why vs. how
+235:            - Use proper punctuation
+236:         Git diff to analyze:
+237:         {diff}
+238:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+239:         response = client.chat.completions.create(
+240:             model=model,
+241:             messages=[{"role": "user", "content": prompt}],
+242:             stream=False,
+243:         )
+244:         # Get the message and clean any potential explanatory text
+245:         message = response.choices[0].message.content.strip()
+246:         if "Based on the diff" in message:
+247:             message = message.split("\n")[-1].strip()
+248:         return message
+249:     except Exception as e:
+250:         error_msg = str(e)
+251:         print(f"Error generating commit message: {error_msg}")
+252:         # Provide helpful diagnostics
+253:         if "500" in error_msg:
+254:             print("\nServer returned 500 error. Possible causes:")
+255:             print("  - Model name may not be supported by your API provider")
+256:             print(
+257:                 f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}"
+258:             )
+259:             print(f"  - Base URL: {base_url or 'default OpenAI'}")
+260:             print("\nTry setting MODEL_NAME in .env to a supported model.")
+261:         elif "401" in error_msg or "403" in error_msg:
+262:             print("\nAuthentication error. Check your AI_API_KEY in .env")
+263:         elif "404" in error_msg:
+264:             print("\nModel not found. Check MODEL_NAME in .env")
+265:         return None
+266: def main():
+267:     # Get the diff and check for lock files
+268:     diff, has_lock_files = get_staged_diff()
+269:     if has_lock_files:
+270:         # Use hardcoded message for lock files
+271:         commit_message = "📦 deps: update dependencies"
+272:     elif not diff:
+273:         print("No changes to analyze")
+274:         sys.exit(1)
+275:     else:
+276:         # Generate commit message for non-lock files
+277:         commit_message = generate_commit_message(diff)
+278:     if not commit_message:
+279:         print("Failed to generate commit message")
+280:         sys.exit(1)
+281:     # Print the commit message
+282:     print("\nGenerated commit message:")
+283:     print("------------------------")
+284:     # Use sys.stdout.buffer.write for Unicode support in console
+285:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+286:     sys.stdout.buffer.flush()
+287:     print("\n------------------------")
+288:     # If running as a hook, save the message
+289:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+290:         # Use UTF-8 encoding when writing the commit message
+291:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+292:             f.write(commit_message)
+293: if __name__ == "__main__":
+294:     main()
 ````
 
 ## File: studio/package.json
