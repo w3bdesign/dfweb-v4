@@ -371,6 +371,7 @@ UTKAST/
 .eslintrc.json
 .gitattributes
 .gitignore
+.npmrc
 .pa11yci.json
 AGENTS.md
 codecov.yml
@@ -394,82 +395,6 @@ tsconfig.json
 ```
 
 # Files
-
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.11.1
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.11.1-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --no-frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
 
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
@@ -17459,234 +17384,6 @@ tsconfig.json
 33: }
 ````
 
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: 
- 18: ## Critical Commands
- 19: 
- 20: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 21: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 22: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 23: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 24: 
- 25: ## Testing Gotchas
- 26: 
- 27: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 28: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 29: - Matrix component intentionally excluded from test coverage
- 30: - Cypress and Playwright have different ESLint rule overrides
- 31: 
- 32: ## Code Quality Principles
- 33: 
- 34: ### SOLID Principles
- 35: 
- 36: #### Single Responsibility Principle (SRP)
- 37: Each component/function should have one reason to change.
- 38: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 39: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
- 40: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 41: 
- 42: #### Open/Closed Principle (OCP)
- 43: Software should be open for extension, closed for modification.
- 44: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 45: - Create generic components that can be customized without modifying source
- 46: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 47: 
- 48: #### Liskov Substitution Principle (LSP)
- 49: Components accepting a type should work with any subtype.
- 50: - Ensure prop interfaces are respected by all implementations
- 51: - Don't throw unexpected errors or require undocumented props
- 52: - **Benefits**: Predictable behavior, safer component hierarchies
- 53: 
- 54: #### Interface Segregation Principle (ISP)
- 55: Don't force components to depend on props they don't use.
- 56: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 57: - Split large prop types into smaller, composable ones
- 58: - **Benefits**: More flexible components, easier to implement and test
- 59: 
- 60: #### Dependency Inversion Principle (DIP)
- 61: Depend on abstractions, not concrete implementations.
- 62: - Use dependency injection for services (e.g., pass clients as props or use context)
- 63: - Define abstract types/interfaces, inject implementations
- 64: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 65: 
- 66: ### DRY Principle (Don't Repeat Yourself)
- 67: 
- 68: - Extract repeated UI patterns into reusable components
- 69: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 70: - Use custom hooks for shared stateful logic
- 71: - Avoid duplicating business logic across components
- 72: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 73: 
- 74: ### KISS Principle (Keep It Simple, Stupid)
- 75: 
- 76: - Use React/Next.js built-in features before custom solutions
- 77: - Write self-explanatory code with clear naming
- 78: - Avoid over-engineering simple problems
- 79: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 80: - Minimize dependencies
- 81: - Start simple, add complexity only when necessary
- 82: - **Benefits**: Easier to understand, faster development, fewer bugs
- 83: 
- 84: ### YAGNI Principle (You Aren't Gonna Need It)
- 85: 
- 86: Don't implement functionality until it's actually needed.
- 87: - Focus on current requirements, not hypothetical future needs
- 88: - Don't create abstraction layers for single implementations
- 89: - Avoid premature optimization before measuring performance
- 90: - Don't build configuration systems until configurability is required
- 91: - Wait for actual use cases before adding flexibility
- 92: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
- 93: 
- 94: ### Code Quality Summary
- 95: 
- 96: Following these principles results in:
- 97: - Maintainable, extendable code
- 98: - Fewer bugs and faster debugging
- 99: - Better team collaboration
-100: - Professional quality standards
-101: - Easier testing and refactoring
-102: 
-103: ## UI Development Rules
-104: 
-105: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-106: 
-107: ### Interactions
-108: 
-109: #### Keyboard
-110: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-111: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-112: - MUST: Manage focus (trap, move, and return) per APG patterns
-113: 
-114: #### Targets & Input
-115: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-116: - MUST: Mobile `<input>` font-size ≥16px or set:
-117:   ```html
-118:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-119:   ```
-120: - NEVER: Disable browser zoom
-121: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-122: 
-123: #### Inputs & Forms (Behavior)
-124: - MUST: Hydration-safe inputs (no lost focus/value)
-125: - NEVER: Block paste in `<input>/<textarea>`
-126: - MUST: Loading buttons show spinner and keep original label
-127: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-128: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-129: - MUST: Don't block typing; accept free text and validate after
-130: - MUST: Allow submitting incomplete forms to surface validation
-131: - MUST: Errors inline next to fields; on submit, focus first error
-132: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-133: - SHOULD: Disable spellcheck for emails/codes/usernames
-134: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-135: - MUST: Warn on unsaved changes before navigation
-136: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-137: - MUST: Trim values to handle text expansion trailing spaces
-138: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-139: 
-140: #### State & Navigation
-141: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-142: - MUST: Back/Forward restores scroll
-143: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-144: 
-145: #### Feedback
-146: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-147: - MUST: Confirm destructive actions or provide Undo window
-148: - MUST: Use polite `aria-live` for toasts/inline validation
-149: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-150: 
-151: #### Touch/Drag/Scroll
-152: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-153: - MUST: Delay first tooltip in a group; subsequent peers no delay
-154: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-155: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-156: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-157: 
-158: #### Autofocus
-159: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-160: 
-161: ### Animation
-162: 
-163: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-164: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-165: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-166: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-167: - SHOULD: Choose easing to match the change (size/distance/trigger)
-168: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-169: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-170: 
-171: ### Layout
-172: 
-173: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-174: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-175: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-176: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-177: - MUST: Respect safe areas (use env(safe-area-inset-*))
-178: - MUST: Avoid unwanted scrollbars; fix overflows
-179: 
-180: ### Content & Accessibility
-181: 
-182: - SHOULD: Inline help first; tooltips last resort
-183: - MUST: Skeletons mirror final content to avoid layout shift
-184: - MUST: `<title>` matches current context
-185: - MUST: No dead ends; always offer next step/recovery
-186: - MUST: Design empty/sparse/dense/error states
-187: - SHOULD: Curly quotes (" "); avoid widows/orphans
-188: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-189: - MUST: Redundant status cues (not color-only); icons have text labels
-190: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-191: - MUST: Use the ellipsis character `…` (not `...`)
-192: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-193: - MUST: Resilient to user-generated content (short/avg/very long)
-194: - MUST: Locale-aware dates/times/numbers/currency
-195: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-196: - MUST: Icon-only buttons have descriptive `aria-label`
-197: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-198: - SHOULD: Right-clicking the nav logo surfaces brand assets
-199: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-200: 
-201: ### Performance
-202: 
-203: - SHOULD: Test iOS Low Power Mode and macOS Safari
-204: - MUST: Measure reliably (disable extensions that skew runtime)
-205: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-206: - MUST: Profile with CPU/network throttling
-207: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-208: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-209: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-210: - MUST: Virtualize large lists (eg, `virtua`)
-211: - MUST: Preload only above-the-fold images; lazy-load the rest
-212: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-213: 
-214: ### Design
-215: 
-216: - SHOULD: Layered shadows (ambient + direct)
-217: - SHOULD: Crisp edges via semi-transparent borders + shadows
-218: - SHOULD: Nested radii: child ≤ parent; concentric
-219: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-220: - MUST: Accessible charts (color-blind-friendly palettes)
-221: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-222: - MUST: Increase contrast on `:hover/:active/:focus`
-223: - SHOULD: Match browser UI to bg
-224: - SHOULD: Avoid gradient banding (use masks when needed)
-````
-
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -19023,6 +18720,82 @@ tsconfig.json
 47: }
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.11.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.11.1-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -19067,173 +18840,6 @@ tsconfig.json
 40:           wait-on: "http://localhost:3000"
 41:           wait-on-timeout: 120
 42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v6
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v6
-10:         with:
-11:           node-version: "24"
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v4
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v6
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install
-34:       - name: Install dependencies and pa11y
-35:         run: |
-36:           pnpm add -D pa11y wait-on
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v5
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v5
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
 ````
 
 ## File: .github/workflows/repomix.yml
@@ -19420,6 +19026,258 @@ tsconfig.json
 94:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: .npmrc
+````
+ 1: # pnpm Security Configuration
+ 2: # Defense against supply chain attacks
+ 3: 
+ 4: # Minimum Release Age: Packages must be at least 7 days old before installation
+ 5: # This prevents installing freshly compromised packages
+ 6: # Value is in minutes: 10080 = 7 days (7 * 24 * 60)
+ 7: minimum-release-age=10080
+ 8: 
+ 9: # Registry configuration (using default npm registry which supports release timestamps)
+10: registry=https://registry.npmjs.org/
+11: 
+12: # Strict peer dependencies for better dependency tree control
+13: strict-peer-dependencies=false
+14: 
+15: # Auto-install peers to avoid manual peer dependency management
+16: auto-install-peers=true
+17: 
+18: # Engine strict mode - fail if Node.js version doesn't match engines field
+19: engine-strict=true
+````
+
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: - **Supply Chain Security**: 7-day minimum release age enforced via `.npmrc` and `renovate.json` - see Security section below
+ 18: 
+ 19: ## Critical Commands
+ 20: 
+ 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 25: 
+ 26: ## Testing Gotchas
+ 27: 
+ 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 30: - Matrix component intentionally excluded from test coverage
+ 31: - Cypress and Playwright have different ESLint rule overrides
+ 32: 
+ 33: ## Code Quality Principles
+ 34: 
+ 35: ### SOLID Principles
+ 36: 
+ 37: #### Single Responsibility Principle (SRP)
+ 38: Each component/function should have one reason to change.
+ 39: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 40: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 41: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 42: 
+ 43: #### Open/Closed Principle (OCP)
+ 44: Software should be open for extension, closed for modification.
+ 45: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 46: - Create generic components that can be customized without modifying source
+ 47: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 48: 
+ 49: #### Liskov Substitution Principle (LSP)
+ 50: Components accepting a type should work with any subtype.
+ 51: - Ensure prop interfaces are respected by all implementations
+ 52: - Don't throw unexpected errors or require undocumented props
+ 53: - **Benefits**: Predictable behavior, safer component hierarchies
+ 54: 
+ 55: #### Interface Segregation Principle (ISP)
+ 56: Don't force components to depend on props they don't use.
+ 57: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 58: - Split large prop types into smaller, composable ones
+ 59: - **Benefits**: More flexible components, easier to implement and test
+ 60: 
+ 61: #### Dependency Inversion Principle (DIP)
+ 62: Depend on abstractions, not concrete implementations.
+ 63: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 64: - Define abstract types/interfaces, inject implementations
+ 65: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 66: 
+ 67: ### DRY Principle (Don't Repeat Yourself)
+ 68: 
+ 69: - Extract repeated UI patterns into reusable components
+ 70: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 71: - Use custom hooks for shared stateful logic
+ 72: - Avoid duplicating business logic across components
+ 73: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 74: 
+ 75: ### KISS Principle (Keep It Simple, Stupid)
+ 76: 
+ 77: - Use React/Next.js built-in features before custom solutions
+ 78: - Write self-explanatory code with clear naming
+ 79: - Avoid over-engineering simple problems
+ 80: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 81: - Minimize dependencies
+ 82: - Start simple, add complexity only when necessary
+ 83: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 84: 
+ 85: ### YAGNI Principle (You Aren't Gonna Need It)
+ 86: 
+ 87: Don't implement functionality until it's actually needed.
+ 88: - Focus on current requirements, not hypothetical future needs
+ 89: - Don't create abstraction layers for single implementations
+ 90: - Avoid premature optimization before measuring performance
+ 91: - Don't build configuration systems until configurability is required
+ 92: - Wait for actual use cases before adding flexibility
+ 93: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+ 94: 
+ 95: ### Code Quality Summary
+ 96: 
+ 97: Following these principles results in:
+ 98: - Maintainable, extendable code
+ 99: - Fewer bugs and faster debugging
+100: - Better team collaboration
+101: - Professional quality standards
+102: - Easier testing and refactoring
+103: 
+104: ## UI Development Rules
+105: 
+106: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+107: 
+108: ### Interactions
+109: 
+110: #### Keyboard
+111: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+112: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+113: - MUST: Manage focus (trap, move, and return) per APG patterns
+114: 
+115: #### Targets & Input
+116: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+117: - MUST: Mobile `<input>` font-size ≥16px or set:
+118:   ```html
+119:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+120:   ```
+121: - NEVER: Disable browser zoom
+122: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+123: 
+124: #### Inputs & Forms (Behavior)
+125: - MUST: Hydration-safe inputs (no lost focus/value)
+126: - NEVER: Block paste in `<input>/<textarea>`
+127: - MUST: Loading buttons show spinner and keep original label
+128: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+129: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+130: - MUST: Don't block typing; accept free text and validate after
+131: - MUST: Allow submitting incomplete forms to surface validation
+132: - MUST: Errors inline next to fields; on submit, focus first error
+133: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+134: - SHOULD: Disable spellcheck for emails/codes/usernames
+135: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+136: - MUST: Warn on unsaved changes before navigation
+137: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+138: - MUST: Trim values to handle text expansion trailing spaces
+139: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+140: 
+141: #### State & Navigation
+142: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+143: - MUST: Back/Forward restores scroll
+144: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+145: 
+146: #### Feedback
+147: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+148: - MUST: Confirm destructive actions or provide Undo window
+149: - MUST: Use polite `aria-live` for toasts/inline validation
+150: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+151: 
+152: #### Touch/Drag/Scroll
+153: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+154: - MUST: Delay first tooltip in a group; subsequent peers no delay
+155: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+156: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+157: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+158: 
+159: #### Autofocus
+160: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+161: 
+162: ### Animation
+163: 
+164: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+165: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+166: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+167: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+168: - SHOULD: Choose easing to match the change (size/distance/trigger)
+169: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+170: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+171: 
+172: ### Layout
+173: 
+174: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+175: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+176: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+177: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+178: - MUST: Respect safe areas (use env(safe-area-inset-*))
+179: - MUST: Avoid unwanted scrollbars; fix overflows
+180: 
+181: ### Content & Accessibility
+182: 
+183: - SHOULD: Inline help first; tooltips last resort
+184: - MUST: Skeletons mirror final content to avoid layout shift
+185: - MUST: `<title>` matches current context
+186: - MUST: No dead ends; always offer next step/recovery
+187: - MUST: Design empty/sparse/dense/error states
+188: - SHOULD: Curly quotes (" "); avoid widows/orphans
+189: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+190: - MUST: Redundant status cues (not color-only); icons have text labels
+191: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+192: - MUST: Use the ellipsis character `…` (not `...`)
+193: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+194: - MUST: Resilient to user-generated content (short/avg/very long)
+195: - MUST: Locale-aware dates/times/numbers/currency
+196: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+197: - MUST: Icon-only buttons have descriptive `aria-label`
+198: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+199: - SHOULD: Right-clicking the nav logo surfaces brand assets
+200: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+201: 
+202: ### Performance
+203: 
+204: - SHOULD: Test iOS Low Power Mode and macOS Safari
+205: - MUST: Measure reliably (disable extensions that skew runtime)
+206: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+207: - MUST: Profile with CPU/network throttling
+208: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+209: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+210: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+211: - MUST: Virtualize large lists (eg, `virtua`)
+212: - MUST: Preload only above-the-fold images; lazy-load the rest
+213: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+214: 
+215: ### Design
+216: 
+217: - SHOULD: Layered shadows (ambient + direct)
+218: - SHOULD: Crisp edges via semi-transparent borders + shadows
+219: - SHOULD: Nested radii: child ≤ parent; concentric
+220: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+221: - MUST: Accessible charts (color-blind-friendly palettes)
+222: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+223: - MUST: Increase contrast on `:hover/:active/:focus`
+224: - SHOULD: Match browser UI to bg
+225: - SHOULD: Avoid gradient banding (use masks when needed)
+````
+
 ## File: jest.config.ts
 ````typescript
  1: import type { Config } from "jest";
@@ -19446,61 +19304,6 @@ tsconfig.json
 22:   ],
 23: };
 24: export default createJestConfig(customJestConfig);
-````
-
-## File: renovate.json
-````json
- 1: {
- 2:   "extends": [
- 3:     "config:recommended"
- 4:   ],
- 5:   "ignorePresets": [
- 6:     ":prHourlyLimit2",
- 7:     ":prConcurrentLimit20"
- 8:   ],
- 9:   "ignoreTests": true,
-10:   "packageRules": [
-11:     {
-12:       "rangeStrategy": "bump",
-13:       "matchDepTypes": [
-14:         "dependencies",
-15:         "devDependencies",
-16:         "optionalDependencies",
-17:         "peerDependencies"
-18:       ]
-19:     },
-20:     {
-21:       "matchUpdateTypes": [
-22:         "minor",
-23:         "pin",
-24:         "digest"
-25:       ],
-26:       "automerge": true,
-27:       "ignoreTests": false,
-28:       "matchDepTypes": [
-29:         "dependencies",
-30:         "devDependencies",
-31:         "optionalDependencies",
-32:         "peerDependencies"
-33:       ]
-34:     },
-35:     {
-36:       "matchUpdateTypes": [
-37:         "patch",
-38:         "lockFileMaintenance"
-39:       ],
-40:       "automerge": true,
-41:       "automergeType": "branch",
-42:       "ignoreTests": false,
-43:       "matchDepTypes": [
-44:         "dependencies",
-45:         "devDependencies",
-46:         "optionalDependencies",
-47:         "peerDependencies"
-48:       ]
-49:     }
-50:   ]
-51: }
 ````
 
 ## File: .github/workflows/codeql.yml
@@ -19539,6 +19342,231 @@ tsconfig.json
 32:         uses: github/codeql-action/analyze@v4
 33:         with:
 34:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v6
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v6
+10:         with:
+11:           node-version: "24"
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v4
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI (Mobile)
+42:         run: pnpm lhci:perf
+43:         env:
+44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+45:       - name: Run Lighthouse CI (Desktop)
+46:         run: pnpm lhci:desktop
+47:         env:
+48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+49:       - name: Stop server
+50:         if: always()
+51:         run: |
+52:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v6
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Create pa11y config
+35:         run: |
+36:           # Create pa11y config file
+37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+38:       - name: Build Next.js app
+39:         run: pnpm build
+40:       - name: Start Next.js app
+41:         run: pnpm start &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm exec wait-on http://localhost:3000
+44:       - name: Run pa11y
+45:         run: |
+46:           # Create a directory for the reports
+47:           mkdir -p pa11y-reports
+48:           # Run pa11y on main pages with config
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+53:       - name: Upload pa11y results
+54:         if: always()
+55:         uses: actions/upload-artifact@v5
+56:         with:
+57:           name: pa11y-reports
+58:           path: pa11y-reports/
+59:       - name: Check for accessibility issues
+60:         run: |
+61:           if grep -q "Error:" pa11y-reports/*.txt; then
+62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+63:             exit 1
+64:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v5
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
+## File: renovate.json
+````json
+ 1: {
+ 2:   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+ 3:   "extends": [
+ 4:     "config:recommended",
+ 5:     "security:openssf-scorecard"
+ 6:   ],
+ 7:   "minimumReleaseAge": "7 days",
+ 8:   "internalChecksFilter": "strict",
+ 9:   "ignorePresets": [
+10:     ":prHourlyLimit2",
+11:     ":prConcurrentLimit20"
+12:   ],
+13:   "ignoreTests": true,
+14:   "packageRules": [
+15:     {
+16:       "rangeStrategy": "bump",
+17:       "matchDepTypes": [
+18:         "dependencies",
+19:         "devDependencies",
+20:         "optionalDependencies",
+21:         "peerDependencies"
+22:       ]
+23:     },
+24:     {
+25:       "matchUpdateTypes": [
+26:         "minor",
+27:         "pin",
+28:         "digest"
+29:       ],
+30:       "automerge": true,
+31:       "ignoreTests": false,
+32:       "matchDepTypes": [
+33:         "dependencies",
+34:         "devDependencies",
+35:         "optionalDependencies",
+36:         "peerDependencies"
+37:       ]
+38:     },
+39:     {
+40:       "matchUpdateTypes": [
+41:         "patch",
+42:         "lockFileMaintenance"
+43:       ],
+44:       "automerge": true,
+45:       "automergeType": "branch",
+46:       "ignoreTests": false,
+47:       "matchDepTypes": [
+48:         "dependencies",
+49:         "devDependencies",
+50:         "optionalDependencies",
+51:         "peerDependencies"
+52:       ]
+53:     }
+54:   ]
+55: }
 ````
 
 ## File: studio/package.json
@@ -19638,7 +19666,7 @@ tsconfig.json
  53:     "react-error-boundary": "^5.0.0",
  54:     "react-hook-form": "^7.67.0",
  55:     "react-icons": "^5.5.0",
- 56:     "sanity": "4.19.0",
+ 56:     "sanity": "4.15.0",
  57:     "sitemap": "^9.0.0",
  58:     "tar-fs": "^3.1.1",
  59:     "ts-node": "^10.9.2",
@@ -19680,12 +19708,13 @@ tsconfig.json
  95:     "jest-environment-jsdom": "^30.2.0",
  96:     "jest-extended": "^7.0.0",
  97:     "jsdom-testing-mocks": "^1.16.0",
- 98:     "postcss": "^8.5.6",
- 99:     "prettier": "3.7.3",
-100:     "tailwindcss": "^4.1.17",
-101:     "ts-jest": "^29.4.6",
-102:     "typescript": "^5.9.3",
-103:     "wait-on": "^9.0.3"
-104:   }
-105: }
+ 98:     "pa11y": "^9.0.1",
+ 99:     "postcss": "^8.5.6",
+100:     "prettier": "3.7.3",
+101:     "tailwindcss": "^4.1.17",
+102:     "ts-jest": "^29.4.6",
+103:     "typescript": "^5.9.3",
+104:     "wait-on": "^9.0.3"
+105:   }
+106: }
 ````
