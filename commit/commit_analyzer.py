@@ -3,7 +3,6 @@ import os
 import sys
 import json
 import codecs
-import shlex
 
 from openai import OpenAI
 from pathlib import Path
@@ -52,8 +51,10 @@ def get_staged_diff():
     """Get the diff of staged changes and list of changed files"""
     try:
         # Get list of staged files
+        # Using explicit argument lists to avoid shell injection vulnerabilities
         files_output = subprocess.check_output(
-            shlex.split("git diff --cached --name-only")
+            ["git", "diff", "--cached", "--name-only"],
+            shell=False
         ).decode("utf-8")
         staged_files = files_output.splitlines()
 
@@ -71,14 +72,19 @@ def get_staged_diff():
             return None, True  # Indicate lock file presence
 
         # Get the actual diff
-        diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
+        diff = subprocess.check_output(
+            ["git", "diff", "--cached"],
+            shell=False
+        ).decode("utf-8")
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode(
-                "utf-8"
-            )
+            diff = subprocess.check_output(
+                ["git", "diff", "HEAD~1"],
+                shell=False
+            ).decode("utf-8")
             files_output = subprocess.check_output(
-                shlex.split("git diff HEAD~1 --name-only")
+                ["git", "diff", "HEAD~1", "--name-only"],
+                shell=False
             ).decode("utf-8")
             staged_files = files_output.splitlines()
             lock_files = [
