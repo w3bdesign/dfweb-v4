@@ -13,7 +13,10 @@ from dotenv import load_dotenv
 # Security: Whitelist of allowed git subcommands and arguments
 # This prevents any possibility of command injection by only allowing known-safe commands
 _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
-_ALLOWED_GIT_ARGS = frozenset(["--cached", "--name-only", "HEAD~1"])
+_GIT_ARG_CACHED = "--cached"
+_GIT_ARG_NAME_ONLY = "--name-only"
+_GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+_ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
 
 
 def _run_git_command(args: List[str]) -> str:
@@ -52,7 +55,7 @@ def _run_git_command(args: List[str]) -> str:
     for arg in args[1:]:
         if arg not in _ALLOWED_GIT_ARGS:
             raise ValueError(
-                f"Git argument '{arg}' is not allowed. " f"Allowed: {_ALLOWED_GIT_ARGS}"
+                f"Git argument '{arg}' is not allowed. Allowed: {_ALLOWED_GIT_ARGS}"
             )
 
     # Execute the validated command
@@ -128,7 +131,7 @@ def get_staged_diff() -> Tuple[Optional[str], bool]:
     """
     try:
         # Get list of staged files using validated git command
-        files_output = _run_git_command(["diff", "--cached", "--name-only"])
+        files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
         staged_files = files_output.splitlines()
 
         # Check if any staged files are lock files
@@ -136,12 +139,12 @@ def get_staged_diff() -> Tuple[Optional[str], bool]:
             return None, True  # Indicate lock file presence
 
         # Get the actual diff using validated git command
-        diff = _run_git_command(["diff", "--cached"])
+        diff = _run_git_command(["diff", _GIT_ARG_CACHED])
 
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = _run_git_command(["diff", "HEAD~1"])
-            files_output = _run_git_command(["diff", "HEAD~1", "--name-only"])
+            diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+            files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
             staged_files = files_output.splitlines()
 
             if any(_is_lock_file(f) for f in staged_files):
