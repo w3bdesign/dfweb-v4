@@ -9,6 +9,7 @@ from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 def read_config_file():
     """Read configuration from local config file."""
     config_path = os.path.join(str(Path.home()), ".ai_config.json")
@@ -20,20 +21,21 @@ def read_config_file():
         print(f"Error reading config file: {e}")
     return {}
 
+
 def get_api_config():
     """Get API configuration from environment variables or config file."""
     load_dotenv()
-    
+
     # Try environment variables first
     api_key = os.getenv("AI_API_KEY")
     base_url = os.getenv("AI_BASE_URL")
-    
+
     # If no API key in env, try config file
     if not api_key:
         config = read_config_file()
         api_key = config.get("api_key")
         base_url = config.get("base_url", base_url)
-    
+
     if not api_key:
         config_path = os.path.join(str(Path.home()), ".ai_config.json")
         raise ValueError(
@@ -42,7 +44,7 @@ def get_api_config():
             "2. Set AI_API_KEY environment variable, or\n"
             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
         )
-    
+
     return api_key, base_url
 
 
@@ -50,23 +52,45 @@ def get_staged_diff():
     """Get the diff of staged changes and list of changed files"""
     try:
         # Get list of staged files
-        files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
+        files_output = subprocess.check_output(
+            shlex.split("git diff --cached --name-only")
+        ).decode("utf-8")
         staged_files = files_output.splitlines()
-        
+
         # Check if any staged files are lock files
-        lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
-        if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+        lock_files = [
+            ".lock",
+            "lock.json",
+            "package-lock.json",
+            "yarn.lock",
+            "pnpm-lock.yaml",
+        ]
+        if any(
+            any(file.endswith(lock) for lock in lock_files) for file in staged_files
+        ):
             return None, True  # Indicate lock file presence
-            
+
         # Get the actual diff
         diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
-            files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
+            diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode(
+                "utf-8"
+            )
+            files_output = subprocess.check_output(
+                shlex.split("git diff HEAD~1 --name-only")
+            ).decode("utf-8")
             staged_files = files_output.splitlines()
-            lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
-            if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+            lock_files = [
+                ".lock",
+                "lock.json",
+                "package-lock.json",
+                "yarn.lock",
+                "pnpm-lock.yaml",
+            ]
+            if any(
+                any(file.endswith(lock) for lock in lock_files) for file in staged_files
+            ):
                 return None, True
         return diff, False  # No lock files found
     except subprocess.CalledProcessError as e:
@@ -134,6 +158,7 @@ def generate_commit_message(diff):
         client = OpenAI(**client_kwargs)
 
         # Get model from environment variable or use default
+
         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
 
         # Load gitmojis
@@ -205,21 +230,35 @@ def generate_commit_message(diff):
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-        
+
         # Get the message and clean any potential explanatory text
         message = response.choices[0].message.content.strip()
         if "Based on the diff" in message:
             message = message.split("\n")[-1].strip()
         return message
     except Exception as e:
-        print(f"Error generating commit message: {e}")
+        error_msg = str(e)
+        print(f"Error generating commit message: {error_msg}")
+        
+        # Provide helpful diagnostics
+        if "500" in error_msg:
+            print("\nServer returned 500 error. Possible causes:")
+            print("  - Model name may not be supported by your API provider")
+            print(f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}")
+            print(f"  - Base URL: {base_url or 'default OpenAI'}")
+            print("\nTry setting MODEL_NAME in .env to a supported model.")
+        elif "401" in error_msg or "403" in error_msg:
+            print("\nAuthentication error. Check your AI_API_KEY in .env")
+        elif "404" in error_msg:
+            print("\nModel not found. Check MODEL_NAME in .env")
+        
         return None
 
 
 def main():
     # Get the diff and check for lock files
     diff, has_lock_files = get_staged_diff()
-    
+
     if has_lock_files:
         # Use hardcoded message for lock files
         commit_message = "📦 deps: update dependencies"
