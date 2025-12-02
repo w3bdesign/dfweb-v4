@@ -3,11 +3,72 @@ import os
 import sys
 import json
 import codecs
-import shlex
+from typing import List, Tuple, Optional
 
 from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
+
+
+# Security: Whitelist of allowed git subcommands and arguments
+# This prevents any possibility of command injection by only allowing known-safe commands
+_ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+_GIT_ARG_CACHED = "--cached"
+_GIT_ARG_NAME_ONLY = "--name-only"
+_GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+_ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+
+
+def _run_git_command(args: List[str]) -> str:
+    """
+    Safely execute a git command with strict validation.
+
+    Security measures implemented:
+    - Whitelist validation: Only allows pre-approved git subcommands and arguments
+    - No shell execution: shell=False prevents shell injection attacks
+    - Explicit argument list: Prevents argument splitting vulnerabilities
+    - No user input: All allowed values are hardcoded constants
+
+    Args:
+        args: List of git command arguments (excluding 'git' itself).
+              Must only contain whitelisted subcommands and arguments.
+
+    Returns:
+        Command output as decoded UTF-8 string.
+
+    Raises:
+        ValueError: If any argument is not in the whitelist.
+        subprocess.CalledProcessError: If the git command fails.
+    """
+    if not args:
+        raise ValueError("Git command arguments cannot be empty")
+
+    # Validate subcommand against whitelist
+    subcommand = args[0]
+    if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+        raise ValueError(
+            f"Git subcommand '{subcommand}' is not allowed. "
+            f"Allowed: {_ALLOWED_GIT_SUBCOMMANDS}"
+        )
+
+    # Validate all additional arguments against whitelist
+    for arg in args[1:]:
+        if arg not in _ALLOWED_GIT_ARGS:
+            raise ValueError(
+                f"Git argument '{arg}' is not allowed. Allowed: {_ALLOWED_GIT_ARGS}"
+            )
+
+    # Execute the validated command
+    # Security: All arguments have been validated against whitelist above
+    # shell=False ensures no shell interpretation of arguments
+    full_command = ["git"] + list(args)
+    result = subprocess.check_output(  # nosec B603 B607 - validated whitelist
+        full_command,
+        shell=False,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.decode("utf-8")
+
 
 def read_config_file():
     """Read configuration from local config file."""
@@ -20,20 +81,21 @@ def read_config_file():
         print(f"Error reading config file: {e}")
     return {}
 
+
 def get_api_config():
     """Get API configuration from environment variables or config file."""
     load_dotenv()
-    
+
     # Try environment variables first
     api_key = os.getenv("AI_API_KEY")
     base_url = os.getenv("AI_BASE_URL")
-    
+
     # If no API key in env, try config file
     if not api_key:
         config = read_config_file()
         api_key = config.get("api_key")
         base_url = config.get("base_url", base_url)
-    
+
     if not api_key:
         config_path = os.path.join(str(Path.home()), ".ai_config.json")
         raise ValueError(
@@ -42,35 +104,60 @@ def get_api_config():
             "2. Set AI_API_KEY environment variable, or\n"
             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
         )
-    
+
     return api_key, base_url
 
 
-def get_staged_diff():
-    """Get the diff of staged changes and list of changed files"""
+def _is_lock_file(filename: str) -> bool:
+    """Check if a filename is a dependency lock file."""
+    lock_file_patterns = (
+        ".lock",
+        "lock.json",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+    )
+    return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+
+
+def get_staged_diff() -> Tuple[Optional[str], bool]:
+    """
+    Get the diff of staged changes and list of changed files.
+
+    Returns:
+        Tuple of (diff_content, has_lock_files):
+        - diff_content: The git diff output, or None if only lock files or error
+        - has_lock_files: True if lock files are present in the changes
+    """
     try:
-        # Get list of staged files
-        files_output = subprocess.check_output(shlex.split("git diff --cached --name-only")).decode("utf-8")
+        # Get list of staged files using validated git command
+        files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
         staged_files = files_output.splitlines()
-        
+
         # Check if any staged files are lock files
-        lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
-        if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+        if any(_is_lock_file(f) for f in staged_files):
             return None, True  # Indicate lock file presence
-            
-        # Get the actual diff
-        diff = subprocess.check_output(shlex.split("git diff --cached")).decode("utf-8")
+
+        # Get the actual diff using validated git command
+        diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(shlex.split("git diff HEAD~1")).decode("utf-8")
-            files_output = subprocess.check_output(shlex.split("git diff HEAD~1 --name-only")).decode("utf-8")
+            diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+            files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
             staged_files = files_output.splitlines()
-            lock_files = ['.lock', 'lock.json', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']
-            if any(any(file.endswith(lock) for lock in lock_files) for file in staged_files):
+
+            if any(_is_lock_file(f) for f in staged_files):
                 return None, True
+
         return diff, False  # No lock files found
+
     except subprocess.CalledProcessError as e:
         print(f"Error getting git diff: {e}")
+        return None, False
+    except ValueError as e:
+        # This would indicate a programming error (invalid command)
+        print(f"Internal error - invalid git command: {e}")
         return None, False
 
 
@@ -134,6 +221,7 @@ def generate_commit_message(diff):
         client = OpenAI(**client_kwargs)
 
         # Get model from environment variable or use default
+
         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
 
         # Load gitmojis
@@ -205,21 +293,37 @@ def generate_commit_message(diff):
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-        
+
         # Get the message and clean any potential explanatory text
         message = response.choices[0].message.content.strip()
         if "Based on the diff" in message:
             message = message.split("\n")[-1].strip()
         return message
     except Exception as e:
-        print(f"Error generating commit message: {e}")
+        error_msg = str(e)
+        print(f"Error generating commit message: {error_msg}")
+
+        # Provide helpful diagnostics
+        if "500" in error_msg:
+            print("\nServer returned 500 error. Possible causes:")
+            print("  - Model name may not be supported by your API provider")
+            print(
+                f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}"
+            )
+            print(f"  - Base URL: {base_url or 'default OpenAI'}")
+            print("\nTry setting MODEL_NAME in .env to a supported model.")
+        elif "401" in error_msg or "403" in error_msg:
+            print("\nAuthentication error. Check your AI_API_KEY in .env")
+        elif "404" in error_msg:
+            print("\nModel not found. Check MODEL_NAME in .env")
+
         return None
 
 
 def main():
     # Get the diff and check for lock files
     diff, has_lock_files = get_staged_diff()
-    
+
     if has_lock_files:
         # Use hardcoded message for lock files
         commit_message = "📦 deps: update dependencies"
@@ -238,6 +342,7 @@ def main():
     print("------------------------")
     # Use sys.stdout.buffer.write for Unicode support in console
     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+    sys.stdout.buffer.flush()
     print("\n------------------------")
 
     # If running as a hook, save the message
