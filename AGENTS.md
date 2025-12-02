@@ -14,6 +14,7 @@ This file provides guidance to agents when working with code in this repository.
 - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
 - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
 - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+- **Supply Chain Security**: 7-day minimum release age enforced via `.npmrc` and `renovate.json` - see Security section below
 
 ## Critical Commands
 
