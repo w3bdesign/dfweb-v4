@@ -3,10 +3,68 @@ import os
 import sys
 import json
 import codecs
+from typing import List, Tuple, Optional
 
 from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
+
+
+# Security: Whitelist of allowed git subcommands and arguments
+# This prevents any possibility of command injection by only allowing known-safe commands
+_ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+_ALLOWED_GIT_ARGS = frozenset(["--cached", "--name-only", "HEAD~1"])
+
+
+def _run_git_command(args: List[str]) -> str:
+    """
+    Safely execute a git command with strict validation.
+
+    Security measures implemented:
+    - Whitelist validation: Only allows pre-approved git subcommands and arguments
+    - No shell execution: shell=False prevents shell injection attacks
+    - Explicit argument list: Prevents argument splitting vulnerabilities
+    - No user input: All allowed values are hardcoded constants
+
+    Args:
+        args: List of git command arguments (excluding 'git' itself).
+              Must only contain whitelisted subcommands and arguments.
+
+    Returns:
+        Command output as decoded UTF-8 string.
+
+    Raises:
+        ValueError: If any argument is not in the whitelist.
+        subprocess.CalledProcessError: If the git command fails.
+    """
+    if not args:
+        raise ValueError("Git command arguments cannot be empty")
+
+    # Validate subcommand against whitelist
+    subcommand = args[0]
+    if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+        raise ValueError(
+            f"Git subcommand '{subcommand}' is not allowed. "
+            f"Allowed: {_ALLOWED_GIT_SUBCOMMANDS}"
+        )
+
+    # Validate all additional arguments against whitelist
+    for arg in args[1:]:
+        if arg not in _ALLOWED_GIT_ARGS:
+            raise ValueError(
+                f"Git argument '{arg}' is not allowed. " f"Allowed: {_ALLOWED_GIT_ARGS}"
+            )
+
+    # Execute the validated command
+    # Security: All arguments have been validated against whitelist above
+    # shell=False ensures no shell interpretation of arguments
+    full_command = ["git"] + list(args)
+    result = subprocess.check_output(  # nosec B603 B607 - validated whitelist
+        full_command,
+        shell=False,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.decode("utf-8")
 
 
 def read_config_file():
@@ -47,56 +105,56 @@ def get_api_config():
     return api_key, base_url
 
 
-def get_staged_diff():
-    """Get the diff of staged changes and list of changed files"""
+def _is_lock_file(filename: str) -> bool:
+    """Check if a filename is a dependency lock file."""
+    lock_file_patterns = (
+        ".lock",
+        "lock.json",
+        "package-lock.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+    )
+    return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+
+
+def get_staged_diff() -> Tuple[Optional[str], bool]:
+    """
+    Get the diff of staged changes and list of changed files.
+
+    Returns:
+        Tuple of (diff_content, has_lock_files):
+        - diff_content: The git diff output, or None if only lock files or error
+        - has_lock_files: True if lock files are present in the changes
+    """
     try:
-        # Get list of staged files
-        # Using explicit argument lists to avoid shell injection vulnerabilities
-        files_output = subprocess.check_output(
-            ["git", "diff", "--cached", "--name-only"], shell=False
-        ).decode("utf-8")
+        # Get list of staged files using validated git command
+        files_output = _run_git_command(["diff", "--cached", "--name-only"])
         staged_files = files_output.splitlines()
 
         # Check if any staged files are lock files
-        lock_files = [
-            ".lock",
-            "lock.json",
-            "package-lock.json",
-            "yarn.lock",
-            "pnpm-lock.yaml",
-        ]
-        if any(
-            any(file.endswith(lock) for lock in lock_files) for file in staged_files
-        ):
+        if any(_is_lock_file(f) for f in staged_files):
             return None, True  # Indicate lock file presence
 
-        # Get the actual diff
-        diff = subprocess.check_output(["git", "diff", "--cached"], shell=False).decode(
-            "utf-8"
-        )
+        # Get the actual diff using validated git command
+        diff = _run_git_command(["diff", "--cached"])
+
         if not diff:
             # If no staged changes, get diff of last commit
-            diff = subprocess.check_output(
-                ["git", "diff", "HEAD~1"], shell=False
-            ).decode("utf-8")
-            files_output = subprocess.check_output(
-                ["git", "diff", "HEAD~1", "--name-only"], shell=False
-            ).decode("utf-8")
+            diff = _run_git_command(["diff", "HEAD~1"])
+            files_output = _run_git_command(["diff", "HEAD~1", "--name-only"])
             staged_files = files_output.splitlines()
-            lock_files = [
-                ".lock",
-                "lock.json",
-                "package-lock.json",
-                "yarn.lock",
-                "pnpm-lock.yaml",
-            ]
-            if any(
-                any(file.endswith(lock) for lock in lock_files) for file in staged_files
-            ):
+
+            if any(_is_lock_file(f) for f in staged_files):
                 return None, True
+
         return diff, False  # No lock files found
+
     except subprocess.CalledProcessError as e:
         print(f"Error getting git diff: {e}")
+        return None, False
+    except ValueError as e:
+        # This would indicate a programming error (invalid command)
+        print(f"Internal error - invalid git command: {e}")
         return None, False
 
 
