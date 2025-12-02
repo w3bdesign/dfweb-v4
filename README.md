@@ -132,11 +132,15 @@ Sanity.io and Typescript.
   - Automated security vulnerability scanning with Snyk
     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
     - Integrates with GitHub Security tab for vulnerability tracking
+  - Supply chain attack prevention with 7-day minimum release age
+    - Packages must be published for at least 7 days before installation
+    - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+    - All CI workflows use `--frozen-lockfile` to prevent bypassing
+    - Protects against compromised package releases (like Shai Hulud incidents)
 
 ### Environment Variables
 
 - Type-safe environment variable validation with envalid
-
   - Runtime validation of required environment variables
   - Clear error messages with examples for missing variables
   - Separate handling of client-side and server-side variables
@@ -164,7 +168,6 @@ Sanity.io and Typescript.
 ### Testing Standards
 
 - ISTQB-aligned comprehensive test strategy
-
   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
   - Multi-level test approach (Unit, Component, E2E)
   - Risk-based testing methodology
@@ -173,7 +176,6 @@ Sanity.io and Typescript.
   - Structured defect management process
 
 - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-
   - Each test must include the following comments:
 
     ```typescript
