@@ -53,8 +53,7 @@ def get_staged_diff():
         # Get list of staged files
         # Using explicit argument lists to avoid shell injection vulnerabilities
         files_output = subprocess.check_output(
-            ["git", "diff", "--cached", "--name-only"],
-            shell=False
+            ["git", "diff", "--cached", "--name-only"], shell=False
         ).decode("utf-8")
         staged_files = files_output.splitlines()
 
@@ -72,19 +71,16 @@ def get_staged_diff():
             return None, True  # Indicate lock file presence
 
         # Get the actual diff
-        diff = subprocess.check_output(
-            ["git", "diff", "--cached"],
-            shell=False
-        ).decode("utf-8")
+        diff = subprocess.check_output(["git", "diff", "--cached"], shell=False).decode(
+            "utf-8"
+        )
         if not diff:
             # If no staged changes, get diff of last commit
             diff = subprocess.check_output(
-                ["git", "diff", "HEAD~1"],
-                shell=False
+                ["git", "diff", "HEAD~1"], shell=False
             ).decode("utf-8")
             files_output = subprocess.check_output(
-                ["git", "diff", "HEAD~1", "--name-only"],
-                shell=False
+                ["git", "diff", "HEAD~1", "--name-only"], shell=False
             ).decode("utf-8")
             staged_files = files_output.splitlines()
             lock_files = [
@@ -245,19 +241,21 @@ def generate_commit_message(diff):
     except Exception as e:
         error_msg = str(e)
         print(f"Error generating commit message: {error_msg}")
-        
+
         # Provide helpful diagnostics
         if "500" in error_msg:
             print("\nServer returned 500 error. Possible causes:")
             print("  - Model name may not be supported by your API provider")
-            print(f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}")
+            print(
+                f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}"
+            )
             print(f"  - Base URL: {base_url or 'default OpenAI'}")
             print("\nTry setting MODEL_NAME in .env to a supported model.")
         elif "401" in error_msg or "403" in error_msg:
             print("\nAuthentication error. Check your AI_API_KEY in .env")
         elif "404" in error_msg:
             print("\nModel not found. Check MODEL_NAME in .env")
-        
+
         return None
 
 
@@ -283,6 +281,7 @@ def main():
     print("------------------------")
     # Use sys.stdout.buffer.write for Unicode support in console
     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+    sys.stdout.buffer.flush()
     print("\n------------------------")
 
     # If running as a hook, save the message
