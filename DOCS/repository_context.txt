@@ -18372,57 +18372,6 @@ tsconfig.json
 104: export default config;
 ````
 
-## File: tsconfig.json
-````json
- 1: {
- 2:   "compilerOptions": {
- 3:     "lib": [
- 4:       "dom",
- 5:       "dom.iterable",
- 6:       "esnext"
- 7:     ],
- 8:     "allowJs": true,
- 9:     "skipLibCheck": true,
-10:     "strict": true,
-11:     "noEmit": true,
-12:     "esModuleInterop": true,
-13:     "module": "esnext",
-14:     "moduleResolution": "bundler",
-15:     "resolveJsonModule": true,
-16:     "isolatedModules": true,
-17:     "jsx": "react-jsx",
-18:     "incremental": true,
-19:     "plugins": [
-20:       {
-21:         "name": "next"
-22:       }
-23:     ],
-24:     "paths": {
-25:       "@/*": [
-26:         "./src/*"
-27:       ]
-28:     },
-29:     "types": [
-30:       "jest",
-31:       "@testing-library/jest-dom"
-32:     ],
-33:     "target": "ES2022"
-34:   },
-35:   "include": [
-36:     "next-env.d.ts",
-37:     "**/*.ts",
-38:     "**/*.tsx",
-39:     ".next/types/**/*.ts",
-40:     "src",
-41:     "cypress",
-42:     ".next/dev/types/**/*.ts"
-43:   ],
-44:   "exclude": [
-45:     "node_modules"
-46:   ]
-47: }
-````
-
 ## File: .circleci/config.yml
 ````yaml
  1: version: 2.1
@@ -18497,6 +18446,44 @@ tsconfig.json
 70:     jobs:
 71:       - build:
 72:           name: Build Next.js project
+````
+
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     permissions:
+14:       actions: read
+15:       contents: read
+16:       security-events: write
+17:     strategy:
+18:       fail-fast: false
+19:       matrix:
+20:         language: [javascript]
+21:     steps:
+22:       - name: Checkout
+23:         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+24:       - name: Initialize CodeQL
+25:         uses: github/codeql-action/init@v4
+26:         with:
+27:           languages: ${{ matrix.language }}
+28:           queries: +security-and-quality
+29:       - name: Autobuild
+30:         uses: github/codeql-action/autobuild@v4
+31:       - name: Perform CodeQL Analysis
+32:         uses: github/codeql-action/analyze@v4
+33:         with:
+34:           category: "/language:${{ matrix.language }}"
 ````
 
 ## File: .github/workflows/cypress.yml
@@ -19092,42 +19079,44 @@ tsconfig.json
 193:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v4
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v4
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v4
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
+## File: tsconfig.json
+````json
+ 1: {
+ 2:   "compilerOptions": {
+ 3:     "lib": ["dom", "dom.iterable", "esnext"],
+ 4:     "allowJs": true,
+ 5:     "skipLibCheck": true,
+ 6:     "strict": true,
+ 7:     "noEmit": true,
+ 8:     "esModuleInterop": true,
+ 9:     "module": "esnext",
+10:     "moduleResolution": "bundler",
+11:     "resolveJsonModule": true,
+12:     "isolatedModules": true,
+13:     "jsx": "react-jsx",
+14:     "incremental": true,
+15:     "plugins": [
+16:       {
+17:         "name": "next"
+18:       }
+19:     ],
+20:     "paths": {
+21:       "@/*": ["./src/*"]
+22:     },
+23:     "types": ["jest", "@testing-library/jest-dom"],
+24:     "target": "ES2022"
+25:   },
+26:   "include": [
+27:     "next-env.d.ts",
+28:     "**/*.ts",
+29:     "**/*.tsx",
+30:     ".next/types/**/*.ts",
+31:     "src",
+32:     "cypress",
+33:     ".next/dev/types/**/*.ts"
+34:   ],
+35:   "exclude": ["node_modules"]
+36: }
 ````
 
 ## File: .github/workflows/lighthouse.yml
@@ -19300,59 +19289,86 @@ tsconfig.json
 ````json
  1: {
  2:   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
- 3:   "extends": [
- 4:     "config:recommended",
- 5:     "security:openssf-scorecard"
- 6:   ],
- 7:   "minimumReleaseAge": "7 days",
- 8:   "internalChecksFilter": "strict",
- 9:   "ignorePresets": [
-10:     ":prHourlyLimit2",
-11:     ":prConcurrentLimit20"
-12:   ],
-13:   "ignoreTests": true,
-14:   "packageRules": [
-15:     {
-16:       "rangeStrategy": "bump",
-17:       "matchDepTypes": [
-18:         "dependencies",
-19:         "devDependencies",
-20:         "optionalDependencies",
-21:         "peerDependencies"
-22:       ]
-23:     },
-24:     {
-25:       "matchUpdateTypes": [
-26:         "minor",
-27:         "pin",
-28:         "digest"
-29:       ],
-30:       "automerge": true,
-31:       "ignoreTests": false,
-32:       "matchDepTypes": [
-33:         "dependencies",
-34:         "devDependencies",
-35:         "optionalDependencies",
-36:         "peerDependencies"
-37:       ]
-38:     },
-39:     {
-40:       "matchUpdateTypes": [
-41:         "patch",
-42:         "lockFileMaintenance"
-43:       ],
-44:       "automerge": true,
-45:       "automergeType": "branch",
-46:       "ignoreTests": false,
-47:       "matchDepTypes": [
-48:         "dependencies",
-49:         "devDependencies",
-50:         "optionalDependencies",
-51:         "peerDependencies"
-52:       ]
-53:     }
-54:   ]
-55: }
+ 3:   "extends": ["config:recommended", "security:openssf-scorecard"],
+ 4:   "minimumReleaseAge": "7 days",
+ 5:   "internalChecksFilter": "strict",
+ 6:   "ignorePresets": [":prHourlyLimit2", ":prConcurrentLimit20"],
+ 7:   "ignoreTests": true,
+ 8:   "packageRules": [
+ 9:     {
+10:       "rangeStrategy": "bump",
+11:       "matchDepTypes": [
+12:         "dependencies",
+13:         "devDependencies",
+14:         "optionalDependencies",
+15:         "peerDependencies"
+16:       ]
+17:     },
+18:     {
+19:       "matchUpdateTypes": ["minor", "pin", "digest"],
+20:       "automerge": true,
+21:       "ignoreTests": false,
+22:       "matchDepTypes": [
+23:         "dependencies",
+24:         "devDependencies",
+25:         "optionalDependencies",
+26:         "peerDependencies"
+27:       ]
+28:     },
+29:     {
+30:       "matchUpdateTypes": ["patch", "lockFileMaintenance"],
+31:       "automerge": true,
+32:       "automergeType": "branch",
+33:       "ignoreTests": false,
+34:       "matchDepTypes": [
+35:         "dependencies",
+36:         "devDependencies",
+37:         "optionalDependencies",
+38:         "peerDependencies"
+39:       ]
+40:     }
+41:   ]
+42: }
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.0",
+18:     "react-dom": "^19.2.0",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^4.19.0",
+21:     "styled-components": "^6.1.19"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.2.7",
+26:     "eslint": "^9.39.1",
+27:     "prettier": "^3.7.3",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
 ````
 
 ## File: commit/commit_analyzer.py
@@ -19653,152 +19669,105 @@ tsconfig.json
 294:     main()
 ````
 
-## File: studio/package.json
+## File: package.json
 ````json
  1: {
  2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.0",
-18:     "react-dom": "^19.2.0",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.19.0",
-21:     "styled-components": "^6.1.19"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.2.7",
-26:     "eslint": "^9.39.1",
-27:     "prettier": "^3.7.3",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
-````
-
-## File: package.json
-````json
-  1: {
-  2:   "name": "dfweb-v4",
-  3:   "version": "1.0.8",
-  4:   "private": true,
-  5:   "engines": {
-  6:     "node": ">=20.19.5"
-  7:   },
-  8:   "pnpm": {
-  9:     "overrides": {
- 10:       "glob@<10.5.0": ">=10.5.0",
- 11:       "glob@>=11.0.0 <11.1.0": ">=11.1.0",
- 12:       "valibot@<1.2.0": ">=1.2.0"
- 13:     }
- 14:   },
- 15:   "scripts": {
- 16:     "dev": "next dev --turbopack",
- 17:     "lhci": "lhci autorun",
- 18:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 19:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 20:     "build": "next build",
- 21:     "start": "next start",
- 22:     "lint": "next lint",
- 23:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 24:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 25:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 26:     "cypress:open": "cypress open",
- 27:     "cypress:headless": "cypress run",
- 28:     "e2e": "start-test dev 3000 cypress:headless",
- 29:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 30:     "ladle": "ladle serve",
- 31:     "typegen": "npx sanity typegen generate"
- 32:   },
- 33:   "dependencies": {
- 34:     "@babel/helpers": ">=7.28.4",
- 35:     "@emailjs/browser": "^4.4.1",
- 36:     "@hookform/resolvers": "^5.2.2",
- 37:     "@portabletext/react": "^4.0.3",
- 38:     "@sanity/client": "^7.13.1",
- 39:     "@sanity/image-url": "^1.2.0",
- 40:     "@vercel/speed-insights": "^1.3.0",
- 41:     "autoprefixer": "^10.4.22",
- 42:     "babel-jest": "30.2.0",
- 43:     "clsx": "^2.1.1",
- 44:     "cookie": ">=1.1.1",
- 45:     "envalid": "^8.1.1",
- 46:     "jest": "30.2.0",
- 47:     "motion": "^12.23.25",
- 48:     "next": "16.0.7",
- 49:     "next-sanity": "^11.6.10",
- 50:     "path-to-regexp": "^8.3.0",
- 51:     "react": "^19.2.0",
- 52:     "react-dom": "^19.2.0",
- 53:     "react-error-boundary": "^5.0.0",
- 54:     "react-hook-form": "^7.67.0",
- 55:     "react-icons": "^5.5.0",
- 56:     "sanity": "4.15.0",
- 57:     "sitemap": "^9.0.0",
- 58:     "tar-fs": "^3.1.1",
- 59:     "ts-node": "^10.9.2",
- 60:     "zod": "^4.1.13"
- 61:   },
- 62:   "devDependencies": {
- 63:     "@jest/expect": "^30.2.0",
- 64:     "@jest/globals": "^30.2.0",
- 65:     "@ladle/react": "^5.1.1",
- 66:     "@lhci/cli": "^0.15.1",
- 67:     "@playwright/test": "^1.57.0",
- 68:     "@portabletext/types": "^3.0.0",
- 69:     "@tailwindcss/postcss": "^4.1.17",
- 70:     "@testing-library/cypress": "^10.1.0",
- 71:     "@testing-library/jest-dom": "^6.9.1",
- 72:     "@testing-library/react": "^16.3.0",
- 73:     "@testing-library/user-event": "^14.6.1",
- 74:     "@types/jest": "^30.0.0",
- 75:     "@types/node": "^24.10.1",
- 76:     "@types/react": "^19.2.7",
- 77:     "@types/react-dom": "^19.2.3",
- 78:     "@typescript-eslint/eslint-plugin": "^8.48.0",
- 79:     "@typescript-eslint/parser": "^8.48.0",
- 80:     "@typescript-eslint/utils": "^8.48.0",
- 81:     "axe-core": "^4.11.0",
- 82:     "cypress": "15.7.0",
- 83:     "cypress-axe": "^1.7.0",
- 84:     "eslint": "9.39.1",
- 85:     "eslint-config-next": "16.0.6",
- 86:     "eslint-config-prettier": "^10.1.8",
- 87:     "eslint-plugin-jest": "^29.2.1",
- 88:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 89:     "eslint-plugin-prettier": "^5.5.4",
- 90:     "eslint-plugin-react": "^7.37.5",
- 91:     "eslint-plugin-react-hooks": "^7.0.1",
- 92:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 93:     "eslint-plugin-testing-library": "^7.13.5",
- 94:     "expect": "^30.2.0",
- 95:     "jest-environment-jsdom": "^30.2.0",
- 96:     "jest-extended": "^7.0.0",
- 97:     "jsdom-testing-mocks": "^1.16.0",
- 98:     "pa11y": "^9.0.1",
- 99:     "postcss": "^8.5.6",
-100:     "prettier": "3.7.3",
-101:     "tailwindcss": "^4.1.17",
-102:     "ts-jest": "^29.4.6",
-103:     "typescript": "^5.9.3",
-104:     "wait-on": "^9.0.3"
-105:   }
-106: }
+ 3:   "version": "1.0.8",
+ 4:   "private": true,
+ 5:   "engines": {
+ 6:     "node": ">=20.19.5"
+ 7:   },  
+ 8:   "scripts": {
+ 9:     "dev": "next dev --turbopack",
+10:     "lhci": "lhci autorun",
+11:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+12:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+13:     "build": "next build",
+14:     "start": "next start",
+15:     "lint": "next lint",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate"
+25:   },
+26:   "dependencies": {
+27:     "@babel/helpers": ">=7.28.4",
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.2.2",
+30:     "@portabletext/react": "^4.0.3",
+31:     "@sanity/client": "^7.13.1",
+32:     "@sanity/image-url": "^1.2.0",
+33:     "@vercel/speed-insights": "1.0.14",
+34:     "autoprefixer": "^10.4.22",
+35:     "babel-jest": "30.2.0",
+36:     "clsx": "^2.1.1",
+37:     "cookie": ">=1.1.1",
+38:     "envalid": "^8.1.1",
+39:     "jest": "30.2.0",
+40:     "motion": "^12.23.25",
+41:     "next": "16.0.7",
+42:     "next-sanity": "^11.6.10",
+43:     "path-to-regexp": "^8.3.0",
+44:     "react": "^19.2.0",
+45:     "react-dom": "^19.2.0",
+46:     "react-error-boundary": "^5.0.0",
+47:     "react-hook-form": "^7.67.0",
+48:     "react-icons": "^5.5.0",
+49:     "sanity": "4.15.0",
+50:     "sitemap": "^9.0.0",
+51:     "tar-fs": "^3.1.1",
+52:     "ts-node": "^10.9.2",
+53:     "zod": "^4.1.13"
+54:   },
+55:   "devDependencies": {
+56:     "@jest/expect": "^30.2.0",
+57:     "@jest/globals": "^30.2.0",
+58:     "@ladle/react": "^5.1.1",
+59:     "@lhci/cli": "^0.15.1",
+60:     "@playwright/test": "^1.57.0",
+61:     "@portabletext/types": "^3.0.0",
+62:     "@tailwindcss/postcss": "^4.1.17",
+63:     "@testing-library/cypress": "^10.1.0",
+64:     "@testing-library/jest-dom": "^6.9.1",
+65:     "@testing-library/react": "^16.3.0",
+66:     "@testing-library/user-event": "^14.6.1",
+67:     "@types/jest": "^30.0.0",
+68:     "@types/node": "^24.10.1",
+69:     "@types/react": "^19.2.7",
+70:     "@types/react-dom": "^19.2.3",
+71:     "@typescript-eslint/eslint-plugin": "^8.48.0",
+72:     "@typescript-eslint/parser": "^8.48.0",
+73:     "@typescript-eslint/utils": "^8.48.0",
+74:     "axe-core": "^4.11.0",
+75:     "cypress": "15.7.0",
+76:     "cypress-axe": "^1.7.0",
+77:     "eslint": "9.39.1",
+78:     "eslint-config-next": "16.0.5",
+79:     "eslint-config-prettier": "^10.1.8",
+80:     "eslint-plugin-jest": "^29.2.1",
+81:     "eslint-plugin-jsx-a11y": "^6.10.2",
+82:     "eslint-plugin-prettier": "^5.5.4",
+83:     "eslint-plugin-react": "^7.37.5",
+84:     "eslint-plugin-react-hooks": "^7.0.1",
+85:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+86:     "eslint-plugin-testing-library": "^7.13.5",
+87:     "expect": "^30.2.0",
+88:     "jest-environment-jsdom": "^30.2.0",
+89:     "jest-extended": "^7.0.0",
+90:     "jsdom-testing-mocks": "^1.16.0",
+91:     "pa11y": "^9.0.1",
+92:     "postcss": "^8.5.6",
+93:     "prettier": "3.7.3",
+94:     "tailwindcss": "^4.1.17",
+95:     "ts-jest": "^29.4.6",
+96:     "typescript": "^5.9.3",
+97:     "wait-on": "^9.0.3"
+98:   }
+99: }
 ````
