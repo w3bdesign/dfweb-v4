@@ -18486,150 +18486,6 @@ tsconfig.json
 34:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v6
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@3a0024f0665291c8c6c9957134b033a5e639e837
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v4
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v6
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@3a0024f0665291c8c6c9957134b033a5e639e837
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Install dependencies for studio
-31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
-32:       - name: Run Snyk to check main project vulnerabilities
-33:         uses: snyk/actions/node@master
-34:         env:
-35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-36:         with:
-37:           command: "test"
-38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-39:       - name: Run Snyk to check studio project vulnerabilities
-40:         uses: snyk/actions/node@master
-41:         env:
-42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-43:         with:
-44:           command: "test"
-45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-46:       - name: Run Snyk to check eslint plugin vulnerabilities
-47:         uses: snyk/actions/node@master
-48:         env:
-49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-50:         with:
-51:           command: "test"
-52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-53:       - name: Upload main project SARIF report to GitHub Security tab
-54:         if: always() && hashFiles('snyk-main.sarif') != ''
-55:         uses: github/codeql-action/upload-sarif@v4
-56:         with:
-57:           sarif_file: snyk-main.sarif
-58:           category: snyk-main
-59:       - name: Upload studio SARIF report to GitHub Security tab
-60:         if: always() && hashFiles('snyk-studio.sarif') != ''
-61:         uses: github/codeql-action/upload-sarif@v4
-62:         with:
-63:           sarif_file: snyk-studio.sarif
-64:           category: snyk-studio
-65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-67:         uses: github/codeql-action/upload-sarif@v4
-68:         with:
-69:           sarif_file: snyk-eslint.sarif
-70:           category: snyk-eslint
-71:       - name: Snyk Monitor main project (only for pushes to main branch)
-72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-73:         uses: snyk/actions/node@master
-74:         env:
-75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-76:         with:
-77:           command: "monitor"
-78:           args: ""
-79:       - name: Snyk Monitor studio project (only for pushes to main branch)
-80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-81:         uses: snyk/actions/node@master
-82:         env:
-83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-84:         with:
-85:           command: "monitor"
-86:           args: "--file=studio/package.json"
-87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-89:         uses: snyk/actions/node@master
-90:         env:
-91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-92:         with:
-93:           command: "monitor"
-94:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: AGENTS.md
 ````markdown
   1: # AGENTS.md
@@ -19096,6 +18952,173 @@ tsconfig.json
 36: }
 ````
 
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v6
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v6
+19:         with:
+20:           node-version: 24
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v4
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v6
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Install dependencies for studio
+31:         run: cd studio && pnpm install --frozen-lockfile && cd ..
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@master
+34:         env:
+35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+36:         with:
+37:           command: "test"
+38:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+39:       - name: Run Snyk to check studio project vulnerabilities
+40:         uses: snyk/actions/node@master
+41:         env:
+42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+43:         with:
+44:           command: "test"
+45:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+46:       - name: Run Snyk to check eslint plugin vulnerabilities
+47:         uses: snyk/actions/node@master
+48:         env:
+49:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+50:         with:
+51:           command: "test"
+52:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+53:       - name: Upload main project SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-main.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@v4
+56:         with:
+57:           sarif_file: snyk-main.sarif
+58:           category: snyk-main
+59:       - name: Upload studio SARIF report to GitHub Security tab
+60:         if: always() && hashFiles('snyk-studio.sarif') != ''
+61:         uses: github/codeql-action/upload-sarif@v4
+62:         with:
+63:           sarif_file: snyk-studio.sarif
+64:           category: snyk-studio
+65:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+66:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+67:         uses: github/codeql-action/upload-sarif@v4
+68:         with:
+69:           sarif_file: snyk-eslint.sarif
+70:           category: snyk-eslint
+71:       - name: Snyk Monitor main project (only for pushes to main branch)
+72:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+73:         uses: snyk/actions/node@master
+74:         env:
+75:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+76:         with:
+77:           command: "monitor"
+78:           args: ""
+79:       - name: Snyk Monitor studio project (only for pushes to main branch)
+80:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+81:         uses: snyk/actions/node@master
+82:         env:
+83:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+84:         with:
+85:           command: "monitor"
+86:           args: "--file=studio/package.json"
+87:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+88:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+89:         uses: snyk/actions/node@master
+90:         env:
+91:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+92:         with:
+93:           command: "monitor"
+94:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: .npmrc
+````
+ 1: # pnpm Security Configuration
+ 2: # Defense against supply chain attacks
+ 3: 
+ 4: # Minimum Release Age: Packages must be at least 7 days old before installation
+ 5: # This prevents installing freshly compromised packages
+ 6: # Value is in minutes: 10080 = 7 days (7 * 24 * 60)
+ 7: # minimum-release-age=10080
+ 8: 
+ 9: # Registry configuration (using default npm registry which supports release timestamps)
+10: registry=https://registry.npmjs.org/
+11: 
+12: # Strict peer dependencies for better dependency tree control
+13: strict-peer-dependencies=false
+14: 
+15: # Auto-install peers to avoid manual peer dependency management
+16: auto-install-peers=true
+17: 
+18: # Engine strict mode - fail if Node.js version doesn't match engines field
+19: engine-strict=true
+````
+
 ## File: .github/workflows/lighthouse.yml
 ````yaml
  1: name: Lighthouse CI
@@ -19110,7 +19133,7 @@ tsconfig.json
 10:         with:
 11:           node-version: "24"
 12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@3a0024f0665291c8c6c9957134b033a5e639e837
+13:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
 14:         with:
 15:           version: 10
 16:           run_install: false
@@ -19170,7 +19193,7 @@ tsconfig.json
 14:         with:
 15:           node-version: "24"
 16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@3a0024f0665291c8c6c9957134b033a5e639e837
+17:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
 18:         with:
 19:           version: 10
 20:           run_install: false
@@ -19234,7 +19257,7 @@ tsconfig.json
 10:     runs-on: ubuntu-latest
 11:     steps:
 12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@3a0024f0665291c8c6c9957134b033a5e639e837
+13:       - uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
 14:         with:
 15:           version: 10
 16:       - uses: actions/setup-node@v6
@@ -19260,69 +19283,6 @@ tsconfig.json
 36:           name: playwright-report
 37:           path: playwright-report/
 38:           retention-days: 30
-````
-
-## File: .npmrc
-````
- 1: # pnpm Security Configuration
- 2: # Defense against supply chain attacks
- 3: 
- 4: # Minimum Release Age: Packages must be at least 7 days old before installation
- 5: # This prevents installing freshly compromised packages
- 6: # Value is in minutes: 10080 = 7 days (7 * 24 * 60)
- 7: # minimum-release-age=10080
- 8: 
- 9: # Registry configuration (using default npm registry which supports release timestamps)
-10: registry=https://registry.npmjs.org/
-11: 
-12: # Strict peer dependencies for better dependency tree control
-13: strict-peer-dependencies=false
-14: 
-15: # Auto-install peers to avoid manual peer dependency management
-16: auto-install-peers=true
-17: 
-18: # Engine strict mode - fail if Node.js version doesn't match engines field
-19: engine-strict=true
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.0",
-18:     "react-dom": "^19.2.0",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.19.0",
-21:     "styled-components": "^6.1.19"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^5.0.2",
-25:     "@types/react": "^19.2.7",
-26:     "eslint": "^9.39.1",
-27:     "prettier": "^3.7.3",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: renovate.json
@@ -19672,6 +19632,46 @@ tsconfig.json
 294:     main()
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.0",
+18:     "react-dom": "^19.2.0",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^4.20.3",
+21:     "styled-components": "^6.1.19"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^5.0.2",
+25:     "@types/react": "^19.2.7",
+26:     "eslint": "^9.39.1",
+27:     "prettier": "^3.7.3",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: package.json
 ````json
  1: {
@@ -19719,7 +19719,7 @@ tsconfig.json
 43:     "react-error-boundary": "^5.0.0",
 44:     "react-hook-form": "^7.67.0",
 45:     "react-icons": "^5.5.0",
-46:     "sanity": "4.15.0",
+46:     "sanity": "4.20.3",
 47:     "sitemap": "^9.0.0",
 48:     "tar-fs": "^3.1.1",
 49:     "ts-node": "^10.9.2",
