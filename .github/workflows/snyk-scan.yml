@@ -34,9 +34,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install dependencies for studio
-        run: cd studio && pnpm install --frozen-lockfile && cd ..
-
       - name: Run Snyk to check main project vulnerabilities
         uses: snyk/actions/node@master
         env:
@@ -44,14 +41,6 @@ jobs:
         with:
           command: "test"
           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-
-      - name: Run Snyk to check studio project vulnerabilities
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: "test"
-          args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
 
       - name: Run Snyk to check eslint plugin vulnerabilities
         uses: snyk/actions/node@master
@@ -68,13 +57,6 @@ jobs:
           sarif_file: snyk-main.sarif
           category: snyk-main
 
-      - name: Upload studio SARIF report to GitHub Security tab
-        if: always() && hashFiles('snyk-studio.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: snyk-studio.sarif
-          category: snyk-studio
-
       - name: Upload eslint plugin SARIF report to GitHub Security tab
         if: always() && hashFiles('snyk-eslint.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
@@ -90,15 +72,6 @@ jobs:
         with:
           command: "monitor"
           args: ""
-
-      - name: Snyk Monitor studio project (only for pushes to main branch)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: "monitor"
-          args: "--file=studio/package.json"
 
       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
