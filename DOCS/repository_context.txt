@@ -19077,6 +19077,74 @@ tsconfig.json
 52:           pkill -f "next start" || true
 ````
 
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v6
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v4
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Create pa11y config
+35:         run: |
+36:           # Create pa11y config file
+37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+38:       - name: Build Next.js app
+39:         run: pnpm build
+40:       - name: Start Next.js app
+41:         run: pnpm start &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm exec wait-on http://localhost:3000
+44:       - name: Run pa11y
+45:         run: |
+46:           # Create a directory for the reports
+47:           mkdir -p pa11y-reports
+48:           # Run pa11y on main pages with config
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+53:       - name: Upload pa11y results
+54:         if: always()
+55:         uses: actions/upload-artifact@v5
+56:         with:
+57:           name: pa11y-reports
+58:           path: pa11y-reports/
+59:       - name: Check for accessibility issues
+60:         run: |
+61:           if grep -q "Error:" pa11y-reports/*.txt; then
+62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+63:             exit 1
+64:           fi
+````
+
 ## File: .github/workflows/playwright.yml
 ````yaml
  1: name: Playwright Tests
@@ -19166,74 +19234,6 @@ tsconfig.json
 43:     }
 44:   ]
 45: }
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v6
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v4
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Create pa11y config
-35:         run: |
-36:           # Create pa11y config file
-37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-38:       - name: Build Next.js app
-39:         run: pnpm build
-40:       - name: Start Next.js app
-41:         run: pnpm start &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm exec wait-on http://localhost:3000
-44:       - name: Run pa11y
-45:         run: |
-46:           # Create a directory for the reports
-47:           mkdir -p pa11y-reports
-48:           # Run pa11y on main pages with config
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-53:       - name: Upload pa11y results
-54:         if: always()
-55:         uses: actions/upload-artifact@v5
-56:         with:
-57:           name: pa11y-reports
-58:           path: pa11y-reports/
-59:       - name: Check for accessibility issues
-60:         run: |
-61:           if grep -q "Error:" pa11y-reports/*.txt; then
-62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-63:             exit 1
-64:           fi
 ````
 
 ## File: .github/workflows/snyk-scan.yml
@@ -19718,16 +19718,16 @@ tsconfig.json
 65:     "@types/node": "^24.10.1",
 66:     "@types/react": "^19.2.7",
 67:     "@types/react-dom": "^19.2.3",
-68:     "@typescript-eslint/eslint-plugin": "^8.48.0",
-69:     "@typescript-eslint/parser": "^8.48.0",
-70:     "@typescript-eslint/utils": "^8.48.0",
+68:     "@typescript-eslint/eslint-plugin": "^8.48.1",
+69:     "@typescript-eslint/parser": "^8.48.1",
+70:     "@typescript-eslint/utils": "^8.48.1",
 71:     "axe-core": "^4.11.0",
 72:     "cypress": "15.7.1",
 73:     "cypress-axe": "^1.7.0",
 74:     "eslint": "9.39.1",
 75:     "eslint-config-next": "16.0.7",
 76:     "eslint-config-prettier": "^10.1.8",
-77:     "eslint-plugin-jest": "^29.3.0",
+77:     "eslint-plugin-jest": "^29.4.0",
 78:     "eslint-plugin-jsx-a11y": "^6.10.2",
 79:     "eslint-plugin-prettier": "^5.5.4",
 80:     "eslint-plugin-react": "^7.37.5",
