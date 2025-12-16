@@ -19236,81 +19236,6 @@ tsconfig.json
 45: }
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v6
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Run Snyk to check main project vulnerabilities
-31:         uses: snyk/actions/node@master
-32:         env:
-33:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-34:         with:
-35:           command: "test"
-36:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-37:       - name: Run Snyk to check eslint plugin vulnerabilities
-38:         uses: snyk/actions/node@master
-39:         env:
-40:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-41:         with:
-42:           command: "test"
-43:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-44:       - name: Upload main project SARIF report to GitHub Security tab
-45:         if: always() && hashFiles('snyk-main.sarif') != ''
-46:         uses: github/codeql-action/upload-sarif@v4
-47:         with:
-48:           sarif_file: snyk-main.sarif
-49:           category: snyk-main
-50:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-51:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-52:         uses: github/codeql-action/upload-sarif@v4
-53:         with:
-54:           sarif_file: snyk-eslint.sarif
-55:           category: snyk-eslint
-56:       - name: Snyk Monitor main project (only for pushes to main branch)
-57:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-58:         uses: snyk/actions/node@master
-59:         env:
-60:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-61:         with:
-62:           command: "monitor"
-63:           args: ""
-64:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-65:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-66:         uses: snyk/actions/node@master
-67:         env:
-68:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-69:         with:
-70:           command: "monitor"
-71:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: commit/commit_analyzer.py
 ````python
   1: import subprocess
@@ -19609,6 +19534,81 @@ tsconfig.json
 294:     main()
 ````
 
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     steps:
+17:       - name: Checkout code
+18:         uses: actions/checkout@v6
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@b9e1dbc72ff7358f971cc0b7c62c7a0d83f1068b
+21:         with:
+22:           version: 10
+23:       - name: Set up Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24.x"
+27:           cache: "pnpm"
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Run Snyk to check main project vulnerabilities
+31:         uses: snyk/actions/node@master
+32:         env:
+33:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+34:         with:
+35:           command: "test"
+36:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+37:       - name: Run Snyk to check eslint plugin vulnerabilities
+38:         uses: snyk/actions/node@master
+39:         env:
+40:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+41:         with:
+42:           command: "test"
+43:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+44:       - name: Upload main project SARIF report to GitHub Security tab
+45:         if: always() && hashFiles('snyk-main.sarif') != ''
+46:         uses: github/codeql-action/upload-sarif@v4
+47:         with:
+48:           sarif_file: snyk-main.sarif
+49:           category: snyk-main
+50:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+51:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+52:         uses: github/codeql-action/upload-sarif@v4
+53:         with:
+54:           sarif_file: snyk-eslint.sarif
+55:           category: snyk-eslint
+56:       - name: Snyk Monitor main project (only for pushes to main branch)
+57:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+58:         uses: snyk/actions/node@master
+59:         env:
+60:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+61:         with:
+62:           command: "monitor"
+63:           args: ""
+64:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+65:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+66:         uses: snyk/actions/node@master
+67:         env:
+68:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+69:         with:
+70:           command: "monitor"
+71:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -19630,7 +19630,7 @@ tsconfig.json
 17:     "react": "^19.2.3",
 18:     "react-dom": "^19.2.3",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^4.20.3",
+20:     "sanity": "^4.21.0",
 21:     "styled-components": "^6.1.19"
 22:   },
 23:   "devDependencies": {
@@ -19696,7 +19696,7 @@ tsconfig.json
 43:     "react-error-boundary": "^5.0.0",
 44:     "react-hook-form": "^7.68.0",
 45:     "react-icons": "^5.5.0",
-46:     "sanity": "4.20.3",
+46:     "sanity": "4.21.0",
 47:     "sitemap": "^9.0.0",
 48:     "tar-fs": "^3.1.1",
 49:     "ts-node": "^10.9.2",
