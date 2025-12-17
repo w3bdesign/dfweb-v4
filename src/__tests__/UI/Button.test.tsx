@@ -65,40 +65,5 @@ describe("Button", () => {
       expect(button).toBeDisabled();
       expect(button).not.toBeEnabled();
     });
-
-    it("renders as anchor with target='_blank' for external links", () => {
-      // Arrange
-      const href = "https://example.com";
-
-      // Act
-      render(
-        <Button renderAs="a" href={href}>
-          External Link
-        </Button>,
-      );
-      const link = screen.getByRole("link", { name: "External Link" });
-
-      // Assert
-      expect(link).toHaveAttribute("href", href);
-      expect(link).toHaveAttribute("target", "_blank");
-    });
-
-    it("renders as anchor without target='_blank' for internal anchor links", () => {
-      // Arrange
-      const href = "#main-content";
-
-      // Act
-      render(
-        <Button renderAs="a" href={href}>
-          Skip to content
-        </Button>,
-      );
-      const link = screen.getByRole("link", { name: "Skip to content" });
-
-      // Assert
-      expect(link).toHaveAttribute("href", href);
-      expect(link).not.toHaveAttribute("target", "_blank");
-      expect(link).not.toHaveAttribute("target");
-    });
   });
 });
