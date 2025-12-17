@@ -37,7 +37,8 @@ const Button = ({
 }: IButtonProps) => {
   const Component = renderAs ?? "button";
   const isLink = renderAs === "a";
-  const targetLink = isLink ? "_blank" : undefined;
+  const isInternalAnchor = href?.startsWith("#");
+  const targetLink = isLink && !isInternalAnchor ? "_blank" : undefined;
 
   return (
     <Component
