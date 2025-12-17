@@ -921,6 +921,304 @@ tsconfig.json
 17: # and false positives you encounter during scanning.
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: import subprocess
+  2: import os
+  3: import sys
+  4: import json
+  5: import codecs
+  6: from typing import List, Tuple, Optional
+  7: from openai import OpenAI
+  8: from pathlib import Path
+  9: from dotenv import load_dotenv
+ 10: # Security: Whitelist of allowed git subcommands and arguments
+ 11: # This prevents any possibility of command injection by only allowing known-safe commands
+ 12: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+ 13: _GIT_ARG_CACHED = "--cached"
+ 14: _GIT_ARG_NAME_ONLY = "--name-only"
+ 15: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+ 16: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+ 17: def _run_git_command(args: List[str]) -> str:
+ 18:     """
+ 19:     Safely execute a git command with strict validation.
+ 20:     Security measures implemented:
+ 21:     - Whitelist validation: Only allows pre-approved git subcommands and arguments
+ 22:     - No shell execution: shell=False prevents shell injection attacks
+ 23:     - Explicit argument list: Prevents argument splitting vulnerabilities
+ 24:     - No user input: All allowed values are hardcoded constants
+ 25:     Args:
+ 26:         args: List of git command arguments (excluding 'git' itself).
+ 27:               Must only contain whitelisted subcommands and arguments.
+ 28:     Returns:
+ 29:         Command output as decoded UTF-8 string.
+ 30:     Raises:
+ 31:         ValueError: If any argument is not in the whitelist.
+ 32:         subprocess.CalledProcessError: If the git command fails.
+ 33:     """
+ 34:     if not args:
+ 35:         raise ValueError("Git command arguments cannot be empty")
+ 36:     # Validate subcommand against whitelist
+ 37:     subcommand = args[0]
+ 38:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+ 39:         raise ValueError(
+ 40:             f"Git subcommand '{subcommand}' is not allowed. "
+ 41:             f"Allowed: {_ALLOWED_GIT_SUBCOMMANDS}"
+ 42:         )
+ 43:     # Validate all additional arguments against whitelist
+ 44:     for arg in args[1:]:
+ 45:         if arg not in _ALLOWED_GIT_ARGS:
+ 46:             raise ValueError(
+ 47:                 f"Git argument '{arg}' is not allowed. Allowed: {_ALLOWED_GIT_ARGS}"
+ 48:             )
+ 49:     # Execute the validated command
+ 50:     # Security: All arguments have been validated against whitelist above
+ 51:     # shell=False ensures no shell interpretation of arguments
+ 52:     full_command = ["git"] + list(args)
+ 53:     result = subprocess.check_output(  # nosec B603 B607 - validated whitelist
+ 54:         full_command,
+ 55:         shell=False,
+ 56:         stderr=subprocess.DEVNULL,
+ 57:     )
+ 58:     return result.decode("utf-8")
+ 59: def read_config_file():
+ 60:     """Read configuration from local config file."""
+ 61:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 62:     try:
+ 63:         if os.path.exists(config_path):
+ 64:             with open(config_path, "r") as f:
+ 65:                 return json.load(f)
+ 66:     except Exception as e:
+ 67:         print(f"Error reading config file: {e}")
+ 68:     return {}
+ 69: def get_api_config():
+ 70:     """Get API configuration from environment variables or config file."""
+ 71:     load_dotenv()
+ 72:     # Try environment variables first
+ 73:     api_key = os.getenv("AI_API_KEY")
+ 74:     base_url = os.getenv("AI_BASE_URL")
+ 75:     # If no API key in env, try config file
+ 76:     if not api_key:
+ 77:         config = read_config_file()
+ 78:         api_key = config.get("api_key")
+ 79:         base_url = config.get("base_url", base_url)
+ 80:     if not api_key:
+ 81:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
+ 82:         raise ValueError(
+ 83:             "No API key found. Please either:\n"
+ 84:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
+ 85:             "2. Set AI_API_KEY environment variable, or\n"
+ 86:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
+ 87:         )
+ 88:     return api_key, base_url
+ 89: def _is_lock_file(filename: str) -> bool:
+ 90:     """Check if a filename is a dependency lock file."""
+ 91:     lock_file_patterns = (
+ 92:         ".lock",
+ 93:         "lock.json",
+ 94:         "package-lock.json",
+ 95:         "yarn.lock",
+ 96:         "pnpm-lock.yaml",
+ 97:     )
+ 98:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+ 99: def get_staged_diff() -> Tuple[Optional[str], bool]:
+100:     """
+101:     Get the diff of staged changes and list of changed files.
+102:     Returns:
+103:         Tuple of (diff_content, has_lock_files):
+104:         - diff_content: The git diff output, or None if only lock files or error
+105:         - has_lock_files: True if lock files are present in the changes
+106:     """
+107:     try:
+108:         # Get list of staged files using validated git command
+109:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
+110:         staged_files = files_output.splitlines()
+111:         # Check if any staged files are lock files
+112:         if any(_is_lock_file(f) for f in staged_files):
+113:             return None, True  # Indicate lock file presence
+114:         # Get the actual diff using validated git command
+115:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+116:         if not diff:
+117:             # If no staged changes, get diff of last commit
+118:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+119:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
+120:             staged_files = files_output.splitlines()
+121:             if any(_is_lock_file(f) for f in staged_files):
+122:                 return None, True
+123:         return diff, False  # No lock files found
+124:     except subprocess.CalledProcessError as e:
+125:         print(f"Error getting git diff: {e}")
+126:         return None, False
+127:     except ValueError as e:
+128:         # This would indicate a programming error (invalid command)
+129:         print(f"Internal error - invalid git command: {e}")
+130:         return None, False
+131: def load_gitmojis():
+132:     """Load gitmojis from gitmojis.json"""
+133:     try:
+134:         with open("gitmojis.json", "r", encoding="utf-8") as f:
+135:             data = json.load(f)
+136:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
+137:     except Exception as e:
+138:         print(f"Error loading gitmojis: {e}")
+139:         return {}
+140: def get_emoji_for_type(commit_type, gitmojis):
+141:     """Map commit type to appropriate emoji"""
+142:     type_to_emoji = {
+143:         # Core conventional commit types
+144:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
+145:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
+146:         "docs": gitmojis.get("memo", "📝"),  # Documentation
+147:         "style": gitmojis.get("art", "🎨"),  # Style/format
+148:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
+149:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
+150:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
+151:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
+152:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
+153:         # Additional commit types with specific emojis
+154:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
+155:         "deps": gitmojis.get("package", "📦"),  # Dependencies
+156:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
+157:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
+158:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
+159:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
+160:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
+161:         "license": gitmojis.get("page-facing-up", "📄"),  # License
+162:         "docker": gitmojis.get("whale", "🐳"),  # Docker
+163:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
+164:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
+165:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
+166:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
+167:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
+168:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
+169:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
+170:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
+171:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
+172:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
+173:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
+174:     }
+175:     return type_to_emoji.get(commit_type, "")
+176: def generate_commit_message(diff):
+177:     """Generate commit message using OpenAI API"""
+178:     try:
+179:         api_key, base_url = get_api_config()
+180:         client_kwargs = {"api_key": api_key}
+181:         if base_url:
+182:             client_kwargs["base_url"] = base_url
+183:         client = OpenAI(**client_kwargs)
+184:         # Get model from environment variable or use default
+185:         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
+186:         # Load gitmojis
+187:         # gitmojis = load_gitmojis()
+188:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+189:         The commit message MUST follow this format:
+190:         <emoji> <type>[optional scope]: <description>
+191:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+192:         [optional footer(s)]
+193:         Where:
+194:         1. Type MUST be one of (with corresponding emoji):
+195:            Core types:
+196:            - ✨ feat: A new feature
+197:            - 🐛 fix: A bug fix
+198:            - 📝 docs: Documentation only changes
+199:            - 🎨 style: Changes that don't affect the meaning of the code
+200:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+201:            - ⚡️ perf: A code change that improves performance
+202:            - ✅ test: Adding missing tests or correcting existing tests
+203:            - 🔧 chore: Changes to build process or auxiliary tools
+204:            - 👷 ci: Changes to CI configuration files and scripts
+205:            Additional specific types:
+206:            - 🔒 security: Security fixes
+207:            - 📦 deps: Dependencies
+208:            - 💥 breaking: Breaking changes
+209:            - 💄 ui: UI/style changes
+210:            - 🌐 i18n: Internationalization
+211:            - ✏️ typo: Fix typos
+212:            - 🎉 init: Initial commit
+213:            - 📄 license: License
+214:            - 🐳 docker: Docker
+215:            - ♿️ access: Accessibility
+216:            - 🔊 logs: Logging
+217:            - 🗃️ db: Database
+218:            - 🔥 cleanup: Remove code/files
+219:            - 🚧 wip: Work in progress
+220:            - 🚚 move: Move/rename files
+221:            - ⏪ revert: Revert changes
+222:            - 🔀 merge: Merge branches
+223:            - 📱 responsive: Responsive design
+224:            - 🚑 hotfix: Critical hotfix
+225:         2. Description MUST:
+226:            - Be 50 characters or less
+227:            - Start with lowercase
+228:            - Use imperative mood ("add" not "adds/added")
+229:            - No period at end
+230:            - Be clear and descriptive
+231:         3. Body (if included) MUST:
+232:            - Be separated from title by blank line
+233:            - Wrap at 72 characters
+234:            - Explain what and why vs. how
+235:            - Use proper punctuation
+236:         Git diff to analyze:
+237:         {diff}
+238:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+239:         response = client.chat.completions.create(
+240:             model=model,
+241:             messages=[{"role": "user", "content": prompt}],
+242:             stream=False,
+243:         )
+244:         # Get the message and clean any potential explanatory text
+245:         message = response.choices[0].message.content.strip()
+246:         if "Based on the diff" in message:
+247:             message = message.split("\n")[-1].strip()
+248:         return message
+249:     except Exception as e:
+250:         error_msg = str(e)
+251:         print(f"Error generating commit message: {error_msg}")
+252:         # Provide helpful diagnostics
+253:         if "500" in error_msg:
+254:             print("\nServer returned 500 error. Possible causes:")
+255:             print("  - Model name may not be supported by your API provider")
+256:             print(
+257:                 f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}"
+258:             )
+259:             print(f"  - Base URL: {base_url or 'default OpenAI'}")
+260:             print("\nTry setting MODEL_NAME in .env to a supported model.")
+261:         elif "401" in error_msg or "403" in error_msg:
+262:             print("\nAuthentication error. Check your AI_API_KEY in .env")
+263:         elif "404" in error_msg:
+264:             print("\nModel not found. Check MODEL_NAME in .env")
+265:         return None
+266: def main():
+267:     # Get the diff and check for lock files
+268:     diff, has_lock_files = get_staged_diff()
+269:     if has_lock_files:
+270:         # Use hardcoded message for lock files
+271:         commit_message = "📦 deps: update dependencies"
+272:     elif not diff:
+273:         print("No changes to analyze")
+274:         sys.exit(1)
+275:     else:
+276:         # Generate commit message for non-lock files
+277:         commit_message = generate_commit_message(diff)
+278:     if not commit_message:
+279:         print("Failed to generate commit message")
+280:         sys.exit(1)
+281:     # Print the commit message
+282:     print("\nGenerated commit message:")
+283:     print("------------------------")
+284:     # Use sys.stdout.buffer.write for Unicode support in console
+285:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+286:     sys.stdout.buffer.flush()
+287:     print("\n------------------------")
+288:     # If running as a hook, save the message
+289:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+290:         # Use UTF-8 encoding when writing the commit message
+291:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+292:             f.write(commit_message)
+293: if __name__ == "__main__":
+294:     main()
+````
+
 ## File: DOCS/EXPLANATION.md
 ````markdown
   1: # DFWeb v4 - Interview Discussion Guide
@@ -10307,66 +10605,6 @@ tsconfig.json
 78: export default ProsjektCard;
 ````
 
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10:   "aria-label"?: string;
-11: }
-12: /**
-13:  * Button component that can be rendered as various HTML elements
-14:  * @param {Object} props
-15:  * @param {ReactNode} props.children - The content of the button
-16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-22:  * @returns {JSX.Element} The rendered Button component
-23:  */
-24: const Button = ({
-25:   children,
-26:   href,
-27:   renderAs,
-28:   type = "submit",
-29:   disabled = false,
-30:   download,
-31:   onClick,
-32:   "aria-label": ariaLabel,
-33:   ...props
-34: }: IButtonProps) => {
-35:   const Component = renderAs ?? "button";
-36:   const isLink = renderAs === "a";
-37:   const targetLink = isLink ? "_blank" : undefined;
-38:   return (
-39:     <Component
-40:       type={isLink ? undefined : type}
-41:       data-cy="submit"
-42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
-43:       href={href}
-44:       target={targetLink}
-45:       disabled={disabled}
-46:       data-text={children}
-47:       download={download}
-48:       onClick={onClick}
-49:       aria-label={ariaLabel}
-50:       {...props}
-51:     >
-52:       {children}
-53:     </Component>
-54:   );
-55: };
-56: export default Button;
-````
-
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -18912,6 +19150,67 @@ tsconfig.json
 104: export default config;
 ````
 
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10:   "aria-label"?: string;
+11: }
+12: /**
+13:  * Button component that can be rendered as various HTML elements
+14:  * @param {Object} props
+15:  * @param {ReactNode} props.children - The content of the button
+16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+22:  * @returns {JSX.Element} The rendered Button component
+23:  */
+24: const Button = ({
+25:   children,
+26:   href,
+27:   renderAs,
+28:   type = "submit",
+29:   disabled = false,
+30:   download,
+31:   onClick,
+32:   "aria-label": ariaLabel,
+33:   ...props
+34: }: IButtonProps) => {
+35:   const Component = renderAs ?? "button";
+36:   const isLink = renderAs === "a";
+37:   const isInternalAnchor = href?.startsWith("#");
+38:   const targetLink = isLink && !isInternalAnchor ? "_blank" : undefined;
+39:   return (
+40:     <Component
+41:       type={isLink ? undefined : type}
+42:       data-cy="submit"
+43:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
+44:       href={href}
+45:       target={targetLink}
+46:       disabled={disabled}
+47:       data-text={children}
+48:       download={download}
+49:       onClick={onClick}
+50:       aria-label={ariaLabel}
+51:       {...props}
+52:     >
+53:       {children}
+54:     </Component>
+55:   );
+56: };
+57: export default Button;
+````
+
 ## File: .npmrc
 ````
  1: # pnpm Security Configuration
@@ -19185,304 +19484,6 @@ tsconfig.json
 36:           name: playwright-report
 37:           path: playwright-report/
 38:           retention-days: 30
-````
-
-## File: commit/commit_analyzer.py
-````python
-  1: import subprocess
-  2: import os
-  3: import sys
-  4: import json
-  5: import codecs
-  6: from typing import List, Tuple, Optional
-  7: from openai import OpenAI
-  8: from pathlib import Path
-  9: from dotenv import load_dotenv
- 10: # Security: Whitelist of allowed git subcommands and arguments
- 11: # This prevents any possibility of command injection by only allowing known-safe commands
- 12: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
- 13: _GIT_ARG_CACHED = "--cached"
- 14: _GIT_ARG_NAME_ONLY = "--name-only"
- 15: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
- 16: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
- 17: def _run_git_command(args: List[str]) -> str:
- 18:     """
- 19:     Safely execute a git command with strict validation.
- 20:     Security measures implemented:
- 21:     - Whitelist validation: Only allows pre-approved git subcommands and arguments
- 22:     - No shell execution: shell=False prevents shell injection attacks
- 23:     - Explicit argument list: Prevents argument splitting vulnerabilities
- 24:     - No user input: All allowed values are hardcoded constants
- 25:     Args:
- 26:         args: List of git command arguments (excluding 'git' itself).
- 27:               Must only contain whitelisted subcommands and arguments.
- 28:     Returns:
- 29:         Command output as decoded UTF-8 string.
- 30:     Raises:
- 31:         ValueError: If any argument is not in the whitelist.
- 32:         subprocess.CalledProcessError: If the git command fails.
- 33:     """
- 34:     if not args:
- 35:         raise ValueError("Git command arguments cannot be empty")
- 36:     # Validate subcommand against whitelist
- 37:     subcommand = args[0]
- 38:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
- 39:         raise ValueError(
- 40:             f"Git subcommand '{subcommand}' is not allowed. "
- 41:             f"Allowed: {_ALLOWED_GIT_SUBCOMMANDS}"
- 42:         )
- 43:     # Validate all additional arguments against whitelist
- 44:     for arg in args[1:]:
- 45:         if arg not in _ALLOWED_GIT_ARGS:
- 46:             raise ValueError(
- 47:                 f"Git argument '{arg}' is not allowed. Allowed: {_ALLOWED_GIT_ARGS}"
- 48:             )
- 49:     # Execute the validated command
- 50:     # Security: All arguments have been validated against whitelist above
- 51:     # shell=False ensures no shell interpretation of arguments
- 52:     full_command = ["git"] + list(args)
- 53:     result = subprocess.check_output(  # nosec B603 B607 - validated whitelist
- 54:         full_command,
- 55:         shell=False,
- 56:         stderr=subprocess.DEVNULL,
- 57:     )
- 58:     return result.decode("utf-8")
- 59: def read_config_file():
- 60:     """Read configuration from local config file."""
- 61:     config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 62:     try:
- 63:         if os.path.exists(config_path):
- 64:             with open(config_path, "r") as f:
- 65:                 return json.load(f)
- 66:     except Exception as e:
- 67:         print(f"Error reading config file: {e}")
- 68:     return {}
- 69: def get_api_config():
- 70:     """Get API configuration from environment variables or config file."""
- 71:     load_dotenv()
- 72:     # Try environment variables first
- 73:     api_key = os.getenv("AI_API_KEY")
- 74:     base_url = os.getenv("AI_BASE_URL")
- 75:     # If no API key in env, try config file
- 76:     if not api_key:
- 77:         config = read_config_file()
- 78:         api_key = config.get("api_key")
- 79:         base_url = config.get("base_url", base_url)
- 80:     if not api_key:
- 81:         config_path = os.path.join(str(Path.home()), ".ai_config.json")
- 82:         raise ValueError(
- 83:             "No API key found. Please either:\n"
- 84:             "1. Create a .env file in your repository with AI_API_KEY=your-api-key\n"
- 85:             "2. Set AI_API_KEY environment variable, or\n"
- 86:             f'3. Create {config_path} with content: {{"api_key": "your-api-key"}}'
- 87:         )
- 88:     return api_key, base_url
- 89: def _is_lock_file(filename: str) -> bool:
- 90:     """Check if a filename is a dependency lock file."""
- 91:     lock_file_patterns = (
- 92:         ".lock",
- 93:         "lock.json",
- 94:         "package-lock.json",
- 95:         "yarn.lock",
- 96:         "pnpm-lock.yaml",
- 97:     )
- 98:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
- 99: def get_staged_diff() -> Tuple[Optional[str], bool]:
-100:     """
-101:     Get the diff of staged changes and list of changed files.
-102:     Returns:
-103:         Tuple of (diff_content, has_lock_files):
-104:         - diff_content: The git diff output, or None if only lock files or error
-105:         - has_lock_files: True if lock files are present in the changes
-106:     """
-107:     try:
-108:         # Get list of staged files using validated git command
-109:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
-110:         staged_files = files_output.splitlines()
-111:         # Check if any staged files are lock files
-112:         if any(_is_lock_file(f) for f in staged_files):
-113:             return None, True  # Indicate lock file presence
-114:         # Get the actual diff using validated git command
-115:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
-116:         if not diff:
-117:             # If no staged changes, get diff of last commit
-118:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
-119:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
-120:             staged_files = files_output.splitlines()
-121:             if any(_is_lock_file(f) for f in staged_files):
-122:                 return None, True
-123:         return diff, False  # No lock files found
-124:     except subprocess.CalledProcessError as e:
-125:         print(f"Error getting git diff: {e}")
-126:         return None, False
-127:     except ValueError as e:
-128:         # This would indicate a programming error (invalid command)
-129:         print(f"Internal error - invalid git command: {e}")
-130:         return None, False
-131: def load_gitmojis():
-132:     """Load gitmojis from gitmojis.json"""
-133:     try:
-134:         with open("gitmojis.json", "r", encoding="utf-8") as f:
-135:             data = json.load(f)
-136:             return {gitmoji["name"]: gitmoji["emoji"] for gitmoji in data["gitmojis"]}
-137:     except Exception as e:
-138:         print(f"Error loading gitmojis: {e}")
-139:         return {}
-140: def get_emoji_for_type(commit_type, gitmojis):
-141:     """Map commit type to appropriate emoji"""
-142:     type_to_emoji = {
-143:         # Core conventional commit types
-144:         "feat": gitmojis.get("sparkles", "✨"),  # New feature
-145:         "fix": gitmojis.get("bug", "🐛"),  # Bug fix
-146:         "docs": gitmojis.get("memo", "📝"),  # Documentation
-147:         "style": gitmojis.get("art", "🎨"),  # Style/format
-148:         "refactor": gitmojis.get("recycle", "♻️"),  # Code refactoring
-149:         "perf": gitmojis.get("zap", "⚡️"),  # Performance
-150:         "test": gitmojis.get("white-check-mark", "✅"),  # Tests
-151:         "chore": gitmojis.get("wrench", "🔧"),  # Chores
-152:         "ci": gitmojis.get("construction-worker", "👷"),  # CI changes
-153:         # Additional commit types with specific emojis
-154:         "security": gitmojis.get("lock", "🔒"),  # Security fixes
-155:         "deps": gitmojis.get("package", "📦"),  # Dependencies
-156:         "breaking": gitmojis.get("boom", "💥"),  # Breaking changes
-157:         "ui": gitmojis.get("lipstick", "💄"),  # UI/style changes
-158:         "i18n": gitmojis.get("globe-with-meridians", "🌐"),  # Internationalization
-159:         "typo": gitmojis.get("pencil2", "✏️"),  # Fix typos
-160:         "init": gitmojis.get("tada", "🎉"),  # Initial commit
-161:         "license": gitmojis.get("page-facing-up", "📄"),  # License
-162:         "docker": gitmojis.get("whale", "🐳"),  # Docker
-163:         "config": gitmojis.get("wrench", "🔧"),  # Configuration changes
-164:         "access": gitmojis.get("wheelchair", "♿️"),  # Accessibility
-165:         "logs": gitmojis.get("loud-sound", "🔊"),  # Logging
-166:         "db": gitmojis.get("card-file-box", "🗃️"),  # Database
-167:         "cleanup": gitmojis.get("fire", "🔥"),  # Remove code/files
-168:         "wip": gitmojis.get("construction", "🚧"),  # Work in progress
-169:         "move": gitmojis.get("truck", "🚚"),  # Move/rename files
-170:         "revert": gitmojis.get("rewind", "⏪"),  # Revert changes
-171:         "merge": gitmojis.get("twisted-rightwards-arrows", "🔀"),  # Merge branches
-172:         "responsive": gitmojis.get("iphone", "📱"),  # Responsive design
-173:         "hotfix": gitmojis.get("ambulance", "🚑"),  # Critical hotfix
-174:     }
-175:     return type_to_emoji.get(commit_type, "")
-176: def generate_commit_message(diff):
-177:     """Generate commit message using OpenAI API"""
-178:     try:
-179:         api_key, base_url = get_api_config()
-180:         client_kwargs = {"api_key": api_key}
-181:         if base_url:
-182:             client_kwargs["base_url"] = base_url
-183:         client = OpenAI(**client_kwargs)
-184:         # Get model from environment variable or use default
-185:         model = os.getenv("MODEL_NAME", "claude-4.5-sonnet@anthropic")
-186:         # Load gitmojis
-187:         # gitmojis = load_gitmojis()
-188:         prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
-189:         The commit message MUST follow this format:
-190:         <emoji> <type>[optional scope]: <description>
-191:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-192:         [optional footer(s)]
-193:         Where:
-194:         1. Type MUST be one of (with corresponding emoji):
-195:            Core types:
-196:            - ✨ feat: A new feature
-197:            - 🐛 fix: A bug fix
-198:            - 📝 docs: Documentation only changes
-199:            - 🎨 style: Changes that don't affect the meaning of the code
-200:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-201:            - ⚡️ perf: A code change that improves performance
-202:            - ✅ test: Adding missing tests or correcting existing tests
-203:            - 🔧 chore: Changes to build process or auxiliary tools
-204:            - 👷 ci: Changes to CI configuration files and scripts
-205:            Additional specific types:
-206:            - 🔒 security: Security fixes
-207:            - 📦 deps: Dependencies
-208:            - 💥 breaking: Breaking changes
-209:            - 💄 ui: UI/style changes
-210:            - 🌐 i18n: Internationalization
-211:            - ✏️ typo: Fix typos
-212:            - 🎉 init: Initial commit
-213:            - 📄 license: License
-214:            - 🐳 docker: Docker
-215:            - ♿️ access: Accessibility
-216:            - 🔊 logs: Logging
-217:            - 🗃️ db: Database
-218:            - 🔥 cleanup: Remove code/files
-219:            - 🚧 wip: Work in progress
-220:            - 🚚 move: Move/rename files
-221:            - ⏪ revert: Revert changes
-222:            - 🔀 merge: Merge branches
-223:            - 📱 responsive: Responsive design
-224:            - 🚑 hotfix: Critical hotfix
-225:         2. Description MUST:
-226:            - Be 50 characters or less
-227:            - Start with lowercase
-228:            - Use imperative mood ("add" not "adds/added")
-229:            - No period at end
-230:            - Be clear and descriptive
-231:         3. Body (if included) MUST:
-232:            - Be separated from title by blank line
-233:            - Wrap at 72 characters
-234:            - Explain what and why vs. how
-235:            - Use proper punctuation
-236:         Git diff to analyze:
-237:         {diff}
-238:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-239:         response = client.chat.completions.create(
-240:             model=model,
-241:             messages=[{"role": "user", "content": prompt}],
-242:             stream=False,
-243:         )
-244:         # Get the message and clean any potential explanatory text
-245:         message = response.choices[0].message.content.strip()
-246:         if "Based on the diff" in message:
-247:             message = message.split("\n")[-1].strip()
-248:         return message
-249:     except Exception as e:
-250:         error_msg = str(e)
-251:         print(f"Error generating commit message: {error_msg}")
-252:         # Provide helpful diagnostics
-253:         if "500" in error_msg:
-254:             print("\nServer returned 500 error. Possible causes:")
-255:             print("  - Model name may not be supported by your API provider")
-256:             print(
-257:                 f"  - Current model: {os.getenv('MODEL_NAME', 'claude-4.5-sonnet@anthropic')}"
-258:             )
-259:             print(f"  - Base URL: {base_url or 'default OpenAI'}")
-260:             print("\nTry setting MODEL_NAME in .env to a supported model.")
-261:         elif "401" in error_msg or "403" in error_msg:
-262:             print("\nAuthentication error. Check your AI_API_KEY in .env")
-263:         elif "404" in error_msg:
-264:             print("\nModel not found. Check MODEL_NAME in .env")
-265:         return None
-266: def main():
-267:     # Get the diff and check for lock files
-268:     diff, has_lock_files = get_staged_diff()
-269:     if has_lock_files:
-270:         # Use hardcoded message for lock files
-271:         commit_message = "📦 deps: update dependencies"
-272:     elif not diff:
-273:         print("No changes to analyze")
-274:         sys.exit(1)
-275:     else:
-276:         # Generate commit message for non-lock files
-277:         commit_message = generate_commit_message(diff)
-278:     if not commit_message:
-279:         print("Failed to generate commit message")
-280:         sys.exit(1)
-281:     # Print the commit message
-282:     print("\nGenerated commit message:")
-283:     print("------------------------")
-284:     # Use sys.stdout.buffer.write for Unicode support in console
-285:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-286:     sys.stdout.buffer.flush()
-287:     print("\n------------------------")
-288:     # If running as a hook, save the message
-289:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-290:         # Use UTF-8 encoding when writing the commit message
-291:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-292:             f.write(commit_message)
-293: if __name__ == "__main__":
-294:     main()
 ````
 
 ## File: renovate.json
