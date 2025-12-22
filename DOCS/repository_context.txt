@@ -398,82 +398,6 @@ tsconfig.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.11.1
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.11.1-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -17482,6 +17406,29 @@ tsconfig.json
 67: DOCS/git_history.txt
 ````
 
+## File: .npmrc
+````
+ 1: # pnpm Security Configuration
+ 2: # Defense against supply chain attacks
+ 3: 
+ 4: # Minimum Release Age: Packages must be at least 7 days old before installation
+ 5: # This prevents installing freshly compromised packages
+ 6: # Value is in minutes: 10080 = 7 days (7 * 24 * 60)
+ 7: # minimum-release-age=10080
+ 8: 
+ 9: # Registry configuration (using default npm registry which supports release timestamps)
+10: registry=https://registry.npmjs.org/
+11: 
+12: # Strict peer dependencies for better dependency tree control
+13: strict-peer-dependencies=false
+14: 
+15: # Auto-install peers to avoid manual peer dependency management
+16: auto-install-peers=true
+17: 
+18: # Engine strict mode - fail if Node.js version doesn't match engines field
+19: engine-strict=true
+````
+
 ## File: .pa11yci.json
 ````json
  1: {
@@ -19152,6 +19099,82 @@ tsconfig.json
 36: }
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.12.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.12.0-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -19177,29 +19200,6 @@ tsconfig.json
 21:     "typescript": "^5.9.3"
 22:   }
 23: }
-````
-
-## File: .npmrc
-````
- 1: # pnpm Security Configuration
- 2: # Defense against supply chain attacks
- 3: 
- 4: # Minimum Release Age: Packages must be at least 7 days old before installation
- 5: # This prevents installing freshly compromised packages
- 6: # Value is in minutes: 10080 = 7 days (7 * 24 * 60)
- 7: # minimum-release-age=10080
- 8: 
- 9: # Registry configuration (using default npm registry which supports release timestamps)
-10: registry=https://registry.npmjs.org/
-11: 
-12: # Strict peer dependencies for better dependency tree control
-13: strict-peer-dependencies=false
-14: 
-15: # Auto-install peers to avoid manual peer dependency management
-16: auto-install-peers=true
-17: 
-18: # Engine strict mode - fail if Node.js version doesn't match engines field
-19: engine-strict=true
 ````
 
 ## File: src/__tests__/UI/Button.test.tsx
