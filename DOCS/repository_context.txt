@@ -14508,6 +14508,33 @@ tsconfig.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=9.39.2"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -18928,6 +18955,218 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     strategy:
+ 7:       fail-fast: false
+ 8:       matrix:
+ 9:         browser: [chrome, firefox, edge]
+10:     steps:
+11:       - name: Checkout
+12:         uses: actions/checkout@v6
+13:       - name: Install pnpm
+14:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+15:         with:
+16:           version: 10
+17:       - name: Setup Node.js
+18:         uses: actions/setup-node@v6
+19:         with:
+20:           node-version: 24
+21:           cache: "pnpm"
+22:           cache-dependency-path: pnpm-lock.yaml
+23:       - name: Cache Cypress binary
+24:         uses: actions/cache@v5
+25:         with:
+26:           path: ~/.cache/Cypress
+27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+28:           restore-keys: |
+29:             ${{ runner.os }}-cypress-
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile
+32:       - name: Verify and install Cypress binary
+33:         run: npx cypress verify || npx cypress install
+34:       - name: Cypress run
+35:         uses: cypress-io/github-action@v6
+36:         with:
+37:           install: false
+38:           build: pnpm build
+39:           start: pnpm dev
+40:           wait-on: "http://localhost:3000"
+41:           wait-on-timeout: 120
+42:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     steps:
+ 7:       - uses: actions/checkout@v6
+ 8:       - name: Setup Node.js
+ 9:         uses: actions/setup-node@v6
+10:         with:
+11:           node-version: "24"
+12:       - name: Setup pnpm
+13:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+14:         with:
+15:           version: 10
+16:           run_install: false
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@v5
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:           restore-keys: |
+27:             ${{ runner.os }}-pnpm-store-
+28:       - name: Install dependencies
+29:         run: pnpm install --frozen-lockfile
+30:       - name: Build project
+31:         run: pnpm build
+32:       - name: Start server
+33:         run: |
+34:           pnpm start &
+35:           echo "Waiting for server to be ready..."
+36:           while ! nc -z localhost 3000; do
+37:             sleep 5
+38:           done
+39:           # Additional wait to ensure full initialization
+40:           sleep 20
+41:       - name: Run Lighthouse CI (Mobile)
+42:         run: pnpm lhci:perf
+43:         env:
+44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+45:       - name: Run Lighthouse CI (Desktop)
+46:         run: pnpm lhci:desktop
+47:         env:
+48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+49:       - name: Stop server
+50:         if: always()
+51:         run: |
+52:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     steps:
+11:       - uses: actions/checkout@v6
+12:       - name: Setup Node.js
+13:         uses: actions/setup-node@v6
+14:         with:
+15:           node-version: "24"
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+18:         with:
+19:           version: 10
+20:           run_install: false
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@v5
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:           restore-keys: |
+31:             ${{ runner.os }}-pnpm-store-
+32:       - name: Install dependencies
+33:         run: pnpm install --frozen-lockfile
+34:       - name: Create pa11y config
+35:         run: |
+36:           # Create pa11y config file
+37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+38:       - name: Build Next.js app
+39:         run: pnpm build
+40:       - name: Start Next.js app
+41:         run: pnpm start &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm exec wait-on http://localhost:3000
+44:       - name: Run pa11y
+45:         run: |
+46:           # Create a directory for the reports
+47:           mkdir -p pa11y-reports
+48:           # Run pa11y on main pages with config
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+53:       - name: Upload pa11y results
+54:         if: always()
+55:         uses: actions/upload-artifact@v6
+56:         with:
+57:           name: pa11y-reports
+58:           path: pa11y-reports/
+59:       - name: Check for accessibility issues
+60:         run: |
+61:           if grep -q "Error:" pa11y-reports/*.txt; then
+62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+63:             exit 1
+64:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v6
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
 ## File: .github/workflows/snyk-scan.yml
 ````yaml
  1: name: Snyk Security Scan
@@ -19352,33 +19591,6 @@ tsconfig.json
 345:     main()
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=9.39.2"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: .gitignore
 ````
  1: # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
@@ -19452,218 +19664,6 @@ tsconfig.json
 69: /.stryker-tmp
 70: /stryker-tmp
 71: DOCS/git_history.txt
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v6
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v5
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v6
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v6
-10:         with:
-11:           node-version: "24"
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
-14:         with:
-15:           version: 10
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v5
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v6
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v6
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v5
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Create pa11y config
-35:         run: |
-36:           # Create pa11y config file
-37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-38:       - name: Build Next.js app
-39:         run: pnpm build
-40:       - name: Start Next.js app
-41:         run: pnpm start &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm exec wait-on http://localhost:3000
-44:       - name: Run pa11y
-45:         run: |
-46:           # Create a directory for the reports
-47:           mkdir -p pa11y-reports
-48:           # Run pa11y on main pages with config
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-53:       - name: Upload pa11y results
-54:         if: always()
-55:         uses: actions/upload-artifact@v6
-56:         with:
-57:           name: pa11y-reports
-58:           path: pa11y-reports/
-59:       - name: Check for accessibility issues
-60:         run: |
-61:           if grep -q "Error:" pa11y-reports/*.txt; then
-62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-63:             exit 1
-64:           fi
 ````
 
 ## File: studio/package.json
@@ -19757,7 +19757,7 @@ tsconfig.json
  47:     "sitemap": "^9.0.0",
  48:     "tar-fs": "^3.1.1",
  49:     "ts-node": "^10.9.2",
- 50:     "zod": "^4.2.1"
+ 50:     "zod": "^4.3.4"
  51:   },
  52:   "devDependencies": {
  53:     "@jest/expect": "^30.2.0",
@@ -19775,9 +19775,9 @@ tsconfig.json
  65:     "@types/node": "^24.10.4",
  66:     "@types/react": "^19.2.7",
  67:     "@types/react-dom": "^19.2.3",
- 68:     "@typescript-eslint/eslint-plugin": "^8.50.1",
- 69:     "@typescript-eslint/parser": "^8.50.1",
- 70:     "@typescript-eslint/utils": "^8.50.1",
+ 68:     "@typescript-eslint/eslint-plugin": "^8.51.0",
+ 69:     "@typescript-eslint/parser": "^8.51.0",
+ 70:     "@typescript-eslint/utils": "^8.51.0",
  71:     "axe-core": "^4.11.0",
  72:     "cypress": "15.8.1",
  73:     "cypress-axe": "^1.7.0",
