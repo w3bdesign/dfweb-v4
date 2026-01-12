@@ -398,6 +398,82 @@ tsconfig.json
 
 # Files
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.12.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.12.0-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -458,44 +534,6 @@ tsconfig.json
 13:     ]
 14:   }
 15: ]
-````
-
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v4
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v4
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v4
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
 ````
 
 ## File: .github/workflows/cypress.yml
@@ -19166,80 +19204,42 @@ tsconfig.json
 36: }
 ````
 
-## File: .circleci/config.yml
+## File: .github/workflows/codeql.yml
 ````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.12.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.12.0-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     permissions:
+14:       actions: read
+15:       contents: read
+16:       security-events: write
+17:     strategy:
+18:       fail-fast: false
+19:       matrix:
+20:         language: [javascript]
+21:     steps:
+22:       - name: Checkout
+23:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+24:       - name: Initialize CodeQL
+25:         uses: github/codeql-action/init@v4
+26:         with:
+27:           languages: ${{ matrix.language }}
+28:           queries: +security-and-quality
+29:       - name: Autobuild
+30:         uses: github/codeql-action/autobuild@v4
+31:       - name: Perform CodeQL Analysis
+32:         uses: github/codeql-action/analyze@v4
+33:         with:
+34:           category: "/language:${{ matrix.language }}"
 ````
 
 ## File: commit/commit_analyzer.py
