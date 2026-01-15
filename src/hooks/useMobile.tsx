@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 
 /**
  * A React hook that returns a boolean indicating if the user is on a mobile device.
- * The determination uses window.innerWidth < 640 as a threshold.
+ * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
+ * aligning with React best practices for derived state subscriptions.
  *
  * @returns true if the device width is under 640px, else false.
  */
@@ -10,14 +11,23 @@ export function useMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkIfMobile = (): void => {
-      setIsMobile(window.innerWidth < 640);
+    // Create media query for mobile breakpoint (max-width: 639px)
+    // Using 639px to match the original logic (< 640)
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    
+    // Set initial state based on current match
+    setIsMobile(mediaQuery.matches);
+
+    // Handler for when the media query match changes
+    const handleChange = (event: MediaQueryListEvent): void => {
+      setIsMobile(event.matches);
     };
 
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
+    // Subscribe to changes
+    mediaQuery.addEventListener("change", handleChange);
 
-    return () => window.removeEventListener("resize", checkIfMobile);
+    // Cleanup subscription
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   return isMobile;
