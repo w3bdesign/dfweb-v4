@@ -4,6 +4,11 @@ Scope: **Strictly** the rules in [`agent-skills/skills/react-best-practices/rule
 
 Repo: `dfweb-v4`
 
+## How to read impact labels
+The **Impact** labels (CRITICAL/HIGH/MEDIUM/LOW) shown per section/rule are copied from the Vercel agent-skills guidance (see [`_sections.md`](agent-skills/skills/react-best-practices/rules/_sections.md:1) and each rule’s frontmatter). They indicate how important the practice *typically* is for performance.
+
+They are **not** a statement that this repo is currently “critical” or broken. The repo-specific assessment is the **Status** field below (Pass/Partial/Fail).
+
 Legend:
 - **Pass**: We follow the rule consistently (or there is no meaningful place it applies).
 - **Partial**: We follow some aspects, but there are notable gaps or inconsistent usage.
