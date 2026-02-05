@@ -20,7 +20,6 @@ class BaseProvider(ABC):
         """
         Return the provider name (e.g., 'openai', 'anthropic', 'openai-compatible').
         """
-        pass
 
     @abstractmethod
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
@@ -37,7 +36,6 @@ class BaseProvider(ABC):
         Raises:
             Exception: If the API request fails.
         """
-        pass
 
     @abstractmethod
     def get_default_model(self) -> str:
@@ -47,4 +45,3 @@ class BaseProvider(ABC):
         Returns:
             The default model identifier string.
         """
-        pass

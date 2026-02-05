@@ -13,9 +13,9 @@ from providers.base import BaseProvider
 class OpenAIProvider(BaseProvider):
     """
     Provider implementation for OpenAI's API.
-    
+
     Uses the official OpenAI Python SDK to interact with GPT models.
-    
+
     Environment variables:
         OPENAI_API_KEY: Required. Your OpenAI API key.
         MODEL_NAME: Optional. Override the default model.
@@ -26,10 +26,10 @@ class OpenAIProvider(BaseProvider):
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize the OpenAI provider.
-        
+
         Args:
             api_key: Optional API key. If not provided, reads from OPENAI_API_KEY env var.
-            
+
         Raises:
             ValueError: If no API key is found.
         """
@@ -52,20 +52,20 @@ class OpenAIProvider(BaseProvider):
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
         """
         Send a chat completion request to OpenAI.
-        
+
         Args:
             prompt: The user prompt to send.
             model: Optional model override.
-            
+
         Returns:
             The text response from the model.
         """
         model_to_use = model or self.get_default_model()
-        
+
         response = self._client.chat.completions.create(
             model=model_to_use,
             messages=[{"role": "user", "content": prompt}],
             stream=False,
         )
-        
+
         return response.choices[0].message.content.strip()
