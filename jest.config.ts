@@ -11,13 +11,11 @@ const customJestConfig: Config = {
   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
   testEnvironment: "jest-environment-jsdom",
   coverageProvider: "v8",
-  transformIgnorePatterns: [
-    "node_modules/(?!.*@portabletext/react)",
-  ],
   moduleNameMapper: {
     "@/(.*)": "<rootDir>/src/$1",
     "^src/utils$": "<rootDir>/src/__mocks__/utils",
     "^src/(.*)$": "<rootDir>/src/$1",
+    "^@portabletext/react$": "<rootDir>/src/__mocks__/portabletext-react.tsx",
   },
   collectCoverageFrom: [
     "src/components/*.{js,jsx,ts,tsx}",
