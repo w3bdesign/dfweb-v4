@@ -15,7 +15,6 @@ const customJestConfig: Config = {
     "@/(.*)": "<rootDir>/src/$1",
     "^src/utils$": "<rootDir>/src/__mocks__/utils",
     "^src/(.*)$": "<rootDir>/src/$1",
-    "^@portabletext/react$": "<rootDir>/src/__mocks__/portabletext-react.tsx",
   },
   collectCoverageFrom: [
     "src/components/*.{js,jsx,ts,tsx}",
