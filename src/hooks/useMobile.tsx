@@ -27,7 +27,7 @@ export function useMobile(): boolean {
     // Create media query for mobile breakpoint (max-width: 639px)
     // Using 639px to match the original logic (< 640)
     const mediaQuery = window.matchMedia("(max-width: 639px)");
-    
+
     // Set initial state based on current match
     setIsMobile(mediaQuery.matches);
 

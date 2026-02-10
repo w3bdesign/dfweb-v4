@@ -28,6 +28,7 @@ const buildCspHeader = (directives: Record<string, string[]>) =>
     .join(" ") + " upgrade-insecure-requests;";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@portabletext/react"],
   images: {
     remotePatterns: [
       {
