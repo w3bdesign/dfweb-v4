@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Children, isValidElement } from "react";
+import { isValidElement } from "react";
 import type { ReactNode } from "react";
 
 import type { PortableTextMarkComponentProps } from "@portabletext/react";
