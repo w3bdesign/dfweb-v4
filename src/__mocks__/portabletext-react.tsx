@@ -48,12 +48,12 @@ interface PortableTextComponents {
 }
 
 interface PortableTextProps {
-  value: PortableTextBlock[];
-  components?: PortableTextComponents;
-  onMissingComponent?: false | ((message: string, options: Record<string, unknown>) => void);
+  readonly value: PortableTextBlock[];
+  readonly components?: PortableTextComponents;
+  readonly onMissingComponent?: false | ((message: string, options: Record<string, unknown>) => void);
 }
 
-export function PortableText({ value, components }: PortableTextProps) {
+export function PortableText({ value, components, onMissingComponent: _onMissingComponent }: Readonly<PortableTextProps>) {
   if (!value || !Array.isArray(value)) return null;
 
   return (
