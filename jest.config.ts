@@ -12,7 +12,7 @@ const customJestConfig: Config = {
   testEnvironment: "jest-environment-jsdom",
   coverageProvider: "v8",
   transformIgnorePatterns: [
-    "node_modules/(?!(@portabletext/react)/)",
+    "node_modules/(?!.*@portabletext/react)",
   ],
   moduleNameMapper: {
     "@/(.*)": "<rootDir>/src/$1",
