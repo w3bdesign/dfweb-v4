@@ -12,6 +12,8 @@ const customJestConfig: Config = {
   testEnvironment: "jest-environment-jsdom",
   coverageProvider: "v8",
   moduleNameMapper: {
+    "^@portabletext/react$":
+      "<rootDir>/src/__mocks__/portabletext-react.tsx",
     "@/(.*)": "<rootDir>/src/$1",
     "^src/utils$": "<rootDir>/src/__mocks__/utils",
     "^src/(.*)$": "<rootDir>/src/$1",
