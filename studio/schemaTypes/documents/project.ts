@@ -51,6 +51,13 @@ const project = defineType({
       type: 'image',
     }),
     defineField({
+      title: 'Published',
+      name: 'published',
+      type: 'boolean',
+      description: 'Set to false to hide this project from the portfolio site',
+      initialValue: true,
+    }),
+    defineField({
       title: 'Featured',
       name: 'featured',
       type: 'boolean',
