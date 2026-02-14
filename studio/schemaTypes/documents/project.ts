@@ -6,6 +6,20 @@ const project = defineType({
   name: 'project',
   icon: RiEraserLine,
   type: 'document',
+  preview: {
+    select: {
+      title: 'name',
+      media: 'projectimage',
+      published: 'published',
+    },
+    prepare({title, media, published}) {
+      return {
+        title: title ?? 'Untitled',
+        subtitle: published ? '✅ Visible on site' : '🚫 Hidden from site',
+        media,
+      }
+    },
+  },
   fields: [
     defineField({
       title: 'Id',
@@ -51,7 +65,7 @@ const project = defineType({
       type: 'image',
     }),
     defineField({
-      title: 'Published',
+      title: 'Visible on Site',
       name: 'published',
       type: 'boolean',
       description: 'Set to false to hide this project from the portfolio site',
