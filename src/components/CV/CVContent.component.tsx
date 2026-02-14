@@ -49,10 +49,20 @@ const CVContent = ({ cvData }: { cvData: Cv }) => {
           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
             <div className="p-4 mx-auto mt-4 flex flex-col items-center">
               <div className="p-4 text-lg rounded-sm md:w-full">
-                <div className="flex justify-center">
-                  <Tabs tabs={tabs} />
+                {/* Desktop: tabbed CV interface */}
+                <div className="hidden sm:block">
+                  <div className="flex justify-center">
+                    <Tabs tabs={tabs} />
+                  </div>
+                  <div className="mx-auto text-center mt-8">
+                    <Button href="./cv2.pdf" renderAs="a" type="button">
+                      Last ned PDF
+                    </Button>
+                  </div>
                 </div>
-                <div className="mx-auto text-center mt-8">
+
+                {/* Mobile: download button only */}
+                <div className="flex sm:hidden justify-center py-8">
                   <Button href="./cv2.pdf" renderAs="a" type="button">
                     Last ned PDF
                   </Button>
