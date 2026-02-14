@@ -11458,92 +11458,6 @@ tsconfig.json
 15: }
 ````
 
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("CV page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/cv");
- 5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
- 6:     await expect(
- 7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
- 8:     ).toBeVisible();
- 9:   });
-10:   test("navigates to and displays Experience section correctly", async ({
-11:     page,
-12:   }) => {
-13:     await page.goto("/cv");
-14:     // Click on 'Erfaring' tab
-15:     await page.getByRole("tab", { name: "Erfaring" }).click();
-16:     // Check if a specific experience entry is visible
-17:     await expect(
-18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
-19:     ).toBeVisible();
-20:   });
-21:   test("displays Education section correctly", async ({ page }) => {
-22:     await page.goto("/cv");
-23:     // Click on 'Erfaring' tab
-24:     await page.getByRole("tab", { name: "Utdanning" }).click();
-25:     // Check if education information is present
-26:     await expect(page.getByLabel("Utdanning")).toContainText(
-27:       "2019 – 2025 - Kompetanseheving / egenlæring frontendutvikling",
-28:     );
-29:   });
-30: });
-````
-
-## File: src/e2e/playwright/index.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("Home page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/");
- 5:     // Check main heading
- 6:     await expect(page.locator("h1")).toContainText("Hei!");
- 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
- 8:       timeout: 10000,
- 9:     });
-10:     // Check subheading
-11:     await expect(
-12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
-13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
-14:     await expect(
-15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
-16:     ).toBeVisible();
-17:     // Check skills text
-18:     await expect(
-19:       page.getByText(
-20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-21:       ),
-22:     ).toBeVisible();
-23:     // Check if icons are visible
-24:     await expect(page.getByTestId("icons")).toBeVisible();
-25:   });
-26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
-27:     await page.goto("/");
-28:     const omMegSection = page.getByLabel("Om Meg");
-29:     // Check section title
-30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-31:       "Om Meg",
-32:       { timeout: 10000 },
-33:     );
-34:     // Check section content
-35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
-36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser på Fiverr, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
-37:     );
-38:   });
-39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
-40:     await page.goto("/");
-41:     const prosjekterSection = page.getByLabel("Prosjekter");
-42:     // Check section content
-43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
-44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
-45:       { timeout: 10000 },
-46:     );
-47:   });
-48: });
-````
-
 ## File: src/e2e/playwright/kontakt.spec.ts
 ````typescript
  1: import { test, expect } from "@playwright/test";
@@ -11662,82 +11576,6 @@ tsconfig.json
 4: export const urlFor = (source: string) => {
 5:   return builder.image(source);
 6: };
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: import { defineQuery } from "next-sanity";
- 2: export const projectsQuery = defineQuery(`
- 3:   *[_type == "project"] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `);
-25: export const cvQuery = defineQuery(`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `);
-48: export const pageContentQuery = defineQuery(`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id,
-51:     title,
-52:     hero,
-53:     content
-54:   }
-55: `);
-56: export const navigationQuery = defineQuery(`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `);
-68: export const settingsQuery = defineQuery(`
-69:   *[_type == "settings"][0] {
-70:     footerCopyrightText
-71:   }
-72: `);
 ````
 
 ## File: src/lib/csrf.ts
@@ -15122,77 +14960,6 @@ tsconfig.json
 36:   ],
 37: })
 38: export default page
-````
-
-## File: studio/schemaTypes/documents/project.ts
-````typescript
- 1: import {RiEraserLine} from 'react-icons/ri'
- 2: import {defineField, defineType} from 'sanity'
- 3: const project = defineType({
- 4:   title: 'Project',
- 5:   name: 'project',
- 6:   icon: RiEraserLine,
- 7:   type: 'document',
- 8:   fields: [
- 9:     defineField({
-10:       title: 'Id',
-11:       name: 'id',
-12:       type: 'number',
-13:     }),
-14:     defineField({
-15:       title: 'Name',
-16:       name: 'name',
-17:       type: 'string',
-18:     }),
-19:     defineField({
-20:       title: 'Description',
-21:       name: 'description',
-22:       type: 'string',
-23:     }),
-24:     defineField({
-25:       title: 'Technologies',
-26:       name: 'subdescription',
-27:       type: 'string',
-28:     }),
-29:     defineField({
-30:       title: 'Project category',
-31:       name: 'projectcategory',
-32:       type: 'reference',
-33:       to: [{type: 'category'}],
-34:     }),
-35:     defineField({
-36:       title: 'Project URL',
-37:       name: 'urlwww',
-38:       type: 'array',
-39:       of: [{type: 'link'}],
-40:     }),
-41:     defineField({
-42:       title: 'Github URL',
-43:       name: 'urlgithub',
-44:       type: 'array',
-45:       of: [{type: 'link'}],
-46:     }),
-47:     defineField({
-48:       title: 'Project image',
-49:       name: 'projectimage',
-50:       type: 'image',
-51:     }),
-52:     defineField({
-53:       title: 'Featured',
-54:       name: 'featured',
-55:       type: 'boolean',
-56:       description: 'Set to true to feature this project at the top of the page',
-57:     }),
-58:     defineField({
-59:       title: 'Feature Order',
-60:       name: 'featureOrder',
-61:       type: 'number',
-62:       description: 'Order of the featured project (lower numbers appear first)',
-63:       hidden: ({document}) => !document?.featured,
-64:     }),
-65:   ],
-66: })
-67: export default project
 ````
 
 ## File: studio/schemaTypes/documents/settings.ts
@@ -19367,6 +19134,92 @@ tsconfig.json
 36: }
 ````
 
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("CV page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/cv");
+ 5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
+ 6:     await expect(
+ 7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+ 8:     ).toBeVisible();
+ 9:   });
+10:   test("navigates to and displays Experience section correctly", async ({
+11:     page,
+12:   }) => {
+13:     await page.goto("/cv");
+14:     // Click on 'Erfaring' tab
+15:     await page.getByRole("tab", { name: "Erfaring" }).click();
+16:     // Check if a specific experience entry is visible
+17:     await expect(
+18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+19:     ).toBeVisible();
+20:   });
+21:   test("displays Education section correctly", async ({ page }) => {
+22:     await page.goto("/cv");
+23:     // Click on 'Erfaring' tab
+24:     await page.getByRole("tab", { name: "Utdanning" }).click();
+25:     // Check if education information is present
+26:     await expect(page.getByLabel("Utdanning")).toContainText(
+27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+28:     );
+29:   });
+30: });
+````
+
+## File: src/e2e/playwright/index.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("Home page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/");
+ 5:     // Check main heading
+ 6:     await expect(page.locator("h1")).toContainText("Hei!");
+ 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
+ 8:       timeout: 10000,
+ 9:     });
+10:     // Check subheading
+11:     await expect(
+12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
+13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
+14:     await expect(
+15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
+16:     ).toBeVisible();
+17:     // Check skills text
+18:     await expect(
+19:       page.getByText(
+20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+21:       ),
+22:     ).toBeVisible();
+23:     // Check if icons are visible
+24:     await expect(page.getByTestId("icons")).toBeVisible();
+25:   });
+26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
+27:     await page.goto("/");
+28:     const omMegSection = page.getByLabel("Om Meg");
+29:     // Check section title
+30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
+31:       "Om Meg",
+32:       { timeout: 10000 },
+33:     );
+34:     // Check section content
+35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
+36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med både WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
+37:     );
+38:   });
+39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
+40:     await page.goto("/");
+41:     const prosjekterSection = page.getByLabel("Prosjekter");
+42:     // Check section content
+43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
+44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
+45:       { timeout: 10000 },
+46:     );
+47:   });
+48: });
+````
+
 ## File: src/hooks/useMobile.tsx
 ````typescript
  1: import { useState, useEffect } from "react";
@@ -19407,6 +19260,84 @@ tsconfig.json
 36:   }, []);
 37:   return isMobile;
 38: }
+````
+
+## File: studio/schemaTypes/documents/project.ts
+````typescript
+ 1: import {RiEraserLine} from 'react-icons/ri'
+ 2: import {defineField, defineType} from 'sanity'
+ 3: const project = defineType({
+ 4:   title: 'Project',
+ 5:   name: 'project',
+ 6:   icon: RiEraserLine,
+ 7:   type: 'document',
+ 8:   fields: [
+ 9:     defineField({
+10:       title: 'Id',
+11:       name: 'id',
+12:       type: 'number',
+13:     }),
+14:     defineField({
+15:       title: 'Name',
+16:       name: 'name',
+17:       type: 'string',
+18:     }),
+19:     defineField({
+20:       title: 'Description',
+21:       name: 'description',
+22:       type: 'string',
+23:     }),
+24:     defineField({
+25:       title: 'Technologies',
+26:       name: 'subdescription',
+27:       type: 'string',
+28:     }),
+29:     defineField({
+30:       title: 'Project category',
+31:       name: 'projectcategory',
+32:       type: 'reference',
+33:       to: [{type: 'category'}],
+34:     }),
+35:     defineField({
+36:       title: 'Project URL',
+37:       name: 'urlwww',
+38:       type: 'array',
+39:       of: [{type: 'link'}],
+40:     }),
+41:     defineField({
+42:       title: 'Github URL',
+43:       name: 'urlgithub',
+44:       type: 'array',
+45:       of: [{type: 'link'}],
+46:     }),
+47:     defineField({
+48:       title: 'Project image',
+49:       name: 'projectimage',
+50:       type: 'image',
+51:     }),
+52:     defineField({
+53:       title: 'Published',
+54:       name: 'published',
+55:       type: 'boolean',
+56:       description: 'Set to false to hide this project from the portfolio site',
+57:       initialValue: true,
+58:     }),
+59:     defineField({
+60:       title: 'Featured',
+61:       name: 'featured',
+62:       type: 'boolean',
+63:       description: 'Set to true to feature this project at the top of the page',
+64:     }),
+65:     defineField({
+66:       title: 'Feature Order',
+67:       name: 'featureOrder',
+68:       type: 'number',
+69:       description: 'Order of the featured project (lower numbers appear first)',
+70:       hidden: ({document}) => !document?.featured,
+71:     }),
+72:   ],
+73: })
+74: export default project
 ````
 
 ## File: commit/providers/anthropic_provider.py
@@ -19852,6 +19783,82 @@ tsconfig.json
 109: export type { PortableTextComponents as PortableTextReactComponents };
 ````
 
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: import { defineQuery } from "next-sanity";
+ 2: export const projectsQuery = defineQuery(`
+ 3:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 4:     id,
+ 5:     name,
+ 6:     description,
+ 7:     subdescription,
+ 8:     projectcategory->{
+ 9:       _id,
+10:       title
+11:     },
+12:     urlwww[]{
+13:       ...,
+14:       _key,
+15:     },
+16:     urlgithub[]{
+17:       ...,
+18:       _key,
+19:     },
+20:     projectimage,
+21:     featured,
+22:     featureOrder
+23:   }
+24: `);
+25: export const cvQuery = defineQuery(`
+26:   *[_type == "cv"][0] {
+27:     keyQualifications,
+28:     experience[] {
+29:       period,
+30:       company,
+31:       role,
+32:       description
+33:     },
+34:     education[] {
+35:       period,
+36:       institution,
+37:       degree,
+38:       description
+39:     },
+40:     volunteerWork[] {
+41:       period,
+42:       organization,
+43:       role,
+44:       description
+45:     }
+46:   }
+47: `);
+48: export const pageContentQuery = defineQuery(`
+49:   *[_type == 'page' && title match 'Hjem'][0]{
+50:     "id": _id,
+51:     title,
+52:     hero,
+53:     content
+54:   }
+55: `);
+56: export const navigationQuery = defineQuery(`
+57:   *[_type == "navigation"][0] {
+58:     title,
+59:     links[] {
+60:       title,
+61:       name,
+62:       hash,
+63:       href,
+64:       externalLink
+65:     }
+66:   }
+67: `);
+68: export const settingsQuery = defineQuery(`
+69:   *[_type == "settings"][0] {
+70:     footerCopyrightText
+71:   }
+72: `);
+````
+
 ## File: src/utils/portableTextComponents.tsx
 ````typescript
  1: import Link from "next/link";
@@ -19979,7 +19986,7 @@ tsconfig.json
 17:     "react": "^19.2.4",
 18:     "react-dom": "^19.2.4",
 19:     "react-icons": "^5.5.0",
-20:     "sanity": "^5.7.0",
+20:     "sanity": "^5.8.1",
 21:     "styled-components": "^6.3.8"
 22:   },
 23:   "devDependencies": {
@@ -20075,7 +20082,7 @@ tsconfig.json
  43:     "react-error-boundary": "^5.0.0",
  44:     "react-hook-form": "^7.71.1",
  45:     "react-icons": "^5.5.0",
- 46:     "sanity": "5.7.0",
+ 46:     "sanity": "5.8.1",
  47:     "sitemap": "^9.0.0",
  48:     "tar-fs": "^3.1.1",
  49:     "ts-node": "^10.9.2",
