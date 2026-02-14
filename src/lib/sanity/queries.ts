@@ -1,7 +1,7 @@
 import { defineQuery } from "next-sanity";
 
 export const projectsQuery = defineQuery(`
-  *[_type == "project" && published != false] | order(featureOrder asc) {
+  *[_type == "project" && published == true] | order(featureOrder asc) {
     id,
     name,
     description,
