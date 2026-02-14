@@ -50,9 +50,11 @@ describe("CVContent", () => {
     expect(
       screen.getByRole("heading", { name: expectedElements.header }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: expectedElements.pdfButton }),
-    ).toBeInTheDocument();
+    const pdfLinks = screen.getAllByRole("link", {
+      name: expectedElements.pdfButton,
+    });
+    expect(pdfLinks.length).toBe(2); // Desktop + mobile
+    pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
   });
 
   it("renders all navigation tabs", () => {
