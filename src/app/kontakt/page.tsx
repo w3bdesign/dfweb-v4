@@ -1,4 +1,3 @@
-import RootLayout from "../RootLayout";
 import ContactForm from "@/components/Kontakt/ContactForm.component";
 import { generateCSRFToken } from "@/lib/csrf";
 
@@ -12,9 +11,5 @@ export default async function PostIndex() {
   // Generate CSRF token server-side
   const csrfToken = generateCSRFToken();
 
-  return (
-    <RootLayout>
-      <ContactForm csrfToken={csrfToken} />
-    </RootLayout>
-  );
+  return <ContactForm csrfToken={csrfToken} />;
 }
