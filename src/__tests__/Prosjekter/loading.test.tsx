@@ -16,12 +16,6 @@ jest.mock("@/components/Animations/RotatingLoader.component", () => {
   };
 });
 
-jest.mock("@/app/RootLayout", () => {
-  return function MockRootLayout({ children }: { children: React.ReactNode }) {
-    return <div>{children}</div>;
-  };
-});
-
 describe("Loading", () => {
   describe("rendering", () => {
     it("renders loading state with correct content and attributes", () => {

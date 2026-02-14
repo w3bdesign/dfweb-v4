@@ -51,9 +51,6 @@ const MockProsjektCard = (props: { name: string }) => (
 const MockRotatingLoader = () => (
   <div data-testid="rotating-loader">Loading...</div>
 );
-const MockRootLayout = ({ children }: { children: React.ReactNode }) => (
-  <div>{children}</div>
-);
 
 jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
 jest.mock(
@@ -64,7 +61,6 @@ jest.mock(
   "@/components/Animations/RotatingLoader.component",
   () => MockRotatingLoader,
 );
-jest.mock("@/app/RootLayout", () => MockRootLayout);
 
 // Create a test component that simulates the page behavior without async server components
 function TestProsjekterPage() {
@@ -79,26 +75,24 @@ function TestProsjekterPage() {
   }, []);
 
   return (
-    <MockRootLayout>
-      <main
-        role="main"
-        aria-label="Innhold portefølje"
-        className="mt-32 bg-graybg"
-      >
-        <MockPageHeader>Prosjekter</MockPageHeader>
-        {loading ? (
-          <MockRotatingLoader />
-        ) : (
-          <div className="container mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-              {projects.map((project) => (
-                <MockProsjektCard key={project.id} {...project} />
-              ))}
-            </div>
+    <main
+      role="main"
+      aria-label="Innhold portefølje"
+      className="mt-32 bg-graybg"
+    >
+      <MockPageHeader>Prosjekter</MockPageHeader>
+      {loading ? (
+        <MockRotatingLoader />
+      ) : (
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+            {projects.map((project) => (
+              <MockProsjektCard key={project.id} {...project} />
+            ))}
           </div>
-        )}
-      </main>
-    </MockRootLayout>
+        </div>
+      )}
+    </main>
   );
 }
 

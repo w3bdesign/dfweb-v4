@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next/types";
 
-import RootLayout from "../RootLayout";
 import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -31,13 +30,11 @@ export default function Prosjekter() {
   preloadProjects();
 
   return (
-    <RootLayout>
-      <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-        <PageHeader>Prosjekter</PageHeader>
-        <Suspense fallback={<RotatingLoader />}>
-          <ProjectList />
-        </Suspense>
-      </main>
-    </RootLayout>
+    <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+      <PageHeader>Prosjekter</PageHeader>
+      <Suspense fallback={<RotatingLoader />}>
+        <ProjectList />
+      </Suspense>
+    </main>
   );
 }
