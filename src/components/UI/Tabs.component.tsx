@@ -113,11 +113,11 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const isVertical = orientation === "vertical";
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px] min-h-[20rem]">
+    <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
       <div
         className={`flex ${
           isVertical ? "flex-col sm:flex-row" : "flex-col"
-        } bg-gray-800 rounded-lg h-[calc(75vh-2rem)] mt-4`}
+        } bg-gray-800 rounded-lg h-[28rem] mt-4`}
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
@@ -144,7 +144,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
         <div
           className={`${
             isVertical ? "sm:w-3/4 w-full" : "w-full"
-          } bg-gray-800 overflow-y-auto`}
+          } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
         >
           <AnimatePresence mode="wait">
             {tabs.map((tab) => (
