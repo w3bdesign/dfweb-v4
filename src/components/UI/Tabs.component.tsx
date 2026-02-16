@@ -31,17 +31,15 @@ const getTabButtonClassName = (
   index: number,
   totalTabs: number,
 ) => {
-  const baseClasses = "px-4 py-3 text-sm font-medium relative cursor-pointer";
+  const baseClasses =
+    "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
   const activeClasses = isActive
     ? "text-white"
-    : "text-gray-300 hover:text-white";
+    : "text-gray-300 hover:text-white hover:bg-gray-600";
   const orientationClasses = isVertical
     ? "w-full text-left"
     : "grow text-center";
-  const borderClasses = [
-    index !== 0 ? "border-t border-gray-600" : "",
-    isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
-  ].join(" ");
+  const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
 
   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
 };
@@ -121,7 +119,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
       >
         <div
           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-            isVertical ? "max-h-[185px] " : ""
+            isVertical ? "sm:h-fit" : ""
           }`}
         >
           <div
