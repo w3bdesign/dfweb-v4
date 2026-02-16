@@ -1,19 +1,5 @@
 import { cleanEnv, str } from "envalid";
 
-// Server-side environment variables
-export const serverEnv = cleanEnv(process.env, {
-  AI_API_KEY: str({
-    desc: "AI service API key",
-  }),
-  AI_BASE_URL: str({
-    desc: "AI service base URL",
-  }),
-  MODEL_NAME: str({
-    desc: "AI model identifier",
-    default: "claude-4-sonnet@anthropic",
-  }),
-});
-
 // Client-side environment variables (NEXT_PUBLIC_)
 export const publicEnv = cleanEnv(process.env, {
   NEXT_PUBLIC_EMAIL_API_KEY: str({
