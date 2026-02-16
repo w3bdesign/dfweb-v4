@@ -31,7 +31,7 @@ const getTabButtonClassName = (
   index: number,
   totalTabs: number,
 ) => {
-  const baseClasses = "px-4 py-3 text-sm font-medium relative";
+  const baseClasses = "px-4 py-3 text-sm font-medium relative cursor-pointer";
   const activeClasses = isActive
     ? "text-white"
     : "text-gray-300 hover:text-white";
