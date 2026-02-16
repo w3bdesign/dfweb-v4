@@ -31,10 +31,11 @@ const getTabButtonClassName = (
   index: number,
   totalTabs: number,
 ) => {
-  const baseClasses = "px-4 py-3 text-sm font-medium relative cursor-pointer";
+  const baseClasses =
+    "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
   const activeClasses = isActive
-    ? "text-white"
-    : "text-gray-300 hover:text-white";
+    ? "text-white bg-gray-800/50"
+    : "text-gray-300 hover:text-white hover:bg-gray-600/50";
   const orientationClasses = isVertical
     ? "w-full text-left"
     : "grow text-center";
