@@ -10944,125 +10944,6 @@ tsconfig.json
 61: export default ContentLoader;
 ````
 
-## File: src/components/UI/InputField.component.tsx
-````typescript
-  1: import React from "react";
-  2: import {
-  3:   UseFormRegister,
-  4:   FieldValues,
-  5:   RegisterOptions,
-  6:   Path,
-  7: } from "react-hook-form";
-  8: export interface InputProps<T extends FieldValues> {
-  9:   readonly name: Path<T>;
- 10:   readonly label: string;
- 11:   readonly htmlFor: string;
- 12:   readonly isRequired?: boolean;
- 13:   readonly inputPattern?: RegExp;
- 14:   readonly title?: string;
- 15:   readonly type?: "input" | "textarea";
- 16:   readonly register: UseFormRegister<T>;
- 17:   readonly error?: string;
- 18:   readonly autoComplete?: string;
- 19:   readonly spellCheck?: boolean;
- 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
- 21: }
- 22: /**
- 23:  * Creates register options for react-hook-form
- 24:  * @template T - Type extending FieldValues
- 25:  * @param {boolean} [isRequired] - Whether the field is required
- 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
- 27:  * @param {string} [title] - Title for the input field
- 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
- 29:  */
- 30: export function createRegisterOptions<T extends FieldValues>(
- 31:   isRequired?: boolean,
- 32:   inputPattern?: RegExp,
- 33:   title?: string,
- 34: ): RegisterOptions<T, Path<T>> {
- 35:   return {
- 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
- 37:     ...(inputPattern
- 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
- 39:       : {}),
- 40:   };
- 41: }
- 42: /**
- 43:  * InputField component for rendering form inputs
- 44:  * @template T - Type extending FieldValues
- 45:  * @param {InputProps<T>} props - The props for the InputField component
- 46:  * @returns {JSX.Element} The rendered InputField component
- 47:  */
- 48: function InputField<T extends FieldValues>({
- 49:   name,
- 50:   label,
- 51:   inputPattern,
- 52:   isRequired,
- 53:   htmlFor,
- 54:   title,
- 55:   type = "input",
- 56:   register,
- 57:   error,
- 58:   autoComplete,
- 59:   spellCheck,
- 60:   inputMode,
- 61:   ...props
- 62: }: InputProps<T>) {
- 63:   const sharedClasses =
- 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200";
- 65:   const registerOptions = createRegisterOptions<T>(
- 66:     isRequired,
- 67:     inputPattern,
- 68:     title,
- 69:   );
- 70:   return (
- 71:     <div className="relative my-2 flex flex-col items-center">
- 72:       <div className="relative">
- 73:         {type === "input" ? (
- 74:           <input
- 75:             id={htmlFor}
- 76:             type="text"
- 77:             placeholder={label}
- 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 79:             autoComplete={autoComplete}
- 80:             spellCheck={spellCheck}
- 81:             inputMode={inputMode}
- 82:             {...register(name, {
- 83:               ...registerOptions,
- 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 85:             })}
- 86:             {...props}
- 87:           />
- 88:         ) : (
- 89:           <textarea
- 90:             id={htmlFor}
- 91:             placeholder={label}
- 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 93:             spellCheck={spellCheck}
- 94:             {...register(name, {
- 95:               ...registerOptions,
- 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 97:             })}
- 98:             {...props}
- 99:           ></textarea>
-100:         )}
-101:         <label
-102:           htmlFor={htmlFor}
-103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
-104:             // Removed peer-focus:text-primary
-105:             type === "textarea" ? "peer-focus:-top-4" : ""
-106:           }`}
-107:         >
-108:           {label}
-109:         </label>
-110:       </div>
-111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-112:     </div>
-113:   );
-114: }
-115: export default InputField;
-````
-
 ## File: src/components/UI/PageHeader.component.tsx
 ````typescript
  1: import type { ReactNode } from "react";
@@ -19133,159 +19014,123 @@ tsconfig.json
 26: }
 ````
 
-## File: src/components/UI/Tabs.component.tsx
+## File: src/components/UI/InputField.component.tsx
 ````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { motion, AnimatePresence } from "motion/react";
-  4: type TabOrientation = "horizontal" | "vertical";
-  5: interface Tab {
-  6:   id: string;
-  7:   label: string;
-  8:   content: React.ReactNode;
-  9: }
- 10: interface TabsProps {
- 11:   tabs: Tab[];
- 12:   orientation?: TabOrientation;
- 13: }
- 14: interface TabButtonProps {
- 15:   tab: Tab;
- 16:   isActive: boolean;
- 17:   isVertical: boolean;
- 18:   index: number;
- 19:   totalTabs: number;
- 20:   onClick: () => void;
+  1: import React from "react";
+  2: import {
+  3:   UseFormRegister,
+  4:   FieldValues,
+  5:   RegisterOptions,
+  6:   Path,
+  7: } from "react-hook-form";
+  8: export interface InputProps<T extends FieldValues> {
+  9:   readonly name: Path<T>;
+ 10:   readonly label: string;
+ 11:   readonly htmlFor: string;
+ 12:   readonly isRequired?: boolean;
+ 13:   readonly inputPattern?: RegExp;
+ 14:   readonly title?: string;
+ 15:   readonly type?: "input" | "textarea";
+ 16:   readonly register: UseFormRegister<T>;
+ 17:   readonly error?: string;
+ 18:   readonly autoComplete?: string;
+ 19:   readonly spellCheck?: boolean;
+ 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
  21: }
- 22: const getTabButtonClassName = (
- 23:   isActive: boolean,
- 24:   isVertical: boolean,
- 25:   index: number,
- 26:   totalTabs: number,
- 27: ) => {
- 28:   const baseClasses = "px-4 py-3 text-sm font-medium relative";
- 29:   const activeClasses = isActive
- 30:     ? "text-white"
- 31:     : "text-gray-300 hover:text-white";
- 32:   const orientationClasses = isVertical
- 33:     ? "w-full text-left"
- 34:     : "grow text-center";
- 35:   const borderClasses = [
- 36:     index !== 0 ? "border-t border-gray-600" : "",
- 37:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
- 38:   ].join(" ");
- 39:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 40: };
- 41: const TabButton: React.FC<TabButtonProps> = ({
- 42:   tab,
- 43:   isActive,
- 44:   isVertical,
- 45:   index,
- 46:   totalTabs,
- 47:   onClick,
- 48: }) => (
- 49:   <motion.button
- 50:     key={tab.id}
- 51:     onClick={onClick}
- 52:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 53:     role="tab"
- 54:     aria-selected={isActive}
- 55:     aria-controls={`tabpanel-${tab.id}`}
- 56:     id={`tab-${tab.id}`}
- 57:   >
- 58:     {isActive && (
- 59:       <motion.div
- 60:         layoutId="active-tab"
- 61:         className={`absolute ${
- 62:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 63:         } bg-[var(--matrix-dark)]`}
- 64:         initial={false}
- 65:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 66:       />
- 67:     )}
- 68:     <span className="relative z-10">{tab.label}</span>
- 69:   </motion.button>
- 70: );
- 71: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 72:   tab,
- 73:   isActive,
- 74: }) => {
- 75:   if (!isActive) return null;
- 76:   return (
- 77:     <motion.div
- 78:       key={tab.id}
- 79:       role="tabpanel"
- 80:       id={`tabpanel-${tab.id}`}
- 81:       aria-labelledby={`tab-${tab.id}`}
- 82:       className="px-8"
- 83:       initial={{ opacity: 0, y: 20 }}
- 84:       animate={{ opacity: 1, y: 0 }}
- 85:       exit={{ opacity: 0, y: -20 }}
- 86:       transition={{ duration: 0.3 }}
- 87:     >
- 88:       {tab.content}
- 89:     </motion.div>
- 90:   );
- 91: };
- 92: /**
- 93:  * Renders a set of tabs with content.
- 94:  *
- 95:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 96:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 97:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 98:  * @return {JSX.Element} The rendered Tabs component.
- 99:  */
-100: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-101:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-102:   const isVertical = orientation === "vertical";
-103:   return (
-104:     <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-105:       <div
-106:         className={`flex ${
-107:           isVertical ? "flex-col sm:flex-row" : "flex-col"
-108:         } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-109:       >
-110:         <div
-111:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-112:             isVertical ? "max-h-[185px] " : ""
-113:           }`}
-114:         >
-115:           <div
-116:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-117:             role="tablist"
-118:           >
-119:             {tabs.map((tab, index) => (
-120:               <TabButton
-121:                 key={tab.id}
-122:                 tab={tab}
-123:                 isActive={activeTab === tab.id}
-124:                 isVertical={isVertical}
-125:                 index={index}
-126:                 totalTabs={tabs.length}
-127:                 onClick={() => setActiveTab(tab.id)}
-128:               />
-129:             ))}
-130:           </div>
-131:         </div>
-132:         <div
-133:           className={`${
-134:             isVertical ? "sm:w-3/4 w-full" : "w-full"
-135:           } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
-136:         >
-137:           <AnimatePresence mode="wait">
-138:             {tabs.map((tab) => (
-139:               <TabPanel
-140:                 key={tab.id}
-141:                 tab={tab}
-142:                 isActive={activeTab === tab.id}
-143:               />
-144:             ))}
-145:           </AnimatePresence>
-146:         </div>
-147:       </div>
-148:     </div>
-149:   );
-150: };
-151: export default Tabs;
+ 22: /**
+ 23:  * Creates register options for react-hook-form
+ 24:  * @template T - Type extending FieldValues
+ 25:  * @param {boolean} [isRequired] - Whether the field is required
+ 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ 27:  * @param {string} [title] - Title for the input field
+ 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+ 29:  */
+ 30: export function createRegisterOptions<T extends FieldValues>(
+ 31:   isRequired?: boolean,
+ 32:   inputPattern?: RegExp,
+ 33:   title?: string,
+ 34: ): RegisterOptions<T, Path<T>> {
+ 35:   return {
+ 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
+ 37:     ...(inputPattern
+ 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+ 39:       : {}),
+ 40:   };
+ 41: }
+ 42: /**
+ 43:  * InputField component for rendering form inputs
+ 44:  * @template T - Type extending FieldValues
+ 45:  * @param {InputProps<T>} props - The props for the InputField component
+ 46:  * @returns {JSX.Element} The rendered InputField component
+ 47:  */
+ 48: function InputField<T extends FieldValues>({
+ 49:   name,
+ 50:   label,
+ 51:   inputPattern,
+ 52:   isRequired,
+ 53:   htmlFor,
+ 54:   title,
+ 55:   type = "input",
+ 56:   register,
+ 57:   error,
+ 58:   autoComplete,
+ 59:   spellCheck,
+ 60:   inputMode,
+ 61:   ...props
+ 62: }: InputProps<T>) {
+ 63:   const sharedClasses =
+ 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden focus:border-green-600 placeholder-gray-300/0 transition duration-200 cursor-text";
+ 65:   const registerOptions = createRegisterOptions<T>(
+ 66:     isRequired,
+ 67:     inputPattern,
+ 68:     title,
+ 69:   );
+ 70:   return (
+ 71:     <div className="relative my-2 flex flex-col items-center">
+ 72:       <div className="relative">
+ 73:         {type === "input" ? (
+ 74:           <input
+ 75:             id={htmlFor}
+ 76:             type="text"
+ 77:             placeholder={label}
+ 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 79:             autoComplete={autoComplete}
+ 80:             spellCheck={spellCheck}
+ 81:             inputMode={inputMode}
+ 82:             {...register(name, {
+ 83:               ...registerOptions,
+ 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 85:             })}
+ 86:             {...props}
+ 87:           />
+ 88:         ) : (
+ 89:           <textarea
+ 90:             id={htmlFor}
+ 91:             placeholder={label}
+ 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 93:             spellCheck={spellCheck}
+ 94:             {...register(name, {
+ 95:               ...registerOptions,
+ 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 97:             })}
+ 98:             {...props}
+ 99:           ></textarea>
+100:         )}
+101:         <label
+102:           htmlFor={htmlFor}
+103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+104:             // Removed peer-focus:text-primary
+105:             type === "textarea" ? "peer-focus:-top-4" : ""
+106:           }`}
+107:         >
+108:           {label}
+109:         </label>
+110:       </div>
+111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+112:     </div>
+113:   );
+114: }
+115: export default InputField;
 ````
 
 ## File: src/e2e/playwright/cv.spec.ts
@@ -19591,6 +19436,161 @@ tsconfig.json
 31:     </main>
 32:   );
 33: }
+````
+
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { motion, AnimatePresence } from "motion/react";
+  4: type TabOrientation = "horizontal" | "vertical";
+  5: interface Tab {
+  6:   id: string;
+  7:   label: string;
+  8:   content: React.ReactNode;
+  9: }
+ 10: interface TabsProps {
+ 11:   tabs: Tab[];
+ 12:   orientation?: TabOrientation;
+ 13: }
+ 14: interface TabButtonProps {
+ 15:   tab: Tab;
+ 16:   isActive: boolean;
+ 17:   isVertical: boolean;
+ 18:   index: number;
+ 19:   totalTabs: number;
+ 20:   onClick: () => void;
+ 21: }
+ 22: const getTabButtonClassName = (
+ 23:   isActive: boolean,
+ 24:   isVertical: boolean,
+ 25:   index: number,
+ 26:   totalTabs: number,
+ 27: ) => {
+ 28:   const baseClasses = "px-4 py-3 text-sm font-medium relative cursor-pointer";
+ 29:   const activeClasses = isActive
+ 30:     ? "text-white"
+ 31:     : "text-gray-300 hover:text-white";
+ 32:   const orientationClasses = isVertical
+ 33:     ? "w-full text-left"
+ 34:     : "grow text-center";
+ 35:   const borderClasses = [
+ 36:     index !== 0 ? "border-t border-gray-600" : "",
+ 37:     isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
+ 38:   ].join(" ");
+ 39:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 40: };
+ 41: const TabButton: React.FC<TabButtonProps> = ({
+ 42:   tab,
+ 43:   isActive,
+ 44:   isVertical,
+ 45:   index,
+ 46:   totalTabs,
+ 47:   onClick,
+ 48: }) => (
+ 49:   <motion.button
+ 50:     key={tab.id}
+ 51:     onClick={onClick}
+ 52:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 53:     role="tab"
+ 54:     aria-selected={isActive}
+ 55:     aria-controls={`tabpanel-${tab.id}`}
+ 56:     id={`tab-${tab.id}`}
+ 57:   >
+ 58:     {isActive && (
+ 59:       <motion.div
+ 60:         layoutId="active-tab"
+ 61:         className={`absolute ${
+ 62:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 63:         } bg-[var(--matrix-dark)]`}
+ 64:         initial={false}
+ 65:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 66:       />
+ 67:     )}
+ 68:     <span className="relative z-10">{tab.label}</span>
+ 69:   </motion.button>
+ 70: );
+ 71: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 72:   tab,
+ 73:   isActive,
+ 74: }) => {
+ 75:   if (!isActive) return null;
+ 76:   return (
+ 77:     <motion.div
+ 78:       key={tab.id}
+ 79:       role="tabpanel"
+ 80:       id={`tabpanel-${tab.id}`}
+ 81:       aria-labelledby={`tab-${tab.id}`}
+ 82:       className="px-8"
+ 83:       initial={{ opacity: 0, y: 20 }}
+ 84:       animate={{ opacity: 1, y: 0 }}
+ 85:       exit={{ opacity: 0, y: -20 }}
+ 86:       transition={{ duration: 0.3 }}
+ 87:     >
+ 88:       {tab.content}
+ 89:     </motion.div>
+ 90:   );
+ 91: };
+ 92: /**
+ 93:  * Renders a set of tabs with content.
+ 94:  *
+ 95:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 96:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 97:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 98:  * @return {JSX.Element} The rendered Tabs component.
+ 99:  */
+100: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+101:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+102:   const isVertical = orientation === "vertical";
+103:   return (
+104:     <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
+105:       <div
+106:         className={`flex ${
+107:           isVertical ? "flex-col sm:flex-row" : "flex-col"
+108:         } bg-gray-800 rounded-lg h-[28rem] mt-4`}
+109:       >
+110:         <div
+111:           className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+112:             isVertical ? "max-h-[185px] " : ""
+113:           }`}
+114:         >
+115:           <div
+116:             className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+117:             role="tablist"
+118:           >
+119:             {tabs.map((tab, index) => (
+120:               <TabButton
+121:                 key={tab.id}
+122:                 tab={tab}
+123:                 isActive={activeTab === tab.id}
+124:                 isVertical={isVertical}
+125:                 index={index}
+126:                 totalTabs={tabs.length}
+127:                 onClick={() => setActiveTab(tab.id)}
+128:               />
+129:             ))}
+130:           </div>
+131:         </div>
+132:         <div
+133:           className={`${
+134:             isVertical ? "sm:w-3/4 w-full" : "w-full"
+135:           } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+136:         >
+137:           <AnimatePresence mode="wait">
+138:             {tabs.map((tab) => (
+139:               <TabPanel
+140:                 key={tab.id}
+141:                 tab={tab}
+142:                 isActive={activeTab === tab.id}
+143:               />
+144:             ))}
+145:           </AnimatePresence>
+146:         </div>
+147:       </div>
+148:     </div>
+149:   );
+150: };
+151: export default Tabs;
 ````
 
 ## File: src/lib/sanity/queries.ts
