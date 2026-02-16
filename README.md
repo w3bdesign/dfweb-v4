@@ -155,11 +155,6 @@ Sanity.io and Typescript.
 
     # Security Configuration (server-side)
     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-
-    # AI Configuration (server-side)
-    AI_API_KEY=xxx                            # AI service API key
-    AI_BASE_URL=https://xxx                   # AI service base URL
-    MODEL_NAME=claude-3.7-sonnet@anthropic    # Optional, has default value
     ```
 
   - Validation prevents application startup if required variables are missing
