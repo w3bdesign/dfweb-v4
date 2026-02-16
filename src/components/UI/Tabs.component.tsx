@@ -39,10 +39,7 @@ const getTabButtonClassName = (
   const orientationClasses = isVertical
     ? "w-full text-left"
     : "grow text-center";
-  const borderClasses = [
-    index !== 0 ? "border-t border-gray-600" : "",
-    isVertical && index !== totalTabs - 1 ? "border-b border-gray-600" : "",
-  ].join(" ");
+  const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
 
   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
 };
