@@ -154,11 +154,6 @@ Required variables:
 NEXT_PUBLIC_EMAIL_API_KEY=user_xxx
 NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx
 NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx
-
-# AI Configuration (server-side)
-AI_API_KEY=xxx
-AI_BASE_URL=xxx
-MODEL_NAME=claude-3.7-sonnet@anthropic
 ```
 
 ## Important Notes
