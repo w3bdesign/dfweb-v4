@@ -1023,27 +1023,6 @@ tsconfig.json
 9: - **CSP Debugging**: Custom headers in `next.config.ts` may block resources - check console for CSP violations
 ````
 
-## File: .zap/rules.tsv
-````
- 1: # ZAP Baseline Scan Rules
- 2: # Format: RULE_ID	ACTION	DESCRIPTION
- 3: # Actions: IGNORE, WARN, FAIL
- 4: # 
- 5: # Common rules you might want to ignore for a Next.js application:
- 6: # 10011	IGNORE	(Cookie Without Secure Flag)
- 7: # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
- 8: # 10021	IGNORE	(X-Content-Type-Options Header Missing)
- 9: # 10023	IGNORE	(Information Disclosure - Debug Error Messages)
-10: # 10035	IGNORE	(Strict-Transport-Security Header Not Set)
-11: # 10038	IGNORE	(Content Security Policy (CSP) Header Not Set)
-12: # 10054	IGNORE	(Cookie without SameSite Attribute)
-13: # 10096	IGNORE	(Timestamp Disclosure - Unix)
-14: # 10109	IGNORE	(Modern Web Application)
-15: #
-16: # Uncomment the rules above as needed based on your security requirements
-17: # and false positives you encounter during scanning.
-````
-
 ## File: commit/providers/__init__.py
 ````python
  1: """
@@ -17472,6 +17451,66 @@ tsconfig.json
 36: }
 ````
 
+## File: next.config.ts
+````typescript
+ 1: import type { NextConfig } from "next";
+ 2: const cspDirectives = {
+ 3:   "default-src": ["'self'"],
+ 4:   "script-src": [
+ 5:     "'self'",
+ 6:     "'unsafe-eval'",
+ 7:     "'unsafe-inline'",
+ 8:     "https://va.vercel-scripts.com",
+ 9:   ],
+10:   "style-src": ["'self'", "'unsafe-inline'"],
+11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
+12:   "font-src": ["'self'"],
+13:   "object-src": ["'none'"],
+14:   "base-uri": ["'self'"],
+15:   "form-action": ["'self'"],
+16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
+17:   "connect-src": [
+18:     "'self'",
+19:     "https://api.emailjs.com",
+20:     "https://va.vercel-scripts.com",
+21:   ],
+22: };
+23: const buildCspHeader = (directives: Record<string, string[]>) =>
+24:   Object.entries(directives)
+25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
+26:     .join(" ") + " upgrade-insecure-requests;";
+27: const nextConfig: NextConfig = {
+28:   transpilePackages: ["@portabletext/react"],
+29:   images: {
+30:     remotePatterns: [
+31:       {
+32:         protocol: "https",
+33:         hostname: "cdn.sanity.io",
+34:       },
+35:     ],
+36:   },
+37:   async headers() {
+38:     return [
+39:       {
+40:         source: "/:path*",
+41:         headers: [
+42:           {
+43:             key: "X-Frame-Options",
+44:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+45:           },
+46:           { key: "X-Content-Type-Options", value: "nosniff" },
+47:           {
+48:             key: "Content-Security-Policy",
+49:             value: buildCspHeader(cspDirectives),
+50:           },
+51:         ],
+52:       },
+53:     ];
+54:   },
+55: };
+56: export default nextConfig;
+````
+
 ## File: playwright.config.ts
 ````typescript
  1: import { defineConfig, devices } from "@playwright/test";
@@ -17965,6 +18004,24 @@ tsconfig.json
 168: - Use Server Components where possible
 169: - Keep components focused and modular
 170: - Document complex logic
+````
+
+## File: .zap/rules.tsv
+````
+ 1: # ZAP Baseline Scan Rules
+ 2: # Format: RULE_ID	ACTION	DESCRIPTION
+ 3: # Actions: IGNORE, WARN, FAIL
+ 4: # 
+ 5: # Common rules you might want to ignore for a Next.js application:
+ 6: # 10011	IGNORE	(Cookie Without Secure Flag)
+ 7: # 10015	IGNORE	(Incomplete or No Cache-control and Pragma HTTP Header Set)
+ 8: # 10021	IGNORE	(X-Content-Type-Options Header Missing)
+ 9: # 10023	IGNORE	(Information Disclosure - Debug Error Messages)
+10: # 10035	IGNORE	(Strict-Transport-Security Header Not Set)
+11: # 10038	IGNORE	(Content Security Policy (CSP) Header Not Set)
+12: # 10054	IGNORE	(Cookie without SameSite Attribute)
+13: # 10096	IGNORE	(Timestamp Disclosure - Unix)
+14: # 10109	IGNORE	(Modern Web Application)
 ````
 
 ## File: DOCS/README.md
@@ -19115,6 +19172,36 @@ tsconfig.json
 6:         threshold: "20"
 ````
 
+## File: jest.config.ts
+````typescript
+ 1: import type { Config } from "jest";
+ 2: import nextJest from "next/jest.js";
+ 3: const createJestConfig = nextJest({
+ 4:   dir: "./",
+ 5: });
+ 6: const customJestConfig: Config = {
+ 7:   preset: "ts-jest/presets/js-with-babel-esm",
+ 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+ 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
+10:   testEnvironment: "jest-environment-jsdom",
+11:   coverageProvider: "v8",
+12:   moduleNameMapper: {
+13:     "^@portabletext/react$":
+14:       "<rootDir>/src/__mocks__/portabletext-react.tsx",
+15:     "@/(.*)": "<rootDir>/src/$1",
+16:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
+17:     "^src/(.*)$": "<rootDir>/src/$1",
+18:   },
+19:   collectCoverageFrom: [
+20:     "src/components/*.{js,jsx,ts,tsx}",
+21:     "!src/lib/**/*.*",
+22:     "!src/pages/**/*.*",
+23:     "!src/utils/**/*.*",
+24:   ],
+25: };
+26: export default createJestConfig(customJestConfig);
+````
+
 ## File: src/__mocks__/portabletext-react.tsx
 ````typescript
   1: /**
@@ -19433,6 +19520,123 @@ tsconfig.json
 88: export default project
 ````
 
+## File: src/components/CV/CVContent.component.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import Button from "@/components/UI/Button.component";
+ 3: import Tabs from "@/components/UI/Tabs.component";
+ 4: import QualificationsTabContent from "./QualificationsTabContent";
+ 5: import ExperienceTabContent from "./ExperienceTabContent";
+ 6: import EducationTabContent from "./EducationTabContent";
+ 7: import VolunteerWorkTabContent from "./VolunteerWorkTabContent";
+ 8: import type { Cv } from "@/types/sanity.types";
+ 9: /**
+10:  * CVContent component for rendering the CV page with tabs
+11:  * @param {Object} props - The props for the CVContent component
+12:  * @param {Cv} props.cvData - The CV data from Sanity
+13:  * @returns {JSX.Element} The rendered CVContent component
+14:  */
+15: const CVContent = ({ cvData }: { cvData: Cv }) => {
+16:   const tabs = [
+17:     {
+18:       id: "qualifications",
+19:       label: "Nøkkelkvalifikasjoner",
+20:       content: (
+21:         <QualificationsTabContent qualifications={cvData.keyQualifications} />
+22:       ),
+23:     },
+24:     {
+25:       id: "experience",
+26:       label: "Erfaring",
+27:       content: <ExperienceTabContent experience={cvData.experience} />,
+28:     },
+29:     {
+30:       id: "education",
+31:       label: "Utdanning",
+32:       content: <EducationTabContent education={cvData.education} />,
+33:     },
+34:     {
+35:       id: "volunteerWork",
+36:       label: "Frivillig arbeid",
+37:       content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
+38:     },
+39:   ];
+40:   return (
+41:     <main id="maincontent">
+42:       <div className="mt-32 bg-graybg">
+43:         <PageHeader>CV</PageHeader>
+44:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+45:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+46:             <div className="p-4 mx-auto mt-4 flex flex-col items-center">
+47:               <div className="p-4 text-lg rounded-sm md:w-full">
+48:                 {/* Desktop: tabbed CV interface */}
+49:                 <div className="hidden sm:block">
+50:                   <div className="flex justify-center">
+51:                     <Tabs tabs={tabs} />
+52:                   </div>
+53:                   <div className="mx-auto text-center mt-8">
+54:                     <Button href="./cv2.pdf" renderAs="a" type="button">
+55:                       Last ned PDF
+56:                     </Button>
+57:                   </div>
+58:                 </div>
+59:                 {/* Mobile: download button only */}
+60:                 <div className="flex sm:hidden justify-center py-8">
+61:                   <Button href="./cv2.pdf" renderAs="a" type="button">
+62:                     Last ned PDF
+63:                   </Button>
+64:                 </div>
+65:               </div>
+66:             </div>
+67:           </div>
+68:         </div>
+69:       </div>
+70:     </main>
+71:   );
+72: };
+73: export default CVContent;
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^5.8.1",
+21:     "styled-components": "^6.3.8"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.13",
+26:     "eslint": "^10.0.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: README.md
 ````markdown
   1: # Dfweb.no Portfolio Version 4
@@ -19557,377 +19761,208 @@ tsconfig.json
 120: - 100% test coverage with Jest and React testing library
 121: - AI-powered commit message generation following Conventional Commits with
 122:   gitmojis
-123: - Automated performance monitoring with Lighthouse CI
-124:   - Performance, accessibility, best practices, and SEO checks on every PR
-125:   - Configurable thresholds for quality metrics
-126:   - Both desktop and performance-focused testing
-127: - Automated repository documentation with Repomix
-128:   - AI-friendly documentation generation on every push to main
-129:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-130:   - Automated PR analysis with repository structure insights
-131:   - Security-focused documentation with sensitive information filtering
-132:   - Markdown formatting for improved readability
-133:   - Automated security vulnerability scanning with Snyk
-134:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-135:     - Integrates with GitHub Security tab for vulnerability tracking
-136:   - Supply chain attack prevention with 7-day minimum release age
-137:     - Packages must be published for at least 7 days before installation
-138:     - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-139:     - All CI workflows use `--frozen-lockfile` to prevent bypassing
-140:     - Protects against compromised package releases (like Shai Hulud incidents)
-141: 
-142: ### Environment Variables
-143: 
-144: - Type-safe environment variable validation with envalid
-145:   - Runtime validation of required environment variables
-146:   - Clear error messages with examples for missing variables
-147:   - Separate handling of client-side and server-side variables
-148:   - Default values where appropriate
-149:   - Required variables:
-150: 
-151:     ```env
-152:     # Email Configuration (client-side)
-153:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-154:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-155:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+123: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+124:   - Scans for security, performance, correctness, and architecture issues
+125:   - Outputs a 0–100 score with actionable diagnostics on every PR
+126:   - Posts results as PR comments and GitHub Actions job summaries
+127:   - Configurable score threshold (default: 80) to gate merges
+128:   - Auto-detects package manager (pnpm, yarn, npm)
+129: - Automated performance monitoring with Lighthouse CI
+130:   - Performance, accessibility, best practices, and SEO checks on every PR
+131:   - Configurable thresholds for quality metrics
+132:   - Both desktop and performance-focused testing
+133: - Automated repository documentation with Repomix
+134:   - AI-friendly documentation generation on every push to main
+135:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+136:   - Automated PR analysis with repository structure insights
+137:   - Security-focused documentation with sensitive information filtering
+138:   - Markdown formatting for improved readability
+139:   - Automated security vulnerability scanning with Snyk
+140:     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+141:     - Integrates with GitHub Security tab for vulnerability tracking
+142:   - Supply chain attack prevention with 7-day minimum release age
+143:     - Packages must be published for at least 7 days before installation
+144:     - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+145:     - All CI workflows use `--frozen-lockfile` to prevent bypassing
+146:     - Protects against compromised package releases (like Shai Hulud incidents)
+147: 
+148: ### Environment Variables
+149: 
+150: - Type-safe environment variable validation with envalid
+151:   - Runtime validation of required environment variables
+152:   - Clear error messages with examples for missing variables
+153:   - Separate handling of client-side and server-side variables
+154:   - Default values where appropriate
+155:   - Required variables:
 156: 
-157:     # Security Configuration (server-side)
-158:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-159:     ```
-160: 
-161:   - Validation prevents application startup if required variables are missing
-162:   - TypeScript integration for type-safe access to environment variables
-163: 
-164: ### Testing Standards
-165: 
-166: - ISTQB-aligned comprehensive test strategy
-167:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-168:   - Multi-level test approach (Unit, Component, E2E)
-169:   - Risk-based testing methodology
-170:   - Defined test metrics and reporting
-171:   - Clear roles and responsibilities
-172:   - Structured defect management process
-173: 
-174: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-175:   - Each test must include the following comments:
-176: 
-177:     ```typescript
-178:     // Arrange - Set up test data and conditions
-179:     // Act - Perform the action being tested
-180:     // Assert - Verify the results
-181:     ```
+157:     ```env
+158:     # Email Configuration (client-side)
+159:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+160:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+161:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+162: 
+163:     # Security Configuration (server-side)
+164:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+165:     ```
+166: 
+167:   - Validation prevents application startup if required variables are missing
+168:   - TypeScript integration for type-safe access to environment variables
+169: 
+170: ### Testing Standards
+171: 
+172: - ISTQB-aligned comprehensive test strategy
+173:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+174:   - Multi-level test approach (Unit, Component, E2E)
+175:   - Risk-based testing methodology
+176:   - Defined test metrics and reporting
+177:   - Clear roles and responsibilities
+178:   - Structured defect management process
+179: 
+180: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+181:   - Each test must include the following comments:
 182: 
-183:   - This pattern ensures:
-184:     - Clear test structure and readability
-185:     - Consistent test organization across the codebase
-186:     - Easy identification of test setup, execution, and verification
-187:   - Simplified test maintenance and debugging
-188:   - Automated validation through custom ESLint rules
-189:   - Tests will fail if AAA pattern is not followed
-````
-
-## File: src/components/CV/CVContent.component.tsx
-````typescript
- 1: import PageHeader from "@/components/UI/PageHeader.component";
- 2: import Button from "@/components/UI/Button.component";
- 3: import Tabs from "@/components/UI/Tabs.component";
- 4: import QualificationsTabContent from "./QualificationsTabContent";
- 5: import ExperienceTabContent from "./ExperienceTabContent";
- 6: import EducationTabContent from "./EducationTabContent";
- 7: import VolunteerWorkTabContent from "./VolunteerWorkTabContent";
- 8: import type { Cv } from "@/types/sanity.types";
- 9: /**
-10:  * CVContent component for rendering the CV page with tabs
-11:  * @param {Object} props - The props for the CVContent component
-12:  * @param {Cv} props.cvData - The CV data from Sanity
-13:  * @returns {JSX.Element} The rendered CVContent component
-14:  */
-15: const CVContent = ({ cvData }: { cvData: Cv }) => {
-16:   const tabs = [
-17:     {
-18:       id: "qualifications",
-19:       label: "Nøkkelkvalifikasjoner",
-20:       content: (
-21:         <QualificationsTabContent qualifications={cvData.keyQualifications} />
-22:       ),
-23:     },
-24:     {
-25:       id: "experience",
-26:       label: "Erfaring",
-27:       content: <ExperienceTabContent experience={cvData.experience} />,
-28:     },
-29:     {
-30:       id: "education",
-31:       label: "Utdanning",
-32:       content: <EducationTabContent education={cvData.education} />,
-33:     },
-34:     {
-35:       id: "volunteerWork",
-36:       label: "Frivillig arbeid",
-37:       content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
-38:     },
-39:   ];
-40:   return (
-41:     <main id="maincontent">
-42:       <div className="mt-32 bg-graybg">
-43:         <PageHeader>CV</PageHeader>
-44:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-45:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
-46:             <div className="p-4 mx-auto mt-4 flex flex-col items-center">
-47:               <div className="p-4 text-lg rounded-sm md:w-full">
-48:                 {/* Desktop: tabbed CV interface */}
-49:                 <div className="hidden sm:block">
-50:                   <div className="flex justify-center">
-51:                     <Tabs tabs={tabs} />
-52:                   </div>
-53:                   <div className="mx-auto text-center mt-8">
-54:                     <Button href="./cv2.pdf" renderAs="a" type="button">
-55:                       Last ned PDF
-56:                     </Button>
-57:                   </div>
-58:                 </div>
-59:                 {/* Mobile: download button only */}
-60:                 <div className="flex sm:hidden justify-center py-8">
-61:                   <Button href="./cv2.pdf" renderAs="a" type="button">
-62:                     Last ned PDF
-63:                   </Button>
-64:                 </div>
-65:               </div>
-66:             </div>
-67:           </div>
-68:         </div>
-69:       </div>
-70:     </main>
-71:   );
-72: };
-73: export default CVContent;
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^5.8.1",
-21:     "styled-components": "^6.3.8"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.13",
-26:     "eslint": "^10.0.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
-````
-
-## File: next.config.ts
-````typescript
- 1: import type { NextConfig } from "next";
- 2: const cspDirectives = {
- 3:   "default-src": ["'self'"],
- 4:   "script-src": [
- 5:     "'self'",
- 6:     "'unsafe-eval'",
- 7:     "'unsafe-inline'",
- 8:     "https://va.vercel-scripts.com",
- 9:   ],
-10:   "style-src": ["'self'", "'unsafe-inline'"],
-11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
-12:   "font-src": ["'self'"],
-13:   "object-src": ["'none'"],
-14:   "base-uri": ["'self'"],
-15:   "form-action": ["'self'"],
-16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
-17:   "connect-src": [
-18:     "'self'",
-19:     "https://api.emailjs.com",
-20:     "https://va.vercel-scripts.com",
-21:   ],
-22: };
-23: const buildCspHeader = (directives: Record<string, string[]>) =>
-24:   Object.entries(directives)
-25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
-26:     .join(" ") + " upgrade-insecure-requests;";
-27: const nextConfig: NextConfig = {
-28:   transpilePackages: ["@portabletext/react"],
-29:   images: {
-30:     remotePatterns: [
-31:       {
-32:         protocol: "https",
-33:         hostname: "cdn.sanity.io",
-34:       },
-35:     ],
-36:   },
-37:   async headers() {
-38:     return [
-39:       {
-40:         source: "/:path*",
-41:         headers: [
-42:           {
-43:             key: "X-Frame-Options",
-44:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
-45:           },
-46:           { key: "X-Content-Type-Options", value: "nosniff" },
-47:           {
-48:             key: "Content-Security-Policy",
-49:             value: buildCspHeader(cspDirectives),
-50:           },
-51:         ],
-52:       },
-53:     ];
-54:   },
-55: };
-56: export default nextConfig;
+183:     ```typescript
+184:     // Arrange - Set up test data and conditions
+185:     // Act - Perform the action being tested
+186:     // Assert - Verify the results
+187:     ```
+188: 
+189:   - This pattern ensures:
+190:     - Clear test structure and readability
+191:     - Consistent test organization across the codebase
+192:     - Easy identification of test setup, execution, and verification
+193:   - Simplified test maintenance and debugging
+194:   - Automated validation through custom ESLint rules
+195:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
   2: on:
-  3:   pull_request:
+  3:   push:
   4:     branches: [main, master]
-  5: jobs:
-  6:   react-doctor:
-  7:     name: React Health Check
-  8:     runs-on: ubuntu-latest
-  9:     permissions:
- 10:       pull-requests: write
- 11:     steps:
- 12:       - uses: actions/checkout@v6
- 13:       - name: Detect package manager
- 14:         id: pm
- 15:         run: |
- 16:           if [ -f "pnpm-lock.yaml" ]; then
- 17:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 18:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 19:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 20:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 21:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 22:           elif [ -f "yarn.lock" ]; then
- 23:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 24:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 25:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 26:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 27:             echo "Detected yarn (yarn.lock found)"
- 28:           else
- 29:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 30:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 31:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 32:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 33:             echo "Detected npm (default)"
- 34:           fi
- 35:       - name: Install pnpm
- 36:         if: steps.pm.outputs.manager == 'pnpm'
- 37:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
- 38:         with:
- 39:           version: 10
- 40:       - uses: actions/setup-node@v6
- 41:         with:
- 42:           node-version: 24
- 43:           cache: ${{ steps.pm.outputs.cache }}
- 44:       - name: Install dependencies
- 45:         run: ${{ steps.pm.outputs.install }}
- 46:       - name: Run React Doctor
- 47:         id: doctor
- 48:         run: |
- 49:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 50:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 51:           # Strip ANSI escape codes for clean output
- 52:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 53:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 54:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 55:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 56:           # Extract just the numeric score for threshold check
- 57:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 58:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 59:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 60:       - name: Post PR comment with results
- 61:         if: github.event_name == 'pull_request'
- 62:         uses: actions/github-script@v7
- 63:         with:
- 64:           script: |
- 65:             const fs = require('fs');
- 66:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 67:             const score = '${{ steps.doctor.outputs.score }}';
- 68:             const body = [
- 69:               `## 🩺 React Doctor — Score: ${score}`,
- 70:               '',
- 71:               '<details>',
- 72:               '<summary>Full diagnostics</summary>',
- 73:               '',
- 74:               '```',
- 75:               output.trim(),
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: jobs:
+  8:   react-doctor:
+  9:     name: React Health Check
+ 10:     runs-on: ubuntu-latest
+ 11:     permissions:
+ 12:       pull-requests: write
+ 13:     steps:
+ 14:       - uses: actions/checkout@v6
+ 15:       - name: Detect package manager
+ 16:         id: pm
+ 17:         run: |
+ 18:           if [ -f "pnpm-lock.yaml" ]; then
+ 19:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 20:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 21:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 22:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 23:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 24:           elif [ -f "yarn.lock" ]; then
+ 25:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected yarn (yarn.lock found)"
+ 30:           else
+ 31:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected npm (default)"
+ 36:           fi
+ 37:       - name: Install pnpm
+ 38:         if: steps.pm.outputs.manager == 'pnpm'
+ 39:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+ 40:         with:
+ 41:           version: 10
+ 42:       - uses: actions/setup-node@v6
+ 43:         with:
+ 44:           node-version: 24
+ 45:           cache: ${{ steps.pm.outputs.cache }}
+ 46:       - name: Install dependencies
+ 47:         run: ${{ steps.pm.outputs.install }}
+ 48:       - name: Run React Doctor
+ 49:         id: doctor
+ 50:         run: |
+ 51:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 52:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 53:           # Strip ANSI escape codes for clean output
+ 54:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 55:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 56:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 57:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 58:           # Extract just the numeric score for threshold check
+ 59:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 60:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 61:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 62:       - name: Post PR comment with results
+ 63:         if: github.event_name == 'pull_request'
+ 64:         uses: actions/github-script@v7
+ 65:         with:
+ 66:           script: |
+ 67:             const fs = require('fs');
+ 68:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 69:             const score = '${{ steps.doctor.outputs.score }}';
+ 70:             const body = [
+ 71:               `## 🩺 React Doctor — Score: ${score}`,
+ 72:               '',
+ 73:               '<details>',
+ 74:               '<summary>Full diagnostics</summary>',
+ 75:               '',
  76:               '```',
- 77:               '',
- 78:               '</details>',
+ 77:               output.trim(),
+ 78:               '```',
  79:               '',
- 80:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
- 81:             ].join('\n');
- 82:             // Find existing comment to update instead of creating duplicates
- 83:             const { data: comments } = await github.rest.issues.listComments({
- 84:               owner: context.repo.owner,
- 85:               repo: context.repo.repo,
- 86:               issue_number: context.issue.number,
- 87:             });
- 88:             const botComment = comments.find(
- 89:               (c) => c.body?.includes('🩺 React Doctor')
- 90:             );
- 91:             if (botComment) {
- 92:               await github.rest.issues.updateComment({
- 93:                 owner: context.repo.owner,
- 94:                 repo: context.repo.repo,
- 95:                 comment_id: botComment.id,
- 96:                 body,
- 97:               });
- 98:             } else {
- 99:               await github.rest.issues.createComment({
-100:                 owner: context.repo.owner,
-101:                 repo: context.repo.repo,
-102:                 issue_number: context.issue.number,
-103:                 body,
-104:               });
-105:             }
-106:       - name: Write job summary
-107:         if: always()
-108:         run: |
-109:           echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-110:           echo "" >> "$GITHUB_STEP_SUMMARY"
-111:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-112:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+ 80:               '</details>',
+ 81:               '',
+ 82:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+ 83:             ].join('\n');
+ 84:             // Find existing comment to update instead of creating duplicates
+ 85:             const { data: comments } = await github.rest.issues.listComments({
+ 86:               owner: context.repo.owner,
+ 87:               repo: context.repo.repo,
+ 88:               issue_number: context.issue.number,
+ 89:             });
+ 90:             const botComment = comments.find(
+ 91:               (c) => c.body?.includes('🩺 React Doctor')
+ 92:             );
+ 93:             if (botComment) {
+ 94:               await github.rest.issues.updateComment({
+ 95:                 owner: context.repo.owner,
+ 96:                 repo: context.repo.repo,
+ 97:                 comment_id: botComment.id,
+ 98:                 body,
+ 99:               });
+100:             } else {
+101:               await github.rest.issues.createComment({
+102:                 owner: context.repo.owner,
+103:                 repo: context.repo.repo,
+104:                 issue_number: context.issue.number,
+105:                 body,
+106:               });
+107:             }
+108:       - name: Write job summary
+109:         if: always()
+110:         run: |
+111:           echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+112:           echo "" >> "$GITHUB_STEP_SUMMARY"
 113:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-114:       - name: Check score threshold
-115:         run: |
-116:           SCORE="${{ steps.doctor.outputs.score_num }}"
-117:           SCORE="${SCORE:-0}"
-118:           THRESHOLD=80
-119:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-120:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-121:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-122:             exit 1
-123:           fi
+114:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+115:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+116:       - name: Check score threshold
+117:         run: |
+118:           SCORE="${{ steps.doctor.outputs.score_num }}"
+119:           SCORE="${SCORE:-0}"
+120:           THRESHOLD=80
+121:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+122:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+123:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+124:             exit 1
+125:           fi
 ````
 
 ## File: src/components/UI/Tabs.component.tsx
@@ -20081,36 +20116,6 @@ tsconfig.json
 147:   );
 148: };
 149: export default Tabs;
-````
-
-## File: jest.config.ts
-````typescript
- 1: import type { Config } from "jest";
- 2: import nextJest from "next/jest.js";
- 3: const createJestConfig = nextJest({
- 4:   dir: "./",
- 5: });
- 6: const customJestConfig: Config = {
- 7:   preset: "ts-jest/presets/js-with-babel-esm",
- 8:   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
- 9:   testPathIgnorePatterns: ["<rootDir>/src/e2e/"],
-10:   testEnvironment: "jest-environment-jsdom",
-11:   coverageProvider: "v8",
-12:   moduleNameMapper: {
-13:     "^@portabletext/react$":
-14:       "<rootDir>/src/__mocks__/portabletext-react.tsx",
-15:     "@/(.*)": "<rootDir>/src/$1",
-16:     "^src/utils$": "<rootDir>/src/__mocks__/utils",
-17:     "^src/(.*)$": "<rootDir>/src/$1",
-18:   },
-19:   collectCoverageFrom: [
-20:     "src/components/*.{js,jsx,ts,tsx}",
-21:     "!src/lib/**/*.*",
-22:     "!src/pages/**/*.*",
-23:     "!src/utils/**/*.*",
-24:   ],
-25: };
-26: export default createJestConfig(customJestConfig);
 ````
 
 ## File: package.json
