@@ -120,6 +120,12 @@ Sanity.io and Typescript.
 - 100% test coverage with Jest and React testing library
 - AI-powered commit message generation following Conventional Commits with
   gitmojis
+- Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+  - Scans for security, performance, correctness, and architecture issues
+  - Outputs a 0–100 score with actionable diagnostics on every PR
+  - Posts results as PR comments and GitHub Actions job summaries
+  - Configurable score threshold (default: 80) to gate merges
+  - Auto-detects package manager (pnpm, yarn, npm)
 - Automated performance monitoring with Lighthouse CI
   - Performance, accessibility, best practices, and SEO checks on every PR
   - Configurable thresholds for quality metrics
