@@ -1783,55 +1783,6 @@ tsconfig.json
 65: Write-Output "2. Make a commit to test the AI commit message generator"
 ````
 
-## File: commit/setup.sh
-````bash
- 1: #!/bin/bash
- 2: # Setup script for AI Commit Message Generator
- 3: # Run this from your repository root after copying the commit/ folder
- 4: set -e
- 5: # Find repo root
- 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
- 7:     echo "Error: Not in a git repository"
- 8:     exit 1
- 9: }
-10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
-12: # Check if commit_analyzer.py exists
-13: if [ ! -f "$COMMIT_ANALYZER" ]; then
-14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR"
-15:     exit 1
-16: fi
-17: echo "Setting up AI Commit Message Generator..."
-18: # Install Python dependencies
-19: echo "Installing Python dependencies..."
-20: pip install openai anthropic python-dotenv
-21: # Create .env from template if it doesn't exist
-22: if [ ! -f "$REPO_ROOT/.env" ]; then
-23:     if [ -f "$SCRIPT_DIR/.env.example" ]; then
-24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
-25:         echo "Created .env from template"
-26:     else
-27:         echo "Warning: .env.example not found, creating minimal .env"
-28:         echo '# Add your API key' > "$REPO_ROOT/.env"
-29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
-30:     fi
-31: fi
-32: # Create git hook
-33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
-34: mkdir -p "$REPO_ROOT/.git/hooks"
-35: cat > "$HOOK_FILE" << EOF
-36: #!/bin/sh
-37: python "$COMMIT_ANALYZER" --hook
-38: EOF
-39: chmod +x "$HOOK_FILE"
-40: echo ""
-41: echo "✅ Setup complete!"
-42: echo ""
-43: echo "Next steps:"
-44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-45: echo "2. Make a commit to test the AI commit message generator"
-````
-
 ## File: DOCS/EXPLANATION.md
 ````markdown
   1: # DFWeb v4 - Interview Discussion Guide
@@ -4108,6 +4059,119 @@ tsconfig.json
 199:     "title": "Hjem"
 200:   }
 201: ]
+````
+
+## File: src/__mocks__/portabletext-react.tsx
+````typescript
+  1: /**
+  2:  * Jest mock for @portabletext/react
+  3:  *
+  4:  * Implements the PortableText component's marks rendering pipeline
+  5:  * per the documented API at https://github.com/portabletext/react-portabletext
+  6:  *
+  7:  * Marks contract (from README):
+  8:  * - Decorators (bold, italic, code): marks[] entry IS the component key
+  9:  *   → components.marks[markName]({ children, markType })
+ 10:  * - Annotations (link): marks[] entry references markDefs[]._key
+ 11:  *   → components.marks[markDef._type]({ children, value: markDef, markType })
+ 12:  */
+ 13: import React from "react";
+ 14: import type { ReactNode } from "react";
+ 15: interface PortableTextSpan {
+ 16:   _key: string;
+ 17:   _type: string;
+ 18:   marks?: string[];
+ 19:   text?: string;
+ 20: }
+ 21: interface PortableTextMarkDefinition {
+ 22:   _key: string;
+ 23:   _type: string;
+ 24:   [key: string]: unknown;
+ 25: }
+ 26: interface PortableTextBlock {
+ 27:   _key: string;
+ 28:   _type: string;
+ 29:   children?: PortableTextSpan[];
+ 30:   markDefs?: PortableTextMarkDefinition[];
+ 31:   style?: string;
+ 32: }
+ 33: interface MarkComponentProps {
+ 34:   children?: ReactNode;
+ 35:   value?: Record<string, unknown>;
+ 36:   markType?: string;
+ 37: }
+ 38: interface PortableTextComponents {
+ 39:   marks?: Record<
+ 40:     string,
+ 41:     React.ComponentType<MarkComponentProps>
+ 42:   >;
+ 43: }
+ 44: interface PortableTextProps {
+ 45:   readonly value: PortableTextBlock[];
+ 46:   readonly components?: PortableTextComponents;
+ 47:   readonly onMissingComponent?: false | ((message: string, options: Record<string, unknown>) => void);
+ 48: }
+ 49: export function PortableText({ value, components, onMissingComponent: _onMissingComponent }: Readonly<PortableTextProps>) {
+ 50:   if (!value || !Array.isArray(value)) return null;
+ 51:   return (
+ 52:     <>
+ 53:       {value.map((block) => {
+ 54:         if (block._type !== "block" || !block.children) return null;
+ 55:         return (
+ 56:           <p key={block._key}>
+ 57:             {block.children.map((child) => {
+ 58:               if (child._type !== "span") return null;
+ 59:               let content: ReactNode = child.text;
+ 60:               if (child.marks && components?.marks) {
+ 61:                 for (const mark of child.marks) {
+ 62:                   const markDef = block.markDefs?.find(
+ 63:                     (md) => md._key === mark,
+ 64:                   );
+ 65:                   // Annotation: mark references a markDef by _key
+ 66:                   // Decorator: mark string IS the component key
+ 67:                   const markType = markDef?._type ?? mark;
+ 68:                   const MarkComponent = components.marks[markType];
+ 69:                   if (MarkComponent) {
+ 70:                     content = (
+ 71:                       <MarkComponent
+ 72:                         value={markDef}
+ 73:                         markType={markType}
+ 74:                       >
+ 75:                         {content}
+ 76:                       </MarkComponent>
+ 77:                     );
+ 78:                   }
+ 79:                 }
+ 80:               }
+ 81:               return (
+ 82:                 <React.Fragment key={child._key}>{content}</React.Fragment>
+ 83:               );
+ 84:             })}
+ 85:           </p>
+ 86:         );
+ 87:       })}
+ 88:     </>
+ 89:   );
+ 90: }
+ 91: /** Extract plain text from Portable Text blocks */
+ 92: export function toPlainText(
+ 93:   blocks: PortableTextBlock | PortableTextBlock[],
+ 94: ): string {
+ 95:   const blockArray = Array.isArray(blocks) ? blocks : [blocks];
+ 96:   return blockArray
+ 97:     .map((block) =>
+ 98:       block.children
+ 99:         ? block.children
+100:             .filter((child) => child._type === "span")
+101:             .map((span) => span.text ?? "")
+102:             .join("")
+103:         : "",
+104:     )
+105:     .join("\n\n");
+106: }
+107: // Type re-exports (compile-time only, stripped at runtime)
+108: export type { MarkComponentProps as PortableTextMarkComponentProps };
+109: export type { PortableTextComponents as PortableTextReactComponents };
 ````
 
 ## File: src/__mocks__/process.ts
@@ -14351,6 +14415,52 @@ tsconfig.json
 13: }
 ````
 
+## File: src/utils/portableTextComponents.tsx
+````typescript
+ 1: import Link from "next/link";
+ 2: import { isValidElement } from "react";
+ 3: import type { ReactNode } from "react";
+ 4: import type { PortableTextMarkComponentProps } from "@portabletext/react";
+ 5: /**
+ 6:  * Recursively extracts plain text from React children.
+ 7:  * Used to provide a string value for data-text attribute (glitch CSS effect).
+ 8:  */
+ 9: export function getTextFromChildren(children: ReactNode): string {
+10:   if (children == null) return "";
+11:   if (typeof children === "string") return children;
+12:   if (typeof children === "number") return String(children);
+13:   if (Array.isArray(children))
+14:     return children.map(getTextFromChildren).join("");
+15:   if (isValidElement(children)) {
+16:     return getTextFromChildren(
+17:       (children.props as { children?: ReactNode }).children,
+18:     );
+19:   }
+20:   return "";
+21: }
+22: export const myPortableTextComponents = {
+23:   marks: {
+24:     bold: ({ children }: PortableTextMarkComponentProps) => <b>{children}</b>,
+25:     italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
+26:     code: ({ children }: PortableTextMarkComponentProps) => (
+27:       <span className="mt-4 text-lg block">{children}</span>
+28:     ),
+29:     link: ({ children, value }: PortableTextMarkComponentProps) => {
+30:       const textContent = getTextFromChildren(children);
+31:       return (
+32:         <Link
+33:           className="glitch underline text-lg font-bold text-green-400"
+34:           href={value?.href || "#"}
+35:           data-text={textContent}
+36:         >
+37:           {children}
+38:         </Link>
+39:       );
+40:     },
+41:   },
+42: };
+````
+
 ## File: src/utils/test-utils.ts
 ````typescript
  1: /**
@@ -18055,6 +18165,55 @@ tsconfig.json
 14: # 10109	IGNORE	(Modern Web Application)
 ````
 
+## File: commit/setup.sh
+````bash
+ 1: #!/bin/bash
+ 2: # Setup script for AI Commit Message Generator
+ 3: # Run this from your repository root after copying the commit/ folder
+ 4: set -e
+ 5: # Find repo root
+ 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+ 7:     echo "Error: Not in a git repository"
+ 8:     exit 1
+ 9: }
+10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
+12: # Check if commit_analyzer.py exists
+13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
+14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR"
+15:     exit 1
+16: fi
+17: echo "Setting up AI Commit Message Generator..."
+18: # Install Python dependencies
+19: echo "Installing Python dependencies..."
+20: pip install openai anthropic python-dotenv
+21: # Create .env from template if it doesn't exist
+22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
+23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
+24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
+25:         echo "Created .env from template"
+26:     else
+27:         echo "Warning: .env.example not found, creating minimal .env"
+28:         echo '# Add your API key' > "$REPO_ROOT/.env"
+29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
+30:     fi
+31: fi
+32: # Create git hook
+33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
+34: mkdir -p "$REPO_ROOT/.git/hooks"
+35: cat > "$HOOK_FILE" << EOF
+36: #!/bin/sh
+37: python "$COMMIT_ANALYZER" --hook
+38: EOF
+39: chmod +x "$HOOK_FILE"
+40: echo ""
+41: echo "✅ Setup complete!"
+42: echo ""
+43: echo "Next steps:"
+44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+45: echo "2. Make a commit to test the AI commit message generator"
+````
+
 ## File: DOCS/dynamic-score-badges.md
 ````markdown
   1: # Dynamic Score Badges for React Doctor & Lighthouse
@@ -18568,119 +18727,6 @@ tsconfig.json
 383: - [Sanity.io Documentation](https://www.sanity.io/docs)
 384: - [Motion Documentation](https://motion.dev/docs)
 385: - [Testing Library Documentation](https://testing-library.com/docs/)
-````
-
-## File: src/__mocks__/portabletext-react.tsx
-````typescript
-  1: /**
-  2:  * Jest mock for @portabletext/react
-  3:  *
-  4:  * Implements the PortableText component's marks rendering pipeline
-  5:  * per the documented API at https://github.com/portabletext/react-portabletext
-  6:  *
-  7:  * Marks contract (from README):
-  8:  * - Decorators (bold, italic, code): marks[] entry IS the component key
-  9:  *   → components.marks[markName]({ children, markType })
- 10:  * - Annotations (link): marks[] entry references markDefs[]._key
- 11:  *   → components.marks[markDef._type]({ children, value: markDef, markType })
- 12:  */
- 13: import React from "react";
- 14: import type { ReactNode } from "react";
- 15: interface PortableTextSpan {
- 16:   _key: string;
- 17:   _type: string;
- 18:   marks?: string[];
- 19:   text?: string;
- 20: }
- 21: interface PortableTextMarkDefinition {
- 22:   _key: string;
- 23:   _type: string;
- 24:   [key: string]: unknown;
- 25: }
- 26: interface PortableTextBlock {
- 27:   _key: string;
- 28:   _type: string;
- 29:   children?: PortableTextSpan[];
- 30:   markDefs?: PortableTextMarkDefinition[];
- 31:   style?: string;
- 32: }
- 33: interface MarkComponentProps {
- 34:   children?: ReactNode;
- 35:   value?: Record<string, unknown>;
- 36:   markType?: string;
- 37: }
- 38: interface PortableTextComponents {
- 39:   marks?: Record<
- 40:     string,
- 41:     React.ComponentType<MarkComponentProps>
- 42:   >;
- 43: }
- 44: interface PortableTextProps {
- 45:   readonly value: PortableTextBlock[];
- 46:   readonly components?: PortableTextComponents;
- 47:   readonly onMissingComponent?: false | ((message: string, options: Record<string, unknown>) => void);
- 48: }
- 49: export function PortableText({ value, components, onMissingComponent: _onMissingComponent }: Readonly<PortableTextProps>) {
- 50:   if (!value || !Array.isArray(value)) return null;
- 51:   return (
- 52:     <>
- 53:       {value.map((block) => {
- 54:         if (block._type !== "block" || !block.children) return null;
- 55:         return (
- 56:           <p key={block._key}>
- 57:             {block.children.map((child) => {
- 58:               if (child._type !== "span") return null;
- 59:               let content: ReactNode = child.text;
- 60:               if (child.marks && components?.marks) {
- 61:                 for (const mark of child.marks) {
- 62:                   const markDef = block.markDefs?.find(
- 63:                     (md) => md._key === mark,
- 64:                   );
- 65:                   // Annotation: mark references a markDef by _key
- 66:                   // Decorator: mark string IS the component key
- 67:                   const markType = markDef?._type ?? mark;
- 68:                   const MarkComponent = components.marks[markType];
- 69:                   if (MarkComponent) {
- 70:                     content = (
- 71:                       <MarkComponent
- 72:                         value={markDef}
- 73:                         markType={markType}
- 74:                       >
- 75:                         {content}
- 76:                       </MarkComponent>
- 77:                     );
- 78:                   }
- 79:                 }
- 80:               }
- 81:               return (
- 82:                 <React.Fragment key={child._key}>{content}</React.Fragment>
- 83:               );
- 84:             })}
- 85:           </p>
- 86:         );
- 87:       })}
- 88:     </>
- 89:   );
- 90: }
- 91: /** Extract plain text from Portable Text blocks */
- 92: export function toPlainText(
- 93:   blocks: PortableTextBlock | PortableTextBlock[],
- 94: ): string {
- 95:   const blockArray = Array.isArray(blocks) ? blocks : [blocks];
- 96:   return blockArray
- 97:     .map((block) =>
- 98:       block.children
- 99:         ? block.children
-100:             .filter((child) => child._type === "span")
-101:             .map((span) => span.text ?? "")
-102:             .join("")
-103:         : "",
-104:     )
-105:     .join("\n\n");
-106: }
-107: // Type re-exports (compile-time only, stripped at runtime)
-108: export type { MarkComponentProps as PortableTextMarkComponentProps };
-109: export type { PortableTextComponents as PortableTextReactComponents };
 ````
 
 ## File: src/__tests__/CV/CVContent.test.tsx
@@ -19384,52 +19430,6 @@ tsconfig.json
 21:     "typescript": "^5.9.3"
 22:   }
 23: }
-````
-
-## File: src/utils/portableTextComponents.tsx
-````typescript
- 1: import Link from "next/link";
- 2: import { isValidElement } from "react";
- 3: import type { ReactNode } from "react";
- 4: import type { PortableTextMarkComponentProps } from "@portabletext/react";
- 5: /**
- 6:  * Recursively extracts plain text from React children.
- 7:  * Used to provide a string value for data-text attribute (glitch CSS effect).
- 8:  */
- 9: export function getTextFromChildren(children: ReactNode): string {
-10:   if (children == null) return "";
-11:   if (typeof children === "string") return children;
-12:   if (typeof children === "number") return String(children);
-13:   if (Array.isArray(children))
-14:     return children.map(getTextFromChildren).join("");
-15:   if (isValidElement(children)) {
-16:     return getTextFromChildren(
-17:       (children.props as { children?: ReactNode }).children,
-18:     );
-19:   }
-20:   return "";
-21: }
-22: export const myPortableTextComponents = {
-23:   marks: {
-24:     bold: ({ children }: PortableTextMarkComponentProps) => <b>{children}</b>,
-25:     italic: ({ children }: PortableTextMarkComponentProps) => <i>{children}</i>,
-26:     code: ({ children }: PortableTextMarkComponentProps) => (
-27:       <span className="mt-4 text-lg block">{children}</span>
-28:     ),
-29:     link: ({ children, value }: PortableTextMarkComponentProps) => {
-30:       const textContent = getTextFromChildren(children);
-31:       return (
-32:         <Link
-33:           className="glitch underline text-lg font-bold text-green-400"
-34:           href={value?.href || "#"}
-35:           data-text={textContent}
-36:         >
-37:           {children}
-38:         </Link>
-39:       );
-40:     },
-41:   },
-42: };
 ````
 
 ## File: codecov.yml
