@@ -96,9 +96,20 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
             const score = '${{ steps.doctor.outputs.score }}';
+            const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+            const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+
+            const scoreDisplay = offline
+              ? 'N/A (scoring server unreachable)'
+              : score;
+            const statusEmoji = offline
+              ? (issuesFound ? '⚠️' : '✅')
+              : '';
 
             const body = [
-              `## 🩺 React Doctor — Score: ${score}`,
+              `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+              '',
+              offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
               '',
               '<details>',
               '<summary>Full diagnostics</summary>',
@@ -110,7 +121,7 @@ jobs:
               '</details>',
               '',
               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-            ].join('\n');
+            ].filter(Boolean).join('\n');
 
             // Find existing comment to update instead of creating duplicates
             const { data: comments } = await github.rest.issues.listComments({
@@ -142,7 +153,14 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+          OFFLINE="${{ steps.doctor.outputs.offline }}"
+          if [ "$OFFLINE" = "true" ]; then
+            echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
@@ -150,6 +168,20 @@ jobs:
 
       - name: Check score threshold
         run: |
+          OFFLINE="${{ steps.doctor.outputs.offline }}"
+          ISSUES="${{ steps.doctor.outputs.issues_found }}"
+
+          # When offline, skip numeric threshold — only fail if lint issues were found
+          if [ "$OFFLINE" = "true" ]; then
+            echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+            if [ "$ISSUES" = "true" ]; then
+              echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+              exit 1
+            fi
+            echo "✅ No lint issues found (score unavailable due to offline)"
+            exit 0
+          fi
+
           SCORE="${{ steps.doctor.outputs.score_num }}"
           SCORE="${SCORE:-0}"
           THRESHOLD=80
