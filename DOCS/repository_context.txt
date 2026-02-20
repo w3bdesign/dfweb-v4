@@ -10153,41 +10153,6 @@ tsconfig.json
 48: export default DesktopNavigation;
 ````
 
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: import type { Settings } from "@/types/sanity.types";
- 5: type FooterProps = Pick<Settings, "footerCopyrightText">;
- 6: /**
- 7:  * Renders the footer for the application
- 8:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
- 9:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
-10:  * @returns {JSX.Element} - Rendered Footer component
-11:  */
-12: const Footer = ({ footerCopyrightText }: FooterProps) => (
-13:   <footer
-14:     className="mt-8"
-15:     aria-label="Innholdet for bunnteksten med copyright"
-16:     data-testid="footer"
-17:   >
-18:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
-19:       <div className="w-full mx-auto p-6 text-center font-semibold">
-20:         <div className="flex justify-center items-center space-x-2">
-21:           <span>{footerCopyrightText}</span>
-22:           <IconContext.Provider value={{ className: "inline-block" }}>
-23:             <BiCopyright size="1.2em" />
-24:           </IconContext.Provider>
-25:           <span>{new Date().getFullYear()}</span>
-26:         </div>
-27:       </div>
-28:     </div>
-29:   </footer>
-30: );
-31: export default Footer;
-````
-
 ## File: src/components/Layout/Hamburger.component.tsx
 ````typescript
  1: "use client";
@@ -11233,6 +11198,58 @@ tsconfig.json
 13:     "./**/*.ts"
 14:   ]
 15: }
+````
+
+## File: src/e2e/playwright/index.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("Home page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/");
+ 5:     // Check main heading
+ 6:     await expect(page.locator("h1")).toContainText("Hei!");
+ 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
+ 8:       timeout: 10000,
+ 9:     });
+10:     // Check subheading
+11:     await expect(
+12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
+13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
+14:     await expect(
+15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
+16:     ).toBeVisible();
+17:     // Check skills text
+18:     await expect(
+19:       page.getByText(
+20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
+21:       ),
+22:     ).toBeVisible();
+23:     // Check if icons are visible
+24:     await expect(page.getByTestId("icons")).toBeVisible();
+25:   });
+26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
+27:     await page.goto("/");
+28:     const omMegSection = page.getByLabel("Om Meg");
+29:     // Check section title
+30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
+31:       "Om Meg",
+32:       { timeout: 10000 },
+33:     );
+34:     // Check section content
+35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
+36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med både WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
+37:     );
+38:   });
+39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
+40:     await page.goto("/");
+41:     const prosjekterSection = page.getByLabel("Prosjekter");
+42:     // Check section content
+43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
+44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
+45:       { timeout: 10000 },
+46:     );
+47:   });
+48: });
 ````
 
 ## File: src/e2e/playwright/kontakt.spec.ts
@@ -18165,55 +18182,6 @@ tsconfig.json
 14: # 10109	IGNORE	(Modern Web Application)
 ````
 
-## File: commit/setup.sh
-````bash
- 1: #!/bin/bash
- 2: # Setup script for AI Commit Message Generator
- 3: # Run this from your repository root after copying the commit/ folder
- 4: set -e
- 5: # Find repo root
- 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
- 7:     echo "Error: Not in a git repository"
- 8:     exit 1
- 9: }
-10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
-12: # Check if commit_analyzer.py exists
-13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
-14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR"
-15:     exit 1
-16: fi
-17: echo "Setting up AI Commit Message Generator..."
-18: # Install Python dependencies
-19: echo "Installing Python dependencies..."
-20: pip install openai anthropic python-dotenv
-21: # Create .env from template if it doesn't exist
-22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
-23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
-25:         echo "Created .env from template"
-26:     else
-27:         echo "Warning: .env.example not found, creating minimal .env"
-28:         echo '# Add your API key' > "$REPO_ROOT/.env"
-29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
-30:     fi
-31: fi
-32: # Create git hook
-33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
-34: mkdir -p "$REPO_ROOT/.git/hooks"
-35: cat > "$HOOK_FILE" << EOF
-36: #!/bin/sh
-37: python "$COMMIT_ANALYZER" --hook
-38: EOF
-39: chmod +x "$HOOK_FILE"
-40: echo ""
-41: echo "✅ Setup complete!"
-42: echo ""
-43: echo "Next steps:"
-44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-45: echo "2. Make a commit to test the AI commit message generator"
-````
-
 ## File: DOCS/dynamic-score-badges.md
 ````markdown
   1: # Dynamic Score Badges for React Doctor & Lighthouse
@@ -19075,6 +19043,43 @@ tsconfig.json
 16: }
 ````
 
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 6: import { getProjects, preloadProjects } from "./actions";
+ 7: export const metadata: Metadata = {
+ 8:   title: "Prosjekter - Dfweb",
+ 9: };
+10: async function ProjectList() {
+11:   const projects = await getProjects();
+12:   return (
+13:     <div className="container mx-auto">
+14:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+15:         {projects.map((project) => (
+16:           <ProsjektCard key={project.id} {...project} />
+17:         ))}
+18:       </div>
+19:     </div>
+20:   );
+21: }
+22: export default function Prosjekter() {
+23:   // Start fetching projects data as early as possible
+24:   preloadProjects();
+25:   return (
+26:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+27:       <PageHeader>Prosjekter</PageHeader>
+28:       <Suspense fallback={<RotatingLoader />}>
+29:         <ProjectList />
+30:       </Suspense>
+31:     </main>
+32:   );
+33: }
+````
+
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -19172,6 +19177,42 @@ tsconfig.json
 24:     </main>
 25:   );
 26: }
+````
+
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: import type { Settings } from "@/types/sanity.types";
+ 5: const iconContextValue = { className: "inline-block" } as const;
+ 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
+ 7: /**
+ 8:  * Renders the footer for the application
+ 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
+10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
+11:  * @returns {JSX.Element} - Rendered Footer component
+12:  */
+13: const Footer = ({ footerCopyrightText }: FooterProps) => (
+14:   <footer
+15:     className="mt-8"
+16:     aria-label="Innholdet for bunnteksten med copyright"
+17:     data-testid="footer"
+18:   >
+19:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
+20:       <div className="w-full mx-auto p-6 text-center font-semibold">
+21:         <div className="flex justify-center items-center space-x-2">
+22:           <span>{footerCopyrightText}</span>
+23:           <IconContext.Provider value={iconContextValue}>
+24:             <BiCopyright size="1.2em" />
+25:           </IconContext.Provider>
+26:           <span>{new Date().getFullYear()}</span>
+27:         </div>
+28:       </div>
+29:     </div>
+30:   </footer>
+31: );
+32: export default Footer;
 ````
 
 ## File: src/components/UI/InputField.component.tsx
@@ -19353,132 +19394,6 @@ tsconfig.json
 30: });
 ````
 
-## File: src/e2e/playwright/index.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("Home page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/");
- 5:     // Check main heading
- 6:     await expect(page.locator("h1")).toContainText("Hei!");
- 7:     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible({
- 8:       timeout: 10000,
- 9:     });
-10:     // Check subheading
-11:     await expect(
-12:       page.getByTestId("fade-in").getByRole("heading", { level: 2 }),
-13:     ).toContainText("Jeg heter Daniel Fjeldstad og er en webutvikler.");
-14:     await expect(
-15:       page.getByRole("heading", { name: "Jeg heter Daniel Fjeldstad og" }),
-16:     ).toBeVisible();
-17:     // Check skills text
-18:     await expect(
-19:       page.getByText(
-20:         "Jeg kan Next.js, Javascript, Typescript, React, Vue, PHP, WordPress og mye mer.",
-21:       ),
-22:     ).toBeVisible();
-23:     // Check if icons are visible
-24:     await expect(page.getByTestId("icons")).toBeVisible();
-25:   });
-26:   test("displays 'Om Meg' section correctly", async ({ page }) => {
-27:     await page.goto("/");
-28:     const omMegSection = page.getByLabel("Om Meg");
-29:     // Check section title
-30:     await expect(omMegSection.getByTestId("sanity-title")).toContainText(
-31:       "Om Meg",
-32:       { timeout: 10000 },
-33:     );
-34:     // Check section content
-35:     await expect(omMegSection.getByTestId("fade-in-scroll")).toContainText(
-36:       "I over 10 år har jeg hatt en lidenskap for webutvikling og design, og ser i dag på meg selv som en dedikert senior frontendutvikler.Jeg har jobbet mye med både WordPress og WooCommerce, hvor jeg siden 2011 har levert kvalitetsarbeid som frilanser, og har oppnådd 100% positive tilbakemeldinger.Språk som moderne Javascript (ES6+) og Typescript, og populære rammeverk som React, Vue 2/3, Next.js og Sveltekit er noe jeg bruker hver dag. Jeg har også erfaring med PHP, mySQL, GraphQL, Docker, Storybook, Sanity.io, Jest, Cypress, Python og Bootstrap.",
-37:     );
-38:   });
-39:   test("displays 'Prosjekter' section correctly", async ({ page }) => {
-40:     await page.goto("/");
-41:     const prosjekterSection = page.getByLabel("Prosjekter");
-42:     // Check section content
-43:     await expect(prosjekterSection.getByTestId("fade-in-scroll")).toContainText(
-44:       "Jeg har de siste årene hatt mye fokus på AI i form av bruk av og programmering av ulike AI verktøy, boter og applikasjoner. Jeg er også svært aktiv i flere AI miljøer på Discord hvor jeg er administrator på flere servere med totalt over 500 medlemmer, og opererer også som teknisk ansvarlig og utvikler av AI boter og verktøy som brukes på serverne. Holder også på mye med utvikling på GITHUB på hobbybasis, hvor jeg kan skilte med å være Norges mest aktive utvikler.På PROSJEKTER kan du se eksempler på arbeid jeg har gjort i nyere tid.Har også bidratt med utvikling av flere open-source prosjekter på GITHUB.",
-45:       { timeout: 10000 },
-46:     );
-47:   });
-48: });
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.0.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
-## File: codecov.yml
-````yaml
-1: coverage:
-2:   status:
-3:     project:
-4:       default:
-5:         target: 95.0
-6:         threshold: "20"
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
- 2: import type { Metadata } from "next/types";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 6: import { getProjects, preloadProjects } from "./actions";
- 7: export const metadata: Metadata = {
- 8:   title: "Prosjekter - Dfweb",
- 9: };
-10: async function ProjectList() {
-11:   const projects = await getProjects();
-12:   return (
-13:     <div className="container mx-auto">
-14:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-15:         {projects.map((project) => (
-16:           <ProsjektCard key={project.id} {...project} />
-17:         ))}
-18:       </div>
-19:     </div>
-20:   );
-21: }
-22: export default function Prosjekter() {
-23:   // Start fetching projects data as early as possible
-24:   preloadProjects();
-25:   return (
-26:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-27:       <PageHeader>Prosjekter</PageHeader>
-28:       <Suspense fallback={<RotatingLoader />}>
-29:         <ProjectList />
-30:       </Suspense>
-31:     </main>
-32:   );
-33: }
-````
-
 ## File: src/lib/sanity/queries.ts
 ````typescript
  1: import { defineQuery } from "next-sanity";
@@ -19553,6 +19468,33 @@ tsconfig.json
 70:     footerCopyrightText
 71:   }
 72: `);
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.0.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
 ````
 
 ## File: studio/schemaTypes/documents/project.ts
@@ -19647,6 +19589,105 @@ tsconfig.json
 88: export default project
 ````
 
+## File: codecov.yml
+````yaml
+1: coverage:
+2:   status:
+3:     project:
+4:       default:
+5:         target: 95.0
+6:         threshold: "20"
+````
+
+## File: commit/setup.sh
+````bash
+ 1: #!/bin/bash
+ 2: # Setup script for AI Commit Message Generator
+ 3: # Run this from your repository root after copying the commit/ folder
+ 4: set -e
+ 5: # Find repo root
+ 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+ 7:     echo "Error: Not in a git repository" >&2
+ 8:     exit 1
+ 9: }
+10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
+12: # Check if commit_analyzer.py exists
+13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
+14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
+15:     exit 1
+16: fi
+17: echo "Setting up AI Commit Message Generator..."
+18: # Install Python dependencies
+19: echo "Installing Python dependencies..."
+20: pip install openai anthropic python-dotenv
+21: # Create .env from template if it doesn't exist
+22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
+23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
+24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
+25:         echo "Created .env from template"
+26:     else
+27:         echo "Warning: .env.example not found, creating minimal .env"
+28:         echo '# Add your API key' > "$REPO_ROOT/.env"
+29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
+30:     fi
+31: fi
+32: # Create git hook
+33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
+34: mkdir -p "$REPO_ROOT/.git/hooks"
+35: cat > "$HOOK_FILE" << EOF
+36: #!/bin/sh
+37: python "$COMMIT_ANALYZER" --hook
+38: EOF
+39: chmod +x "$HOOK_FILE"
+40: echo ""
+41: echo "✅ Setup complete!"
+42: echo ""
+43: echo "Next steps:"
+44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+45: echo "2. Make a commit to test the AI commit message generator"
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^5.8.1",
+21:     "styled-components": "^6.3.8"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.13",
+26:     "eslint": "^10.0.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: src/components/CV/CVContent.component.tsx
 ````typescript
  1: import PageHeader from "@/components/UI/PageHeader.component";
@@ -19722,46 +19763,6 @@ tsconfig.json
 71:   );
 72: };
 73: export default CVContent;
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^5.8.1",
-21:     "styled-components": "^6.3.8"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.13",
-26:     "eslint": "^10.0.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: README.md
@@ -19963,137 +19964,6 @@ tsconfig.json
 195:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: jobs:
-  8:   react-doctor:
-  9:     name: React Health Check
- 10:     runs-on: ubuntu-latest
- 11:     permissions:
- 12:       contents: read
- 13:       pull-requests: write
- 14:       issues: write
- 15:     steps:
- 16:       - uses: actions/checkout@v6
- 17:       - name: Detect package manager
- 18:         id: pm
- 19:         run: |
- 20:           if [ -f "pnpm-lock.yaml" ]; then
- 21:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 22:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 23:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 24:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 25:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 26:           elif [ -f "yarn.lock" ]; then
- 27:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 28:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 29:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 30:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 31:             echo "Detected yarn (yarn.lock found)"
- 32:           else
- 33:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 34:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 35:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 36:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 37:             echo "Detected npm (default)"
- 38:           fi
- 39:       - name: Install pnpm
- 40:         if: steps.pm.outputs.manager == 'pnpm'
- 41:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
- 42:         with:
- 43:           version: 10
- 44:       - uses: actions/setup-node@v6
- 45:         with:
- 46:           node-version: 24
- 47:           cache: ${{ steps.pm.outputs.cache }}
- 48:       - name: Install dependencies
- 49:         run: ${{ steps.pm.outputs.install }}
- 50:       - name: Run React Doctor
- 51:         id: doctor
- 52:         run: |
- 53:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 54:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 55:           # Strip ANSI escape codes for clean output
- 56:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 57:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 58:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 59:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 60:           # Extract just the numeric score for threshold check
- 61:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 62:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 63:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 64:       - name: Post PR comment with results
- 65:         if: github.event_name == 'pull_request'
- 66:         uses: actions/github-script@v7
- 67:         with:
- 68:           script: |
- 69:             const fs = require('fs');
- 70:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 71:             const score = '${{ steps.doctor.outputs.score }}';
- 72:             const body = [
- 73:               `## 🩺 React Doctor — Score: ${score}`,
- 74:               '',
- 75:               '<details>',
- 76:               '<summary>Full diagnostics</summary>',
- 77:               '',
- 78:               '```',
- 79:               output.trim(),
- 80:               '```',
- 81:               '',
- 82:               '</details>',
- 83:               '',
- 84:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
- 85:             ].join('\n');
- 86:             // Find existing comment to update instead of creating duplicates
- 87:             const { data: comments } = await github.rest.issues.listComments({
- 88:               owner: context.repo.owner,
- 89:               repo: context.repo.repo,
- 90:               issue_number: context.issue.number,
- 91:             });
- 92:             const botComment = comments.find(
- 93:               (c) => c.body?.includes('🩺 React Doctor')
- 94:             );
- 95:             if (botComment) {
- 96:               await github.rest.issues.updateComment({
- 97:                 owner: context.repo.owner,
- 98:                 repo: context.repo.repo,
- 99:                 comment_id: botComment.id,
-100:                 body,
-101:               });
-102:             } else {
-103:               await github.rest.issues.createComment({
-104:                 owner: context.repo.owner,
-105:                 repo: context.repo.repo,
-106:                 issue_number: context.issue.number,
-107:                 body,
-108:               });
-109:             }
-110:       - name: Write job summary
-111:         if: always()
-112:         run: |
-113:           echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-114:           echo "" >> "$GITHUB_STEP_SUMMARY"
-115:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-116:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-117:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-118:       - name: Check score threshold
-119:         run: |
-120:           SCORE="${{ steps.doctor.outputs.score_num }}"
-121:           SCORE="${SCORE:-0}"
-122:           THRESHOLD=80
-123:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-124:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-125:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-126:             exit 1
-127:           fi
-````
-
 ## File: src/components/UI/Tabs.component.tsx
 ````typescript
   1: "use client";
@@ -20247,6 +20117,179 @@ tsconfig.json
 149: export default Tabs;
 ````
 
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: jobs:
+  8:   react-doctor:
+  9:     name: React Health Check
+ 10:     runs-on: ubuntu-latest
+ 11:     permissions:
+ 12:       contents: read
+ 13:       pull-requests: write
+ 14:       issues: write
+ 15:     steps:
+ 16:       - uses: actions/checkout@v6
+ 17:       - name: Detect package manager
+ 18:         id: pm
+ 19:         run: |
+ 20:           if [ -f "pnpm-lock.yaml" ]; then
+ 21:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 22:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 23:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 24:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 25:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 26:           elif [ -f "yarn.lock" ]; then
+ 27:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 28:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 29:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 30:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 31:             echo "Detected yarn (yarn.lock found)"
+ 32:           else
+ 33:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 34:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 35:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 36:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 37:             echo "Detected npm (default)"
+ 38:           fi
+ 39:       - name: Install pnpm
+ 40:         if: steps.pm.outputs.manager == 'pnpm'
+ 41:         uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c
+ 42:         with:
+ 43:           version: 10
+ 44:       - uses: actions/setup-node@v6
+ 45:         with:
+ 46:           node-version: 24
+ 47:           cache: ${{ steps.pm.outputs.cache }}
+ 48:       - name: Install dependencies
+ 49:         run: ${{ steps.pm.outputs.install }}
+ 50:       - name: Run React Doctor
+ 51:         id: doctor
+ 52:         run: |
+ 53:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 54:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 55:           # Strip ANSI escape codes for clean output
+ 56:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 57:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 58:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 59:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 60:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 61:           else
+ 62:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 63:           fi
+ 64:           # Check for lint issues (the actionable part of the report)
+ 65:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 66:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 67:           else
+ 68:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 69:           fi
+ 70:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 71:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 72:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 73:           # Extract just the numeric score for threshold check
+ 74:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 75:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 76:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 77:       - name: Post PR comment with results
+ 78:         if: github.event_name == 'pull_request'
+ 79:         uses: actions/github-script@v7
+ 80:         with:
+ 81:           script: |
+ 82:             const fs = require('fs');
+ 83:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 84:             const score = '${{ steps.doctor.outputs.score }}';
+ 85:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 86:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 87:             const scoreDisplay = offline
+ 88:               ? 'N/A (scoring server unreachable)'
+ 89:               : score;
+ 90:             const statusEmoji = offline
+ 91:               ? (issuesFound ? '⚠️' : '✅')
+ 92:               : '';
+ 93:             const body = [
+ 94:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 95:               '',
+ 96:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+ 97:               '',
+ 98:               '<details>',
+ 99:               '<summary>Full diagnostics</summary>',
+100:               '',
+101:               '```',
+102:               output.trim(),
+103:               '```',
+104:               '',
+105:               '</details>',
+106:               '',
+107:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+108:             ].filter(Boolean).join('\n');
+109:             // Find existing comment to update instead of creating duplicates
+110:             const { data: comments } = await github.rest.issues.listComments({
+111:               owner: context.repo.owner,
+112:               repo: context.repo.repo,
+113:               issue_number: context.issue.number,
+114:             });
+115:             const botComment = comments.find(
+116:               (c) => c.body?.includes('🩺 React Doctor')
+117:             );
+118:             if (botComment) {
+119:               await github.rest.issues.updateComment({
+120:                 owner: context.repo.owner,
+121:                 repo: context.repo.repo,
+122:                 comment_id: botComment.id,
+123:                 body,
+124:               });
+125:             } else {
+126:               await github.rest.issues.createComment({
+127:                 owner: context.repo.owner,
+128:                 repo: context.repo.repo,
+129:                 issue_number: context.issue.number,
+130:                 body,
+131:               });
+132:             }
+133:       - name: Write job summary
+134:         if: always()
+135:         run: |
+136:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+137:           if [ "$OFFLINE" = "true" ]; then
+138:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+139:             echo "" >> "$GITHUB_STEP_SUMMARY"
+140:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+141:           else
+142:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+143:           fi
+144:           echo "" >> "$GITHUB_STEP_SUMMARY"
+145:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+146:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+148:       - name: Check score threshold
+149:         run: |
+150:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+151:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+152:           # When offline, skip numeric threshold — only fail if lint issues were found
+153:           if [ "$OFFLINE" = "true" ]; then
+154:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+155:             if [ "$ISSUES" = "true" ]; then
+156:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+157:               exit 1
+158:             fi
+159:             echo "✅ No lint issues found (score unavailable due to offline)"
+160:             exit 0
+161:           fi
+162:           SCORE="${{ steps.doctor.outputs.score_num }}"
+163:           SCORE="${SCORE:-0}"
+164:           THRESHOLD=80
+165:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+166:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+167:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+168:             exit 1
+169:           fi
+````
+
 ## File: package.json
 ````json
   1: {
@@ -20347,8 +20390,9 @@ tsconfig.json
  96:   },
  97:   "pnpm": {
  98:     "overrides": {
- 99:       "@pnpm/npm-conf": ">=3.0.2"
-100:     }
-101:   }
-102: }
+ 99:       "@pnpm/npm-conf": ">=3.0.2",
+100:       "minimatch": ">=10.2.1"
+101:     }
+102:   }
+103: }
 ````
