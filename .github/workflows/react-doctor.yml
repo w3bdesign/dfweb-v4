@@ -63,6 +63,21 @@ jobs:
           # Strip ANSI escape codes for clean output
           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
 
+          # Check if react-doctor was offline (can't reach scoring server in CI)
+          if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+            echo "offline=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+          else
+            echo "offline=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Check for lint issues (the actionable part of the report)
+          if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+            echo "issues_found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "issues_found=true" >> "$GITHUB_OUTPUT"
+          fi
+
           # Extract score from the cleaned output (matches "96 / 100" pattern)
           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
