@@ -6,7 +6,7 @@ set -e
 
 # Find repo root
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
-    echo "Error: Not in a git repository"
+    echo "Error: Not in a git repository" >&2
     exit 1
 }
 
@@ -15,7 +15,7 @@ COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
 
 # Check if commit_analyzer.py exists
 if [[ ! -f "$COMMIT_ANALYZER" ]]; then
-    echo "Error: commit_analyzer.py not found in $SCRIPT_DIR"
+    echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
     exit 1
 fi
 
