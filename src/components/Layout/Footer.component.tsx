@@ -5,6 +5,8 @@ import { BiCopyright } from "react-icons/bi";
 
 import type { Settings } from "@/types/sanity.types";
 
+const iconContextValue = { className: "inline-block" } as const;
+
 type FooterProps = Pick<Settings, "footerCopyrightText">;
 
 /**
@@ -23,7 +25,7 @@ const Footer = ({ footerCopyrightText }: FooterProps) => (
       <div className="w-full mx-auto p-6 text-center font-semibold">
         <div className="flex justify-center items-center space-x-2">
           <span>{footerCopyrightText}</span>
-          <IconContext.Provider value={{ className: "inline-block" }}>
+          <IconContext.Provider value={iconContextValue}>
             <BiCopyright size="1.2em" />
           </IconContext.Provider>
           <span>{new Date().getFullYear()}</span>
