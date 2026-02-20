@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
 
 # Check if commit_analyzer.py exists
-if [ ! -f "$COMMIT_ANALYZER" ]; then
+if [[ ! -f "$COMMIT_ANALYZER" ]]; then
     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR"
     exit 1
 fi
@@ -26,8 +26,8 @@ echo "Installing Python dependencies..."
 pip install openai anthropic python-dotenv
 
 # Create .env from template if it doesn't exist
-if [ ! -f "$REPO_ROOT/.env" ]; then
-    if [ -f "$SCRIPT_DIR/.env.example" ]; then
+if [[ ! -f "$REPO_ROOT/.env" ]]; then
+    if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
         echo "Created .env from template"
     else
