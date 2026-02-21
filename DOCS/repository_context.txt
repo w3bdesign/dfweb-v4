@@ -412,82 +412,6 @@ tsconfig.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.13.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.13.0-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -11200,6 +11124,40 @@ tsconfig.json
 15: }
 ````
 
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: test.describe("CV page", () => {
+ 3:   test("loads and displays main content correctly", async ({ page }) => {
+ 4:     await page.goto("/cv");
+ 5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
+ 6:     await expect(
+ 7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+ 8:     ).toBeVisible();
+ 9:   });
+10:   test("navigates to and displays Experience section correctly", async ({
+11:     page,
+12:   }) => {
+13:     await page.goto("/cv");
+14:     // Click on 'Erfaring' tab
+15:     await page.getByRole("tab", { name: "Erfaring" }).click();
+16:     // Check if a specific experience entry is visible
+17:     await expect(
+18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+19:     ).toBeVisible();
+20:   });
+21:   test("displays Education section correctly", async ({ page }) => {
+22:     await page.goto("/cv");
+23:     // Click on 'Erfaring' tab
+24:     await page.getByRole("tab", { name: "Utdanning" }).click();
+25:     // Check if education information is present
+26:     await expect(page.getByLabel("Utdanning")).toContainText(
+27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+28:     );
+29:   });
+30: });
+````
+
 ## File: src/e2e/playwright/index.spec.ts
 ````typescript
  1: import { test, expect } from "@playwright/test";
@@ -11412,6 +11370,82 @@ tsconfig.json
 4: export const urlFor = (source: string) => {
 5:   return builder.image(source);
 6: };
+````
+
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: import { defineQuery } from "next-sanity";
+ 2: export const projectsQuery = defineQuery(`
+ 3:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 4:     id,
+ 5:     name,
+ 6:     description,
+ 7:     subdescription,
+ 8:     projectcategory->{
+ 9:       _id,
+10:       title
+11:     },
+12:     urlwww[]{
+13:       ...,
+14:       _key,
+15:     },
+16:     urlgithub[]{
+17:       ...,
+18:       _key,
+19:     },
+20:     projectimage,
+21:     featured,
+22:     featureOrder
+23:   }
+24: `);
+25: export const cvQuery = defineQuery(`
+26:   *[_type == "cv"][0] {
+27:     keyQualifications,
+28:     experience[] {
+29:       period,
+30:       company,
+31:       role,
+32:       description
+33:     },
+34:     education[] {
+35:       period,
+36:       institution,
+37:       degree,
+38:       description
+39:     },
+40:     volunteerWork[] {
+41:       period,
+42:       organization,
+43:       role,
+44:       description
+45:     }
+46:   }
+47: `);
+48: export const pageContentQuery = defineQuery(`
+49:   *[_type == 'page' && title match 'Hjem'][0]{
+50:     "id": _id,
+51:     title,
+52:     hero,
+53:     content
+54:   }
+55: `);
+56: export const navigationQuery = defineQuery(`
+57:   *[_type == "navigation"][0] {
+58:     title,
+59:     links[] {
+60:       title,
+61:       name,
+62:       hash,
+63:       href,
+64:       externalLink
+65:     }
+66:   }
+67: `);
+68: export const settingsQuery = defineQuery(`
+69:   *[_type == "settings"][0] {
+70:     footerCopyrightText
+71:   }
+72: `);
 ````
 
 ## File: src/lib/csrf.ts
@@ -14413,6 +14447,33 @@ tsconfig.json
 80:     "arrange-act-assert": rule,
 81:   },
 82: };
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.0.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
 ````
 
 ## File: src/utils/eslint/tsconfig.json
@@ -17990,6 +18051,82 @@ tsconfig.json
 36: }
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.13.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.13.1-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -19360,143 +19497,6 @@ tsconfig.json
 22: };
 ````
 
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("CV page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/cv");
- 5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
- 6:     await expect(
- 7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
- 8:     ).toBeVisible();
- 9:   });
-10:   test("navigates to and displays Experience section correctly", async ({
-11:     page,
-12:   }) => {
-13:     await page.goto("/cv");
-14:     // Click on 'Erfaring' tab
-15:     await page.getByRole("tab", { name: "Erfaring" }).click();
-16:     // Check if a specific experience entry is visible
-17:     await expect(
-18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
-19:     ).toBeVisible();
-20:   });
-21:   test("displays Education section correctly", async ({ page }) => {
-22:     await page.goto("/cv");
-23:     // Click on 'Erfaring' tab
-24:     await page.getByRole("tab", { name: "Utdanning" }).click();
-25:     // Check if education information is present
-26:     await expect(page.getByLabel("Utdanning")).toContainText(
-27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
-28:     );
-29:   });
-30: });
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: import { defineQuery } from "next-sanity";
- 2: export const projectsQuery = defineQuery(`
- 3:   *[_type == "project" && published == true] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `);
-25: export const cvQuery = defineQuery(`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `);
-48: export const pageContentQuery = defineQuery(`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id,
-51:     title,
-52:     hero,
-53:     content
-54:   }
-55: `);
-56: export const navigationQuery = defineQuery(`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `);
-68: export const settingsQuery = defineQuery(`
-69:   *[_type == "settings"][0] {
-70:     footerCopyrightText
-71:   }
-72: `);
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.0.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: studio/schemaTypes/documents/project.ts
 ````typescript
  1: import {RiEraserLine} from 'react-icons/ri'
@@ -19589,6 +19589,46 @@ tsconfig.json
 88: export default project
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.5.0",
+20:     "sanity": "^5.8.1",
+21:     "styled-components": "^6.3.8"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.13",
+26:     "eslint": "^10.0.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "prettier": {
+31:     "semi": false,
+32:     "printWidth": 100,
+33:     "bracketSpacing": false,
+34:     "singleQuote": true
+35:   }
+36: }
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -19646,46 +19686,6 @@ tsconfig.json
 43: echo "Next steps:"
 44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
 45: echo "2. Make a commit to test the AI commit message generator"
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.5.0",
-20:     "sanity": "^5.8.1",
-21:     "styled-components": "^6.3.8"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.13",
-26:     "eslint": "^10.0.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
 ````
 
 ## File: src/components/CV/CVContent.component.tsx
@@ -20391,7 +20391,7 @@ tsconfig.json
  97:   "pnpm": {
  98:     "overrides": {
  99:       "@pnpm/npm-conf": ">=3.0.2",
-100:       "minimatch": ">=10.2.1"
+100:       "minimatch": ">=10.2.2"
 101:     }
 102:   }
 103: }
