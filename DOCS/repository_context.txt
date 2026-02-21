@@ -6805,6 +6805,202 @@ tsconfig.json
 50: });
 ````
 
+## File: src/__tests__/Prosjekter/loading.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import Loading from "@/app/prosjekter/loading";
+ 5: // Mock the components used in Loading
+ 6: jest.mock("@/components/UI/PageHeader.component", () => {
+ 7:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
+ 8:     return <h1>{children}</h1>;
+ 9:   };
+10: });
+11: jest.mock("@/components/Animations/RotatingLoader.component", () => {
+12:   return function MockRotatingLoader() {
+13:     return <div data-testid="rotating-loader">Loading...</div>;
+14:   };
+15: });
+16: describe("Loading", () => {
+17:   describe("rendering", () => {
+18:     it("renders loading state with correct content and attributes", () => {
+19:       // Arrange
+20:       const expected = {
+21:         header: "Prosjekter",
+22:         testId: "rotating-loader",
+23:         mainAttributes: {
+24:           ariaLabel: "Laster portefølje",
+25:           classes: ["mt-32", "bg-graybg"],
+26:         },
+27:       };
+28:       // Act
+29:       render(<Loading />);
+30:       const main = screen.getByRole("main");
+31:       // Assert
+32:       expect(screen.getByText(expected.header)).toBeInTheDocument();
+33:       expect(screen.getByTestId(expected.testId)).toBeInTheDocument();
+34:       expect(main).toHaveAttribute(
+35:         "aria-label",
+36:         expected.mainAttributes.ariaLabel,
+37:       );
+38:       expected.mainAttributes.classes.forEach((className) => {
+39:         expect(main).toHaveClass(className);
+40:       });
+41:     });
+42:   });
+43: });
+````
+
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  6: // Define the project type
+  7: interface ProjectType {
+  8:   id: string;
+  9:   name: string;
+ 10:   description: string;
+ 11:   subdescription: string;
+ 12:   projectimage: { asset: { _ref: string } };
+ 13:   urlwww: unknown[];
+ 14:   urlgithub: unknown[];
+ 15: }
+ 16: // Mock the actions before importing the page component
+ 17: const mockGetProjects = jest.fn();
+ 18: const mockPreloadProjects = jest.fn();
+ 19: jest.mock("@/app/prosjekter/actions", () => ({
+ 20:   getProjects: mockGetProjects,
+ 21:   preloadProjects: mockPreloadProjects,
+ 22: }));
+ 23: // Mock the sanity client
+ 24: const mockUrlBuilder = {
+ 25:   width: jest.fn().mockReturnThis(),
+ 26:   fit: jest.fn().mockReturnThis(),
+ 27:   quality: jest.fn().mockReturnThis(),
+ 28:   auto: jest.fn().mockReturnThis(),
+ 29:   url: jest.fn().mockReturnValue("mock-url"),
+ 30: };
+ 31: jest.mock("@/lib/sanity/client", () => ({
+ 32:   client: {
+ 33:     fetch: jest.fn(),
+ 34:   },
+ 35:   urlFor: jest.fn(() => mockUrlBuilder),
+ 36: }));
+ 37: // Mock components
+ 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 39:   <h1>{children}</h1>
+ 40: );
+ 41: const MockProsjektCard = (props: { name: string }) => (
+ 42:   <div data-testid="project-card">{props.name}</div>
+ 43: );
+ 44: const MockRotatingLoader = () => (
+ 45:   <div data-testid="rotating-loader">Loading...</div>
+ 46: );
+ 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+ 48: jest.mock(
+ 49:   "@/components/Prosjekter/ProsjektCard.component",
+ 50:   () => MockProsjektCard,
+ 51: );
+ 52: jest.mock(
+ 53:   "@/components/Animations/RotatingLoader.component",
+ 54:   () => MockRotatingLoader,
+ 55: );
+ 56: // Create a test component that simulates the page behavior without async server components
+ 57: function TestProsjekterPage() {
+ 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 59:   const [loading, setLoading] = React.useState(true);
+ 60:   React.useEffect(() => {
+ 61:     mockGetProjects().then((data: ProjectType[]) => {
+ 62:       setProjects(data);
+ 63:       setLoading(false);
+ 64:     });
+ 65:   }, []);
+ 66:   return (
+ 67:     <main
+ 68:       role="main"
+ 69:       aria-label="Innhold portefølje"
+ 70:       className="mt-32 bg-graybg"
+ 71:     >
+ 72:       <MockPageHeader>Prosjekter</MockPageHeader>
+ 73:       {loading ? (
+ 74:         <MockRotatingLoader />
+ 75:       ) : (
+ 76:         <div className="container mx-auto">
+ 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 78:             {projects.map((project) => (
+ 79:               <MockProsjektCard key={project.id} {...project} />
+ 80:             ))}
+ 81:           </div>
+ 82:         </div>
+ 83:       )}
+ 84:     </main>
+ 85:   );
+ 86: }
+ 87: describe("ProsjekterPage", () => {
+ 88:   beforeEach(() => {
+ 89:     jest.clearAllMocks();
+ 90:   });
+ 91:   it("renders projects from server component", async () => {
+ 92:     // Arrange - Set up test data and conditions
+ 93:     const mockProjects = [
+ 94:       {
+ 95:         id: "1",
+ 96:         name: "Test Project 1",
+ 97:         description: "Test Description 1",
+ 98:         subdescription: "Test Subdescription 1",
+ 99:         projectimage: { asset: { _ref: "test1" } },
+100:         urlwww: [],
+101:         urlgithub: [],
+102:       },
+103:       {
+104:         id: "2",
+105:         name: "Test Project 2",
+106:         description: "Test Description 2",
+107:         subdescription: "Test Subdescription 2",
+108:         projectimage: { asset: { _ref: "test2" } },
+109:         urlwww: [],
+110:         urlgithub: [],
+111:       },
+112:     ];
+113:     mockGetProjects.mockResolvedValue(mockProjects);
+114:     // Act - Perform the action being tested
+115:     render(<TestProsjekterPage />);
+116:     // Assert - Verify the results
+117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+118:     // Wait for projects to load and render
+119:     const projectCards = await screen.findAllByTestId("project-card");
+120:     expect(projectCards).toHaveLength(2);
+121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+123:     // Test that projects are rendered within the main content area
+124:     const main = screen.getByRole("main");
+125:     expect(main).toContainElement(projectCards[0]);
+126:     expect(main).toContainElement(projectCards[1]);
+127:   });
+128:   it("uses Suspense boundary for loading state", async () => {
+129:     // Arrange - Set up test data and conditions
+130:     const delayedPromise = createDelayedPromise([], 100);
+131:     mockGetProjects.mockImplementation(() => delayedPromise);
+132:     // Act - Perform the action being tested
+133:     render(<TestProsjekterPage />);
+134:     // Assert - Verify the results
+135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+137:     const main = screen.getByRole("main");
+138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+140:     // Wait for loading to complete
+141:     await waitFor(() => {
+142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+143:     });
+144:   });
+145: });
+````
+
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
 ````typescript
   1: import React from "react";
@@ -7941,6 +8137,21 @@ tsconfig.json
 30: export default siteMapGenerator;
 ````
 
+## File: src/app/kontakt/page.tsx
+````typescript
+ 1: import ContactForm from "@/components/Kontakt/ContactForm.component";
+ 2: import { generateCSRFToken } from "@/lib/csrf";
+ 3: import { Metadata } from "next/types";
+ 4: export const metadata: Metadata = {
+ 5:   title: "Kontakt - Dfweb",
+ 6: };
+ 7: export default async function PostIndex() {
+ 8:   // Generate CSRF token server-side
+ 9:   const csrfToken = generateCSRFToken();
+10:   return <ContactForm csrfToken={csrfToken} />;
+11: }
+````
+
 ## File: src/app/prosjekter/actions.ts
 ````typescript
  1: import { cache } from "react";
@@ -8015,6 +8226,63 @@ tsconfig.json
 22:     </div>
 23:   );
 24: }
+````
+
+## File: src/app/prosjekter/loading.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 3: export default function Loading() {
+ 4:   return (
+ 5:     <main
+ 6:       role="main"
+ 7:       aria-label="Laster portefølje"
+ 8:       className="mt-32 bg-graybg"
+ 9:     >
+10:       <PageHeader>Prosjekter</PageHeader>
+11:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
+12:         <RotatingLoader />
+13:       </div>
+14:     </main>
+15:   );
+16: }
+````
+
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 6: import { getProjects, preloadProjects } from "./actions";
+ 7: export const metadata: Metadata = {
+ 8:   title: "Prosjekter - Dfweb",
+ 9: };
+10: async function ProjectList() {
+11:   const projects = await getProjects();
+12:   return (
+13:     <div className="container mx-auto">
+14:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+15:         {projects.map((project) => (
+16:           <ProsjektCard key={project.id} {...project} />
+17:         ))}
+18:       </div>
+19:     </div>
+20:   );
+21: }
+22: export default function Prosjekter() {
+23:   // Start fetching projects data as early as possible
+24:   preloadProjects();
+25:   return (
+26:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+27:       <PageHeader>Prosjekter</PageHeader>
+28:       <Suspense fallback={<RotatingLoader />}>
+29:         <ProjectList />
+30:       </Suspense>
+31:     </main>
+32:   );
+33: }
 ````
 
 ## File: src/app/cursor.css
@@ -8453,6 +8721,75 @@ tsconfig.json
 182: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import "./glitch.css";
+ 6: import { client } from "@/lib/sanity/client";
+ 7: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 8: import SkipLink from "@/components/UI/SkipLink.component";
+ 9: import Header from "@/components/Layout/Header.component";
+10: import Footer from "@/components/Layout/Footer.component";
+11: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+12: const inter = Inter({ subsets: ["latin"] });
+13: export const metadata: Metadata = {
+14:   title: "Forside - Dfweb",
+15:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+16: };
+17: export default async function RootLayout({
+18:   children,
+19: }: Readonly<{
+20:   children: React.ReactNode;
+21: }>) {
+22:   const [navigation, { footerCopyrightText }] = await Promise.all([
+23:     client.fetch(navigationQuery),
+24:     client.fetch(settingsQuery),
+25:   ]);
+26:   return (
+27:     <html lang="nb">
+28:       <head>
+29:         <meta
+30:           name="viewport"
+31:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+32:         />
+33:         <link rel="icon" href="/favicon.ico" />
+34:         <link rel="apple-touch-icon" href="/logo.png" />
+35:         <meta property="og:title" content="Daniel Fjeldstad" />
+36:         <meta name="author" content="Daniel Fjeldstad" />
+37:         <meta property="og:locale" content="nb_NO" />
+38:         <meta
+39:           property="og:description"
+40:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+41:         />
+42:         <meta property="og:url" content="https://www.dfweb.no/" />
+43:         <meta property="og:site_name" content="dfweb.no" />
+44:         <meta name="theme-color" content="#004014" />
+45:       </head>
+46:       <body
+47:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+48:       >
+49:         <SkipLink />
+50:         <ErrorBoundary>
+51:           <div id="main-content" className="grow flex flex-col">
+52:             <Header navigation={navigation} />
+53:             <SpeedInsights />
+54:             <div className="grow">{children}</div>
+55:             <Footer
+56:               footerCopyrightText={
+57:                 footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+58:               }
+59:             />
+60:           </div>
+61:         </ErrorBoundary>
+62:       </body>
+63:     </html>
+64:   );
+65: }
+````
+
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -8468,6 +8805,36 @@ tsconfig.json
 11:     </div>
 12:   );
 13: }
+````
+
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import { client } from "@/lib/sanity/client";
+ 3: import { pageContentQuery } from "@/lib/sanity/queries";
+ 4: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 6:   loading: () => <ContentLoader type="hero" />,
+ 7: });
+ 8: const DynamicIndexContent = dynamic(
+ 9:   () => import("@/components/Index/IndexContent.component"),
+10:   {
+11:     loading: () => <ContentLoader type="section" sections={3} />,
+12:   },
+13: );
+14: export default async function HomePage() {
+15:   const pageContent = await client.fetch(pageContentQuery);
+16:   return (
+17:     <main>
+18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+19:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+20:       </div>
+21:       {pageContent?.content && (
+22:         <DynamicIndexContent pageContent={pageContent.content} />
+23:       )}
+24:     </main>
+25:   );
+26: }
 ````
 
 ## File: src/components/Animations/types/Animations.types.ts
@@ -19026,202 +19393,6 @@ tsconfig.json
 96: });
 ````
 
-## File: src/__tests__/Prosjekter/loading.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import Loading from "@/app/prosjekter/loading";
- 5: // Mock the components used in Loading
- 6: jest.mock("@/components/UI/PageHeader.component", () => {
- 7:   return function MockPageHeader({ children }: { children: React.ReactNode }) {
- 8:     return <h1>{children}</h1>;
- 9:   };
-10: });
-11: jest.mock("@/components/Animations/RotatingLoader.component", () => {
-12:   return function MockRotatingLoader() {
-13:     return <div data-testid="rotating-loader">Loading...</div>;
-14:   };
-15: });
-16: describe("Loading", () => {
-17:   describe("rendering", () => {
-18:     it("renders loading state with correct content and attributes", () => {
-19:       // Arrange
-20:       const expected = {
-21:         header: "Prosjekter",
-22:         testId: "rotating-loader",
-23:         mainAttributes: {
-24:           ariaLabel: "Laster portefølje",
-25:           classes: ["mt-32", "bg-graybg"],
-26:         },
-27:       };
-28:       // Act
-29:       render(<Loading />);
-30:       const main = screen.getByRole("main");
-31:       // Assert
-32:       expect(screen.getByText(expected.header)).toBeInTheDocument();
-33:       expect(screen.getByTestId(expected.testId)).toBeInTheDocument();
-34:       expect(main).toHaveAttribute(
-35:         "aria-label",
-36:         expected.mainAttributes.ariaLabel,
-37:       );
-38:       expected.mainAttributes.classes.forEach((className) => {
-39:         expect(main).toHaveClass(className);
-40:       });
-41:     });
-42:   });
-43: });
-````
-
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  6: // Define the project type
-  7: interface ProjectType {
-  8:   id: string;
-  9:   name: string;
- 10:   description: string;
- 11:   subdescription: string;
- 12:   projectimage: { asset: { _ref: string } };
- 13:   urlwww: unknown[];
- 14:   urlgithub: unknown[];
- 15: }
- 16: // Mock the actions before importing the page component
- 17: const mockGetProjects = jest.fn();
- 18: const mockPreloadProjects = jest.fn();
- 19: jest.mock("@/app/prosjekter/actions", () => ({
- 20:   getProjects: mockGetProjects,
- 21:   preloadProjects: mockPreloadProjects,
- 22: }));
- 23: // Mock the sanity client
- 24: const mockUrlBuilder = {
- 25:   width: jest.fn().mockReturnThis(),
- 26:   fit: jest.fn().mockReturnThis(),
- 27:   quality: jest.fn().mockReturnThis(),
- 28:   auto: jest.fn().mockReturnThis(),
- 29:   url: jest.fn().mockReturnValue("mock-url"),
- 30: };
- 31: jest.mock("@/lib/sanity/client", () => ({
- 32:   client: {
- 33:     fetch: jest.fn(),
- 34:   },
- 35:   urlFor: jest.fn(() => mockUrlBuilder),
- 36: }));
- 37: // Mock components
- 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 39:   <h1>{children}</h1>
- 40: );
- 41: const MockProsjektCard = (props: { name: string }) => (
- 42:   <div data-testid="project-card">{props.name}</div>
- 43: );
- 44: const MockRotatingLoader = () => (
- 45:   <div data-testid="rotating-loader">Loading...</div>
- 46: );
- 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
- 48: jest.mock(
- 49:   "@/components/Prosjekter/ProsjektCard.component",
- 50:   () => MockProsjektCard,
- 51: );
- 52: jest.mock(
- 53:   "@/components/Animations/RotatingLoader.component",
- 54:   () => MockRotatingLoader,
- 55: );
- 56: // Create a test component that simulates the page behavior without async server components
- 57: function TestProsjekterPage() {
- 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 59:   const [loading, setLoading] = React.useState(true);
- 60:   React.useEffect(() => {
- 61:     mockGetProjects().then((data: ProjectType[]) => {
- 62:       setProjects(data);
- 63:       setLoading(false);
- 64:     });
- 65:   }, []);
- 66:   return (
- 67:     <main
- 68:       role="main"
- 69:       aria-label="Innhold portefølje"
- 70:       className="mt-32 bg-graybg"
- 71:     >
- 72:       <MockPageHeader>Prosjekter</MockPageHeader>
- 73:       {loading ? (
- 74:         <MockRotatingLoader />
- 75:       ) : (
- 76:         <div className="container mx-auto">
- 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 78:             {projects.map((project) => (
- 79:               <MockProsjektCard key={project.id} {...project} />
- 80:             ))}
- 81:           </div>
- 82:         </div>
- 83:       )}
- 84:     </main>
- 85:   );
- 86: }
- 87: describe("ProsjekterPage", () => {
- 88:   beforeEach(() => {
- 89:     jest.clearAllMocks();
- 90:   });
- 91:   it("renders projects from server component", async () => {
- 92:     // Arrange - Set up test data and conditions
- 93:     const mockProjects = [
- 94:       {
- 95:         id: "1",
- 96:         name: "Test Project 1",
- 97:         description: "Test Description 1",
- 98:         subdescription: "Test Subdescription 1",
- 99:         projectimage: { asset: { _ref: "test1" } },
-100:         urlwww: [],
-101:         urlgithub: [],
-102:       },
-103:       {
-104:         id: "2",
-105:         name: "Test Project 2",
-106:         description: "Test Description 2",
-107:         subdescription: "Test Subdescription 2",
-108:         projectimage: { asset: { _ref: "test2" } },
-109:         urlwww: [],
-110:         urlgithub: [],
-111:       },
-112:     ];
-113:     mockGetProjects.mockResolvedValue(mockProjects);
-114:     // Act - Perform the action being tested
-115:     render(<TestProsjekterPage />);
-116:     // Assert - Verify the results
-117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-118:     // Wait for projects to load and render
-119:     const projectCards = await screen.findAllByTestId("project-card");
-120:     expect(projectCards).toHaveLength(2);
-121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-123:     // Test that projects are rendered within the main content area
-124:     const main = screen.getByRole("main");
-125:     expect(main).toContainElement(projectCards[0]);
-126:     expect(main).toContainElement(projectCards[1]);
-127:   });
-128:   it("uses Suspense boundary for loading state", async () => {
-129:     // Arrange - Set up test data and conditions
-130:     const delayedPromise = createDelayedPromise([], 100);
-131:     mockGetProjects.mockImplementation(() => delayedPromise);
-132:     // Act - Perform the action being tested
-133:     render(<TestProsjekterPage />);
-134:     // Assert - Verify the results
-135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-137:     const main = screen.getByRole("main");
-138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-140:     // Wait for loading to complete
-141:     await waitFor(() => {
-142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-143:     });
-144:   });
-145: });
-````
-
 ## File: src/app/cv/page.tsx
 ````typescript
  1: import CVContent from "@/components/CV/CVContent.component";
@@ -19235,177 +19406,6 @@ tsconfig.json
  9:   const cvData = await client.fetch(cvQuery);
 10:   return <CVContent cvData={cvData} />;
 11: }
-````
-
-## File: src/app/kontakt/page.tsx
-````typescript
- 1: import ContactForm from "@/components/Kontakt/ContactForm.component";
- 2: import { generateCSRFToken } from "@/lib/csrf";
- 3: import { Metadata } from "next/types";
- 4: export const metadata: Metadata = {
- 5:   title: "Kontakt - Dfweb",
- 6: };
- 7: export default async function PostIndex() {
- 8:   // Generate CSRF token server-side
- 9:   const csrfToken = generateCSRFToken();
-10:   return <ContactForm csrfToken={csrfToken} />;
-11: }
-````
-
-## File: src/app/prosjekter/loading.tsx
-````typescript
- 1: import PageHeader from "@/components/UI/PageHeader.component";
- 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 3: export default function Loading() {
- 4:   return (
- 5:     <main
- 6:       role="main"
- 7:       aria-label="Laster portefølje"
- 8:       className="mt-32 bg-graybg"
- 9:     >
-10:       <PageHeader>Prosjekter</PageHeader>
-11:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
-12:         <RotatingLoader />
-13:       </div>
-14:     </main>
-15:   );
-16: }
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
- 2: import type { Metadata } from "next/types";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 6: import { getProjects, preloadProjects } from "./actions";
- 7: export const metadata: Metadata = {
- 8:   title: "Prosjekter - Dfweb",
- 9: };
-10: async function ProjectList() {
-11:   const projects = await getProjects();
-12:   return (
-13:     <div className="container mx-auto">
-14:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-15:         {projects.map((project) => (
-16:           <ProsjektCard key={project.id} {...project} />
-17:         ))}
-18:       </div>
-19:     </div>
-20:   );
-21: }
-22: export default function Prosjekter() {
-23:   // Start fetching projects data as early as possible
-24:   preloadProjects();
-25:   return (
-26:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-27:       <PageHeader>Prosjekter</PageHeader>
-28:       <Suspense fallback={<RotatingLoader />}>
-29:         <ProjectList />
-30:       </Suspense>
-31:     </main>
-32:   );
-33: }
-````
-
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import "./glitch.css";
- 6: import { client } from "@/lib/sanity/client";
- 7: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 8: import SkipLink from "@/components/UI/SkipLink.component";
- 9: import Header from "@/components/Layout/Header.component";
-10: import Footer from "@/components/Layout/Footer.component";
-11: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-12: const inter = Inter({ subsets: ["latin"] });
-13: export const metadata: Metadata = {
-14:   title: "Forside - Dfweb",
-15:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-16: };
-17: export default async function RootLayout({
-18:   children,
-19: }: Readonly<{
-20:   children: React.ReactNode;
-21: }>) {
-22:   const [navigation, { footerCopyrightText }] = await Promise.all([
-23:     client.fetch(navigationQuery),
-24:     client.fetch(settingsQuery),
-25:   ]);
-26:   return (
-27:     <html lang="nb">
-28:       <head>
-29:         <meta
-30:           name="viewport"
-31:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-32:         />
-33:         <link rel="icon" href="/favicon.ico" />
-34:         <link rel="apple-touch-icon" href="/logo.png" />
-35:         <meta property="og:title" content="Daniel Fjeldstad" />
-36:         <meta name="author" content="Daniel Fjeldstad" />
-37:         <meta property="og:locale" content="nb_NO" />
-38:         <meta
-39:           property="og:description"
-40:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-41:         />
-42:         <meta property="og:url" content="https://www.dfweb.no/" />
-43:         <meta property="og:site_name" content="dfweb.no" />
-44:         <meta name="theme-color" content="#004014" />
-45:       </head>
-46:       <body
-47:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-48:       >
-49:         <SkipLink />
-50:         <ErrorBoundary>
-51:           <div id="main-content" className="grow flex flex-col">
-52:             <Header navigation={navigation} />
-53:             <SpeedInsights />
-54:             <div className="grow">{children}</div>
-55:             <Footer
-56:               footerCopyrightText={
-57:                 footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-58:               }
-59:             />
-60:           </div>
-61:         </ErrorBoundary>
-62:       </body>
-63:     </html>
-64:   );
-65: }
-````
-
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { pageContentQuery } from "@/lib/sanity/queries";
- 4: import ContentLoader from "@/components/UI/ContentLoader.component";
- 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 6:   loading: () => <ContentLoader type="hero" />,
- 7: });
- 8: const DynamicIndexContent = dynamic(
- 9:   () => import("@/components/Index/IndexContent.component"),
-10:   {
-11:     loading: () => <ContentLoader type="section" sections={3} />,
-12:   },
-13: );
-14: export default async function HomePage() {
-15:   const pageContent = await client.fetch(pageContentQuery);
-16:   return (
-17:     <main>
-18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-19:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-20:       </div>
-21:       {pageContent?.content && (
-22:         <DynamicIndexContent pageContent={pageContent.content} />
-23:       )}
-24:     </main>
-25:   );
-26: }
 ````
 
 ## File: src/components/Layout/Footer.component.tsx
@@ -20368,7 +20368,7 @@ tsconfig.json
  74:     "eslint": "10.0.0",
  75:     "eslint-config-next": "16.1.6",
  76:     "eslint-config-prettier": "^10.1.8",
- 77:     "eslint-plugin-jest": "^29.12.2",
+ 77:     "eslint-plugin-jest": "^29.14.0",
  78:     "eslint-plugin-jsx-a11y": "^6.10.2",
  79:     "eslint-plugin-prettier": "^5.5.5",
  80:     "eslint-plugin-react": "^7.37.5",
