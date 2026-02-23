@@ -5459,6 +5459,106 @@ tsconfig.json
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
+## File: src/__tests__/CV/CVContent.test.tsx
+````typescript
+ 1: /**
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import React from "react";
+ 5: import { render, screen } from "@testing-library/react";
+ 6: import userEvent from "@testing-library/user-event";
+ 7: import CVContent from "@/components/CV/CVContent.component";
+ 8: const mockCVData = {
+ 9:   keyQualifications: ["Qualification 1", "Qualification 2"],
+10:   experience: [
+11:     {
+12:       period: "2020-2022",
+13:       company: "Example Company",
+14:       role: "Software Developer",
+15:       description: "Worked on various projects",
+16:     },
+17:   ],
+18:   education: [
+19:     {
+20:       period: "2016-2020",
+21:       institution: "University of Example",
+22:       degree: "Bachelor in Computer Science",
+23:       description: "Studied various aspects of computer science",
+24:     },
+25:   ],
+26:   volunteerWork: [
+27:     {
+28:       period: "2023-2024",
+29:       organization: "AI Community",
+30:       role: "Technical Lead",
+31:       description: "Managing AI Discord community and developing bots",
+32:     },
+33:   ],
+34: };
+35: describe("CVContent", () => {
+36:   it("renders CV header and PDF download button", () => {
+37:     // Arrange
+38:     const expectedElements = {
+39:       header: /cv/i,
+40:       pdfButton: /last ned pdf/i,
+41:     };
+42:     // Act
+43:     render(<CVContent cvData={mockCVData} />);
+44:     // Assert
+45:     expect(
+46:       screen.getByRole("heading", { name: expectedElements.header }),
+47:     ).toBeInTheDocument();
+48:     const pdfLinks = screen.getAllByRole("link", {
+49:       name: expectedElements.pdfButton,
+50:     });
+51:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
+52:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
+53:   });
+54:   it("renders all navigation tabs", () => {
+55:     // Arrange
+56:     const expectedTabs = [
+57:       /nøkkelkvalifikasjoner/i,
+58:       /erfaring/i,
+59:       /utdanning/i,
+60:       /frivillig arbeid/i,
+61:     ];
+62:     // Act
+63:     render(<CVContent cvData={mockCVData} />);
+64:     // Assert
+65:     expectedTabs.forEach((tabName) => {
+66:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
+67:     });
+68:   });
+69:   it("displays qualifications in initial tab", () => {
+70:     // Arrange
+71:     const expectedQualification = /qualification 1/i;
+72:     // Act
+73:     render(<CVContent cvData={mockCVData} />);
+74:     // Assert
+75:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
+76:   });
+77:   it("displays volunteer work content when switching tabs", async () => {
+78:     // Arrange
+79:     const user = userEvent.setup();
+80:     render(<CVContent cvData={mockCVData} />);
+81:     const volunteerWorkTab = screen.getByRole("tab", {
+82:       name: /frivillig arbeid/i,
+83:     });
+84:     const expectedContent = {
+85:       role: /technical lead/i,
+86:       organization: /ai community/i,
+87:     };
+88:     // Act
+89:     await user.click(volunteerWorkTab);
+90:     // Assert
+91:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
+92:     expect(
+93:       await screen.findByText(expectedContent.organization),
+94:     ).toBeInTheDocument();
+95:   });
+96: });
+````
+
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
  1: import React from "react";
@@ -19385,106 +19485,6 @@ tsconfig.json
 385: - [Testing Library Documentation](https://testing-library.com/docs/)
 ````
 
-## File: src/__tests__/CV/CVContent.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import React from "react";
- 5: import { render, screen } from "@testing-library/react";
- 6: import userEvent from "@testing-library/user-event";
- 7: import CVContent from "@/components/CV/CVContent.component";
- 8: const mockCVData = {
- 9:   keyQualifications: ["Qualification 1", "Qualification 2"],
-10:   experience: [
-11:     {
-12:       period: "2020-2022",
-13:       company: "Example Company",
-14:       role: "Software Developer",
-15:       description: "Worked on various projects",
-16:     },
-17:   ],
-18:   education: [
-19:     {
-20:       period: "2016-2020",
-21:       institution: "University of Example",
-22:       degree: "Bachelor in Computer Science",
-23:       description: "Studied various aspects of computer science",
-24:     },
-25:   ],
-26:   volunteerWork: [
-27:     {
-28:       period: "2023-2024",
-29:       organization: "AI Community",
-30:       role: "Technical Lead",
-31:       description: "Managing AI Discord community and developing bots",
-32:     },
-33:   ],
-34: };
-35: describe("CVContent", () => {
-36:   it("renders CV header and PDF download button", () => {
-37:     // Arrange
-38:     const expectedElements = {
-39:       header: /cv/i,
-40:       pdfButton: /last ned pdf/i,
-41:     };
-42:     // Act
-43:     render(<CVContent cvData={mockCVData} />);
-44:     // Assert
-45:     expect(
-46:       screen.getByRole("heading", { name: expectedElements.header }),
-47:     ).toBeInTheDocument();
-48:     const pdfLinks = screen.getAllByRole("link", {
-49:       name: expectedElements.pdfButton,
-50:     });
-51:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
-52:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
-53:   });
-54:   it("renders all navigation tabs", () => {
-55:     // Arrange
-56:     const expectedTabs = [
-57:       /nøkkelkvalifikasjoner/i,
-58:       /erfaring/i,
-59:       /utdanning/i,
-60:       /frivillig arbeid/i,
-61:     ];
-62:     // Act
-63:     render(<CVContent cvData={mockCVData} />);
-64:     // Assert
-65:     expectedTabs.forEach((tabName) => {
-66:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
-67:     });
-68:   });
-69:   it("displays qualifications in initial tab", () => {
-70:     // Arrange
-71:     const expectedQualification = /qualification 1/i;
-72:     // Act
-73:     render(<CVContent cvData={mockCVData} />);
-74:     // Assert
-75:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
-76:   });
-77:   it("displays volunteer work content when switching tabs", async () => {
-78:     // Arrange
-79:     const user = userEvent.setup();
-80:     render(<CVContent cvData={mockCVData} />);
-81:     const volunteerWorkTab = screen.getByRole("tab", {
-82:       name: /frivillig arbeid/i,
-83:     });
-84:     const expectedContent = {
-85:       role: /technical lead/i,
-86:       organization: /ai community/i,
-87:     };
-88:     // Act
-89:     await user.click(volunteerWorkTab);
-90:     // Assert
-91:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
-92:     expect(
-93:       await screen.findByText(expectedContent.organization),
-94:     ).toBeInTheDocument();
-95:   });
-96: });
-````
-
 ## File: src/components/Layout/Footer.component.tsx
 ````typescript
  1: "use client";
@@ -19747,7 +19747,7 @@ tsconfig.json
 18:     "react-dom": "^19.2.4",
 19:     "react-icons": "^5.5.0",
 20:     "sanity": "^5.8.1",
-21:     "styled-components": "^6.3.8"
+21:     "styled-components": "^6.3.9"
 22:   },
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^6.0.0",
