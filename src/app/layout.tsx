@@ -7,6 +7,7 @@ import "./glitch.css";
 
 import { client } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 
 import SkipLink from "@/components/UI/SkipLink.component";
 import Header from "@/components/Layout/Header.component";
@@ -56,19 +57,21 @@ export default async function RootLayout({
       <body
         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
       >
-        <SkipLink />
-        <ErrorBoundary>
-          <div id="main-content" className="grow flex flex-col">
-            <Header navigation={navigation} />
-            <SpeedInsights />
-            <div className="grow">{children}</div>
-            <Footer
-              footerCopyrightText={
-                footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-              }
-            />
-          </div>
-        </ErrorBoundary>
+        <LazyMotionProvider>
+          <SkipLink />
+          <ErrorBoundary>
+            <div id="main-content" className="grow flex flex-col">
+              <Header navigation={navigation} />
+              <SpeedInsights />
+              <div className="grow">{children}</div>
+              <Footer
+                footerCopyrightText={
+                  footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+                }
+              />
+            </div>
+          </ErrorBoundary>
+        </LazyMotionProvider>
       </body>
     </html>
   );

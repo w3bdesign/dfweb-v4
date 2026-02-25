@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { ReactNode } from "react";
 
 export interface FadeInProps {
@@ -21,7 +21,7 @@ const FadeIn = ({
   "data-testid": dataTestId,
 }: FadeInProps) => {
   return (
-    <motion.div
+    <m.div
       className={className}
       data-testid={dataTestId}
       initial={{ opacity: 0 }}
@@ -36,7 +36,7 @@ const FadeIn = ({
       }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

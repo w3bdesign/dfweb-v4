@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 
-export const MotionDiv = motion.div;
-export const MotionLi = motion.li;
-export const MotionUl = motion.ul;
+export const MotionDiv = m.div;
+export const MotionLi = m.li;
+export const MotionUl = m.ul;

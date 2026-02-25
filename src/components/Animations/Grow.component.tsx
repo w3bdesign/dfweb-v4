@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 
 import { IGrowProps } from "./types/Animations.types";
 
@@ -14,14 +14,14 @@ const Grow = ({
   children,
 }: IGrowProps) => {
   return (
-    <motion.div
+    <m.div
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ duration, delay, ease: easing }}
       data-testid="grow"
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

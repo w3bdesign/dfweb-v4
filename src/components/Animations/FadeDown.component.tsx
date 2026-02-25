@@ -1,4 +1,5 @@
-import { Variants, motion } from "motion/react";
+import { Variants } from "motion/react";
+import * as m from "motion/react-m";
 
 import { IAnimateWithDelayProps } from "./types/Animations.types";
 
@@ -21,7 +22,7 @@ const FadeDown = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
     },
   };
   return (
-    <motion.div
+    <m.div
       className={cssClass}
       variants={fadeDownVariants}
       initial="initial"
@@ -29,7 +30,7 @@ const FadeDown = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
       data-testid="fadedown"
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 
