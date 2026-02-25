@@ -68,8 +68,8 @@ export const LazyMotion: React.FC<{
   children?: ReactNode;
   features?: unknown;
 }> = ({ children, features }) => {
-  void features;
-  return React.createElement(React.Fragment, null, children);
+  const fragmentKey = features ? "mock-lazy-motion-with-features" : "mock-lazy-motion";
+  return React.createElement(React.Fragment, { key: fragmentKey }, children);
 };
 
 export const domAnimation = {};
