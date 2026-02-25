@@ -67,7 +67,8 @@ export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
 export const LazyMotion: React.FC<{
   children?: ReactNode;
   features?: unknown;
-}> = ({ children }) => {
+}> = ({ children, features }) => {
+  void features;
   return React.createElement(React.Fragment, null, children);
 };
 
