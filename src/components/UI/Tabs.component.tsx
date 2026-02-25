@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, LazyMotion, domMax } from "motion/react";
+import * as m from "motion/react-m";
 
 type TabOrientation = "horizontal" | "vertical";
 
@@ -52,7 +53,7 @@ const TabButton: React.FC<TabButtonProps> = ({
   totalTabs,
   onClick,
 }) => (
-  <motion.button
+  <m.button
     key={tab.id}
     onClick={onClick}
     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
@@ -62,7 +63,7 @@ const TabButton: React.FC<TabButtonProps> = ({
     id={`tab-${tab.id}`}
   >
     {isActive && (
-      <motion.div
+      <m.div
         layoutId="active-tab"
         className={`absolute ${
           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
@@ -72,7 +73,7 @@ const TabButton: React.FC<TabButtonProps> = ({
       />
     )}
     <span className="relative z-10">{tab.label}</span>
-  </motion.button>
+  </m.button>
 );
 
 const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
@@ -82,7 +83,7 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
   if (!isActive) return null;
 
   return (
-    <motion.div
+    <m.div
       key={tab.id}
       role="tabpanel"
       id={`tabpanel-${tab.id}`}
@@ -94,7 +95,7 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
       transition={{ duration: 0.3 }}
     >
       {tab.content}
-    </motion.div>
+    </m.div>
   );
 };
 
@@ -111,51 +112,53 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const isVertical = orientation === "vertical";
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-      <div
-        className={`flex ${
-          isVertical ? "flex-col sm:flex-row" : "flex-col"
-        } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-      >
+    <LazyMotion features={domMax}>
+      <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
         <div
-          className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-            isVertical ? "sm:h-fit" : ""
-          }`}
+          className={`flex ${
+            isVertical ? "flex-col sm:flex-row" : "flex-col"
+          } bg-gray-800 rounded-lg h-[28rem] mt-4`}
         >
           <div
-            className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-            role="tablist"
+            className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+              isVertical ? "sm:h-fit" : ""
+            }`}
           >
-            {tabs.map((tab, index) => (
-              <TabButton
-                key={tab.id}
-                tab={tab}
-                isActive={activeTab === tab.id}
-                isVertical={isVertical}
-                index={index}
-                totalTabs={tabs.length}
-                onClick={() => setActiveTab(tab.id)}
-              />
-            ))}
+            <div
+              className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+              role="tablist"
+            >
+              {tabs.map((tab, index) => (
+                <TabButton
+                  key={tab.id}
+                  tab={tab}
+                  isActive={activeTab === tab.id}
+                  isVertical={isVertical}
+                  index={index}
+                  totalTabs={tabs.length}
+                  onClick={() => setActiveTab(tab.id)}
+                />
+              ))}
+            </div>
+          </div>
+          <div
+            className={`${
+              isVertical ? "sm:w-3/4 w-full" : "w-full"
+            } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+          >
+            <AnimatePresence mode="wait">
+              {tabs.map((tab) => (
+                <TabPanel
+                  key={tab.id}
+                  tab={tab}
+                  isActive={activeTab === tab.id}
+                />
+              ))}
+            </AnimatePresence>
           </div>
         </div>
-        <div
-          className={`${
-            isVertical ? "sm:w-3/4 w-full" : "w-full"
-          } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
-        >
-          <AnimatePresence mode="wait">
-            {tabs.map((tab) => (
-              <TabPanel
-                key={tab.id}
-                tab={tab}
-                isActive={activeTab === tab.id}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
       </div>
-    </div>
+    </LazyMotion>
   );
 };
 

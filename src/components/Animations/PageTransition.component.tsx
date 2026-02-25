@@ -1,4 +1,5 @@
-import { Variants, motion, AnimatePresence } from "motion/react";
+import { Variants, AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 
 import { IAnimateProps } from "./types/Animations.types";
 
@@ -18,7 +19,7 @@ const PageTransition = ({ children, cssClass }: IAnimateProps) => {
   };
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         className={cssClass}
         variants={pageTransitionVariants}
         initial="initial"
@@ -27,7 +28,7 @@ const PageTransition = ({ children, cssClass }: IAnimateProps) => {
         data-testid="pagetransition"
       >
         {children}
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 };

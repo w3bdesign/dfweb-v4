@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, useCycle, motion, Variants } from "motion/react";
+import { AnimatePresence, useCycle, Variants } from "motion/react";
+import * as m from "motion/react-m";
 
 import Hamburger from "./Hamburger.component";
 
@@ -74,7 +75,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
+          <m.div
             id="mobile-menu"
             data-testid="mobile-menu"
             data-cy="mobile-menu"
@@ -86,7 +87,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
             variants={menuVariants}
           >
             <nav aria-label="Navigasjon" className="w-full">
-              <motion.ul
+              <m.ul
                 className="w-full"
                 initial="closed"
                 animate="open"
@@ -101,7 +102,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                 }}
               >
                 {links?.map(({ title, name, href, externalLink }, index) => (
-                  <motion.li
+                  <m.li
                     key={title}
                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
                     data-cy="mobile-menu-item"
@@ -131,7 +132,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                       >
                         <div className="glitch relative" data-text={name}>
                           {name}
-                          <motion.span
+                          <m.span
                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
                               pathname === href ? "bg-green-400" : "bg-white"
                             }`}
@@ -146,11 +147,11 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         </div>
                       </Link>
                     )}
-                  </motion.li>
+                  </m.li>
                 ))}
-              </motion.ul>
+              </m.ul>
             </nav>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

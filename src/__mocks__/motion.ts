@@ -64,6 +64,16 @@ export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
   return React.createElement(React.Fragment, null, children);
 };
 
+export const LazyMotion: React.FC<{
+  children?: ReactNode;
+  features?: unknown;
+}> = ({ children }) => {
+  return React.createElement(React.Fragment, null, children);
+};
+
+export const domAnimation = {};
+export const domMax = {};
+
 // Basic animations for use in stories
 export const useAnimation = () => ({
   start: () => Promise.resolve(),
@@ -74,5 +84,12 @@ export const useAnimation = () => ({
 // Mock variants for animations
 export type Variants = Record<string, Record<string, unknown>>;
 
-const motionMock = { motion, AnimatePresence, useAnimation };
+const motionMock = {
+  motion,
+  AnimatePresence,
+  LazyMotion,
+  domAnimation,
+  domMax,
+  useAnimation,
+};
 export default motionMock;

@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 
 import { MotionDiv } from "@/lib/framer/client";
 
@@ -33,7 +33,7 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({
     >
       <div className="glitch relative" data-text={name}>
         {name}
-        <motion.span
+        <m.span
           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
             isActive ? "bg-green-400" : "bg-white"
           }`}

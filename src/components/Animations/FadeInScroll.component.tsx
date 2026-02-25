@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import * as m from "motion/react-m";
 import { ReactNode } from "react";
 
 export interface FadeInScrollProps {
@@ -23,7 +23,7 @@ const FadeInScroll = ({
   "data-testid": dataTestId,
 }: FadeInScrollProps) => {
   return (
-    <motion.div
+    <m.div
       className={className}
       data-testid={dataTestId}
       initial={{ opacity: 0 }}
@@ -38,7 +38,7 @@ const FadeInScroll = ({
       }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 };
 

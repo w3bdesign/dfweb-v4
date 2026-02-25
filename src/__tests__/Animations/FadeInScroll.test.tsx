@@ -21,42 +21,40 @@ type TransitionProps = {
 };
 
 // Mock framer-motion
-jest.mock("motion/react", () => ({
-  motion: {
-    div: ({
-      children,
-      className,
-      initial,
-      whileInView,
-      viewport,
-      transition,
-      style,
-      "data-testid": dataTestId,
-    }: {
-      children: React.ReactNode;
-      className?: string;
-      initial?: AnimationProps;
-      whileInView?: AnimationProps;
-      viewport?: ViewportProps;
-      transition?: TransitionProps;
-      style?: MotionStyle;
-      "data-testid"?: string;
-    }) => {
-      // Store props in data attributes for testing
-      return (
-        <div
-          className={className}
-          style={style}
-          data-initial={JSON.stringify(initial)}
-          data-while-in-view={JSON.stringify(whileInView)}
-          data-viewport={JSON.stringify(viewport)}
-          data-transition={JSON.stringify(transition)}
-          data-testid={dataTestId}
-        >
-          {children}
-        </div>
-      );
-    },
+jest.mock("motion/react-m", () => ({
+  div: ({
+    children,
+    className,
+    initial,
+    whileInView,
+    viewport,
+    transition,
+    style,
+    "data-testid": dataTestId,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    initial?: AnimationProps;
+    whileInView?: AnimationProps;
+    viewport?: ViewportProps;
+    transition?: TransitionProps;
+    style?: MotionStyle;
+    "data-testid"?: string;
+  }) => {
+    // Store props in data attributes for testing
+    return (
+      <div
+        className={className}
+        style={style}
+        data-initial={JSON.stringify(initial)}
+        data-while-in-view={JSON.stringify(whileInView)}
+        data-viewport={JSON.stringify(viewport)}
+        data-transition={JSON.stringify(transition)}
+        data-testid={dataTestId}
+      >
+        {children}
+      </div>
+    );
   },
 }));
 

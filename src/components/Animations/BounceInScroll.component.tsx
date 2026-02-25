@@ -1,6 +1,7 @@
 "use client";
 
-import { Variants, motion } from "motion/react";
+import { Variants } from "motion/react";
+import * as m from "motion/react-m";
 
 import { IAnimateBounceProps } from "./types/Animations.types";
 
@@ -36,7 +37,7 @@ const BounceInScroll = ({
   viewAmount,
   instant,
 }: IAnimateBounceProps) => (
-  <motion.div
+  <m.div
     initial="offscreen"
     animate={instant ? "onscreen" : undefined}
     whileInView={instant ? undefined : "onscreen"}
@@ -44,8 +45,8 @@ const BounceInScroll = ({
     className={cssClass}
     data-testid="bounceinscroll"
   >
-    <motion.div variants={bounceVariants}>{children}</motion.div>
-  </motion.div>
+    <m.div variants={bounceVariants}>{children}</m.div>
+  </m.div>
 );
 
 export default BounceInScroll;

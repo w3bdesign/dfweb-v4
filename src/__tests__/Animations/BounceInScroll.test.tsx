@@ -4,22 +4,23 @@ import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 import React from "react";
 
 // Mock framer-motion
+jest.mock("motion/react-m", () => ({
+  div: ({
+    children,
+    className,
+    "data-testid": testId,
+  }: {
+    children: React.ReactNode;
+    className: string;
+    "data-testid": string;
+  }) => (
+    <div className={className} data-testid={testId}>
+      {children}
+    </div>
+  ),
+}));
+
 jest.mock("motion/react", () => ({
-  motion: {
-    div: ({
-      children,
-      className,
-      "data-testid": testId,
-    }: {
-      children: React.ReactNode;
-      className: string;
-      "data-testid": string;
-    }) => (
-      <div className={className} data-testid={testId}>
-        {children}
-      </div>
-    ),
-  },
   Variants: {},
 }));
 
