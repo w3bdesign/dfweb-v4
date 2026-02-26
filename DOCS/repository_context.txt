@@ -476,130 +476,6 @@ tsconfig.json
 15: ]
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     permissions:
-14:       actions: read
-15:       contents: read
-16:       security-events: write
-17:     strategy:
-18:       fail-fast: false
-19:       matrix:
-20:         language: [javascript]
-21:     steps:
-22:       - name: Checkout
-23:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-24:       - name: Initialize CodeQL
-25:         uses: github/codeql-action/init@v4
-26:         with:
-27:           languages: ${{ matrix.language }}
-28:           queries: +security-and-quality
-29:       - name: Autobuild
-30:         uses: github/codeql-action/autobuild@v4
-31:       - name: Perform CodeQL Analysis
-32:         uses: github/codeql-action/analyze@v4
-33:         with:
-34:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - name: Checkout repository
-15:         uses: actions/checkout@v6
-16:         with:
-17:           fetch-depth: 0 # fetch all history for better context
-18:       - name: Wait for other checks
-19:         run: |
-20:           echo "Waiting for 5 minutes to allow other checks to complete..."
-21:           sleep 300
-22:       - name: Setup Node.js
-23:         uses: actions/setup-node@v6
-24:         with:
-25:           node-version: "24"
-26:       - name: Install Repomix
-27:         run: npm install -g repomix
-28:       - name: Generate Repository Documentation
-29:         run: |
-30:           echo "Creating DOCS directory..."
-31:           mkdir -p DOCS
-32:           echo "Running Repomix..."
-33:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-34:             echo "Error: Repomix command failed"
-35:             # Print directory contents for debugging
-36:             echo "DOCS directory contents:"
-37:             ls -la DOCS/
-38:             exit 1
-39:           fi
-40:           echo "Verifying output file..."
-41:           if [ ! -f "DOCS/repository_context.txt" ]; then
-42:             echo "Error: repository_context.txt was not created"
-43:             # Print directory contents for debugging
-44:             echo "DOCS directory contents:"
-45:             ls -la DOCS/
-46:             exit 1
-47:           fi
-48:           if [ ! -s "DOCS/repository_context.txt" ]; then
-49:             echo "Error: repository_context.txt is empty"
-50:             exit 1
-51:           fi
-52:           echo "Repository context file generated successfully"
-53:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-54:           echo "First few lines of the file:"
-55:           head -n 5 "DOCS/repository_context.txt"
-56:       # Update Documentation
-57:       - name: Commit and Push Changes
-58:         run: |
-59:           echo "Configuring git..."
-60:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-61:           git config --local user.name "github-actions[bot]"
-62:           echo "Checking for changes..."
-63:           if [[ -n "$(git status --porcelain)" ]]; then
-64:             echo "Changes detected, committing..."
-65:             # Stage only repository_context.txt to avoid unintended changes
-66:             if ! git add DOCS/repository_context.txt; then
-67:               echo "Error: Failed to stage repository_context.txt"
-68:               exit 1
-69:             fi
-70:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-71:               echo "Error: Failed to create commit"
-72:               exit 1
-73:             fi
-74:             echo "Pushing to main branch..."
-75:             if ! git push; then
-76:               echo "Error: Failed to push changes"
-77:               exit 1
-78:             fi
-79:             echo "Successfully updated repository context"
-80:           else
-81:             echo "No changes detected in repository_context.txt"
-82:           fi
-````
-
 ## File: .ladle/components.tsx
 ````typescript
 1: import "@/app/globals.css";
@@ -10233,6 +10109,32 @@ tsconfig.json
 12: export default SkipLink;
 ````
 
+## File: src/config/env.ts
+````typescript
+ 1: import { cleanEnv, str } from "envalid";
+ 2: // Client-side environment variables (NEXT_PUBLIC_)
+ 3: export const publicEnv = cleanEnv(process.env, {
+ 4:   NEXT_PUBLIC_EMAIL_API_KEY: str({
+ 5:     desc: 'EmailJS API key starting with "user_"',
+ 6:     example: "user_abc123",
+ 7:   }),
+ 8:   NEXT_PUBLIC_EMAIL_TEMPLATE_KEY: str({
+ 9:     desc: 'EmailJS template key starting with "template_"',
+10:     example: "template_xyz789",
+11:   }),
+12:   NEXT_PUBLIC_EMAIL_SERVICE_KEY: str({
+13:     desc: 'EmailJS service key starting with "service_"',
+14:     example: "service_def456",
+15:   }),
+16: });
+17: // Type-safe way to access public env vars from the client
+18: export const clientEnv = {
+19:   EMAIL_API_KEY: publicEnv.NEXT_PUBLIC_EMAIL_API_KEY,
+20:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
+21:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
+22: };
+````
+
 ## File: src/e2e/cypress/component/Button.cy.tsx
 ````typescript
  1: /// <reference types="cypress" />
@@ -17038,6 +16940,16 @@ tsconfig.json
 225: - SHOULD: Avoid gradient banding (use masks when needed)
 ````
 
+## File: codecov.yml
+````yaml
+1: coverage:
+2:   status:
+3:     project:
+4:       default:
+5:         target: 95.0
+6:         threshold: "20"
+````
+
 ## File: cypress.config.ts
 ````typescript
  1: import { defineConfig } from "cypress";
@@ -17721,174 +17633,43 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/cypress.yml
+## File: .github/workflows/codeql.yml
 ````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     strategy:
- 7:       fail-fast: false
- 8:       matrix:
- 9:         browser: [chrome, firefox, edge]
-10:     steps:
-11:       - name: Checkout
-12:         uses: actions/checkout@v6
-13:       - name: Install pnpm
-14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-15:         with:
-16:           version: 10
-17:       - name: Setup Node.js
-18:         uses: actions/setup-node@v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:           cache-dependency-path: pnpm-lock.yaml
-23:       - name: Cache Cypress binary
-24:         uses: actions/cache@v5
-25:         with:
-26:           path: ~/.cache/Cypress
-27:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-28:           restore-keys: |
-29:             ${{ runner.os }}-cypress-
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile
-32:       - name: Verify and install Cypress binary
-33:         run: npx cypress verify || npx cypress install
-34:       - name: Cypress run
-35:         uses: cypress-io/github-action@v6
-36:         with:
-37:           install: false
-38:           build: pnpm build
-39:           start: pnpm dev
-40:           wait-on: "http://localhost:3000"
-41:           wait-on-timeout: 120
-42:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     steps:
- 7:       - uses: actions/checkout@v6
- 8:       - name: Setup Node.js
- 9:         uses: actions/setup-node@v6
-10:         with:
-11:           node-version: "24"
-12:       - name: Setup pnpm
-13:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-14:         with:
-15:           version: 10
-16:           run_install: false
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@v5
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:           restore-keys: |
-27:             ${{ runner.os }}-pnpm-store-
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Build project
-31:         run: pnpm build
-32:       - name: Start server
-33:         run: |
-34:           pnpm start &
-35:           echo "Waiting for server to be ready..."
-36:           while ! nc -z localhost 3000; do
-37:             sleep 5
-38:           done
-39:           # Additional wait to ensure full initialization
-40:           sleep 20
-41:       - name: Run Lighthouse CI (Mobile)
-42:         run: pnpm lhci:perf
-43:         env:
-44:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-45:       - name: Run Lighthouse CI (Desktop)
-46:         run: pnpm lhci:desktop
-47:         env:
-48:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-49:       - name: Stop server
-50:         if: always()
-51:         run: |
-52:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
+ 1: name: "CodeQL"
  2: on:
  3:   push:
- 4:     branches: [main]
+ 4:     branches: ["master"]
  5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     steps:
-11:       - uses: actions/checkout@v6
-12:       - name: Setup Node.js
-13:         uses: actions/setup-node@v6
-14:         with:
-15:           node-version: "24"
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-18:         with:
-19:           version: 10
-20:           run_install: false
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@v5
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@v4
 27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:           restore-keys: |
-31:             ${{ runner.os }}-pnpm-store-
-32:       - name: Install dependencies
-33:         run: pnpm install --frozen-lockfile
-34:       - name: Create pa11y config
-35:         run: |
-36:           # Create pa11y config file
-37:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-38:       - name: Build Next.js app
-39:         run: pnpm build
-40:       - name: Start Next.js app
-41:         run: pnpm start &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm exec wait-on http://localhost:3000
-44:       - name: Run pa11y
-45:         run: |
-46:           # Create a directory for the reports
-47:           mkdir -p pa11y-reports
-48:           # Run pa11y on main pages with config
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-53:       - name: Upload pa11y results
-54:         if: always()
-55:         uses: actions/upload-artifact@v6
-56:         with:
-57:           name: pa11y-reports
-58:           path: pa11y-reports/
-59:       - name: Check for accessibility issues
-60:         run: |
-61:           if grep -q "Error:" pa11y-reports/*.txt; then
-62:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-63:             exit 1
-64:           fi
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
 ````
 
 ## File: .github/workflows/playwright.yml
@@ -17933,79 +17714,91 @@ tsconfig.json
 38:           retention-days: 30
 ````
 
-## File: .github/workflows/snyk-scan.yml
+## File: .github/workflows/repomix.yml
 ````yaml
- 1: name: Snyk Security Scan
+ 1: name: Repository Documentation
  2: on:
  3:   push:
  4:     branches:
  5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     steps:
-17:       - name: Checkout code
-18:         uses: actions/checkout@v6
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-21:         with:
-22:           version: 10
-23:       - name: Set up Node.js
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
 24:         uses: actions/setup-node@v6
 25:         with:
-26:           node-version: "24.x"
-27:           cache: "pnpm"
-28:       - name: Install dependencies
-29:         run: pnpm install --frozen-lockfile
-30:       - name: Run Snyk to check main project vulnerabilities
-31:         uses: snyk/actions/node@master
-32:         env:
-33:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-34:         with:
-35:           command: "test"
-36:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-37:       - name: Run Snyk to check eslint plugin vulnerabilities
-38:         uses: snyk/actions/node@master
-39:         env:
-40:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-41:         with:
-42:           command: "test"
-43:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-44:       - name: Upload main project SARIF report to GitHub Security tab
-45:         if: always() && hashFiles('snyk-main.sarif') != ''
-46:         uses: github/codeql-action/upload-sarif@v4
-47:         with:
-48:           sarif_file: snyk-main.sarif
-49:           category: snyk-main
-50:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-51:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-52:         uses: github/codeql-action/upload-sarif@v4
-53:         with:
-54:           sarif_file: snyk-eslint.sarif
-55:           category: snyk-eslint
-56:       - name: Snyk Monitor main project (only for pushes to main branch)
-57:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-58:         uses: snyk/actions/node@master
-59:         env:
-60:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-61:         with:
-62:           command: "monitor"
-63:           args: ""
-64:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-65:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-66:         uses: snyk/actions/node@master
-67:         env:
-68:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-69:         with:
-70:           command: "monitor"
-71:           args: "--file=src/utils/eslint/package.json"
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
 ````
 
 ## File: .github/copilot-instructions.md
@@ -19568,30 +19361,160 @@ tsconfig.json
 49: export default NavigationLink;
 ````
 
-## File: src/config/env.ts
+## File: src/components/UI/Tabs.component.tsx
 ````typescript
- 1: import { cleanEnv, str } from "envalid";
- 2: // Client-side environment variables (NEXT_PUBLIC_)
- 3: export const publicEnv = cleanEnv(process.env, {
- 4:   NEXT_PUBLIC_EMAIL_API_KEY: str({
- 5:     desc: 'EmailJS API key starting with "user_"',
- 6:     example: "user_abc123",
- 7:   }),
- 8:   NEXT_PUBLIC_EMAIL_TEMPLATE_KEY: str({
- 9:     desc: 'EmailJS template key starting with "template_"',
-10:     example: "template_xyz789",
-11:   }),
-12:   NEXT_PUBLIC_EMAIL_SERVICE_KEY: str({
-13:     desc: 'EmailJS service key starting with "service_"',
-14:     example: "service_def456",
-15:   }),
-16: });
-17: // Type-safe way to access public env vars from the client
-18: export const clientEnv = {
-19:   EMAIL_API_KEY: publicEnv.NEXT_PUBLIC_EMAIL_API_KEY,
-20:   EMAIL_TEMPLATE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY,
-21:   EMAIL_SERVICE_KEY: publicEnv.NEXT_PUBLIC_EMAIL_SERVICE_KEY,
-22: };
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
+  4: import * as m from "motion/react-m";
+  5: type TabOrientation = "horizontal" | "vertical";
+  6: interface Tab {
+  7:   id: string;
+  8:   label: string;
+  9:   content: React.ReactNode;
+ 10: }
+ 11: interface TabsProps {
+ 12:   tabs: Tab[];
+ 13:   orientation?: TabOrientation;
+ 14: }
+ 15: interface TabButtonProps {
+ 16:   tab: Tab;
+ 17:   isActive: boolean;
+ 18:   isVertical: boolean;
+ 19:   index: number;
+ 20:   totalTabs: number;
+ 21:   onClick: () => void;
+ 22: }
+ 23: const getTabButtonClassName = (
+ 24:   isActive: boolean,
+ 25:   isVertical: boolean,
+ 26:   index: number,
+ 27:   totalTabs: number,
+ 28: ) => {
+ 29:   const baseClasses =
+ 30:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
+ 31:   const activeClasses = isActive
+ 32:     ? "text-white"
+ 33:     : "text-gray-300 hover:text-white hover:bg-gray-600";
+ 34:   const orientationClasses = isVertical
+ 35:     ? "w-full text-left"
+ 36:     : "grow text-center";
+ 37:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
+ 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 39: };
+ 40: const TabButton: React.FC<TabButtonProps> = ({
+ 41:   tab,
+ 42:   isActive,
+ 43:   isVertical,
+ 44:   index,
+ 45:   totalTabs,
+ 46:   onClick,
+ 47: }) => (
+ 48:   <m.button
+ 49:     key={tab.id}
+ 50:     onClick={onClick}
+ 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 52:     role="tab"
+ 53:     aria-selected={isActive}
+ 54:     aria-controls={`tabpanel-${tab.id}`}
+ 55:     id={`tab-${tab.id}`}
+ 56:   >
+ 57:     {isActive && (
+ 58:       <m.div
+ 59:         layoutId="active-tab"
+ 60:         className={`absolute ${
+ 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 62:         } bg-[var(--matrix-dark)]`}
+ 63:         initial={false}
+ 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 65:       />
+ 66:     )}
+ 67:     <span className="relative z-10">{tab.label}</span>
+ 68:   </m.button>
+ 69: );
+ 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 71:   tab,
+ 72:   isActive,
+ 73: }) => {
+ 74:   if (!isActive) return null;
+ 75:   return (
+ 76:     <m.div
+ 77:       key={tab.id}
+ 78:       role="tabpanel"
+ 79:       id={`tabpanel-${tab.id}`}
+ 80:       aria-labelledby={`tab-${tab.id}`}
+ 81:       className="px-8"
+ 82:       initial={{ opacity: 0, y: 20 }}
+ 83:       animate={{ opacity: 1, y: 0 }}
+ 84:       exit={{ opacity: 0, y: -20 }}
+ 85:       transition={{ duration: 0.3 }}
+ 86:     >
+ 87:       {tab.content}
+ 88:     </m.div>
+ 89:   );
+ 90: };
+ 91: /**
+ 92:  * Renders a set of tabs with content.
+ 93:  *
+ 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 97:  * @return {JSX.Element} The rendered Tabs component.
+ 98:  */
+ 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+101:   const isVertical = orientation === "vertical";
+102:   return (
+103:     <LazyMotion features={domMax}>
+104:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
+105:         <div
+106:           className={`flex ${
+107:             isVertical ? "flex-col sm:flex-row" : "flex-col"
+108:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
+109:         >
+110:           <div
+111:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+112:               isVertical ? "sm:h-fit" : ""
+113:             }`}
+114:           >
+115:             <div
+116:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+117:               role="tablist"
+118:             >
+119:               {tabs.map((tab, index) => (
+120:                 <TabButton
+121:                   key={tab.id}
+122:                   tab={tab}
+123:                   isActive={activeTab === tab.id}
+124:                   isVertical={isVertical}
+125:                   index={index}
+126:                   totalTabs={tabs.length}
+127:                   onClick={() => setActiveTab(tab.id)}
+128:                 />
+129:               ))}
+130:             </div>
+131:           </div>
+132:           <div
+133:             className={`${
+134:               isVertical ? "sm:w-3/4 w-full" : "w-full"
+135:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+136:           >
+137:             <AnimatePresence mode="wait">
+138:               {tabs.map((tab) => (
+139:                 <TabPanel
+140:                   key={tab.id}
+141:                   tab={tab}
+142:                   isActive={activeTab === tab.id}
+143:                 />
+144:               ))}
+145:             </AnimatePresence>
+146:           </div>
+147:         </div>
+148:       </div>
+149:     </LazyMotion>
+150:   );
+151: };
+152: export default Tabs;
 ````
 
 ## File: src/lib/framer/client.ts
@@ -19617,14 +19540,253 @@ tsconfig.json
 10: export default LazyMotionProvider;
 ````
 
-## File: codecov.yml
+## File: .github/workflows/cypress.yml
 ````yaml
-1: coverage:
-2:   status:
-3:     project:
-4:       default:
-5:         target: 95.0
-6:         threshold: "20"
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     timeout-minutes: 30
+ 7:     strategy:
+ 8:       fail-fast: false
+ 9:       matrix:
+10:         browser: [chrome, firefox, edge]
+11:     steps:
+12:       - name: Checkout
+13:         uses: actions/checkout@v6
+14:       - name: Install pnpm
+15:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+16:         with:
+17:           version: 10
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:           restore-keys: |
+30:             ${{ runner.os }}-cypress-
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@v6
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     timeout-minutes: 30
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - name: Setup Node.js
+14:         uses: actions/setup-node@v6
+15:         with:
+16:           node-version: "24"
+17:       - name: Install pnpm
+18:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+19:         with:
+20:           version: 10
+21:           run_install: false
+22:       - name: Get pnpm store directory
+23:         shell: bash
+24:         run: |
+25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+26:       - name: Setup pnpm cache
+27:         uses: actions/cache@v5
+28:         with:
+29:           path: ${{ env.STORE_PATH }}
+30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+31:           restore-keys: |
+32:             ${{ runner.os }}-pnpm-store-
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v6
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+22:         with:
+23:           version: 10
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: ""
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: commit/setup.sh
@@ -20020,162 +20182,6 @@ tsconfig.json
 195:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
-  4: import * as m from "motion/react-m";
-  5: type TabOrientation = "horizontal" | "vertical";
-  6: interface Tab {
-  7:   id: string;
-  8:   label: string;
-  9:   content: React.ReactNode;
- 10: }
- 11: interface TabsProps {
- 12:   tabs: Tab[];
- 13:   orientation?: TabOrientation;
- 14: }
- 15: interface TabButtonProps {
- 16:   tab: Tab;
- 17:   isActive: boolean;
- 18:   isVertical: boolean;
- 19:   index: number;
- 20:   totalTabs: number;
- 21:   onClick: () => void;
- 22: }
- 23: const getTabButtonClassName = (
- 24:   isActive: boolean,
- 25:   isVertical: boolean,
- 26:   index: number,
- 27:   totalTabs: number,
- 28: ) => {
- 29:   const baseClasses =
- 30:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
- 31:   const activeClasses = isActive
- 32:     ? "text-white"
- 33:     : "text-gray-300 hover:text-white hover:bg-gray-600";
- 34:   const orientationClasses = isVertical
- 35:     ? "w-full text-left"
- 36:     : "grow text-center";
- 37:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
- 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 39: };
- 40: const TabButton: React.FC<TabButtonProps> = ({
- 41:   tab,
- 42:   isActive,
- 43:   isVertical,
- 44:   index,
- 45:   totalTabs,
- 46:   onClick,
- 47: }) => (
- 48:   <m.button
- 49:     key={tab.id}
- 50:     onClick={onClick}
- 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 52:     role="tab"
- 53:     aria-selected={isActive}
- 54:     aria-controls={`tabpanel-${tab.id}`}
- 55:     id={`tab-${tab.id}`}
- 56:   >
- 57:     {isActive && (
- 58:       <m.div
- 59:         layoutId="active-tab"
- 60:         className={`absolute ${
- 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 62:         } bg-[var(--matrix-dark)]`}
- 63:         initial={false}
- 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 65:       />
- 66:     )}
- 67:     <span className="relative z-10">{tab.label}</span>
- 68:   </m.button>
- 69: );
- 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 71:   tab,
- 72:   isActive,
- 73: }) => {
- 74:   if (!isActive) return null;
- 75:   return (
- 76:     <m.div
- 77:       key={tab.id}
- 78:       role="tabpanel"
- 79:       id={`tabpanel-${tab.id}`}
- 80:       aria-labelledby={`tab-${tab.id}`}
- 81:       className="px-8"
- 82:       initial={{ opacity: 0, y: 20 }}
- 83:       animate={{ opacity: 1, y: 0 }}
- 84:       exit={{ opacity: 0, y: -20 }}
- 85:       transition={{ duration: 0.3 }}
- 86:     >
- 87:       {tab.content}
- 88:     </m.div>
- 89:   );
- 90: };
- 91: /**
- 92:  * Renders a set of tabs with content.
- 93:  *
- 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 97:  * @return {JSX.Element} The rendered Tabs component.
- 98:  */
- 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-101:   const isVertical = orientation === "vertical";
-102:   return (
-103:     <LazyMotion features={domMax}>
-104:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-105:         <div
-106:           className={`flex ${
-107:             isVertical ? "flex-col sm:flex-row" : "flex-col"
-108:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-109:         >
-110:           <div
-111:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-112:               isVertical ? "sm:h-fit" : ""
-113:             }`}
-114:           >
-115:             <div
-116:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-117:               role="tablist"
-118:             >
-119:               {tabs.map((tab, index) => (
-120:                 <TabButton
-121:                   key={tab.id}
-122:                   tab={tab}
-123:                   isActive={activeTab === tab.id}
-124:                   isVertical={isVertical}
-125:                   index={index}
-126:                   totalTabs={tabs.length}
-127:                   onClick={() => setActiveTab(tab.id)}
-128:                 />
-129:               ))}
-130:             </div>
-131:           </div>
-132:           <div
-133:             className={`${
-134:               isVertical ? "sm:w-3/4 w-full" : "w-full"
-135:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
-136:           >
-137:             <AnimatePresence mode="wait">
-138:               {tabs.map((tab) => (
-139:                 <TabPanel
-140:                   key={tab.id}
-141:                   tab={tab}
-142:                   isActive={activeTab === tab.id}
-143:                 />
-144:               ))}
-145:             </AnimatePresence>
-146:           </div>
-147:         </div>
-148:       </div>
-149:     </LazyMotion>
-150:   );
-151: };
-152: export default Tabs;
-````
-
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
@@ -20184,169 +20190,173 @@ tsconfig.json
   4:     branches: [main, master]
   5:   pull_request:
   6:     branches: [main, master]
-  7: jobs:
-  8:   react-doctor:
-  9:     name: React Health Check
- 10:     runs-on: ubuntu-latest
- 11:     permissions:
- 12:       contents: read
- 13:       pull-requests: write
- 14:       issues: write
- 15:     steps:
- 16:       - uses: actions/checkout@v6
- 17:       - name: Detect package manager
- 18:         id: pm
- 19:         run: |
- 20:           if [ -f "pnpm-lock.yaml" ]; then
- 21:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 22:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 23:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 24:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 25:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 26:           elif [ -f "yarn.lock" ]; then
- 27:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 28:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 29:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 30:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 31:             echo "Detected yarn (yarn.lock found)"
- 32:           else
- 33:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 34:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 35:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 36:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 37:             echo "Detected npm (default)"
- 38:           fi
- 39:       - name: Install pnpm
- 40:         if: steps.pm.outputs.manager == 'pnpm'
- 41:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
- 42:         with:
- 43:           version: 10
- 44:       - uses: actions/setup-node@v6
- 45:         with:
- 46:           node-version: 24
- 47:           cache: ${{ steps.pm.outputs.cache }}
- 48:       - name: Install dependencies
- 49:         run: ${{ steps.pm.outputs.install }}
- 50:       - name: Run React Doctor
- 51:         id: doctor
- 52:         run: |
- 53:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 54:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 55:           # Strip ANSI escape codes for clean output
- 56:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 57:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 58:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 59:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 60:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 61:           else
- 62:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 63:           fi
- 64:           # Check for lint issues (the actionable part of the report)
- 65:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 66:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 67:           else
- 68:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 69:           fi
- 70:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 71:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 72:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 73:           # Extract just the numeric score for threshold check
- 74:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 75:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 76:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 77:       - name: Post PR comment with results
- 78:         if: github.event_name == 'pull_request'
- 79:         uses: actions/github-script@v8
- 80:         with:
- 81:           script: |
- 82:             const fs = require('fs');
- 83:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 84:             const score = '${{ steps.doctor.outputs.score }}';
- 85:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 86:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 87:             const scoreDisplay = offline
- 88:               ? 'N/A (scoring server unreachable)'
- 89:               : score;
- 90:             const statusEmoji = offline
- 91:               ? (issuesFound ? '⚠️' : '✅')
- 92:               : '';
- 93:             const body = [
- 94:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 95:               '',
- 96:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
- 97:               '',
- 98:               '<details>',
- 99:               '<summary>Full diagnostics</summary>',
-100:               '',
-101:               '```',
-102:               output.trim(),
-103:               '```',
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+ 46:         with:
+ 47:           version: 10
+ 48:       - uses: actions/setup-node@v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@v8
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
 104:               '',
-105:               '</details>',
-106:               '',
-107:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-108:             ].filter(Boolean).join('\n');
-109:             // Find existing comment to update instead of creating duplicates
-110:             const { data: comments } = await github.rest.issues.listComments({
-111:               owner: context.repo.owner,
-112:               repo: context.repo.repo,
-113:               issue_number: context.issue.number,
-114:             });
-115:             const botComment = comments.find(
-116:               (c) => c.body?.includes('🩺 React Doctor')
-117:             );
-118:             if (botComment) {
-119:               await github.rest.issues.updateComment({
-120:                 owner: context.repo.owner,
-121:                 repo: context.repo.repo,
-122:                 comment_id: botComment.id,
-123:                 body,
-124:               });
-125:             } else {
-126:               await github.rest.issues.createComment({
-127:                 owner: context.repo.owner,
-128:                 repo: context.repo.repo,
-129:                 issue_number: context.issue.number,
-130:                 body,
-131:               });
-132:             }
-133:       - name: Write job summary
-134:         if: always()
-135:         run: |
-136:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-137:           if [ "$OFFLINE" = "true" ]; then
-138:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-139:             echo "" >> "$GITHUB_STEP_SUMMARY"
-140:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-141:           else
-142:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-143:           fi
-144:           echo "" >> "$GITHUB_STEP_SUMMARY"
-145:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-146:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-148:       - name: Check score threshold
-149:         run: |
-150:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-151:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-152:           # When offline, skip numeric threshold — only fail if lint issues were found
-153:           if [ "$OFFLINE" = "true" ]; then
-154:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-155:             if [ "$ISSUES" = "true" ]; then
-156:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-157:               exit 1
-158:             fi
-159:             echo "✅ No lint issues found (score unavailable due to offline)"
-160:             exit 0
-161:           fi
-162:           SCORE="${{ steps.doctor.outputs.score_num }}"
-163:           SCORE="${SCORE:-0}"
-164:           THRESHOLD=80
-165:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-166:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-167:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-168:             exit 1
-169:           fi
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
 ````
 
 ## File: package.json
