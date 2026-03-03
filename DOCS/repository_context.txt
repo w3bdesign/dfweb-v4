@@ -1490,6 +1490,55 @@ tsconfig.json
 65: Write-Output "2. Make a commit to test the AI commit message generator"
 ````
 
+## File: commit/setup.sh
+````bash
+ 1: #!/bin/bash
+ 2: # Setup script for AI Commit Message Generator
+ 3: # Run this from your repository root after copying the commit/ folder
+ 4: set -e
+ 5: # Find repo root
+ 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+ 7:     echo "Error: Not in a git repository" >&2
+ 8:     exit 1
+ 9: }
+10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
+12: # Check if commit_analyzer.py exists
+13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
+14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
+15:     exit 1
+16: fi
+17: echo "Setting up AI Commit Message Generator..."
+18: # Install Python dependencies
+19: echo "Installing Python dependencies..."
+20: pip install openai anthropic python-dotenv
+21: # Create .env from template if it doesn't exist
+22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
+23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
+24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
+25:         echo "Created .env from template"
+26:     else
+27:         echo "Warning: .env.example not found, creating minimal .env"
+28:         echo '# Add your API key' > "$REPO_ROOT/.env"
+29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
+30:     fi
+31: fi
+32: # Create git hook
+33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
+34: mkdir -p "$REPO_ROOT/.git/hooks"
+35: cat > "$HOOK_FILE" << EOF
+36: #!/bin/sh
+37: python "$COMMIT_ANALYZER" --hook
+38: EOF
+39: chmod +x "$HOOK_FILE"
+40: echo ""
+41: echo "✅ Setup complete!"
+42: echo ""
+43: echo "Next steps:"
+44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+45: echo "2. Make a commit to test the AI commit message generator"
+````
+
 ## File: DOCS/dynamic-score-badges.md
 ````markdown
   1: # Dynamic Score Badges for React Doctor & Lighthouse
@@ -18680,55 +18729,6 @@ tsconfig.json
 83:           fi
 ````
 
-## File: commit/setup.sh
-````bash
- 1: #!/bin/bash
- 2: # Setup script for AI Commit Message Generator
- 3: # Run this from your repository root after copying the commit/ folder
- 4: set -e
- 5: # Find repo root
- 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
- 7:     echo "Error: Not in a git repository" >&2
- 8:     exit 1
- 9: }
-10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
-12: # Check if commit_analyzer.py exists
-13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
-14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
-15:     exit 1
-16: fi
-17: echo "Setting up AI Commit Message Generator..."
-18: # Install Python dependencies
-19: echo "Installing Python dependencies..."
-20: pip install openai anthropic python-dotenv
-21: # Create .env from template if it doesn't exist
-22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
-23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
-25:         echo "Created .env from template"
-26:     else
-27:         echo "Warning: .env.example not found, creating minimal .env"
-28:         echo '# Add your API key' > "$REPO_ROOT/.env"
-29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
-30:     fi
-31: fi
-32: # Create git hook
-33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
-34: mkdir -p "$REPO_ROOT/.git/hooks"
-35: cat > "$HOOK_FILE" << EOF
-36: #!/bin/sh
-37: python "$COMMIT_ANALYZER" --hook
-38: EOF
-39: chmod +x "$HOOK_FILE"
-40: echo ""
-41: echo "✅ Setup complete!"
-42: echo ""
-43: echo "Next steps:"
-44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-45: echo "2. Make a commit to test the AI commit message generator"
-````
-
 ## File: src/__tests__/Animations/BounceInScroll.test.tsx
 ````typescript
   1: import { render, screen } from "@testing-library/react";
@@ -20428,9 +20428,9 @@ tsconfig.json
  65:     "@types/node": "^24.10.13",
  66:     "@types/react": "^19.2.14",
  67:     "@types/react-dom": "^19.2.3",
- 68:     "@typescript-eslint/eslint-plugin": "^8.56.0",
- 69:     "@typescript-eslint/parser": "^8.56.0",
- 70:     "@typescript-eslint/utils": "^8.56.0",
+ 68:     "@typescript-eslint/eslint-plugin": "^8.56.1",
+ 69:     "@typescript-eslint/parser": "^8.56.1",
+ 70:     "@typescript-eslint/utils": "^8.56.1",
  71:     "axe-core": "^4.11.1",
  72:     "cypress": "15.10.0",
  73:     "cypress-axe": "^1.7.0",
