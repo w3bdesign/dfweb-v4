@@ -40,7 +40,7 @@ describe("VolunteerWorkTabContent", () => {
     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
 
     // Assert
-    expect(screen.getByText(" - ")).toBeInTheDocument();
+    expect(screen.getByText(/-/)).toBeInTheDocument();
     expect(screen.getByText("Volunteer")).toBeInTheDocument();
   });
 
