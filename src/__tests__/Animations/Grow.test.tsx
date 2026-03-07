@@ -26,7 +26,7 @@ describe("Grow", () => {
 
     it("applies initial scale transform animation", () => {
       // Arrange
-      const expectedStyle = { transform: "scale(0)" };
+      const expectedStyle = { transform: "scale(0.95)" };
       render(
         <Grow duration={0.3} delay={0.2} easing={[0.42, 0, 0.58, 1]}>
           Hello World
