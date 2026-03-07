@@ -1,7 +1,7 @@
 "use client";
 
 import * as m from "motion/react-m";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 
 export interface FadeInScrollProps {
   children: ReactNode;
@@ -22,8 +22,11 @@ const FadeInScroll = ({
   viewAmount = 0.2,
   "data-testid": dataTestId,
 }: FadeInScrollProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+
   return (
     <m.div
+      ref={ref}
       className={className}
       data-testid={dataTestId}
       initial={{ opacity: 0 }}
@@ -33,8 +36,11 @@ const FadeInScroll = ({
         duration,
         ease: "easeOut",
       }}
-      style={{
-        willChange: "opacity",
+      onAnimationStart={() => {
+        if (ref.current) ref.current.style.willChange = "opacity";
+      }}
+      onAnimationComplete={() => {
+        if (ref.current) ref.current.style.willChange = "auto";
       }}
     >
       {children}
