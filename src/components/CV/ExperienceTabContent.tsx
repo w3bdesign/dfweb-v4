@@ -12,19 +12,22 @@ interface ExperienceTabContentProps {
   experience?: Experience[];
 }
 
+const renderExperienceHeader = (exp: Experience): React.ReactNode => (
+  <>
+    {exp.period ?? ""} - {exp.company ?? ""}
+  </>
+);
+
+const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
+  exp.role && <p className="italic">{exp.role}</p>;
+
 const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
   experience,
 }) => (
   <GenericCVSectionContent<Experience>
     items={experience}
-    renderHeaderContent={(exp) => (
-      <>
-        {exp.period ?? ""} - {exp.company ?? ""}
-      </>
-    )}
-    renderSubHeaderContent={(exp) =>
-      exp.role && <p className="italic">{exp.role}</p>
-    }
+    renderHeaderContent={renderExperienceHeader}
+    renderSubHeaderContent={renderExperienceSubHeader}
   />
 );
 

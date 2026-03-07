@@ -8,36 +8,41 @@ import { urlFor } from "@/lib/sanity/client";
 
 import type { Project } from "@/types/sanity.types";
 
+interface ProsjektCardProps extends Project {
+  /** Stagger delay in seconds for coordinated group animations */
+  staggerDelay?: number;
+}
+
 /**
  * Renders a card displaying information about a single project.
  * Uses the Project type definition from Sanity types.
  *
- * @param {Project} props - The project data object conforming to the Sanity Project type.
+ * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
  * @param {string} props.name - The name of the project.
  * @param {string} [props.description] - A brief description of the project (optional).
  * @param {string} [props.subdescription] - Additional description of the project (optional).
  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
- * @param {boolean} [props.featured] - Flag indicating if the project is featured (optional, affects animation).
+ * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
  * @returns {JSX.Element} The rendered ProsjektCard component.
  */
 
-const ProsjektCard: React.FC<Project> = ({
+const ProsjektCard: React.FC<ProsjektCardProps> = ({
   name,
   description,
   subdescription,
   projectimage,
   urlwww,
   urlgithub,
-  featured,
+  staggerDelay = 0,
 }) => {
   return (
     <div
       className="bg-slate-700 shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-white/5 hover:border-white/10"
       data-testid="project-card"
     >
-      <BounceInScroll viewAmount={0.3} instant={featured}>
+      <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
         <div className="relative w-full md:h-60">
           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
