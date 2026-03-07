@@ -12,19 +12,22 @@ interface EducationTabContentProps {
   education?: Education[];
 }
 
+const renderEducationHeader = (edu: Education): React.ReactNode => (
+  <>
+    {edu.period ?? ""} - {edu.institution ?? ""}
+  </>
+);
+
+const renderEducationSubHeader = (edu: Education): React.ReactNode =>
+  edu.degree && <p className="italic">{edu.degree}</p>;
+
 const EducationTabContent: React.FC<EducationTabContentProps> = ({
   education,
 }) => (
   <GenericCVSectionContent<Education>
     items={education}
-    renderHeaderContent={(edu) => (
-      <>
-        {edu.period ?? ""} - {edu.institution ?? ""}
-      </>
-    )}
-    renderSubHeaderContent={(edu) =>
-      edu.degree && <p className="italic">{edu.degree}</p>
-    }
+    renderHeaderContent={renderEducationHeader}
+    renderSubHeaderContent={renderEducationSubHeader}
   />
 );
 
