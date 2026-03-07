@@ -17,8 +17,12 @@ async function ProjectList() {
   return (
     <div className="container mx-auto">
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-        {projects.map((project) => (
-          <ProsjektCard key={project.id} {...project} />
+        {projects.map((project, index) => (
+          <ProsjektCard
+            key={project.id}
+            {...project}
+            staggerDelay={(index % 2) * 0.15}
+          />
         ))}
       </div>
     </div>

@@ -10,6 +10,7 @@ export interface IAnimateBounceProps {
   cssClass?: string;
   viewAmount?: "some" | "all" | number;
   instant?: boolean;
+  delay?: number;
 }
 
 export interface IAnimateWithDelayProps {
