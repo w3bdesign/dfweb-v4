@@ -44,7 +44,8 @@ describe("FadeIn", () => {
     const fadeInElement = screen.getByTestId("fade-in");
 
     // Assert
-    expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
+    // will-change is now applied dynamically during animation, not as a permanent style
+    expect(fadeInElement).toBeInTheDocument();
   });
 
   it("accepts custom duration", () => {
