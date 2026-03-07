@@ -1,10 +1,6 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import FadeInScroll from "@/components/Animations/FadeInScroll.component";
-import React from "react";
-
-type MotionStyle = React.CSSProperties & {
-  willChange?: string;
-};
 
 type AnimationProps = {
   opacity?: number;
@@ -20,45 +16,64 @@ type TransitionProps = {
   ease?: string;
 };
 
-// Mock framer-motion
+// Capture onAnimationStart/onAnimationComplete callbacks from the mock
+let capturedOnAnimationStart: (() => void) | undefined;
+let capturedOnAnimationComplete: (() => void) | undefined;
+
 jest.mock("motion/react-m", () => ({
-  div: ({
-    children,
-    className,
-    initial,
-    whileInView,
-    viewport,
-    transition,
-    style,
-    "data-testid": dataTestId,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    initial?: AnimationProps;
-    whileInView?: AnimationProps;
-    viewport?: ViewportProps;
-    transition?: TransitionProps;
-    style?: MotionStyle;
-    "data-testid"?: string;
-  }) => {
-    // Store props in data attributes for testing
-    return (
-      <div
-        className={className}
-        style={style}
-        data-initial={JSON.stringify(initial)}
-        data-while-in-view={JSON.stringify(whileInView)}
-        data-viewport={JSON.stringify(viewport)}
-        data-transition={JSON.stringify(transition)}
-        data-testid={dataTestId}
-      >
-        {children}
-      </div>
-    );
-  },
+  div: React.forwardRef(
+    (
+      {
+        children,
+        className,
+        initial,
+        whileInView,
+        viewport,
+        transition,
+        style,
+        "data-testid": dataTestId,
+        onAnimationStart,
+        onAnimationComplete,
+      }: {
+        children: React.ReactNode;
+        className?: string;
+        initial?: AnimationProps;
+        whileInView?: AnimationProps;
+        viewport?: ViewportProps;
+        transition?: TransitionProps;
+        style?: React.CSSProperties;
+        "data-testid"?: string;
+        onAnimationStart?: () => void;
+        onAnimationComplete?: () => void;
+      },
+      ref: React.Ref<HTMLDivElement>,
+    ) => {
+      capturedOnAnimationStart = onAnimationStart;
+      capturedOnAnimationComplete = onAnimationComplete;
+      return (
+        <div
+          ref={ref}
+          className={className}
+          style={style}
+          data-initial={JSON.stringify(initial)}
+          data-while-in-view={JSON.stringify(whileInView)}
+          data-viewport={JSON.stringify(viewport)}
+          data-transition={JSON.stringify(transition)}
+          data-testid={dataTestId}
+        >
+          {children}
+        </div>
+      );
+    },
+  ),
 }));
 
 describe("FadeInScroll", () => {
+  beforeEach(() => {
+    capturedOnAnimationStart = undefined;
+    capturedOnAnimationComplete = undefined;
+  });
+
   it("renders children correctly", () => {
     // Arrange
     render(
@@ -101,7 +116,6 @@ describe("FadeInScroll", () => {
     const fadeInElement = screen.getByTestId("fade-in-scroll");
 
     // Assert
-    // will-change is now applied dynamically during animation, not as a permanent style
     expect(fadeInElement).toBeInTheDocument();
     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
   });
@@ -161,5 +175,37 @@ describe("FadeInScroll", () => {
     // Assert
     expect(transition.duration).toBe(0.8);
     expect(transition.ease).toBe("easeOut");
+  });
+
+  it("sets willChange to opacity on animation start", () => {
+    // Arrange
+    render(
+      <FadeInScroll data-testid="fade-in-scroll">
+        <div>Test content</div>
+      </FadeInScroll>,
+    );
+    const fadeInElement = screen.getByTestId("fade-in-scroll");
+
+    // Act
+    capturedOnAnimationStart?.();
+
+    // Assert
+    expect(fadeInElement.style.willChange).toBe("opacity");
+  });
+
+  it("sets willChange to auto on animation complete", () => {
+    // Arrange
+    render(
+      <FadeInScroll data-testid="fade-in-scroll">
+        <div>Test content</div>
+      </FadeInScroll>,
+    );
+    const fadeInElement = screen.getByTestId("fade-in-scroll");
+
+    // Act
+    capturedOnAnimationComplete?.();
+
+    // Assert
+    expect(fadeInElement.style.willChange).toBe("auto");
   });
 });
