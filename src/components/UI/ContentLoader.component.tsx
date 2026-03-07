@@ -45,7 +45,7 @@ const ContentLoader = ({
             key={`content-section-${sectionNum}`}
             data-testid="content-section"
             className={`md:py-6 relative contain-layout ${
-              sectionNum % 2 === 1 ? "bg-slate-900" : "bg-slate-800/30"
+              sectionNum % 2 === 0 ? "bg-slate-800/30" : "bg-slate-900"
             }`}
           >
           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
