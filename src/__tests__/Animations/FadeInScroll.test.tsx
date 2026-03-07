@@ -101,7 +101,8 @@ describe("FadeInScroll", () => {
     const fadeInElement = screen.getByTestId("fade-in-scroll");
 
     // Assert
-    expect(fadeInElement).toHaveStyle({ willChange: "opacity" });
+    // will-change is now applied dynamically during animation, not as a permanent style
+    expect(fadeInElement).toBeInTheDocument();
     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
   });
 

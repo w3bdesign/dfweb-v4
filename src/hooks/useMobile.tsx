@@ -9,37 +9,32 @@ import { useState, useEffect } from "react";
  * @returns true if the device width is under 640px, else false.
  */
 export function useMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (globalThis.window === undefined) return false;
+    if (globalThis.matchMedia) {
+      return globalThis.matchMedia("(max-width: 639px)").matches;
+    }
+    return globalThis.innerWidth < 640;
+  });
 
   useEffect(() => {
-    // Guard check for environments without matchMedia (like JSDOM/Node.js tests)
-    if (typeof window === "undefined" || !window.matchMedia) {
-      // Fallback to resize listener for test environments
-      const checkIfMobile = (): void => {
-        setIsMobile(window.innerWidth < 640);
-      };
+    if (globalThis.window === undefined) return;
 
-      checkIfMobile();
-      window.addEventListener("resize", checkIfMobile);
-      return () => window.removeEventListener("resize", checkIfMobile);
+    // Fallback to resize listener for test environments without matchMedia
+    if (!globalThis.matchMedia) {
+      const handleResize = (): void => {
+        setIsMobile(globalThis.innerWidth < 640);
+      };
+      globalThis.addEventListener("resize", handleResize);
+      return () => globalThis.removeEventListener("resize", handleResize);
     }
 
-    // Create media query for mobile breakpoint (max-width: 639px)
-    // Using 639px to match the original logic (< 640)
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
-
-    // Set initial state based on current match
-    setIsMobile(mediaQuery.matches);
-
-    // Handler for when the media query match changes
+    // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
+    const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
     const handleChange = (event: MediaQueryListEvent): void => {
       setIsMobile(event.matches);
     };
-
-    // Subscribe to changes
     mediaQuery.addEventListener("change", handleChange);
-
-    // Cleanup subscription
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 

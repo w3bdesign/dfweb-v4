@@ -27,8 +27,8 @@ const ContentLoader = ({
           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" shimmer />
           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
           <div className="flex justify-center space-x-4 mt-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} height="h-10 w-10" rounded shimmer />
+            {[1, 2, 3].map((iconNum) => (
+              <Skeleton key={`icon-skeleton-${iconNum}`} height="h-10 w-10" rounded shimmer />
             ))}
           </div>
         </div>
@@ -41,7 +41,7 @@ const ContentLoader = ({
     <div className="w-full overflow-hidden -mb-8">
       {Array.from({ length: sections }, (_, index) => (
         <div
-          key={index}
+          key={`content-section-${index}`}
           data-testid="content-section"
           className={`md:py-6 relative contain-layout ${
             index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"

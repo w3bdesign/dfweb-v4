@@ -1,5 +1,5 @@
 import * as m from "motion/react-m";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 
 export interface FadeInProps {
   children: ReactNode;
@@ -20,8 +20,11 @@ const FadeIn = ({
   delay = 0,
   "data-testid": dataTestId,
 }: FadeInProps) => {
+  const ref = useRef<HTMLDivElement>(null);
+
   return (
     <m.div
+      ref={ref}
       className={className}
       data-testid={dataTestId}
       initial={{ opacity: 0 }}
@@ -31,8 +34,11 @@ const FadeIn = ({
         delay,
         ease: "easeOut",
       }}
-      style={{
-        willChange: "opacity",
+      onAnimationStart={() => {
+        if (ref.current) ref.current.style.willChange = "opacity";
+      }}
+      onAnimationComplete={() => {
+        if (ref.current) ref.current.style.willChange = "auto";
       }}
     >
       {children}

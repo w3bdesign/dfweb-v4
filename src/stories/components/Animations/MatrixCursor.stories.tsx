@@ -94,12 +94,12 @@ export const WithContent = () => (
         Content Interaction
       </h2>
       <div className="grid grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
+        {[1, 2, 3].map((cardNumber) => (
           <div
-            key={i}
+            key={`card-${cardNumber}`}
             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
           >
-            <h3 className="text-lg font-semibold mb-2">Card {i}</h3>
+            <h3 className="text-lg font-semibold mb-2">Card {cardNumber}</h3>
             <p className="text-sm">
               Hover over this card to see how the matrix cursor interacts with
               content.
