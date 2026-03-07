@@ -10,27 +10,27 @@ import { useState, useEffect } from "react";
  */
 export function useMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    if (window.matchMedia) {
-      return window.matchMedia("(max-width: 639px)").matches;
+    if (typeof globalThis.window === "undefined") return false;
+    if (globalThis.matchMedia) {
+      return globalThis.matchMedia("(max-width: 639px)").matches;
     }
-    return window.innerWidth < 640;
+    return globalThis.innerWidth < 640;
   });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof globalThis.window === "undefined") return;
 
     // Fallback to resize listener for test environments without matchMedia
-    if (!window.matchMedia) {
+    if (!globalThis.matchMedia) {
       const handleResize = (): void => {
-        setIsMobile(window.innerWidth < 640);
+        setIsMobile(globalThis.innerWidth < 640);
       };
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+      globalThis.addEventListener("resize", handleResize);
+      return () => globalThis.removeEventListener("resize", handleResize);
     }
 
     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
-    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
     const handleChange = (event: MediaQueryListEvent): void => {
       setIsMobile(event.matches);
     };
