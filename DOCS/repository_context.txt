@@ -414,6 +414,82 @@ tsconfig.json
 
 # Files
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.13.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.13.1-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -474,6 +550,48 @@ tsconfig.json
 13:     ]
 14:   }
 15: ]
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@v6
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
 ````
 
 ## File: .github/copilot-instructions.md
@@ -10307,6 +10425,42 @@ tsconfig.json
 48: export default DesktopNavigation;
 ````
 
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: import type { Settings } from "@/types/sanity.types";
+ 5: const iconContextValue = { className: "inline-block" } as const;
+ 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
+ 7: /**
+ 8:  * Renders the footer for the application
+ 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
+10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
+11:  * @returns {JSX.Element} - Rendered Footer component
+12:  */
+13: const Footer = ({ footerCopyrightText }: FooterProps) => (
+14:   <footer
+15:     className="mt-8"
+16:     aria-label="Innholdet for bunnteksten med copyright"
+17:     data-testid="footer"
+18:   >
+19:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
+20:       <div className="w-full mx-auto p-6 text-center font-semibold">
+21:         <div className="flex justify-center items-center space-x-2">
+22:           <span>{footerCopyrightText}</span>
+23:           <IconContext.Provider value={iconContextValue}>
+24:             <BiCopyright size="1.2em" />
+25:           </IconContext.Provider>
+26:           <span>{new Date().getFullYear()}</span>
+27:         </div>
+28:       </div>
+29:     </div>
+30:   </footer>
+31: );
+32: export default Footer;
+````
+
 ## File: src/components/Layout/Hamburger.component.tsx
 ````typescript
  1: "use client";
@@ -18485,82 +18639,6 @@ tsconfig.json
 36: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.13.1
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.13.1-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/workflows/codeql.yml
 ````yaml
  1: name: "CodeQL"
@@ -18600,46 +18678,177 @@ tsconfig.json
 35:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/playwright.yml
+## File: .github/workflows/cypress.yml
 ````yaml
- 1: name: Playwright Tests
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     timeout-minutes: 30
+ 7:     strategy:
+ 8:       fail-fast: false
+ 9:       matrix:
+10:         browser: [chrome, firefox, edge]
+11:     steps:
+12:       - name: Checkout
+13:         uses: actions/checkout@v6
+14:       - name: Install pnpm
+15:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+16:         with:
+17:           version: 10
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:           restore-keys: |
+30:             ${{ runner.os }}-cypress-
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@v6
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
  2: on:
  3:   push:
- 4:     branches: [main, master]
+ 4:     branches: [main]
  5:   pull_request:
- 6:     branches: [main, master]
+ 6:     branches: [main]
  7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     timeout-minutes: 30
 11:     steps:
 12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v6
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
+13:       - name: Setup Node.js
+14:         uses: actions/setup-node@v6
+15:         with:
+16:           node-version: "24"
+17:       - name: Install pnpm
+18:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+19:         with:
+20:           version: 10
+21:           run_install: false
+22:       - name: Get pnpm store directory
+23:         shell: bash
+24:         run: |
+25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+26:       - name: Setup pnpm cache
+27:         uses: actions/cache@v5
+28:         with:
+29:           path: ${{ env.STORE_PATH }}
+30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+31:           restore-keys: |
+32:             ${{ runner.os }}-pnpm-store-
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v6
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
 ````
 
 ## File: .github/workflows/repomix.yml
@@ -18727,6 +18936,82 @@ tsconfig.json
 81:           else
 82:             echo "No changes detected in repository_context.txt"
 83:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+22:         with:
+23:           version: 10
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: ""
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/__tests__/Animations/BounceInScroll.test.tsx
@@ -19339,42 +19624,6 @@ tsconfig.json
 32: export default PageTransition;
 ````
 
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: import type { Settings } from "@/types/sanity.types";
- 5: const iconContextValue = { className: "inline-block" } as const;
- 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
- 7: /**
- 8:  * Renders the footer for the application
- 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
-10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
-11:  * @returns {JSX.Element} - Rendered Footer component
-12:  */
-13: const Footer = ({ footerCopyrightText }: FooterProps) => (
-14:   <footer
-15:     className="mt-8"
-16:     aria-label="Innholdet for bunnteksten med copyright"
-17:     data-testid="footer"
-18:   >
-19:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
-20:       <div className="w-full mx-auto p-6 text-center font-semibold">
-21:         <div className="flex justify-center items-center space-x-2">
-22:           <span>{footerCopyrightText}</span>
-23:           <IconContext.Provider value={iconContextValue}>
-24:             <BiCopyright size="1.2em" />
-25:           </IconContext.Provider>
-26:           <span>{new Date().getFullYear()}</span>
-27:         </div>
-28:       </div>
-29:     </div>
-30:   </footer>
-31: );
-32: export default Footer;
-````
-
 ## File: src/components/Layout/MobileMenu.component.tsx
 ````typescript
   1: "use client";
@@ -19761,300 +20010,6 @@ tsconfig.json
 10: export default LazyMotionProvider;
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     timeout-minutes: 30
- 7:     strategy:
- 8:       fail-fast: false
- 9:       matrix:
-10:         browser: [chrome, firefox, edge]
-11:     steps:
-12:       - name: Checkout
-13:         uses: actions/checkout@v6
-14:       - name: Install pnpm
-15:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-16:         with:
-17:           version: 10
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:           restore-keys: |
-30:             ${{ runner.os }}-cypress-
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@v6
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     timeout-minutes: 30
- 7:     steps:
- 8:       - uses: actions/checkout@v6
- 9:       - name: Setup Node.js
-10:         uses: actions/setup-node@v6
-11:         with:
-12:           node-version: "24"
-13:       - name: Setup pnpm
-14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-15:         with:
-16:           version: 10
-17:           run_install: false
-18:       - name: Get pnpm store directory
-19:         shell: bash
-20:         run: |
-21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-22:       - name: Setup pnpm cache
-23:         uses: actions/cache@v5
-24:         with:
-25:           path: ${{ env.STORE_PATH }}
-26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-27:           restore-keys: |
-28:             ${{ runner.os }}-pnpm-store-
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     timeout-minutes: 30
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - name: Setup Node.js
-14:         uses: actions/setup-node@v6
-15:         with:
-16:           node-version: "24"
-17:       - name: Install pnpm
-18:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-19:         with:
-20:           version: 10
-21:           run_install: false
-22:       - name: Get pnpm store directory
-23:         shell: bash
-24:         run: |
-25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-26:       - name: Setup pnpm cache
-27:         uses: actions/cache@v5
-28:         with:
-29:           path: ${{ env.STORE_PATH }}
-30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-31:           restore-keys: |
-32:             ${{ runner.os }}-pnpm-store-
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v6
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-22:         with:
-23:           version: 10
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: ""
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
-````
-
-## File: src/__mocks__/react-m.ts
-````typescript
- 1: import { motion } from "./motion";
- 2: export const {
- 3:   div,
- 4:   span,
- 5:   ul,
- 6:   li,
- 7:   p,
- 8:   section,
- 9:   nav,
-10:   header,
-11:   footer,
-12:   button,
-13:   a,
-14: } = motion;
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.0.2"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
@@ -20230,6 +20185,51 @@ tsconfig.json
 171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
 172:             exit 1
 173:           fi
+````
+
+## File: src/__mocks__/react-m.ts
+````typescript
+ 1: import { motion } from "./motion";
+ 2: export const {
+ 3:   div,
+ 4:   span,
+ 5:   ul,
+ 6:   li,
+ 7:   p,
+ 8:   section,
+ 9:   nav,
+10:   header,
+11:   footer,
+12:   button,
+13:   a,
+14: } = motion;
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.0.2"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
 ````
 
 ## File: src/__mocks__/motion.ts
@@ -20432,7 +20432,7 @@ tsconfig.json
  69:     "@typescript-eslint/parser": "^8.56.1",
  70:     "@typescript-eslint/utils": "^8.56.1",
  71:     "axe-core": "^4.11.1",
- 72:     "cypress": "15.10.0",
+ 72:     "cypress": "15.11.0",
  73:     "cypress-axe": "^1.7.0",
  74:     "eslint": "10.0.2",
  75:     "eslint-config-next": "16.1.6",
@@ -20460,18 +20460,19 @@ tsconfig.json
  97:   "pnpm": {
  98:     "overrides": {
  99:       "@pnpm/npm-conf": ">=3.0.2",
-100:       "minimatch": ">=10.2.3",
-101:       "rollup": ">=4.59.0"
-102:     },
-103:     "onlyBuiltDependencies": [
-104:       "@swc/core",
-105:       "cypress",
-106:       "esbuild",
-107:       "msw",
-108:       "puppeteer",
-109:       "sharp",
-110:       "unrs-resolver"
-111:     ]
-112:   }
-113: }
+100:       "minimatch": ">=10.2.4",
+101:       "rollup": ">=4.59.0",
+102:       "tar": ">=7.5.10"
+103:     },
+104:     "onlyBuiltDependencies": [
+105:       "@swc/core",
+106:       "cypress",
+107:       "esbuild",
+108:       "msw",
+109:       "puppeteer",
+110:       "sharp",
+111:       "unrs-resolver"
+112:     ]
+113:   }
+114: }
 ````
