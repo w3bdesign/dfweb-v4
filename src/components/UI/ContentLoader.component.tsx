@@ -39,14 +39,15 @@ const ContentLoader = ({
   // Default to section loader
   return (
     <div className="w-full overflow-hidden -mb-8">
-      {Array.from({ length: sections }, (_, index) => (
-        <div
-          key={`content-section-${index}`}
-          data-testid="content-section"
-          className={`md:py-6 relative contain-layout ${
-            index % 2 === 0 ? "bg-slate-900" : "bg-slate-800/30"
-          }`}
-        >
+      {Array.from({ length: sections }, (_, index) => index + 1).map(
+        (sectionNum) => (
+          <div
+            key={`content-section-${sectionNum}`}
+            data-testid="content-section"
+            className={`md:py-6 relative contain-layout ${
+              sectionNum % 2 !== 0 ? "bg-slate-900" : "bg-slate-800/30"
+            }`}
+          >
           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
             <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
             <div className="max-w-3xl mx-auto space-y-3 mt-4">
@@ -57,8 +58,9 @@ const ContentLoader = ({
               <Skeleton width="w-3/4" shimmer />
             </div>
           </div>
-        </div>
-      ))}
+          </div>
+        ),
+      )}
     </div>
   );
 };
