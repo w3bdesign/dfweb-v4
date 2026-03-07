@@ -25,7 +25,10 @@ const ContactForm: React.FC<ContactFormProps> = ({
   onSubmit: onSubmitProp,
   initialResponse = "",
 }) => {
-  const [serverResponse, setServerResponse] = useState<string>(initialResponse);
+  const [submittedResponse, setSubmittedResponse] = useState<string | null>(
+    null,
+  );
+  const serverResponse = submittedResponse ?? initialResponse;
 
   const {
     register,
@@ -58,7 +61,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const handleFormSubmit = async (data: FormData): Promise<void> => {
     const submitHandler = onSubmitProp ?? defaultOnSubmit;
     const message = await submitHandler(data);
-    setServerResponse(message);
+    setSubmittedResponse(message);
   };
 
   return (
