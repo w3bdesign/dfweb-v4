@@ -155,6 +155,7 @@ src/
       CVContent.test.tsx
       EducationTabContent.test.tsx
       ExperienceTabContent.test.tsx
+      VolunteerWorkTabContent.test.tsx
     ErrorBoundary/
       ErrorBoundary.test.tsx
       ErrorFallback.test.tsx
@@ -474,6 +475,183 @@ tsconfig.json
 13:     ]
 14:   }
 15: ]
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+ 46:         with:
+ 47:           version: 10
+ 48:       - uses: actions/setup-node@v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@v8
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
+104:               '',
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
 ````
 
 ## File: .github/copilot-instructions.md
@@ -4019,6 +4197,93 @@ tsconfig.json
 37: ]
 ````
 
+## File: src/__mocks__/motion.ts
+````typescript
+ 1: import React, { ReactNode, ComponentType } from "react";
+ 2: /**
+ 3:  * This mocks the 'motion/react' module for Ladle stories
+ 4:  */
+ 5: // Define types for the motion component props
+ 6: type MotionProps = {
+ 7:   children?: ReactNode;
+ 8:   className?: string;
+ 9:   animate?: string | Record<string, unknown>;
+10:   initial?: string | Record<string, unknown>;
+11:   variants?: Record<string, unknown>;
+12:   whileInView?: string | Record<string, unknown>;
+13:   viewport?: Record<string, unknown>;
+14:   [key: string]: unknown;
+15: };
+16: const createMotionComponent = (
+17:   component = "div",
+18: ): ComponentType<MotionProps> => {
+19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
+20:     // Extract the className from variants if present
+21:     const { className = "", animate, whileInView, initial, ...rest } = props;
+22:     // Add a class to indicate this is a mocked motion component
+23:     const combinedClassName = `${className} mock-motion-component`;
+24:     return React.createElement(
+25:       component,
+26:       {
+27:         ...rest,
+28:         className: combinedClassName,
+29:         "data-mock-motion": true,
+30:         "data-mock-initial": initial,
+31:         "data-mock-animate": animate,
+32:         "data-mock-while-in-view": whileInView,
+33:       },
+34:       children,
+35:     );
+36:   };
+37:   return MotionComponent;
+38: };
+39: // Export the mock components
+40: export const motion = {
+41:   div: createMotionComponent("div"),
+42:   span: createMotionComponent("span"),
+43:   ul: createMotionComponent("ul"),
+44:   li: createMotionComponent("li"),
+45:   p: createMotionComponent("p"),
+46:   section: createMotionComponent("section"),
+47:   nav: createMotionComponent("nav"),
+48:   header: createMotionComponent("header"),
+49:   footer: createMotionComponent("footer"),
+50:   button: createMotionComponent("button"),
+51:   a: createMotionComponent("a"),
+52: };
+53: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
+54:   children,
+55: }) => {
+56:   return React.createElement(React.Fragment, null, children);
+57: };
+58: export const LazyMotion: React.FC<{
+59:   children?: ReactNode;
+60:   features?: unknown;
+61: }> = ({ children, features }) => {
+62:   const fragmentKey = features ? "mock-lazy-motion-with-features" : "mock-lazy-motion";
+63:   return React.createElement(React.Fragment, { key: fragmentKey }, children);
+64: };
+65: export const domAnimation = {};
+66: export const domMax = {};
+67: // Basic animations for use in stories
+68: export const useAnimation = () => ({
+69:   start: () => Promise.resolve(),
+70:   stop: () => Promise.resolve(),
+71:   set: () => {},
+72: });
+73: // Mock variants for animations
+74: export type Variants = Record<string, Record<string, unknown>>;
+75: const motionMock = {
+76:   motion,
+77:   AnimatePresence,
+78:   LazyMotion,
+79:   domAnimation,
+80:   domMax,
+81:   useAnimation,
+82: };
+83: export default motionMock;
+````
+
 ## File: src/__mocks__/next-navigation.ts
 ````typescript
  1: /**
@@ -4437,6 +4702,24 @@ tsconfig.json
 7: };
 ````
 
+## File: src/__mocks__/react-m.ts
+````typescript
+ 1: import { motion } from "./motion";
+ 2: export const {
+ 3:   div,
+ 4:   span,
+ 5:   ul,
+ 6:   li,
+ 7:   p,
+ 8:   section,
+ 9:   nav,
+10:   header,
+11:   footer,
+12:   button,
+13:   a,
+14: } = motion;
+````
+
 ## File: src/__mocks__/sanity-client.ts
 ````typescript
  1: export const client = {
@@ -4656,6 +4939,121 @@ tsconfig.json
 191:     // Our globals.css handles prefers-reduced-motion media query
 192:   });
 193: });
+````
+
+## File: src/__tests__/Animations/BounceInScroll.test.tsx
+````typescript
+  1: import { render, screen } from "@testing-library/react";
+  2: import "@testing-library/jest-dom";
+  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+  4: import React from "react";
+  5: // Mock framer-motion
+  6: jest.mock("motion/react-m", () => ({
+  7:   div: ({
+  8:     children,
+  9:     className,
+ 10:     "data-testid": testId,
+ 11:   }: {
+ 12:     children: React.ReactNode;
+ 13:     className: string;
+ 14:     "data-testid": string;
+ 15:   }) => (
+ 16:     <div className={className} data-testid={testId}>
+ 17:       {children}
+ 18:     </div>
+ 19:   ),
+ 20: }));
+ 21: jest.mock("motion/react", () => ({
+ 22:   Variants: {},
+ 23: }));
+ 24: describe("BounceInScroll", () => {
+ 25:   it("renders children content", () => {
+ 26:     // Arrange
+ 27:     const testContent = "Test content";
+ 28:     // Act
+ 29:     render(
+ 30:       <BounceInScroll>
+ 31:         <div>{testContent}</div>
+ 32:       </BounceInScroll>,
+ 33:     );
+ 34:     // Assert
+ 35:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 36:   });
+ 37:   it("applies custom CSS class", () => {
+ 38:     // Arrange
+ 39:     const testClass = "test-class";
+ 40:     // Act
+ 41:     render(
+ 42:       <BounceInScroll cssClass={testClass}>
+ 43:         <div>Test content</div>
+ 44:       </BounceInScroll>,
+ 45:     );
+ 46:     // Assert
+ 47:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
+ 48:   });
+ 49:   it("configures viewport with default amount when viewAmount not provided", () => {
+ 50:     // Arrange
+ 51:     const testContent = "Test content";
+ 52:     // Act
+ 53:     render(
+ 54:       <BounceInScroll>
+ 55:         <div>{testContent}</div>
+ 56:       </BounceInScroll>,
+ 57:     );
+ 58:     // Assert
+ 59:     const element = screen.getByTestId("bounceinscroll");
+ 60:     expect(element).toBeInTheDocument();
+ 61:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 62:   });
+ 63:   it("configures viewport with custom amount when viewAmount provided", () => {
+ 64:     // Arrange
+ 65:     const testContent = "Test content";
+ 66:     const viewAmount = 0.5;
+ 67:     // Act
+ 68:     render(
+ 69:       <BounceInScroll viewAmount={viewAmount}>
+ 70:         <div>{testContent}</div>
+ 71:       </BounceInScroll>,
+ 72:     );
+ 73:     // Assert
+ 74:     const element = screen.getByTestId("bounceinscroll");
+ 75:     expect(element).toBeInTheDocument();
+ 76:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 77:   });
+ 78:   it("configures for instant animation when instant prop is true", () => {
+ 79:     // Arrange
+ 80:     const testContent = "Test content";
+ 81:     // Act
+ 82:     render(
+ 83:       <BounceInScroll instant={true}>
+ 84:         <div>{testContent}</div>
+ 85:       </BounceInScroll>,
+ 86:     );
+ 87:     // Assert
+ 88:     const element = screen.getByTestId("bounceinscroll");
+ 89:     expect(element).toBeInTheDocument();
+ 90:     expect(screen.getByText(testContent)).toBeInTheDocument();
+ 91:   });
+ 92:   it("handles all viewport amount types", () => {
+ 93:     // Arrange
+ 94:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
+ 95:     const testContent = "Test content";
+ 96:     amounts.forEach((amount) => {
+ 97:       // Act
+ 98:       const { unmount } = render(
+ 99:         <BounceInScroll viewAmount={amount}>
+100:           <div>{testContent}</div>
+101:         </BounceInScroll>,
+102:       );
+103:       // Assert
+104:       const element = screen.getByTestId("bounceinscroll");
+105:       expect(element).toBeInTheDocument();
+106:       expect(screen.getByText(testContent)).toBeInTheDocument();
+107:       // Cleanup
+108:       unmount();
+109:     });
+110:   });
+111: });
 ````
 
 ## File: src/__tests__/Animations/Matrix.renderer.test.tsx
@@ -5054,181 +5452,6 @@ tsconfig.json
 113:     });
 114:   });
 115: });
-````
-
-## File: src/__tests__/Animations/MatrixCursor.test.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { render, fireEvent, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-  5: import { useMobile } from "@/hooks/useMobile";
-  6: // Mock useMobile hook
-  7: jest.mock("@/hooks/useMobile");
-  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
-  9: // Wrapper component to provide ref
- 10: const TestWrapper = () => {
- 11:   const heroRef = useRef<HTMLDivElement>(null);
- 12:   return (
- 13:     <>
- 14:       <div ref={heroRef} data-testid="hero-section" />
- 15:       <MatrixCursor heroRef={heroRef} />
- 16:     </>
- 17:   );
- 18: };
- 19: describe("MatrixCursor", () => {
- 20:   beforeEach(() => {
- 21:     // Default to desktop view
- 22:     mockUseMobile.mockReturnValue(false);
- 23:   });
- 24:   afterEach(() => {
- 25:     jest.clearAllMocks();
- 26:   });
- 27:   test("should not render when heroRef is null", () => {
- 28:     // Arrange
- 29:     const NullRefWrapper = () => {
- 30:       const heroRef = useRef<HTMLDivElement>(null);
- 31:       // Don't render the div, so heroRef.current will be null
- 32:       return <MatrixCursor heroRef={heroRef} />;
- 33:     };
- 34:     // Act
- 35:     render(<NullRefWrapper />);
- 36:     // Assert
- 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 38:   });
- 39:   test("should not render on mobile devices", () => {
- 40:     // Arrange
- 41:     mockUseMobile.mockReturnValue(true);
- 42:     // Act
- 43:     render(<TestWrapper />);
- 44:     // Assert
- 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 46:   });
- 47:   test("should update cursor position and styles on mousemove", () => {
- 48:     // Arrange
- 49:     render(<TestWrapper />);
- 50:     const heroSection = screen.getByTestId("hero-section");
- 51:     const expectedPosition = { x: 100, y: 200 };
- 52:     // Act
- 53:     fireEvent.mouseEnter(heroSection);
- 54:     fireEvent.mouseMove(heroSection, {
- 55:       clientX: expectedPosition.x,
- 56:       clientY: expectedPosition.y,
- 57:     });
- 58:     const cursor = screen.getByTestId("matrix-cursor");
- 59:     // Assert
- 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
- 61:       `${expectedPosition.x}px`,
- 62:     );
- 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
- 64:       `${expectedPosition.y}px`,
- 65:     );
- 66:   });
- 67:   test("should add matrix-cursor class on mouseenter", () => {
- 68:     // Arrange
- 69:     render(<TestWrapper />);
- 70:     const heroSection = screen.getByTestId("hero-section");
- 71:     // Act
- 72:     fireEvent.mouseEnter(heroSection);
- 73:     const cursor = screen.getByTestId("matrix-cursor");
- 74:     // Assert
- 75:     expect(cursor).toHaveClass("matrix-cursor");
- 76:     expect(heroSection.style.cursor).toBe("none");
- 77:   });
- 78:   test("should remove matrix-cursor class on mouseleave", () => {
- 79:     // Arrange
- 80:     render(<TestWrapper />);
- 81:     const heroSection = screen.getByTestId("hero-section");
- 82:     // Act - First add the class
- 83:     fireEvent.mouseEnter(heroSection);
- 84:     const cursor = screen.getByTestId("matrix-cursor");
- 85:     // Assert initial state
- 86:     expect(cursor).toHaveClass("matrix-cursor");
- 87:     // Act - Then remove it
- 88:     fireEvent.mouseLeave(heroSection);
- 89:     // Assert final state
- 90:     expect(cursor).not.toHaveClass("matrix-cursor");
- 91:     expect(heroSection.style.cursor).toBe("");
- 92:   });
- 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
- 94:     // Arrange
- 95:     const { unmount } = render(<TestWrapper />);
- 96:     const heroSection = screen.getByTestId("hero-section");
- 97:     // Act - Set initial state
- 98:     fireEvent.mouseEnter(heroSection);
- 99:     // Assert initial state
-100:     expect(heroSection.style.cursor).toBe("none");
-101:     // Act - Unmount component
-102:     unmount();
-103:     // Assert cleanup
-104:     expect(heroSection.style.cursor).toBe("");
-105:   });
-106:   test("should create trail elements on mousemove when hovered", () => {
-107:     // Arrange
-108:     render(<TestWrapper />);
-109:     const heroSection = screen.getByTestId("hero-section");
-110:     const movePositions = [
-111:       { x: 100, y: 100 },
-112:       { x: 110, y: 110 },
-113:       { x: 120, y: 120 },
-114:     ];
-115:     // Act - Enable trail creation
-116:     fireEvent.mouseEnter(heroSection);
-117:     // Act & Assert - Create and verify trails
-118:     movePositions.forEach((pos, index) => {
-119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
-120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
-121:     });
-122:   });
-123:   test("should limit the number of trail elements", () => {
-124:     // Arrange
-125:     render(<TestWrapper />);
-126:     const heroSection = screen.getByTestId("hero-section");
-127:     const maxTrails = 20;
-128:     const totalMoves = 25;
-129:     // Act
-130:     fireEvent.mouseEnter(heroSection);
-131:     for (let i = 0; i < totalMoves; i++) {
-132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-133:     }
-134:     // Assert
-135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
-136:       maxTrails,
-137:     );
-138:   });
-139:   test("should cleanup trail elements on mouseleave", () => {
-140:     // Arrange
-141:     render(<TestWrapper />);
-142:     const heroSection = screen.getByTestId("hero-section");
-143:     const trailCount = 5;
-144:     // Act - Create trails
-145:     fireEvent.mouseEnter(heroSection);
-146:     for (let i = 0; i < trailCount; i++) {
-147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-148:     }
-149:     // Assert trails were created
-150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
-151:     // Act - Leave hero section
-152:     fireEvent.mouseLeave(heroSection);
-153:     // Assert trails were cleaned up
-154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-155:   });
-156:   test("should remove trail element when animation ends", () => {
-157:     // Arrange
-158:     render(<TestWrapper />);
-159:     const heroSection = screen.getByTestId("hero-section");
-160:     // Act - Create trail
-161:     fireEvent.mouseEnter(heroSection);
-162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
-163:     // Assert trail was created
-164:     const trailElements = screen.getAllByTestId("matrix-trail");
-165:     expect(trailElements).toHaveLength(1);
-166:     // Act - Trigger animation end
-167:     fireEvent.animationEnd(trailElements[0]);
-168:     // Assert trail was removed
-169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-170:   });
-171: });
 ````
 
 ## File: src/__tests__/Animations/RotatingLoader.test.tsx
@@ -8679,6 +8902,78 @@ tsconfig.json
 182: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import "./glitch.css";
+ 6: import { client } from "@/lib/sanity/client";
+ 7: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const inter = Inter({ subsets: ["latin"] });
+14: export const metadata: Metadata = {
+15:   title: "Forside - Dfweb",
+16:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+17: };
+18: export default async function RootLayout({
+19:   children,
+20: }: Readonly<{
+21:   children: React.ReactNode;
+22: }>) {
+23:   const [navigation, { footerCopyrightText }] = await Promise.all([
+24:     client.fetch(navigationQuery),
+25:     client.fetch(settingsQuery),
+26:   ]);
+27:   return (
+28:     <html lang="nb">
+29:       <head>
+30:         <meta
+31:           name="viewport"
+32:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+33:         />
+34:         <link rel="icon" href="/favicon.ico" />
+35:         <link rel="apple-touch-icon" href="/logo.png" />
+36:         <meta property="og:title" content="Daniel Fjeldstad" />
+37:         <meta name="author" content="Daniel Fjeldstad" />
+38:         <meta property="og:locale" content="nb_NO" />
+39:         <meta
+40:           property="og:description"
+41:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+42:         />
+43:         <meta property="og:url" content="https://www.dfweb.no/" />
+44:         <meta property="og:site_name" content="dfweb.no" />
+45:         <meta name="theme-color" content="#004014" />
+46:       </head>
+47:       <body
+48:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+49:       >
+50:         <LazyMotionProvider>
+51:           <SkipLink />
+52:           <ErrorBoundary>
+53:             <div id="main-content" className="grow flex flex-col">
+54:               <Header navigation={navigation} />
+55:               <SpeedInsights />
+56:               <div className="grow">{children}</div>
+57:               <Footer
+58:                 footerCopyrightText={
+59:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+60:                 }
+61:               />
+62:             </div>
+63:           </ErrorBoundary>
+64:         </LazyMotionProvider>
+65:       </body>
+66:     </html>
+67:   );
+68: }
+````
+
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -8724,6 +9019,80 @@ tsconfig.json
 24:     </main>
 25:   );
 26: }
+````
+
+## File: src/components/Animations/FadeDown.component.tsx
+````typescript
+ 1: import { Variants } from "motion/react";
+ 2: import * as m from "motion/react-m";
+ 3: import { IAnimateWithDelayProps } from "./types/Animations.types";
+ 4: /**
+ 5:  * Fade down content animation
+ 6:  * @function FadeDown
+ 7:  * @param {ReactNode} children - Children content to render
+ 8:  * @param {string} cssClass - CSS classes to apply to component
+ 9:  * @param {number} delay - Time to wait before starting animation
+10:  * @returns {JSX.Element} - Rendered component
+11:  */
+12: const FadeDown = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
+13:   const fadeDownVariants: Variants = {
+14:     initial: { opacity: 0, y: -20 },
+15:     animate: {
+16:       y: 0,
+17:       opacity: 1,
+18:       transition: { delay, type: "spring", duration: 0.5, stiffness: 100 },
+19:     },
+20:   };
+21:   return (
+22:     <m.div
+23:       className={cssClass}
+24:       variants={fadeDownVariants}
+25:       initial="initial"
+26:       animate="animate"
+27:       data-testid="fadedown"
+28:     >
+29:       {children}
+30:     </m.div>
+31:   );
+32: };
+33: export default FadeDown;
+````
+
+## File: src/components/Animations/FadeUp.component.tsx
+````typescript
+ 1: import { Variants } from "motion/react";
+ 2: import * as m from "motion/react-m";
+ 3: import { IAnimateWithDelayProps } from "./types/Animations.types";
+ 4: /**
+ 5:  * Fade up content animation
+ 6:  * @function FadeUp
+ 7:  * @param {ReactNode} children - Children content to render
+ 8:  * @param {string} cssClass - CSS classes to apply to component
+ 9:  * @param {number} delay - Time to wait before starting animation
+10:  * @returns {JSX.Element} - Rendered component
+11:  */
+12: const FadeUp = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
+13:   const fadeUpVariants: Variants = {
+14:     initial: { opacity: 0, y: 20 },
+15:     animate: {
+16:       y: 0,
+17:       opacity: 1,
+18:       transition: { delay, type: "spring", duration: 0.5, stiffness: 100 },
+19:     },
+20:   };
+21:   return (
+22:     <m.div
+23:       className={cssClass}
+24:       variants={fadeUpVariants}
+25:       initial="initial"
+26:       animate="animate"
+27:       data-testid="fadeup"
+28:     >
+29:       {children}
+30:     </m.div>
+31:   );
+32: };
+33: export default FadeUp;
 ````
 
 ## File: src/components/Animations/Matrix.component.tsx
@@ -9044,6 +9413,42 @@ tsconfig.json
 63:     timeout = setTimeout(() => func(...args), wait);
 64:   };
 65: };
+````
+
+## File: src/components/Animations/PageTransition.component.tsx
+````typescript
+ 1: import { Variants, AnimatePresence } from "motion/react";
+ 2: import * as m from "motion/react-m";
+ 3: import { IAnimateProps } from "./types/Animations.types";
+ 4: /**
+ 5:  * Fade in animation used for page transitions
+ 6:  * @function PageTransition
+ 7:  * @param {ReactNode} children - Children content to render
+ 8:  * @param {string} cssClass - CSS classes to apply to component
+ 9:  * @returns {JSX.Element} - Rendered component
+10:  */
+11: const PageTransition = ({ children, cssClass }: IAnimateProps) => {
+12:   const pageTransitionVariants: Variants = {
+13:     initial: { opacity: 0 },
+14:     animate: { opacity: 1, transition: { duration: 1.0 } },
+15:     exit: { opacity: 0 },
+16:   };
+17:   return (
+18:     <AnimatePresence mode="wait">
+19:       <m.div
+20:         className={cssClass}
+21:         variants={pageTransitionVariants}
+22:         initial="initial"
+23:         animate="animate"
+24:         exit="exit"
+25:         data-testid="pagetransition"
+26:       >
+27:         {children}
+28:       </m.div>
+29:     </AnimatePresence>
+30:   );
+31: };
+32: export default PageTransition;
 ````
 
 ## File: src/components/Animations/RotatingLoader.component.tsx
@@ -9824,6 +10229,213 @@ tsconfig.json
 44: export default Header;
 ````
 
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: /**
+ 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 11:  * @param {Object} props
+ 12:  * @param {ILink[]} props.links - Array of navigation link objects
+ 13:  * @returns {JSX.Element} The rendered MobileMenu component
+ 14:  */
+ 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 17:   const closeMenu = () => toggleExpanded(0);
+ 18:   const pathname = usePathname();
+ 19:   const menuVariants: Variants = {
+ 20:     closed: {
+ 21:       x: "125%",
+ 22:       transition: {
+ 23:         type: "spring",
+ 24:         stiffness: 60,
+ 25:         damping: 10,
+ 26:         delay: 0.3,
+ 27:       },
+ 28:     },
+ 29:     open: {
+ 30:       x: 0,
+ 31:       transition: {
+ 32:         type: "spring",
+ 33:         stiffness: 60,
+ 34:         damping: 10,
+ 35:       },
+ 36:     },
+ 37:   };
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             aria-hidden={!isExpanded}
+ 73:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 74:             initial="closed"
+ 75:             animate="open"
+ 76:             exit="closed"
+ 77:             variants={menuVariants}
+ 78:           >
+ 79:             <nav aria-label="Navigasjon" className="w-full">
+ 80:               <m.ul
+ 81:                 className="w-full"
+ 82:                 initial="closed"
+ 83:                 animate="open"
+ 84:                 exit="closed"
+ 85:                 variants={{
+ 86:                   open: {
+ 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 88:                   },
+ 89:                   closed: {
+ 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 91:                   },
+ 92:                 }}
+ 93:               >
+ 94:                 {links?.map(({ title, name, href, externalLink }, index) => (
+ 95:                   <m.li
+ 96:                     key={title}
+ 97:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+ 98:                     data-cy="mobile-menu-item"
+ 99:                     custom={index}
+100:                     variants={itemVariants}
+101:                   >
+102:                     {externalLink ? (
+103:                       <a
+104:                         aria-label={name}
+105:                         href={href}
+106:                         target="_blank"
+107:                         rel="noreferrer"
+108:                         data-testid={`mobil-${name}`}
+109:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+110:                       >
+111:                         {name}
+112:                       </a>
+113:                     ) : (
+114:                       <Link
+115:                         href={href ?? ""}
+116:                         data-testid={`mobil-${name}`}
+117:                         prefetch={true}
+118:                         onClick={closeMenu}
+119:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+120:                           pathname === href ? "text-green-400" : ""
+121:                         }`}
+122:                       >
+123:                         <div className="glitch relative" data-text={name}>
+124:                           {name}
+125:                           <m.span
+126:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+127:                               pathname === href ? "bg-green-400" : "bg-white"
+128:                             }`}
+129:                             initial={{
+130:                               width: pathname === href ? "100%" : "0%",
+131:                             }}
+132:                             animate={{
+133:                               width: pathname === href ? "100%" : "0%",
+134:                             }}
+135:                             transition={{ duration: 0.3 }}
+136:                           />
+137:                         </div>
+138:                       </Link>
+139:                     )}
+140:                   </m.li>
+141:                 ))}
+142:               </m.ul>
+143:             </nav>
+144:           </m.div>
+145:         )}
+146:       </AnimatePresence>
+147:     </div>
+148:   );
+149: };
+150: export default MobileMenu;
+````
+
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import * as m from "motion/react-m";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: export interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-green-400" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <m.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-green-400" : "bg-white"
+36:           }`}
+37:           initial={{
+38:             width: isActive ? "100%" : "0%",
+39:           }}
+40:           variants={{
+41:             hover: { width: "100%" },
+42:           }}
+43:           transition={{ duration: 0.3 }}
+44:         />
+45:       </div>
+46:     </Link>
+47:   </MotionDiv>
+48: );
+49: export default NavigationLink;
+````
+
 ## File: src/components/UI/Button.component.tsx
 ````typescript
  1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
@@ -10130,6 +10742,162 @@ tsconfig.json
 10:   );
 11: };
 12: export default SkipLink;
+````
+
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
+  4: import * as m from "motion/react-m";
+  5: type TabOrientation = "horizontal" | "vertical";
+  6: interface Tab {
+  7:   id: string;
+  8:   label: string;
+  9:   content: React.ReactNode;
+ 10: }
+ 11: interface TabsProps {
+ 12:   tabs: Tab[];
+ 13:   orientation?: TabOrientation;
+ 14: }
+ 15: interface TabButtonProps {
+ 16:   tab: Tab;
+ 17:   isActive: boolean;
+ 18:   isVertical: boolean;
+ 19:   index: number;
+ 20:   totalTabs: number;
+ 21:   onClick: () => void;
+ 22: }
+ 23: const getTabButtonClassName = (
+ 24:   isActive: boolean,
+ 25:   isVertical: boolean,
+ 26:   index: number,
+ 27:   totalTabs: number,
+ 28: ) => {
+ 29:   const baseClasses =
+ 30:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
+ 31:   const activeClasses = isActive
+ 32:     ? "text-white"
+ 33:     : "text-gray-300 hover:text-white hover:bg-gray-600";
+ 34:   const orientationClasses = isVertical
+ 35:     ? "w-full text-left"
+ 36:     : "grow text-center";
+ 37:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
+ 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 39: };
+ 40: const TabButton: React.FC<TabButtonProps> = ({
+ 41:   tab,
+ 42:   isActive,
+ 43:   isVertical,
+ 44:   index,
+ 45:   totalTabs,
+ 46:   onClick,
+ 47: }) => (
+ 48:   <m.button
+ 49:     key={tab.id}
+ 50:     onClick={onClick}
+ 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 52:     role="tab"
+ 53:     aria-selected={isActive}
+ 54:     aria-controls={`tabpanel-${tab.id}`}
+ 55:     id={`tab-${tab.id}`}
+ 56:   >
+ 57:     {isActive && (
+ 58:       <m.div
+ 59:         layoutId="active-tab"
+ 60:         className={`absolute ${
+ 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 62:         } bg-[var(--matrix-dark)]`}
+ 63:         initial={false}
+ 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 65:       />
+ 66:     )}
+ 67:     <span className="relative z-10">{tab.label}</span>
+ 68:   </m.button>
+ 69: );
+ 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 71:   tab,
+ 72:   isActive,
+ 73: }) => {
+ 74:   if (!isActive) return null;
+ 75:   return (
+ 76:     <m.div
+ 77:       key={tab.id}
+ 78:       role="tabpanel"
+ 79:       id={`tabpanel-${tab.id}`}
+ 80:       aria-labelledby={`tab-${tab.id}`}
+ 81:       className="px-8"
+ 82:       initial={{ opacity: 0, y: 20 }}
+ 83:       animate={{ opacity: 1, y: 0 }}
+ 84:       exit={{ opacity: 0, y: -20 }}
+ 85:       transition={{ duration: 0.3 }}
+ 86:     >
+ 87:       {tab.content}
+ 88:     </m.div>
+ 89:   );
+ 90: };
+ 91: /**
+ 92:  * Renders a set of tabs with content.
+ 93:  *
+ 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+ 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+ 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+ 97:  * @return {JSX.Element} The rendered Tabs component.
+ 98:  */
+ 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+101:   const isVertical = orientation === "vertical";
+102:   return (
+103:     <LazyMotion features={domMax}>
+104:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
+105:         <div
+106:           className={`flex ${
+107:             isVertical ? "flex-col sm:flex-row" : "flex-col"
+108:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
+109:         >
+110:           <div
+111:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+112:               isVertical ? "sm:h-fit" : ""
+113:             }`}
+114:           >
+115:             <div
+116:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+117:               role="tablist"
+118:             >
+119:               {tabs.map((tab, index) => (
+120:                 <TabButton
+121:                   key={tab.id}
+122:                   tab={tab}
+123:                   isActive={activeTab === tab.id}
+124:                   isVertical={isVertical}
+125:                   index={index}
+126:                   totalTabs={tabs.length}
+127:                   onClick={() => setActiveTab(tab.id)}
+128:                 />
+129:               ))}
+130:             </div>
+131:           </div>
+132:           <div
+133:             className={`${
+134:               isVertical ? "sm:w-3/4 w-full" : "w-full"
+135:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+136:           >
+137:             <AnimatePresence mode="wait">
+138:               {tabs.map((tab) => (
+139:                 <TabPanel
+140:                   key={tab.id}
+141:                   tab={tab}
+142:                   isActive={activeTab === tab.id}
+143:                 />
+144:               ))}
+145:             </AnimatePresence>
+146:           </div>
+147:         </div>
+148:       </div>
+149:     </LazyMotion>
+150:   );
+151: };
+152: export default Tabs;
 ````
 
 ## File: src/config/env.ts
@@ -10725,6 +11493,29 @@ tsconfig.json
 15:     isLinkActive,
 16:   };
 17: }
+````
+
+## File: src/lib/framer/client.ts
+````typescript
+1: "use client";
+2: import * as m from "motion/react-m";
+3: export const MotionDiv = m.div;
+4: export const MotionLi = m.li;
+5: export const MotionUl = m.ul;
+````
+
+## File: src/lib/framer/LazyMotionProvider.tsx
+````typescript
+ 1: "use client";
+ 2: import { LazyMotion, domAnimation } from "motion/react";
+ 3: import { ReactNode } from "react";
+ 4: interface LazyMotionProviderProps {
+ 5:   children: ReactNode;
+ 6: }
+ 7: const LazyMotionProvider = ({ children }: LazyMotionProviderProps) => {
+ 8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
+ 9: };
+10: export default LazyMotionProvider;
 ````
 
 ## File: src/lib/sanity/client.ts
@@ -17674,183 +18465,6 @@ tsconfig.json
 38:           retention-days: 30
 ````
 
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
- 46:         with:
- 47:           version: 10
- 48:       - uses: actions/setup-node@v6
- 49:         with:
- 50:           node-version: 24
- 51:           cache: ${{ steps.pm.outputs.cache }}
- 52:       - name: Install dependencies
- 53:         run: ${{ steps.pm.outputs.install }}
- 54:       - name: Run React Doctor
- 55:         id: doctor
- 56:         run: |
- 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 59:           # Strip ANSI escape codes for clean output
- 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 65:           else
- 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 67:           fi
- 68:           # Check for lint issues (the actionable part of the report)
- 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 71:           else
- 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 73:           fi
- 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 77:           # Extract just the numeric score for threshold check
- 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 81:       - name: Post PR comment with results
- 82:         if: github.event_name == 'pull_request'
- 83:         uses: actions/github-script@v8
- 84:         with:
- 85:           script: |
- 86:             const fs = require('fs');
- 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 88:             const score = '${{ steps.doctor.outputs.score }}';
- 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 91:             const scoreDisplay = offline
- 92:               ? 'N/A (scoring server unreachable)'
- 93:               : score;
- 94:             const statusEmoji = offline
- 95:               ? (issuesFound ? '⚠️' : '✅')
- 96:               : '';
- 97:             const body = [
- 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 99:               '',
-100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
-101:               '',
-102:               '<details>',
-103:               '<summary>Full diagnostics</summary>',
-104:               '',
-105:               '```',
-106:               output.trim(),
-107:               '```',
-108:               '',
-109:               '</details>',
-110:               '',
-111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-112:             ].filter(Boolean).join('\n');
-113:             // Find existing comment to update instead of creating duplicates
-114:             const { data: comments } = await github.rest.issues.listComments({
-115:               owner: context.repo.owner,
-116:               repo: context.repo.repo,
-117:               issue_number: context.issue.number,
-118:             });
-119:             const botComment = comments.find(
-120:               (c) => c.body?.includes('🩺 React Doctor')
-121:             );
-122:             if (botComment) {
-123:               await github.rest.issues.updateComment({
-124:                 owner: context.repo.owner,
-125:                 repo: context.repo.repo,
-126:                 comment_id: botComment.id,
-127:                 body,
-128:               });
-129:             } else {
-130:               await github.rest.issues.createComment({
-131:                 owner: context.repo.owner,
-132:                 repo: context.repo.repo,
-133:                 issue_number: context.issue.number,
-134:                 body,
-135:               });
-136:             }
-137:       - name: Write job summary
-138:         if: always()
-139:         run: |
-140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-141:           if [ "$OFFLINE" = "true" ]; then
-142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-143:             echo "" >> "$GITHUB_STEP_SUMMARY"
-144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-145:           else
-146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-147:           fi
-148:           echo "" >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-152:       - name: Check score threshold
-153:         run: |
-154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-156:           # When offline, skip numeric threshold — only fail if lint issues were found
-157:           if [ "$OFFLINE" = "true" ]; then
-158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-159:             if [ "$ISSUES" = "true" ]; then
-160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-161:               exit 1
-162:             fi
-163:             echo "✅ No lint issues found (score unavailable due to offline)"
-164:             exit 0
-165:           fi
-166:           SCORE="${{ steps.doctor.outputs.score_num }}"
-167:           SCORE="${SCORE:-0}"
-168:           THRESHOLD=80
-169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-172:             exit 1
-173:           fi
-````
-
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -18014,190 +18628,6 @@ tsconfig.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/Animations/BounceInScroll.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import "@testing-library/jest-dom";
-  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-  4: import React from "react";
-  5: // Mock framer-motion
-  6: jest.mock("motion/react-m", () => ({
-  7:   div: ({
-  8:     children,
-  9:     className,
- 10:     "data-testid": testId,
- 11:   }: {
- 12:     children: React.ReactNode;
- 13:     className: string;
- 14:     "data-testid": string;
- 15:   }) => (
- 16:     <div className={className} data-testid={testId}>
- 17:       {children}
- 18:     </div>
- 19:   ),
- 20: }));
- 21: jest.mock("motion/react", () => ({
- 22:   Variants: {},
- 23: }));
- 24: describe("BounceInScroll", () => {
- 25:   it("renders children content", () => {
- 26:     // Arrange
- 27:     const testContent = "Test content";
- 28:     // Act
- 29:     render(
- 30:       <BounceInScroll>
- 31:         <div>{testContent}</div>
- 32:       </BounceInScroll>,
- 33:     );
- 34:     // Assert
- 35:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 36:   });
- 37:   it("applies custom CSS class", () => {
- 38:     // Arrange
- 39:     const testClass = "test-class";
- 40:     // Act
- 41:     render(
- 42:       <BounceInScroll cssClass={testClass}>
- 43:         <div>Test content</div>
- 44:       </BounceInScroll>,
- 45:     );
- 46:     // Assert
- 47:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
- 48:   });
- 49:   it("configures viewport with default amount when viewAmount not provided", () => {
- 50:     // Arrange
- 51:     const testContent = "Test content";
- 52:     // Act
- 53:     render(
- 54:       <BounceInScroll>
- 55:         <div>{testContent}</div>
- 56:       </BounceInScroll>,
- 57:     );
- 58:     // Assert
- 59:     const element = screen.getByTestId("bounceinscroll");
- 60:     expect(element).toBeInTheDocument();
- 61:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 62:   });
- 63:   it("configures viewport with custom amount when viewAmount provided", () => {
- 64:     // Arrange
- 65:     const testContent = "Test content";
- 66:     const viewAmount = 0.5;
- 67:     // Act
- 68:     render(
- 69:       <BounceInScroll viewAmount={viewAmount}>
- 70:         <div>{testContent}</div>
- 71:       </BounceInScroll>,
- 72:     );
- 73:     // Assert
- 74:     const element = screen.getByTestId("bounceinscroll");
- 75:     expect(element).toBeInTheDocument();
- 76:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 77:   });
- 78:   it("configures for instant animation when instant prop is true", () => {
- 79:     // Arrange
- 80:     const testContent = "Test content";
- 81:     // Act
- 82:     render(
- 83:       <BounceInScroll instant={true}>
- 84:         <div>{testContent}</div>
- 85:       </BounceInScroll>,
- 86:     );
- 87:     // Assert
- 88:     const element = screen.getByTestId("bounceinscroll");
- 89:     expect(element).toBeInTheDocument();
- 90:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 91:   });
- 92:   it("handles all viewport amount types", () => {
- 93:     // Arrange
- 94:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
- 95:     const testContent = "Test content";
- 96:     amounts.forEach((amount) => {
- 97:       // Act
- 98:       const { unmount } = render(
- 99:         <BounceInScroll viewAmount={amount}>
-100:           <div>{testContent}</div>
-101:         </BounceInScroll>,
-102:       );
-103:       // Assert
-104:       const element = screen.getByTestId("bounceinscroll");
-105:       expect(element).toBeInTheDocument();
-106:       expect(screen.getByText(testContent)).toBeInTheDocument();
-107:       // Cleanup
-108:       unmount();
-109:     });
-110:   });
-111: });
-````
-
-## File: src/__tests__/Animations/FadeIn.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import FadeIn from "@/components/Animations/FadeIn.component";
- 3: describe("FadeIn", () => {
- 4:   it("renders children correctly", () => {
- 5:     // Arrange
- 6:     render(
- 7:       <FadeIn>
- 8:         <div>Test content</div>
- 9:       </FadeIn>,
-10:     );
-11:     // Act
-12:     const element = screen.getByText("Test content");
-13:     // Assert
-14:     expect(element).toBeInTheDocument();
-15:   });
-16:   it("applies custom className", () => {
-17:     // Arrange
-18:     render(
-19:       <FadeIn className="custom-class" data-testid="fade-in">
-20:         <div>Test content</div>
-21:       </FadeIn>,
-22:     );
-23:     // Act
-24:     const container = screen.getByTestId("fade-in");
-25:     // Assert
-26:     expect(container).toHaveClass("custom-class");
-27:   });
-28:   it("has initial opacity of 0", () => {
-29:     // Arrange
-30:     render(
-31:       <FadeIn data-testid="fade-in">
-32:         <div>Test content</div>
-33:       </FadeIn>,
-34:     );
-35:     // Act
-36:     const fadeInElement = screen.getByTestId("fade-in");
-37:     // Assert
-38:     // will-change is now applied dynamically during animation, not as a permanent style
-39:     expect(fadeInElement).toBeInTheDocument();
-40:   });
-41:   it("accepts custom duration", () => {
-42:     // Arrange
-43:     render(
-44:       <FadeIn duration={0.5}>
-45:         <div>Test content</div>
-46:       </FadeIn>,
-47:     );
-48:     // Act
-49:     const element = screen.getByText("Test content");
-50:     // Assert
-51:     expect(element).toBeInTheDocument();
-52:   });
-53:   it("accepts custom delay", () => {
-54:     // Arrange
-55:     render(
-56:       <FadeIn delay={0.2}>
-57:         <div>Test content</div>
-58:       </FadeIn>,
-59:     );
-60:     // Act
-61:     const element = screen.getByText("Test content");
-62:     // Assert
-63:     expect(element).toBeInTheDocument();
-64:   });
-65: });
-````
-
 ## File: src/__tests__/Animations/Grow.test.tsx
 ````typescript
  1: /**
@@ -18305,78 +18735,6 @@ tsconfig.json
 37: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import "./glitch.css";
- 6: import { client } from "@/lib/sanity/client";
- 7: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const inter = Inter({ subsets: ["latin"] });
-14: export const metadata: Metadata = {
-15:   title: "Forside - Dfweb",
-16:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-17: };
-18: export default async function RootLayout({
-19:   children,
-20: }: Readonly<{
-21:   children: React.ReactNode;
-22: }>) {
-23:   const [navigation, { footerCopyrightText }] = await Promise.all([
-24:     client.fetch(navigationQuery),
-25:     client.fetch(settingsQuery),
-26:   ]);
-27:   return (
-28:     <html lang="nb">
-29:       <head>
-30:         <meta
-31:           name="viewport"
-32:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-33:         />
-34:         <link rel="icon" href="/favicon.ico" />
-35:         <link rel="apple-touch-icon" href="/logo.png" />
-36:         <meta property="og:title" content="Daniel Fjeldstad" />
-37:         <meta name="author" content="Daniel Fjeldstad" />
-38:         <meta property="og:locale" content="nb_NO" />
-39:         <meta
-40:           property="og:description"
-41:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-42:         />
-43:         <meta property="og:url" content="https://www.dfweb.no/" />
-44:         <meta property="og:site_name" content="dfweb.no" />
-45:         <meta name="theme-color" content="#004014" />
-46:       </head>
-47:       <body
-48:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-49:       >
-50:         <LazyMotionProvider>
-51:           <SkipLink />
-52:           <ErrorBoundary>
-53:             <div id="main-content" className="grow flex flex-col">
-54:               <Header navigation={navigation} />
-55:               <SpeedInsights />
-56:               <div className="grow">{children}</div>
-57:               <Footer
-58:                 footerCopyrightText={
-59:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-60:                 }
-61:               />
-62:             </div>
-63:           </ErrorBoundary>
-64:         </LazyMotionProvider>
-65:       </body>
-66:     </html>
-67:   );
-68: }
-````
-
 ## File: src/components/Animations/types/Animations.types.ts
 ````typescript
  1: import { ReactNode } from "react";
@@ -18411,78 +18769,198 @@ tsconfig.json
 30: }
 ````
 
-## File: src/components/Animations/FadeDown.component.tsx
+## File: src/components/Animations/BounceInScroll.component.tsx
 ````typescript
- 1: import { Variants } from "motion/react";
- 2: import * as m from "motion/react-m";
- 3: import { IAnimateWithDelayProps } from "./types/Animations.types";
- 4: /**
- 5:  * Fade down content animation
- 6:  * @function FadeDown
- 7:  * @param {ReactNode} children - Children content to render
- 8:  * @param {string} cssClass - CSS classes to apply to component
- 9:  * @param {number} delay - Time to wait before starting animation
-10:  * @returns {JSX.Element} - Rendered component
-11:  */
-12: const FadeDown = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
-13:   const fadeDownVariants: Variants = {
-14:     initial: { opacity: 0, y: -20 },
-15:     animate: {
-16:       y: 0,
-17:       opacity: 1,
-18:       transition: { delay, type: "spring", duration: 0.5, stiffness: 100 },
-19:     },
-20:   };
-21:   return (
-22:     <m.div
-23:       className={cssClass}
-24:       variants={fadeDownVariants}
-25:       initial="initial"
-26:       animate="animate"
-27:       data-testid="fadedown"
-28:     >
-29:       {children}
-30:     </m.div>
-31:   );
-32: };
-33: export default FadeDown;
+ 1: "use client";
+ 2: import { useMemo } from "react";
+ 3: import { Variants } from "motion/react";
+ 4: import * as m from "motion/react-m";
+ 5: import { IAnimateBounceProps } from "./types/Animations.types";
+ 6: /**
+ 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
+ 8:  * @param {number} delay - Delay in seconds before the animation starts
+ 9:  * @returns {Variants} Motion variants with the specified delay
+10:  */
+11: function createBounceVariants(delay: number): Variants {
+12:   return {
+13:     offscreen: {
+14:       y: 30,
+15:       opacity: 0,
+16:     },
+17:     onscreen: {
+18:       y: 0,
+19:       opacity: 1,
+20:       transition: {
+21:         type: "spring",
+22:         bounce: 0.5,
+23:         duration: 1.5,
+24:         delay,
+25:       },
+26:     },
+27:   };
+28: }
+29: /**
+30:  * Bounce in content when content becomes visible in viewport
+31:  * @function BounceInScroll
+32:  * @param {ReactNode} children - Children content to render
+33:  * @param {string} cssClass - CSS classes to apply to component
+34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
+35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
+36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
+37:  * @returns {JSX.Element} - Rendered component
+38:  */
+39: const BounceInScroll = ({
+40:   children,
+41:   cssClass,
+42:   viewAmount,
+43:   instant,
+44:   delay = 0,
+45: }: IAnimateBounceProps) => {
+46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
+47:   return (
+48:     <m.div
+49:       initial="offscreen"
+50:       animate={instant ? "onscreen" : undefined}
+51:       whileInView={instant ? undefined : "onscreen"}
+52:       viewport={
+53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
+54:       }
+55:       className={cssClass}
+56:       data-testid="bounceinscroll"
+57:     >
+58:       <m.div variants={variants}>{children}</m.div>
+59:     </m.div>
+60:   );
+61: };
+62: export default BounceInScroll;
 ````
 
-## File: src/components/Animations/FadeUp.component.tsx
+## File: src/components/Animations/FadeIn.component.tsx
 ````typescript
- 1: import { Variants } from "motion/react";
+ 1: import * as m from "motion/react-m";
+ 2: import { ReactNode, useRef } from "react";
+ 3: export interface FadeInProps {
+ 4:   children: ReactNode;
+ 5:   className?: string;
+ 6:   duration?: number;
+ 7:   delay?: number;
+ 8:   "data-testid"?: string;
+ 9: }
+10: /**
+11:  * Minimal fade-in animation component
+12:  * Only uses opacity for zero CLS impact
+13:  */
+14: const FadeIn = ({
+15:   children,
+16:   className = "",
+17:   duration = 1,
+18:   delay = 0,
+19:   "data-testid": dataTestId,
+20: }: FadeInProps) => {
+21:   const ref = useRef<HTMLDivElement>(null);
+22:   return (
+23:     <m.div
+24:       ref={ref}
+25:       className={className}
+26:       data-testid={dataTestId}
+27:       initial={{ opacity: 0 }}
+28:       animate={{ opacity: 1 }}
+29:       transition={{
+30:         duration,
+31:         delay,
+32:         ease: "easeOut",
+33:       }}
+34:       onAnimationStart={() => {
+35:         if (ref.current) ref.current.style.willChange = "opacity";
+36:       }}
+37:       onAnimationComplete={() => {
+38:         if (ref.current) ref.current.style.willChange = "auto";
+39:       }}
+40:     >
+41:       {children}
+42:     </m.div>
+43:   );
+44: };
+45: export default FadeIn;
+````
+
+## File: src/components/Animations/FadeInScroll.component.tsx
+````typescript
+ 1: "use client";
  2: import * as m from "motion/react-m";
- 3: import { IAnimateWithDelayProps } from "./types/Animations.types";
- 4: /**
- 5:  * Fade up content animation
- 6:  * @function FadeUp
- 7:  * @param {ReactNode} children - Children content to render
- 8:  * @param {string} cssClass - CSS classes to apply to component
- 9:  * @param {number} delay - Time to wait before starting animation
-10:  * @returns {JSX.Element} - Rendered component
-11:  */
-12: const FadeUp = ({ children, cssClass, delay }: IAnimateWithDelayProps) => {
-13:   const fadeUpVariants: Variants = {
-14:     initial: { opacity: 0, y: 20 },
-15:     animate: {
-16:       y: 0,
-17:       opacity: 1,
-18:       transition: { delay, type: "spring", duration: 0.5, stiffness: 100 },
-19:     },
-20:   };
-21:   return (
-22:     <m.div
-23:       className={cssClass}
-24:       variants={fadeUpVariants}
-25:       initial="initial"
-26:       animate="animate"
-27:       data-testid="fadeup"
-28:     >
-29:       {children}
-30:     </m.div>
-31:   );
-32: };
-33: export default FadeUp;
+ 3: import { ReactNode, useRef } from "react";
+ 4: export interface FadeInScrollProps {
+ 5:   children: ReactNode;
+ 6:   className?: string;
+ 7:   duration?: number;
+ 8:   viewAmount?: "some" | "all" | number;
+ 9:   "data-testid"?: string;
+10: }
+11: /**
+12:  * Minimal fade-in animation triggered on scroll
+13:  * Only uses opacity for zero CLS impact
+14:  */
+15: const FadeInScroll = ({
+16:   children,
+17:   className = "",
+18:   duration = 0.4,
+19:   viewAmount = 0.2,
+20:   "data-testid": dataTestId,
+21: }: FadeInScrollProps) => {
+22:   const ref = useRef<HTMLDivElement>(null);
+23:   return (
+24:     <m.div
+25:       ref={ref}
+26:       className={className}
+27:       data-testid={dataTestId}
+28:       initial={{ opacity: 0 }}
+29:       whileInView={{ opacity: 1 }}
+30:       viewport={{ once: true, amount: viewAmount }}
+31:       transition={{
+32:         duration,
+33:         ease: "easeOut",
+34:       }}
+35:       onAnimationStart={() => {
+36:         if (ref.current) ref.current.style.willChange = "opacity";
+37:       }}
+38:       onAnimationComplete={() => {
+39:         if (ref.current) ref.current.style.willChange = "auto";
+40:       }}
+41:     >
+42:       {children}
+43:     </m.div>
+44:   );
+45: };
+46: export default FadeInScroll;
+````
+
+## File: src/components/Animations/Grow.component.tsx
+````typescript
+ 1: import * as m from "motion/react-m";
+ 2: import { IGrowProps } from "./types/Animations.types";
+ 3: /**
+ 4:  * A component that animates its children to grow in size.
+ 5:  * @param props Props for the Grow component.
+ 6:  * @returns A component that animates its children to grow in size.
+ 7:  */
+ 8: const Grow = ({
+ 9:   duration = 0.5,
+10:   delay = 0,
+11:   easing = [0.42, 0, 0.58, 1],
+12:   children,
+13: }: IGrowProps) => {
+14:   return (
+15:     <m.div
+16:       initial={{ scale: 0.95, opacity: 0 }}
+17:       animate={{ scale: 1, opacity: 1 }}
+18:       transition={{ duration, delay, ease: easing }}
+19:       data-testid="grow"
+20:     >
+21:       {children}
+22:     </m.div>
+23:   );
+24: };
+25: export default Grow;
 ````
 
 ## File: src/components/Animations/MatrixCursor.component.tsx
@@ -18658,42 +19136,6 @@ tsconfig.json
 169:   );
 170: };
 171: export default MatrixCursor;
-````
-
-## File: src/components/Animations/PageTransition.component.tsx
-````typescript
- 1: import { Variants, AnimatePresence } from "motion/react";
- 2: import * as m from "motion/react-m";
- 3: import { IAnimateProps } from "./types/Animations.types";
- 4: /**
- 5:  * Fade in animation used for page transitions
- 6:  * @function PageTransition
- 7:  * @param {ReactNode} children - Children content to render
- 8:  * @param {string} cssClass - CSS classes to apply to component
- 9:  * @returns {JSX.Element} - Rendered component
-10:  */
-11: const PageTransition = ({ children, cssClass }: IAnimateProps) => {
-12:   const pageTransitionVariants: Variants = {
-13:     initial: { opacity: 0 },
-14:     animate: { opacity: 1, transition: { duration: 1.0 } },
-15:     exit: { opacity: 0 },
-16:   };
-17:   return (
-18:     <AnimatePresence mode="wait">
-19:       <m.div
-20:         className={cssClass}
-21:         variants={pageTransitionVariants}
-22:         initial="initial"
-23:         animate="animate"
-24:         exit="exit"
-25:         data-testid="pagetransition"
-26:       >
-27:         {children}
-28:       </m.div>
-29:     </AnimatePresence>
-30:   );
-31: };
-32: export default PageTransition;
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -18991,213 +19433,6 @@ tsconfig.json
 147: export default ContactForm;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: /**
- 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 11:  * @param {Object} props
- 12:  * @param {ILink[]} props.links - Array of navigation link objects
- 13:  * @returns {JSX.Element} The rendered MobileMenu component
- 14:  */
- 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 17:   const closeMenu = () => toggleExpanded(0);
- 18:   const pathname = usePathname();
- 19:   const menuVariants: Variants = {
- 20:     closed: {
- 21:       x: "125%",
- 22:       transition: {
- 23:         type: "spring",
- 24:         stiffness: 60,
- 25:         damping: 10,
- 26:         delay: 0.3,
- 27:       },
- 28:     },
- 29:     open: {
- 30:       x: 0,
- 31:       transition: {
- 32:         type: "spring",
- 33:         stiffness: 60,
- 34:         damping: 10,
- 35:       },
- 36:     },
- 37:   };
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             aria-hidden={!isExpanded}
- 73:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 74:             initial="closed"
- 75:             animate="open"
- 76:             exit="closed"
- 77:             variants={menuVariants}
- 78:           >
- 79:             <nav aria-label="Navigasjon" className="w-full">
- 80:               <m.ul
- 81:                 className="w-full"
- 82:                 initial="closed"
- 83:                 animate="open"
- 84:                 exit="closed"
- 85:                 variants={{
- 86:                   open: {
- 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 88:                   },
- 89:                   closed: {
- 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 91:                   },
- 92:                 }}
- 93:               >
- 94:                 {links?.map(({ title, name, href, externalLink }, index) => (
- 95:                   <m.li
- 96:                     key={title}
- 97:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
- 98:                     data-cy="mobile-menu-item"
- 99:                     custom={index}
-100:                     variants={itemVariants}
-101:                   >
-102:                     {externalLink ? (
-103:                       <a
-104:                         aria-label={name}
-105:                         href={href}
-106:                         target="_blank"
-107:                         rel="noreferrer"
-108:                         data-testid={`mobil-${name}`}
-109:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-110:                       >
-111:                         {name}
-112:                       </a>
-113:                     ) : (
-114:                       <Link
-115:                         href={href ?? ""}
-116:                         data-testid={`mobil-${name}`}
-117:                         prefetch={true}
-118:                         onClick={closeMenu}
-119:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-120:                           pathname === href ? "text-green-400" : ""
-121:                         }`}
-122:                       >
-123:                         <div className="glitch relative" data-text={name}>
-124:                           {name}
-125:                           <m.span
-126:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-127:                               pathname === href ? "bg-green-400" : "bg-white"
-128:                             }`}
-129:                             initial={{
-130:                               width: pathname === href ? "100%" : "0%",
-131:                             }}
-132:                             animate={{
-133:                               width: pathname === href ? "100%" : "0%",
-134:                             }}
-135:                             transition={{ duration: 0.3 }}
-136:                           />
-137:                         </div>
-138:                       </Link>
-139:                     )}
-140:                   </m.li>
-141:                 ))}
-142:               </m.ul>
-143:             </nav>
-144:           </m.div>
-145:         )}
-146:       </AnimatePresence>
-147:     </div>
-148:   );
-149: };
-150: export default MobileMenu;
-````
-
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import * as m from "motion/react-m";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: export interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-green-400" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <m.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-green-400" : "bg-white"
-36:           }`}
-37:           initial={{
-38:             width: isActive ? "100%" : "0%",
-39:           }}
-40:           variants={{
-41:             hover: { width: "100%" },
-42:           }}
-43:           transition={{ duration: 0.3 }}
-44:         />
-45:       </div>
-46:     </Link>
-47:   </MotionDiv>
-48: );
-49: export default NavigationLink;
-````
-
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -19282,185 +19517,6 @@ tsconfig.json
 80:   );
 81: };
 82: export default ProsjektCard;
-````
-
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
-  4: import * as m from "motion/react-m";
-  5: type TabOrientation = "horizontal" | "vertical";
-  6: interface Tab {
-  7:   id: string;
-  8:   label: string;
-  9:   content: React.ReactNode;
- 10: }
- 11: interface TabsProps {
- 12:   tabs: Tab[];
- 13:   orientation?: TabOrientation;
- 14: }
- 15: interface TabButtonProps {
- 16:   tab: Tab;
- 17:   isActive: boolean;
- 18:   isVertical: boolean;
- 19:   index: number;
- 20:   totalTabs: number;
- 21:   onClick: () => void;
- 22: }
- 23: const getTabButtonClassName = (
- 24:   isActive: boolean,
- 25:   isVertical: boolean,
- 26:   index: number,
- 27:   totalTabs: number,
- 28: ) => {
- 29:   const baseClasses =
- 30:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
- 31:   const activeClasses = isActive
- 32:     ? "text-white"
- 33:     : "text-gray-300 hover:text-white hover:bg-gray-600";
- 34:   const orientationClasses = isVertical
- 35:     ? "w-full text-left"
- 36:     : "grow text-center";
- 37:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
- 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 39: };
- 40: const TabButton: React.FC<TabButtonProps> = ({
- 41:   tab,
- 42:   isActive,
- 43:   isVertical,
- 44:   index,
- 45:   totalTabs,
- 46:   onClick,
- 47: }) => (
- 48:   <m.button
- 49:     key={tab.id}
- 50:     onClick={onClick}
- 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 52:     role="tab"
- 53:     aria-selected={isActive}
- 54:     aria-controls={`tabpanel-${tab.id}`}
- 55:     id={`tab-${tab.id}`}
- 56:   >
- 57:     {isActive && (
- 58:       <m.div
- 59:         layoutId="active-tab"
- 60:         className={`absolute ${
- 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 62:         } bg-[var(--matrix-dark)]`}
- 63:         initial={false}
- 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 65:       />
- 66:     )}
- 67:     <span className="relative z-10">{tab.label}</span>
- 68:   </m.button>
- 69: );
- 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 71:   tab,
- 72:   isActive,
- 73: }) => {
- 74:   if (!isActive) return null;
- 75:   return (
- 76:     <m.div
- 77:       key={tab.id}
- 78:       role="tabpanel"
- 79:       id={`tabpanel-${tab.id}`}
- 80:       aria-labelledby={`tab-${tab.id}`}
- 81:       className="px-8"
- 82:       initial={{ opacity: 0, y: 20 }}
- 83:       animate={{ opacity: 1, y: 0 }}
- 84:       exit={{ opacity: 0, y: -20 }}
- 85:       transition={{ duration: 0.3 }}
- 86:     >
- 87:       {tab.content}
- 88:     </m.div>
- 89:   );
- 90: };
- 91: /**
- 92:  * Renders a set of tabs with content.
- 93:  *
- 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 97:  * @return {JSX.Element} The rendered Tabs component.
- 98:  */
- 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-101:   const isVertical = orientation === "vertical";
-102:   return (
-103:     <LazyMotion features={domMax}>
-104:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-105:         <div
-106:           className={`flex ${
-107:             isVertical ? "flex-col sm:flex-row" : "flex-col"
-108:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-109:         >
-110:           <div
-111:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-112:               isVertical ? "sm:h-fit" : ""
-113:             }`}
-114:           >
-115:             <div
-116:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-117:               role="tablist"
-118:             >
-119:               {tabs.map((tab, index) => (
-120:                 <TabButton
-121:                   key={tab.id}
-122:                   tab={tab}
-123:                   isActive={activeTab === tab.id}
-124:                   isVertical={isVertical}
-125:                   index={index}
-126:                   totalTabs={tabs.length}
-127:                   onClick={() => setActiveTab(tab.id)}
-128:                 />
-129:               ))}
-130:             </div>
-131:           </div>
-132:           <div
-133:             className={`${
-134:               isVertical ? "sm:w-3/4 w-full" : "w-full"
-135:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
-136:           >
-137:             <AnimatePresence mode="wait">
-138:               {tabs.map((tab) => (
-139:                 <TabPanel
-140:                   key={tab.id}
-141:                   tab={tab}
-142:                   isActive={activeTab === tab.id}
-143:                 />
-144:               ))}
-145:             </AnimatePresence>
-146:           </div>
-147:         </div>
-148:       </div>
-149:     </LazyMotion>
-150:   );
-151: };
-152: export default Tabs;
-````
-
-## File: src/lib/framer/client.ts
-````typescript
-1: "use client";
-2: import * as m from "motion/react-m";
-3: export const MotionDiv = m.div;
-4: export const MotionLi = m.li;
-5: export const MotionUl = m.ul;
-````
-
-## File: src/lib/framer/LazyMotionProvider.tsx
-````typescript
- 1: "use client";
- 2: import { LazyMotion, domAnimation } from "motion/react";
- 3: import { ReactNode } from "react";
- 4: interface LazyMotionProviderProps {
- 5:   children: ReactNode;
- 6: }
- 7: const LazyMotionProvider = ({ children }: LazyMotionProviderProps) => {
- 8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
- 9: };
-10: export default LazyMotionProvider;
 ````
 
 ## File: src/stories/components/Animations/MatrixCursor.stories.tsx
@@ -19829,362 +19885,583 @@ tsconfig.json
 65:           fi
 ````
 
-## File: src/__mocks__/react-m.ts
+## File: src/__tests__/Animations/FadeIn.test.tsx
 ````typescript
- 1: import { motion } from "./motion";
- 2: export const {
- 3:   div,
- 4:   span,
- 5:   ul,
- 6:   li,
- 7:   p,
- 8:   section,
- 9:   nav,
-10:   header,
-11:   footer,
-12:   button,
-13:   a,
-14: } = motion;
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import FadeIn from "@/components/Animations/FadeIn.component";
+  4: // Capture onAnimationStart/onAnimationComplete callbacks from the mock
+  5: let capturedOnAnimationStart: (() => void) | undefined;
+  6: let capturedOnAnimationComplete: (() => void) | undefined;
+  7: jest.mock("motion/react-m", () => ({
+  8:   div: React.forwardRef(
+  9:     (
+ 10:       {
+ 11:         children,
+ 12:         className,
+ 13:         "data-testid": dataTestId,
+ 14:         onAnimationStart,
+ 15:         onAnimationComplete,
+ 16:       }: {
+ 17:         children?: React.ReactNode;
+ 18:         className?: string;
+ 19:         "data-testid"?: string;
+ 20:         onAnimationStart?: () => void;
+ 21:         onAnimationComplete?: () => void;
+ 22:       },
+ 23:       ref: React.Ref<HTMLDivElement>,
+ 24:     ) => {
+ 25:       capturedOnAnimationStart = onAnimationStart;
+ 26:       capturedOnAnimationComplete = onAnimationComplete;
+ 27:       return (
+ 28:         <div ref={ref} className={className} data-testid={dataTestId}>
+ 29:           {children}
+ 30:         </div>
+ 31:       );
+ 32:     },
+ 33:   ),
+ 34: }));
+ 35: describe("FadeIn", () => {
+ 36:   beforeEach(() => {
+ 37:     capturedOnAnimationStart = undefined;
+ 38:     capturedOnAnimationComplete = undefined;
+ 39:   });
+ 40:   it("renders children correctly", () => {
+ 41:     // Arrange
+ 42:     render(
+ 43:       <FadeIn>
+ 44:         <div>Test content</div>
+ 45:       </FadeIn>,
+ 46:     );
+ 47:     // Act
+ 48:     const element = screen.getByText("Test content");
+ 49:     // Assert
+ 50:     expect(element).toBeInTheDocument();
+ 51:   });
+ 52:   it("applies custom className", () => {
+ 53:     // Arrange
+ 54:     render(
+ 55:       <FadeIn className="custom-class" data-testid="fade-in">
+ 56:         <div>Test content</div>
+ 57:       </FadeIn>,
+ 58:     );
+ 59:     // Act
+ 60:     const container = screen.getByTestId("fade-in");
+ 61:     // Assert
+ 62:     expect(container).toHaveClass("custom-class");
+ 63:   });
+ 64:   it("has initial opacity of 0", () => {
+ 65:     // Arrange
+ 66:     render(
+ 67:       <FadeIn data-testid="fade-in">
+ 68:         <div>Test content</div>
+ 69:       </FadeIn>,
+ 70:     );
+ 71:     // Act
+ 72:     const fadeInElement = screen.getByTestId("fade-in");
+ 73:     // Assert
+ 74:     expect(fadeInElement).toBeInTheDocument();
+ 75:   });
+ 76:   it("accepts custom duration", () => {
+ 77:     // Arrange
+ 78:     render(
+ 79:       <FadeIn duration={0.5}>
+ 80:         <div>Test content</div>
+ 81:       </FadeIn>,
+ 82:     );
+ 83:     // Act
+ 84:     const element = screen.getByText("Test content");
+ 85:     // Assert
+ 86:     expect(element).toBeInTheDocument();
+ 87:   });
+ 88:   it("accepts custom delay", () => {
+ 89:     // Arrange
+ 90:     render(
+ 91:       <FadeIn delay={0.2}>
+ 92:         <div>Test content</div>
+ 93:       </FadeIn>,
+ 94:     );
+ 95:     // Act
+ 96:     const element = screen.getByText("Test content");
+ 97:     // Assert
+ 98:     expect(element).toBeInTheDocument();
+ 99:   });
+100:   it("sets willChange to opacity on animation start", () => {
+101:     // Arrange
+102:     render(
+103:       <FadeIn data-testid="fade-in">
+104:         <div>Test content</div>
+105:       </FadeIn>,
+106:     );
+107:     const fadeInElement = screen.getByTestId("fade-in");
+108:     // Act
+109:     capturedOnAnimationStart?.();
+110:     // Assert
+111:     expect(fadeInElement.style.willChange).toBe("opacity");
+112:   });
+113:   it("sets willChange to auto on animation complete", () => {
+114:     // Arrange
+115:     render(
+116:       <FadeIn data-testid="fade-in">
+117:         <div>Test content</div>
+118:       </FadeIn>,
+119:     );
+120:     const fadeInElement = screen.getByTestId("fade-in");
+121:     // Act
+122:     capturedOnAnimationComplete?.();
+123:     // Assert
+124:     expect(fadeInElement.style.willChange).toBe("auto");
+125:   });
+126: });
 ````
 
 ## File: src/__tests__/Animations/FadeInScroll.test.tsx
 ````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
-  3: import React from "react";
-  4: type MotionStyle = React.CSSProperties & {
-  5:   willChange?: string;
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
+  4: type AnimationProps = {
+  5:   opacity?: number;
   6: };
-  7: type AnimationProps = {
-  8:   opacity?: number;
-  9: };
- 10: type ViewportProps = {
- 11:   once?: boolean;
- 12:   amount?: "some" | "all" | number;
- 13: };
- 14: type TransitionProps = {
- 15:   duration?: number;
- 16:   ease?: string;
- 17: };
- 18: // Mock framer-motion
- 19: jest.mock("motion/react-m", () => ({
- 20:   div: ({
- 21:     children,
- 22:     className,
- 23:     initial,
- 24:     whileInView,
- 25:     viewport,
- 26:     transition,
- 27:     style,
- 28:     "data-testid": dataTestId,
- 29:   }: {
- 30:     children: React.ReactNode;
- 31:     className?: string;
- 32:     initial?: AnimationProps;
- 33:     whileInView?: AnimationProps;
- 34:     viewport?: ViewportProps;
- 35:     transition?: TransitionProps;
- 36:     style?: MotionStyle;
- 37:     "data-testid"?: string;
- 38:   }) => {
- 39:     // Store props in data attributes for testing
- 40:     return (
- 41:       <div
- 42:         className={className}
- 43:         style={style}
- 44:         data-initial={JSON.stringify(initial)}
- 45:         data-while-in-view={JSON.stringify(whileInView)}
- 46:         data-viewport={JSON.stringify(viewport)}
- 47:         data-transition={JSON.stringify(transition)}
- 48:         data-testid={dataTestId}
- 49:       >
- 50:         {children}
- 51:       </div>
- 52:     );
- 53:   },
- 54: }));
- 55: describe("FadeInScroll", () => {
- 56:   it("renders children correctly", () => {
- 57:     // Arrange
- 58:     render(
- 59:       <FadeInScroll>
- 60:         <div>Test content</div>
- 61:       </FadeInScroll>,
- 62:     );
- 63:     // Act
- 64:     const element = screen.getByText("Test content");
- 65:     // Assert
- 66:     expect(element).toBeInTheDocument();
- 67:   });
- 68:   it("applies custom className", () => {
- 69:     // Arrange
- 70:     render(
- 71:       <FadeInScroll className="custom-class" data-testid="fade-in-scroll">
- 72:         <div>Test content</div>
- 73:       </FadeInScroll>,
- 74:     );
- 75:     // Act
- 76:     const container = screen.getByTestId("fade-in-scroll");
- 77:     // Assert
- 78:     expect(container).toHaveClass("custom-class");
- 79:   });
- 80:   it("has initial opacity of 0", () => {
- 81:     // Arrange
- 82:     render(
- 83:       <FadeInScroll data-testid="fade-in-scroll">
- 84:         <div>Test content</div>
- 85:       </FadeInScroll>,
- 86:     );
- 87:     // Act
- 88:     const fadeInElement = screen.getByTestId("fade-in-scroll");
- 89:     // Assert
- 90:     // will-change is now applied dynamically during animation, not as a permanent style
- 91:     expect(fadeInElement).toBeInTheDocument();
- 92:     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
+  7: type ViewportProps = {
+  8:   once?: boolean;
+  9:   amount?: "some" | "all" | number;
+ 10: };
+ 11: type TransitionProps = {
+ 12:   duration?: number;
+ 13:   ease?: string;
+ 14: };
+ 15: // Capture onAnimationStart/onAnimationComplete callbacks from the mock
+ 16: let capturedOnAnimationStart: (() => void) | undefined;
+ 17: let capturedOnAnimationComplete: (() => void) | undefined;
+ 18: jest.mock("motion/react-m", () => ({
+ 19:   div: React.forwardRef(
+ 20:     (
+ 21:       {
+ 22:         children,
+ 23:         className,
+ 24:         initial,
+ 25:         whileInView,
+ 26:         viewport,
+ 27:         transition,
+ 28:         style,
+ 29:         "data-testid": dataTestId,
+ 30:         onAnimationStart,
+ 31:         onAnimationComplete,
+ 32:       }: {
+ 33:         children: React.ReactNode;
+ 34:         className?: string;
+ 35:         initial?: AnimationProps;
+ 36:         whileInView?: AnimationProps;
+ 37:         viewport?: ViewportProps;
+ 38:         transition?: TransitionProps;
+ 39:         style?: React.CSSProperties;
+ 40:         "data-testid"?: string;
+ 41:         onAnimationStart?: () => void;
+ 42:         onAnimationComplete?: () => void;
+ 43:       },
+ 44:       ref: React.Ref<HTMLDivElement>,
+ 45:     ) => {
+ 46:       capturedOnAnimationStart = onAnimationStart;
+ 47:       capturedOnAnimationComplete = onAnimationComplete;
+ 48:       return (
+ 49:         <div
+ 50:           ref={ref}
+ 51:           className={className}
+ 52:           style={style}
+ 53:           data-initial={JSON.stringify(initial)}
+ 54:           data-while-in-view={JSON.stringify(whileInView)}
+ 55:           data-viewport={JSON.stringify(viewport)}
+ 56:           data-transition={JSON.stringify(transition)}
+ 57:           data-testid={dataTestId}
+ 58:         >
+ 59:           {children}
+ 60:         </div>
+ 61:       );
+ 62:     },
+ 63:   ),
+ 64: }));
+ 65: describe("FadeInScroll", () => {
+ 66:   beforeEach(() => {
+ 67:     capturedOnAnimationStart = undefined;
+ 68:     capturedOnAnimationComplete = undefined;
+ 69:   });
+ 70:   it("renders children correctly", () => {
+ 71:     // Arrange
+ 72:     render(
+ 73:       <FadeInScroll>
+ 74:         <div>Test content</div>
+ 75:       </FadeInScroll>,
+ 76:     );
+ 77:     // Act
+ 78:     const element = screen.getByText("Test content");
+ 79:     // Assert
+ 80:     expect(element).toBeInTheDocument();
+ 81:   });
+ 82:   it("applies custom className", () => {
+ 83:     // Arrange
+ 84:     render(
+ 85:       <FadeInScroll className="custom-class" data-testid="fade-in-scroll">
+ 86:         <div>Test content</div>
+ 87:       </FadeInScroll>,
+ 88:     );
+ 89:     // Act
+ 90:     const container = screen.getByTestId("fade-in-scroll");
+ 91:     // Assert
+ 92:     expect(container).toHaveClass("custom-class");
  93:   });
- 94:   it("configures viewport with custom viewAmount", () => {
+ 94:   it("has initial opacity of 0", () => {
  95:     // Arrange
  96:     render(
- 97:       <FadeInScroll viewAmount={0.5} data-testid="fade-in-scroll">
+ 97:       <FadeInScroll data-testid="fade-in-scroll">
  98:         <div>Test content</div>
  99:       </FadeInScroll>,
 100:     );
 101:     // Act
-102:     const container = screen.getByTestId("fade-in-scroll");
-103:     const viewport = JSON.parse(
-104:       container?.getAttribute("data-viewport") || "{}",
-105:     );
-106:     // Assert
-107:     expect(viewport.once).toBe(true);
-108:     expect(viewport.amount).toBe(0.5);
-109:   });
-110:   it("uses default viewAmount when not provided", () => {
-111:     // Arrange
-112:     render(
-113:       <FadeInScroll data-testid="fade-in-scroll">
-114:         <div>Test content</div>
-115:       </FadeInScroll>,
-116:     );
-117:     // Act
-118:     const container = screen.getByTestId("fade-in-scroll");
-119:     const viewport = JSON.parse(
-120:       container?.getAttribute("data-viewport") || "{}",
-121:     );
-122:     // Assert
-123:     expect(viewport.once).toBe(true);
-124:     expect(viewport.amount).toBe(0.2);
-125:   });
-126:   it("accepts custom duration", () => {
-127:     // Arrange
-128:     render(
-129:       <FadeInScroll duration={0.8} data-testid="fade-in-scroll">
-130:         <div>Test content</div>
-131:       </FadeInScroll>,
-132:     );
-133:     // Act
-134:     const container = screen.getByTestId("fade-in-scroll");
-135:     const transition = JSON.parse(
-136:       container?.getAttribute("data-transition") || "{}",
+102:     const fadeInElement = screen.getByTestId("fade-in-scroll");
+103:     // Assert
+104:     expect(fadeInElement).toBeInTheDocument();
+105:     expect(fadeInElement.getAttribute("data-initial")).toBe('{"opacity":0}');
+106:   });
+107:   it("configures viewport with custom viewAmount", () => {
+108:     // Arrange
+109:     render(
+110:       <FadeInScroll viewAmount={0.5} data-testid="fade-in-scroll">
+111:         <div>Test content</div>
+112:       </FadeInScroll>,
+113:     );
+114:     // Act
+115:     const container = screen.getByTestId("fade-in-scroll");
+116:     const viewport = JSON.parse(
+117:       container?.getAttribute("data-viewport") || "{}",
+118:     );
+119:     // Assert
+120:     expect(viewport.once).toBe(true);
+121:     expect(viewport.amount).toBe(0.5);
+122:   });
+123:   it("uses default viewAmount when not provided", () => {
+124:     // Arrange
+125:     render(
+126:       <FadeInScroll data-testid="fade-in-scroll">
+127:         <div>Test content</div>
+128:       </FadeInScroll>,
+129:     );
+130:     // Act
+131:     const container = screen.getByTestId("fade-in-scroll");
+132:     const viewport = JSON.parse(
+133:       container?.getAttribute("data-viewport") || "{}",
+134:     );
+135:     // Assert
+136:     expect(viewport.once).toBe(true);
+137:     expect(viewport.amount).toBe(0.2);
+138:   });
+139:   it("accepts custom duration", () => {
+140:     // Arrange
+141:     render(
+142:       <FadeInScroll duration={0.8} data-testid="fade-in-scroll">
+143:         <div>Test content</div>
+144:       </FadeInScroll>,
+145:     );
+146:     // Act
+147:     const container = screen.getByTestId("fade-in-scroll");
+148:     const transition = JSON.parse(
+149:       container?.getAttribute("data-transition") || "{}",
+150:     );
+151:     // Assert
+152:     expect(transition.duration).toBe(0.8);
+153:     expect(transition.ease).toBe("easeOut");
+154:   });
+155:   it("sets willChange to opacity on animation start", () => {
+156:     // Arrange
+157:     render(
+158:       <FadeInScroll data-testid="fade-in-scroll">
+159:         <div>Test content</div>
+160:       </FadeInScroll>,
+161:     );
+162:     const fadeInElement = screen.getByTestId("fade-in-scroll");
+163:     // Act
+164:     capturedOnAnimationStart?.();
+165:     // Assert
+166:     expect(fadeInElement.style.willChange).toBe("opacity");
+167:   });
+168:   it("sets willChange to auto on animation complete", () => {
+169:     // Arrange
+170:     render(
+171:       <FadeInScroll data-testid="fade-in-scroll">
+172:         <div>Test content</div>
+173:       </FadeInScroll>,
+174:     );
+175:     const fadeInElement = screen.getByTestId("fade-in-scroll");
+176:     // Act
+177:     capturedOnAnimationComplete?.();
+178:     // Assert
+179:     expect(fadeInElement.style.willChange).toBe("auto");
+180:   });
+181: });
+````
+
+## File: src/__tests__/Animations/MatrixCursor.test.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { render, fireEvent, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+  5: import { useMobile } from "@/hooks/useMobile";
+  6: // Mock useMobile hook
+  7: jest.mock("@/hooks/useMobile");
+  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
+  9: // Wrapper component to provide ref
+ 10: const TestWrapper = () => {
+ 11:   const heroRef = useRef<HTMLDivElement>(null);
+ 12:   return (
+ 13:     <>
+ 14:       <div ref={heroRef} data-testid="hero-section" />
+ 15:       <MatrixCursor heroRef={heroRef} />
+ 16:     </>
+ 17:   );
+ 18: };
+ 19: describe("MatrixCursor", () => {
+ 20:   beforeEach(() => {
+ 21:     // Default to desktop view
+ 22:     mockUseMobile.mockReturnValue(false);
+ 23:   });
+ 24:   afterEach(() => {
+ 25:     jest.clearAllMocks();
+ 26:   });
+ 27:   test("should not render when heroRef is null", () => {
+ 28:     // Arrange
+ 29:     const NullRefWrapper = () => {
+ 30:       const heroRef = useRef<HTMLDivElement>(null);
+ 31:       // Don't render the div, so heroRef.current will be null
+ 32:       return <MatrixCursor heroRef={heroRef} />;
+ 33:     };
+ 34:     // Act
+ 35:     render(<NullRefWrapper />);
+ 36:     // Assert
+ 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 38:   });
+ 39:   test("should not render on mobile devices", () => {
+ 40:     // Arrange
+ 41:     mockUseMobile.mockReturnValue(true);
+ 42:     // Act
+ 43:     render(<TestWrapper />);
+ 44:     // Assert
+ 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 46:   });
+ 47:   test("should update cursor position and styles on mousemove", () => {
+ 48:     // Arrange
+ 49:     render(<TestWrapper />);
+ 50:     const heroSection = screen.getByTestId("hero-section");
+ 51:     const expectedPosition = { x: 100, y: 200 };
+ 52:     // Act
+ 53:     fireEvent.mouseEnter(heroSection);
+ 54:     fireEvent.mouseMove(heroSection, {
+ 55:       clientX: expectedPosition.x,
+ 56:       clientY: expectedPosition.y,
+ 57:     });
+ 58:     const cursor = screen.getByTestId("matrix-cursor");
+ 59:     // Assert
+ 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
+ 61:       `${expectedPosition.x}px`,
+ 62:     );
+ 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
+ 64:       `${expectedPosition.y}px`,
+ 65:     );
+ 66:   });
+ 67:   test("should add matrix-cursor class on mouseenter", () => {
+ 68:     // Arrange
+ 69:     render(<TestWrapper />);
+ 70:     const heroSection = screen.getByTestId("hero-section");
+ 71:     // Act
+ 72:     fireEvent.mouseEnter(heroSection);
+ 73:     const cursor = screen.getByTestId("matrix-cursor");
+ 74:     // Assert
+ 75:     expect(cursor).toHaveClass("matrix-cursor");
+ 76:     expect(heroSection.style.cursor).toBe("none");
+ 77:   });
+ 78:   test("should remove matrix-cursor class on mouseleave", () => {
+ 79:     // Arrange
+ 80:     render(<TestWrapper />);
+ 81:     const heroSection = screen.getByTestId("hero-section");
+ 82:     // Act - First add the class
+ 83:     fireEvent.mouseEnter(heroSection);
+ 84:     const cursor = screen.getByTestId("matrix-cursor");
+ 85:     // Assert initial state
+ 86:     expect(cursor).toHaveClass("matrix-cursor");
+ 87:     // Act - Then remove it
+ 88:     fireEvent.mouseLeave(heroSection);
+ 89:     // Assert final state
+ 90:     expect(cursor).not.toHaveClass("matrix-cursor");
+ 91:     expect(heroSection.style.cursor).toBe("");
+ 92:   });
+ 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
+ 94:     // Arrange
+ 95:     const { unmount } = render(<TestWrapper />);
+ 96:     const heroSection = screen.getByTestId("hero-section");
+ 97:     // Act - Set initial state
+ 98:     fireEvent.mouseEnter(heroSection);
+ 99:     // Assert initial state
+100:     expect(heroSection.style.cursor).toBe("none");
+101:     // Act - Unmount component
+102:     unmount();
+103:     // Assert cleanup
+104:     expect(heroSection.style.cursor).toBe("");
+105:   });
+106:   test("should create trail elements on mousemove when hovered", () => {
+107:     // Arrange
+108:     render(<TestWrapper />);
+109:     const heroSection = screen.getByTestId("hero-section");
+110:     const movePositions = [
+111:       { x: 100, y: 100 },
+112:       { x: 110, y: 110 },
+113:       { x: 120, y: 120 },
+114:     ];
+115:     // Act - Enable trail creation
+116:     fireEvent.mouseEnter(heroSection);
+117:     // Act & Assert - Create and verify trails
+118:     movePositions.forEach((pos, index) => {
+119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
+120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
+121:     });
+122:   });
+123:   test("should limit the number of trail elements", () => {
+124:     // Arrange
+125:     render(<TestWrapper />);
+126:     const heroSection = screen.getByTestId("hero-section");
+127:     const maxTrails = 20;
+128:     const totalMoves = 25;
+129:     // Act
+130:     fireEvent.mouseEnter(heroSection);
+131:     for (let i = 0; i < totalMoves; i++) {
+132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+133:     }
+134:     // Assert
+135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
+136:       maxTrails,
 137:     );
-138:     // Assert
-139:     expect(transition.duration).toBe(0.8);
-140:     expect(transition.ease).toBe("easeOut");
-141:   });
-142: });
+138:   });
+139:   test("should cleanup trail elements on mouseleave", () => {
+140:     // Arrange
+141:     render(<TestWrapper />);
+142:     const heroSection = screen.getByTestId("hero-section");
+143:     const trailCount = 5;
+144:     // Act - Create trails
+145:     fireEvent.mouseEnter(heroSection);
+146:     for (let i = 0; i < trailCount; i++) {
+147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+148:     }
+149:     // Assert trails were created
+150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
+151:     // Act - Leave hero section
+152:     fireEvent.mouseLeave(heroSection);
+153:     // Assert trails were cleaned up
+154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+155:   });
+156:   test("should remove trail element when animation ends", () => {
+157:     // Arrange
+158:     render(<TestWrapper />);
+159:     const heroSection = screen.getByTestId("hero-section");
+160:     // Act - Create trail
+161:     fireEvent.mouseEnter(heroSection);
+162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
+163:     // Assert trail was created
+164:     const trailElements = screen.getAllByTestId("matrix-trail");
+165:     expect(trailElements).toHaveLength(1);
+166:     // Act - Trigger animation end
+167:     fireEvent.animationEnd(trailElements[0]);
+168:     // Assert trail was removed
+169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+170:   });
+171:   test("should update cursor position without creating trails when not hovered", () => {
+172:     // Arrange
+173:     render(<TestWrapper />);
+174:     const heroSection = screen.getByTestId("hero-section");
+175:     // Act - Move mouse without entering (no mouseenter, so not hovered)
+176:     fireEvent.mouseMove(heroSection, { clientX: 50, clientY: 75 });
+177:     const cursor = screen.getByTestId("matrix-cursor");
+178:     // Assert - Position updates but no trails created
+179:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe("50px");
+180:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe("75px");
+181:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+182:   });
+183: });
 ````
 
-## File: src/components/Animations/BounceInScroll.component.tsx
+## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
 ````typescript
- 1: "use client";
- 2: import { useMemo } from "react";
- 3: import { Variants } from "motion/react";
- 4: import * as m from "motion/react-m";
- 5: import { IAnimateBounceProps } from "./types/Animations.types";
- 6: /**
- 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
- 8:  * @param {number} delay - Delay in seconds before the animation starts
- 9:  * @returns {Variants} Motion variants with the specified delay
-10:  */
-11: function createBounceVariants(delay: number): Variants {
-12:   return {
-13:     offscreen: {
-14:       y: 30,
-15:       opacity: 0,
-16:     },
-17:     onscreen: {
-18:       y: 0,
-19:       opacity: 1,
-20:       transition: {
-21:         type: "spring",
-22:         bounce: 0.5,
-23:         duration: 1.5,
-24:         delay,
-25:       },
-26:     },
-27:   };
-28: }
-29: /**
-30:  * Bounce in content when content becomes visible in viewport
-31:  * @function BounceInScroll
-32:  * @param {ReactNode} children - Children content to render
-33:  * @param {string} cssClass - CSS classes to apply to component
-34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
-35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
-36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
-37:  * @returns {JSX.Element} - Rendered component
-38:  */
-39: const BounceInScroll = ({
-40:   children,
-41:   cssClass,
-42:   viewAmount,
-43:   instant,
-44:   delay = 0,
-45: }: IAnimateBounceProps) => {
-46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
-47:   return (
-48:     <m.div
-49:       initial="offscreen"
-50:       animate={instant ? "onscreen" : undefined}
-51:       whileInView={instant ? undefined : "onscreen"}
-52:       viewport={
-53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
-54:       }
-55:       className={cssClass}
-56:       data-testid="bounceinscroll"
-57:     >
-58:       <m.div variants={variants}>{children}</m.div>
-59:     </m.div>
-60:   );
-61: };
-62: export default BounceInScroll;
-````
-
-## File: src/components/Animations/FadeIn.component.tsx
-````typescript
- 1: import * as m from "motion/react-m";
- 2: import { ReactNode, useRef } from "react";
- 3: export interface FadeInProps {
- 4:   children: ReactNode;
- 5:   className?: string;
- 6:   duration?: number;
- 7:   delay?: number;
- 8:   "data-testid"?: string;
- 9: }
-10: /**
-11:  * Minimal fade-in animation component
-12:  * Only uses opacity for zero CLS impact
-13:  */
-14: const FadeIn = ({
-15:   children,
-16:   className = "",
-17:   duration = 1,
-18:   delay = 0,
-19:   "data-testid": dataTestId,
-20: }: FadeInProps) => {
-21:   const ref = useRef<HTMLDivElement>(null);
-22:   return (
-23:     <m.div
-24:       ref={ref}
-25:       className={className}
-26:       data-testid={dataTestId}
-27:       initial={{ opacity: 0 }}
-28:       animate={{ opacity: 1 }}
-29:       transition={{
-30:         duration,
-31:         delay,
-32:         ease: "easeOut",
-33:       }}
-34:       onAnimationStart={() => {
-35:         if (ref.current) ref.current.style.willChange = "opacity";
-36:       }}
-37:       onAnimationComplete={() => {
-38:         if (ref.current) ref.current.style.willChange = "auto";
-39:       }}
-40:     >
-41:       {children}
-42:     </m.div>
-43:   );
-44: };
-45: export default FadeIn;
-````
-
-## File: src/components/Animations/FadeInScroll.component.tsx
-````typescript
- 1: "use client";
- 2: import * as m from "motion/react-m";
- 3: import { ReactNode, useRef } from "react";
- 4: export interface FadeInScrollProps {
- 5:   children: ReactNode;
- 6:   className?: string;
- 7:   duration?: number;
- 8:   viewAmount?: "some" | "all" | number;
- 9:   "data-testid"?: string;
-10: }
-11: /**
-12:  * Minimal fade-in animation triggered on scroll
-13:  * Only uses opacity for zero CLS impact
-14:  */
-15: const FadeInScroll = ({
-16:   children,
-17:   className = "",
-18:   duration = 0.4,
-19:   viewAmount = 0.2,
-20:   "data-testid": dataTestId,
-21: }: FadeInScrollProps) => {
-22:   const ref = useRef<HTMLDivElement>(null);
-23:   return (
-24:     <m.div
-25:       ref={ref}
-26:       className={className}
-27:       data-testid={dataTestId}
-28:       initial={{ opacity: 0 }}
-29:       whileInView={{ opacity: 1 }}
-30:       viewport={{ once: true, amount: viewAmount }}
-31:       transition={{
-32:         duration,
-33:         ease: "easeOut",
-34:       }}
-35:       onAnimationStart={() => {
-36:         if (ref.current) ref.current.style.willChange = "opacity";
-37:       }}
-38:       onAnimationComplete={() => {
-39:         if (ref.current) ref.current.style.willChange = "auto";
-40:       }}
-41:     >
-42:       {children}
-43:     </m.div>
-44:   );
-45: };
-46: export default FadeInScroll;
-````
-
-## File: src/components/Animations/Grow.component.tsx
-````typescript
- 1: import * as m from "motion/react-m";
- 2: import { IGrowProps } from "./types/Animations.types";
- 3: /**
- 4:  * A component that animates its children to grow in size.
- 5:  * @param props Props for the Grow component.
- 6:  * @returns A component that animates its children to grow in size.
- 7:  */
- 8: const Grow = ({
- 9:   duration = 0.5,
-10:   delay = 0,
-11:   easing = [0.42, 0, 0.58, 1],
-12:   children,
-13: }: IGrowProps) => {
-14:   return (
-15:     <m.div
-16:       initial={{ scale: 0.95, opacity: 0 }}
-17:       animate={{ scale: 1, opacity: 1 }}
-18:       transition={{ duration, delay, ease: easing }}
-19:       data-testid="grow"
-20:     >
-21:       {children}
-22:     </m.div>
-23:   );
-24: };
-25: export default Grow;
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
+ 4: describe("VolunteerWorkTabContent", () => {
+ 5:   it("renders volunteer work items with all fields", () => {
+ 6:     // Arrange
+ 7:     const mockVolunteerWork = [
+ 8:       {
+ 9:         period: "2020-2022",
+10:         organization: "Open Source Foundation",
+11:         role: "Maintainer",
+12:         description: "Maintained open source projects",
+13:       },
+14:     ];
+15:     // Act
+16:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+17:     // Assert
+18:     expect(
+19:       screen.getByText("2020-2022 - Open Source Foundation"),
+20:     ).toBeInTheDocument();
+21:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
+22:     expect(
+23:       screen.getByText("Maintained open source projects"),
+24:     ).toBeInTheDocument();
+25:   });
+26:   it("renders with missing period and organization (nullish coalescing branches)", () => {
+27:     // Arrange
+28:     const mockVolunteerWork = [
+29:       {
+30:         role: "Volunteer",
+31:         description: "Helped with events",
+32:       },
+33:     ];
+34:     // Act
+35:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+36:     // Assert
+37:     expect(screen.getByText(/-/)).toBeInTheDocument();
+38:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
+39:   });
+40:   it("renders without role (conditional branch)", () => {
+41:     // Arrange
+42:     const mockVolunteerWork = [
+43:       {
+44:         period: "2021-2023",
+45:         organization: "Community Group",
+46:         description: "Community outreach",
+47:       },
+48:     ];
+49:     // Act
+50:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+51:     // Assert
+52:     expect(
+53:       screen.getByText("2021-2023 - Community Group"),
+54:     ).toBeInTheDocument();
+55:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
+56:   });
+57:   it("renders with undefined volunteerWork", () => {
+58:     // Act
+59:     render(<VolunteerWorkTabContent />);
+60:     // Assert
+61:     expect(
+62:       screen.queryByText("Open Source Foundation"),
+63:     ).not.toBeInTheDocument();
+64:   });
+65:   it("renders with empty volunteerWork array", () => {
+66:     // Act
+67:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
+68:     // Assert
+69:     expect(
+70:       screen.queryByText("Open Source Foundation"),
+71:     ).not.toBeInTheDocument();
+72:   });
+73: });
 ````
 
 ## File: src/utils/eslint/package.json
@@ -20212,93 +20489,6 @@ tsconfig.json
 21:     "typescript": "^5.9.3"
 22:   }
 23: }
-````
-
-## File: src/__mocks__/motion.ts
-````typescript
- 1: import React, { ReactNode, ComponentType } from "react";
- 2: /**
- 3:  * This mocks the 'motion/react' module for Ladle stories
- 4:  */
- 5: // Define types for the motion component props
- 6: type MotionProps = {
- 7:   children?: ReactNode;
- 8:   className?: string;
- 9:   animate?: string | Record<string, unknown>;
-10:   initial?: string | Record<string, unknown>;
-11:   variants?: Record<string, unknown>;
-12:   whileInView?: string | Record<string, unknown>;
-13:   viewport?: Record<string, unknown>;
-14:   [key: string]: unknown;
-15: };
-16: const createMotionComponent = (
-17:   component = "div",
-18: ): ComponentType<MotionProps> => {
-19:   const MotionComponent: React.FC<MotionProps> = ({ children, ...props }) => {
-20:     // Extract the className from variants if present
-21:     const { className = "", animate, whileInView, initial, ...rest } = props;
-22:     // Add a class to indicate this is a mocked motion component
-23:     const combinedClassName = `${className} mock-motion-component`;
-24:     return React.createElement(
-25:       component,
-26:       {
-27:         ...rest,
-28:         className: combinedClassName,
-29:         "data-mock-motion": true,
-30:         "data-mock-initial": initial,
-31:         "data-mock-animate": animate,
-32:         "data-mock-while-in-view": whileInView,
-33:       },
-34:       children,
-35:     );
-36:   };
-37:   return MotionComponent;
-38: };
-39: // Export the mock components
-40: export const motion = {
-41:   div: createMotionComponent("div"),
-42:   span: createMotionComponent("span"),
-43:   ul: createMotionComponent("ul"),
-44:   li: createMotionComponent("li"),
-45:   p: createMotionComponent("p"),
-46:   section: createMotionComponent("section"),
-47:   nav: createMotionComponent("nav"),
-48:   header: createMotionComponent("header"),
-49:   footer: createMotionComponent("footer"),
-50:   button: createMotionComponent("button"),
-51:   a: createMotionComponent("a"),
-52: };
-53: export const AnimatePresence: React.FC<{ children?: ReactNode }> = ({
-54:   children,
-55: }) => {
-56:   return React.createElement(React.Fragment, null, children);
-57: };
-58: export const LazyMotion: React.FC<{
-59:   children?: ReactNode;
-60:   features?: unknown;
-61: }> = ({ children, features }) => {
-62:   const fragmentKey = features ? "mock-lazy-motion-with-features" : "mock-lazy-motion";
-63:   return React.createElement(React.Fragment, { key: fragmentKey }, children);
-64: };
-65: export const domAnimation = {};
-66: export const domMax = {};
-67: // Basic animations for use in stories
-68: export const useAnimation = () => ({
-69:   start: () => Promise.resolve(),
-70:   stop: () => Promise.resolve(),
-71:   set: () => {},
-72: });
-73: // Mock variants for animations
-74: export type Variants = Record<string, Record<string, unknown>>;
-75: const motionMock = {
-76:   motion,
-77:   AnimatePresence,
-78:   LazyMotion,
-79:   domAnimation,
-80:   domMax,
-81:   useAnimation,
-82: };
-83: export default motionMock;
 ````
 
 ## File: src/hooks/useMobile.tsx
