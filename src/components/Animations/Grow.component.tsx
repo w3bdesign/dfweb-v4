@@ -15,8 +15,8 @@ const Grow = ({
 }: IGrowProps) => {
   return (
     <m.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
       transition={{ duration, delay, ease: easing }}
       data-testid="grow"
     >
