@@ -42,7 +42,7 @@ export const WithClickHandler = () => {
     <div className="flex flex-col items-center">
       <Pill
         text={`Clicked ${clickCount} times`}
-        onClick={() => setClickCount(clickCount + 1)}
+        onClick={() => setClickCount((prev) => prev + 1)}
       />
       {clickCount > 0 && (
         <div className="mt-4 text-white">
