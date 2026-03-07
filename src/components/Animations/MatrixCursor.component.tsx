@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, RefObject, useState, useCallback } from "react";
+import { useEffect, useReducer, RefObject, useCallback } from "react";
 import "@/app/cursor.css";
 import { useMobile } from "../../hooks/useMobile"; // Pb51b
 
@@ -20,6 +20,58 @@ interface MatrixTrail {
   char: string;
 }
 
+interface CursorState {
+  cursorPosition: { x: number; y: number };
+  isHovered: boolean;
+  trails: MatrixTrail[];
+}
+
+type CursorAction =
+  | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+  | { type: "MOUSE_ENTER" }
+  | { type: "MOUSE_LEAVE" }
+  | { type: "REMOVE_TRAIL"; trailId: string };
+
+const MAX_TRAILS = 20;
+
+const cursorReducer = (
+  state: CursorState,
+  action: CursorAction,
+): CursorState => {
+  switch (action.type) {
+    case "MOUSE_MOVE": {
+      const newPosition = { x: action.x, y: action.y };
+      if (!action.trail) {
+        return { ...state, cursorPosition: newPosition };
+      }
+      const updatedTrails = [...state.trails, action.trail];
+      return {
+        ...state,
+        cursorPosition: newPosition,
+        trails:
+          updatedTrails.length > MAX_TRAILS
+            ? updatedTrails.slice(1)
+            : updatedTrails,
+      };
+    }
+    case "MOUSE_ENTER":
+      return { ...state, isHovered: true };
+    case "MOUSE_LEAVE":
+      return { ...state, isHovered: false, trails: [] };
+    case "REMOVE_TRAIL":
+      return {
+        ...state,
+        trails: state.trails.filter((trail) => trail.id !== action.trailId),
+      };
+  }
+};
+
+const initialState: CursorState = {
+  cursorPosition: { x: 0, y: 0 },
+  isHovered: false,
+  trails: [],
+};
+
 /**
  * MatrixCursor component that renders a custom cursor with a matrix trail effect
  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
@@ -28,9 +80,7 @@ interface MatrixTrail {
  */
 const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
   const isMobile = useMobile(); // Pd528
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [trails, setTrails] = useState<MatrixTrail[]>([]);
+  const [state, dispatch] = useReducer(cursorReducer, initialState);
 
   const getRandomChar = useCallback(() => {
     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
@@ -38,54 +88,38 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     return matrixChars[index] ?? matrixChars[0] ?? "X";
   }, []);
 
-  const createTrail = useCallback(
-    (x: number, y: number) => {
-      const newTrail: MatrixTrail = {
-        id: Math.random().toString(36).substring(2, 100),
-        x,
-        y,
-        char: getRandomChar(),
-      };
-
-      setTrails((currentTrails) => {
-        const updatedTrails = [...currentTrails, newTrail];
-        if (updatedTrails.length > 20) {
-          return updatedTrails.slice(1);
-        }
-        return updatedTrails;
-      });
-    },
-    [getRandomChar],
-  );
-
   useEffect(() => {
     const heroSection = heroRef.current;
     if (!heroSection) return;
 
     // Add cursor: none to the hero section when hovered
-    if (isHovered) {
+    if (state.isHovered) {
       heroSection.style.cursor = "none";
     } else {
       heroSection.style.cursor = "";
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
+      const trail: MatrixTrail | undefined = state.isHovered
+        ? {
+            id: Math.random().toString(36).substring(2, 100),
+            x: e.clientX,
+            y: e.clientY,
+            char: getRandomChar(),
+          }
+        : undefined;
 
-      if (isHovered) {
-        createTrail(e.clientX, e.clientY);
-      }
+      dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
     };
 
     const handleMouseEnter = () => {
-      setIsHovered(true);
+      dispatch({ type: "MOUSE_ENTER" });
       heroSection.style.cursor = "none";
     };
 
     const handleMouseLeave = () => {
-      setIsHovered(false);
+      dispatch({ type: "MOUSE_LEAVE" });
       heroSection.style.cursor = "";
-      setTrails([]);
     };
 
     heroSection.addEventListener("mousemove", handleMouseMove);
@@ -98,12 +132,10 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
       heroSection.removeEventListener("mouseleave", handleMouseLeave);
       heroSection.style.cursor = "";
     };
-  }, [heroRef, isHovered, createTrail]);
+  }, [heroRef, state.isHovered, getRandomChar]);
 
   const handleAnimationEnd = useCallback((trailId: string) => {
-    setTrails((currentTrails) =>
-      currentTrails.filter((trail) => trail.id !== trailId),
-    );
+    dispatch({ type: "REMOVE_TRAIL", trailId });
   }, []);
 
   if (!heroRef.current || isMobile) return null; // P6ecf
@@ -116,17 +148,17 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     height: "100%",
     pointerEvents: "none",
     zIndex: 9999,
-    "--cursor-x": `${cursorPosition.x}px`,
-    "--cursor-y": `${cursorPosition.y}px`,
+    "--cursor-x": `${state.cursorPosition.x}px`,
+    "--cursor-y": `${state.cursorPosition.y}px`,
   };
 
   return (
     <div
       data-testid="matrix-cursor"
-      className={isHovered ? "matrix-cursor" : ""}
+      className={state.isHovered ? "matrix-cursor" : ""}
       style={cursorStyles}
     >
-      {trails.map((trail) => (
+      {state.trails.map((trail) => (
         <div
           key={trail.id}
           data-testid="matrix-trail"
@@ -143,7 +175,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
           {trail.char}
         </div>
       ))}
-      {isHovered && (
+      {state.isHovered && (
         <div
           style={{
             position: "fixed",
