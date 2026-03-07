@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
  */
 export function useMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof globalThis.window === "undefined") return false;
+    if (globalThis.window === undefined) return false;
     if (globalThis.matchMedia) {
       return globalThis.matchMedia("(max-width: 639px)").matches;
     }
@@ -18,7 +18,7 @@ export function useMobile(): boolean {
   });
 
   useEffect(() => {
-    if (typeof globalThis.window === "undefined") return;
+    if (globalThis.window === undefined) return;
 
     // Fallback to resize listener for test environments without matchMedia
     if (!globalThis.matchMedia) {
