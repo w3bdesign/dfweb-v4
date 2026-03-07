@@ -13,10 +13,10 @@ const NavigationLink = ({
   isActive: boolean;
 }) => (
   <div className="relative">
-    <a
-      href={href}
-      onClick={(e) => e.preventDefault()}
-      className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+    <button
+      type="button"
+      data-href={href}
+      className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg bg-transparent border-none cursor-pointer ${
         isActive ? "text-green-400" : ""
       }`}
     >
@@ -32,7 +32,7 @@ const NavigationLink = ({
           }}
         />
       </div>
-    </a>
+    </button>
   </div>
 );
 
