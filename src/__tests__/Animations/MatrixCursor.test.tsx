@@ -210,5 +210,19 @@ describe("MatrixCursor", () => {
 
     // Assert trail was removed
     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+    test("should update cursor position without creating trails when not hovered", () => {
+      // Arrange
+      render(<TestWrapper />);
+      const heroSection = screen.getByTestId("hero-section");
+  
+      // Act - Move mouse without entering (no mouseenter, so not hovered)
+      fireEvent.mouseMove(heroSection, { clientX: 50, clientY: 75 });
+      const cursor = screen.getByTestId("matrix-cursor");
+  
+      // Assert - Position updates but no trails created
+      expect(cursor.style.getPropertyValue("--cursor-x")).toBe("50px");
+      expect(cursor.style.getPropertyValue("--cursor-y")).toBe("75px");
+      expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+    });
   });
 });
