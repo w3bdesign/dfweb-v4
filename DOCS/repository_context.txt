@@ -477,6 +477,92 @@ tsconfig.json
 15: ]
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     timeout-minutes: 30
+ 7:     strategy:
+ 8:       fail-fast: false
+ 9:       matrix:
+10:         browser: [chrome, firefox, edge]
+11:     steps:
+12:       - name: Checkout
+13:         uses: actions/checkout@v6
+14:       - name: Install pnpm
+15:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+16:         with:
+17:           version: 10
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:           restore-keys: |
+30:             ${{ runner.os }}-cypress-
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@v6
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
@@ -18280,92 +18366,6 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     timeout-minutes: 30
- 7:     strategy:
- 8:       fail-fast: false
- 9:       matrix:
-10:         browser: [chrome, firefox, edge]
-11:     steps:
-12:       - name: Checkout
-13:         uses: actions/checkout@v6
-14:       - name: Install pnpm
-15:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-16:         with:
-17:           version: 10
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:           restore-keys: |
-30:             ${{ runner.os }}-cypress-
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@v6
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
 ## File: .github/workflows/lighthouse.yml
 ````yaml
  1: name: Lighthouse CI
@@ -20689,7 +20689,7 @@ tsconfig.json
  46:     "react-hook-form": "^7.71.2",
  47:     "react-icons": "^5.5.0",
  48:     "sanity": "5.12.0",
- 49:     "sitemap": "^9.0.0",
+ 49:     "sitemap": "^9.0.1",
  50:     "tar-fs": "^3.1.1",
  51:     "ts-node": "^10.9.2",
  52:     "zod": "^4.3.6"
