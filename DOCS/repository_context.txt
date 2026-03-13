@@ -740,6 +740,169 @@ tsconfig.json
 173:           fi
 ````
 
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@v6
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+22:         with:
+23:           version: 10
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: ""
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -18366,61 +18529,73 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/lighthouse.yml
+## File: .github/workflows/pa11y.yml
 ````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     timeout-minutes: 30
- 7:     steps:
- 8:       - uses: actions/checkout@v6
- 9:       - name: Setup Node.js
-10:         uses: actions/setup-node@v6
-11:         with:
-12:           node-version: "24"
-13:       - name: Setup pnpm
-14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     timeout-minutes: 30
+11:     steps:
+12:       - uses: actions/checkout@v6
+13:       - name: Setup Node.js
+14:         uses: actions/setup-node@v6
 15:         with:
-16:           version: 10
-17:           run_install: false
-18:       - name: Get pnpm store directory
-19:         shell: bash
-20:         run: |
-21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-22:       - name: Setup pnpm cache
-23:         uses: actions/cache@v5
-24:         with:
-25:           path: ${{ env.STORE_PATH }}
-26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-27:           restore-keys: |
-28:             ${{ runner.os }}-pnpm-store-
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
+16:           node-version: "24"
+17:       - name: Install pnpm
+18:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+19:         with:
+20:           version: 10
+21:           run_install: false
+22:       - name: Get pnpm store directory
+23:         shell: bash
+24:         run: |
+25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+26:       - name: Setup pnpm cache
+27:         uses: actions/cache@v5
+28:         with:
+29:           path: ${{ env.STORE_PATH }}
+30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+31:           restore-keys: |
+32:             ${{ runner.os }}-pnpm-store-
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@v7
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
 ````
 
 ## File: .github/workflows/playwright.yml
@@ -18463,169 +18638,6 @@ tsconfig.json
 36:           name: playwright-report
 37:           path: playwright-report/
 38:           retention-days: 30
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@v6
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-22:         with:
-23:           version: 10
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: ""
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/__tests__/Animations/Grow.test.tsx
@@ -19816,73 +19828,31 @@ tsconfig.json
 79: );
 ````
 
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     timeout-minutes: 30
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - name: Setup Node.js
-14:         uses: actions/setup-node@v6
-15:         with:
-16:           node-version: "24"
-17:       - name: Install pnpm
-18:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
-19:         with:
-20:           version: 10
-21:           run_install: false
-22:       - name: Get pnpm store directory
-23:         shell: bash
-24:         run: |
-25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-26:       - name: Setup pnpm cache
-27:         uses: actions/cache@v5
-28:         with:
-29:           path: ${{ env.STORE_PATH }}
-30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-31:           restore-keys: |
-32:             ${{ runner.os }}-pnpm-store-
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v7
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.0.2"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
 ````
 
 ## File: src/__tests__/Animations/FadeIn.test.tsx
@@ -20464,33 +20434,6 @@ tsconfig.json
 73: });
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.0.2"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: src/hooks/useMobile.tsx
 ````typescript
  1: import { useState, useEffect } from "react";
@@ -20530,6 +20473,63 @@ tsconfig.json
 35:   }, []);
 36:   return isMobile;
 37: }
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@9b5745cdf0a2e8c2620f0746130f809adb911c19
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
 ````
 
 ## File: src/components/UI/ContentLoader.component.tsx
@@ -20630,13 +20630,18 @@ tsconfig.json
 27:     "prettier": "^3.8.1",
 28:     "typescript": "^5.9.3"
 29:   },
-30:   "prettier": {
-31:     "semi": false,
-32:     "printWidth": 100,
-33:     "bracketSpacing": false,
-34:     "singleQuote": true
-35:   }
-36: }
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=5.2.0"
+33:     }
+34:   },
+35:   "prettier": {
+36:     "semi": false,
+37:     "printWidth": 100,
+38:     "bracketSpacing": false,
+39:     "singleQuote": true
+40:   }
+41: }
 ````
 
 ## File: package.json
@@ -20706,7 +20711,7 @@ tsconfig.json
  63:     "@testing-library/react": "^16.3.2",
  64:     "@testing-library/user-event": "^14.6.1",
  65:     "@types/jest": "^30.0.0",
- 66:     "@types/node": "^24.11.0",
+ 66:     "@types/node": "^24.12.0",
  67:     "@types/react": "^19.2.14",
  68:     "@types/react-dom": "^19.2.3",
  69:     "@typescript-eslint/eslint-plugin": "^8.56.1",
@@ -20743,7 +20748,7 @@ tsconfig.json
 100:       "@pnpm/npm-conf": ">=3.0.2",
 101:       "minimatch": ">=10.2.4",
 102:       "rollup": ">=4.59.0",
-103:       "tar": ">=7.5.10"
+103:       "tar": "7.5.11"
 104:     },
 105:     "onlyBuiltDependencies": [
 106:       "@swc/core",
