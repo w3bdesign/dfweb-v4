@@ -20434,47 +20434,6 @@ tsconfig.json
 73: });
 ````
 
-## File: src/hooks/useMobile.tsx
-````typescript
- 1: import { useState, useEffect } from "react";
- 2: /**
- 3:  * A React hook that returns a boolean indicating if the user is on a mobile device.
- 4:  * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
- 5:  * aligning with React best practices for derived state subscriptions.
- 6:  * Includes fallback for test environments where matchMedia is not available.
- 7:  *
- 8:  * @returns true if the device width is under 640px, else false.
- 9:  */
-10: export function useMobile(): boolean {
-11:   const [isMobile, setIsMobile] = useState<boolean>(() => {
-12:     if (globalThis.window === undefined) return false;
-13:     if (globalThis.matchMedia) {
-14:       return globalThis.matchMedia("(max-width: 639px)").matches;
-15:     }
-16:     return globalThis.innerWidth < 640;
-17:   });
-18:   useEffect(() => {
-19:     if (globalThis.window === undefined) return;
-20:     // Fallback to resize listener for test environments without matchMedia
-21:     if (!globalThis.matchMedia) {
-22:       const handleResize = (): void => {
-23:         setIsMobile(globalThis.innerWidth < 640);
-24:       };
-25:       globalThis.addEventListener("resize", handleResize);
-26:       return () => globalThis.removeEventListener("resize", handleResize);
-27:     }
-28:     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
-29:     const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
-30:     const handleChange = (event: MediaQueryListEvent): void => {
-31:       setIsMobile(event.matches);
-32:     };
-33:     mediaQuery.addEventListener("change", handleChange);
-34:     return () => mediaQuery.removeEventListener("change", handleChange);
-35:   }, []);
-36:   return isMobile;
-37: }
-````
-
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -20540,6 +20499,47 @@ tsconfig.json
 61:   );
 62: };
 63: export default ContentLoader;
+````
+
+## File: src/hooks/useMobile.tsx
+````typescript
+ 1: import { useState, useEffect } from "react";
+ 2: /**
+ 3:  * A React hook that returns a boolean indicating if the user is on a mobile device.
+ 4:  * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
+ 5:  * aligning with React best practices for derived state subscriptions.
+ 6:  * Includes fallback for test environments where matchMedia is not available.
+ 7:  *
+ 8:  * @returns true if the device width is under 640px, else false.
+ 9:  */
+10: export function useMobile(): boolean {
+11:   const [isMobile, setIsMobile] = useState<boolean>(() => {
+12:     if (globalThis.window === undefined) return false;
+13:     if (globalThis.matchMedia) {
+14:       return globalThis.matchMedia("(max-width: 639px)").matches;
+15:     }
+16:     return globalThis.innerWidth < 640;
+17:   });
+18:   useEffect(() => {
+19:     if (globalThis.window === undefined) return;
+20:     // Fallback to resize listener for test environments without matchMedia
+21:     if (!globalThis.matchMedia) {
+22:       const handleResize = (): void => {
+23:         setIsMobile(globalThis.innerWidth < 640);
+24:       };
+25:       globalThis.addEventListener("resize", handleResize);
+26:       return () => globalThis.removeEventListener("resize", handleResize);
+27:     }
+28:     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
+29:     const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
+30:     const handleChange = (event: MediaQueryListEvent): void => {
+31:       setIsMobile(event.matches);
+32:     };
+33:     mediaQuery.addEventListener("change", handleChange);
+34:     return () => mediaQuery.removeEventListener("change", handleChange);
+35:   }, []);
+36:   return isMobile;
+37: }
 ````
 
 ## File: .github/workflows/lighthouse.yml
@@ -20720,7 +20720,7 @@ tsconfig.json
  70:     "@typescript-eslint/parser": "^8.56.1",
  71:     "@typescript-eslint/utils": "^8.56.1",
  72:     "axe-core": "^4.11.1",
- 73:     "cypress": "15.11.0",
+ 73:     "cypress": "15.12.0",
  74:     "cypress-axe": "^1.7.0",
  75:     "eslint": "10.0.3",
  76:     "eslint-config-next": "16.1.6",
