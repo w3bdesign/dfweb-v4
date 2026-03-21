@@ -9523,6 +9523,54 @@ tsconfig.json
 73: export default CVContent;
 ````
 
+## File: src/components/CV/GenericCVSectionContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface BaseItem {
+ 3:   description?: string;
+ 4: }
+ 5: interface GenericCVSectionContentProps<T extends BaseItem> {
+ 6:   items?: T[];
+ 7:   renderHeaderContent: (item: T) => React.ReactNode;
+ 8:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+ 9: }
+10: interface CVListItemProps<T extends BaseItem> {
+11:   item: T;
+12:   renderHeaderContent: (item: T) => React.ReactNode;
+13:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+14: }
+15: const CVListItem = <T extends BaseItem>({
+16:   item,
+17:   renderHeaderContent,
+18:   renderSubHeaderContent,
+19: }: CVListItemProps<T>) => (
+20:   <div className="mb-6">
+21:     <h3 className="font-semibold text-slate-100">
+22:       {renderHeaderContent(item)}
+23:     </h3>
+24:     {renderSubHeaderContent?.(item)}
+25:     <p>{item.description ?? ""}</p>
+26:   </div>
+27: );
+28: const GenericCVSectionContent = <T extends BaseItem>({
+29:   items,
+30:   renderHeaderContent,
+31:   renderSubHeaderContent,
+32: }: GenericCVSectionContentProps<T>) => (
+33:   <div className="text-slate-300/[0.9]">
+34:     {items?.map((item, index) => (
+35:       <CVListItem
+36:         key={item.description ?? `item-${index}`}
+37:         item={item}
+38:         renderHeaderContent={renderHeaderContent}
+39:         renderSubHeaderContent={renderSubHeaderContent}
+40:       />
+41:     ))}
+42:   </div>
+43: );
+44: export default GenericCVSectionContent;
+````
+
 ## File: src/components/CV/QualificationsTabContent.tsx
 ````typescript
  1: import React from "react";
@@ -11989,6 +12037,122 @@ tsconfig.json
 111:     />
 112:   </Container>
 113: );
+````
+
+## File: src/stories/components/Animations/MatrixCursor.stories.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+  4: import "@/app/cursor.css";
+  5: export default {
+  6:   title: "Animations/MatrixCursor",
+  7:   component: MatrixCursor,
+  8: } as Meta;
+  9: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
+ 10:   const heroRef = useRef<HTMLDivElement>(null);
+ 11:   return (
+ 12:     <div
+ 13:       ref={heroRef}
+ 14:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
+ 15:     >
+ 16:       {children}
+ 17:       <MatrixCursor heroRef={heroRef} />
+ 18:     </div>
+ 19:   );
+ 20: };
+ 21: export const Default = () => (
+ 22:   <DemoContainer>
+ 23:     <div className="text-gray-300 space-y-4">
+ 24:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
+ 25:       <p>
+ 26:         Move your mouse around this container to see the matrix cursor effect.
+ 27:       </p>
+ 28:       <p>The cursor will change and leave a trail of matrix characters.</p>
+ 29:       <div className="grid grid-cols-2 gap-4 mt-8">
+ 30:         <div className="bg-gray-800 p-4 rounded-sm">
+ 31:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
+ 32:           <p className="text-sm">
+ 33:             Move your cursor here to see the effect in action
+ 34:           </p>
+ 35:         </div>
+ 36:         <div className="bg-gray-800 p-4 rounded-sm">
+ 37:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
+ 38:           <p className="text-sm">
+ 39:             Try moving between different areas to see the trail
+ 40:           </p>
+ 41:         </div>
+ 42:       </div>
+ 43:     </div>
+ 44:   </DemoContainer>
+ 45: );
+ 46: export const WithInteractiveElements = () => (
+ 47:   <DemoContainer>
+ 48:     <div className="text-gray-300 space-y-6">
+ 49:       <h2 className="text-2xl font-bold text-white mb-4">
+ 50:         Interactive Elements Demo
+ 51:       </h2>
+ 52:       <div className="grid grid-cols-2 gap-4">
+ 53:         <button className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
+ 54:           Hover Me
+ 55:         </button>
+ 56:         <button className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
+ 57:           Button Example
+ 58:         </button>
+ 59:       </div>
+ 60:       <div className="bg-gray-800 p-6 rounded-sm">
+ 61:         <p>
+ 62:           The matrix cursor effect works seamlessly with interactive elements.
+ 63:           Try hovering over the buttons above.
+ 64:         </p>
+ 65:       </div>
+ 66:     </div>
+ 67:   </DemoContainer>
+ 68: );
+ 69: export const LargeArea = () => (
+ 70:   <DemoContainer>
+ 71:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
+ 72:       <div className="text-center space-y-4">
+ 73:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
+ 74:         <p>
+ 75:           This demo shows how the matrix cursor effect works in a larger area.
+ 76:           <br />
+ 77:           Move your cursor around to create longer trails.
+ 78:         </p>
+ 79:       </div>
+ 80:     </div>
+ 81:   </DemoContainer>
+ 82: );
+ 83: export const WithContent = () => (
+ 84:   <DemoContainer>
+ 85:     <div className="text-gray-300 space-y-6">
+ 86:       <h2 className="text-2xl font-bold text-white mb-4">
+ 87:         Content Interaction
+ 88:       </h2>
+ 89:       <div className="grid grid-cols-3 gap-4">
+ 90:         {[1, 2, 3].map((cardNumber) => (
+ 91:           <div
+ 92:             key={`card-${cardNumber}`}
+ 93:             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
+ 94:           >
+ 95:             <h3 className="text-lg font-semibold mb-2">Card {cardNumber}</h3>
+ 96:             <p className="text-sm">
+ 97:               Hover over this card to see how the matrix cursor interacts with
+ 98:               content.
+ 99:             </p>
+100:           </div>
+101:         ))}
+102:       </div>
+103:       <div className="bg-gray-800 p-6 rounded-sm mt-8">
+104:         <p className="text-lg">
+105:           The matrix cursor effect adds a unique interactive element to your
+106:           content. Try moving between different cards to see how the trail
+107:           follows your movement.
+108:         </p>
+109:       </div>
+110:     </div>
+111:   </DemoContainer>
+112: );
 ````
 
 ## File: src/stories/components/Animations/PageTransition.stories.tsx
@@ -19103,54 +19267,6 @@ tsconfig.json
 28: export default ExperienceTabContent;
 ````
 
-## File: src/components/CV/GenericCVSectionContent.tsx
-````typescript
- 1: import React from "react";
- 2: interface BaseItem {
- 3:   description?: string;
- 4: }
- 5: interface GenericCVSectionContentProps<T extends BaseItem> {
- 6:   items?: T[];
- 7:   renderHeaderContent: (item: T) => React.ReactNode;
- 8:   renderSubHeaderContent?: (item: T) => React.ReactNode;
- 9: }
-10: interface CVListItemProps<T extends BaseItem> {
-11:   item: T;
-12:   renderHeaderContent: (item: T) => React.ReactNode;
-13:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-14: }
-15: const CVListItem = <T extends BaseItem>({
-16:   item,
-17:   renderHeaderContent,
-18:   renderSubHeaderContent,
-19: }: CVListItemProps<T>) => (
-20:   <div className="mb-6">
-21:     <h3 className="font-semibold text-slate-100">
-22:       {renderHeaderContent(item)}
-23:     </h3>
-24:     {renderSubHeaderContent?.(item)}
-25:     <p>{item.description ?? ""}</p>
-26:   </div>
-27: );
-28: const GenericCVSectionContent = <T extends BaseItem>({
-29:   items,
-30:   renderHeaderContent,
-31:   renderSubHeaderContent,
-32: }: GenericCVSectionContentProps<T>) => (
-33:   <div className="text-slate-300/[0.9]">
-34:     {items?.map((item, index) => (
-35:       <CVListItem
-36:         key={item.description ?? `item-${index}`}
-37:         item={item}
-38:         renderHeaderContent={renderHeaderContent}
-39:         renderSubHeaderContent={renderSubHeaderContent}
-40:       />
-41:     ))}
-42:   </div>
-43: );
-44: export default GenericCVSectionContent;
-````
-
 ## File: src/components/CV/VolunteerWorkTabContent.tsx
 ````typescript
  1: import React from "react";
@@ -19418,122 +19534,6 @@ tsconfig.json
 80:   );
 81: };
 82: export default ProsjektCard;
-````
-
-## File: src/stories/components/Animations/MatrixCursor.stories.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-  4: import "@/app/cursor.css";
-  5: export default {
-  6:   title: "Animations/MatrixCursor",
-  7:   component: MatrixCursor,
-  8: } as Meta;
-  9: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
- 10:   const heroRef = useRef<HTMLDivElement>(null);
- 11:   return (
- 12:     <div
- 13:       ref={heroRef}
- 14:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
- 15:     >
- 16:       {children}
- 17:       <MatrixCursor heroRef={heroRef} />
- 18:     </div>
- 19:   );
- 20: };
- 21: export const Default = () => (
- 22:   <DemoContainer>
- 23:     <div className="text-gray-300 space-y-4">
- 24:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
- 25:       <p>
- 26:         Move your mouse around this container to see the matrix cursor effect.
- 27:       </p>
- 28:       <p>The cursor will change and leave a trail of matrix characters.</p>
- 29:       <div className="grid grid-cols-2 gap-4 mt-8">
- 30:         <div className="bg-gray-800 p-4 rounded-sm">
- 31:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
- 32:           <p className="text-sm">
- 33:             Move your cursor here to see the effect in action
- 34:           </p>
- 35:         </div>
- 36:         <div className="bg-gray-800 p-4 rounded-sm">
- 37:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
- 38:           <p className="text-sm">
- 39:             Try moving between different areas to see the trail
- 40:           </p>
- 41:         </div>
- 42:       </div>
- 43:     </div>
- 44:   </DemoContainer>
- 45: );
- 46: export const WithInteractiveElements = () => (
- 47:   <DemoContainer>
- 48:     <div className="text-gray-300 space-y-6">
- 49:       <h2 className="text-2xl font-bold text-white mb-4">
- 50:         Interactive Elements Demo
- 51:       </h2>
- 52:       <div className="grid grid-cols-2 gap-4">
- 53:         <button className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
- 54:           Hover Me
- 55:         </button>
- 56:         <button className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
- 57:           Button Example
- 58:         </button>
- 59:       </div>
- 60:       <div className="bg-gray-800 p-6 rounded-sm">
- 61:         <p>
- 62:           The matrix cursor effect works seamlessly with interactive elements.
- 63:           Try hovering over the buttons above.
- 64:         </p>
- 65:       </div>
- 66:     </div>
- 67:   </DemoContainer>
- 68: );
- 69: export const LargeArea = () => (
- 70:   <DemoContainer>
- 71:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
- 72:       <div className="text-center space-y-4">
- 73:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
- 74:         <p>
- 75:           This demo shows how the matrix cursor effect works in a larger area.
- 76:           <br />
- 77:           Move your cursor around to create longer trails.
- 78:         </p>
- 79:       </div>
- 80:     </div>
- 81:   </DemoContainer>
- 82: );
- 83: export const WithContent = () => (
- 84:   <DemoContainer>
- 85:     <div className="text-gray-300 space-y-6">
- 86:       <h2 className="text-2xl font-bold text-white mb-4">
- 87:         Content Interaction
- 88:       </h2>
- 89:       <div className="grid grid-cols-3 gap-4">
- 90:         {[1, 2, 3].map((cardNumber) => (
- 91:           <div
- 92:             key={`card-${cardNumber}`}
- 93:             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
- 94:           >
- 95:             <h3 className="text-lg font-semibold mb-2">Card {cardNumber}</h3>
- 96:             <p className="text-sm">
- 97:               Hover over this card to see how the matrix cursor interacts with
- 98:               content.
- 99:             </p>
-100:           </div>
-101:         ))}
-102:       </div>
-103:       <div className="bg-gray-800 p-6 rounded-sm mt-8">
-104:         <p className="text-lg">
-105:           The matrix cursor effect adds a unique interactive element to your
-106:           content. Try moving between different cards to see how the trail
-107:           follows your movement.
-108:         </p>
-109:       </div>
-110:     </div>
-111:   </DemoContainer>
-112: );
 ````
 
 ## File: src/stories/components/Layout/NavigationLink.stories.tsx
@@ -20739,7 +20739,7 @@ tsconfig.json
  89:     "pa11y": "^9.1.1",
  90:     "postcss": "^8.5.8",
  91:     "prettier": "3.8.1",
- 92:     "react-doctor": "^0.0.29",
+ 92:     "react-doctor": "^0.0.30",
  93:     "tailwindcss": "^4.2.1",
  94:     "ts-jest": "^29.4.6",
  95:     "typescript": "^5.9.3",
