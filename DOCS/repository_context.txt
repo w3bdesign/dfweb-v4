@@ -5081,6 +5081,136 @@ tsconfig.json
 111: });
 ````
 
+## File: src/__tests__/Animations/FadeIn.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen } from "@testing-library/react";
+  3: import FadeIn from "@/components/Animations/FadeIn.component";
+  4: // Capture onAnimationStart/onAnimationComplete callbacks from the mock
+  5: let capturedOnAnimationStart: (() => void) | undefined;
+  6: let capturedOnAnimationComplete: (() => void) | undefined;
+  7: jest.mock("motion/react-m", () => ({
+  8:   div: React.forwardRef(
+  9:     (
+ 10:       {
+ 11:         children,
+ 12:         className,
+ 13:         "data-testid": dataTestId,
+ 14:         onAnimationStart,
+ 15:         onAnimationComplete,
+ 16:       }: {
+ 17:         children?: React.ReactNode;
+ 18:         className?: string;
+ 19:         "data-testid"?: string;
+ 20:         onAnimationStart?: () => void;
+ 21:         onAnimationComplete?: () => void;
+ 22:       },
+ 23:       ref: React.Ref<HTMLDivElement>,
+ 24:     ) => {
+ 25:       capturedOnAnimationStart = onAnimationStart;
+ 26:       capturedOnAnimationComplete = onAnimationComplete;
+ 27:       return (
+ 28:         <div ref={ref} className={className} data-testid={dataTestId}>
+ 29:           {children}
+ 30:         </div>
+ 31:       );
+ 32:     },
+ 33:   ),
+ 34: }));
+ 35: describe("FadeIn", () => {
+ 36:   beforeEach(() => {
+ 37:     capturedOnAnimationStart = undefined;
+ 38:     capturedOnAnimationComplete = undefined;
+ 39:   });
+ 40:   it("renders children correctly", () => {
+ 41:     // Arrange
+ 42:     render(
+ 43:       <FadeIn>
+ 44:         <div>Test content</div>
+ 45:       </FadeIn>,
+ 46:     );
+ 47:     // Act
+ 48:     const element = screen.getByText("Test content");
+ 49:     // Assert
+ 50:     expect(element).toBeInTheDocument();
+ 51:   });
+ 52:   it("applies custom className", () => {
+ 53:     // Arrange
+ 54:     render(
+ 55:       <FadeIn className="custom-class" data-testid="fade-in">
+ 56:         <div>Test content</div>
+ 57:       </FadeIn>,
+ 58:     );
+ 59:     // Act
+ 60:     const container = screen.getByTestId("fade-in");
+ 61:     // Assert
+ 62:     expect(container).toHaveClass("custom-class");
+ 63:   });
+ 64:   it("has initial opacity of 0", () => {
+ 65:     // Arrange
+ 66:     render(
+ 67:       <FadeIn data-testid="fade-in">
+ 68:         <div>Test content</div>
+ 69:       </FadeIn>,
+ 70:     );
+ 71:     // Act
+ 72:     const fadeInElement = screen.getByTestId("fade-in");
+ 73:     // Assert
+ 74:     expect(fadeInElement).toBeInTheDocument();
+ 75:   });
+ 76:   it("accepts custom duration", () => {
+ 77:     // Arrange
+ 78:     render(
+ 79:       <FadeIn duration={0.5}>
+ 80:         <div>Test content</div>
+ 81:       </FadeIn>,
+ 82:     );
+ 83:     // Act
+ 84:     const element = screen.getByText("Test content");
+ 85:     // Assert
+ 86:     expect(element).toBeInTheDocument();
+ 87:   });
+ 88:   it("accepts custom delay", () => {
+ 89:     // Arrange
+ 90:     render(
+ 91:       <FadeIn delay={0.2}>
+ 92:         <div>Test content</div>
+ 93:       </FadeIn>,
+ 94:     );
+ 95:     // Act
+ 96:     const element = screen.getByText("Test content");
+ 97:     // Assert
+ 98:     expect(element).toBeInTheDocument();
+ 99:   });
+100:   it("sets willChange to opacity on animation start", () => {
+101:     // Arrange
+102:     render(
+103:       <FadeIn data-testid="fade-in">
+104:         <div>Test content</div>
+105:       </FadeIn>,
+106:     );
+107:     const fadeInElement = screen.getByTestId("fade-in");
+108:     // Act
+109:     capturedOnAnimationStart?.();
+110:     // Assert
+111:     expect(fadeInElement.style.willChange).toBe("opacity");
+112:   });
+113:   it("sets willChange to auto on animation complete", () => {
+114:     // Arrange
+115:     render(
+116:       <FadeIn data-testid="fade-in">
+117:         <div>Test content</div>
+118:       </FadeIn>,
+119:     );
+120:     const fadeInElement = screen.getByTestId("fade-in");
+121:     // Act
+122:     capturedOnAnimationComplete?.();
+123:     // Assert
+124:     expect(fadeInElement.style.willChange).toBe("auto");
+125:   });
+126: });
+````
+
 ## File: src/__tests__/Animations/Grow.test.tsx
 ````typescript
  1: /**
@@ -19936,136 +20066,6 @@ tsconfig.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/Animations/FadeIn.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import FadeIn from "@/components/Animations/FadeIn.component";
-  4: // Capture onAnimationStart/onAnimationComplete callbacks from the mock
-  5: let capturedOnAnimationStart: (() => void) | undefined;
-  6: let capturedOnAnimationComplete: (() => void) | undefined;
-  7: jest.mock("motion/react-m", () => ({
-  8:   div: React.forwardRef(
-  9:     (
- 10:       {
- 11:         children,
- 12:         className,
- 13:         "data-testid": dataTestId,
- 14:         onAnimationStart,
- 15:         onAnimationComplete,
- 16:       }: {
- 17:         children?: React.ReactNode;
- 18:         className?: string;
- 19:         "data-testid"?: string;
- 20:         onAnimationStart?: () => void;
- 21:         onAnimationComplete?: () => void;
- 22:       },
- 23:       ref: React.Ref<HTMLDivElement>,
- 24:     ) => {
- 25:       capturedOnAnimationStart = onAnimationStart;
- 26:       capturedOnAnimationComplete = onAnimationComplete;
- 27:       return (
- 28:         <div ref={ref} className={className} data-testid={dataTestId}>
- 29:           {children}
- 30:         </div>
- 31:       );
- 32:     },
- 33:   ),
- 34: }));
- 35: describe("FadeIn", () => {
- 36:   beforeEach(() => {
- 37:     capturedOnAnimationStart = undefined;
- 38:     capturedOnAnimationComplete = undefined;
- 39:   });
- 40:   it("renders children correctly", () => {
- 41:     // Arrange
- 42:     render(
- 43:       <FadeIn>
- 44:         <div>Test content</div>
- 45:       </FadeIn>,
- 46:     );
- 47:     // Act
- 48:     const element = screen.getByText("Test content");
- 49:     // Assert
- 50:     expect(element).toBeInTheDocument();
- 51:   });
- 52:   it("applies custom className", () => {
- 53:     // Arrange
- 54:     render(
- 55:       <FadeIn className="custom-class" data-testid="fade-in">
- 56:         <div>Test content</div>
- 57:       </FadeIn>,
- 58:     );
- 59:     // Act
- 60:     const container = screen.getByTestId("fade-in");
- 61:     // Assert
- 62:     expect(container).toHaveClass("custom-class");
- 63:   });
- 64:   it("has initial opacity of 0", () => {
- 65:     // Arrange
- 66:     render(
- 67:       <FadeIn data-testid="fade-in">
- 68:         <div>Test content</div>
- 69:       </FadeIn>,
- 70:     );
- 71:     // Act
- 72:     const fadeInElement = screen.getByTestId("fade-in");
- 73:     // Assert
- 74:     expect(fadeInElement).toBeInTheDocument();
- 75:   });
- 76:   it("accepts custom duration", () => {
- 77:     // Arrange
- 78:     render(
- 79:       <FadeIn duration={0.5}>
- 80:         <div>Test content</div>
- 81:       </FadeIn>,
- 82:     );
- 83:     // Act
- 84:     const element = screen.getByText("Test content");
- 85:     // Assert
- 86:     expect(element).toBeInTheDocument();
- 87:   });
- 88:   it("accepts custom delay", () => {
- 89:     // Arrange
- 90:     render(
- 91:       <FadeIn delay={0.2}>
- 92:         <div>Test content</div>
- 93:       </FadeIn>,
- 94:     );
- 95:     // Act
- 96:     const element = screen.getByText("Test content");
- 97:     // Assert
- 98:     expect(element).toBeInTheDocument();
- 99:   });
-100:   it("sets willChange to opacity on animation start", () => {
-101:     // Arrange
-102:     render(
-103:       <FadeIn data-testid="fade-in">
-104:         <div>Test content</div>
-105:       </FadeIn>,
-106:     );
-107:     const fadeInElement = screen.getByTestId("fade-in");
-108:     // Act
-109:     capturedOnAnimationStart?.();
-110:     // Assert
-111:     expect(fadeInElement.style.willChange).toBe("opacity");
-112:   });
-113:   it("sets willChange to auto on animation complete", () => {
-114:     // Arrange
-115:     render(
-116:       <FadeIn data-testid="fade-in">
-117:         <div>Test content</div>
-118:       </FadeIn>,
-119:     );
-120:     const fadeInElement = screen.getByTestId("fade-in");
-121:     // Act
-122:     capturedOnAnimationComplete?.();
-123:     // Assert
-124:     expect(fadeInElement.style.willChange).toBe("auto");
-125:   });
-126: });
-````
-
 ## File: src/__tests__/Animations/FadeInScroll.test.tsx
 ````typescript
   1: import React from "react";
@@ -20687,7 +20687,7 @@ tsconfig.json
  37:     "envalid": "^8.1.1",
  38:     "jest": "30.3.0",
  39:     "motion": "^12.38.0",
- 40:     "next": "^16.1.6",
+ 40:     "next": "^16.2.1",
  41:     "next-sanity": "^12.1.1",
  42:     "path-to-regexp": "^8.4.0",
  43:     "react": "^19.2.4",
@@ -20723,7 +20723,7 @@ tsconfig.json
  73:     "cypress": "15.12.0",
  74:     "cypress-axe": "^1.7.0",
  75:     "eslint": "10.0.3",
- 76:     "eslint-config-next": "16.1.6",
+ 76:     "eslint-config-next": "16.2.1",
  77:     "eslint-config-prettier": "^10.1.8",
  78:     "eslint-plugin-jest": "^29.15.0",
  79:     "eslint-plugin-jsx-a11y": "^6.10.2",
