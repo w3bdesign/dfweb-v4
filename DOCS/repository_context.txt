@@ -11991,6 +11991,47 @@ tsconfig.json
 34: });
 ````
 
+## File: src/hooks/useMobile.tsx
+````typescript
+ 1: import { useState, useEffect } from "react";
+ 2: /**
+ 3:  * A React hook that returns a boolean indicating if the user is on a mobile device.
+ 4:  * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
+ 5:  * aligning with React best practices for derived state subscriptions.
+ 6:  * Includes fallback for test environments where matchMedia is not available.
+ 7:  *
+ 8:  * @returns true if the device width is under 640px, else false.
+ 9:  */
+10: export function useMobile(): boolean {
+11:   const [isMobile, setIsMobile] = useState<boolean>(() => {
+12:     if (globalThis.window === undefined) return false;
+13:     if (globalThis.matchMedia) {
+14:       return globalThis.matchMedia("(max-width: 639px)").matches;
+15:     }
+16:     return globalThis.innerWidth < 640;
+17:   });
+18:   useEffect(() => {
+19:     if (globalThis.window === undefined) return;
+20:     // Fallback to resize listener for test environments without matchMedia
+21:     if (!globalThis.matchMedia) {
+22:       const handleResize = (): void => {
+23:         setIsMobile(globalThis.innerWidth < 640);
+24:       };
+25:       globalThis.addEventListener("resize", handleResize);
+26:       return () => globalThis.removeEventListener("resize", handleResize);
+27:     }
+28:     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
+29:     const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
+30:     const handleChange = (event: MediaQueryListEvent): void => {
+31:       setIsMobile(event.matches);
+32:     };
+33:     mediaQuery.addEventListener("change", handleChange);
+34:     return () => mediaQuery.removeEventListener("change", handleChange);
+35:   }, []);
+36:   return isMobile;
+37: }
+````
+
 ## File: src/hooks/useNavigation.ts
 ````typescript
  1: import { usePathname } from "next/navigation";
@@ -20143,47 +20184,6 @@ tsconfig.json
 82: export default ProsjektCard;
 ````
 
-## File: src/hooks/useMobile.tsx
-````typescript
- 1: import { useState, useEffect } from "react";
- 2: /**
- 3:  * A React hook that returns a boolean indicating if the user is on a mobile device.
- 4:  * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
- 5:  * aligning with React best practices for derived state subscriptions.
- 6:  * Includes fallback for test environments where matchMedia is not available.
- 7:  *
- 8:  * @returns true if the device width is under 640px, else false.
- 9:  */
-10: export function useMobile(): boolean {
-11:   const [isMobile, setIsMobile] = useState<boolean>(() => {
-12:     if (globalThis.window === undefined) return false;
-13:     if (globalThis.matchMedia) {
-14:       return globalThis.matchMedia("(max-width: 639px)").matches;
-15:     }
-16:     return globalThis.innerWidth < 640;
-17:   });
-18:   useEffect(() => {
-19:     if (globalThis.window === undefined) return;
-20:     // Fallback to resize listener for test environments without matchMedia
-21:     if (!globalThis.matchMedia) {
-22:       const handleResize = (): void => {
-23:         setIsMobile(globalThis.innerWidth < 640);
-24:       };
-25:       globalThis.addEventListener("resize", handleResize);
-26:       return () => globalThis.removeEventListener("resize", handleResize);
-27:     }
-28:     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
-29:     const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
-30:     const handleChange = (event: MediaQueryListEvent): void => {
-31:       setIsMobile(event.matches);
-32:     };
-33:     mediaQuery.addEventListener("change", handleChange);
-34:     return () => mediaQuery.removeEventListener("change", handleChange);
-35:   }, []);
-36:   return isMobile;
-37: }
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -20686,7 +20686,7 @@ tsconfig.json
  36:     "cookie": ">=1.1.1",
  37:     "envalid": "^8.1.1",
  38:     "jest": "30.3.0",
- 39:     "motion": "^12.36.0",
+ 39:     "motion": "^12.38.0",
  40:     "next": "^16.1.6",
  41:     "next-sanity": "^12.1.1",
  42:     "path-to-regexp": "^8.3.0",
