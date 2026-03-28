@@ -5860,6 +5860,193 @@ tsconfig.json
 115: });
 ````
 
+## File: src/__tests__/Animations/MatrixCursor.test.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { render, fireEvent, screen } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+  5: import { useMobile } from "@/hooks/useMobile";
+  6: // Mock useMobile hook
+  7: jest.mock("@/hooks/useMobile");
+  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
+  9: // Wrapper component to provide ref
+ 10: const TestWrapper = () => {
+ 11:   const heroRef = useRef<HTMLDivElement>(null);
+ 12:   return (
+ 13:     <>
+ 14:       <div ref={heroRef} data-testid="hero-section" />
+ 15:       <MatrixCursor heroRef={heroRef} />
+ 16:     </>
+ 17:   );
+ 18: };
+ 19: describe("MatrixCursor", () => {
+ 20:   beforeEach(() => {
+ 21:     // Default to desktop view
+ 22:     mockUseMobile.mockReturnValue(false);
+ 23:   });
+ 24:   afterEach(() => {
+ 25:     jest.clearAllMocks();
+ 26:   });
+ 27:   test("should not render when heroRef is null", () => {
+ 28:     // Arrange
+ 29:     const NullRefWrapper = () => {
+ 30:       const heroRef = useRef<HTMLDivElement>(null);
+ 31:       // Don't render the div, so heroRef.current will be null
+ 32:       return <MatrixCursor heroRef={heroRef} />;
+ 33:     };
+ 34:     // Act
+ 35:     render(<NullRefWrapper />);
+ 36:     // Assert
+ 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 38:   });
+ 39:   test("should not render on mobile devices", () => {
+ 40:     // Arrange
+ 41:     mockUseMobile.mockReturnValue(true);
+ 42:     // Act
+ 43:     render(<TestWrapper />);
+ 44:     // Assert
+ 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
+ 46:   });
+ 47:   test("should update cursor position and styles on mousemove", () => {
+ 48:     // Arrange
+ 49:     render(<TestWrapper />);
+ 50:     const heroSection = screen.getByTestId("hero-section");
+ 51:     const expectedPosition = { x: 100, y: 200 };
+ 52:     // Act
+ 53:     fireEvent.mouseEnter(heroSection);
+ 54:     fireEvent.mouseMove(heroSection, {
+ 55:       clientX: expectedPosition.x,
+ 56:       clientY: expectedPosition.y,
+ 57:     });
+ 58:     const cursor = screen.getByTestId("matrix-cursor");
+ 59:     // Assert
+ 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
+ 61:       `${expectedPosition.x}px`,
+ 62:     );
+ 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
+ 64:       `${expectedPosition.y}px`,
+ 65:     );
+ 66:   });
+ 67:   test("should add matrix-cursor class on mouseenter", () => {
+ 68:     // Arrange
+ 69:     render(<TestWrapper />);
+ 70:     const heroSection = screen.getByTestId("hero-section");
+ 71:     // Act
+ 72:     fireEvent.mouseEnter(heroSection);
+ 73:     const cursor = screen.getByTestId("matrix-cursor");
+ 74:     // Assert
+ 75:     expect(cursor).toHaveClass("matrix-cursor");
+ 76:     expect(heroSection.style.cursor).toBe("none");
+ 77:   });
+ 78:   test("should remove matrix-cursor class on mouseleave", () => {
+ 79:     // Arrange
+ 80:     render(<TestWrapper />);
+ 81:     const heroSection = screen.getByTestId("hero-section");
+ 82:     // Act - First add the class
+ 83:     fireEvent.mouseEnter(heroSection);
+ 84:     const cursor = screen.getByTestId("matrix-cursor");
+ 85:     // Assert initial state
+ 86:     expect(cursor).toHaveClass("matrix-cursor");
+ 87:     // Act - Then remove it
+ 88:     fireEvent.mouseLeave(heroSection);
+ 89:     // Assert final state
+ 90:     expect(cursor).not.toHaveClass("matrix-cursor");
+ 91:     expect(heroSection.style.cursor).toBe("");
+ 92:   });
+ 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
+ 94:     // Arrange
+ 95:     const { unmount } = render(<TestWrapper />);
+ 96:     const heroSection = screen.getByTestId("hero-section");
+ 97:     // Act - Set initial state
+ 98:     fireEvent.mouseEnter(heroSection);
+ 99:     // Assert initial state
+100:     expect(heroSection.style.cursor).toBe("none");
+101:     // Act - Unmount component
+102:     unmount();
+103:     // Assert cleanup
+104:     expect(heroSection.style.cursor).toBe("");
+105:   });
+106:   test("should create trail elements on mousemove when hovered", () => {
+107:     // Arrange
+108:     render(<TestWrapper />);
+109:     const heroSection = screen.getByTestId("hero-section");
+110:     const movePositions = [
+111:       { x: 100, y: 100 },
+112:       { x: 110, y: 110 },
+113:       { x: 120, y: 120 },
+114:     ];
+115:     // Act - Enable trail creation
+116:     fireEvent.mouseEnter(heroSection);
+117:     // Act & Assert - Create and verify trails
+118:     movePositions.forEach((pos, index) => {
+119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
+120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
+121:     });
+122:   });
+123:   test("should limit the number of trail elements", () => {
+124:     // Arrange
+125:     render(<TestWrapper />);
+126:     const heroSection = screen.getByTestId("hero-section");
+127:     const maxTrails = 20;
+128:     const totalMoves = 25;
+129:     // Act
+130:     fireEvent.mouseEnter(heroSection);
+131:     for (let i = 0; i < totalMoves; i++) {
+132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+133:     }
+134:     // Assert
+135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
+136:       maxTrails,
+137:     );
+138:   });
+139:   test("should cleanup trail elements on mouseleave", () => {
+140:     // Arrange
+141:     render(<TestWrapper />);
+142:     const heroSection = screen.getByTestId("hero-section");
+143:     const trailCount = 5;
+144:     // Act - Create trails
+145:     fireEvent.mouseEnter(heroSection);
+146:     for (let i = 0; i < trailCount; i++) {
+147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
+148:     }
+149:     // Assert trails were created
+150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
+151:     // Act - Leave hero section
+152:     fireEvent.mouseLeave(heroSection);
+153:     // Assert trails were cleaned up
+154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+155:   });
+156:   test("should remove trail element when animation ends", () => {
+157:     // Arrange
+158:     render(<TestWrapper />);
+159:     const heroSection = screen.getByTestId("hero-section");
+160:     // Act - Create trail
+161:     fireEvent.mouseEnter(heroSection);
+162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
+163:     // Assert trail was created
+164:     const trailElements = screen.getAllByTestId("matrix-trail");
+165:     expect(trailElements).toHaveLength(1);
+166:     // Act - Trigger animation end
+167:     fireEvent.animationEnd(trailElements[0]);
+168:     // Assert trail was removed
+169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+170:   });
+171:   test("should update cursor position without creating trails when not hovered", () => {
+172:     // Arrange
+173:     render(<TestWrapper />);
+174:     const heroSection = screen.getByTestId("hero-section");
+175:     // Act - Move mouse without entering (no mouseenter, so not hovered)
+176:     fireEvent.mouseMove(heroSection, { clientX: 50, clientY: 75 });
+177:     const cursor = screen.getByTestId("matrix-cursor");
+178:     // Assert - Position updates but no trails created
+179:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe("50px");
+180:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe("75px");
+181:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
+182:   });
+183: });
+````
+
 ## File: src/__tests__/Animations/RotatingLoader.test.tsx
 ````typescript
  1: import React from "react";
@@ -6226,6 +6413,83 @@ tsconfig.json
 69:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
 70:   });
 71: });
+````
+
+## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
+ 4: describe("VolunteerWorkTabContent", () => {
+ 5:   it("renders volunteer work items with all fields", () => {
+ 6:     // Arrange
+ 7:     const mockVolunteerWork = [
+ 8:       {
+ 9:         period: "2020-2022",
+10:         organization: "Open Source Foundation",
+11:         role: "Maintainer",
+12:         description: "Maintained open source projects",
+13:       },
+14:     ];
+15:     // Act
+16:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+17:     // Assert
+18:     expect(
+19:       screen.getByText("2020-2022 - Open Source Foundation"),
+20:     ).toBeInTheDocument();
+21:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
+22:     expect(
+23:       screen.getByText("Maintained open source projects"),
+24:     ).toBeInTheDocument();
+25:   });
+26:   it("renders with missing period and organization (nullish coalescing branches)", () => {
+27:     // Arrange
+28:     const mockVolunteerWork = [
+29:       {
+30:         role: "Volunteer",
+31:         description: "Helped with events",
+32:       },
+33:     ];
+34:     // Act
+35:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+36:     // Assert
+37:     expect(screen.getByText(/-/)).toBeInTheDocument();
+38:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
+39:   });
+40:   it("renders without role (conditional branch)", () => {
+41:     // Arrange
+42:     const mockVolunteerWork = [
+43:       {
+44:         period: "2021-2023",
+45:         organization: "Community Group",
+46:         description: "Community outreach",
+47:       },
+48:     ];
+49:     // Act
+50:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+51:     // Assert
+52:     expect(
+53:       screen.getByText("2021-2023 - Community Group"),
+54:     ).toBeInTheDocument();
+55:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
+56:   });
+57:   it("renders with undefined volunteerWork", () => {
+58:     // Act
+59:     render(<VolunteerWorkTabContent />);
+60:     // Assert
+61:     expect(
+62:       screen.queryByText("Open Source Foundation"),
+63:     ).not.toBeInTheDocument();
+64:   });
+65:   it("renders with empty volunteerWork array", () => {
+66:     // Act
+67:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
+68:     // Assert
+69:     expect(
+70:       screen.queryByText("Open Source Foundation"),
+71:     ).not.toBeInTheDocument();
+72:   });
+73: });
 ````
 
 ## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
@@ -20251,270 +20515,6 @@ tsconfig.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: src/__tests__/Animations/MatrixCursor.test.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { render, fireEvent, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-  5: import { useMobile } from "@/hooks/useMobile";
-  6: // Mock useMobile hook
-  7: jest.mock("@/hooks/useMobile");
-  8: const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
-  9: // Wrapper component to provide ref
- 10: const TestWrapper = () => {
- 11:   const heroRef = useRef<HTMLDivElement>(null);
- 12:   return (
- 13:     <>
- 14:       <div ref={heroRef} data-testid="hero-section" />
- 15:       <MatrixCursor heroRef={heroRef} />
- 16:     </>
- 17:   );
- 18: };
- 19: describe("MatrixCursor", () => {
- 20:   beforeEach(() => {
- 21:     // Default to desktop view
- 22:     mockUseMobile.mockReturnValue(false);
- 23:   });
- 24:   afterEach(() => {
- 25:     jest.clearAllMocks();
- 26:   });
- 27:   test("should not render when heroRef is null", () => {
- 28:     // Arrange
- 29:     const NullRefWrapper = () => {
- 30:       const heroRef = useRef<HTMLDivElement>(null);
- 31:       // Don't render the div, so heroRef.current will be null
- 32:       return <MatrixCursor heroRef={heroRef} />;
- 33:     };
- 34:     // Act
- 35:     render(<NullRefWrapper />);
- 36:     // Assert
- 37:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 38:   });
- 39:   test("should not render on mobile devices", () => {
- 40:     // Arrange
- 41:     mockUseMobile.mockReturnValue(true);
- 42:     // Act
- 43:     render(<TestWrapper />);
- 44:     // Assert
- 45:     expect(screen.queryByTestId("matrix-cursor")).not.toBeInTheDocument();
- 46:   });
- 47:   test("should update cursor position and styles on mousemove", () => {
- 48:     // Arrange
- 49:     render(<TestWrapper />);
- 50:     const heroSection = screen.getByTestId("hero-section");
- 51:     const expectedPosition = { x: 100, y: 200 };
- 52:     // Act
- 53:     fireEvent.mouseEnter(heroSection);
- 54:     fireEvent.mouseMove(heroSection, {
- 55:       clientX: expectedPosition.x,
- 56:       clientY: expectedPosition.y,
- 57:     });
- 58:     const cursor = screen.getByTestId("matrix-cursor");
- 59:     // Assert
- 60:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe(
- 61:       `${expectedPosition.x}px`,
- 62:     );
- 63:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe(
- 64:       `${expectedPosition.y}px`,
- 65:     );
- 66:   });
- 67:   test("should add matrix-cursor class on mouseenter", () => {
- 68:     // Arrange
- 69:     render(<TestWrapper />);
- 70:     const heroSection = screen.getByTestId("hero-section");
- 71:     // Act
- 72:     fireEvent.mouseEnter(heroSection);
- 73:     const cursor = screen.getByTestId("matrix-cursor");
- 74:     // Assert
- 75:     expect(cursor).toHaveClass("matrix-cursor");
- 76:     expect(heroSection.style.cursor).toBe("none");
- 77:   });
- 78:   test("should remove matrix-cursor class on mouseleave", () => {
- 79:     // Arrange
- 80:     render(<TestWrapper />);
- 81:     const heroSection = screen.getByTestId("hero-section");
- 82:     // Act - First add the class
- 83:     fireEvent.mouseEnter(heroSection);
- 84:     const cursor = screen.getByTestId("matrix-cursor");
- 85:     // Assert initial state
- 86:     expect(cursor).toHaveClass("matrix-cursor");
- 87:     // Act - Then remove it
- 88:     fireEvent.mouseLeave(heroSection);
- 89:     // Assert final state
- 90:     expect(cursor).not.toHaveClass("matrix-cursor");
- 91:     expect(heroSection.style.cursor).toBe("");
- 92:   });
- 93:   test("should cleanup event listeners and cursor styles on unmount", () => {
- 94:     // Arrange
- 95:     const { unmount } = render(<TestWrapper />);
- 96:     const heroSection = screen.getByTestId("hero-section");
- 97:     // Act - Set initial state
- 98:     fireEvent.mouseEnter(heroSection);
- 99:     // Assert initial state
-100:     expect(heroSection.style.cursor).toBe("none");
-101:     // Act - Unmount component
-102:     unmount();
-103:     // Assert cleanup
-104:     expect(heroSection.style.cursor).toBe("");
-105:   });
-106:   test("should create trail elements on mousemove when hovered", () => {
-107:     // Arrange
-108:     render(<TestWrapper />);
-109:     const heroSection = screen.getByTestId("hero-section");
-110:     const movePositions = [
-111:       { x: 100, y: 100 },
-112:       { x: 110, y: 110 },
-113:       { x: 120, y: 120 },
-114:     ];
-115:     // Act - Enable trail creation
-116:     fireEvent.mouseEnter(heroSection);
-117:     // Act & Assert - Create and verify trails
-118:     movePositions.forEach((pos, index) => {
-119:       fireEvent.mouseMove(heroSection, { clientX: pos.x, clientY: pos.y });
-120:       expect(screen.getAllByTestId("matrix-trail")).toHaveLength(index + 1);
-121:     });
-122:   });
-123:   test("should limit the number of trail elements", () => {
-124:     // Arrange
-125:     render(<TestWrapper />);
-126:     const heroSection = screen.getByTestId("hero-section");
-127:     const maxTrails = 20;
-128:     const totalMoves = 25;
-129:     // Act
-130:     fireEvent.mouseEnter(heroSection);
-131:     for (let i = 0; i < totalMoves; i++) {
-132:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-133:     }
-134:     // Assert
-135:     expect(screen.getAllByTestId("matrix-trail").length).toBeLessThanOrEqual(
-136:       maxTrails,
-137:     );
-138:   });
-139:   test("should cleanup trail elements on mouseleave", () => {
-140:     // Arrange
-141:     render(<TestWrapper />);
-142:     const heroSection = screen.getByTestId("hero-section");
-143:     const trailCount = 5;
-144:     // Act - Create trails
-145:     fireEvent.mouseEnter(heroSection);
-146:     for (let i = 0; i < trailCount; i++) {
-147:       fireEvent.mouseMove(heroSection, { clientX: i * 10, clientY: i * 10 });
-148:     }
-149:     // Assert trails were created
-150:     expect(screen.getAllByTestId("matrix-trail").length).toBeGreaterThan(0);
-151:     // Act - Leave hero section
-152:     fireEvent.mouseLeave(heroSection);
-153:     // Assert trails were cleaned up
-154:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-155:   });
-156:   test("should remove trail element when animation ends", () => {
-157:     // Arrange
-158:     render(<TestWrapper />);
-159:     const heroSection = screen.getByTestId("hero-section");
-160:     // Act - Create trail
-161:     fireEvent.mouseEnter(heroSection);
-162:     fireEvent.mouseMove(heroSection, { clientX: 100, clientY: 100 });
-163:     // Assert trail was created
-164:     const trailElements = screen.getAllByTestId("matrix-trail");
-165:     expect(trailElements).toHaveLength(1);
-166:     // Act - Trigger animation end
-167:     fireEvent.animationEnd(trailElements[0]);
-168:     // Assert trail was removed
-169:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-170:   });
-171:   test("should update cursor position without creating trails when not hovered", () => {
-172:     // Arrange
-173:     render(<TestWrapper />);
-174:     const heroSection = screen.getByTestId("hero-section");
-175:     // Act - Move mouse without entering (no mouseenter, so not hovered)
-176:     fireEvent.mouseMove(heroSection, { clientX: 50, clientY: 75 });
-177:     const cursor = screen.getByTestId("matrix-cursor");
-178:     // Assert - Position updates but no trails created
-179:     expect(cursor.style.getPropertyValue("--cursor-x")).toBe("50px");
-180:     expect(cursor.style.getPropertyValue("--cursor-y")).toBe("75px");
-181:     expect(screen.queryAllByTestId("matrix-trail")).toHaveLength(0);
-182:   });
-183: });
-````
-
-## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
- 4: describe("VolunteerWorkTabContent", () => {
- 5:   it("renders volunteer work items with all fields", () => {
- 6:     // Arrange
- 7:     const mockVolunteerWork = [
- 8:       {
- 9:         period: "2020-2022",
-10:         organization: "Open Source Foundation",
-11:         role: "Maintainer",
-12:         description: "Maintained open source projects",
-13:       },
-14:     ];
-15:     // Act
-16:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-17:     // Assert
-18:     expect(
-19:       screen.getByText("2020-2022 - Open Source Foundation"),
-20:     ).toBeInTheDocument();
-21:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
-22:     expect(
-23:       screen.getByText("Maintained open source projects"),
-24:     ).toBeInTheDocument();
-25:   });
-26:   it("renders with missing period and organization (nullish coalescing branches)", () => {
-27:     // Arrange
-28:     const mockVolunteerWork = [
-29:       {
-30:         role: "Volunteer",
-31:         description: "Helped with events",
-32:       },
-33:     ];
-34:     // Act
-35:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-36:     // Assert
-37:     expect(screen.getByText(/-/)).toBeInTheDocument();
-38:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
-39:   });
-40:   it("renders without role (conditional branch)", () => {
-41:     // Arrange
-42:     const mockVolunteerWork = [
-43:       {
-44:         period: "2021-2023",
-45:         organization: "Community Group",
-46:         description: "Community outreach",
-47:       },
-48:     ];
-49:     // Act
-50:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-51:     // Assert
-52:     expect(
-53:       screen.getByText("2021-2023 - Community Group"),
-54:     ).toBeInTheDocument();
-55:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
-56:   });
-57:   it("renders with undefined volunteerWork", () => {
-58:     // Act
-59:     render(<VolunteerWorkTabContent />);
-60:     // Assert
-61:     expect(
-62:       screen.queryByText("Open Source Foundation"),
-63:     ).not.toBeInTheDocument();
-64:   });
-65:   it("renders with empty volunteerWork array", () => {
-66:     // Act
-67:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
-68:     // Assert
-69:     expect(
-70:       screen.queryByText("Open Source Foundation"),
-71:     ).not.toBeInTheDocument();
-72:   });
-73: });
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -20620,7 +20620,7 @@ tsconfig.json
 17:     "react": "^19.2.4",
 18:     "react-dom": "^19.2.4",
 19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.16.0",
+20:     "sanity": "^5.17.1",
 21:     "styled-components": "^6.3.11"
 22:   },
 23:   "devDependencies": {
@@ -20695,7 +20695,7 @@ tsconfig.json
  45:     "react-error-boundary": "^5.0.0",
  46:     "react-hook-form": "^7.71.2",
  47:     "react-icons": "^5.6.0",
- 48:     "sanity": "5.16.0",
+ 48:     "sanity": "5.17.1",
  49:     "sitemap": "^9.0.1",
  50:     "tar-fs": "^3.1.2",
  51:     "ts-node": "^10.9.2",
@@ -20751,7 +20751,7 @@ tsconfig.json
 101:       "brace-expansion": ">=5.0.5",
 102:       "minimatch": ">=10.2.4",
 103:       "picomatch@<2.3.2": "2.3.2",
-104:       "picomatch@>=3 <3.0.2": "3.0.2",
+104:       "picomatch@>=3 <3.0.2": "4.0.3",
 105:       "picomatch@>=4 <4.0.4": "4.0.4",
 106:       "rollup": ">=4.59.0",
 107:       "tar": "7.5.11",
