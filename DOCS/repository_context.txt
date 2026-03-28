@@ -415,6 +415,82 @@ tsconfig.json
 
 # Files
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.14.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.14.0-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -11336,6 +11412,73 @@ tsconfig.json
 56: export default Button;
 ````
 
+## File: src/components/UI/ContentLoader.component.tsx
+````typescript
+ 1: import Skeleton from "./Skeleton.component";
+ 2: interface ContentLoaderProps {
+ 3:   /** Type of content being loaded */
+ 4:   type?: "hero" | "section" | "custom";
+ 5:   /** Number of sections to show (for section type) */
+ 6:   sections?: number;
+ 7:   /** Custom content for flexibility */
+ 8:   children?: React.ReactNode;
+ 9: }
+10: const ContentLoader = ({
+11:   type = "section",
+12:   sections = 1,
+13:   children,
+14: }: ContentLoaderProps) => {
+15:   if (type === "custom" && children) {
+16:     return <>{children}</>;
+17:   }
+18:   if (type === "hero") {
+19:     return (
+20:       <div className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
+21:         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900" />
+22:         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
+23:           <Skeleton height="h-14" width="w-32 mx-auto" shimmer />
+24:           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" shimmer />
+25:           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
+26:           <div className="flex justify-center space-x-4 mt-4">
+27:             {[1, 2, 3].map((iconNum) => (
+28:               <Skeleton key={`icon-skeleton-${iconNum}`} height="h-10 w-10" rounded shimmer />
+29:             ))}
+30:           </div>
+31:         </div>
+32:       </div>
+33:     );
+34:   }
+35:   // Default to section loader
+36:   return (
+37:     <div className="w-full overflow-hidden -mb-8">
+38:       {Array.from({ length: sections }, (_, index) => index + 1).map(
+39:         (sectionNum) => (
+40:           <div
+41:             key={`content-section-${sectionNum}`}
+42:             data-testid="content-section"
+43:             className={`md:py-6 relative contain-layout ${
+44:               sectionNum % 2 === 0 ? "bg-slate-800/30" : "bg-slate-900"
+45:             }`}
+46:           >
+47:           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
+48:             <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
+49:             <div className="max-w-3xl mx-auto space-y-3 mt-4">
+50:               <Skeleton shimmer />
+51:               <Skeleton width="w-5/6" shimmer />
+52:               <Skeleton width="w-4/6" shimmer />
+53:               <Skeleton shimmer />
+54:               <Skeleton width="w-3/4" shimmer />
+55:             </div>
+56:           </div>
+57:           </div>
+58:         ),
+59:       )}
+60:     </div>
+61:   );
+62: };
+63: export default ContentLoader;
+````
+
 ## File: src/components/UI/InputField.component.tsx
 ````typescript
   1: import React from "react";
@@ -19382,82 +19525,6 @@ tsconfig.json
 36: }
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.14.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.14.0-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -20475,73 +20542,6 @@ tsconfig.json
 73: });
 ````
 
-## File: src/components/UI/ContentLoader.component.tsx
-````typescript
- 1: import Skeleton from "./Skeleton.component";
- 2: interface ContentLoaderProps {
- 3:   /** Type of content being loaded */
- 4:   type?: "hero" | "section" | "custom";
- 5:   /** Number of sections to show (for section type) */
- 6:   sections?: number;
- 7:   /** Custom content for flexibility */
- 8:   children?: React.ReactNode;
- 9: }
-10: const ContentLoader = ({
-11:   type = "section",
-12:   sections = 1,
-13:   children,
-14: }: ContentLoaderProps) => {
-15:   if (type === "custom" && children) {
-16:     return <>{children}</>;
-17:   }
-18:   if (type === "hero") {
-19:     return (
-20:       <div className="relative flex flex-col justify-center text-lg h-[32rem] md:h-[30rem] overflow-hidden w-full">
-21:         <div className="absolute inset-0 bg-slate-800 md:bg-slate-900" />
-22:         <div className="relative z-10 text-center px-4 md:px-0 space-y-4">
-23:           <Skeleton height="h-14" width="w-32 mx-auto" shimmer />
-24:           <Skeleton height="h-7" width="w-96 max-w-full mx-auto" shimmer />
-25:           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
-26:           <div className="flex justify-center space-x-4 mt-4">
-27:             {[1, 2, 3].map((iconNum) => (
-28:               <Skeleton key={`icon-skeleton-${iconNum}`} height="h-10 w-10" rounded shimmer />
-29:             ))}
-30:           </div>
-31:         </div>
-32:       </div>
-33:     );
-34:   }
-35:   // Default to section loader
-36:   return (
-37:     <div className="w-full overflow-hidden -mb-8">
-38:       {Array.from({ length: sections }, (_, index) => index + 1).map(
-39:         (sectionNum) => (
-40:           <div
-41:             key={`content-section-${sectionNum}`}
-42:             data-testid="content-section"
-43:             className={`md:py-6 relative contain-layout ${
-44:               sectionNum % 2 === 0 ? "bg-slate-800/30" : "bg-slate-900"
-45:             }`}
-46:           >
-47:           <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
-48:             <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
-49:             <div className="max-w-3xl mx-auto space-y-3 mt-4">
-50:               <Skeleton shimmer />
-51:               <Skeleton width="w-5/6" shimmer />
-52:               <Skeleton width="w-4/6" shimmer />
-53:               <Skeleton shimmer />
-54:               <Skeleton width="w-3/4" shimmer />
-55:             </div>
-56:           </div>
-57:           </div>
-58:         ),
-59:       )}
-60:     </div>
-61:   );
-62: };
-63: export default ContentLoader;
-````
-
 ## File: .github/workflows/lighthouse.yml
 ````yaml
  1: name: Lighthouse CI
@@ -20689,7 +20689,7 @@ tsconfig.json
  39:     "motion": "^12.38.0",
  40:     "next": "^16.1.6",
  41:     "next-sanity": "^12.1.1",
- 42:     "path-to-regexp": "^8.3.0",
+ 42:     "path-to-regexp": "^8.4.0",
  43:     "react": "^19.2.4",
  44:     "react-dom": "^19.2.4",
  45:     "react-error-boundary": "^5.0.0",
@@ -20748,20 +20748,24 @@ tsconfig.json
  98:   "pnpm": {
  99:     "overrides": {
 100:       "@pnpm/npm-conf": ">=3.0.2",
-101:       "minimatch": ">=10.2.4",
-102:       "rollup": ">=4.59.0",
-103:       "tar": "7.5.11",
-104:       "undici": ">=6.24.0"
-105:     },
-106:     "onlyBuiltDependencies": [
-107:       "@swc/core",
-108:       "cypress",
-109:       "esbuild",
-110:       "msw",
-111:       "puppeteer",
-112:       "sharp",
-113:       "unrs-resolver"
-114:     ]
-115:   }
-116: }
+101:       "brace-expansion": ">=5.0.5",
+102:       "minimatch": ">=10.2.4",
+103:       "picomatch@<2.3.2": "2.3.2",
+104:       "picomatch@>=3 <3.0.2": "3.0.2",
+105:       "picomatch@>=4 <4.0.4": "4.0.4",
+106:       "rollup": ">=4.59.0",
+107:       "tar": "7.5.11",
+108:       "undici": ">=6.24.0"
+109:     },
+110:     "onlyBuiltDependencies": [
+111:       "@swc/core",
+112:       "cypress",
+113:       "esbuild",
+114:       "msw",
+115:       "puppeteer",
+116:       "sharp",
+117:       "unrs-resolver"
+118:     ]
+119:   }
+120: }
 ````
