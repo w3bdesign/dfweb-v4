@@ -20151,6 +20151,63 @@ tsconfig.json
 43:           browser: ${{ matrix.browser }}
 ````
 
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
 ## File: .github/workflows/pa11y.yml
 ````yaml
  1: name: A11y
@@ -20534,69 +20591,12 @@ tsconfig.json
 15:   "author": "",
 16:   "license": "ISC",
 17:   "peerDependencies": {
-18:     "eslint": ">=10.0.3"
+18:     "eslint": ">=10.1.0"
 19:   },
 20:   "devDependencies": {
 21:     "typescript": "^5.9.3"
 22:   }
 23: }
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     timeout-minutes: 30
- 7:     steps:
- 8:       - uses: actions/checkout@v6
- 9:       - name: Setup Node.js
-10:         uses: actions/setup-node@v6
-11:         with:
-12:           node-version: "24"
-13:       - name: Setup pnpm
-14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-15:         with:
-16:           version: 10
-17:           run_install: false
-18:       - name: Get pnpm store directory
-19:         shell: bash
-20:         run: |
-21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-22:       - name: Setup pnpm cache
-23:         uses: actions/cache@v5
-24:         with:
-25:           path: ${{ env.STORE_PATH }}
-26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-27:           restore-keys: |
-28:             ${{ runner.os }}-pnpm-store-
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
 ````
 
 ## File: studio/package.json
@@ -20626,7 +20626,7 @@ tsconfig.json
 23:   "devDependencies": {
 24:     "@sanity/eslint-config-studio": "^6.0.0",
 25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.0.3",
+26:     "eslint": "^10.1.0",
 27:     "prettier": "^3.8.1",
 28:     "typescript": "^5.9.3"
 29:   },
@@ -20722,7 +20722,7 @@ tsconfig.json
  72:     "axe-core": "^4.11.1",
  73:     "cypress": "15.12.0",
  74:     "cypress-axe": "^1.7.0",
- 75:     "eslint": "10.0.3",
+ 75:     "eslint": "10.1.0",
  76:     "eslint-config-next": "16.2.1",
  77:     "eslint-config-prettier": "^10.1.8",
  78:     "eslint-plugin-jest": "^29.15.0",
