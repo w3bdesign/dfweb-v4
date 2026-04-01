@@ -11640,160 +11640,6 @@ tsconfig.json
 44: export default Header;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: /**
- 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 11:  * @param {Object} props
- 12:  * @param {ILink[]} props.links - Array of navigation link objects
- 13:  * @returns {JSX.Element} The rendered MobileMenu component
- 14:  */
- 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 17:   const closeMenu = () => toggleExpanded(0);
- 18:   const pathname = usePathname();
- 19:   const menuVariants: Variants = {
- 20:     closed: {
- 21:       x: "125%",
- 22:       transition: {
- 23:         type: "spring",
- 24:         stiffness: 60,
- 25:         damping: 10,
- 26:         delay: 0.3,
- 27:       },
- 28:     },
- 29:     open: {
- 30:       x: 0,
- 31:       transition: {
- 32:         type: "spring",
- 33:         stiffness: 60,
- 34:         damping: 10,
- 35:       },
- 36:     },
- 37:   };
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             aria-hidden={!isExpanded}
- 73:             className="fixed top-0 right-0 w-[calc(100vw+20px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 74:             initial="closed"
- 75:             animate="open"
- 76:             exit="closed"
- 77:             variants={menuVariants}
- 78:           >
- 79:             <nav aria-label="Navigasjon" className="w-full">
- 80:               <m.ul
- 81:                 className="w-full"
- 82:                 initial="closed"
- 83:                 animate="open"
- 84:                 exit="closed"
- 85:                 variants={{
- 86:                   open: {
- 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 88:                   },
- 89:                   closed: {
- 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 91:                   },
- 92:                 }}
- 93:               >
- 94:                 {links?.map(({ title, name, href, externalLink }, index) => (
- 95:                   <m.li
- 96:                     key={title}
- 97:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
- 98:                     data-cy="mobile-menu-item"
- 99:                     custom={index}
-100:                     variants={itemVariants}
-101:                   >
-102:                     {externalLink ? (
-103:                       <a
-104:                         aria-label={name}
-105:                         href={href}
-106:                         target="_blank"
-107:                         rel="noreferrer"
-108:                         data-testid={`mobil-${name}`}
-109:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
-110:                       >
-111:                         {name}
-112:                       </a>
-113:                     ) : (
-114:                       <Link
-115:                         href={href ?? ""}
-116:                         data-testid={`mobil-${name}`}
-117:                         prefetch={true}
-118:                         onClick={closeMenu}
-119:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-120:                           pathname === href ? "text-green-400" : ""
-121:                         }`}
-122:                       >
-123:                         <div className="glitch relative" data-text={name}>
-124:                           {name}
-125:                           <m.span
-126:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-127:                               pathname === href ? "bg-green-400" : "bg-white"
-128:                             }`}
-129:                             initial={{
-130:                               width: pathname === href ? "100%" : "0%",
-131:                             }}
-132:                             animate={{
-133:                               width: pathname === href ? "100%" : "0%",
-134:                             }}
-135:                             transition={{ duration: 0.3 }}
-136:                           />
-137:                         </div>
-138:                       </Link>
-139:                     )}
-140:                   </m.li>
-141:                 ))}
-142:               </m.ul>
-143:             </nav>
-144:           </m.div>
-145:         )}
-146:       </AnimatePresence>
-147:     </div>
-148:   );
-149: };
-150: export default MobileMenu;
-````
-
 ## File: src/components/Layout/NavigationLink.component.tsx
 ````typescript
  1: import React from "react";
@@ -20549,6 +20395,160 @@ tsconfig.json
 70:         with:
 71:           command: "monitor"
 72:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: /**
+ 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 11:  * @param {Object} props
+ 12:  * @param {ILink[]} props.links - Array of navigation link objects
+ 13:  * @returns {JSX.Element} The rendered MobileMenu component
+ 14:  */
+ 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 17:   const closeMenu = () => toggleExpanded(0);
+ 18:   const pathname = usePathname();
+ 19:   const menuVariants: Variants = {
+ 20:     closed: {
+ 21:       x: "125%",
+ 22:       transition: {
+ 23:         type: "spring",
+ 24:         stiffness: 60,
+ 25:         damping: 10,
+ 26:         delay: 0.3,
+ 27:       },
+ 28:     },
+ 29:     open: {
+ 30:       x: 0,
+ 31:       transition: {
+ 32:         type: "spring",
+ 33:         stiffness: 60,
+ 34:         damping: 10,
+ 35:       },
+ 36:     },
+ 37:   };
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             aria-hidden={!isExpanded}
+ 73:             className="fixed inset-[-1rem] bg-gray-800 flex items-center justify-center z-40"
+ 74:             initial="closed"
+ 75:             animate="open"
+ 76:             exit="closed"
+ 77:             variants={menuVariants}
+ 78:           >
+ 79:             <nav aria-label="Navigasjon" className="w-full">
+ 80:               <m.ul
+ 81:                 className="w-full"
+ 82:                 initial="closed"
+ 83:                 animate="open"
+ 84:                 exit="closed"
+ 85:                 variants={{
+ 86:                   open: {
+ 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 88:                   },
+ 89:                   closed: {
+ 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 91:                   },
+ 92:                 }}
+ 93:               >
+ 94:                 {links?.map(({ title, name, href, externalLink }, index) => (
+ 95:                   <m.li
+ 96:                     key={title}
+ 97:                     className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+ 98:                     data-cy="mobile-menu-item"
+ 99:                     custom={index}
+100:                     variants={itemVariants}
+101:                   >
+102:                     {externalLink ? (
+103:                       <a
+104:                         aria-label={name}
+105:                         href={href}
+106:                         target="_blank"
+107:                         rel="noreferrer"
+108:                         data-testid={`mobil-${name}`}
+109:                         className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+110:                       >
+111:                         {name}
+112:                       </a>
+113:                     ) : (
+114:                       <Link
+115:                         href={href ?? ""}
+116:                         data-testid={`mobil-${name}`}
+117:                         prefetch={true}
+118:                         onClick={closeMenu}
+119:                         className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+120:                           pathname === href ? "text-green-400" : ""
+121:                         }`}
+122:                       >
+123:                         <div className="glitch relative" data-text={name}>
+124:                           {name}
+125:                           <m.span
+126:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+127:                               pathname === href ? "bg-green-400" : "bg-white"
+128:                             }`}
+129:                             initial={{
+130:                               width: pathname === href ? "100%" : "0%",
+131:                             }}
+132:                             animate={{
+133:                               width: pathname === href ? "100%" : "0%",
+134:                             }}
+135:                             transition={{ duration: 0.3 }}
+136:                           />
+137:                         </div>
+138:                       </Link>
+139:                     )}
+140:                   </m.li>
+141:                 ))}
+142:               </m.ul>
+143:             </nav>
+144:           </m.div>
+145:         )}
+146:       </AnimatePresence>
+147:     </div>
+148:   );
+149: };
+150: export default MobileMenu;
 ````
 
 ## File: src/utils/eslint/.npmrc
