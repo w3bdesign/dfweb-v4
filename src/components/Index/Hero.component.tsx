@@ -46,7 +46,7 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
       </div>
       <div className="relative z-10">
         <div
-          className="text-center px-4 md:px-0"
+          className="text-center px-4 md:px-0 max-w-xs md:max-w-none mx-auto"
           data-testid="fade-in"
         >
           <FadeIn delay={0.2}>
