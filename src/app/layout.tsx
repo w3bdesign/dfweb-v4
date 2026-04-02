@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -15,7 +15,7 @@ import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 
-const inter = Inter({ subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
@@ -59,7 +59,7 @@ export default async function RootLayout({
       </head>
 
       <body
-        className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+        className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
       >
         <LazyMotionProvider>
           <SkipLink />
