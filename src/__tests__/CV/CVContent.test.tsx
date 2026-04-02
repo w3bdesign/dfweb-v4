@@ -16,6 +16,7 @@ const mockCVData = {
   keyQualifications: ["Qualification 1", "Qualification 2"],
   experience: [
     {
+      _key: "exp-1",
       period: "2020-2022",
       company: "Example Company",
       role: "Software Developer",
@@ -24,6 +25,7 @@ const mockCVData = {
   ],
   education: [
     {
+      _key: "edu-1",
       period: "2016-2020",
       institution: "University of Example",
       degree: "Bachelor in Computer Science",
@@ -32,6 +34,7 @@ const mockCVData = {
   ],
   volunteerWork: [
     {
+      _key: "vol-1",
       period: "2023-2024",
       organization: "AI Community",
       role: "Technical Lead",
