@@ -8585,117 +8585,6 @@ tsconfig.json
 99: });
 ````
 
-## File: src/__tests__/UI/Pill.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, fireEvent } from "@testing-library/react";
-  3: import Pill from "@/components/UI/Pill.component";
-  4: interface LinkProps {
-  5:   children: React.ReactNode;
-  6:   href: string;
-  7: }
-  8: // Mock Next.js Link component
-  9: jest.mock("next/link", () => {
- 10:   return function MockLink({ children, href }: LinkProps) {
- 11:     return <a href={href}>{children}</a>;
- 12:   };
- 13: });
- 14: describe("Pill Component", () => {
- 15:   describe("rendering", () => {
- 16:     it("renders as button with default props", () => {
- 17:       // Arrange
- 18:       const text = "Test Pill";
- 19:       // Act
- 20:       render(<Pill text={text} />);
- 21:       const pill = screen.getByText(text);
- 22:       // Assert
- 23:       expect(pill).toBeInTheDocument();
- 24:       expect(pill.tagName).toBe("BUTTON");
- 25:       expect(pill).toHaveAttribute("data-text", text);
- 26:     });
- 27:     it("renders as link when href is provided", () => {
- 28:       // Arrange
- 29:       const props = {
- 30:         text: "Link Pill",
- 31:         href: "/test",
- 32:       };
- 33:       // Act
- 34:       render(<Pill {...props} />);
- 35:       const pill = screen.getByText(props.text);
- 36:       // Assert
- 37:       expect(pill).toBeInTheDocument();
- 38:       expect(pill.tagName).toBe("A");
- 39:       expect(pill).toHaveAttribute("href", props.href);
- 40:       expect(pill).toHaveAttribute("data-text", props.text);
- 41:     });
- 42:     it("applies custom className alongside base classes", () => {
- 43:       // Arrange
- 44:       const props = {
- 45:         text: "Custom Class",
- 46:         className: "custom-class",
- 47:       };
- 48:       const baseClasses = [
- 49:         "glitch",
- 50:         "text-white",
- 51:         "m-4",
- 52:         "text-xl",
- 53:         "p-6",
- 54:         "mt-4",
- 55:         "rounded-full",
- 56:         "transition",
- 57:         "duration-300",
- 58:         "ease-in-out",
- 59:         "transform",
- 60:         "bg-blue-600",
- 61:         "bg-opacity-20",
- 62:         "border-2",
- 63:         "border-blue-800",
- 64:         "border-opacity-30",
- 65:         "hover:bg-blue-400",
- 66:         "hover:bg-opacity-30",
- 67:         "backdrop-blur-sm",
- 68:       ];
- 69:       // Act
- 70:       render(<Pill {...props} />);
- 71:       const pill = screen.getByText(props.text);
- 72:       // Assert
- 73:       expect(pill).toHaveClass(...baseClasses, props.className);
- 74:     });
- 75:   });
- 76:   describe("interactions", () => {
- 77:     it("calls onClick when clicked as button", () => {
- 78:       // Arrange
- 79:       const mockOnClick = jest.fn();
- 80:       const props = {
- 81:         text: "Clickable Pill",
- 82:         onClick: mockOnClick,
- 83:       };
- 84:       // Act
- 85:       render(<Pill {...props} />);
- 86:       const pill = screen.getByText(props.text);
- 87:       fireEvent.click(pill);
- 88:       // Assert
- 89:       expect(mockOnClick).toHaveBeenCalledTimes(1);
- 90:     });
- 91:     it("does not call onClick when rendered as link", () => {
- 92:       // Arrange
- 93:       const mockOnClick = jest.fn();
- 94:       const props = {
- 95:         text: "Link Pill",
- 96:         href: "/test",
- 97:         onClick: mockOnClick,
- 98:       };
- 99:       // Act
-100:       render(<Pill {...props} />);
-101:       const pill = screen.getByText(props.text);
-102:       fireEvent.click(pill);
-103:       // Assert
-104:       expect(mockOnClick).not.toHaveBeenCalled();
-105:     });
-106:   });
-107: });
-````
-
 ## File: src/__tests__/UI/Skeleton.test.tsx
 ````typescript
  1: import { render, screen } from "@testing-library/react";
@@ -9878,72 +9767,6 @@ tsconfig.json
 30: }
 ````
 
-## File: src/components/Animations/BounceInScroll.component.tsx
-````typescript
- 1: "use client";
- 2: import { useMemo } from "react";
- 3: import { Variants } from "motion/react";
- 4: import * as m from "motion/react-m";
- 5: import { IAnimateBounceProps } from "./types/Animations.types";
- 6: /**
- 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
- 8:  * @param {number} delay - Delay in seconds before the animation starts
- 9:  * @returns {Variants} Motion variants with the specified delay
-10:  */
-11: function createBounceVariants(delay: number): Variants {
-12:   return {
-13:     offscreen: {
-14:       y: 30,
-15:       opacity: 0,
-16:     },
-17:     onscreen: {
-18:       y: 0,
-19:       opacity: 1,
-20:       transition: {
-21:         type: "spring",
-22:         bounce: 0.5,
-23:         duration: 1.5,
-24:         delay,
-25:       },
-26:     },
-27:   };
-28: }
-29: /**
-30:  * Bounce in content when content becomes visible in viewport
-31:  * @function BounceInScroll
-32:  * @param {ReactNode} children - Children content to render
-33:  * @param {string} cssClass - CSS classes to apply to component
-34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
-35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
-36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
-37:  * @returns {JSX.Element} - Rendered component
-38:  */
-39: const BounceInScroll = ({
-40:   children,
-41:   cssClass,
-42:   viewAmount,
-43:   instant,
-44:   delay = 0,
-45: }: IAnimateBounceProps) => {
-46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
-47:   return (
-48:     <m.div
-49:       initial="offscreen"
-50:       animate={instant ? "onscreen" : undefined}
-51:       whileInView={instant ? undefined : "onscreen"}
-52:       viewport={
-53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
-54:       }
-55:       className={cssClass}
-56:       data-testid="bounceinscroll"
-57:     >
-58:       <m.div variants={variants}>{children}</m.div>
-59:     </m.div>
-60:   );
-61: };
-62: export default BounceInScroll;
-````
-
 ## File: src/components/Animations/FadeDown.component.tsx
 ````typescript
  1: import { Variants } from "motion/react";
@@ -11061,79 +10884,6 @@ tsconfig.json
 10: export default Fallback;
 ````
 
-## File: src/components/Index/Icons.component.tsx
-````typescript
- 1: import { IconType } from "react-icons";
- 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
- 3: import { SiTypescript, SiWordpress } from "react-icons/si";
- 4: import Grow from "../Animations/Grow.component";
- 5: interface IAnimateIcons {
- 6:   id: number;
- 7:   Icon: IconType;
- 8:   iconName: string;
- 9: }
-10: const AnimateIcons: IAnimateIcons[] = [
-11:   {
-12:     id: 0,
-13:     Icon: FaReact,
-14:     iconName: "React",
-15:   },
-16:   {
-17:     id: 1,
-18:     Icon: FaVuejs,
-19:     iconName: "VueJS",
-20:   },
-21:   {
-22:     id: 2,
-23:     Icon: SiTypescript,
-24:     iconName: "TypeScript",
-25:   },
-26:   {
-27:     id: 3,
-28:     Icon: SiWordpress,
-29:     iconName: "WordPress",
-30:   },
-31:   {
-32:     id: 4,
-33:     Icon: FaPhp,
-34:     iconName: "PHP",
-35:   },
-36: ];
-37: /**
-38:  * Icons component that renders SVG icons used on the front page
-39:  * Uses Framer Motion for animations to show the SVGs
-40:  * @returns {JSX.Element} The rendered Icons component
-41:  */
-42: const Icons = () => (
-43:   <div
-44:     data-testid="icons"
-45:     className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
-46:   >
-47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
-48:       <div className="relative" key={id}>
-49:         <Grow delay={2.5 + id * 0.2}>
-50:           <div className="relative group">
-51:             <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-[#00ff62]/30 group-hover:bg-slate-900/70">
-52:               <Icon
-53:                 data-testid={iconName}
-54:                 aria-label={`${iconName} ikon`}
-55:                 title={`${iconName} ikon`}
-56:                 size="2.5em"
-57:                 className="transition-all duration-300 group-hover:text-[#00ff62]"
-58:               />
-59:             </div>
-60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-[#00ff62]">
-61:               {iconName}
-62:             </span>
-63:           </div>
-64:         </Grow>
-65:       </div>
-66:     ))}
-67:   </div>
-68: );
-69: export default Icons;
-````
-
 ## File: src/components/Index/IndexContent.component.tsx
 ````typescript
  1: "use client";
@@ -11342,42 +11092,6 @@ tsconfig.json
 48: export default DesktopNavigation;
 ````
 
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: import type { Settings } from "@/types/sanity.types";
- 5: const iconContextValue = { className: "inline-block" } as const;
- 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
- 7: /**
- 8:  * Renders the footer for the application
- 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
-10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
-11:  * @returns {JSX.Element} - Rendered Footer component
-12:  */
-13: const Footer = ({ footerCopyrightText }: FooterProps) => (
-14:   <footer
-15:     className="mt-8"
-16:     aria-label="Innholdet for bunnteksten med copyright"
-17:     data-testid="footer"
-18:   >
-19:     <div className="bg-slate-800 shadow-sm min-h-[50px]">
-20:       <div className="w-full mx-auto p-6 text-center font-semibold">
-21:         <div className="flex justify-center items-center space-x-2">
-22:           <span>{footerCopyrightText}</span>
-23:           <IconContext.Provider value={iconContextValue}>
-24:             <BiCopyright size="1.2em" />
-25:           </IconContext.Provider>
-26:           <span>{new Date().getFullYear()}</span>
-27:         </div>
-28:       </div>
-29:     </div>
-30:   </footer>
-31: );
-32: export default Footer;
-````
-
 ## File: src/components/Layout/Hamburger.component.tsx
 ````typescript
  1: "use client";
@@ -11532,152 +11246,6 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: interface ProsjektCardProps extends Project {
- 8:   /** Stagger delay in seconds for coordinated group animations */
- 9:   staggerDelay?: number;
-10: }
-11: /**
-12:  * Renders a card displaying information about a single project.
-13:  * Uses the Project type definition from Sanity types.
-14:  *
-15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-16:  * @param {string} props.name - The name of the project.
-17:  * @param {string} [props.description] - A brief description of the project (optional).
-18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-23:  * @returns {JSX.Element} The rendered ProsjektCard component.
-24:  */
-25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-26:   name,
-27:   description,
-28:   subdescription,
-29:   projectimage,
-30:   urlwww,
-31:   urlgithub,
-32:   staggerDelay = 0,
-33: }) => {
-34:   return (
-35:     <div
-36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-shadow duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-white/5 hover:border-white/10"
-37:       data-testid="project-card"
-38:     >
-39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-40:         <div className="relative w-full md:h-60">
-41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-42:             {projectimage && (
-43:               <img
-44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)] hover:brightness-110"
-45:                 width={600}
-46:                 src={urlFor(projectimage)
-47:                   .width(600)
-48:                   .fit("max")
-49:                   .quality(100)
-50:                   .auto("format")
-51:                   .url()}
-52:                 alt={name}
-53:               />
-54:             )}
-55:           </div>
-56:         </div>
-57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-59:             {name}
-60:           </h2>
-61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
-62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-63:             {subdescription}
-64:           </p>
-65:           <div className="flex justify-center mt-4">
-66:             {urlwww && urlwww.length > 0 && (
-67:               <Button href={urlwww?.[0]?.url} renderAs="a">
-68:                 Besøk
-69:               </Button>
-70:             )}
-71:             {urlgithub && urlgithub.length > 0 && (
-72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-73:                 GitHub
-74:               </Button>
-75:             )}
-76:           </div>
-77:         </div>
-78:       </BounceInScroll>
-79:     </div>
-80:   );
-81: };
-82: export default ProsjektCard;
-````
-
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10:   "aria-label"?: string;
-11: }
-12: /**
-13:  * Button component that can be rendered as various HTML elements
-14:  * @param {Object} props
-15:  * @param {ReactNode} props.children - The content of the button
-16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-22:  * @returns {JSX.Element} The rendered Button component
-23:  */
-24: const Button = ({
-25:   children,
-26:   href,
-27:   renderAs,
-28:   type = "submit",
-29:   disabled = false,
-30:   download,
-31:   onClick,
-32:   "aria-label": ariaLabel,
-33:   ...props
-34: }: IButtonProps) => {
-35:   const Component = renderAs ?? "button";
-36:   const isLink = renderAs === "a";
-37:   const targetLink = isLink ? "_blank" : undefined;
-38:   return (
-39:     <Component
-40:       type={isLink ? undefined : type}
-41:       data-cy="submit"
-42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-emerald-700 rounded-sm hover:bg-emerald-800 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-md active:shadow-inner border border-white/5 hover:border-white/10 hover:brightness-110 active:brightness-95 cursor-pointer"
-43:       href={href}
-44:       target={targetLink}
-45:       disabled={disabled}
-46:       data-text={children}
-47:       download={download}
-48:       onClick={onClick}
-49:       aria-label={ariaLabel}
-50:       {...props}
-51:     >
-52:       {children}
-53:     </Component>
-54:   );
-55: };
-56: export default Button;
 ````
 
 ## File: src/components/UI/ContentLoader.component.tsx
@@ -11864,71 +11432,6 @@ tsconfig.json
 113:   );
 114: }
 115: export default InputField;
-````
-
-## File: src/components/UI/PageHeader.component.tsx
-````typescript
- 1: import type { ReactNode } from "react";
- 2: export interface IPageHeaderProps {
- 3:   children: ReactNode;
- 4: }
- 5: /**
- 6:  * PageHeader component for rendering the header for each page
- 7:  * @function PageHeader
- 8:  * @param {children?} children - HTML children to render in the page header component
- 9:  * @returns {ReactNode} - Rendered component
-10:  */
-11: const PageHeader = ({ children }: IPageHeaderProps) => (
-12:   <div className="px-4 p lg:px-0 xl:px-0 md:px-0">
-13:     <div className="container bg-slate-700 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
-14:       <h1 className="text-2xl text-center font-bold text-slate-100">
-15:         {children}
-16:       </h1>
-17:     </div>
-18:   </div>
-19: );
-20: export default PageHeader;
-````
-
-## File: src/components/UI/Pill.component.tsx
-````typescript
- 1: import React from "react";
- 2: interface PillProps {
- 3:   text: string;
- 4:   className?: string;
- 5:   href?: string;
- 6:   onClick?: () => void;
- 7: }
- 8: /**
- 9:  * Renders a Pill component.
-10:  *
-11:  * @param {PillProps} props - The properties for the Pill component.
-12:  * @param {string} props.text - The text to display in the Pill.
-13:  * @param {string} [props.className=''] - Additional CSS classes to apply to the Pill.
-14:  * @param {string} [props.href] - The URL to navigate to when the Pill is clicked.
-15:  * @param {() => void} [props.onClick] - The function to call when the Pill is clicked.
-16:  * @return {JSX.Element} The rendered Pill component.
-17:  */
-18: const Pill: React.FC<PillProps> = ({ text, className = "", href, onClick }) => {
-19:   const baseClasses = `glitch text-white m-4 text-xl p-6 mt-4 rounded-full transition duration-300 ease-in-out transform
-20:                  bg-blue-600 bg-opacity-20 border-2 border-blue-800 border-opacity-30                     
-21:                  hover:bg-blue-400 hover:bg-opacity-30
-22:                  hover:shadow-[0_0_15px_rgba(0,255,255,0.1),0_0_20px_rgba(0,255,255,0.1),inset_0_0_20px_rgba(0,255,255,0.1)]
-23:                  backdrop-blur-sm ${className}`;
-24:   if (href) {
-25:     return (
-26:       <a href={href} className={baseClasses} data-text={text}>
-27:         {text}
-28:       </a>
-29:     );
-30:   }
-31:   return (
-32:     <button className={baseClasses} onClick={onClick} data-text={text}>
-33:       {text}
-34:     </button>
-35:   );
-36: };
-37: export default Pill;
 ````
 
 ## File: src/components/UI/Skeleton.component.tsx
@@ -19566,181 +19069,178 @@ tsconfig.json
 36: }
 ````
 
-## File: src/app/globals.css
-````css
-  1: @import "tailwindcss";
-  2: @config '../../tailwind.config.ts';
-  3: @layer base {
-  4:   *,
-  5:   ::after,
-  6:   ::before,
-  7:   ::backdrop,
-  8:   ::file-selector-button {
-  9:     border-color: var(--color-gray-200, currentcolor);
- 10:   }
- 11: }
- 12: :root {
- 13:   /* Modern Color Scheme */
- 14:   --primary: #00ff62;
- 15:   --secondary: #00cc4e;
- 16:   --accent: #008529;
- 17:   --text: #e1e1e1;
- 18:   --background: var(--color-slate-900, #0f172a);
- 19:   /* Semantic Colors */
- 20:   --success: #00cc4e;
- 21:   --error: #ff4e4e;
- 22:   --warning: #ffb74e;
- 23:   --info: #4e9fff;
- 24:   /* Matrix Theme Colors */
- 25:   --matrix-light: #00ff62;
- 26:   --matrix: #00cc4e;
- 27:   --matrix-dark: #008529;
- 28:   --matrix-glow: rgba(0, 255, 98, 0.6);
- 29: }
- 30: body {
- 31:   background-color: var(--background);
- 32:   color: var(--text);
- 33:   font-family: "JetBrains Mono", monospace;
- 34: }
- 35: #matrixCanvas {
- 36:   opacity: 0.7;
- 37: }
- 38: /* Touch interaction improvements */
- 39: button,
- 40: a,
- 41: input,
- 42: textarea,
- 43: select {
- 44:   touch-action: manipulation; /* Prevents double-tap zoom */
- 45:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
- 46: }
- 47: /* Minimum touch targets for mobile */
- 48: @media (pointer: coarse) {
- 49:   button,
- 50:   a[role="button"],
- 51:   input[type="submit"],
- 52:   input[type="button"] {
- 53:     min-height: 44px;
- 54:     min-width: 44px;
- 55:   }
- 56: }
- 57: /* Scroll margin for anchor links */
- 58: [id] {
- 59:   scroll-margin-top: 100px;
- 60: }
- 61: h1[id],
- 62: h2[id],
- 63: h3[id],
- 64: h4[id],
- 65: h5[id],
- 66: h6[id] {
- 67:   scroll-margin-top: 120px;
- 68: }
- 69: /* Selection */
- 70: ::selection {
- 71:   background-color: var(--matrix-dark);
- 72:   color: #ffffff;
- 73: }
- 74: /* Scrollbar */
- 75: * {
- 76:   scrollbar-width: thin;
- 77:   scrollbar-color: var(--matrix-dark) #1a1a1a;
- 78: }
- 79: ::-webkit-scrollbar {
- 80:   width: 6px;
- 81: }
- 82: ::-webkit-scrollbar-track {
- 83:   background: #1a1a1a;
- 84: }
- 85: ::-webkit-scrollbar-thumb {
- 86:   background: var(--matrix-dark);
- 87:   border-radius: 3px;
- 88: }
- 89: ::-webkit-scrollbar-thumb:hover {
- 90:   background: var(--matrix-light);
- 91: }
- 92: /* Enhanced keyboard focus indicators for accessibility */
- 93: /* Exclude form elements which handle their own focus styling */
- 94: :focus-visible:not(input):not(textarea):not(select) {
- 95:   outline: 2px solid var(--matrix-dark);
- 96:   outline-offset: 2px;
- 97:   border-radius: 2px;
- 98: }
- 99: /* Focus within container styling - only for specific interactive containers */
-100: .focus-within-container:focus-within {
-101:   outline: 2px solid var(--matrix-dark);
-102:   outline-offset: 2px;
-103:   border-radius: 2px;
-104: }
-105: /* Button-specific focus styling */
-106: button:focus-visible,
-107: a:focus-visible {
-108:   outline: 2px solid var(--matrix-dark);
-109:   outline-offset: 3px;
-110:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
-111: }
-112: /* Input and textarea focus styling handled by individual components */
-113: /* Tab and interactive element focus */
-114: [role="tab"]:focus-visible,
-115: [role="button"]:focus-visible,
-116: [tabindex="0"]:focus-visible {
-117:   outline: 2px solid var(--matrix-dark);
-118:   outline-offset: 2px;
-119: }
-120: /* Skip link special focus styling for better visibility */
-121: .sr-only:focus,
-122: .sr-only:focus-within {
-123:   position: absolute;
-124:   width: auto;
-125:   height: auto;
-126:   padding: 0.5rem 1rem;
-127:   margin: 0;
-128:   overflow: visible;
-129:   clip: auto;
-130:   white-space: normal;
-131:   outline: 3px solid var(--matrix-light);
-132:   outline-offset: 2px;
-133:   z-index: 9999;
-134: }
-135: /* Skeleton shimmer effect */
-136: @keyframes shimmer {
-137:   0% {
-138:     background-position: -200% 0;
-139:   }
-140:   100% {
-141:     background-position: 200% 0;
-142:   }
-143: }
-144: .skeleton-shimmer::before {
-145:   content: "";
-146:   position: absolute;
-147:   top: 0;
-148:   left: 0;
-149:   right: 0;
-150:   bottom: 0;
-151:   background: linear-gradient(
-152:     90deg,
-153:     transparent 0%,
-154:     rgba(255, 255, 255, 0.04) 50%,
-155:     transparent 100%
-156:   );
-157:   background-size: 200% 100%;
-158:   animation: shimmer 1.5s infinite;
-159: }
-160: /* Performance optimizations for animations */
-161: .contain-layout {
-162:   contain: layout style paint;
-163: }
-164: /* Reduced motion for accessibility */
-165: @media (prefers-reduced-motion: reduce) {
-166:   *,
-167:   *::before,
-168:   *::after {
-169:     animation-duration: 0.01ms !important;
-170:     animation-iteration-count: 1 !important;
-171:     transition-duration: 0.01ms !important;
-172:   }
-173: }
+## File: src/__tests__/UI/Pill.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, fireEvent } from "@testing-library/react";
+  3: import Pill from "@/components/UI/Pill.component";
+  4: interface LinkProps {
+  5:   children: React.ReactNode;
+  6:   href: string;
+  7: }
+  8: // Mock Next.js Link component
+  9: jest.mock("next/link", () => {
+ 10:   return function MockLink({ children, href }: LinkProps) {
+ 11:     return <a href={href}>{children}</a>;
+ 12:   };
+ 13: });
+ 14: describe("Pill Component", () => {
+ 15:   describe("rendering", () => {
+ 16:     it("renders as button with default props", () => {
+ 17:       // Arrange
+ 18:       const text = "Test Pill";
+ 19:       // Act
+ 20:       render(<Pill text={text} />);
+ 21:       const pill = screen.getByText(text);
+ 22:       // Assert
+ 23:       expect(pill).toBeInTheDocument();
+ 24:       expect(pill.tagName).toBe("BUTTON");
+ 25:       expect(pill).toHaveAttribute("data-text", text);
+ 26:     });
+ 27:     it("renders as link when href is provided", () => {
+ 28:       // Arrange
+ 29:       const props = {
+ 30:         text: "Link Pill",
+ 31:         href: "/test",
+ 32:       };
+ 33:       // Act
+ 34:       render(<Pill {...props} />);
+ 35:       const pill = screen.getByText(props.text);
+ 36:       // Assert
+ 37:       expect(pill).toBeInTheDocument();
+ 38:       expect(pill.tagName).toBe("A");
+ 39:       expect(pill).toHaveAttribute("href", props.href);
+ 40:       expect(pill).toHaveAttribute("data-text", props.text);
+ 41:     });
+ 42:     it("applies custom className alongside base classes", () => {
+ 43:       // Arrange
+ 44:       const props = {
+ 45:         text: "Custom Class",
+ 46:         className: "custom-class",
+ 47:       };
+ 48:       const baseClasses = [
+ 49:         "glitch",
+ 50:         "text-white",
+ 51:         "m-4",
+ 52:         "text-xl",
+ 53:         "p-6",
+ 54:         "mt-4",
+ 55:         "rounded-full",
+ 56:         "transition",
+ 57:         "duration-300",
+ 58:         "ease-in-out",
+ 59:         "transform",
+ 60:         "bg-matrix-dark/20",
+ 61:         "border-2",
+ 62:         "border-matrix-dark/30",
+ 63:         "hover:bg-matrix/30",
+ 64:         "backdrop-blur-sm",
+ 65:       ];
+ 66:       // Act
+ 67:       render(<Pill {...props} />);
+ 68:       const pill = screen.getByText(props.text);
+ 69:       // Assert
+ 70:       expect(pill).toHaveClass(...baseClasses, props.className);
+ 71:     });
+ 72:   });
+ 73:   describe("interactions", () => {
+ 74:     it("calls onClick when clicked as button", () => {
+ 75:       // Arrange
+ 76:       const mockOnClick = jest.fn();
+ 77:       const props = {
+ 78:         text: "Clickable Pill",
+ 79:         onClick: mockOnClick,
+ 80:       };
+ 81:       // Act
+ 82:       render(<Pill {...props} />);
+ 83:       const pill = screen.getByText(props.text);
+ 84:       fireEvent.click(pill);
+ 85:       // Assert
+ 86:       expect(mockOnClick).toHaveBeenCalledTimes(1);
+ 87:     });
+ 88:     it("does not call onClick when rendered as link", () => {
+ 89:       // Arrange
+ 90:       const mockOnClick = jest.fn();
+ 91:       const props = {
+ 92:         text: "Link Pill",
+ 93:         href: "/test",
+ 94:         onClick: mockOnClick,
+ 95:       };
+ 96:       // Act
+ 97:       render(<Pill {...props} />);
+ 98:       const pill = screen.getByText(props.text);
+ 99:       fireEvent.click(pill);
+100:       // Assert
+101:       expect(mockOnClick).not.toHaveBeenCalled();
+102:     });
+103:   });
+104: });
+````
+
+## File: src/components/Animations/BounceInScroll.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useMemo } from "react";
+ 3: import { Variants } from "motion/react";
+ 4: import * as m from "motion/react-m";
+ 5: import { IAnimateBounceProps } from "./types/Animations.types";
+ 6: /**
+ 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
+ 8:  * @param {number} delay - Delay in seconds before the animation starts
+ 9:  * @returns {Variants} Motion variants with the specified delay
+10:  */
+11: function createBounceVariants(delay: number): Variants {
+12:   return {
+13:     offscreen: {
+14:       y: 15,
+15:       opacity: 0,
+16:     },
+17:     onscreen: {
+18:       y: 0,
+19:       opacity: 1,
+20:       transition: {
+21:         type: "spring",
+22:         bounce: 0.3,
+23:         duration: 1,
+24:         delay,
+25:       },
+26:     },
+27:   };
+28: }
+29: /**
+30:  * Bounce in content when content becomes visible in viewport
+31:  * @function BounceInScroll
+32:  * @param {ReactNode} children - Children content to render
+33:  * @param {string} cssClass - CSS classes to apply to component
+34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
+35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
+36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
+37:  * @returns {JSX.Element} - Rendered component
+38:  */
+39: const BounceInScroll = ({
+40:   children,
+41:   cssClass,
+42:   viewAmount,
+43:   instant,
+44:   delay = 0,
+45: }: IAnimateBounceProps) => {
+46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
+47:   return (
+48:     <m.div
+49:       initial="offscreen"
+50:       animate={instant ? "onscreen" : undefined}
+51:       whileInView={instant ? undefined : "onscreen"}
+52:       viewport={
+53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
+54:       }
+55:       className={cssClass}
+56:       data-testid="bounceinscroll"
+57:     >
+58:       <m.div variants={variants}>{children}</m.div>
+59:     </m.div>
+60:   );
+61: };
+62: export default BounceInScroll;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
@@ -19863,6 +19363,79 @@ tsconfig.json
 71:   );
 72: };
 73: export default Hero;
+````
+
+## File: src/components/Index/Icons.component.tsx
+````typescript
+ 1: import { IconType } from "react-icons";
+ 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
+ 3: import { SiTypescript, SiWordpress } from "react-icons/si";
+ 4: import Grow from "../Animations/Grow.component";
+ 5: interface IAnimateIcons {
+ 6:   id: number;
+ 7:   Icon: IconType;
+ 8:   iconName: string;
+ 9: }
+10: const AnimateIcons: IAnimateIcons[] = [
+11:   {
+12:     id: 0,
+13:     Icon: FaReact,
+14:     iconName: "React",
+15:   },
+16:   {
+17:     id: 1,
+18:     Icon: FaVuejs,
+19:     iconName: "VueJS",
+20:   },
+21:   {
+22:     id: 2,
+23:     Icon: SiTypescript,
+24:     iconName: "TypeScript",
+25:   },
+26:   {
+27:     id: 3,
+28:     Icon: SiWordpress,
+29:     iconName: "WordPress",
+30:   },
+31:   {
+32:     id: 4,
+33:     Icon: FaPhp,
+34:     iconName: "PHP",
+35:   },
+36: ];
+37: /**
+38:  * Icons component that renders SVG icons used on the front page
+39:  * Uses Framer Motion for animations to show the SVGs
+40:  * @returns {JSX.Element} The rendered Icons component
+41:  */
+42: const Icons = () => (
+43:   <div
+44:     data-testid="icons"
+45:     className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
+46:   >
+47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
+48:       <div className="relative" key={id}>
+49:         <Grow delay={2.5 + id * 0.2}>
+50:           <div className="relative group">
+51:             <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70">
+52:               <Icon
+53:                 data-testid={iconName}
+54:                 aria-label={`${iconName} ikon`}
+55:                 title={`${iconName} ikon`}
+56:                 size="2.5em"
+57:                 className="transition-all duration-300 group-hover:text-matrix-light"
+58:               />
+59:             </div>
+60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-matrix-light">
+61:               {iconName}
+62:             </span>
+63:           </div>
+64:         </Grow>
+65:       </div>
+66:     ))}
+67:   </div>
+68: );
+69: export default Icons;
 ````
 
 ## File: src/components/Kontakt/ContactForm.component.tsx
@@ -20019,6 +19592,143 @@ tsconfig.json
 150:   );
 151: };
 152: export default ContactForm;
+````
+
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: import type { Settings } from "@/types/sanity.types";
+ 5: const iconContextValue = { className: "inline-block" } as const;
+ 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
+ 7: /**
+ 8:  * Renders the footer for the application
+ 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
+10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
+11:  * @returns {JSX.Element} - Rendered Footer component
+12:  */
+13: const Footer = ({ footerCopyrightText }: FooterProps) => (
+14:   <footer
+15:     className="mt-8"
+16:     aria-label="Innholdet for bunnteksten med copyright"
+17:     data-testid="footer"
+18:   >
+19:     <div className="bg-slate-800/80 border-t border-matrix-dark/20 shadow-sm min-h-[50px]">
+20:       <div className="w-full mx-auto p-6 text-center font-semibold text-slate-400">
+21:         <div className="flex justify-center items-center space-x-2">
+22:           <span>{footerCopyrightText}</span>
+23:           <IconContext.Provider value={iconContextValue}>
+24:             <BiCopyright size="1.2em" />
+25:           </IconContext.Provider>
+26:           <span>{new Date().getFullYear()}</span>
+27:         </div>
+28:       </div>
+29:     </div>
+30:   </footer>
+31: );
+32: export default Footer;
+````
+
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10:   "aria-label"?: string;
+11: }
+12: /**
+13:  * Button component that can be rendered as various HTML elements
+14:  * @param {Object} props
+15:  * @param {ReactNode} props.children - The content of the button
+16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+22:  * @returns {JSX.Element} The rendered Button component
+23:  */
+24: const Button = ({
+25:   children,
+26:   href,
+27:   renderAs,
+28:   type = "submit",
+29:   disabled = false,
+30:   download,
+31:   onClick,
+32:   "aria-label": ariaLabel,
+33:   ...props
+34: }: IButtonProps) => {
+35:   const Component = renderAs ?? "button";
+36:   const isLink = renderAs === "a";
+37:   const targetLink = isLink ? "_blank" : undefined;
+38:   return (
+39:     <Component
+40:       type={isLink ? undefined : type}
+41:       data-cy="submit"
+42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-matrix-dark rounded-sm hover:bg-matrix-dark/80 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-glow-sm active:shadow-inner border border-matrix/20 hover:border-matrix/40 hover:brightness-110 active:brightness-95 cursor-pointer"
+43:       href={href}
+44:       target={targetLink}
+45:       disabled={disabled}
+46:       data-text={children}
+47:       download={download}
+48:       onClick={onClick}
+49:       aria-label={ariaLabel}
+50:       {...props}
+51:     >
+52:       {children}
+53:     </Component>
+54:   );
+55: };
+56: export default Button;
+````
+
+## File: src/components/UI/Pill.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface PillProps {
+ 3:   text: string;
+ 4:   className?: string;
+ 5:   href?: string;
+ 6:   onClick?: () => void;
+ 7: }
+ 8: /**
+ 9:  * Renders a Pill component.
+10:  *
+11:  * @param {PillProps} props - The properties for the Pill component.
+12:  * @param {string} props.text - The text to display in the Pill.
+13:  * @param {string} [props.className=''] - Additional CSS classes to apply to the Pill.
+14:  * @param {string} [props.href] - The URL to navigate to when the Pill is clicked.
+15:  * @param {() => void} [props.onClick] - The function to call when the Pill is clicked.
+16:  * @return {JSX.Element} The rendered Pill component.
+17:  */
+18: const Pill: React.FC<PillProps> = ({ text, className = "", href, onClick }) => {
+19:   const baseClasses = `glitch text-white m-4 text-xl p-6 mt-4 rounded-full transition duration-300 ease-in-out transform
+20:                  bg-matrix-dark/20 border-2 border-matrix-dark/30
+21:                  hover:bg-matrix/30
+22:                  hover:shadow-[0_0_15px_rgba(0,255,98,0.1),0_0_20px_rgba(0,255,98,0.1),inset_0_0_20px_rgba(0,255,98,0.1)]
+23:                  backdrop-blur-sm ${className}`;
+24:   if (href) {
+25:     return (
+26:       <a href={href} className={baseClasses} data-text={text}>
+27:         {text}
+28:       </a>
+29:     );
+30:   }
+31:   return (
+32:     <button className={baseClasses} onClick={onClick} data-text={text}>
+33:       {text}
+34:     </button>
+35:   );
+36: };
+37: export default Pill;
 ````
 
 ## File: src/lib/sanity/client.ts
@@ -20464,6 +20174,293 @@ tsconfig.json
 69:     </html>
 70:   );
 71: }
+````
+
+## File: src/components/UI/PageHeader.component.tsx
+````typescript
+ 1: import type { ReactNode } from "react";
+ 2: export interface IPageHeaderProps {
+ 3:   children: ReactNode;
+ 4: }
+ 5: /**
+ 6:  * PageHeader component for rendering the header for each page
+ 7:  * @function PageHeader
+ 8:  * @param {children?} children - HTML children to render in the page header component
+ 9:  * @returns {ReactNode} - Rendered component
+10:  */
+11: const PageHeader = ({ children }: IPageHeaderProps) => (
+12:   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+13:     <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
+14:       <h1 className="text-2xl text-center font-bold text-slate-100">
+15:         {children}
+16:       </h1>
+17:     </div>
+18:   </div>
+19: );
+20: export default PageHeader;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: interface ProsjektCardProps extends Project {
+ 8:   /** Stagger delay in seconds for coordinated group animations */
+ 9:   staggerDelay?: number;
+10: }
+11: /**
+12:  * Renders a card displaying information about a single project.
+13:  * Uses the Project type definition from Sanity types.
+14:  *
+15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+16:  * @param {string} props.name - The name of the project.
+17:  * @param {string} [props.description] - A brief description of the project (optional).
+18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+23:  * @returns {JSX.Element} The rendered ProsjektCard component.
+24:  */
+25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+26:   name,
+27:   description,
+28:   subdescription,
+29:   projectimage,
+30:   urlwww,
+31:   urlgithub,
+32:   staggerDelay = 0,
+33: }) => {
+34:   return (
+35:     <div
+36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+37:       data-testid="project-card"
+38:     >
+39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+40:         <div className="relative w-full md:h-60">
+41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+42:             {projectimage && (
+43:               <img
+44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+45:                 width={600}
+46:                 src={urlFor(projectimage)
+47:                   .width(600)
+48:                   .fit("max")
+49:                   .quality(100)
+50:                   .auto("format")
+51:                   .url()}
+52:                 alt={name}
+53:               />
+54:             )}
+55:           </div>
+56:         </div>
+57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+59:             {name}
+60:           </h2>
+61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
+62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+63:             {subdescription}
+64:           </p>
+65:           <div className="flex justify-center mt-4">
+66:             {urlwww && urlwww.length > 0 && (
+67:               <Button href={urlwww?.[0]?.url} renderAs="a">
+68:                 Besøk
+69:               </Button>
+70:             )}
+71:             {urlgithub && urlgithub.length > 0 && (
+72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+73:                 GitHub
+74:               </Button>
+75:             )}
+76:           </div>
+77:         </div>
+78:       </BounceInScroll>
+79:     </div>
+80:   );
+81: };
+82: export default ProsjektCard;
+````
+
+## File: src/app/globals.css
+````css
+  1: @import "tailwindcss";
+  2: @config '../../tailwind.config.ts';
+  3: @layer base {
+  4:   *,
+  5:   ::after,
+  6:   ::before,
+  7:   ::backdrop,
+  8:   ::file-selector-button {
+  9:     border-color: var(--color-gray-200, currentcolor);
+ 10:   }
+ 11: }
+ 12: :root {
+ 13:   /* Modern Color Scheme */
+ 14:   --primary: #00ff62;
+ 15:   --secondary: #00cc4e;
+ 16:   --accent: #008529;
+ 17:   --text: #e1e1e1;
+ 18:   --background: var(--color-slate-900, #0f172a);
+ 19:   /* Semantic Colors */
+ 20:   --success: #00cc4e;
+ 21:   --error: #ff4e4e;
+ 22:   --warning: #ffb74e;
+ 23:   --info: #4e9fff;
+ 24:   /* Matrix Theme Colors */
+ 25:   --matrix-light: #00ff62;
+ 26:   --matrix: #00cc4e;
+ 27:   --matrix-dark: #008529;
+ 28:   --matrix-glow: rgba(0, 255, 98, 0.6);
+ 29: }
+ 30: body {
+ 31:   background-color: var(--background);
+ 32:   color: var(--text);
+ 33:   font-family: "JetBrains Mono", monospace;
+ 34: }
+ 35: #matrixCanvas {
+ 36:   opacity: 0.7;
+ 37: }
+ 38: /* Touch interaction improvements */
+ 39: button,
+ 40: a,
+ 41: input,
+ 42: textarea,
+ 43: select {
+ 44:   touch-action: manipulation; /* Prevents double-tap zoom */
+ 45:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
+ 46: }
+ 47: /* Minimum touch targets for mobile */
+ 48: @media (pointer: coarse) {
+ 49:   button,
+ 50:   a[role="button"],
+ 51:   input[type="submit"],
+ 52:   input[type="button"] {
+ 53:     min-height: 44px;
+ 54:     min-width: 44px;
+ 55:   }
+ 56: }
+ 57: /* Scroll margin for anchor links */
+ 58: [id] {
+ 59:   scroll-margin-top: 100px;
+ 60: }
+ 61: h1[id],
+ 62: h2[id],
+ 63: h3[id],
+ 64: h4[id],
+ 65: h5[id],
+ 66: h6[id] {
+ 67:   scroll-margin-top: 120px;
+ 68: }
+ 69: /* Selection */
+ 70: ::selection {
+ 71:   background-color: var(--matrix-dark);
+ 72:   color: #ffffff;
+ 73: }
+ 74: /* Scrollbar */
+ 75: * {
+ 76:   scrollbar-width: thin;
+ 77:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+ 78: }
+ 79: ::-webkit-scrollbar {
+ 80:   width: 6px;
+ 81: }
+ 82: ::-webkit-scrollbar-track {
+ 83:   background: #1a1a1a;
+ 84: }
+ 85: ::-webkit-scrollbar-thumb {
+ 86:   background: var(--matrix-dark);
+ 87:   border-radius: 3px;
+ 88: }
+ 89: ::-webkit-scrollbar-thumb:hover {
+ 90:   background: var(--matrix-light);
+ 91: }
+ 92: /* Enhanced keyboard focus indicators for accessibility */
+ 93: /* Exclude form elements which handle their own focus styling */
+ 94: :focus-visible:not(input):not(textarea):not(select) {
+ 95:   outline: 2px solid var(--matrix-dark);
+ 96:   outline-offset: 2px;
+ 97:   border-radius: 2px;
+ 98: }
+ 99: /* Focus within container styling - only for specific interactive containers */
+100: .focus-within-container:focus-within {
+101:   outline: 2px solid var(--matrix-dark);
+102:   outline-offset: 2px;
+103:   border-radius: 2px;
+104: }
+105: /* Button-specific focus styling */
+106: button:focus-visible,
+107: a:focus-visible {
+108:   outline: 2px solid var(--matrix-dark);
+109:   outline-offset: 3px;
+110:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
+111: }
+112: /* Input and textarea focus styling handled by individual components */
+113: /* Tab and interactive element focus */
+114: [role="tab"]:focus-visible,
+115: [role="button"]:focus-visible,
+116: [tabindex="0"]:focus-visible {
+117:   outline: 2px solid var(--matrix-dark);
+118:   outline-offset: 2px;
+119: }
+120: /* Skip link special focus styling for better visibility */
+121: .sr-only:focus,
+122: .sr-only:focus-within {
+123:   position: absolute;
+124:   width: auto;
+125:   height: auto;
+126:   padding: 0.5rem 1rem;
+127:   margin: 0;
+128:   overflow: visible;
+129:   clip: auto;
+130:   white-space: normal;
+131:   outline: 3px solid var(--matrix-light);
+132:   outline-offset: 2px;
+133:   z-index: 9999;
+134: }
+135: /* Skeleton shimmer effect */
+136: @keyframes shimmer {
+137:   0% {
+138:     background-position: -200% 0;
+139:   }
+140:   100% {
+141:     background-position: 200% 0;
+142:   }
+143: }
+144: .skeleton-shimmer::before {
+145:   content: "";
+146:   position: absolute;
+147:   top: 0;
+148:   left: 0;
+149:   right: 0;
+150:   bottom: 0;
+151:   background: linear-gradient(
+152:     90deg,
+153:     transparent 0%,
+154:     rgba(255, 255, 255, 0.04) 50%,
+155:     transparent 100%
+156:   );
+157:   background-size: 200% 100%;
+158:   animation: shimmer 1.5s infinite;
+159: }
+160: /* Performance optimizations for animations */
+161: .contain-layout {
+162:   contain: layout style paint;
+163: }
+164: /* Reduced motion for accessibility */
+165: @media (prefers-reduced-motion: reduce) {
+166:   *,
+167:   *::before,
+168:   *::after {
+169:     animation-duration: 0.01ms !important;
+170:     animation-iteration-count: 1 !important;
+171:     transition-duration: 0.01ms !important;
+172:   }
+173: }
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
