@@ -66,7 +66,7 @@ const Section = ({
           <h2
             data-testid="sanity-title"
             data-cy={title}
-            className="text-3xl text-center text-slate-100"
+            className="text-2xl md:text-3xl text-center text-slate-100"
           >
             {title}
           </h2>
