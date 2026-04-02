@@ -101,10 +101,14 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                   },
                 }}
               >
-                {links?.map(({ title, name, href, externalLink }, index) => (
+                {links?.map(({ title, name, href, externalLink }, index) => {
+                  const linkClassName =
+                    "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
+
+                  return (
                   <m.li
                     key={title}
-                    className="block p-4 text-xl text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+                    className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
                     data-cy="mobile-menu-item"
                     custom={index}
                     variants={itemVariants}
@@ -116,7 +120,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         target="_blank"
                         rel="noreferrer"
                         data-testid={`mobil-${name}`}
-                        className="flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg"
+                        className={linkClassName}
                       >
                         {name}
                       </a>
@@ -126,7 +130,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         data-testid={`mobil-${name}`}
                         prefetch={true}
                         onClick={closeMenu}
-                        className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+                        className={`${linkClassName} ${
                           pathname === href ? "text-green-400" : ""
                         }`}
                       >
@@ -148,7 +152,8 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                       </Link>
                     )}
                   </m.li>
-                ))}
+                  );
+                })}
               </m.ul>
             </nav>
           </m.div>

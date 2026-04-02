@@ -52,12 +52,12 @@ const Icons = () => (
       <div className="relative" key={id}>
         <Grow delay={2.5 + id * 0.2}>
           <div className="relative group">
-            <div className="p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70">
+            <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[2em] md:text-[2.5em]">
               <Icon
                 data-testid={iconName}
                 aria-label={`${iconName} ikon`}
                 title={`${iconName} ikon`}
-                size="2.5em"
+                size="1em"
                 className="transition-all duration-300 group-hover:text-matrix-light"
               />
             </div>

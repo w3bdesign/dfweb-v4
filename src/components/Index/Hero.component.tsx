@@ -46,26 +46,26 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
       </div>
       <div className="relative z-10">
         <div
-          className="text-left md:text-center px-4 md:px-0"
+          className="text-center px-4 md:px-0"
           data-testid="fade-in"
         >
           <FadeIn delay={0.2}>
             <h1
               data-cy="hei"
-              className="text-6xl font-bold text-matrix-light text-center"
+              className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
             >
               {content?.length > 0 ? content[0]?.text : "Hei!"}
             </h1>
           </FadeIn>
 
           <FadeIn delay={1}>
-            <h2 className="mt-4 text-2xl text-slate-300 text-left md:text-center  ">
+            <h2 className="mt-4 text-xl md:text-2xl text-slate-300">
               {content?.length > 0 && content[1]?.text}
             </h2>
           </FadeIn>
 
           <FadeIn delay={2}>
-            <p className="mt-4 text-xl text-slate-300 text-left md:text-center ">
+            <p className="mt-4 text-lg md:text-xl text-slate-300">
               {content?.length > 0 && content[2]?.text}
             </p>
           </FadeIn>
