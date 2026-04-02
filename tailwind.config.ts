@@ -42,17 +42,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "Oxygen",
-          "Ubuntu",
-          "Cantarell",
-          "sans-serif",
-        ],
+        sans: ["JetBrains Mono", "monospace"],
         mono: ["JetBrains Mono", "monospace"],
       },
       boxShadow: {
