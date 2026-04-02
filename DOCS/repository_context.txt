@@ -395,6 +395,7 @@ UTKAST/
 .gitignore
 .npmrc
 .pa11yci.json
+.snyk
 AGENTS.md
 codecov.yml
 cypress.config.ts
@@ -6157,106 +6158,6 @@ tsconfig.json
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
-## File: src/__tests__/CV/CVContent.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import React from "react";
- 5: import { render, screen } from "@testing-library/react";
- 6: import userEvent from "@testing-library/user-event";
- 7: import CVContent from "@/components/CV/CVContent.component";
- 8: const mockCVData = {
- 9:   keyQualifications: ["Qualification 1", "Qualification 2"],
-10:   experience: [
-11:     {
-12:       period: "2020-2022",
-13:       company: "Example Company",
-14:       role: "Software Developer",
-15:       description: "Worked on various projects",
-16:     },
-17:   ],
-18:   education: [
-19:     {
-20:       period: "2016-2020",
-21:       institution: "University of Example",
-22:       degree: "Bachelor in Computer Science",
-23:       description: "Studied various aspects of computer science",
-24:     },
-25:   ],
-26:   volunteerWork: [
-27:     {
-28:       period: "2023-2024",
-29:       organization: "AI Community",
-30:       role: "Technical Lead",
-31:       description: "Managing AI Discord community and developing bots",
-32:     },
-33:   ],
-34: };
-35: describe("CVContent", () => {
-36:   it("renders CV header and PDF download button", () => {
-37:     // Arrange
-38:     const expectedElements = {
-39:       header: /cv/i,
-40:       pdfButton: /last ned pdf/i,
-41:     };
-42:     // Act
-43:     render(<CVContent cvData={mockCVData} />);
-44:     // Assert
-45:     expect(
-46:       screen.getByRole("heading", { name: expectedElements.header }),
-47:     ).toBeInTheDocument();
-48:     const pdfLinks = screen.getAllByRole("link", {
-49:       name: expectedElements.pdfButton,
-50:     });
-51:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
-52:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
-53:   });
-54:   it("renders all navigation tabs", () => {
-55:     // Arrange
-56:     const expectedTabs = [
-57:       /nøkkelkvalifikasjoner/i,
-58:       /erfaring/i,
-59:       /utdanning/i,
-60:       /frivillig arbeid/i,
-61:     ];
-62:     // Act
-63:     render(<CVContent cvData={mockCVData} />);
-64:     // Assert
-65:     expectedTabs.forEach((tabName) => {
-66:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
-67:     });
-68:   });
-69:   it("displays qualifications in initial tab", () => {
-70:     // Arrange
-71:     const expectedQualification = /qualification 1/i;
-72:     // Act
-73:     render(<CVContent cvData={mockCVData} />);
-74:     // Assert
-75:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
-76:   });
-77:   it("displays volunteer work content when switching tabs", async () => {
-78:     // Arrange
-79:     const user = userEvent.setup();
-80:     render(<CVContent cvData={mockCVData} />);
-81:     const volunteerWorkTab = screen.getByRole("tab", {
-82:       name: /frivillig arbeid/i,
-83:     });
-84:     const expectedContent = {
-85:       role: /technical lead/i,
-86:       organization: /ai community/i,
-87:     };
-88:     // Act
-89:     await user.click(volunteerWorkTab);
-90:     // Assert
-91:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
-92:     expect(
-93:       await screen.findByText(expectedContent.organization),
-94:     ).toBeInTheDocument();
-95:   });
-96: });
-````
-
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
  1: import React from "react";
@@ -9615,78 +9516,6 @@ tsconfig.json
 182: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { Inter } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import "./glitch.css";
- 6: import { client } from "@/lib/sanity/client";
- 7: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const inter = Inter({ subsets: ["latin"] });
-14: export const metadata: Metadata = {
-15:   title: "Forside - Dfweb",
-16:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-17: };
-18: export default async function RootLayout({
-19:   children,
-20: }: Readonly<{
-21:   children: React.ReactNode;
-22: }>) {
-23:   const [navigation, { footerCopyrightText }] = await Promise.all([
-24:     client.fetch(navigationQuery),
-25:     client.fetch(settingsQuery),
-26:   ]);
-27:   return (
-28:     <html lang="nb">
-29:       <head>
-30:         <meta
-31:           name="viewport"
-32:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-33:         />
-34:         <link rel="icon" href="/favicon.ico" />
-35:         <link rel="apple-touch-icon" href="/logo.png" />
-36:         <meta property="og:title" content="Daniel Fjeldstad" />
-37:         <meta name="author" content="Daniel Fjeldstad" />
-38:         <meta property="og:locale" content="nb_NO" />
-39:         <meta
-40:           property="og:description"
-41:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-42:         />
-43:         <meta property="og:url" content="https://www.dfweb.no/" />
-44:         <meta property="og:site_name" content="dfweb.no" />
-45:         <meta name="theme-color" content="#004014" />
-46:       </head>
-47:       <body
-48:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
-49:       >
-50:         <LazyMotionProvider>
-51:           <SkipLink />
-52:           <ErrorBoundary>
-53:             <div id="main-content" className="grow flex flex-col">
-54:               <Header navigation={navigation} />
-55:               <SpeedInsights />
-56:               <div className="grow">{children}</div>
-57:               <Footer
-58:                 footerCopyrightText={
-59:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-60:                 }
-61:               />
-62:             </div>
-63:           </ErrorBoundary>
-64:         </LazyMotionProvider>
-65:       </body>
-66:     </html>
-67:   );
-68: }
-````
-
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -10854,47 +10683,6 @@ tsconfig.json
 28: export default VolunteerWorkTabContent;
 ````
 
-## File: src/components/ErrorBoundary/ErrorBoundary.tsx
-````typescript
- 1: "use client";
- 2: import React, { ReactNode, ErrorInfo } from "react";
- 3: import {
- 4:   ErrorBoundary as ReactErrorBoundary,
- 5:   FallbackProps,
- 6: } from "react-error-boundary";
- 7: import Fallback from "./Fallback.component";
- 8: interface ErrorBoundaryProps {
- 9:   children: ReactNode;
-10:   compact?: boolean;
-11: }
-12: /**
-13:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
-14:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
-15:  *
-16:  * @param {Object} props - The component props
-17:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
-18:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
-19:  * @returns {JSX.Element} A React component that catches errors in its child components
-20:  */
-21: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
-22:   children,
-23:   compact = false,
-24: }) => {
-25:   const handleError = (error: Error, info: ErrorInfo) => {
-26:     console.error("Uventet feil i Matrix:", error, info);
-27:   };
-28:   const ErrorFallback = (props: FallbackProps) => {
-29:     return <Fallback {...props} compact={compact} />;
-30:   };
-31:   return (
-32:     <ReactErrorBoundary FallbackComponent={ErrorFallback} onError={handleError}>
-33:       {children}
-34:     </ReactErrorBoundary>
-35:   );
-36: };
-37: export default ErrorBoundary;
-````
-
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
  1: import React from "react";
@@ -11296,157 +11084,6 @@ tsconfig.json
 11:   tekst: z.string().min(1, "Beskjed er påkrevd"),
 12: });
 13: export type FormData = z.infer<typeof formSchema>;
-````
-
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import emailjs from "@emailjs/browser";
-  6: import PageHeader from "@/components/UI/PageHeader.component";
-  7: import Button from "@/components/UI/Button.component";
-  8: import InputField from "@/components/UI/InputField.component";
-  9: import { formSchema, FormData } from "./config/formConfig";
- 10: interface ContactFormProps {
- 11:   csrfToken?: string;
- 12:   onSubmit?: (data: FormData) => Promise<string>;
- 13:   initialResponse?: string;
- 14: }
- 15: /**
- 16:  * ContactForm component - A complete contact form with EmailJS integration
- 17:  * Handles both the form UI and submission logic in a single, clear component
- 18:  */
- 19: const ContactForm: React.FC<ContactFormProps> = ({
- 20:   csrfToken = "",
- 21:   onSubmit: onSubmitProp,
- 22:   initialResponse = "",
- 23: }) => {
- 24:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
- 25:     null,
- 26:   );
- 27:   const serverResponse = submittedResponse ?? initialResponse;
- 28:   const {
- 29:     register,
- 30:     handleSubmit,
- 31:     formState: { errors, isSubmitting },
- 32:   } = useForm<FormData>({
- 33:     resolver: zodResolver(formSchema),
- 34:   });
- 35:   /**
- 36:    * Default form submission handler using EmailJS.
- 37:    * @param {FormData} data - The form data.
- 38:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 39:    */
- 40:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 41:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 42:     const TEMPLATE_KEY =
- 43:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 44:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 45:     try {
- 46:       emailjs.init(EMAIL_API_KEY);
- 47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 48:       return "Takk for din beskjed";
- 49:     } catch {
- 50:       return "Feil under sending av skjema";
- 51:     }
- 52:   };
- 53:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 54:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 55:     const message = await submitHandler(data);
- 56:     setSubmittedResponse(message);
- 57:   };
- 58:   return (
- 59:     <main data-testid="kontaktcontent" id="maincontent">
- 60:       <div className="mt-32 bg-graybg">
- 61:         <PageHeader>Kontakt</PageHeader>
- 62:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 63:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 64:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 65:               <div className="p-2 md:p-6 pt-8">
- 66:                 {serverResponse ? (
- 67:                   <div aria-live="polite" aria-atomic="true">
- 68:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 69:                       {serverResponse}
- 70:                     </h3>
- 71:                   </div>
- 72:                 ) : (
- 73:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 74:                     <form
- 75:                       id="contact-form"
- 76:                       className="text-center"
- 77:                       onSubmit={handleSubmit(handleFormSubmit)}
- 78:                       method="POST"
- 79:                       action="/api/form"
- 80:                       aria-label="Contact Form"
- 81:                     >
- 82:                       {csrfToken && (
- 83:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 84:                       )}
- 85:                       <fieldset>
- 86:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 87:                           Kontaktskjema
- 88:                         </legend>
- 89:                         <InputField<FormData>
- 90:                           name="navn"
- 91:                           label="Fullt navn"
- 92:                           htmlFor="navn"
- 93:                           register={register}
- 94:                           error={errors.navn?.message}
- 95:                           isRequired
- 96:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
- 97:                           title="Vennligst bruk norske bokstaver"
- 98:                           autoComplete="name"
- 99:                           spellCheck={false}
-100:                         />
-101:                         <br />
-102:                         <InputField<FormData>
-103:                           name="telefon"
-104:                           label="Telefonnummer"
-105:                           htmlFor="telefon"
-106:                           register={register}
-107:                           error={errors.telefon?.message}
-108:                           isRequired
-109:                           inputPattern={/^\d{8}$/}
-110:                           title="Vennligst oppgi et gyldig telefonnummer"
-111:                           autoComplete="tel"
-112:                           inputMode="tel"
-113:                           spellCheck={false}
-114:                         />
-115:                         <br />
-116:                         <InputField<FormData>
-117:                           name="tekst"
-118:                           label="Hva ønsker du å si?"
-119:                           htmlFor="tekst"
-120:                           register={register}
-121:                           error={errors.tekst?.message}
-122:                           isRequired
-123:                           type="textarea"
-124:                           spellCheck={true}
-125:                         />
-126:                         <br />
-127:                       </fieldset>
-128:                       <div className="-mt-4">
-129:                         <Button
-130:                           disabled={isSubmitting}
-131:                           data-testid="submit-button"
-132:                         >
-133:                           {isSubmitting ? "Sender..." : "Send skjema"}
-134:                         </Button>
-135:                       </div>
-136:                     </form>
-137:                   </div>
-138:                 )}
-139:               </div>
-140:             </div>
-141:           </div>
-142:         </div>
-143:       </div>
-144:     </main>
-145:   );
-146: };
-147: export default ContactForm;
 ````
 
 ## File: src/components/Layout/DesktopNavigation.component.tsx
@@ -20397,6 +20034,282 @@ tsconfig.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { Inter } from "next/font/google";
+ 3: import { preconnect } from "react-dom";
+ 4: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 5: import "./globals.css";
+ 6: import "./glitch.css";
+ 7: import { client } from "@/lib/sanity/client";
+ 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 9: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+10: import SkipLink from "@/components/UI/SkipLink.component";
+11: import Header from "@/components/Layout/Header.component";
+12: import Footer from "@/components/Layout/Footer.component";
+13: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+14: const inter = Inter({ subsets: ["latin"] });
+15: export const metadata: Metadata = {
+16:   title: "Forside - Dfweb",
+17:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+18: };
+19: export default async function RootLayout({
+20:   children,
+21: }: Readonly<{
+22:   children: React.ReactNode;
+23: }>) {
+24:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
+25:   preconnect("https://cdn.sanity.io");
+26:   const [navigation, { footerCopyrightText }] = await Promise.all([
+27:     client.fetch(navigationQuery),
+28:     client.fetch(settingsQuery),
+29:   ]);
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link rel="icon" href="/favicon.ico" />
+38:         <link rel="apple-touch-icon" href="/logo.png" />
+39:         <meta property="og:title" content="Daniel Fjeldstad" />
+40:         <meta name="author" content="Daniel Fjeldstad" />
+41:         <meta property="og:locale" content="nb_NO" />
+42:         <meta
+43:           property="og:description"
+44:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+45:         />
+46:         <meta property="og:url" content="https://www.dfweb.no/" />
+47:         <meta property="og:site_name" content="dfweb.no" />
+48:         <meta name="theme-color" content="#004014" />
+49:       </head>
+50:       <body
+51:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${inter.className}`}
+52:       >
+53:         <LazyMotionProvider>
+54:           <SkipLink />
+55:           <ErrorBoundary>
+56:             <div id="main-content" className="grow flex flex-col">
+57:               <Header navigation={navigation} />
+58:               <SpeedInsights />
+59:               <div className="grow">{children}</div>
+60:               <Footer
+61:                 footerCopyrightText={
+62:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+63:                 }
+64:               />
+65:             </div>
+66:           </ErrorBoundary>
+67:         </LazyMotionProvider>
+68:       </body>
+69:     </html>
+70:   );
+71: }
+````
+
+## File: src/components/ErrorBoundary/ErrorBoundary.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
+ 3: import {
+ 4:   ErrorBoundary as ReactErrorBoundary,
+ 5:   FallbackProps,
+ 6: } from "react-error-boundary";
+ 7: import Fallback from "./Fallback.component";
+ 8: interface ErrorBoundaryProps {
+ 9:   children: ReactNode;
+10:   compact?: boolean;
+11: }
+12: const handleError = (error: Error, info: ErrorInfo) => {
+13:   console.error("Uventet feil i Matrix:", error, info);
+14: };
+15: /**
+16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
+17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+18:  *
+19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
+21:  *
+22:  * @param {Object} props - The component props
+23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
+25:  * @returns {JSX.Element} A React component that catches errors in its child components
+26:  */
+27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
+28:   children,
+29:   compact = false,
+30: }) => {
+31:   const renderFallback = useCallback(
+32:     (props: FallbackProps) => <Fallback {...props} compact={compact} />,
+33:     [compact],
+34:   );
+35:   return (
+36:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
+37:       {children}
+38:     </ReactErrorBoundary>
+39:   );
+40: };
+41: export default ErrorBoundary;
+````
+
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import PageHeader from "@/components/UI/PageHeader.component";
+  6: import Button from "@/components/UI/Button.component";
+  7: import InputField from "@/components/UI/InputField.component";
+  8: import { formSchema, FormData } from "./config/formConfig";
+  9: interface ContactFormProps {
+ 10:   csrfToken?: string;
+ 11:   onSubmit?: (data: FormData) => Promise<string>;
+ 12:   initialResponse?: string;
+ 13: }
+ 14: /**
+ 15:  * ContactForm component - A complete contact form with EmailJS integration
+ 16:  * Handles both the form UI and submission logic in a single, clear component
+ 17:  */
+ 18: const ContactForm: React.FC<ContactFormProps> = ({
+ 19:   csrfToken = "",
+ 20:   onSubmit: onSubmitProp,
+ 21:   initialResponse = "",
+ 22: }) => {
+ 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
+ 24:     null,
+ 25:   );
+ 26:   const serverResponse = submittedResponse ?? initialResponse;
+ 27:   const {
+ 28:     register,
+ 29:     handleSubmit,
+ 30:     formState: { errors, isSubmitting },
+ 31:   } = useForm<FormData>({
+ 32:     resolver: zodResolver(formSchema),
+ 33:   });
+ 34:   /**
+ 35:    * Default form submission handler using EmailJS.
+ 36:    * @param {FormData} data - The form data.
+ 37:    * @return {Promise<string>} A promise that resolves to a success or error message.
+ 38:    */
+ 39:   /**
+ 40:    * Default form submission handler using EmailJS.
+ 41:    * Dynamically imports @emailjs/browser only when the user submits,
+ 42:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
+ 43:    */
+ 44:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 45:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 46:     const TEMPLATE_KEY =
+ 47:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 48:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 49:     try {
+ 50:       const emailjs = (await import("@emailjs/browser")).default;
+ 51:       emailjs.init(EMAIL_API_KEY);
+ 52:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 53:       return "Takk for din beskjed";
+ 54:     } catch {
+ 55:       return "Feil under sending av skjema";
+ 56:     }
+ 57:   };
+ 58:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 59:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 60:     const message = await submitHandler(data);
+ 61:     setSubmittedResponse(message);
+ 62:   };
+ 63:   return (
+ 64:     <main data-testid="kontaktcontent" id="maincontent">
+ 65:       <div className="mt-32 bg-graybg">
+ 66:         <PageHeader>Kontakt</PageHeader>
+ 67:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 68:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 69:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 70:               <div className="p-2 md:p-6 pt-8">
+ 71:                 {serverResponse ? (
+ 72:                   <div aria-live="polite" aria-atomic="true">
+ 73:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 74:                       {serverResponse}
+ 75:                     </h3>
+ 76:                   </div>
+ 77:                 ) : (
+ 78:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 79:                     <form
+ 80:                       id="contact-form"
+ 81:                       className="text-center"
+ 82:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 83:                       method="POST"
+ 84:                       action="/api/form"
+ 85:                       aria-label="Contact Form"
+ 86:                     >
+ 87:                       {csrfToken && (
+ 88:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 89:                       )}
+ 90:                       <fieldset>
+ 91:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 92:                           Kontaktskjema
+ 93:                         </legend>
+ 94:                         <InputField<FormData>
+ 95:                           name="navn"
+ 96:                           label="Fullt navn"
+ 97:                           htmlFor="navn"
+ 98:                           register={register}
+ 99:                           error={errors.navn?.message}
+100:                           isRequired
+101:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+102:                           title="Vennligst bruk norske bokstaver"
+103:                           autoComplete="name"
+104:                           spellCheck={false}
+105:                         />
+106:                         <br />
+107:                         <InputField<FormData>
+108:                           name="telefon"
+109:                           label="Telefonnummer"
+110:                           htmlFor="telefon"
+111:                           register={register}
+112:                           error={errors.telefon?.message}
+113:                           isRequired
+114:                           inputPattern={/^\d{8}$/}
+115:                           title="Vennligst oppgi et gyldig telefonnummer"
+116:                           autoComplete="tel"
+117:                           inputMode="tel"
+118:                           spellCheck={false}
+119:                         />
+120:                         <br />
+121:                         <InputField<FormData>
+122:                           name="tekst"
+123:                           label="Hva ønsker du å si?"
+124:                           htmlFor="tekst"
+125:                           register={register}
+126:                           error={errors.tekst?.message}
+127:                           isRequired
+128:                           type="textarea"
+129:                           spellCheck={true}
+130:                         />
+131:                         <br />
+132:                       </fieldset>
+133:                       <div className="-mt-4">
+134:                         <Button
+135:                           disabled={isSubmitting}
+136:                           data-testid="submit-button"
+137:                         >
+138:                           {isSubmitting ? "Sender..." : "Send skjema"}
+139:                         </Button>
+140:                       </div>
+141:                     </form>
+142:                   </div>
+143:                 )}
+144:               </div>
+145:             </div>
+146:           </div>
+147:         </div>
+148:       </div>
+149:     </main>
+150:   );
+151: };
+152: export default ContactForm;
+````
+
 ## File: src/utils/eslint/.npmrc
 ````
 1: ignore-scripts=true
@@ -20456,6 +20369,137 @@ tsconfig.json
 18: # Engine strict mode - fail if Node.js version doesn't match engines field
 19: engine-strict=true
 20: ignore-scripts=true
+````
+
+## File: .snyk
+````
+ 1: # Snyk (https://snyk.io) policy file
+ 2: # Ignores transitive vulnerabilities with no available fix
+ 3: version: v1.25.0
+ 4: ignore:
+ 5:   SNYK-JS-LODASH-15869625:
+ 6:     - "* > lodash@4.17.23":
+ 7:         reason: >-
+ 8:           Transitive dependency from next-sanity > @sanity/visual-editing >
+ 9:           @sanity/mutate. No patched lodash version available. Awaiting upstream
+10:           fix from Sanity.
+11:         expires: 2026-07-02T00:00:00.000Z
+12:         created: 2026-04-02T04:00:00.000Z
+13:   SNYK-JS-LODASHES-15869627:
+14:     - "* > lodash-es@4.17.23":
+15:         reason: >-
+16:           Transitive dependency from sanity@5.18.0. No patched lodash-es version
+17:           available. Awaiting upstream fix from Sanity.
+18:         expires: 2026-07-02T00:00:00.000Z
+19:         created: 2026-04-02T04:00:00.000Z
+````
+
+## File: src/__tests__/CV/CVContent.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import CVContent from "@/components/CV/CVContent.component";
+  8: const mockCVData = {
+  9:   _id: "cv-test-id",
+ 10:   _type: "cv" as const,
+ 11:   _createdAt: "2024-01-01T00:00:00Z",
+ 12:   _updatedAt: "2024-01-01T00:00:00Z",
+ 13:   _rev: "test-rev",
+ 14:   keyQualifications: ["Qualification 1", "Qualification 2"],
+ 15:   experience: [
+ 16:     {
+ 17:       _key: "exp-1",
+ 18:       period: "2020-2022",
+ 19:       company: "Example Company",
+ 20:       role: "Software Developer",
+ 21:       description: "Worked on various projects",
+ 22:     },
+ 23:   ],
+ 24:   education: [
+ 25:     {
+ 26:       _key: "edu-1",
+ 27:       period: "2016-2020",
+ 28:       institution: "University of Example",
+ 29:       degree: "Bachelor in Computer Science",
+ 30:       description: "Studied various aspects of computer science",
+ 31:     },
+ 32:   ],
+ 33:   volunteerWork: [
+ 34:     {
+ 35:       _key: "vol-1",
+ 36:       period: "2023-2024",
+ 37:       organization: "AI Community",
+ 38:       role: "Technical Lead",
+ 39:       description: "Managing AI Discord community and developing bots",
+ 40:     },
+ 41:   ],
+ 42: };
+ 43: describe("CVContent", () => {
+ 44:   it("renders CV header and PDF download button", () => {
+ 45:     // Arrange
+ 46:     const expectedElements = {
+ 47:       header: /cv/i,
+ 48:       pdfButton: /last ned pdf/i,
+ 49:     };
+ 50:     // Act
+ 51:     render(<CVContent cvData={mockCVData} />);
+ 52:     // Assert
+ 53:     expect(
+ 54:       screen.getByRole("heading", { name: expectedElements.header }),
+ 55:     ).toBeInTheDocument();
+ 56:     const pdfLinks = screen.getAllByRole("link", {
+ 57:       name: expectedElements.pdfButton,
+ 58:     });
+ 59:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
+ 60:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
+ 61:   });
+ 62:   it("renders all navigation tabs", () => {
+ 63:     // Arrange
+ 64:     const expectedTabs = [
+ 65:       /nøkkelkvalifikasjoner/i,
+ 66:       /erfaring/i,
+ 67:       /utdanning/i,
+ 68:       /frivillig arbeid/i,
+ 69:     ];
+ 70:     // Act
+ 71:     render(<CVContent cvData={mockCVData} />);
+ 72:     // Assert
+ 73:     expectedTabs.forEach((tabName) => {
+ 74:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
+ 75:     });
+ 76:   });
+ 77:   it("displays qualifications in initial tab", () => {
+ 78:     // Arrange
+ 79:     const expectedQualification = /qualification 1/i;
+ 80:     // Act
+ 81:     render(<CVContent cvData={mockCVData} />);
+ 82:     // Assert
+ 83:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
+ 84:   });
+ 85:   it("displays volunteer work content when switching tabs", async () => {
+ 86:     // Arrange
+ 87:     const user = userEvent.setup();
+ 88:     render(<CVContent cvData={mockCVData} />);
+ 89:     const volunteerWorkTab = screen.getByRole("tab", {
+ 90:       name: /frivillig arbeid/i,
+ 91:     });
+ 92:     const expectedContent = {
+ 93:       role: /technical lead/i,
+ 94:       organization: /ai community/i,
+ 95:     };
+ 96:     // Act
+ 97:     await user.click(volunteerWorkTab);
+ 98:     // Assert
+ 99:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
+100:     expect(
+101:       await screen.findByText(expectedContent.organization),
+102:     ).toBeInTheDocument();
+103:   });
+104: });
 ````
 
 ## File: src/components/Layout/MobileMenu.component.tsx
