@@ -14,7 +14,7 @@ import { IAnimateBounceProps } from "./types/Animations.types";
 function createBounceVariants(delay: number): Variants {
   return {
     offscreen: {
-      y: 30,
+      y: 15,
       opacity: 0,
     },
     onscreen: {
@@ -22,8 +22,8 @@ function createBounceVariants(delay: number): Variants {
       opacity: 1,
       transition: {
         type: "spring",
-        bounce: 0.5,
-        duration: 1.5,
+        bounce: 0.3,
+        duration: 1,
         delay,
       },
     },

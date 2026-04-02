@@ -21,8 +21,8 @@ const Footer = ({ footerCopyrightText }: FooterProps) => (
     aria-label="Innholdet for bunnteksten med copyright"
     data-testid="footer"
   >
-    <div className="bg-slate-800 shadow-sm min-h-[50px]">
-      <div className="w-full mx-auto p-6 text-center font-semibold">
+    <div className="bg-slate-800/80 border-t border-matrix-dark/20 shadow-sm min-h-[50px]">
+      <div className="w-full mx-auto p-6 text-center font-semibold text-slate-400">
         <div className="flex justify-center items-center space-x-2">
           <span>{footerCopyrightText}</span>
           <IconContext.Provider value={iconContextValue}>

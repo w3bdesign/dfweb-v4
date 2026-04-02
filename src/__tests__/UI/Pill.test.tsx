@@ -67,13 +67,10 @@ describe("Pill Component", () => {
         "duration-300",
         "ease-in-out",
         "transform",
-        "bg-blue-600",
-        "bg-opacity-20",
+        "bg-matrix-dark/20",
         "border-2",
-        "border-blue-800",
-        "border-opacity-30",
-        "hover:bg-blue-400",
-        "hover:bg-opacity-30",
+        "border-matrix-dark/30",
+        "hover:bg-matrix/30",
         "backdrop-blur-sm",
       ];
 
