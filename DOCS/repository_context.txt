@@ -395,7 +395,6 @@ UTKAST/
 .gitignore
 .npmrc
 .pa11yci.json
-.snyk
 AGENTS.md
 codecov.yml
 cypress.config.ts
@@ -12606,26 +12605,6 @@ tsconfig.json
 10: export default LazyMotionProvider;
 ````
 
-## File: src/lib/sanity/client.ts
-````typescript
- 1: import imageUrlBuilder from "@sanity/image-url";
- 2: import { createClient } from "next-sanity";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2023-05-03";
- 7: export const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: const builder = imageUrlBuilder(client);
-14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-15:   return builder.image(source);
-16: }
-````
-
 ## File: src/lib/sanity/helpers.ts
 ````typescript
 1: import { client } from "./client";
@@ -12634,82 +12613,6 @@ tsconfig.json
 4: export const urlFor = (source: string) => {
 5:   return builder.image(source);
 6: };
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: import { defineQuery } from "next-sanity";
- 2: export const projectsQuery = defineQuery(`
- 3:   *[_type == "project" && published == true] | order(featureOrder asc) {
- 4:     id,
- 5:     name,
- 6:     description,
- 7:     subdescription,
- 8:     projectcategory->{
- 9:       _id,
-10:       title
-11:     },
-12:     urlwww[]{
-13:       ...,
-14:       _key,
-15:     },
-16:     urlgithub[]{
-17:       ...,
-18:       _key,
-19:     },
-20:     projectimage,
-21:     featured,
-22:     featureOrder
-23:   }
-24: `);
-25: export const cvQuery = defineQuery(`
-26:   *[_type == "cv"][0] {
-27:     keyQualifications,
-28:     experience[] {
-29:       period,
-30:       company,
-31:       role,
-32:       description
-33:     },
-34:     education[] {
-35:       period,
-36:       institution,
-37:       degree,
-38:       description
-39:     },
-40:     volunteerWork[] {
-41:       period,
-42:       organization,
-43:       role,
-44:       description
-45:     }
-46:   }
-47: `);
-48: export const pageContentQuery = defineQuery(`
-49:   *[_type == 'page' && title match 'Hjem'][0]{
-50:     "id": _id,
-51:     title,
-52:     hero,
-53:     content
-54:   }
-55: `);
-56: export const navigationQuery = defineQuery(`
-57:   *[_type == "navigation"][0] {
-58:     title,
-59:     links[] {
-60:       title,
-61:       name,
-62:       hash,
-63:       href,
-64:       externalLink
-65:     }
-66:   }
-67: `);
-68: export const settingsQuery = defineQuery(`
-69:   *[_type == "settings"][0] {
-70:     footerCopyrightText
-71:   }
-72: `);
 ````
 
 ## File: src/lib/csrf.ts
@@ -20310,6 +20213,109 @@ tsconfig.json
 152: export default ContactForm;
 ````
 
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import imageUrlBuilder from "@sanity/image-url";
+ 2: import { createClient } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2023-05-03";
+ 7: export const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: const builder = imageUrlBuilder(client);
+14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+15:   return builder.image(source);
+16: }
+````
+
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: /**
+ 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
+ 3:  * pulling in the next-sanity dependency tree (which transitively includes
+ 4:  * lodash via @sanity/visual-editing).
+ 5:  */
+ 6: function defineQuery<T extends string>(query: T): T {
+ 7:   return query;
+ 8: }
+ 9: export const projectsQuery = defineQuery(`
+10:   *[_type == "project" && published == true] | order(featureOrder asc) {
+11:     id,
+12:     name,
+13:     description,
+14:     subdescription,
+15:     projectcategory->{
+16:       _id,
+17:       title
+18:     },
+19:     urlwww[]{
+20:       ...,
+21:       _key,
+22:     },
+23:     urlgithub[]{
+24:       ...,
+25:       _key,
+26:     },
+27:     projectimage,
+28:     featured,
+29:     featureOrder
+30:   }
+31: `);
+32: export const cvQuery = defineQuery(`
+33:   *[_type == "cv"][0] {
+34:     keyQualifications,
+35:     experience[] {
+36:       period,
+37:       company,
+38:       role,
+39:       description
+40:     },
+41:     education[] {
+42:       period,
+43:       institution,
+44:       degree,
+45:       description
+46:     },
+47:     volunteerWork[] {
+48:       period,
+49:       organization,
+50:       role,
+51:       description
+52:     }
+53:   }
+54: `);
+55: export const pageContentQuery = defineQuery(`
+56:   *[_type == 'page' && title match 'Hjem'][0]{
+57:     "id": _id,
+58:     title,
+59:     hero,
+60:     content
+61:   }
+62: `);
+63: export const navigationQuery = defineQuery(`
+64:   *[_type == "navigation"][0] {
+65:     title,
+66:     links[] {
+67:       title,
+68:       name,
+69:       hash,
+70:       href,
+71:       externalLink
+72:     }
+73:   }
+74: `);
+75: export const settingsQuery = defineQuery(`
+76:   *[_type == "settings"][0] {
+77:     footerCopyrightText
+78:   }
+79: `);
+````
+
 ## File: src/utils/eslint/.npmrc
 ````
 1: ignore-scripts=true
@@ -20369,29 +20375,6 @@ tsconfig.json
 18: # Engine strict mode - fail if Node.js version doesn't match engines field
 19: engine-strict=true
 20: ignore-scripts=true
-````
-
-## File: .snyk
-````
- 1: # Snyk (https://snyk.io) policy file
- 2: # Ignores transitive vulnerabilities with no available fix
- 3: version: v1.25.0
- 4: ignore:
- 5:   SNYK-JS-LODASH-15869625:
- 6:     - "* > lodash@4.17.23":
- 7:         reason: >-
- 8:           Transitive dependency from next-sanity > @sanity/visual-editing >
- 9:           @sanity/mutate. No patched lodash version available. Awaiting upstream
-10:           fix from Sanity.
-11:         expires: 2026-07-02T00:00:00.000Z
-12:         created: 2026-04-02T04:00:00.000Z
-13:   SNYK-JS-LODASHES-15869627:
-14:     - "* > lodash-es@4.17.23":
-15:         reason: >-
-16:           Transitive dependency from sanity@5.18.0. No patched lodash-es version
-17:           available. Awaiting upstream fix from Sanity.
-18:         expires: 2026-07-02T00:00:00.000Z
-19:         created: 2026-04-02T04:00:00.000Z
 ````
 
 ## File: src/__tests__/CV/CVContent.test.tsx
@@ -20745,84 +20728,83 @@ tsconfig.json
  38:     "jest": "30.3.0",
  39:     "motion": "^12.38.0",
  40:     "next": "^16.2.1",
- 41:     "next-sanity": "^12.1.3",
- 42:     "path-to-regexp": "^8.4.0",
- 43:     "react": "^19.2.4",
- 44:     "react-dom": "^19.2.4",
- 45:     "react-error-boundary": "^5.0.0",
- 46:     "react-hook-form": "^7.71.2",
- 47:     "react-icons": "^5.6.0",
- 48:     "sanity": "5.18.0",
- 49:     "sitemap": "^9.0.1",
- 50:     "tar-fs": "^3.1.2",
- 51:     "ts-node": "^10.9.2",
- 52:     "zod": "^4.3.6"
- 53:   },
- 54:   "devDependencies": {
- 55:     "@jest/expect": "^30.3.0",
- 56:     "@jest/globals": "^30.3.0",
- 57:     "@ladle/react": "^5.1.1",
- 58:     "@lhci/cli": "^0.15.1",
- 59:     "@playwright/test": "^1.58.2",
- 60:     "@tailwindcss/postcss": "^4.2.2",
- 61:     "@testing-library/cypress": "^10.1.0",
- 62:     "@testing-library/jest-dom": "^6.9.1",
- 63:     "@testing-library/react": "^16.3.2",
- 64:     "@testing-library/user-event": "^14.6.1",
- 65:     "@types/jest": "^30.0.0",
- 66:     "@types/node": "^24.12.0",
- 67:     "@types/react": "^19.2.14",
- 68:     "@types/react-dom": "^19.2.3",
- 69:     "@typescript-eslint/eslint-plugin": "^8.57.1",
- 70:     "@typescript-eslint/parser": "^8.57.1",
- 71:     "@typescript-eslint/utils": "^8.57.1",
- 72:     "axe-core": "^4.11.1",
- 73:     "cypress": "15.12.0",
- 74:     "cypress-axe": "^1.7.0",
- 75:     "eslint": "10.1.0",
- 76:     "eslint-config-next": "16.2.1",
- 77:     "eslint-config-prettier": "^10.1.8",
- 78:     "eslint-plugin-jest": "^29.15.0",
- 79:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 80:     "eslint-plugin-prettier": "^5.5.5",
- 81:     "eslint-plugin-react": "^7.37.5",
- 82:     "eslint-plugin-react-hooks": "^7.0.1",
- 83:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 84:     "eslint-plugin-testing-library": "^7.16.1",
- 85:     "expect": "^30.3.0",
- 86:     "jest-environment-jsdom": "^30.3.0",
- 87:     "jest-extended": "^7.0.0",
- 88:     "jsdom-testing-mocks": "^1.16.0",
- 89:     "pa11y": "^9.1.1",
- 90:     "postcss": "^8.5.8",
- 91:     "prettier": "3.8.1",
- 92:     "react-doctor": "^0.0.30",
- 93:     "tailwindcss": "^4.2.2",
- 94:     "ts-jest": "^29.4.6",
- 95:     "typescript": "^5.9.3",
- 96:     "wait-on": "^9.0.4"
- 97:   },
- 98:   "pnpm": {
- 99:     "overrides": {
-100:       "@pnpm/npm-conf": ">=3.0.2",
-101:       "brace-expansion": ">=5.0.5",
-102:       "minimatch": ">=10.2.4",
-103:       "picomatch@<2.3.2": "4.0.4",
-104:       "picomatch@>=3 <3.0.2": "4.0.3",
-105:       "picomatch@>=4 <4.0.4": "4.0.4",
-106:       "rollup": ">=4.59.0",
-107:       "tar": "7.5.12",
-108:       "undici": ">=6.24.0"
-109:     },
-110:     "onlyBuiltDependencies": [
-111:       "@swc/core",
-112:       "cypress",
-113:       "esbuild",
-114:       "msw",
-115:       "puppeteer",
-116:       "sharp",
-117:       "unrs-resolver"
-118:     ]
-119:   }
-120: }
+ 41:     "path-to-regexp": "^8.4.0",
+ 42:     "react": "^19.2.4",
+ 43:     "react-dom": "^19.2.4",
+ 44:     "react-error-boundary": "^5.0.0",
+ 45:     "react-hook-form": "^7.71.2",
+ 46:     "react-icons": "^5.6.0",
+ 47:     "sitemap": "^9.0.1",
+ 48:     "tar-fs": "^3.1.2",
+ 49:     "ts-node": "^10.9.2",
+ 50:     "zod": "^4.3.6"
+ 51:   },
+ 52:   "devDependencies": {
+ 53:     "@jest/expect": "^30.3.0",
+ 54:     "@jest/globals": "^30.3.0",
+ 55:     "@ladle/react": "^5.1.1",
+ 56:     "@lhci/cli": "^0.15.1",
+ 57:     "@playwright/test": "^1.58.2",
+ 58:     "@tailwindcss/postcss": "^4.2.2",
+ 59:     "@testing-library/cypress": "^10.1.0",
+ 60:     "@testing-library/jest-dom": "^6.9.1",
+ 61:     "@testing-library/react": "^16.3.2",
+ 62:     "@testing-library/user-event": "^14.6.1",
+ 63:     "@types/jest": "^30.0.0",
+ 64:     "@types/node": "^24.12.0",
+ 65:     "@types/react": "^19.2.14",
+ 66:     "@types/react-dom": "^19.2.3",
+ 67:     "@typescript-eslint/eslint-plugin": "^8.57.1",
+ 68:     "@typescript-eslint/parser": "^8.57.1",
+ 69:     "@typescript-eslint/utils": "^8.57.1",
+ 70:     "axe-core": "^4.11.1",
+ 71:     "cypress": "15.12.0",
+ 72:     "cypress-axe": "^1.7.0",
+ 73:     "eslint": "10.1.0",
+ 74:     "eslint-config-next": "16.2.1",
+ 75:     "eslint-config-prettier": "^10.1.8",
+ 76:     "eslint-plugin-jest": "^29.15.0",
+ 77:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 78:     "eslint-plugin-prettier": "^5.5.5",
+ 79:     "eslint-plugin-react": "^7.37.5",
+ 80:     "eslint-plugin-react-hooks": "^7.0.1",
+ 81:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 82:     "eslint-plugin-testing-library": "^7.16.1",
+ 83:     "expect": "^30.3.0",
+ 84:     "jest-environment-jsdom": "^30.3.0",
+ 85:     "jest-extended": "^7.0.0",
+ 86:     "jsdom-testing-mocks": "^1.16.0",
+ 87:     "pa11y": "^9.1.1",
+ 88:     "postcss": "^8.5.8",
+ 89:     "prettier": "3.8.1",
+ 90:     "react-doctor": "^0.0.30",
+ 91:     "sanity": "5.17.1",
+ 92:     "tailwindcss": "^4.2.2",
+ 93:     "ts-jest": "^29.4.6",
+ 94:     "typescript": "^5.9.3",
+ 95:     "wait-on": "^9.0.4"
+ 96:   },
+ 97:   "pnpm": {
+ 98:     "overrides": {
+ 99:       "@pnpm/npm-conf": ">=3.0.2",
+100:       "brace-expansion": ">=5.0.5",
+101:       "minimatch": ">=10.2.4",
+102:       "picomatch@<2.3.2": "4.0.4",
+103:       "picomatch@>=3 <3.0.2": "4.0.3",
+104:       "picomatch@>=4 <4.0.4": "4.0.4",
+105:       "rollup": ">=4.59.0",
+106:       "tar": "7.5.12",
+107:       "undici": ">=6.24.0"
+108:     },
+109:     "onlyBuiltDependencies": [
+110:       "@swc/core",
+111:       "cypress",
+112:       "esbuild",
+113:       "msw",
+114:       "puppeteer",
+115:       "sharp",
+116:       "unrs-resolver"
+117:     ]
+118:   }
+119: }
 ````
