@@ -52,7 +52,7 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
           <FadeIn delay={0.2}>
             <h1
               data-cy="hei"
-              className="text-6xl font-bold text-[#00ff62] text-center"
+              className="text-6xl font-bold text-matrix-light text-center"
             >
               {content?.length > 0 ? content[0]?.text : "Hei!"}
             </h1>
