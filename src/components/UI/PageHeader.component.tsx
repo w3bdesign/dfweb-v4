@@ -13,16 +13,9 @@ export interface IPageHeaderProps {
 
 const PageHeader = ({ children }: IPageHeaderProps) => (
   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-    <div className="container bg-slate-800/80 border border-matrix-dark/30 shadow-glow-sm rounded-sm h-16 p-4 m-4 mx-auto backdrop-blur-sm">
-      <h1 className="text-2xl text-center font-bold text-matrix-light tracking-wider">
-        <span className="text-matrix-dark/60 mr-2" aria-hidden="true">
-          &gt;
-        </span>
+    <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
+      <h1 className="text-2xl text-center font-bold text-slate-100">
         {children}
-        <span
-          className="inline-block w-2 h-5 bg-matrix-light/80 ml-1 align-middle animate-[pulse_1s_ease-in-out_infinite]"
-          aria-hidden="true"
-        />
       </h1>
     </div>
   </div>
