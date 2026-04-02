@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import emailjs from "@emailjs/browser";
 
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
@@ -43,6 +42,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
    * @param {FormData} data - The form data.
    * @return {Promise<string>} A promise that resolves to a success or error message.
    */
+  /**
+   * Default form submission handler using EmailJS.
+   * Dynamically imports @emailjs/browser only when the user submits,
+   * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
+   */
   const defaultOnSubmit = async (data: FormData): Promise<string> => {
     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
     const TEMPLATE_KEY =
@@ -50,6 +54,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
 
     try {
+      const emailjs = (await import("@emailjs/browser")).default;
       emailjs.init(EMAIL_API_KEY);
       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
       return "Takk for din beskjed";
