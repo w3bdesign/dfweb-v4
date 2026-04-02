@@ -103,7 +103,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
               >
                 {links?.map(({ title, name, href, externalLink }, index) => {
                   const linkClassName =
-                    "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-2xl";
+                    "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
 
                   return (
                   <m.li
