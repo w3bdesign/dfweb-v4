@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
@@ -26,6 +27,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
+  preconnect("https://cdn.sanity.io");
+
   const [navigation, { footerCopyrightText }] = await Promise.all([
     client.fetch(navigationQuery),
     client.fetch(settingsQuery),

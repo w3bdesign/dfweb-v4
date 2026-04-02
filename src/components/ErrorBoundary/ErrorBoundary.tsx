@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, ErrorInfo } from "react";
+import React, { ReactNode, ErrorInfo, useCallback } from "react";
 import {
   ErrorBoundary as ReactErrorBoundary,
   FallbackProps,
@@ -12,9 +12,16 @@ interface ErrorBoundaryProps {
   compact?: boolean;
 }
 
+const handleError = (error: Error, info: ErrorInfo) => {
+  console.error("Uventet feil i Matrix:", error, info);
+};
+
 /**
  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+ *
+ * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+ * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
  *
  * @param {Object} props - The component props
  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
@@ -25,16 +32,13 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
   children,
   compact = false,
 }) => {
-  const handleError = (error: Error, info: ErrorInfo) => {
-    console.error("Uventet feil i Matrix:", error, info);
-  };
-
-  const ErrorFallback = (props: FallbackProps) => {
-    return <Fallback {...props} compact={compact} />;
-  };
+  const renderFallback = useCallback(
+    (props: FallbackProps) => <Fallback {...props} compact={compact} />,
+    [compact],
+  );
 
   return (
-    <ReactErrorBoundary FallbackComponent={ErrorFallback} onError={handleError}>
+    <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
       {children}
     </ReactErrorBoundary>
   );

@@ -8,9 +8,15 @@ import userEvent from "@testing-library/user-event";
 import CVContent from "@/components/CV/CVContent.component";
 
 const mockCVData = {
+  _id: "cv-test-id",
+  _type: "cv" as const,
+  _createdAt: "2024-01-01T00:00:00Z",
+  _updatedAt: "2024-01-01T00:00:00Z",
+  _rev: "test-rev",
   keyQualifications: ["Qualification 1", "Qualification 2"],
   experience: [
     {
+      _key: "exp-1",
       period: "2020-2022",
       company: "Example Company",
       role: "Software Developer",
@@ -19,6 +25,7 @@ const mockCVData = {
   ],
   education: [
     {
+      _key: "edu-1",
       period: "2016-2020",
       institution: "University of Example",
       degree: "Bachelor in Computer Science",
@@ -27,6 +34,7 @@ const mockCVData = {
   ],
   volunteerWork: [
     {
+      _key: "vol-1",
       period: "2023-2024",
       organization: "AI Community",
       role: "Technical Lead",
