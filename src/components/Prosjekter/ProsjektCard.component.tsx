@@ -47,7 +47,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
             {projectimage && (
               <img
-                className="transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-[0_2px_20px_rgba(60,255,60,0.35)] hover:brightness-110"
+                className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
                 width={600}
                 src={urlFor(projectimage)
                   .width(600)
