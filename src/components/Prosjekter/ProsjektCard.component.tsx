@@ -39,7 +39,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-slate-700 shadow-sm hover:shadow-glow-sm transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/40"
+      className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
       data-testid="project-card"
     >
       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
