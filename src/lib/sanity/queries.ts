@@ -1,4 +1,11 @@
-import { defineQuery } from "next-sanity";
+/**
+ * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
+ * pulling in the next-sanity dependency tree (which transitively includes
+ * lodash via @sanity/visual-editing).
+ */
+function defineQuery<T extends string>(query: T): T {
+  return query;
+}
 
 export const projectsQuery = defineQuery(`
   *[_type == "project" && published == true] | order(featureOrder asc) {
