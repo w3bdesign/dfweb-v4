@@ -46,7 +46,7 @@ const AnimateIcons: IAnimateIcons[] = [
 const Icons = () => (
   <div
     data-testid="icons"
-    className="flex flex-wrap justify-center gap-8 p-2 text-slate-300/[0.8]"
+    className="flex flex-wrap justify-center gap-2 md:gap-8 p-2 text-slate-300/[0.8]"
   >
     {AnimateIcons.map(({ Icon, id, iconName }) => (
       <div className="relative" key={id}>
