@@ -35,18 +35,23 @@ This file provides guidance to agents when working with code in this repository.
 ### SOLID Principles
 
 #### Single Responsibility Principle (SRP)
+
 Each component/function should have one reason to change.
+
 - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
 - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
 - **Benefits**: Easier testing, clearer purpose, simpler maintenance
 
 #### Open/Closed Principle (OCP)
+
 Software should be open for extension, closed for modification.
+
 - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
 - Create generic components that can be customized without modifying source
 - **Benefits**: Reduces bugs in existing code, safer feature additions
 
 #### Liskov Substitution Principle (LSP)
+
 Components accepting a type should work with any subtype.
 
 - Ensure prop interfaces are respected by all implementations
@@ -56,11 +61,13 @@ Components accepting a type should work with any subtype.
 #### Interface Segregation Principle (ISP)
 
 Don't force components to depend on props they don't use.
+
 - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
 - Split large prop types into smaller, composable ones
 - **Benefits**: More flexible components, easier to implement and test
 
 #### Dependency Inversion Principle (DIP)
+
 Depend on abstractions, not concrete implementations.
 
 - Use dependency injection for services (e.g., pass clients as props or use context)
@@ -99,6 +106,7 @@ Don't implement functionality until it's actually needed.
 ### Code Quality Summary
 
 Following these principles results in:
+
 - Maintainable, extendable code
 - Fewer bugs and faster debugging
 - Better team collaboration
@@ -118,6 +126,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: Manage focus (trap, move, and return) per APG patterns
 
 #### Targets & Input
+
 - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
 - MUST: Mobile `<input>` font-size ≥16px or set:
   ```html
@@ -145,6 +154,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
 
 #### State & Navigation
+
 - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
 - MUST: Back/Forward restores scroll
 - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
@@ -157,6 +167,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
 
 #### Touch/Drag/Scroll
+
 - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
 - MUST: Delay first tooltip in a group; subsequent peers no delay
 - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
