@@ -10765,6 +10765,66 @@ tsconfig.json
 49: export default NavigationLink;
 ````
 
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: export interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   download?: boolean | string;
+ 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
+10:   "aria-label"?: string;
+11: }
+12: /**
+13:  * Button component that can be rendered as various HTML elements
+14:  * @param {Object} props
+15:  * @param {ReactNode} props.children - The content of the button
+16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+22:  * @returns {JSX.Element} The rendered Button component
+23:  */
+24: const Button = ({
+25:   children,
+26:   href,
+27:   renderAs,
+28:   type = "submit",
+29:   disabled = false,
+30:   download,
+31:   onClick,
+32:   "aria-label": ariaLabel,
+33:   ...props
+34: }: IButtonProps) => {
+35:   const Component = renderAs ?? "button";
+36:   const isLink = renderAs === "a";
+37:   const targetLink = isLink ? "_blank" : undefined;
+38:   return (
+39:     <Component
+40:       type={isLink ? undefined : type}
+41:       data-cy="submit"
+42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-matrix-dark rounded-sm hover:bg-matrix-dark/80 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-glow-sm active:shadow-inner border border-matrix/20 hover:border-matrix/40 hover:brightness-110 active:brightness-95 cursor-pointer"
+43:       href={href}
+44:       target={targetLink}
+45:       disabled={disabled}
+46:       data-text={children}
+47:       download={download}
+48:       onClick={onClick}
+49:       aria-label={ariaLabel}
+50:       {...props}
+51:     >
+52:       {children}
+53:     </Component>
+54:   );
+55: };
+56: export default Button;
+````
+
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -10949,6 +11009,47 @@ tsconfig.json
 113:   );
 114: }
 115: export default InputField;
+````
+
+## File: src/components/UI/Pill.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface PillProps {
+ 3:   text: string;
+ 4:   className?: string;
+ 5:   href?: string;
+ 6:   onClick?: () => void;
+ 7: }
+ 8: /**
+ 9:  * Renders a Pill component.
+10:  *
+11:  * @param {PillProps} props - The properties for the Pill component.
+12:  * @param {string} props.text - The text to display in the Pill.
+13:  * @param {string} [props.className=''] - Additional CSS classes to apply to the Pill.
+14:  * @param {string} [props.href] - The URL to navigate to when the Pill is clicked.
+15:  * @param {() => void} [props.onClick] - The function to call when the Pill is clicked.
+16:  * @return {JSX.Element} The rendered Pill component.
+17:  */
+18: const Pill: React.FC<PillProps> = ({ text, className = "", href, onClick }) => {
+19:   const baseClasses = `glitch text-white m-4 text-xl p-6 mt-4 rounded-full transition duration-300 ease-in-out transform
+20:                  bg-matrix-dark/20 border-2 border-matrix-dark/30
+21:                  hover:bg-matrix/30
+22:                  hover:shadow-[0_0_15px_rgba(0,255,98,0.1),0_0_20px_rgba(0,255,98,0.1),inset_0_0_20px_rgba(0,255,98,0.1)]
+23:                  backdrop-blur-sm ${className}`;
+24:   if (href) {
+25:     return (
+26:       <a href={href} className={baseClasses} data-text={text}>
+27:         {text}
+28:       </a>
+29:     );
+30:   }
+31:   return (
+32:     <button className={baseClasses} onClick={onClick} data-text={text}>
+33:       {text}
+34:     </button>
+35:   );
+36: };
+37: export default Pill;
 ````
 
 ## File: src/components/UI/Skeleton.component.tsx
@@ -19497,107 +19598,6 @@ tsconfig.json
 32: export default Footer;
 ````
 
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   download?: boolean | string;
- 9:   onClick?: MouseEventHandler<HTMLButtonElement>;
-10:   "aria-label"?: string;
-11: }
-12: /**
-13:  * Button component that can be rendered as various HTML elements
-14:  * @param {Object} props
-15:  * @param {ReactNode} props.children - The content of the button
-16:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-17:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-18:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-19:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-20:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-21:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-22:  * @returns {JSX.Element} The rendered Button component
-23:  */
-24: const Button = ({
-25:   children,
-26:   href,
-27:   renderAs,
-28:   type = "submit",
-29:   disabled = false,
-30:   download,
-31:   onClick,
-32:   "aria-label": ariaLabel,
-33:   ...props
-34: }: IButtonProps) => {
-35:   const Component = renderAs ?? "button";
-36:   const isLink = renderAs === "a";
-37:   const targetLink = isLink ? "_blank" : undefined;
-38:   return (
-39:     <Component
-40:       type={isLink ? undefined : type}
-41:       data-cy="submit"
-42:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-matrix-dark rounded-sm hover:bg-matrix-dark/80 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-glow-sm active:shadow-inner border border-matrix/20 hover:border-matrix/40 hover:brightness-110 active:brightness-95 cursor-pointer"
-43:       href={href}
-44:       target={targetLink}
-45:       disabled={disabled}
-46:       data-text={children}
-47:       download={download}
-48:       onClick={onClick}
-49:       aria-label={ariaLabel}
-50:       {...props}
-51:     >
-52:       {children}
-53:     </Component>
-54:   );
-55: };
-56: export default Button;
-````
-
-## File: src/components/UI/Pill.component.tsx
-````typescript
- 1: import React from "react";
- 2: interface PillProps {
- 3:   text: string;
- 4:   className?: string;
- 5:   href?: string;
- 6:   onClick?: () => void;
- 7: }
- 8: /**
- 9:  * Renders a Pill component.
-10:  *
-11:  * @param {PillProps} props - The properties for the Pill component.
-12:  * @param {string} props.text - The text to display in the Pill.
-13:  * @param {string} [props.className=''] - Additional CSS classes to apply to the Pill.
-14:  * @param {string} [props.href] - The URL to navigate to when the Pill is clicked.
-15:  * @param {() => void} [props.onClick] - The function to call when the Pill is clicked.
-16:  * @return {JSX.Element} The rendered Pill component.
-17:  */
-18: const Pill: React.FC<PillProps> = ({ text, className = "", href, onClick }) => {
-19:   const baseClasses = `glitch text-white m-4 text-xl p-6 mt-4 rounded-full transition duration-300 ease-in-out transform
-20:                  bg-matrix-dark/20 border-2 border-matrix-dark/30
-21:                  hover:bg-matrix/30
-22:                  hover:shadow-[0_0_15px_rgba(0,255,98,0.1),0_0_20px_rgba(0,255,98,0.1),inset_0_0_20px_rgba(0,255,98,0.1)]
-23:                  backdrop-blur-sm ${className}`;
-24:   if (href) {
-25:     return (
-26:       <a href={href} className={baseClasses} data-text={text}>
-27:         {text}
-28:       </a>
-29:     );
-30:   }
-31:   return (
-32:     <button className={baseClasses} onClick={onClick} data-text={text}>
-33:       {text}
-34:     </button>
-35:   );
-36: };
-37: export default Pill;
-````
-
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -19931,6 +19931,30 @@ tsconfig.json
 152:   );
 153: };
 154: export default MobileMenu;
+````
+
+## File: src/components/UI/PageHeader.component.tsx
+````typescript
+ 1: import type { ReactNode } from "react";
+ 2: export interface IPageHeaderProps {
+ 3:   children: ReactNode;
+ 4: }
+ 5: /**
+ 6:  * PageHeader component for rendering the header for each page
+ 7:  * @function PageHeader
+ 8:  * @param {children?} children - HTML children to render in the page header component
+ 9:  * @returns {ReactNode} - Rendered component
+10:  */
+11: const PageHeader = ({ children }: IPageHeaderProps) => (
+12:   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+13:     <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
+14:       <h1 className="text-xl md:text-2xl text-center font-bold text-slate-100">
+15:         {children}
+16:       </h1>
+17:     </div>
+18:   </div>
+19: );
+20: export default PageHeader;
 ````
 
 ## File: src/utils/eslint/package.json
@@ -20322,30 +20346,6 @@ tsconfig.json
 82: export default ProsjektCard;
 ````
 
-## File: src/components/UI/PageHeader.component.tsx
-````typescript
- 1: import type { ReactNode } from "react";
- 2: export interface IPageHeaderProps {
- 3:   children: ReactNode;
- 4: }
- 5: /**
- 6:  * PageHeader component for rendering the header for each page
- 7:  * @function PageHeader
- 8:  * @param {children?} children - HTML children to render in the page header component
- 9:  * @returns {ReactNode} - Rendered component
-10:  */
-11: const PageHeader = ({ children }: IPageHeaderProps) => (
-12:   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-13:     <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
-14:       <h1 className="text-xl md:text-2xl text-center font-bold text-slate-100">
-15:         {children}
-16:       </h1>
-17:     </div>
-18:   </div>
-19: );
-20: export default PageHeader;
-````
-
 ## File: src/components/Index/Icons.component.tsx
 ````typescript
  1: import { IconType } from "react-icons";
@@ -20479,7 +20479,7 @@ tsconfig.json
 
 ## File: src/app/globals.css
 ````css
-  1: @import url("tailwindcss");
+  1: @import "tailwindcss";
   2: @config '../../tailwind.config.ts';
   3: @layer base {
   4:   *,
