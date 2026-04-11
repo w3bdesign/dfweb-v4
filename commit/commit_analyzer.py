@@ -177,7 +177,9 @@ def generate_commit_message(diff: str) -> Optional[str]:
         load_dotenv()
         provider = get_provider()
 
-        prompt = f"""You are a git commit message generator. Your task is to analyze the git diff and output ONLY the commit message itself - no explanations, no prefixes like "Based on the diff...", just the commit message exactly as it should appear in git.
+        prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
+the commit message itself - no explanations, no prefixes like "Based on the diff...", \
+just the commit message exactly as it should appear in git.
 
         The commit message MUST follow this format:
         <emoji> <type>[optional scope]: <description>
