@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, RefObject, useCallback } from "react";
 import "@/app/cursor.css";
-import { useMobile } from "../../hooks/useMobile"; // Pb51b
+import { useMobile } from "../../hooks/useMobile";
 
 interface MatrixCursorProps {
   heroRef: RefObject<HTMLElement | null>;
@@ -84,7 +84,9 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
 
   const getRandomChar = useCallback(() => {
     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
-    const index = Math.floor(Math.random() * matrixChars.length);
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const index = array[0]! % matrixChars.length;
     return matrixChars[index] ?? matrixChars[0] ?? "X";
   }, []);
 
@@ -102,7 +104,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     const handleMouseMove = (e: MouseEvent) => {
       const trail: MatrixTrail | undefined = state.isHovered
         ? {
-            id: Math.random().toString(36).substring(2, 100),
+            id: crypto.randomUUID(),
             x: e.clientX,
             y: e.clientY,
             char: getRandomChar(),
