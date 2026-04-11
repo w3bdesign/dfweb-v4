@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, RefObject, useCallback } from "react";
 import "@/app/cursor.css";
-import { useMobile } from "../../hooks/useMobile"; // Pb51b
+import { useMobile } from "../../hooks/useMobile";
 
 interface MatrixCursorProps {
   heroRef: RefObject<HTMLElement | null>;
