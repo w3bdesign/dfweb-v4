@@ -13,7 +13,7 @@ export interface ReactMatrixAnimationProps {
   tileSet?: string[] | null;
 }
 
-const CANVAS_ID = "matrixCanvas";
+const CANVAS_ID = "matrix-canvas";
 
 /**
  * ReactMatrixAnimation component
