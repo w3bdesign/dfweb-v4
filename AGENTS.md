@@ -48,11 +48,13 @@ Software should be open for extension, closed for modification.
 
 #### Liskov Substitution Principle (LSP)
 Components accepting a type should work with any subtype.
+
 - Ensure prop interfaces are respected by all implementations
 - Don't throw unexpected errors or require undocumented props
 - **Benefits**: Predictable behavior, safer component hierarchies
 
 #### Interface Segregation Principle (ISP)
+
 Don't force components to depend on props they don't use.
 - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
 - Split large prop types into smaller, composable ones
@@ -60,6 +62,7 @@ Don't force components to depend on props they don't use.
 
 #### Dependency Inversion Principle (DIP)
 Depend on abstractions, not concrete implementations.
+
 - Use dependency injection for services (e.g., pass clients as props or use context)
 - Define abstract types/interfaces, inject implementations
 - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
@@ -85,6 +88,7 @@ Depend on abstractions, not concrete implementations.
 ### YAGNI Principle (You Aren't Gonna Need It)
 
 Don't implement functionality until it's actually needed.
+
 - Focus on current requirements, not hypothetical future needs
 - Don't create abstraction layers for single implementations
 - Avoid premature optimization before measuring performance
@@ -108,6 +112,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 ### Interactions
 
 #### Keyboard
+
 - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
 - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
 - MUST: Manage focus (trap, move, and return) per APG patterns
@@ -122,6 +127,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
 
 #### Inputs & Forms (Behavior)
+
 - MUST: Hydration-safe inputs (no lost focus/value)
 - NEVER: Block paste in `<input>/<textarea>`
 - MUST: Loading buttons show spinner and keep original label
@@ -144,6 +150,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
 
 #### Feedback
+
 - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
 - MUST: Confirm destructive actions or provide Undo window
 - MUST: Use polite `aria-live` for toasts/inline validation
@@ -157,6 +164,7 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
 
 #### Autofocus
+
 - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
 
 ### Animation
