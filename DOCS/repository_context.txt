@@ -417,82 +417,6 @@ tsconfig.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.14.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: |
-19:             sudo corepack enable
-20:             sudo corepack prepare pnpm@latest-8 --activate
-21:       - run:
-22:           name: Install Dependencies
-23:           command: pnpm install --frozen-lockfile
-24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-25:       - save_cache:
-26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-27:           paths:
-28:             - ~/.pnpm-store
-29:   build:
-30:     working_directory: /home/circleci/dfweb
-31:     docker:
-32:       - image: cimg/node:24.14.0-browsers
-33:     steps:
-34:       - checkout
-35:       - restore_cache:
-36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-37:       - run:
-38:           name: Install pnpm package manager
-39:           command: |
-40:             sudo corepack enable
-41:             sudo corepack prepare pnpm@latest-8 --activate
-42:       - run:
-43:           name: Install Dependencies
-44:           command: pnpm install --frozen-lockfile
-45:       - run:
-46:           name: Chrome key start setup
-47:           command: sudo apt update -y
-48:       - run:
-49:           name: Chrome key finish setup
-50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-51:       - run:
-52:           name: Chrome package download
-53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-54:       - save_cache:
-55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-56:           paths:
-57:             - ~/.pnpm-store
-58:       - store_artifacts:
-59:           path: /root/.npm/_logs
-60:       - run:
-61:           name: Run Jest Tests
-62:           command: pnpm test
-63:       - run:
-64:           name: Make sure ~/.gnupg directory exists
-65:           command: mkdir -p ~/.gnupg
-66:       - codecov/upload
-67:     parallelism: 6
-68: workflows:
-69:   chromatic-deploy:
-70:     jobs:
-71:       - build:
-72:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -15236,6 +15160,33 @@ tsconfig.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.1.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   }
+23: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -18981,6 +18932,82 @@ tsconfig.json
 36: }
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.14.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: |
+19:             sudo corepack enable
+20:             sudo corepack prepare pnpm@latest-8 --activate
+21:       - run:
+22:           name: Install Dependencies
+23:           command: pnpm install --frozen-lockfile
+24:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+25:       - save_cache:
+26:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+27:           paths:
+28:             - ~/.pnpm-store
+29:   build:
+30:     working_directory: /home/circleci/dfweb
+31:     docker:
+32:       - image: cimg/node:24.14.1-browsers
+33:     steps:
+34:       - checkout
+35:       - restore_cache:
+36:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+37:       - run:
+38:           name: Install pnpm package manager
+39:           command: |
+40:             sudo corepack enable
+41:             sudo corepack prepare pnpm@latest-8 --activate
+42:       - run:
+43:           name: Install Dependencies
+44:           command: pnpm install --frozen-lockfile
+45:       - run:
+46:           name: Chrome key start setup
+47:           command: sudo apt update -y
+48:       - run:
+49:           name: Chrome key finish setup
+50:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+51:       - run:
+52:           name: Chrome package download
+53:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+54:       - save_cache:
+55:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+56:           paths:
+57:             - ~/.pnpm-store
+58:       - store_artifacts:
+59:           path: /root/.npm/_logs
+60:       - run:
+61:           name: Run Jest Tests
+62:           command: pnpm test
+63:       - run:
+64:           name: Make sure ~/.gnupg directory exists
+65:           command: mkdir -p ~/.gnupg
+66:       - codecov/upload
+67:     parallelism: 6
+68: workflows:
+69:   chromatic-deploy:
+70:     jobs:
+71:       - build:
+72:           name: Build Next.js project
+````
+
 ## File: src/__tests__/UI/Pill.test.tsx
 ````typescript
   1: import React from "react";
@@ -19689,36 +19716,56 @@ tsconfig.json
 1: ignore-scripts=true
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.1.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: studio/.npmrc
 ````
 1: ignore-scripts=true
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.6.0",
+20:     "sanity": "^5.18.0",
+21:     "styled-components": "^6.3.12"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.14",
+26:     "eslint": "^10.1.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=5.2.0",
+33:       "js-yaml": ">=3.14.2",
+34:       "undici": ">=6.24.0"
+35:     }
+36:   },
+37:   "prettier": {
+38:     "semi": false,
+39:     "printWidth": 100,
+40:     "bracketSpacing": false,
+41:     "singleQuote": true
+42:   }
+43: }
 ````
 
 ## File: .npmrc
@@ -20313,53 +20360,6 @@ tsconfig.json
 173: }
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.18.0",
-21:     "styled-components": "^6.3.12"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.1.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "basic-ftp": ">=5.2.0",
-33:       "js-yaml": ">=3.14.2",
-34:       "undici": ">=6.24.0"
-35:     }
-36:   },
-37:   "prettier": {
-38:     "semi": false,
-39:     "printWidth": 100,
-40:     "bracketSpacing": false,
-41:     "singleQuote": true
-42:   }
-43: }
-````
-
 ## File: src/components/Index/Icons.component.tsx
 ````typescript
  1: import { IconType } from "react-icons";
@@ -20738,22 +20738,22 @@ tsconfig.json
  64:     "@types/node": "^24.12.0",
  65:     "@types/react": "^19.2.14",
  66:     "@types/react-dom": "^19.2.3",
- 67:     "@typescript-eslint/eslint-plugin": "^8.57.1",
- 68:     "@typescript-eslint/parser": "^8.57.1",
- 69:     "@typescript-eslint/utils": "^8.57.1",
+ 67:     "@typescript-eslint/eslint-plugin": "^8.57.2",
+ 68:     "@typescript-eslint/parser": "^8.57.2",
+ 69:     "@typescript-eslint/utils": "^8.57.2",
  70:     "axe-core": "^4.11.1",
- 71:     "cypress": "15.12.0",
+ 71:     "cypress": "15.13.0",
  72:     "cypress-axe": "^1.7.0",
  73:     "eslint": "10.1.0",
  74:     "eslint-config-next": "16.2.1",
  75:     "eslint-config-prettier": "^10.1.8",
- 76:     "eslint-plugin-jest": "^29.15.0",
+ 76:     "eslint-plugin-jest": "^29.15.1",
  77:     "eslint-plugin-jsx-a11y": "^6.10.2",
  78:     "eslint-plugin-prettier": "^5.5.5",
  79:     "eslint-plugin-react": "^7.37.5",
  80:     "eslint-plugin-react-hooks": "^7.0.1",
  81:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 82:     "eslint-plugin-testing-library": "^7.16.1",
+ 82:     "eslint-plugin-testing-library": "^7.16.2",
  83:     "expect": "^30.3.0",
  84:     "jest-environment-jsdom": "^30.3.0",
  85:     "jest-extended": "^7.0.0",
@@ -20762,7 +20762,7 @@ tsconfig.json
  88:     "postcss": "^8.5.8",
  89:     "prettier": "3.8.1",
  90:     "react-doctor": "^0.0.30",
- 91:     "sanity": "5.17.1",
+ 91:     "sanity": "5.18.0",
  92:     "tailwindcss": "^4.2.2",
  93:     "ts-jest": "^29.4.6",
  94:     "typescript": "^5.9.3",
@@ -20774,10 +20774,10 @@ tsconfig.json
 100:       "brace-expansion": ">=5.0.5",
 101:       "minimatch": ">=10.2.4",
 102:       "picomatch@<2.3.2": "4.0.4",
-103:       "picomatch@>=3 <3.0.2": "4.0.3",
+103:       "picomatch@>=3 <3.0.2": "4.0.4",
 104:       "picomatch@>=4 <4.0.4": "4.0.4",
 105:       "rollup": ">=4.59.0",
-106:       "tar": "7.5.12",
+106:       "tar": "7.5.13",
 107:       "undici": ">=6.24.0"
 108:     },
 109:     "onlyBuiltDependencies": [
