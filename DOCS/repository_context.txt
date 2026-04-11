@@ -6549,6 +6549,114 @@ tsconfig.json
 55: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
+## File: src/__tests__/CV/CVContent.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import CVContent from "@/components/CV/CVContent.component";
+  8: const mockCVData = {
+  9:   _id: "cv-test-id",
+ 10:   _type: "cv" as const,
+ 11:   _createdAt: "2024-01-01T00:00:00Z",
+ 12:   _updatedAt: "2024-01-01T00:00:00Z",
+ 13:   _rev: "test-rev",
+ 14:   keyQualifications: ["Qualification 1", "Qualification 2"],
+ 15:   experience: [
+ 16:     {
+ 17:       _key: "exp-1",
+ 18:       period: "2020-2022",
+ 19:       company: "Example Company",
+ 20:       role: "Software Developer",
+ 21:       description: "Worked on various projects",
+ 22:     },
+ 23:   ],
+ 24:   education: [
+ 25:     {
+ 26:       _key: "edu-1",
+ 27:       period: "2016-2020",
+ 28:       institution: "University of Example",
+ 29:       degree: "Bachelor in Computer Science",
+ 30:       description: "Studied various aspects of computer science",
+ 31:     },
+ 32:   ],
+ 33:   volunteerWork: [
+ 34:     {
+ 35:       _key: "vol-1",
+ 36:       period: "2023-2024",
+ 37:       organization: "AI Community",
+ 38:       role: "Technical Lead",
+ 39:       description: "Managing AI Discord community and developing bots",
+ 40:     },
+ 41:   ],
+ 42: };
+ 43: describe("CVContent", () => {
+ 44:   it("renders CV header and PDF download button", () => {
+ 45:     // Arrange
+ 46:     const expectedElements = {
+ 47:       header: /cv/i,
+ 48:       pdfButton: /last ned pdf/i,
+ 49:     };
+ 50:     // Act
+ 51:     render(<CVContent cvData={mockCVData} />);
+ 52:     // Assert
+ 53:     expect(
+ 54:       screen.getByRole("heading", { name: expectedElements.header }),
+ 55:     ).toBeInTheDocument();
+ 56:     const pdfLinks = screen.getAllByRole("link", {
+ 57:       name: expectedElements.pdfButton,
+ 58:     });
+ 59:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
+ 60:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
+ 61:   });
+ 62:   it("renders all navigation tabs", () => {
+ 63:     // Arrange
+ 64:     const expectedTabs = [
+ 65:       /nøkkelkvalifikasjoner/i,
+ 66:       /erfaring/i,
+ 67:       /utdanning/i,
+ 68:       /frivillig arbeid/i,
+ 69:     ];
+ 70:     // Act
+ 71:     render(<CVContent cvData={mockCVData} />);
+ 72:     // Assert
+ 73:     expectedTabs.forEach((tabName) => {
+ 74:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
+ 75:     });
+ 76:   });
+ 77:   it("displays qualifications in initial tab", () => {
+ 78:     // Arrange
+ 79:     const expectedQualification = /qualification 1/i;
+ 80:     // Act
+ 81:     render(<CVContent cvData={mockCVData} />);
+ 82:     // Assert
+ 83:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
+ 84:   });
+ 85:   it("displays volunteer work content when switching tabs", async () => {
+ 86:     // Arrange
+ 87:     const user = userEvent.setup();
+ 88:     render(<CVContent cvData={mockCVData} />);
+ 89:     const volunteerWorkTab = screen.getByRole("tab", {
+ 90:       name: /frivillig arbeid/i,
+ 91:     });
+ 92:     const expectedContent = {
+ 93:       role: /technical lead/i,
+ 94:       organization: /ai community/i,
+ 95:     };
+ 96:     // Act
+ 97:     await user.click(volunteerWorkTab);
+ 98:     // Assert
+ 99:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
+100:     expect(
+101:       await screen.findByText(expectedContent.organization),
+102:     ).toBeInTheDocument();
+103:   });
+104: });
+````
+
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
  1: import React from "react";
@@ -10213,181 +10321,6 @@ tsconfig.json
 65: };
 ````
 
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
-  3: import "@/app/cursor.css";
-  4: import { useMobile } from "../../hooks/useMobile"; // Pb51b
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: interface CursorState {
- 19:   cursorPosition: { x: number; y: number };
- 20:   isHovered: boolean;
- 21:   trails: MatrixTrail[];
- 22: }
- 23: type CursorAction =
- 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
- 25:   | { type: "MOUSE_ENTER" }
- 26:   | { type: "MOUSE_LEAVE" }
- 27:   | { type: "REMOVE_TRAIL"; trailId: string };
- 28: const MAX_TRAILS = 20;
- 29: const cursorReducer = (
- 30:   state: CursorState,
- 31:   action: CursorAction,
- 32: ): CursorState => {
- 33:   switch (action.type) {
- 34:     case "MOUSE_MOVE": {
- 35:       const newPosition = { x: action.x, y: action.y };
- 36:       if (!action.trail) {
- 37:         return { ...state, cursorPosition: newPosition };
- 38:       }
- 39:       const updatedTrails = [...state.trails, action.trail];
- 40:       return {
- 41:         ...state,
- 42:         cursorPosition: newPosition,
- 43:         trails:
- 44:           updatedTrails.length > MAX_TRAILS
- 45:             ? updatedTrails.slice(1)
- 46:             : updatedTrails,
- 47:       };
- 48:     }
- 49:     case "MOUSE_ENTER":
- 50:       return { ...state, isHovered: true };
- 51:     case "MOUSE_LEAVE":
- 52:       return { ...state, isHovered: false, trails: [] };
- 53:     case "REMOVE_TRAIL":
- 54:       return {
- 55:         ...state,
- 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
- 57:       };
- 58:   }
- 59: };
- 60: const initialState: CursorState = {
- 61:   cursorPosition: { x: 0, y: 0 },
- 62:   isHovered: false,
- 63:   trails: [],
- 64: };
- 65: /**
- 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 70:  */
- 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 72:   const isMobile = useMobile(); // Pd528
- 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
- 74:   const getRandomChar = useCallback(() => {
- 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 76:     const index = Math.floor(Math.random() * matrixChars.length);
- 77:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 78:   }, []);
- 79:   useEffect(() => {
- 80:     const heroSection = heroRef.current;
- 81:     if (!heroSection) return;
- 82:     // Add cursor: none to the hero section when hovered
- 83:     if (state.isHovered) {
- 84:       heroSection.style.cursor = "none";
- 85:     } else {
- 86:       heroSection.style.cursor = "";
- 87:     }
- 88:     const handleMouseMove = (e: MouseEvent) => {
- 89:       const trail: MatrixTrail | undefined = state.isHovered
- 90:         ? {
- 91:             id: Math.random().toString(36).substring(2, 100),
- 92:             x: e.clientX,
- 93:             y: e.clientY,
- 94:             char: getRandomChar(),
- 95:           }
- 96:         : undefined;
- 97:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
- 98:     };
- 99:     const handleMouseEnter = () => {
-100:       dispatch({ type: "MOUSE_ENTER" });
-101:       heroSection.style.cursor = "none";
-102:     };
-103:     const handleMouseLeave = () => {
-104:       dispatch({ type: "MOUSE_LEAVE" });
-105:       heroSection.style.cursor = "";
-106:     };
-107:     heroSection.addEventListener("mousemove", handleMouseMove);
-108:     heroSection.addEventListener("mouseenter", handleMouseEnter);
-109:     heroSection.addEventListener("mouseleave", handleMouseLeave);
-110:     return () => {
-111:       heroSection.removeEventListener("mousemove", handleMouseMove);
-112:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
-113:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-114:       heroSection.style.cursor = "";
-115:     };
-116:   }, [heroRef, state.isHovered, getRandomChar]);
-117:   const handleAnimationEnd = useCallback((trailId: string) => {
-118:     dispatch({ type: "REMOVE_TRAIL", trailId });
-119:   }, []);
-120:   if (!heroRef.current || isMobile) return null; // P6ecf
-121:   const cursorStyles: CursorStyles = {
-122:     position: "fixed",
-123:     top: 0,
-124:     left: 0,
-125:     width: "100%",
-126:     height: "100%",
-127:     pointerEvents: "none",
-128:     zIndex: 9999,
-129:     "--cursor-x": `${state.cursorPosition.x}px`,
-130:     "--cursor-y": `${state.cursorPosition.y}px`,
-131:   };
-132:   return (
-133:     <div
-134:       data-testid="matrix-cursor"
-135:       className={state.isHovered ? "matrix-cursor" : ""}
-136:       style={cursorStyles}
-137:     >
-138:       {state.trails.map((trail) => (
-139:         <div
-140:           key={trail.id}
-141:           data-testid="matrix-trail"
-142:           className="matrix-trail"
-143:           style={{
-144:             position: "fixed",
-145:             left: `${trail.x}px`,
-146:             top: `${trail.y}px`,
-147:             zIndex: 10000,
-148:             pointerEvents: "none",
-149:           }}
-150:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-151:         >
-152:           {trail.char}
-153:         </div>
-154:       ))}
-155:       {state.isHovered && (
-156:         <div
-157:           style={{
-158:             position: "fixed",
-159:             top: 0,
-160:             left: 0,
-161:             width: "100%",
-162:             height: "100%",
-163:             pointerEvents: "none",
-164:             zIndex: 9999,
-165:           }}
-166:         />
-167:       )}
-168:     </div>
-169:   );
-170: };
-171: export default MatrixCursor;
-````
-
 ## File: src/components/Animations/PageTransition.component.tsx
 ````typescript
  1: import { Variants, AnimatePresence } from "motion/react";
@@ -10711,6 +10644,51 @@ tsconfig.json
 28: export default VolunteerWorkTabContent;
 ````
 
+## File: src/components/ErrorBoundary/ErrorBoundary.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
+ 3: import {
+ 4:   ErrorBoundary as ReactErrorBoundary,
+ 5:   FallbackProps,
+ 6: } from "react-error-boundary";
+ 7: import Fallback from "./Fallback.component";
+ 8: interface ErrorBoundaryProps {
+ 9:   children: ReactNode;
+10:   compact?: boolean;
+11: }
+12: const handleError = (error: Error, info: ErrorInfo) => {
+13:   console.error("Uventet feil i Matrix:", error, info);
+14: };
+15: /**
+16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
+17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+18:  *
+19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
+21:  *
+22:  * @param {Object} props - The component props
+23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
+25:  * @returns {JSX.Element} A React component that catches errors in its child components
+26:  */
+27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
+28:   children,
+29:   compact = false,
+30: }) => {
+31:   const renderFallback = useCallback(
+32:     (props: FallbackProps) => <Fallback {...props} compact={compact} />,
+33:     [compact],
+34:   );
+35:   return (
+36:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
+37:       {children}
+38:     </ReactErrorBoundary>
+39:   );
+40: };
+41: export default ErrorBoundary;
+````
+
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
  1: import React from "react";
@@ -10874,6 +10852,162 @@ tsconfig.json
 11:   tekst: z.string().min(1, "Beskjed er påkrevd"),
 12: });
 13: export type FormData = z.infer<typeof formSchema>;
+````
+
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import PageHeader from "@/components/UI/PageHeader.component";
+  6: import Button from "@/components/UI/Button.component";
+  7: import InputField from "@/components/UI/InputField.component";
+  8: import { formSchema, FormData } from "./config/formConfig";
+  9: interface ContactFormProps {
+ 10:   csrfToken?: string;
+ 11:   onSubmit?: (data: FormData) => Promise<string>;
+ 12:   initialResponse?: string;
+ 13: }
+ 14: /**
+ 15:  * ContactForm component - A complete contact form with EmailJS integration
+ 16:  * Handles both the form UI and submission logic in a single, clear component
+ 17:  */
+ 18: const ContactForm: React.FC<ContactFormProps> = ({
+ 19:   csrfToken = "",
+ 20:   onSubmit: onSubmitProp,
+ 21:   initialResponse = "",
+ 22: }) => {
+ 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
+ 24:     null,
+ 25:   );
+ 26:   const serverResponse = submittedResponse ?? initialResponse;
+ 27:   const {
+ 28:     register,
+ 29:     handleSubmit,
+ 30:     formState: { errors, isSubmitting },
+ 31:   } = useForm<FormData>({
+ 32:     resolver: zodResolver(formSchema),
+ 33:   });
+ 34:   /**
+ 35:    * Default form submission handler using EmailJS.
+ 36:    * @param {FormData} data - The form data.
+ 37:    * @return {Promise<string>} A promise that resolves to a success or error message.
+ 38:    */
+ 39:   /**
+ 40:    * Default form submission handler using EmailJS.
+ 41:    * Dynamically imports @emailjs/browser only when the user submits,
+ 42:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
+ 43:    */
+ 44:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 45:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 46:     const TEMPLATE_KEY =
+ 47:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 48:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 49:     try {
+ 50:       const emailjs = (await import("@emailjs/browser")).default;
+ 51:       emailjs.init(EMAIL_API_KEY);
+ 52:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 53:       return "Takk for din beskjed";
+ 54:     } catch {
+ 55:       return "Feil under sending av skjema";
+ 56:     }
+ 57:   };
+ 58:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 59:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 60:     const message = await submitHandler(data);
+ 61:     setSubmittedResponse(message);
+ 62:   };
+ 63:   return (
+ 64:     <main data-testid="kontaktcontent" id="maincontent">
+ 65:       <div className="mt-32 bg-graybg">
+ 66:         <PageHeader>Kontakt</PageHeader>
+ 67:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 68:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 69:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 70:               <div className="p-2 md:p-6 pt-8">
+ 71:                 {serverResponse ? (
+ 72:                   <div aria-live="polite" aria-atomic="true">
+ 73:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 74:                       {serverResponse}
+ 75:                     </h3>
+ 76:                   </div>
+ 77:                 ) : (
+ 78:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 79:                     <form
+ 80:                       id="contact-form"
+ 81:                       className="text-center"
+ 82:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 83:                       method="POST"
+ 84:                       action="/api/form"
+ 85:                       aria-label="Contact Form"
+ 86:                     >
+ 87:                       {csrfToken && (
+ 88:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 89:                       )}
+ 90:                       <fieldset>
+ 91:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 92:                           Kontaktskjema
+ 93:                         </legend>
+ 94:                         <InputField<FormData>
+ 95:                           name="navn"
+ 96:                           label="Fullt navn"
+ 97:                           htmlFor="navn"
+ 98:                           register={register}
+ 99:                           error={errors.navn?.message}
+100:                           isRequired
+101:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
+102:                           title="Vennligst bruk norske bokstaver"
+103:                           autoComplete="name"
+104:                           spellCheck={false}
+105:                         />
+106:                         <br />
+107:                         <InputField<FormData>
+108:                           name="telefon"
+109:                           label="Telefonnummer"
+110:                           htmlFor="telefon"
+111:                           register={register}
+112:                           error={errors.telefon?.message}
+113:                           isRequired
+114:                           inputPattern={/^\d{8}$/}
+115:                           title="Vennligst oppgi et gyldig telefonnummer"
+116:                           autoComplete="tel"
+117:                           inputMode="tel"
+118:                           spellCheck={false}
+119:                         />
+120:                         <br />
+121:                         <InputField<FormData>
+122:                           name="tekst"
+123:                           label="Hva ønsker du å si?"
+124:                           htmlFor="tekst"
+125:                           register={register}
+126:                           error={errors.tekst?.message}
+127:                           isRequired
+128:                           type="textarea"
+129:                           spellCheck={true}
+130:                         />
+131:                         <br />
+132:                       </fieldset>
+133:                       <div className="-mt-4">
+134:                         <Button
+135:                           disabled={isSubmitting}
+136:                           data-testid="submit-button"
+137:                         >
+138:                           {isSubmitting ? "Sender..." : "Send skjema"}
+139:                         </Button>
+140:                       </div>
+141:                     </form>
+142:                   </div>
+143:                 )}
+144:               </div>
+145:             </div>
+146:           </div>
+147:         </div>
+148:       </div>
+149:     </main>
+150:   );
+151: };
+152: export default ContactForm;
 ````
 
 ## File: src/components/Layout/DesktopNavigation.component.tsx
@@ -15165,33 +15299,6 @@ tsconfig.json
 82: };
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.1.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   }
-23: }
-````
-
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -19150,6 +19257,81 @@ tsconfig.json
 104: });
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { preconnect } from "react-dom";
+ 4: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 5: import "./globals.css";
+ 6: import "./glitch.css";
+ 7: import { client } from "@/lib/sanity/client";
+ 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 9: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+10: import SkipLink from "@/components/UI/SkipLink.component";
+11: import Header from "@/components/Layout/Header.component";
+12: import Footer from "@/components/Layout/Footer.component";
+13: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+14: const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
+15: export const metadata: Metadata = {
+16:   title: "Forside - Dfweb",
+17:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+18: };
+19: export default async function RootLayout({
+20:   children,
+21: }: Readonly<{
+22:   children: React.ReactNode;
+23: }>) {
+24:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
+25:   preconnect("https://cdn.sanity.io");
+26:   const [navigation, { footerCopyrightText }] = await Promise.all([
+27:     client.fetch(navigationQuery),
+28:     client.fetch(settingsQuery),
+29:   ]);
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link rel="icon" href="/favicon.ico" />
+38:         <link rel="apple-touch-icon" href="/logo.png" />
+39:         <meta property="og:title" content="Daniel Fjeldstad" />
+40:         <meta name="author" content="Daniel Fjeldstad" />
+41:         <meta property="og:locale" content="nb_NO" />
+42:         <meta
+43:           property="og:description"
+44:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+45:         />
+46:         <meta property="og:url" content="https://www.dfweb.no/" />
+47:         <meta property="og:site_name" content="dfweb.no" />
+48:         <meta name="theme-color" content="#004014" />
+49:       </head>
+50:       <body
+51:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+52:       >
+53:         <LazyMotionProvider>
+54:           <SkipLink />
+55:           <ErrorBoundary>
+56:             <div id="main-content" className="grow flex flex-col">
+57:               <Header navigation={navigation} />
+58:               <SpeedInsights />
+59:               <div className="grow">{children}</div>
+60:               <Footer
+61:                 footerCopyrightText={
+62:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+63:                 }
+64:               />
+65:             </div>
+66:           </ErrorBoundary>
+67:         </LazyMotionProvider>
+68:       </body>
+69:     </html>
+70:   );
+71: }
+````
+
 ## File: src/components/Animations/BounceInScroll.component.tsx
 ````typescript
  1: "use client";
@@ -19214,51 +19396,6 @@ tsconfig.json
 60:   );
 61: };
 62: export default BounceInScroll;
-````
-
-## File: src/components/ErrorBoundary/ErrorBoundary.tsx
-````typescript
- 1: "use client";
- 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
- 3: import {
- 4:   ErrorBoundary as ReactErrorBoundary,
- 5:   FallbackProps,
- 6: } from "react-error-boundary";
- 7: import Fallback from "./Fallback.component";
- 8: interface ErrorBoundaryProps {
- 9:   children: ReactNode;
-10:   compact?: boolean;
-11: }
-12: const handleError = (error: Error, info: ErrorInfo) => {
-13:   console.error("Uventet feil i Matrix:", error, info);
-14: };
-15: /**
-16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
-17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
-18:  *
-19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
-20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
-21:  *
-22:  * @param {Object} props - The component props
-23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
-24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
-25:  * @returns {JSX.Element} A React component that catches errors in its child components
-26:  */
-27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
-28:   children,
-29:   compact = false,
-30: }) => {
-31:   const renderFallback = useCallback(
-32:     (props: FallbackProps) => <Fallback {...props} compact={compact} />,
-33:     [compact],
-34:   );
-35:   return (
-36:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
-37:       {children}
-38:     </ReactErrorBoundary>
-39:   );
-40: };
-41: export default ErrorBoundary;
 ````
 
 ## File: src/components/Index/Section.component.tsx
@@ -19347,162 +19484,6 @@ tsconfig.json
 82:   );
 83: };
 84: export default Section;
-````
-
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import PageHeader from "@/components/UI/PageHeader.component";
-  6: import Button from "@/components/UI/Button.component";
-  7: import InputField from "@/components/UI/InputField.component";
-  8: import { formSchema, FormData } from "./config/formConfig";
-  9: interface ContactFormProps {
- 10:   csrfToken?: string;
- 11:   onSubmit?: (data: FormData) => Promise<string>;
- 12:   initialResponse?: string;
- 13: }
- 14: /**
- 15:  * ContactForm component - A complete contact form with EmailJS integration
- 16:  * Handles both the form UI and submission logic in a single, clear component
- 17:  */
- 18: const ContactForm: React.FC<ContactFormProps> = ({
- 19:   csrfToken = "",
- 20:   onSubmit: onSubmitProp,
- 21:   initialResponse = "",
- 22: }) => {
- 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
- 24:     null,
- 25:   );
- 26:   const serverResponse = submittedResponse ?? initialResponse;
- 27:   const {
- 28:     register,
- 29:     handleSubmit,
- 30:     formState: { errors, isSubmitting },
- 31:   } = useForm<FormData>({
- 32:     resolver: zodResolver(formSchema),
- 33:   });
- 34:   /**
- 35:    * Default form submission handler using EmailJS.
- 36:    * @param {FormData} data - The form data.
- 37:    * @return {Promise<string>} A promise that resolves to a success or error message.
- 38:    */
- 39:   /**
- 40:    * Default form submission handler using EmailJS.
- 41:    * Dynamically imports @emailjs/browser only when the user submits,
- 42:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
- 43:    */
- 44:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 45:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 46:     const TEMPLATE_KEY =
- 47:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 48:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 49:     try {
- 50:       const emailjs = (await import("@emailjs/browser")).default;
- 51:       emailjs.init(EMAIL_API_KEY);
- 52:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 53:       return "Takk for din beskjed";
- 54:     } catch {
- 55:       return "Feil under sending av skjema";
- 56:     }
- 57:   };
- 58:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 59:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 60:     const message = await submitHandler(data);
- 61:     setSubmittedResponse(message);
- 62:   };
- 63:   return (
- 64:     <main data-testid="kontaktcontent" id="maincontent">
- 65:       <div className="mt-32 bg-graybg">
- 66:         <PageHeader>Kontakt</PageHeader>
- 67:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 68:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 69:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 70:               <div className="p-2 md:p-6 pt-8">
- 71:                 {serverResponse ? (
- 72:                   <div aria-live="polite" aria-atomic="true">
- 73:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 74:                       {serverResponse}
- 75:                     </h3>
- 76:                   </div>
- 77:                 ) : (
- 78:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 79:                     <form
- 80:                       id="contact-form"
- 81:                       className="text-center"
- 82:                       onSubmit={handleSubmit(handleFormSubmit)}
- 83:                       method="POST"
- 84:                       action="/api/form"
- 85:                       aria-label="Contact Form"
- 86:                     >
- 87:                       {csrfToken && (
- 88:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 89:                       )}
- 90:                       <fieldset>
- 91:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 92:                           Kontaktskjema
- 93:                         </legend>
- 94:                         <InputField<FormData>
- 95:                           name="navn"
- 96:                           label="Fullt navn"
- 97:                           htmlFor="navn"
- 98:                           register={register}
- 99:                           error={errors.navn?.message}
-100:                           isRequired
-101:                           inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
-102:                           title="Vennligst bruk norske bokstaver"
-103:                           autoComplete="name"
-104:                           spellCheck={false}
-105:                         />
-106:                         <br />
-107:                         <InputField<FormData>
-108:                           name="telefon"
-109:                           label="Telefonnummer"
-110:                           htmlFor="telefon"
-111:                           register={register}
-112:                           error={errors.telefon?.message}
-113:                           isRequired
-114:                           inputPattern={/^\d{8}$/}
-115:                           title="Vennligst oppgi et gyldig telefonnummer"
-116:                           autoComplete="tel"
-117:                           inputMode="tel"
-118:                           spellCheck={false}
-119:                         />
-120:                         <br />
-121:                         <InputField<FormData>
-122:                           name="tekst"
-123:                           label="Hva ønsker du å si?"
-124:                           htmlFor="tekst"
-125:                           register={register}
-126:                           error={errors.tekst?.message}
-127:                           isRequired
-128:                           type="textarea"
-129:                           spellCheck={true}
-130:                         />
-131:                         <br />
-132:                       </fieldset>
-133:                       <div className="-mt-4">
-134:                         <Button
-135:                           disabled={isSubmitting}
-136:                           data-testid="submit-button"
-137:                         >
-138:                           {isSubmitting ? "Sender..." : "Send skjema"}
-139:                         </Button>
-140:                       </div>
-141:                     </form>
-142:                   </div>
-143:                 )}
-144:               </div>
-145:             </div>
-146:           </div>
-147:         </div>
-148:       </div>
-149:     </main>
-150:   );
-151: };
-152: export default ContactForm;
 ````
 
 ## File: src/components/Layout/Footer.component.tsx
@@ -19745,51 +19726,37 @@ tsconfig.json
 79: `);
 ````
 
-## File: studio/package.json
+## File: src/utils/eslint/package.json
 ````json
  1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
  6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.18.0",
-21:     "styled-components": "^6.3.12"
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.1.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
 22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.1.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "basic-ftp": ">=5.2.0",
-33:       "js-yaml": ">=3.14.2",
-34:       "undici": ">=6.24.0"
-35:     }
-36:   },
-37:   "prettier": {
-38:     "semi": false,
-39:     "printWidth": 100,
-40:     "bracketSpacing": false,
-41:     "singleQuote": true
-42:   }
-43: }
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.5",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
 ````
 
 ## File: tailwind.config.ts
@@ -19890,187 +19857,339 @@ tsconfig.json
 94: export default config;
 ````
 
-## File: src/__tests__/CV/CVContent.test.tsx
+## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen } from "@testing-library/react";
-  6: import userEvent from "@testing-library/user-event";
-  7: import CVContent from "@/components/CV/CVContent.component";
-  8: const mockCVData = {
-  9:   _id: "cv-test-id",
- 10:   _type: "cv" as const,
- 11:   _createdAt: "2024-01-01T00:00:00Z",
- 12:   _updatedAt: "2024-01-01T00:00:00Z",
- 13:   _rev: "test-rev",
- 14:   keyQualifications: ["Qualification 1", "Qualification 2"],
- 15:   experience: [
- 16:     {
- 17:       _key: "exp-1",
- 18:       period: "2020-2022",
- 19:       company: "Example Company",
- 20:       role: "Software Developer",
- 21:       description: "Worked on various projects",
- 22:     },
- 23:   ],
- 24:   education: [
- 25:     {
- 26:       _key: "edu-1",
- 27:       period: "2016-2020",
- 28:       institution: "University of Example",
- 29:       degree: "Bachelor in Computer Science",
- 30:       description: "Studied various aspects of computer science",
- 31:     },
- 32:   ],
- 33:   volunteerWork: [
- 34:     {
- 35:       _key: "vol-1",
- 36:       period: "2023-2024",
- 37:       organization: "AI Community",
- 38:       role: "Technical Lead",
- 39:       description: "Managing AI Discord community and developing bots",
- 40:     },
- 41:   ],
- 42: };
- 43: describe("CVContent", () => {
- 44:   it("renders CV header and PDF download button", () => {
- 45:     // Arrange
- 46:     const expectedElements = {
- 47:       header: /cv/i,
- 48:       pdfButton: /last ned pdf/i,
- 49:     };
- 50:     // Act
- 51:     render(<CVContent cvData={mockCVData} />);
- 52:     // Assert
- 53:     expect(
- 54:       screen.getByRole("heading", { name: expectedElements.header }),
- 55:     ).toBeInTheDocument();
- 56:     const pdfLinks = screen.getAllByRole("link", {
- 57:       name: expectedElements.pdfButton,
- 58:     });
- 59:     expect(pdfLinks.length).toBe(2); // Desktop + mobile
- 60:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
- 61:   });
- 62:   it("renders all navigation tabs", () => {
- 63:     // Arrange
- 64:     const expectedTabs = [
- 65:       /nøkkelkvalifikasjoner/i,
- 66:       /erfaring/i,
- 67:       /utdanning/i,
- 68:       /frivillig arbeid/i,
- 69:     ];
- 70:     // Act
- 71:     render(<CVContent cvData={mockCVData} />);
- 72:     // Assert
- 73:     expectedTabs.forEach((tabName) => {
- 74:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
- 75:     });
- 76:   });
- 77:   it("displays qualifications in initial tab", () => {
- 78:     // Arrange
- 79:     const expectedQualification = /qualification 1/i;
- 80:     // Act
- 81:     render(<CVContent cvData={mockCVData} />);
- 82:     // Assert
- 83:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
- 84:   });
- 85:   it("displays volunteer work content when switching tabs", async () => {
- 86:     // Arrange
- 87:     const user = userEvent.setup();
- 88:     render(<CVContent cvData={mockCVData} />);
- 89:     const volunteerWorkTab = screen.getByRole("tab", {
- 90:       name: /frivillig arbeid/i,
- 91:     });
- 92:     const expectedContent = {
- 93:       role: /technical lead/i,
- 94:       organization: /ai community/i,
- 95:     };
- 96:     // Act
- 97:     await user.click(volunteerWorkTab);
- 98:     // Assert
- 99:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
-100:     expect(
-101:       await screen.findByText(expectedContent.organization),
-102:     ).toBeInTheDocument();
-103:   });
-104: });
+  1: "use client";
+  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
+  3: import "@/app/cursor.css";
+  4: import { useMobile } from "../../hooks/useMobile";
+  5: interface MatrixCursorProps {
+  6:   heroRef: RefObject<HTMLElement | null>;
+  7: }
+  8: interface CursorStyles extends React.CSSProperties {
+  9:   "--cursor-x": string;
+ 10:   "--cursor-y": string;
+ 11: }
+ 12: interface MatrixTrail {
+ 13:   id: string;
+ 14:   x: number;
+ 15:   y: number;
+ 16:   char: string;
+ 17: }
+ 18: interface CursorState {
+ 19:   cursorPosition: { x: number; y: number };
+ 20:   isHovered: boolean;
+ 21:   trails: MatrixTrail[];
+ 22: }
+ 23: type CursorAction =
+ 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+ 25:   | { type: "MOUSE_ENTER" }
+ 26:   | { type: "MOUSE_LEAVE" }
+ 27:   | { type: "REMOVE_TRAIL"; trailId: string };
+ 28: const MAX_TRAILS = 20;
+ 29: const cursorReducer = (
+ 30:   state: CursorState,
+ 31:   action: CursorAction,
+ 32: ): CursorState => {
+ 33:   switch (action.type) {
+ 34:     case "MOUSE_MOVE": {
+ 35:       const newPosition = { x: action.x, y: action.y };
+ 36:       if (!action.trail) {
+ 37:         return { ...state, cursorPosition: newPosition };
+ 38:       }
+ 39:       const updatedTrails = [...state.trails, action.trail];
+ 40:       return {
+ 41:         ...state,
+ 42:         cursorPosition: newPosition,
+ 43:         trails:
+ 44:           updatedTrails.length > MAX_TRAILS
+ 45:             ? updatedTrails.slice(1)
+ 46:             : updatedTrails,
+ 47:       };
+ 48:     }
+ 49:     case "MOUSE_ENTER":
+ 50:       return { ...state, isHovered: true };
+ 51:     case "MOUSE_LEAVE":
+ 52:       return { ...state, isHovered: false, trails: [] };
+ 53:     case "REMOVE_TRAIL":
+ 54:       return {
+ 55:         ...state,
+ 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
+ 57:       };
+ 58:   }
+ 59: };
+ 60: const initialState: CursorState = {
+ 61:   cursorPosition: { x: 0, y: 0 },
+ 62:   isHovered: false,
+ 63:   trails: [],
+ 64: };
+ 65: /**
+ 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 70:  */
+ 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 72:   const isMobile = useMobile(); // Pd528
+ 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
+ 74:   const getRandomChar = useCallback(() => {
+ 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 76:     const array = new Uint32Array(1);
+ 77:     crypto.getRandomValues(array);
+ 78:     const index = array[0]! % matrixChars.length;
+ 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 80:   }, []);
+ 81:   useEffect(() => {
+ 82:     const heroSection = heroRef.current;
+ 83:     if (!heroSection) return;
+ 84:     // Add cursor: none to the hero section when hovered
+ 85:     if (state.isHovered) {
+ 86:       heroSection.style.cursor = "none";
+ 87:     } else {
+ 88:       heroSection.style.cursor = "";
+ 89:     }
+ 90:     const handleMouseMove = (e: MouseEvent) => {
+ 91:       const trail: MatrixTrail | undefined = state.isHovered
+ 92:         ? {
+ 93:             id: crypto.randomUUID(),
+ 94:             x: e.clientX,
+ 95:             y: e.clientY,
+ 96:             char: getRandomChar(),
+ 97:           }
+ 98:         : undefined;
+ 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
+100:     };
+101:     const handleMouseEnter = () => {
+102:       dispatch({ type: "MOUSE_ENTER" });
+103:       heroSection.style.cursor = "none";
+104:     };
+105:     const handleMouseLeave = () => {
+106:       dispatch({ type: "MOUSE_LEAVE" });
+107:       heroSection.style.cursor = "";
+108:     };
+109:     heroSection.addEventListener("mousemove", handleMouseMove);
+110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+112:     return () => {
+113:       heroSection.removeEventListener("mousemove", handleMouseMove);
+114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+116:       heroSection.style.cursor = "";
+117:     };
+118:   }, [heroRef, state.isHovered, getRandomChar]);
+119:   const handleAnimationEnd = useCallback((trailId: string) => {
+120:     dispatch({ type: "REMOVE_TRAIL", trailId });
+121:   }, []);
+122:   if (!heroRef.current || isMobile) return null; // P6ecf
+123:   const cursorStyles: CursorStyles = {
+124:     position: "fixed",
+125:     top: 0,
+126:     left: 0,
+127:     width: "100%",
+128:     height: "100%",
+129:     pointerEvents: "none",
+130:     zIndex: 9999,
+131:     "--cursor-x": `${state.cursorPosition.x}px`,
+132:     "--cursor-y": `${state.cursorPosition.y}px`,
+133:   };
+134:   return (
+135:     <div
+136:       data-testid="matrix-cursor"
+137:       className={state.isHovered ? "matrix-cursor" : ""}
+138:       style={cursorStyles}
+139:     >
+140:       {state.trails.map((trail) => (
+141:         <div
+142:           key={trail.id}
+143:           data-testid="matrix-trail"
+144:           className="matrix-trail"
+145:           style={{
+146:             position: "fixed",
+147:             left: `${trail.x}px`,
+148:             top: `${trail.y}px`,
+149:             zIndex: 10000,
+150:             pointerEvents: "none",
+151:           }}
+152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+153:         >
+154:           {trail.char}
+155:         </div>
+156:       ))}
+157:       {state.isHovered && (
+158:         <div
+159:           style={{
+160:             position: "fixed",
+161:             top: 0,
+162:             left: 0,
+163:             width: "100%",
+164:             height: "100%",
+165:             pointerEvents: "none",
+166:             zIndex: 9999,
+167:           }}
+168:         />
+169:       )}
+170:     </div>
+171:   );
+172: };
+173: export default MatrixCursor;
 ````
 
-## File: src/app/layout.tsx
+## File: src/components/Layout/MobileMenu.component.tsx
 ````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { preconnect } from "react-dom";
- 4: import { SpeedInsights } from "@vercel/speed-insights/next";
- 5: import "./globals.css";
- 6: import "./glitch.css";
- 7: import { client } from "@/lib/sanity/client";
- 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 9: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
-10: import SkipLink from "@/components/UI/SkipLink.component";
-11: import Header from "@/components/Layout/Header.component";
-12: import Footer from "@/components/Layout/Footer.component";
-13: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-14: const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
-15: export const metadata: Metadata = {
-16:   title: "Forside - Dfweb",
-17:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-18: };
-19: export default async function RootLayout({
-20:   children,
-21: }: Readonly<{
-22:   children: React.ReactNode;
-23: }>) {
-24:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-25:   preconnect("https://cdn.sanity.io");
-26:   const [navigation, { footerCopyrightText }] = await Promise.all([
-27:     client.fetch(navigationQuery),
-28:     client.fetch(settingsQuery),
-29:   ]);
-30:   return (
-31:     <html lang="nb">
-32:       <head>
-33:         <meta
-34:           name="viewport"
-35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-36:         />
-37:         <link rel="icon" href="/favicon.ico" />
-38:         <link rel="apple-touch-icon" href="/logo.png" />
-39:         <meta property="og:title" content="Daniel Fjeldstad" />
-40:         <meta name="author" content="Daniel Fjeldstad" />
-41:         <meta property="og:locale" content="nb_NO" />
-42:         <meta
-43:           property="og:description"
-44:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-45:         />
-46:         <meta property="og:url" content="https://www.dfweb.no/" />
-47:         <meta property="og:site_name" content="dfweb.no" />
-48:         <meta name="theme-color" content="#004014" />
-49:       </head>
-50:       <body
-51:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-52:       >
-53:         <LazyMotionProvider>
-54:           <SkipLink />
-55:           <ErrorBoundary>
-56:             <div id="main-content" className="grow flex flex-col">
-57:               <Header navigation={navigation} />
-58:               <SpeedInsights />
-59:               <div className="grow">{children}</div>
-60:               <Footer
-61:                 footerCopyrightText={
-62:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-63:                 }
-64:               />
-65:             </div>
-66:           </ErrorBoundary>
-67:         </LazyMotionProvider>
-68:       </body>
-69:     </html>
-70:   );
-71: }
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: /**
+ 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 11:  * @param {Object} props
+ 12:  * @param {ILink[]} props.links - Array of navigation link objects
+ 13:  * @returns {JSX.Element} The rendered MobileMenu component
+ 14:  */
+ 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 17:   const closeMenu = () => toggleExpanded(0);
+ 18:   const pathname = usePathname();
+ 19:   const menuVariants: Variants = {
+ 20:     closed: {
+ 21:       x: "125%",
+ 22:       transition: {
+ 23:         type: "spring",
+ 24:         stiffness: 60,
+ 25:         damping: 10,
+ 26:         delay: 0.3,
+ 27:       },
+ 28:     },
+ 29:     open: {
+ 30:       x: 0,
+ 31:       transition: {
+ 32:         type: "spring",
+ 33:         stiffness: 60,
+ 34:         damping: 10,
+ 35:       },
+ 36:     },
+ 37:   };
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             aria-hidden={!isExpanded}
+ 73:             className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+ 74:             initial="closed"
+ 75:             animate="open"
+ 76:             exit="closed"
+ 77:             variants={menuVariants}
+ 78:           >
+ 79:             <nav aria-label="Navigasjon" className="w-full">
+ 80:               <m.ul
+ 81:                 className="w-full"
+ 82:                 initial="closed"
+ 83:                 animate="open"
+ 84:                 exit="closed"
+ 85:                 variants={{
+ 86:                   open: {
+ 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 88:                   },
+ 89:                   closed: {
+ 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 91:                   },
+ 92:                 }}
+ 93:               >
+ 94:                 {links?.map(({ title, name, href, externalLink }, index) => {
+ 95:                   const linkClassName =
+ 96:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
+ 97:                   return (
+ 98:                   <m.li
+ 99:                     key={title}
+100:                     className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+101:                     data-cy="mobile-menu-item"
+102:                     custom={index}
+103:                     variants={itemVariants}
+104:                   >
+105:                     {externalLink ? (
+106:                       <a
+107:                         aria-label={name}
+108:                         href={href}
+109:                         target="_blank"
+110:                         rel="noreferrer"
+111:                         data-testid={`mobil-${name}`}
+112:                         className={linkClassName}
+113:                       >
+114:                         {name}
+115:                       </a>
+116:                     ) : (
+117:                       <Link
+118:                         href={href ?? ""}
+119:                         data-testid={`mobil-${name}`}
+120:                         prefetch={true}
+121:                         onClick={closeMenu}
+122:                         className={`${linkClassName} ${
+123:                           pathname === href ? "text-green-400" : ""
+124:                         }`}
+125:                       >
+126:                         <div className="glitch relative" data-text={name}>
+127:                           {name}
+128:                           <m.span
+129:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+130:                               pathname === href ? "bg-green-400" : "bg-white"
+131:                             }`}
+132:                             initial={{
+133:                               width: pathname === href ? "100%" : "0%",
+134:                             }}
+135:                             animate={{
+136:                               width: pathname === href ? "100%" : "0%",
+137:                             }}
+138:                             transition={{ duration: 0.3 }}
+139:                           />
+140:                         </div>
+141:                       </Link>
+142:                     )}
+143:                   </m.li>
+144:                   );
+145:                 })}
+146:               </m.ul>
+147:             </nav>
+148:           </m.div>
+149:         )}
+150:       </AnimatePresence>
+151:     </div>
+152:   );
+153: };
+154: export default MobileMenu;
 ````
 
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
@@ -20181,6 +20300,64 @@ tsconfig.json
 18:   </div>
 19: );
 20: export default PageHeader;
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.6.0",
+20:     "sanity": "^5.18.0",
+21:     "styled-components": "^6.3.12"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.14",
+26:     "eslint": "^10.1.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=5.2.0",
+33:       "brace-expansion": ">=2.0.3",
+34:       "dompurify": ">=3.3.2",
+35:       "flatted": ">=3.4.2",
+36:       "js-yaml": ">=3.14.2",
+37:       "lodash": ">=4.18.0",
+38:       "lodash-es": ">=4.18.0",
+39:       "minimatch@>=5.0.0 <10.2.1": "10.2.5",
+40:       "picomatch@<2.3.2": "2.3.2",
+41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
+42:       "smol-toml": ">=1.6.1",
+43:       "undici": ">=6.24.0",
+44:       "vite": ">=7.3.2",
+45:       "yaml": ">=2.8.3"
+46:     }
+47:   },
+48:   "prettier": {
+49:     "semi": false,
+50:     "printWidth": 100,
+51:     "bracketSpacing": false,
+52:     "singleQuote": true
+53:   }
+54: }
 ````
 
 ## File: src/app/globals.css
@@ -20433,164 +20610,6 @@ tsconfig.json
 69: export default Icons;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: /**
- 10:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 11:  * @param {Object} props
- 12:  * @param {ILink[]} props.links - Array of navigation link objects
- 13:  * @returns {JSX.Element} The rendered MobileMenu component
- 14:  */
- 15: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 16:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 17:   const closeMenu = () => toggleExpanded(0);
- 18:   const pathname = usePathname();
- 19:   const menuVariants: Variants = {
- 20:     closed: {
- 21:       x: "125%",
- 22:       transition: {
- 23:         type: "spring",
- 24:         stiffness: 60,
- 25:         damping: 10,
- 26:         delay: 0.3,
- 27:       },
- 28:     },
- 29:     open: {
- 30:       x: 0,
- 31:       transition: {
- 32:         type: "spring",
- 33:         stiffness: 60,
- 34:         damping: 10,
- 35:       },
- 36:     },
- 37:   };
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             aria-hidden={!isExpanded}
- 73:             className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
- 74:             initial="closed"
- 75:             animate="open"
- 76:             exit="closed"
- 77:             variants={menuVariants}
- 78:           >
- 79:             <nav aria-label="Navigasjon" className="w-full">
- 80:               <m.ul
- 81:                 className="w-full"
- 82:                 initial="closed"
- 83:                 animate="open"
- 84:                 exit="closed"
- 85:                 variants={{
- 86:                   open: {
- 87:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 88:                   },
- 89:                   closed: {
- 90:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 91:                   },
- 92:                 }}
- 93:               >
- 94:                 {links?.map(({ title, name, href, externalLink }, index) => {
- 95:                   const linkClassName =
- 96:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
- 97:                   return (
- 98:                   <m.li
- 99:                     key={title}
-100:                     className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-101:                     data-cy="mobile-menu-item"
-102:                     custom={index}
-103:                     variants={itemVariants}
-104:                   >
-105:                     {externalLink ? (
-106:                       <a
-107:                         aria-label={name}
-108:                         href={href}
-109:                         target="_blank"
-110:                         rel="noreferrer"
-111:                         data-testid={`mobil-${name}`}
-112:                         className={linkClassName}
-113:                       >
-114:                         {name}
-115:                       </a>
-116:                     ) : (
-117:                       <Link
-118:                         href={href ?? ""}
-119:                         data-testid={`mobil-${name}`}
-120:                         prefetch={true}
-121:                         onClick={closeMenu}
-122:                         className={`${linkClassName} ${
-123:                           pathname === href ? "text-green-400" : ""
-124:                         }`}
-125:                       >
-126:                         <div className="glitch relative" data-text={name}>
-127:                           {name}
-128:                           <m.span
-129:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-130:                               pathname === href ? "bg-green-400" : "bg-white"
-131:                             }`}
-132:                             initial={{
-133:                               width: pathname === href ? "100%" : "0%",
-134:                             }}
-135:                             animate={{
-136:                               width: pathname === href ? "100%" : "0%",
-137:                             }}
-138:                             transition={{ duration: 0.3 }}
-139:                           />
-140:                         </div>
-141:                       </Link>
-142:                     )}
-143:                   </m.li>
-144:                   );
-145:                 })}
-146:               </m.ul>
-147:             </nav>
-148:           </m.div>
-149:         )}
-150:       </AnimatePresence>
-151:     </div>
-152:   );
-153: };
-154: export default MobileMenu;
-````
-
 ## File: src/components/Index/Hero.component.tsx
 ````typescript
  1: "use client";
@@ -20711,7 +20730,7 @@ tsconfig.json
  37:     "envalid": "^8.1.1",
  38:     "jest": "30.3.0",
  39:     "motion": "^12.38.0",
- 40:     "next": "^16.2.1",
+ 40:     "next": "^16.2.3",
  41:     "path-to-regexp": "^8.4.0",
  42:     "react": "^19.2.4",
  43:     "react-dom": "^19.2.4",
@@ -20745,7 +20764,7 @@ tsconfig.json
  71:     "cypress": "15.13.0",
  72:     "cypress-axe": "^1.7.0",
  73:     "eslint": "10.1.0",
- 74:     "eslint-config-next": "16.2.1",
+ 74:     "eslint-config-next": "16.2.3",
  75:     "eslint-config-prettier": "^10.1.8",
  76:     "eslint-plugin-jest": "^29.15.1",
  77:     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -20772,23 +20791,24 @@ tsconfig.json
  98:     "overrides": {
  99:       "@pnpm/npm-conf": ">=3.0.2",
 100:       "brace-expansion": ">=5.0.5",
-101:       "minimatch": ">=10.2.4",
-102:       "picomatch@<2.3.2": "4.0.4",
-103:       "picomatch@>=3 <3.0.2": "4.0.4",
-104:       "picomatch@>=4 <4.0.4": "4.0.4",
-105:       "rollup": ">=4.59.0",
-106:       "tar": "7.5.13",
-107:       "undici": ">=6.24.0"
-108:     },
-109:     "onlyBuiltDependencies": [
-110:       "@swc/core",
-111:       "cypress",
-112:       "esbuild",
-113:       "msw",
-114:       "puppeteer",
-115:       "sharp",
-116:       "unrs-resolver"
-117:     ]
-118:   }
-119: }
+101:       "flatted": ">=3.4.2",
+102:       "minimatch": ">=10.2.4",
+103:       "picomatch@<2.3.2": "4.0.4",
+104:       "picomatch@>=3 <3.0.2": "4.0.4",
+105:       "picomatch@>=4 <4.0.4": "4.0.4",
+106:       "rollup": ">=4.59.0",
+107:       "tar": "7.5.13",
+108:       "undici": ">=6.24.0"
+109:     },
+110:     "onlyBuiltDependencies": [
+111:       "@swc/core",
+112:       "cypress",
+113:       "esbuild",
+114:       "msw",
+115:       "puppeteer",
+116:       "sharp",
+117:       "unrs-resolver"
+118:     ]
+119:   }
+120: }
 ````
