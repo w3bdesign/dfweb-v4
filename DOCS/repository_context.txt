@@ -10609,6 +10609,42 @@ tsconfig.json
 48: export default DesktopNavigation;
 ````
 
+## File: src/components/Layout/Footer.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { IconContext } from "react-icons";
+ 3: import { BiCopyright } from "react-icons/bi";
+ 4: import type { Settings } from "@/types/sanity.types";
+ 5: const iconContextValue = { className: "inline-block" } as const;
+ 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
+ 7: /**
+ 8:  * Renders the footer for the application
+ 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
+10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
+11:  * @returns {JSX.Element} - Rendered Footer component
+12:  */
+13: const Footer = ({ footerCopyrightText }: FooterProps) => (
+14:   <footer
+15:     className="mt-8"
+16:     aria-label="Innholdet for bunnteksten med copyright"
+17:     data-testid="footer"
+18:   >
+19:     <div className="bg-slate-800/80 border-t border-matrix-dark/20 shadow-sm min-h-[50px]">
+20:       <div className="w-full mx-auto p-6 text-center font-semibold text-slate-400">
+21:         <div className="flex justify-center items-center space-x-2">
+22:           <span>{footerCopyrightText}</span>
+23:           <IconContext.Provider value={iconContextValue}>
+24:             <BiCopyright size="1.2em" />
+25:           </IconContext.Provider>
+26:           <span>{new Date().getFullYear()}</span>
+27:         </div>
+28:       </div>
+29:     </div>
+30:   </footer>
+31: );
+32: export default Footer;
+````
+
 ## File: src/components/Layout/Hamburger.component.tsx
 ````typescript
  1: "use client";
@@ -19562,42 +19598,6 @@ tsconfig.json
 84: export default Section;
 ````
 
-## File: src/components/Layout/Footer.component.tsx
-````typescript
- 1: "use client";
- 2: import { IconContext } from "react-icons";
- 3: import { BiCopyright } from "react-icons/bi";
- 4: import type { Settings } from "@/types/sanity.types";
- 5: const iconContextValue = { className: "inline-block" } as const;
- 6: type FooterProps = Pick<Settings, "footerCopyrightText">;
- 7: /**
- 8:  * Renders the footer for the application
- 9:  * @param {FooterProps} props - The props for the Footer component, containing only footerCopyrightText from Settings.
-10:  * @param {string} [props.footerCopyrightText] - The copyright text from Sanity settings (optional)
-11:  * @returns {JSX.Element} - Rendered Footer component
-12:  */
-13: const Footer = ({ footerCopyrightText }: FooterProps) => (
-14:   <footer
-15:     className="mt-8"
-16:     aria-label="Innholdet for bunnteksten med copyright"
-17:     data-testid="footer"
-18:   >
-19:     <div className="bg-slate-800/80 border-t border-matrix-dark/20 shadow-sm min-h-[50px]">
-20:       <div className="w-full mx-auto p-6 text-center font-semibold text-slate-400">
-21:         <div className="flex justify-center items-center space-x-2">
-22:           <span>{footerCopyrightText}</span>
-23:           <IconContext.Provider value={iconContextValue}>
-24:             <BiCopyright size="1.2em" />
-25:           </IconContext.Provider>
-26:           <span>{new Date().getFullYear()}</span>
-27:         </div>
-28:       </div>
-29:     </div>
-30:   </footer>
-31: );
-32: export default Footer;
-````
-
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -19933,6 +19933,92 @@ tsconfig.json
 154: export default MobileMenu;
 ````
 
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: interface ProsjektCardProps extends Project {
+ 8:   /** Stagger delay in seconds for coordinated group animations */
+ 9:   staggerDelay?: number;
+10: }
+11: /**
+12:  * Renders a card displaying information about a single project.
+13:  * Uses the Project type definition from Sanity types.
+14:  *
+15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+16:  * @param {string} props.name - The name of the project.
+17:  * @param {string} [props.description] - A brief description of the project (optional).
+18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+23:  * @returns {JSX.Element} The rendered ProsjektCard component.
+24:  */
+25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+26:   name,
+27:   description,
+28:   subdescription,
+29:   projectimage,
+30:   urlwww,
+31:   urlgithub,
+32:   staggerDelay = 0,
+33: }) => {
+34:   return (
+35:     <div
+36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+37:       data-testid="project-card"
+38:     >
+39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+40:         <div className="relative w-full md:h-60">
+41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+42:             {projectimage && (
+43:               <img
+44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+45:                 width={600}
+46:                 src={urlFor(projectimage)
+47:                   .width(600)
+48:                   .fit("max")
+49:                   .quality(100)
+50:                   .auto("format")
+51:                   .url()}
+52:                 alt={name}
+53:               />
+54:             )}
+55:           </div>
+56:         </div>
+57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+59:             {name}
+60:           </h2>
+61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
+62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+63:             {subdescription}
+64:           </p>
+65:           <div className="flex justify-center mt-4">
+66:             {urlwww && urlwww.length > 0 && (
+67:               <Button href={urlwww?.[0]?.url} renderAs="a">
+68:                 Besøk
+69:               </Button>
+70:             )}
+71:             {urlgithub && urlgithub.length > 0 && (
+72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+73:                 GitHub
+74:               </Button>
+75:             )}
+76:           </div>
+77:         </div>
+78:       </BounceInScroll>
+79:     </div>
+80:   );
+81: };
+82: export default ProsjektCard;
+````
+
 ## File: src/components/UI/PageHeader.component.tsx
 ````typescript
  1: import type { ReactNode } from "react";
@@ -20258,92 +20344,6 @@ tsconfig.json
 242: - MUST: Increase contrast on `:hover/:active/:focus`
 243: - SHOULD: Match browser UI to bg
 244: - SHOULD: Avoid gradient banding (use masks when needed)
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: interface ProsjektCardProps extends Project {
- 8:   /** Stagger delay in seconds for coordinated group animations */
- 9:   staggerDelay?: number;
-10: }
-11: /**
-12:  * Renders a card displaying information about a single project.
-13:  * Uses the Project type definition from Sanity types.
-14:  *
-15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-16:  * @param {string} props.name - The name of the project.
-17:  * @param {string} [props.description] - A brief description of the project (optional).
-18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-23:  * @returns {JSX.Element} The rendered ProsjektCard component.
-24:  */
-25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-26:   name,
-27:   description,
-28:   subdescription,
-29:   projectimage,
-30:   urlwww,
-31:   urlgithub,
-32:   staggerDelay = 0,
-33: }) => {
-34:   return (
-35:     <div
-36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
-37:       data-testid="project-card"
-38:     >
-39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-40:         <div className="relative w-full md:h-60">
-41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-42:             {projectimage && (
-43:               <img
-44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
-45:                 width={600}
-46:                 src={urlFor(projectimage)
-47:                   .width(600)
-48:                   .fit("max")
-49:                   .quality(100)
-50:                   .auto("format")
-51:                   .url()}
-52:                 alt={name}
-53:               />
-54:             )}
-55:           </div>
-56:         </div>
-57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-59:             {name}
-60:           </h2>
-61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
-62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-63:             {subdescription}
-64:           </p>
-65:           <div className="flex justify-center mt-4">
-66:             {urlwww && urlwww.length > 0 && (
-67:               <Button href={urlwww?.[0]?.url} renderAs="a">
-68:                 Besøk
-69:               </Button>
-70:             )}
-71:             {urlgithub && urlgithub.length > 0 && (
-72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-73:                 GitHub
-74:               </Button>
-75:             )}
-76:           </div>
-77:         </div>
-78:       </BounceInScroll>
-79:     </div>
-80:   );
-81: };
-82: export default ProsjektCard;
 ````
 
 ## File: src/components/Index/Icons.component.tsx
@@ -20774,7 +20774,7 @@ tsconfig.json
  40:     "jest": "30.3.0",
  41:     "motion": "^12.38.0",
  42:     "next": "^16.2.3",
- 43:     "path-to-regexp": "^8.4.0",
+ 43:     "path-to-regexp": "^8.4.2",
  44:     "react": "^19.2.4",
  45:     "react-dom": "^19.2.4",
  46:     "react-error-boundary": "^5.0.0",
