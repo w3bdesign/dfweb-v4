@@ -9592,6 +9592,72 @@ tsconfig.json
 30: }
 ````
 
+## File: src/components/Animations/BounceInScroll.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useMemo } from "react";
+ 3: import { Variants } from "motion/react";
+ 4: import * as m from "motion/react-m";
+ 5: import { IAnimateBounceProps } from "./types/Animations.types";
+ 6: /**
+ 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
+ 8:  * @param {number} delay - Delay in seconds before the animation starts
+ 9:  * @returns {Variants} Motion variants with the specified delay
+10:  */
+11: function createBounceVariants(delay: number): Variants {
+12:   return {
+13:     offscreen: {
+14:       y: 15,
+15:       opacity: 0,
+16:     },
+17:     onscreen: {
+18:       y: 0,
+19:       opacity: 1,
+20:       transition: {
+21:         type: "spring",
+22:         bounce: 0.3,
+23:         duration: 1,
+24:         delay,
+25:       },
+26:     },
+27:   };
+28: }
+29: /**
+30:  * Bounce in content when content becomes visible in viewport
+31:  * @function BounceInScroll
+32:  * @param {ReactNode} children - Children content to render
+33:  * @param {string} cssClass - CSS classes to apply to component
+34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
+35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
+36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
+37:  * @returns {JSX.Element} - Rendered component
+38:  */
+39: const BounceInScroll = ({
+40:   children,
+41:   cssClass,
+42:   viewAmount,
+43:   instant,
+44:   delay = 0,
+45: }: IAnimateBounceProps) => {
+46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
+47:   return (
+48:     <m.div
+49:       initial="offscreen"
+50:       animate={instant ? "onscreen" : undefined}
+51:       whileInView={instant ? undefined : "onscreen"}
+52:       viewport={
+53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
+54:       }
+55:       className={cssClass}
+56:       data-testid="bounceinscroll"
+57:     >
+58:       <m.div variants={variants}>{children}</m.div>
+59:     </m.div>
+60:   );
+61: };
+62: export default BounceInScroll;
+````
+
 ## File: src/components/Animations/FadeDown.component.tsx
 ````typescript
  1: import { Variants } from "motion/react";
@@ -10907,6 +10973,92 @@ tsconfig.json
 47:   </MotionDiv>
 48: );
 49: export default NavigationLink;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Button from "@/components/UI/Button.component";
+ 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 5: import { urlFor } from "@/lib/sanity/client";
+ 6: import type { Project } from "@/types/sanity.types";
+ 7: interface ProsjektCardProps extends Project {
+ 8:   /** Stagger delay in seconds for coordinated group animations */
+ 9:   staggerDelay?: number;
+10: }
+11: /**
+12:  * Renders a card displaying information about a single project.
+13:  * Uses the Project type definition from Sanity types.
+14:  *
+15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+16:  * @param {string} props.name - The name of the project.
+17:  * @param {string} [props.description] - A brief description of the project (optional).
+18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+23:  * @returns {JSX.Element} The rendered ProsjektCard component.
+24:  */
+25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+26:   name,
+27:   description,
+28:   subdescription,
+29:   projectimage,
+30:   urlwww,
+31:   urlgithub,
+32:   staggerDelay = 0,
+33: }) => {
+34:   return (
+35:     <div
+36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+37:       data-testid="project-card"
+38:     >
+39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+40:         <div className="relative w-full md:h-60">
+41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+42:             {projectimage && (
+43:               <img
+44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+45:                 width={600}
+46:                 src={urlFor(projectimage)
+47:                   .width(600)
+48:                   .fit("max")
+49:                   .quality(100)
+50:                   .auto("format")
+51:                   .url()}
+52:                 alt={name}
+53:               />
+54:             )}
+55:           </div>
+56:         </div>
+57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+59:             {name}
+60:           </h2>
+61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
+62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+63:             {subdescription}
+64:           </p>
+65:           <div className="flex justify-center mt-4">
+66:             {urlwww && urlwww.length > 0 && (
+67:               <Button href={urlwww?.[0]?.url} renderAs="a">
+68:                 Besøk
+69:               </Button>
+70:             )}
+71:             {urlgithub && urlgithub.length > 0 && (
+72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+73:                 GitHub
+74:               </Button>
+75:             )}
+76:           </div>
+77:         </div>
+78:       </BounceInScroll>
+79:     </div>
+80:   );
+81: };
+82: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -19306,72 +19458,6 @@ tsconfig.json
 155: }
 ````
 
-## File: src/components/Animations/BounceInScroll.component.tsx
-````typescript
- 1: "use client";
- 2: import { useMemo } from "react";
- 3: import { Variants } from "motion/react";
- 4: import * as m from "motion/react-m";
- 5: import { IAnimateBounceProps } from "./types/Animations.types";
- 6: /**
- 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
- 8:  * @param {number} delay - Delay in seconds before the animation starts
- 9:  * @returns {Variants} Motion variants with the specified delay
-10:  */
-11: function createBounceVariants(delay: number): Variants {
-12:   return {
-13:     offscreen: {
-14:       y: 15,
-15:       opacity: 0,
-16:     },
-17:     onscreen: {
-18:       y: 0,
-19:       opacity: 1,
-20:       transition: {
-21:         type: "spring",
-22:         bounce: 0.3,
-23:         duration: 1,
-24:         delay,
-25:       },
-26:     },
-27:   };
-28: }
-29: /**
-30:  * Bounce in content when content becomes visible in viewport
-31:  * @function BounceInScroll
-32:  * @param {ReactNode} children - Children content to render
-33:  * @param {string} cssClass - CSS classes to apply to component
-34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
-35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
-36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
-37:  * @returns {JSX.Element} - Rendered component
-38:  */
-39: const BounceInScroll = ({
-40:   children,
-41:   cssClass,
-42:   viewAmount,
-43:   instant,
-44:   delay = 0,
-45: }: IAnimateBounceProps) => {
-46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
-47:   return (
-48:     <m.div
-49:       initial="offscreen"
-50:       animate={instant ? "onscreen" : undefined}
-51:       whileInView={instant ? undefined : "onscreen"}
-52:       viewport={
-53:         instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
-54:       }
-55:       className={cssClass}
-56:       data-testid="bounceinscroll"
-57:     >
-58:       <m.div variants={variants}>{children}</m.div>
-59:     </m.div>
-60:   );
-61: };
-62: export default BounceInScroll;
-````
-
 ## File: src/components/Animations/Matrix.component.tsx
 ````typescript
   1: "use client";
@@ -19596,92 +19682,6 @@ tsconfig.json
 82:   );
 83: };
 84: export default Section;
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Button from "@/components/UI/Button.component";
- 4: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 5: import { urlFor } from "@/lib/sanity/client";
- 6: import type { Project } from "@/types/sanity.types";
- 7: interface ProsjektCardProps extends Project {
- 8:   /** Stagger delay in seconds for coordinated group animations */
- 9:   staggerDelay?: number;
-10: }
-11: /**
-12:  * Renders a card displaying information about a single project.
-13:  * Uses the Project type definition from Sanity types.
-14:  *
-15:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-16:  * @param {string} props.name - The name of the project.
-17:  * @param {string} [props.description] - A brief description of the project (optional).
-18:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-19:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-20:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-22:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-23:  * @returns {JSX.Element} The rendered ProsjektCard component.
-24:  */
-25: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-26:   name,
-27:   description,
-28:   subdescription,
-29:   projectimage,
-30:   urlwww,
-31:   urlgithub,
-32:   staggerDelay = 0,
-33: }) => {
-34:   return (
-35:     <div
-36:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
-37:       data-testid="project-card"
-38:     >
-39:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-40:         <div className="relative w-full md:h-60">
-41:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-42:             {projectimage && (
-43:               <img
-44:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
-45:                 width={600}
-46:                 src={urlFor(projectimage)
-47:                   .width(600)
-48:                   .fit("max")
-49:                   .quality(100)
-50:                   .auto("format")
-51:                   .url()}
-52:                 alt={name}
-53:               />
-54:             )}
-55:           </div>
-56:         </div>
-57:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-58:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-59:             {name}
-60:           </h2>
-61:           <h3 className="text-md px-4 text-gray-300">{description}</h3>
-62:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-63:             {subdescription}
-64:           </p>
-65:           <div className="flex justify-center mt-4">
-66:             {urlwww && urlwww.length > 0 && (
-67:               <Button href={urlwww?.[0]?.url} renderAs="a">
-68:                 Besøk
-69:               </Button>
-70:             )}
-71:             {urlgithub && urlgithub.length > 0 && (
-72:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-73:                 GitHub
-74:               </Button>
-75:             )}
-76:           </div>
-77:         </div>
-78:       </BounceInScroll>
-79:     </div>
-80:   );
-81: };
-82: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/PageHeader.component.tsx
@@ -20593,64 +20593,6 @@ tsconfig.json
 69: export default Icons;
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.3",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.4",
-18:     "react-dom": "^19.2.4",
-19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.18.0",
-21:     "styled-components": "^6.3.12"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.2.0",
-27:     "prettier": "^3.8.1",
-28:     "typescript": "^5.9.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "basic-ftp": ">=5.2.0",
-33:       "brace-expansion": ">=2.0.3",
-34:       "dompurify": ">=3.3.2",
-35:       "flatted": ">=3.4.2",
-36:       "js-yaml": ">=3.14.2",
-37:       "lodash": ">=4.18.0",
-38:       "lodash-es": ">=4.18.0",
-39:       "minimatch@>=5.0.0 <10.2.1": "10.2.5",
-40:       "picomatch@<2.3.2": "4.0.4",
-41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
-42:       "smol-toml": ">=1.6.1",
-43:       "undici": ">=6.24.0",
-44:       "vite": ">=7.3.2",
-45:       "yaml": ">=2.8.3"
-46:     }
-47:   },
-48:   "prettier": {
-49:     "semi": false,
-50:     "printWidth": 100,
-51:     "bracketSpacing": false,
-52:     "singleQuote": true
-53:   }
-54: }
-````
-
 ## File: src/components/Index/Hero.component.tsx
 ````typescript
  1: "use client";
@@ -20728,6 +20670,64 @@ tsconfig.json
 73:   );
 74: };
 75: export default Hero;
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.3",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.4",
+18:     "react-dom": "^19.2.4",
+19:     "react-icons": "^5.6.0",
+20:     "sanity": "^5.19.0",
+21:     "styled-components": "^6.3.12"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.14",
+26:     "eslint": "^10.2.0",
+27:     "prettier": "^3.8.1",
+28:     "typescript": "^5.9.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=5.2.0",
+33:       "brace-expansion": ">=2.0.3",
+34:       "dompurify": ">=3.3.2",
+35:       "flatted": ">=3.4.2",
+36:       "js-yaml": ">=3.14.2",
+37:       "lodash": ">=4.18.0",
+38:       "lodash-es": ">=4.18.0",
+39:       "minimatch@>=5.0.0 <10.2.1": "10.2.5",
+40:       "picomatch@<2.3.2": "4.0.4",
+41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
+42:       "smol-toml": ">=1.6.1",
+43:       "undici": ">=6.24.0",
+44:       "vite": ">=7.3.2",
+45:       "yaml": ">=2.8.3"
+46:     }
+47:   },
+48:   "prettier": {
+49:     "semi": false,
+50:     "printWidth": 100,
+51:     "bracketSpacing": false,
+52:     "singleQuote": true
+53:   }
+54: }
 ````
 
 ## File: package.json
@@ -20824,7 +20824,7 @@ tsconfig.json
  90:     "postcss": "^8.5.8",
  91:     "prettier": "3.8.1",
  92:     "react-doctor": "^0.0.30",
- 93:     "sanity": "5.18.0",
+ 93:     "sanity": "5.19.0",
  94:     "stylelint": "^17.6.0",
  95:     "stylelint-config-standard": "^40.0.0",
  96:     "tailwindcss": "^4.2.2",
