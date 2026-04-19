@@ -1,0 +1,66 @@
+name: OWASP Security Scan
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  secrets:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sast:
+    name: SAST - Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep with OWASP rules
+        run: |
+          semgrep scan \
+            --config .semgrep/ \
+            --config "p/owasp-top-ten" \
+            --config "p/javascript" \
+            --config "p/typescript" \
+            --config "p/react" \
+            --severity ERROR \
+            --error \
+            --verbose
+        # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+        # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+        # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+        # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+        # --config "p/react"         → Semgrep registry React rules (auto-updated)
+        # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+        # --error                    → Exit code 1 if findings (fails the job)
+
+  dependencies:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          format: table
