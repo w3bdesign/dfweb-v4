@@ -21,6 +21,7 @@ Sanity.io and Typescript.
   - [General](#general)
   - [Design](#design)
   - [Accessibility](#accessibility)
+  - [Security](#security)
   - [Devops and Code quality](#devops-and-code-quality)
   - [Environment Variables](#environment-variables)
   - [Testing Standards](#testing-standards)
