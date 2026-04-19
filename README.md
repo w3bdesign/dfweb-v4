@@ -138,20 +138,23 @@ Sanity.io and Typescript.
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
-  - OWASP security scanning with Semgrep, Gitleaks and Trivy
-    - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-    - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-    - Secret detection with Gitleaks on every PR and push
-    - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-    - Runs automatically on every PR and push to main
-  - Automated security vulnerability scanning with Snyk
-    - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-    - Integrates with GitHub Security tab for vulnerability tracking
-  - Supply chain attack prevention with 7-day minimum release age
-    - Packages must be published for at least 7 days before installation
-    - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-    - All CI workflows use `--frozen-lockfile` to prevent bypassing
-    - Protects against compromised package releases (like Shai Hulud incidents)
+
+### Security
+
+- OWASP security scanning with Semgrep, Gitleaks and Trivy
+  - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+  - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+  - Secret detection with Gitleaks on every PR and push
+  - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+  - Runs automatically on every PR and push to main
+- Automated security vulnerability scanning with Snyk
+  - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+  - Integrates with GitHub Security tab for vulnerability tracking
+- Supply chain attack prevention with 7-day minimum release age
+  - Packages must be published for at least 7 days before installation
+  - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+  - All CI workflows use `--frozen-lockfile` to prevent bypassing
+  - Protects against compromised package releases (like Shai Hulud incidents)
 
 ### Environment Variables
 
