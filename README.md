@@ -6,6 +6,7 @@
 ![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)
 [![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml)
 [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml)
+[![OWASP Security](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP%20Security)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
 
 Fourth version of my personal portfolio website with Next.js, Motion,
 Sanity.io and Typescript.
@@ -136,6 +137,12 @@ Sanity.io and Typescript.
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
+  - OWASP security scanning with Semgrep, Gitleaks and Trivy
+    - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+    - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+    - Secret detection with Gitleaks on every PR and push
+    - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+    - Runs automatically on every PR and push to main
   - Automated security vulnerability scanning with Snyk
     - Scans for vulnerabilities in open-source dependencies on every PR and push to main
     - Integrates with GitHub Security tab for vulnerability tracking
