@@ -149,6 +149,15 @@ Sanity.io and Typescript.
   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
   - All CI workflows use `--frozen-lockfile` to prevent bypassing
   - Protects against compromised package releases (like Shai Hulud incidents)
+- GitHub Actions supply chain hardening with SHA pinning
+  - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+  - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+  - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+  - Custom audit script at `scripts/pin-actions.py` (zero external dependencies, stdlib-only Python)
+    - `python scripts/pin-actions.py audit` — scan and report mutable references
+    - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+    - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+    - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
 
 ### Environment Variables
 
