@@ -39,6 +39,8 @@ from typing import Callable, Optional
 # ---------------------------------------------------------------------------
 
 _GITHUB_API_HOST = "api.github.com"
+_DEFAULT_WORKFLOW_DIR = ".github/workflows"
+_WORKFLOW_DIR_HELP = "Workflow directory to scan"
 
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 # Matches:  uses: owner/repo@ref           (simple)
