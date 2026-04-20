@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
+"""pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
 
 Zero external dependencies. Uses only the Python standard library.
 
@@ -32,11 +31,13 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+_GITHUB_API_BASE = "https://api.github.com"
 
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 # Matches:  uses: owner/repo@ref           (simple)
@@ -61,22 +62,27 @@ def _c(code: str, text: str) -> str:
 
 
 def red(t: str) -> str:
+    """Apply red ANSI color."""
     return _c("31", t)
 
 
 def yellow(t: str) -> str:
+    """Apply yellow ANSI color."""
     return _c("33", t)
 
 
 def green(t: str) -> str:
+    """Apply green ANSI color."""
     return _c("32", t)
 
 
 def bold(t: str) -> str:
+    """Apply bold ANSI style."""
     return _c("1", t)
 
 
 def dim(t: str) -> str:
+    """Apply dim ANSI style."""
     return _c("2", t)
 
 
@@ -100,11 +106,10 @@ class ActionRef:
     resolved_sha: Optional[str] = None
 
     def __post_init__(self) -> None:
-        # Determine owner/repo (first two path segments)
+        """Derive owner_repo and classify risk level from the ref string."""
         parts = self.action.split("/")
         self.owner_repo = f"{parts[0]}/{parts[1]}"
 
-        # Classify risk
         if SHA_PATTERN.match(self.ref):
             self.risk = RISK_PINNED
         elif self._looks_like_branch(self.ref):
@@ -114,8 +119,11 @@ class ActionRef:
 
     @staticmethod
     def _looks_like_branch(ref: str) -> bool:
-        """Heuristic: branches are names like 'master', 'main', 'develop'.
-        Tags typically start with 'v' followed by digits."""
+        """Detect if a ref looks like a branch name rather than a version tag.
+
+        Branches are names like 'master', 'main', 'develop'.
+        Tags typically start with 'v' followed by digits.
+        """
         branch_names = {
             "master",
             "main",
@@ -143,18 +151,22 @@ class AuditResult:
 
     @property
     def pinned(self) -> list[ActionRef]:
+        """Return refs that are already SHA-pinned."""
         return [r for r in self.refs if r.risk == RISK_PINNED]
 
     @property
     def mutable_tags(self) -> list[ActionRef]:
+        """Return refs using mutable version tags."""
         return [r for r in self.refs if r.risk == RISK_TAG]
 
     @property
     def mutable_branches(self) -> list[ActionRef]:
+        """Return refs tracking a branch HEAD."""
         return [r for r in self.refs if r.risk == RISK_BRANCH]
 
     @property
     def mutable(self) -> list[ActionRef]:
+        """Return all refs that are not SHA-pinned."""
         return [r for r in self.refs if r.risk != RISK_PINNED]
 
 
@@ -197,16 +209,33 @@ def scan_workflows(workflow_dir: Path) -> AuditResult:
 # ---------------------------------------------------------------------------
 
 
+def _safe_urlopen(url: str, headers: dict[str, str]) -> bytes:
+    """Open a URL after validating it uses the HTTPS scheme only.
+
+    Prevents file:// and other non-HTTPS schemes from being used,
+    which would allow arbitrary file reads if an attacker could
+    control the URL.
+    """
+    if not url.startswith("https://"):
+        raise ValueError(f"Refusing to open non-HTTPS URL: {url}")
+
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
+        return resp.read()
+
+
 def _github_api(url: str, token: Optional[str] = None) -> dict:
     """Make a GET request to the GitHub API. Returns parsed JSON."""
-    headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "pin-actions/1.0"}
+    headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "pin-actions/1.0",
+    }
     if token:
         headers["Authorization"] = f"token {token}"
 
-    req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return json.loads(resp.read().decode())
+        data = _safe_urlopen(url, headers)
+        return json.loads(data.decode())
     except urllib.error.HTTPError as e:
         body = e.read().decode() if e.fp else ""
         raise RuntimeError(f"GitHub API {e.code}: {url}\n{body}") from e
@@ -214,21 +243,27 @@ def _github_api(url: str, token: Optional[str] = None) -> dict:
         raise RuntimeError(f"Network error: {e.reason}") from e
 
 
-def resolve_ref_to_sha(owner_repo: str, ref: str, token: Optional[str] = None) -> str:
+def _build_api_url(owner_repo: str, path: str) -> str:
+    """Build a GitHub API URL from owner/repo and a path suffix."""
+    return f"{_GITHUB_API_BASE}/repos/{owner_repo}/{path}"
+
+
+def resolve_ref_to_sha(
+    owner_repo: str, ref: str, token: Optional[str] = None
+) -> str:
     """Resolve a tag or branch name to its full commit SHA.
 
-    Tries tags first (annotated → peel to commit), then branches.
+    Tries tags first (annotated tags are peeled to their commit),
+    then falls back to branches, then to the direct git/ref endpoint.
     """
     # Try as a git ref via the matching refs endpoint
-    url = f"https://api.github.com/repos/{owner_repo}/git/matching-refs/tags/{ref}"
+    url = _build_api_url(owner_repo, f"git/matching-refs/tags/{ref}")
     try:
         data = _github_api(url, token)
         if data:
-            # Find exact match
             for item in data:
                 if item["ref"] == f"refs/tags/{ref}":
                     obj = item["object"]
-                    # Annotated tags need peeling
                     if obj["type"] == "tag":
                         tag_data = _github_api(obj["url"], token)
                         return tag_data["object"]["sha"]
@@ -237,7 +272,7 @@ def resolve_ref_to_sha(owner_repo: str, ref: str, token: Optional[str] = None) -
         pass
 
     # Try as a branch
-    url = f"https://api.github.com/repos/{owner_repo}/branches/{ref}"
+    url = _build_api_url(owner_repo, f"branches/{ref}")
     try:
         data = _github_api(url, token)
         return data["commit"]["sha"]
@@ -245,7 +280,7 @@ def resolve_ref_to_sha(owner_repo: str, ref: str, token: Optional[str] = None) -
         pass
 
     # Last resort: git/ref endpoint
-    url = f"https://api.github.com/repos/{owner_repo}/git/ref/tags/{ref}"
+    url = _build_api_url(owner_repo, f"git/ref/tags/{ref}")
     try:
         data = _github_api(url, token)
         obj = data["object"]
@@ -311,8 +346,10 @@ def print_audit(result: AuditResult) -> None:
     if result.mutable:
         pct = (len(result.mutable) / total * 100) if total else 0
         print(bold("── Summary ─────────────────────────────────────────────"))
-        print(f"  {red(f'{len(result.mutable)}/{total}')} references "
-              f"({red(f'{pct:.0f}%')}) are mutable and vulnerable.")
+        print(
+            f"  {red(f'{len(result.mutable)}/{total}')} references "
+            f"({red(f'{pct:.0f}%')}) are mutable and vulnerable."
+        )
         print(f"  Run {bold('python scripts/pin-actions.py pin')} to fix them.")
         print()
     else:
@@ -320,11 +357,14 @@ def print_audit(result: AuditResult) -> None:
         print()
 
 
-def _print_ref(ref: ActionRef, color_fn) -> None:
+def _print_ref(ref: ActionRef, color_fn: Callable[[str], str]) -> None:
+    """Print a single action reference with color formatting."""
     fname = ref.file.name
     comment = f"  # {ref.comment}" if ref.comment else ""
-    print(f"  {dim(f'{fname}:{ref.line_number:>3}')}  "
-          f"{color_fn(f'{ref.action}@{ref.ref}')}{dim(comment)}")
+    print(
+        f"  {dim(f'{fname}:{ref.line_number:>3}')}  "
+        f"{color_fn(f'{ref.action}@{ref.ref}')}{dim(comment)}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -332,22 +372,13 @@ def _print_ref(ref: ActionRef, color_fn) -> None:
 # ---------------------------------------------------------------------------
 
 
-def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
-    """Resolve mutable refs to SHAs and rewrite workflow files.
+def _resolve_shas(
+    mutable: list[ActionRef], token: Optional[str],
+) -> tuple[dict[tuple[str, str], str], list[str]]:
+    """Resolve each unique action@ref pair to a commit SHA.
 
-    Returns the number of references pinned.
+    Returns a (cache, errors) tuple.
     """
-    mutable = result.mutable
-    if not mutable:
-        print(green("✅ All action references are already SHA-pinned. Nothing to do."))
-        return 0
-
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        print(yellow("Tip: Set GITHUB_TOKEN to raise the API rate limit from 60/hr to 5000/hr."))
-        print()
-
-    # Resolve each unique action@ref pair
     cache: dict[tuple[str, str], str] = {}
     errors: list[str] = []
     total = len(mutable)
@@ -370,15 +401,77 @@ def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
             errors.append(f"  {red('✗')} {ref.action}@{ref.ref}: {e}")
             print(f"  [{i}/{total}] {ref.action}@{ref.ref} → {red('FAILED')}")
 
+    return cache, errors
+
+
+def _rewrite_file(
+    fpath: Path,
+    ref_map: dict[tuple[Path, int], ActionRef],
+    dry_run: bool,
+) -> int:
+    """Rewrite a single workflow file, replacing mutable refs with SHAs.
+
+    Returns the number of lines modified.
+    """
+    with open(fpath, encoding="utf-8") as f:
+        lines = f.readlines()
+
+    modified = False
+    pinned_count = 0
+
+    for line_idx, old_line in enumerate(lines):
+        line_num = line_idx + 1
+        key = (fpath, line_num)
+        if key not in ref_map:
+            continue
+
+        ref = ref_map[key]
+        new_ref_str = f"{ref.resolved_sha} # {ref.ref}"
+        new_line = re.sub(
+            r"@" + re.escape(ref.ref) + r"(\s*(?:#.*)?)$",
+            f"@{new_ref_str}",
+            old_line.rstrip(),
+        ) + "\n"
+
+        if new_line != old_line:
+            lines[line_idx] = new_line
+            modified = True
+            pinned_count += 1
+
+            if dry_run:
+                print(f"\n  {dim(f'{fpath.name}:{line_num}')}")
+                print(f"  {red('- ' + old_line.rstrip())}")
+                print(f"  {green('+ ' + new_line.rstrip())}")
+
+    if modified and not dry_run:
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+
+    return pinned_count
+
+
+def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
+    """Resolve mutable refs to SHAs and rewrite workflow files.
+
+    Returns the number of references pinned.
+    """
+    mutable = result.mutable
+    if not mutable:
+        print(green("✅ All action references are already SHA-pinned. Nothing to do."))
+        return 0
+
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        print(yellow("Tip: Set GITHUB_TOKEN to raise the API rate limit from 60/hr to 5000/hr."))
+        print()
+
+    _cache, errors = _resolve_shas(mutable, token)
+
     if errors:
         print(f"\n{red(bold('Errors:'))}")
         for err in errors:
             print(err)
         print()
-
-    # Group by file and rewrite
-    pinned_count = 0
-    files_modified: set[str] = set()
 
     # Build a map of (file, line_number) → ActionRef for resolved refs
     ref_map: dict[tuple[Path, int], ActionRef] = {}
@@ -388,52 +481,33 @@ def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
 
     # Process each file
     files_to_process = sorted({ref.file for ref in mutable if ref.resolved_sha})
+    pinned_count = 0
+    files_modified: set[str] = set()
 
     for fpath in files_to_process:
-        with open(fpath, encoding="utf-8") as f:
-            lines = f.readlines()
-
-        modified = False
-        for line_idx in range(len(lines)):
-            line_num = line_idx + 1
-            key = (fpath, line_num)
-            if key not in ref_map:
-                continue
-
-            ref = ref_map[key]
-            old_line = lines[line_idx]
-            # Build replacement: action@sha # original-ref
-            new_ref_str = f"{ref.resolved_sha} # {ref.ref}"
-            # Replace @old_ref with @sha # old_ref
-            new_line = re.sub(
-                r"@" + re.escape(ref.ref) + r"(\s*(?:#.*)?)$",
-                f"@{new_ref_str}",
-                old_line.rstrip(),
-            ) + "\n"
-
-            if new_line != old_line:
-                lines[line_idx] = new_line
-                modified = True
-                pinned_count += 1
-
-                if dry_run:
-                    print(f"\n  {dim(f'{fpath.name}:{line_num}')}")
-                    print(f"  {red('- ' + old_line.rstrip())}")
-                    print(f"  {green('+ ' + new_line.rstrip())}")
-
-        if modified and not dry_run:
-            with open(fpath, "w", encoding="utf-8") as f:
-                f.writelines(lines)
+        count = _rewrite_file(fpath, ref_map, dry_run)
+        pinned_count += count
+        if count > 0 and not dry_run:
             files_modified.add(str(fpath))
 
     print()
     if dry_run:
-        print(bold(f"Dry run complete. {pinned_count} references would be pinned "
-                   f"across {len(files_to_process)} files."))
+        print(
+            bold(
+                f"Dry run complete. {pinned_count} references would be pinned "
+                f"across {len(files_to_process)} files."
+            )
+        )
         print(f"Run without {bold('--dry-run')} to apply changes.")
     else:
-        print(green(bold(f"✅ Pinned {pinned_count} references across "
-                         f"{len(files_modified)} files.")))
+        print(
+            green(
+                bold(
+                    f"✅ Pinned {pinned_count} references across "
+                    f"{len(files_modified)} files."
+                )
+            )
+        )
 
     return pinned_count
 
@@ -449,13 +523,15 @@ def verify_workflows(result: AuditResult) -> int:
         print(red(bold(f"✗ {len(result.mutable)} mutable action reference(s) found:\n")))
         for ref in result.mutable:
             risk_label = "BRANCH" if ref.risk == RISK_BRANCH else "TAG"
-            print(f"  {ref.file.name}:{ref.line_number}  "
-                  f"{ref.action}@{ref.ref}  [{risk_label}]")
+            print(
+                f"  {ref.file.name}:{ref.line_number}  "
+                f"{ref.action}@{ref.ref}  [{risk_label}]"
+            )
         print(f"\nRun {bold('python scripts/pin-actions.py pin')} to fix.")
         return 1
-    else:
-        print(green(bold("✅ All action references are SHA-pinned.")))
-        return 0
+
+    print(green(bold("✅ All action references are SHA-pinned.")))
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -464,6 +540,7 @@ def verify_workflows(result: AuditResult) -> int:
 
 
 def main() -> None:
+    """Entry point for the pin-actions CLI."""
     parser = argparse.ArgumentParser(
         description="Audit & pin GitHub Actions to immutable commit SHAs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
