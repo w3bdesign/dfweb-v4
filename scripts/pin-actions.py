@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
+"""pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
 
 Zero external dependencies. Uses only the Python standard library.
 
@@ -97,9 +96,8 @@ def dim(t: str) -> str:
 
 @dataclass
 class ActionRef:
-    """
-    A single `uses:` reference found in a workflow file.
-    """
+
+    """A single `uses:` reference found in a workflow file."""
 
     file: Path
     line_number: int
@@ -152,9 +150,8 @@ class ActionRef:
 
 @dataclass
 class AuditResult:
-    """
-    Collected results from scanning workflow files.
-    """
+
+    """Collected results from scanning workflow files."""
 
     refs: list[ActionRef] = field(default_factory=list)
 
