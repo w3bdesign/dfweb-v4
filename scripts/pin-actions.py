@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
+"""
+pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
 
 Zero external dependencies. Uses only the Python standard library.
 
@@ -23,12 +24,12 @@ Environment:
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import re
+import ssl
 import sys
-import urllib.error
-import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
@@ -37,7 +38,7 @@ from typing import Callable, Optional
 # Constants
 # ---------------------------------------------------------------------------
 
-_GITHUB_API_BASE = "https://api.github.com"
+_GITHUB_API_HOST = "api.github.com"
 
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 # Matches:  uses: owner/repo@ref           (simple)
@@ -58,6 +59,7 @@ _use_color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
 
 
 def _c(code: str, text: str) -> str:
+    """Apply an ANSI escape code to text if colors are enabled."""
     return f"\033[{code}m{text}\033[0m" if _use_color else text
 
 
@@ -93,7 +95,9 @@ def dim(t: str) -> str:
 
 @dataclass
 class ActionRef:
-    """A single `uses:` reference found in a workflow file."""
+    """
+    A single `uses:` reference found in a workflow file.
+    """
 
     file: Path
     line_number: int
@@ -119,7 +123,8 @@ class ActionRef:
 
     @staticmethod
     def _looks_like_branch(ref: str) -> bool:
-        """Detect if a ref looks like a branch name rather than a version tag.
+        """
+        Detect if a ref looks like a branch name rather than a version tag.
 
         Branches are names like 'master', 'main', 'develop'.
         Tags typically start with 'v' followed by digits.
@@ -145,7 +150,9 @@ class ActionRef:
 
 @dataclass
 class AuditResult:
-    """Collected results from scanning workflow files."""
+    """
+    Collected results from scanning workflow files.
+    """
 
     refs: list[ActionRef] = field(default_factory=list)
 
@@ -205,27 +212,17 @@ def scan_workflows(workflow_dir: Path) -> AuditResult:
 
 
 # ---------------------------------------------------------------------------
-# GitHub API — resolve ref to SHA
+# GitHub API — resolve ref to SHA (uses http.client, no urllib)
 # ---------------------------------------------------------------------------
 
 
-def _safe_urlopen(url: str, headers: dict[str, str]) -> bytes:
-    """Open a URL after validating it uses the HTTPS scheme only.
-
-    Prevents file:// and other non-HTTPS schemes from being used,
-    which would allow arbitrary file reads if an attacker could
-    control the URL.
+def _https_get(path: str, token: Optional[str] = None) -> dict:
     """
-    if not url.startswith("https://"):
-        raise ValueError(f"Refusing to open non-HTTPS URL: {url}")
+    Make an HTTPS GET request to the GitHub API using http.client.
 
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
-        return resp.read()
-
-
-def _github_api(url: str, token: Optional[str] = None) -> dict:
-    """Make a GET request to the GitHub API. Returns parsed JSON."""
+    Uses http.client.HTTPSConnection directly — physically cannot
+    open file:// or other non-HTTPS schemes.
+    """
     headers = {
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "pin-actions/1.0",
@@ -233,59 +230,68 @@ def _github_api(url: str, token: Optional[str] = None) -> dict:
     if token:
         headers["Authorization"] = f"token {token}"
 
+    ctx = ssl.create_default_context()
+    conn = http.client.HTTPSConnection(_GITHUB_API_HOST, timeout=15, context=ctx)
     try:
-        data = _safe_urlopen(url, headers)
-        return json.loads(data.decode())
-    except urllib.error.HTTPError as e:
-        body = e.read().decode() if e.fp else ""
-        raise RuntimeError(f"GitHub API {e.code}: {url}\n{body}") from e
-    except urllib.error.URLError as e:
-        raise RuntimeError(f"Network error: {e.reason}") from e
+        conn.request("GET", path, headers=headers)
+        resp = conn.getresponse()
+        body = resp.read().decode()
+
+        if resp.status == 200:
+            return json.loads(body)
+
+        raise RuntimeError(f"GitHub API {resp.status}: {path}\n{body}")
+    finally:
+        conn.close()
 
 
-def _build_api_url(owner_repo: str, path: str) -> str:
-    """Build a GitHub API URL from owner/repo and a path suffix."""
-    return f"{_GITHUB_API_BASE}/repos/{owner_repo}/{path}"
+def _build_api_path(owner_repo: str, suffix: str) -> str:
+    """Build a GitHub API path from owner/repo and a path suffix."""
+    return f"/repos/{owner_repo}/{suffix}"
 
 
 def resolve_ref_to_sha(
-    owner_repo: str, ref: str, token: Optional[str] = None
+    owner_repo: str, ref: str, token: Optional[str] = None,
 ) -> str:
-    """Resolve a tag or branch name to its full commit SHA.
+    """
+    Resolve a tag or branch name to its full commit SHA.
 
     Tries tags first (annotated tags are peeled to their commit),
     then falls back to branches, then to the direct git/ref endpoint.
     """
     # Try as a git ref via the matching refs endpoint
-    url = _build_api_url(owner_repo, f"git/matching-refs/tags/{ref}")
+    path = _build_api_path(owner_repo, f"git/matching-refs/tags/{ref}")
     try:
-        data = _github_api(url, token)
+        data = _https_get(path, token)
         if data:
             for item in data:
                 if item["ref"] == f"refs/tags/{ref}":
                     obj = item["object"]
                     if obj["type"] == "tag":
-                        tag_data = _github_api(obj["url"], token)
+                        # Annotated tag — peel to commit via object URL path
+                        tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
+                        tag_data = _https_get(tag_path, token)
                         return tag_data["object"]["sha"]
                     return obj["sha"]
     except RuntimeError:
         pass
 
     # Try as a branch
-    url = _build_api_url(owner_repo, f"branches/{ref}")
+    path = _build_api_path(owner_repo, f"branches/{ref}")
     try:
-        data = _github_api(url, token)
+        data = _https_get(path, token)
         return data["commit"]["sha"]
     except RuntimeError:
         pass
 
     # Last resort: git/ref endpoint
-    url = _build_api_url(owner_repo, f"git/ref/tags/{ref}")
+    path = _build_api_path(owner_repo, f"git/ref/tags/{ref}")
     try:
-        data = _github_api(url, token)
+        data = _https_get(path, token)
         obj = data["object"]
         if obj["type"] == "tag":
-            tag_data = _github_api(obj["url"], token)
+            tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
+            tag_data = _https_get(tag_path, token)
             return tag_data["object"]["sha"]
         return obj["sha"]
     except RuntimeError as exc:
@@ -375,7 +381,8 @@ def _print_ref(ref: ActionRef, color_fn: Callable[[str], str]) -> None:
 def _resolve_shas(
     mutable: list[ActionRef], token: Optional[str],
 ) -> tuple[dict[tuple[str, str], str], list[str]]:
-    """Resolve each unique action@ref pair to a commit SHA.
+    """
+    Resolve each unique action@ref pair to a commit SHA.
 
     Returns a (cache, errors) tuple.
     """
@@ -409,7 +416,8 @@ def _rewrite_file(
     ref_map: dict[tuple[Path, int], ActionRef],
     dry_run: bool,
 ) -> int:
-    """Rewrite a single workflow file, replacing mutable refs with SHAs.
+    """
+    Rewrite a single workflow file, replacing mutable refs with SHAs.
 
     Returns the number of lines modified.
     """
@@ -451,7 +459,8 @@ def _rewrite_file(
 
 
 def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
-    """Resolve mutable refs to SHAs and rewrite workflow files.
+    """
+    Resolve mutable refs to SHAs and rewrite workflow files.
 
     Returns the number of references pinned.
     """
