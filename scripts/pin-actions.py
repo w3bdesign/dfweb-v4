@@ -233,6 +233,7 @@ def _https_get(path: str, token: Optional[str] = None) -> dict:
         headers["Authorization"] = f"token {token}"
 
     ctx = ssl.create_default_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     conn = http.client.HTTPSConnection(_GITHUB_API_HOST, timeout=15, context=ctx)
     try:
         conn.request("GET", path, headers=headers)
@@ -562,13 +563,13 @@ def main() -> None:
     # audit
     p_audit = sub.add_parser("audit", help="Report mutable action references")
     p_audit.add_argument(
-        "--dir", default=".github/workflows", help="Workflow directory to scan"
+        "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
     )
 
     # pin
     p_pin = sub.add_parser("pin", help="Rewrite workflow files with SHA-pinned refs")
     p_pin.add_argument(
-        "--dir", default=".github/workflows", help="Workflow directory to scan"
+        "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
     )
     p_pin.add_argument(
         "--dry-run", action="store_true", help="Show changes without writing files"
@@ -579,7 +580,7 @@ def main() -> None:
         "verify", help="Exit 1 if any mutable refs exist (CI gate)"
     )
     p_verify.add_argument(
-        "--dir", default=".github/workflows", help="Workflow directory to scan"
+        "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
     )
 
     args = parser.parse_args()
