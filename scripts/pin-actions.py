@@ -215,12 +215,28 @@ def scan_workflows(workflow_dir: Path) -> AuditResult:
 # ---------------------------------------------------------------------------
 
 
+def _create_ssl_context() -> ssl.SSLContext:
+    """Create a hardened SSL context with explicit certificate verification."""
+    if sys.version_info < (3, 10):
+        raise RuntimeError(
+            "Python 3.10+ is required for secure TLS defaults. "
+            f"Current version: {sys.version}"
+        )
+
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    ctx.check_hostname = True
+    ctx.verify_mode = ssl.CERT_REQUIRED
+    ctx.load_default_certs()
+    return ctx
+
+
 def _https_get(path: str, token: Optional[str] = None) -> dict:
     """
-    Make an HTTPS GET request to the GitHub API using http.client.
+    Make an HTTPS GET request to the GitHub API.
 
-    Uses http.client.HTTPSConnection directly — physically cannot
-    open file:// or other non-HTTPS schemes.
+    Uses http.client.HTTPSConnection with explicit TLS 1.2+ and
+    certificate verification. Cannot open file:// or other schemes.
     """
     headers = {
         "Accept": "application/vnd.github.v3+json",
@@ -229,8 +245,7 @@ def _https_get(path: str, token: Optional[str] = None) -> dict:
     if token:
         headers["Authorization"] = f"token {token}"
 
-    ctx = ssl.create_default_context()
-    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    ctx = _create_ssl_context()
     conn = http.client.HTTPSConnection(_GITHUB_API_HOST, timeout=15, context=ctx)
     try:
         conn.request("GET", path, headers=headers)
