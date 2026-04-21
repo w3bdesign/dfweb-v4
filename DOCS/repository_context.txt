@@ -125,6 +125,8 @@ public/
   robots.txt
 screenshots/
   local-test.png
+scripts/
+  pin-actions.py
 src/
   __mocks__/
     categories.json
@@ -560,600 +562,6 @@ tsconfig.json
 13:     ]
 14:   }
 15: ]
-````
-
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     timeout-minutes: 30
- 7:     strategy:
- 8:       fail-fast: false
- 9:       matrix:
-10:         browser: [chrome, firefox, edge]
-11:     steps:
-12:       - name: Checkout
-13:         uses: actions/checkout@v6
-14:       - name: Install pnpm
-15:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:         with:
-17:           version: 10
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:           restore-keys: |
-30:             ${{ runner.os }}-cypress-
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@v6
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     timeout-minutes: 30
- 7:     steps:
- 8:       - uses: actions/checkout@v6
- 9:       - name: Setup Node.js
-10:         uses: actions/setup-node@v6
-11:         with:
-12:           node-version: "24"
-13:       - name: Setup pnpm
-14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-15:         with:
-16:           version: 10
-17:           run_install: false
-18:       - name: Get pnpm store directory
-19:         shell: bash
-20:         run: |
-21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-22:       - name: Setup pnpm cache
-23:         uses: actions/cache@v5
-24:         with:
-25:           path: ${{ env.STORE_PATH }}
-26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-27:           restore-keys: |
-28:             ${{ runner.os }}-pnpm-store-
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     timeout-minutes: 30
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - name: Setup Node.js
-14:         uses: actions/setup-node@v6
-15:         with:
-16:           node-version: "24"
-17:       - name: Install pnpm
-18:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-19:         with:
-20:           version: 10
-21:           run_install: false
-22:       - name: Get pnpm store directory
-23:         shell: bash
-24:         run: |
-25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-26:       - name: Setup pnpm cache
-27:         uses: actions/cache@v5
-28:         with:
-29:           path: ${{ env.STORE_PATH }}
-30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-31:           restore-keys: |
-32:             ${{ runner.os }}-pnpm-store-
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@v7
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@v6
-13:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@v7
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
-````
-
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:         with:
- 47:           version: 10
- 48:       - uses: actions/setup-node@v6
- 49:         with:
- 50:           node-version: 24
- 51:           cache: ${{ steps.pm.outputs.cache }}
- 52:       - name: Install dependencies
- 53:         run: ${{ steps.pm.outputs.install }}
- 54:       - name: Run React Doctor
- 55:         id: doctor
- 56:         run: |
- 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 59:           # Strip ANSI escape codes for clean output
- 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 65:           else
- 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 67:           fi
- 68:           # Check for lint issues (the actionable part of the report)
- 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 71:           else
- 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 73:           fi
- 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 77:           # Extract just the numeric score for threshold check
- 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 81:       - name: Post PR comment with results
- 82:         if: github.event_name == 'pull_request'
- 83:         uses: actions/github-script@v8
- 84:         with:
- 85:           script: |
- 86:             const fs = require('fs');
- 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 88:             const score = '${{ steps.doctor.outputs.score }}';
- 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 91:             const scoreDisplay = offline
- 92:               ? 'N/A (scoring server unreachable)'
- 93:               : score;
- 94:             const statusEmoji = offline
- 95:               ? (issuesFound ? '⚠️' : '✅')
- 96:               : '';
- 97:             const body = [
- 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 99:               '',
-100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
-101:               '',
-102:               '<details>',
-103:               '<summary>Full diagnostics</summary>',
-104:               '',
-105:               '```',
-106:               output.trim(),
-107:               '```',
-108:               '',
-109:               '</details>',
-110:               '',
-111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-112:             ].filter(Boolean).join('\n');
-113:             // Find existing comment to update instead of creating duplicates
-114:             const { data: comments } = await github.rest.issues.listComments({
-115:               owner: context.repo.owner,
-116:               repo: context.repo.repo,
-117:               issue_number: context.issue.number,
-118:             });
-119:             const botComment = comments.find(
-120:               (c) => c.body?.includes('🩺 React Doctor')
-121:             );
-122:             if (botComment) {
-123:               await github.rest.issues.updateComment({
-124:                 owner: context.repo.owner,
-125:                 repo: context.repo.repo,
-126:                 comment_id: botComment.id,
-127:                 body,
-128:               });
-129:             } else {
-130:               await github.rest.issues.createComment({
-131:                 owner: context.repo.owner,
-132:                 repo: context.repo.repo,
-133:                 issue_number: context.issue.number,
-134:                 body,
-135:               });
-136:             }
-137:       - name: Write job summary
-138:         if: always()
-139:         run: |
-140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-141:           if [ "$OFFLINE" = "true" ]; then
-142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-143:             echo "" >> "$GITHUB_STEP_SUMMARY"
-144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-145:           else
-146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-147:           fi
-148:           echo "" >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-152:       - name: Check score threshold
-153:         run: |
-154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-156:           # When offline, skip numeric threshold — only fail if lint issues were found
-157:           if [ "$OFFLINE" = "true" ]; then
-158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-159:             if [ "$ISSUES" = "true" ]; then
-160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-161:               exit 1
-162:             fi
-163:             echo "✅ No lint issues found (score unavailable due to offline)"
-164:             exit 0
-165:           fi
-166:           SCORE="${{ steps.doctor.outputs.score_num }}"
-167:           SCORE="${SCORE:-0}"
-168:           THRESHOLD=80
-169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-172:             exit 1
-173:           fi
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@v6
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@v6
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:         with:
-23:           version: 10
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: ""
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: .github/copilot-instructions.md
@@ -10122,6 +9530,183 @@ tsconfig.json
 63:     timeout = setTimeout(() => func(...args), wait);
 64:   };
 65: };
+````
+
+## File: src/components/Animations/MatrixCursor.component.tsx
+````typescript
+  1: "use client";
+  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
+  3: import "@/app/cursor.css";
+  4: import { useMobile } from "../../hooks/useMobile";
+  5: interface MatrixCursorProps {
+  6:   heroRef: RefObject<HTMLElement | null>;
+  7: }
+  8: interface CursorStyles extends React.CSSProperties {
+  9:   "--cursor-x": string;
+ 10:   "--cursor-y": string;
+ 11: }
+ 12: interface MatrixTrail {
+ 13:   id: string;
+ 14:   x: number;
+ 15:   y: number;
+ 16:   char: string;
+ 17: }
+ 18: interface CursorState {
+ 19:   cursorPosition: { x: number; y: number };
+ 20:   isHovered: boolean;
+ 21:   trails: MatrixTrail[];
+ 22: }
+ 23: type CursorAction =
+ 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+ 25:   | { type: "MOUSE_ENTER" }
+ 26:   | { type: "MOUSE_LEAVE" }
+ 27:   | { type: "REMOVE_TRAIL"; trailId: string };
+ 28: const MAX_TRAILS = 20;
+ 29: const cursorReducer = (
+ 30:   state: CursorState,
+ 31:   action: CursorAction,
+ 32: ): CursorState => {
+ 33:   switch (action.type) {
+ 34:     case "MOUSE_MOVE": {
+ 35:       const newPosition = { x: action.x, y: action.y };
+ 36:       if (!action.trail) {
+ 37:         return { ...state, cursorPosition: newPosition };
+ 38:       }
+ 39:       const updatedTrails = [...state.trails, action.trail];
+ 40:       return {
+ 41:         ...state,
+ 42:         cursorPosition: newPosition,
+ 43:         trails:
+ 44:           updatedTrails.length > MAX_TRAILS
+ 45:             ? updatedTrails.slice(1)
+ 46:             : updatedTrails,
+ 47:       };
+ 48:     }
+ 49:     case "MOUSE_ENTER":
+ 50:       return { ...state, isHovered: true };
+ 51:     case "MOUSE_LEAVE":
+ 52:       return { ...state, isHovered: false, trails: [] };
+ 53:     case "REMOVE_TRAIL":
+ 54:       return {
+ 55:         ...state,
+ 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
+ 57:       };
+ 58:   }
+ 59: };
+ 60: const initialState: CursorState = {
+ 61:   cursorPosition: { x: 0, y: 0 },
+ 62:   isHovered: false,
+ 63:   trails: [],
+ 64: };
+ 65: /**
+ 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 70:  */
+ 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 72:   const isMobile = useMobile(); // Pd528
+ 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
+ 74:   const getRandomChar = useCallback(() => {
+ 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 76:     const array = new Uint32Array(1);
+ 77:     crypto.getRandomValues(array);
+ 78:     const index = array[0]! % matrixChars.length;
+ 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 80:   }, []);
+ 81:   useEffect(() => {
+ 82:     const heroSection = heroRef.current;
+ 83:     if (!heroSection) return;
+ 84:     // Add cursor: none to the hero section when hovered
+ 85:     if (state.isHovered) {
+ 86:       heroSection.style.cursor = "none";
+ 87:     } else {
+ 88:       heroSection.style.cursor = "";
+ 89:     }
+ 90:     const handleMouseMove = (e: MouseEvent) => {
+ 91:       const trail: MatrixTrail | undefined = state.isHovered
+ 92:         ? {
+ 93:             id: crypto.randomUUID(),
+ 94:             x: e.clientX,
+ 95:             y: e.clientY,
+ 96:             char: getRandomChar(),
+ 97:           }
+ 98:         : undefined;
+ 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
+100:     };
+101:     const handleMouseEnter = () => {
+102:       dispatch({ type: "MOUSE_ENTER" });
+103:       heroSection.style.cursor = "none";
+104:     };
+105:     const handleMouseLeave = () => {
+106:       dispatch({ type: "MOUSE_LEAVE" });
+107:       heroSection.style.cursor = "";
+108:     };
+109:     heroSection.addEventListener("mousemove", handleMouseMove);
+110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+112:     return () => {
+113:       heroSection.removeEventListener("mousemove", handleMouseMove);
+114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+116:       heroSection.style.cursor = "";
+117:     };
+118:   }, [heroRef, state.isHovered, getRandomChar]);
+119:   const handleAnimationEnd = useCallback((trailId: string) => {
+120:     dispatch({ type: "REMOVE_TRAIL", trailId });
+121:   }, []);
+122:   if (!heroRef.current || isMobile) return null; // P6ecf
+123:   const cursorStyles: CursorStyles = {
+124:     position: "fixed",
+125:     top: 0,
+126:     left: 0,
+127:     width: "100%",
+128:     height: "100%",
+129:     pointerEvents: "none",
+130:     zIndex: 9999,
+131:     "--cursor-x": `${state.cursorPosition.x}px`,
+132:     "--cursor-y": `${state.cursorPosition.y}px`,
+133:   };
+134:   return (
+135:     <div
+136:       data-testid="matrix-cursor"
+137:       className={state.isHovered ? "matrix-cursor" : ""}
+138:       style={cursorStyles}
+139:     >
+140:       {state.trails.map((trail) => (
+141:         <div
+142:           key={trail.id}
+143:           data-testid="matrix-trail"
+144:           className="matrix-trail"
+145:           style={{
+146:             position: "fixed",
+147:             left: `${trail.x}px`,
+148:             top: `${trail.y}px`,
+149:             zIndex: 10000,
+150:             pointerEvents: "none",
+151:           }}
+152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+153:         >
+154:           {trail.char}
+155:         </div>
+156:       ))}
+157:       {state.isHovered && (
+158:         <div
+159:           style={{
+160:             position: "fixed",
+161:             top: 0,
+162:             left: 0,
+163:             width: "100%",
+164:             height: "100%",
+165:             pointerEvents: "none",
+166:             zIndex: 9999,
+167:           }}
+168:         />
+169:       )}
+170:     </div>
+171:   );
+172: };
+173: export default MatrixCursor;
 ````
 
 ## File: src/components/Animations/PageTransition.component.tsx
@@ -19294,6 +18879,600 @@ tsconfig.json
 36: }
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     timeout-minutes: 30
+ 7:     strategy:
+ 8:       fail-fast: false
+ 9:       matrix:
+10:         browser: [chrome, firefox, edge]
+11:     steps:
+12:       - name: Checkout
+13:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+14:       - name: Install pnpm
+15:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:         with:
+17:           version: 10
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:           restore-keys: |
+30:             ${{ runner.os }}-cypress-
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     timeout-minutes: 30
+11:     steps:
+12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+13:       - name: Setup Node.js
+14:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+15:         with:
+16:           node-version: "24"
+17:       - name: Install pnpm
+18:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+19:         with:
+20:           version: 10
+21:           run_install: false
+22:       - name: Get pnpm store directory
+23:         shell: bash
+24:         run: |
+25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+26:       - name: Setup pnpm cache
+27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+28:         with:
+29:           path: ${{ env.STORE_PATH }}
+30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+31:           restore-keys: |
+32:             ${{ runner.os }}-pnpm-store-
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+13:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:         with:
+ 47:           version: 10
+ 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
+104:               '',
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:         with:
+23:           version: 10
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: ""
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: commit/commit_analyzer.py
 ````python
   1: #!/usr/bin/env python3
@@ -19825,6 +20004,39 @@ tsconfig.json
 134: export default ReactMatrixAnimation;
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.2.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^5.9.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.5",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: .semgrepignore
 ````
  1: # Auto-generated files
@@ -20106,216 +20318,6 @@ tsconfig.json
 261:     metadata:
 262:       owasp: A10:2021
 263:       cwe: CWE-918
-````
-
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
-  3: import "@/app/cursor.css";
-  4: import { useMobile } from "../../hooks/useMobile";
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: interface CursorState {
- 19:   cursorPosition: { x: number; y: number };
- 20:   isHovered: boolean;
- 21:   trails: MatrixTrail[];
- 22: }
- 23: type CursorAction =
- 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
- 25:   | { type: "MOUSE_ENTER" }
- 26:   | { type: "MOUSE_LEAVE" }
- 27:   | { type: "REMOVE_TRAIL"; trailId: string };
- 28: const MAX_TRAILS = 20;
- 29: const cursorReducer = (
- 30:   state: CursorState,
- 31:   action: CursorAction,
- 32: ): CursorState => {
- 33:   switch (action.type) {
- 34:     case "MOUSE_MOVE": {
- 35:       const newPosition = { x: action.x, y: action.y };
- 36:       if (!action.trail) {
- 37:         return { ...state, cursorPosition: newPosition };
- 38:       }
- 39:       const updatedTrails = [...state.trails, action.trail];
- 40:       return {
- 41:         ...state,
- 42:         cursorPosition: newPosition,
- 43:         trails:
- 44:           updatedTrails.length > MAX_TRAILS
- 45:             ? updatedTrails.slice(1)
- 46:             : updatedTrails,
- 47:       };
- 48:     }
- 49:     case "MOUSE_ENTER":
- 50:       return { ...state, isHovered: true };
- 51:     case "MOUSE_LEAVE":
- 52:       return { ...state, isHovered: false, trails: [] };
- 53:     case "REMOVE_TRAIL":
- 54:       return {
- 55:         ...state,
- 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
- 57:       };
- 58:   }
- 59: };
- 60: const initialState: CursorState = {
- 61:   cursorPosition: { x: 0, y: 0 },
- 62:   isHovered: false,
- 63:   trails: [],
- 64: };
- 65: /**
- 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 70:  */
- 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 72:   const isMobile = useMobile(); // Pd528
- 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
- 74:   const getRandomChar = useCallback(() => {
- 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 76:     const array = new Uint32Array(1);
- 77:     crypto.getRandomValues(array);
- 78:     const index = array[0]! % matrixChars.length;
- 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 80:   }, []);
- 81:   useEffect(() => {
- 82:     const heroSection = heroRef.current;
- 83:     if (!heroSection) return;
- 84:     // Add cursor: none to the hero section when hovered
- 85:     if (state.isHovered) {
- 86:       heroSection.style.cursor = "none";
- 87:     } else {
- 88:       heroSection.style.cursor = "";
- 89:     }
- 90:     const handleMouseMove = (e: MouseEvent) => {
- 91:       const trail: MatrixTrail | undefined = state.isHovered
- 92:         ? {
- 93:             id: crypto.randomUUID(),
- 94:             x: e.clientX,
- 95:             y: e.clientY,
- 96:             char: getRandomChar(),
- 97:           }
- 98:         : undefined;
- 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
-100:     };
-101:     const handleMouseEnter = () => {
-102:       dispatch({ type: "MOUSE_ENTER" });
-103:       heroSection.style.cursor = "none";
-104:     };
-105:     const handleMouseLeave = () => {
-106:       dispatch({ type: "MOUSE_LEAVE" });
-107:       heroSection.style.cursor = "";
-108:     };
-109:     heroSection.addEventListener("mousemove", handleMouseMove);
-110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
-111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
-112:     return () => {
-113:       heroSection.removeEventListener("mousemove", handleMouseMove);
-114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
-115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-116:       heroSection.style.cursor = "";
-117:     };
-118:   }, [heroRef, state.isHovered, getRandomChar]);
-119:   const handleAnimationEnd = useCallback((trailId: string) => {
-120:     dispatch({ type: "REMOVE_TRAIL", trailId });
-121:   }, []);
-122:   if (!heroRef.current || isMobile) return null; // P6ecf
-123:   const cursorStyles: CursorStyles = {
-124:     position: "fixed",
-125:     top: 0,
-126:     left: 0,
-127:     width: "100%",
-128:     height: "100%",
-129:     pointerEvents: "none",
-130:     zIndex: 9999,
-131:     "--cursor-x": `${state.cursorPosition.x}px`,
-132:     "--cursor-y": `${state.cursorPosition.y}px`,
-133:   };
-134:   return (
-135:     <div
-136:       data-testid="matrix-cursor"
-137:       className={state.isHovered ? "matrix-cursor" : ""}
-138:       style={cursorStyles}
-139:     >
-140:       {state.trails.map((trail) => (
-141:         <div
-142:           key={trail.id}
-143:           data-testid="matrix-trail"
-144:           className="matrix-trail"
-145:           style={{
-146:             position: "fixed",
-147:             left: `${trail.x}px`,
-148:             top: `${trail.y}px`,
-149:             zIndex: 10000,
-150:             pointerEvents: "none",
-151:           }}
-152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-153:         >
-154:           {trail.char}
-155:         </div>
-156:       ))}
-157:       {state.isHovered && (
-158:         <div
-159:           style={{
-160:             position: "fixed",
-161:             top: 0,
-162:             left: 0,
-163:             width: "100%",
-164:             height: "100%",
-165:             pointerEvents: "none",
-166:             zIndex: 9999,
-167:           }}
-168:         />
-169:       )}
-170:     </div>
-171:   );
-172: };
-173: export default MatrixCursor;
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.2.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^5.9.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.5",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
 ````
 
 ## File: .stylelintrc.json
@@ -21402,55 +21404,64 @@ tsconfig.json
 149:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
 150:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
 151:   - Protects against compromised package releases (like Shai Hulud incidents)
-152: 
-153: ### Environment Variables
-154: 
-155: - Type-safe environment variable validation with envalid
-156:   - Runtime validation of required environment variables
-157:   - Clear error messages with examples for missing variables
-158:   - Separate handling of client-side and server-side variables
-159:   - Default values where appropriate
-160:   - Required variables:
+152: - GitHub Actions supply chain hardening with SHA pinning
+153:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+154:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+155:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+156:   - Custom audit script at `scripts/pin-actions.py` (zero external dependencies, stdlib-only Python)
+157:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+158:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+159:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+160:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
 161: 
-162:     ```env
-163:     # Email Configuration (client-side)
-164:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-165:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-166:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-167: 
-168:     # Security Configuration (server-side)
-169:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-170:     ```
-171: 
-172:   - Validation prevents application startup if required variables are missing
-173:   - TypeScript integration for type-safe access to environment variables
-174: 
-175: ### Testing Standards
+162: ### Environment Variables
+163: 
+164: - Type-safe environment variable validation with envalid
+165:   - Runtime validation of required environment variables
+166:   - Clear error messages with examples for missing variables
+167:   - Separate handling of client-side and server-side variables
+168:   - Default values where appropriate
+169:   - Required variables:
+170: 
+171:     ```env
+172:     # Email Configuration (client-side)
+173:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+174:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+175:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
 176: 
-177: - ISTQB-aligned comprehensive test strategy
-178:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-179:   - Multi-level test approach (Unit, Component, E2E)
-180:   - Risk-based testing methodology
-181:   - Defined test metrics and reporting
-182:   - Clear roles and responsibilities
-183:   - Structured defect management process
-184: 
-185: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-186:   - Each test must include the following comments:
-187: 
-188:     ```typescript
-189:     // Arrange - Set up test data and conditions
-190:     // Act - Perform the action being tested
-191:     // Assert - Verify the results
-192:     ```
+177:     # Security Configuration (server-side)
+178:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+179:     ```
+180: 
+181:   - Validation prevents application startup if required variables are missing
+182:   - TypeScript integration for type-safe access to environment variables
+183: 
+184: ### Testing Standards
+185: 
+186: - ISTQB-aligned comprehensive test strategy
+187:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+188:   - Multi-level test approach (Unit, Component, E2E)
+189:   - Risk-based testing methodology
+190:   - Defined test metrics and reporting
+191:   - Clear roles and responsibilities
+192:   - Structured defect management process
 193: 
-194:   - This pattern ensures:
-195:     - Clear test structure and readability
-196:     - Consistent test organization across the codebase
-197:     - Easy identification of test setup, execution, and verification
-198:   - Simplified test maintenance and debugging
-199:   - Automated validation through custom ESLint rules
-200:   - Tests will fail if AAA pattern is not followed
+194: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+195:   - Each test must include the following comments:
+196: 
+197:     ```typescript
+198:     // Arrange - Set up test data and conditions
+199:     // Act - Perform the action being tested
+200:     // Assert - Verify the results
+201:     ```
+202: 
+203:   - This pattern ensures:
+204:     - Clear test structure and readability
+205:     - Consistent test organization across the codebase
+206:     - Easy identification of test setup, execution, and verification
+207:   - Simplified test maintenance and debugging
+208:   - Automated validation through custom ESLint rules
+209:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: studio/package.json
@@ -21509,6 +21520,471 @@ tsconfig.json
 52:     "singleQuote": true
 53:   }
 54: }
+````
+
+## File: scripts/pin-actions.py
+````python
+  1: #!/usr/bin/env python3
+  2: # pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
+  3: # Uses niquests for secure HTTPS. No other external dependencies.
+  4: from __future__ import annotations
+  5: import argparse
+  6: import os
+  7: import re
+  8: import sys
+  9: from dataclasses import dataclass, field
+ 10: from pathlib import Path
+ 11: from typing import Callable, Optional
+ 12: import niquests
+ 13: # ---------------------------------------------------------------------------
+ 14: # Constants
+ 15: # ---------------------------------------------------------------------------
+ 16: _GITHUB_API_HOST = "api.github.com"
+ 17: _DEFAULT_WORKFLOW_DIR = ".github/workflows"
+ 18: _WORKFLOW_DIR_HELP = "Workflow directory to scan"
+ 19: SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+ 20: # Matches:  uses: owner/repo@ref           (simple)
+ 21: #           uses: owner/repo/path@ref       (sub-action)
+ 22: USES_PATTERN = re.compile(
+ 23:     r"^(?P<indent>\s*)-?\s*uses:\s*"
+ 24:     r"(?P<action>[a-zA-Z0-9\-_.]+/[a-zA-Z0-9\-_.]+(?:/[a-zA-Z0-9\-_.]+)*)"
+ 25:     r"@(?P<ref>[^\s#]+)"
+ 26:     r"(?:\s*#\s*(?P<comment>.+))?\s*$"
+ 27: )
+ 28: RISK_BRANCH = "BRANCH"
+ 29: RISK_TAG = "TAG"
+ 30: RISK_PINNED = "PINNED"
+ 31: # ANSI colors (disabled when NO_COLOR is set or not a tty)
+ 32: _use_color = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+ 33: def _c(code: str, text: str) -> str:
+ 34:     """Apply an ANSI escape code to text if colors are enabled."""
+ 35:     return f"\033[{code}m{text}\033[0m" if _use_color else text
+ 36: def red(t: str) -> str:
+ 37:     """Apply red ANSI color."""
+ 38:     return _c("31", t)
+ 39: def yellow(t: str) -> str:
+ 40:     """Apply yellow ANSI color."""
+ 41:     return _c("33", t)
+ 42: def green(t: str) -> str:
+ 43:     """Apply green ANSI color."""
+ 44:     return _c("32", t)
+ 45: def bold(t: str) -> str:
+ 46:     """Apply bold ANSI style."""
+ 47:     return _c("1", t)
+ 48: def dim(t: str) -> str:
+ 49:     """Apply dim ANSI style."""
+ 50:     return _c("2", t)
+ 51: # ---------------------------------------------------------------------------
+ 52: # Data
+ 53: # ---------------------------------------------------------------------------
+ 54: @dataclass
+ 55: class ActionRef:
+ 56:     file: Path
+ 57:     line_number: int
+ 58:     line_text: str
+ 59:     action: str  # e.g. "actions/checkout" or "github/codeql-action/init"
+ 60:     ref: str  # e.g. "v6", "master", or a SHA
+ 61:     comment: Optional[str] = None  # trailing comment like "v4.2.2"
+ 62:     risk: str = ""
+ 63:     owner_repo: str = ""  # e.g. "actions/checkout" (without sub-path)
+ 64:     resolved_sha: Optional[str] = None
+ 65:     def __post_init__(self) -> None:
+ 66:         """Derive owner_repo and classify risk level from the ref string."""
+ 67:         parts = self.action.split("/")
+ 68:         self.owner_repo = f"{parts[0]}/{parts[1]}"
+ 69:         if SHA_PATTERN.match(self.ref):
+ 70:             self.risk = RISK_PINNED
+ 71:         elif self._looks_like_branch(self.ref):
+ 72:             self.risk = RISK_BRANCH
+ 73:         else:
+ 74:             self.risk = RISK_TAG
+ 75:     @staticmethod
+ 76:     def _looks_like_branch(ref: str) -> bool:
+ 77:         branch_names = {
+ 78:             "master",
+ 79:             "main",
+ 80:             "develop",
+ 81:             "dev",
+ 82:             "release",
+ 83:             "stable",
+ 84:             "latest",
+ 85:             "nightly",
+ 86:             "trunk",
+ 87:         }
+ 88:         if ref.lower() in branch_names:
+ 89:             return True
+ 90:         # If it doesn't start with 'v' + digit, and isn't a SHA, likely a branch
+ 91:         if not re.match(r"^v?\d", ref):
+ 92:             return True
+ 93:         return False
+ 94: @dataclass
+ 95: class AuditResult:
+ 96:     refs: list[ActionRef] = field(default_factory=list)
+ 97:     @property
+ 98:     def pinned(self) -> list[ActionRef]:
+ 99:         """Return refs that are already SHA-pinned."""
+100:         return [r for r in self.refs if r.risk == RISK_PINNED]
+101:     @property
+102:     def mutable_tags(self) -> list[ActionRef]:
+103:         """Return refs using mutable version tags."""
+104:         return [r for r in self.refs if r.risk == RISK_TAG]
+105:     @property
+106:     def mutable_branches(self) -> list[ActionRef]:
+107:         """Return refs tracking a branch HEAD."""
+108:         return [r for r in self.refs if r.risk == RISK_BRANCH]
+109:     @property
+110:     def mutable(self) -> list[ActionRef]:
+111:         """Return all refs that are not SHA-pinned."""
+112:         return [r for r in self.refs if r.risk != RISK_PINNED]
+113: # ---------------------------------------------------------------------------
+114: # Scanner
+115: # ---------------------------------------------------------------------------
+116: def scan_workflows(workflow_dir: Path) -> AuditResult:
+117:     """Parse all .yml/.yaml files in the workflow directory."""
+118:     result = AuditResult()
+119:     if not workflow_dir.is_dir():
+120:         print(red(f"Error: {workflow_dir} is not a directory"), file=sys.stderr)
+121:         sys.exit(1)
+122:     for fpath in sorted(workflow_dir.iterdir()):
+123:         if fpath.suffix not in (".yml", ".yaml"):
+124:             continue
+125:         with open(fpath, encoding="utf-8") as f:
+126:             for line_num, line in enumerate(f, start=1):
+127:                 m = USES_PATTERN.match(line)
+128:                 if m:
+129:                     result.refs.append(
+130:                         ActionRef(
+131:                             file=fpath,
+132:                             line_number=line_num,
+133:                             line_text=line.rstrip(),
+134:                             action=m.group("action"),
+135:                             ref=m.group("ref"),
+136:                             comment=m.group("comment"),
+137:                         )
+138:                     )
+139:     return result
+140: # ---------------------------------------------------------------------------
+141: # GitHub API — resolve ref to SHA (uses niquests for secure HTTPS)
+142: # ---------------------------------------------------------------------------
+143: # Reuse a single session for connection pooling and secure defaults
+144: _session: Optional[niquests.Session] = None
+145: def _get_session(token: Optional[str] = None) -> niquests.Session:
+146:     """Return a shared niquests session with GitHub API headers."""
+147:     global _session  # noqa: PLW0603
+148:     if _session is None:
+149:         _session = niquests.Session()
+150:         _session.headers.update({
+151:             "Accept": "application/vnd.github.v3+json",
+152:             "User-Agent": "pin-actions/1.0",
+153:         })
+154:     if token and "Authorization" not in _session.headers:
+155:         _session.headers["Authorization"] = f"token {token}"
+156:     return _session
+157: def _https_get(path: str, token: Optional[str] = None) -> dict:
+158:     session = _get_session(token)
+159:     url = f"https://{_GITHUB_API_HOST}{path}"
+160:     resp = session.get(url, timeout=15)
+161:     if resp.status_code == 200:
+162:         return resp.json()
+163:     raise RuntimeError(f"GitHub API {resp.status_code}: {path}\n{resp.text}")
+164: def _build_api_path(owner_repo: str, suffix: str) -> str:
+165:     """Build a GitHub API path from owner/repo and a path suffix."""
+166:     return f"/repos/{owner_repo}/{suffix}"
+167: def _peel_tag(owner_repo: str, obj: dict, token: Optional[str]) -> str:
+168:     """If obj is an annotated tag, peel to the underlying commit SHA."""
+169:     if obj["type"] == "tag":
+170:         tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
+171:         tag_data = _https_get(tag_path, token)
+172:         return tag_data["object"]["sha"]
+173:     return obj["sha"]
+174: def _try_matching_refs(
+175:     owner_repo: str, ref: str, token: Optional[str],
+176: ) -> Optional[str]:
+177:     """Try resolving via the matching-refs endpoint."""
+178:     path = _build_api_path(owner_repo, f"git/matching-refs/tags/{ref}")
+179:     data = _https_get(path, token)
+180:     if not data:
+181:         return None
+182:     for item in data:
+183:         if item["ref"] == f"refs/tags/{ref}":
+184:             return _peel_tag(owner_repo, item["object"], token)
+185:     return None
+186: def _try_branch(
+187:     owner_repo: str, ref: str, token: Optional[str],
+188: ) -> Optional[str]:
+189:     """Try resolving as a branch name."""
+190:     path = _build_api_path(owner_repo, f"branches/{ref}")
+191:     data = _https_get(path, token)
+192:     return data["commit"]["sha"]
+193: def _try_git_ref(
+194:     owner_repo: str, ref: str, token: Optional[str],
+195: ) -> str:
+196:     """Try resolving via the direct git/ref endpoint."""
+197:     path = _build_api_path(owner_repo, f"git/ref/tags/{ref}")
+198:     data = _https_get(path, token)
+199:     return _peel_tag(owner_repo, data["object"], token)
+200: def resolve_ref_to_sha(
+201:     owner_repo: str, ref: str, token: Optional[str] = None,
+202: ) -> str:
+203:     # Try each strategy in order: matching-refs → branch → git/ref
+204:     strategies = [_try_matching_refs, _try_branch, _try_git_ref]
+205:     for strategy in strategies:
+206:         try:
+207:             result = strategy(owner_repo, ref, token)
+208:             if result:
+209:                 return result
+210:         except RuntimeError:
+211:             continue
+212:     raise RuntimeError(
+213:         f"Could not resolve {owner_repo}@{ref} — is it a valid tag/branch?"
+214:     )
+215: # ---------------------------------------------------------------------------
+216: # Audit report
+217: # ---------------------------------------------------------------------------
+218: def _print_section(
+219:     title: str,
+220:     description: list[str],
+221:     refs: list[ActionRef],
+222:     color_fn: Callable[[str], str],
+223: ) -> None:
+224:     """Print a colored audit section with title, description, and ref list."""
+225:     if not refs:
+226:         return
+227:     print(color_fn(bold(title)))
+228:     for line in description:
+229:         print(color_fn(line))
+230:     print()
+231:     for ref in refs:
+232:         _print_ref(ref, color_fn)
+233:     print()
+234: def _print_header(result: AuditResult) -> None:
+235:     """Print the audit header with totals."""
+236:     print()
+237:     print(bold("═══════════════════════════════════════════════════════════"))
+238:     print(bold("  GitHub Actions Supply Chain Audit"))
+239:     print(bold("═══════════════════════════════════════════════════════════"))
+240:     print()
+241:     print(f"  Total action references:  {bold(str(len(result.refs)))}")
+242:     print(f"  ✅ SHA-pinned (safe):      {green(str(len(result.pinned)))}")
+243:     print(f"  ⚠️  Mutable tag (@vN):      {yellow(str(len(result.mutable_tags)))}")
+244:     print(f"  🔴 Mutable branch:         {red(str(len(result.mutable_branches)))}")
+245:     print()
+246: def _print_summary(result: AuditResult) -> None:
+247:     """Print the final summary line."""
+248:     total = len(result.refs)
+249:     if result.mutable:
+250:         pct = (len(result.mutable) / total * 100) if total else 0
+251:         print(bold("── Summary ─────────────────────────────────────────────"))
+252:         print(
+253:             f"  {red(f'{len(result.mutable)}/{total}')} references "
+254:             f"({red(f'{pct:.0f}%')}) are mutable and vulnerable."
+255:         )
+256:         print(f"  Run {bold('python scripts/pin-actions.py pin')} to fix them.")
+257:         print()
+258:     else:
+259:         print(green(bold("  ✅ All action references are SHA-pinned. You're safe.")))
+260:         print()
+261: def print_audit(result: AuditResult) -> None:
+262:     """Print a detailed audit report to stdout."""
+263:     _print_header(result)
+264:     _print_section(
+265:         "── 🔴 CRITICAL: Branch References ──────────────────────",
+266:         ["  These track a branch HEAD — any push silently changes",
+267:          "  what runs in your pipeline."],
+268:         result.mutable_branches,
+269:         red,
+270:     )
+271:     _print_section(
+272:         "── ⚠️  Mutable Tag References ──────────────────────────",
+273:         ["  Tags can be force-pushed. This is the exact vector",
+274:          "  used in the tj-actions/changed-files compromise."],
+275:         result.mutable_tags,
+276:         yellow,
+277:     )
+278:     _print_section(
+279:         "── ✅ SHA-Pinned (Safe) ─────────────────────────────────",
+280:         [],
+281:         result.pinned,
+282:         green,
+283:     )
+284:     _print_summary(result)
+285: def _print_ref(ref: ActionRef, color_fn: Callable[[str], str]) -> None:
+286:     """Print a single action reference with color formatting."""
+287:     fname = ref.file.name
+288:     comment = f"  # {ref.comment}" if ref.comment else ""
+289:     print(
+290:         f"  {dim(f'{fname}:{ref.line_number:>3}')}  "
+291:         f"{color_fn(f'{ref.action}@{ref.ref}')}{dim(comment)}"
+292:     )
+293: # ---------------------------------------------------------------------------
+294: # Pin (rewrite files)
+295: # ---------------------------------------------------------------------------
+296: def _resolve_shas(
+297:     mutable: list[ActionRef], token: Optional[str],
+298: ) -> tuple[dict[tuple[str, str], str], list[str]]:
+299:     cache: dict[tuple[str, str], str] = {}
+300:     errors: list[str] = []
+301:     total = len(mutable)
+302:     print(bold(f"\nResolving {total} mutable references...\n"))
+303:     for i, ref in enumerate(mutable, 1):
+304:         key = (ref.owner_repo, ref.ref)
+305:         if key in cache:
+306:             ref.resolved_sha = cache[key]
+307:             print(f"  [{i}/{total}] {ref.action}@{ref.ref} → {dim('(cached)')}")
+308:             continue
+309:         try:
+310:             sha = resolve_ref_to_sha(ref.owner_repo, ref.ref, token)
+311:             ref.resolved_sha = sha
+312:             cache[key] = sha
+313:             print(f"  [{i}/{total}] {ref.action}@{ref.ref} → {green(sha[:12])}")
+314:         except RuntimeError as e:
+315:             errors.append(f"  {red('✗')} {ref.action}@{ref.ref}: {e}")
+316:             print(f"  [{i}/{total}] {ref.action}@{ref.ref} → {red('FAILED')}")
+317:     return cache, errors
+318: def _rewrite_file(
+319:     fpath: Path,
+320:     ref_map: dict[tuple[Path, int], ActionRef],
+321:     dry_run: bool,
+322: ) -> int:
+323:     with open(fpath, encoding="utf-8") as f:
+324:         lines = f.readlines()
+325:     modified = False
+326:     pinned_count = 0
+327:     for line_idx, old_line in enumerate(lines):
+328:         line_num = line_idx + 1
+329:         key = (fpath, line_num)
+330:         if key not in ref_map:
+331:             continue
+332:         ref = ref_map[key]
+333:         new_ref_str = f"{ref.resolved_sha} # {ref.ref}"
+334:         new_line = re.sub(
+335:             r"@" + re.escape(ref.ref) + r"(\s*(?:#.*)?)$",
+336:             f"@{new_ref_str}",
+337:             old_line.rstrip(),
+338:         ) + "\n"
+339:         if new_line != old_line:
+340:             lines[line_idx] = new_line
+341:             modified = True
+342:             pinned_count += 1
+343:             if dry_run:
+344:                 print(f"\n  {dim(f'{fpath.name}:{line_num}')}")
+345:                 print(f"  {red('- ' + old_line.rstrip())}")
+346:                 print(f"  {green('+ ' + new_line.rstrip())}")
+347:     if modified and not dry_run:
+348:         with open(fpath, "w", encoding="utf-8") as f:
+349:             f.writelines(lines)
+350:     return pinned_count
+351: def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
+352:     mutable = result.mutable
+353:     if not mutable:
+354:         print(green("✅ All action references are already SHA-pinned. Nothing to do."))
+355:         return 0
+356:     token = os.environ.get("GITHUB_TOKEN")
+357:     if not token:
+358:         print(yellow("Tip: Set GITHUB_TOKEN to raise the API rate limit from 60/hr to 5000/hr."))
+359:         print()
+360:     _cache, errors = _resolve_shas(mutable, token)
+361:     if errors:
+362:         print(f"\n{red(bold('Errors:'))}")
+363:         for err in errors:
+364:             print(err)
+365:         print()
+366:     # Build a map of (file, line_number) → ActionRef for resolved refs
+367:     ref_map: dict[tuple[Path, int], ActionRef] = {}
+368:     for ref in mutable:
+369:         if ref.resolved_sha:
+370:             ref_map[(ref.file, ref.line_number)] = ref
+371:     # Process each file
+372:     files_to_process = sorted({ref.file for ref in mutable if ref.resolved_sha})
+373:     pinned_count = 0
+374:     files_modified: set[str] = set()
+375:     for fpath in files_to_process:
+376:         count = _rewrite_file(fpath, ref_map, dry_run)
+377:         pinned_count += count
+378:         if count > 0 and not dry_run:
+379:             files_modified.add(str(fpath))
+380:     print()
+381:     if dry_run:
+382:         print(
+383:             bold(
+384:                 f"Dry run complete. {pinned_count} references would be pinned "
+385:                 f"across {len(files_to_process)} files."
+386:             )
+387:         )
+388:         print(f"Run without {bold('--dry-run')} to apply changes.")
+389:     else:
+390:         print(
+391:             green(
+392:                 bold(
+393:                     f"✅ Pinned {pinned_count} references across "
+394:                     f"{len(files_modified)} files."
+395:                 )
+396:             )
+397:         )
+398:     return pinned_count
+399: # ---------------------------------------------------------------------------
+400: # Verify
+401: # ---------------------------------------------------------------------------
+402: def verify_workflows(result: AuditResult) -> int:
+403:     """Check that all references are SHA-pinned. Exit 1 if any are mutable."""
+404:     if result.mutable:
+405:         print(red(bold(f"✗ {len(result.mutable)} mutable action reference(s) found:\n")))
+406:         for ref in result.mutable:
+407:             risk_label = "BRANCH" if ref.risk == RISK_BRANCH else "TAG"
+408:             print(
+409:                 f"  {ref.file.name}:{ref.line_number}  "
+410:                 f"{ref.action}@{ref.ref}  [{risk_label}]"
+411:             )
+412:         print(f"\nRun {bold('python scripts/pin-actions.py pin')} to fix.")
+413:         return 1
+414:     print(green(bold("✅ All action references are SHA-pinned.")))
+415:     return 0
+416: # ---------------------------------------------------------------------------
+417: # CLI
+418: # ---------------------------------------------------------------------------
+419: def main() -> None:
+420:     """Entry point for the pin-actions CLI."""
+421:     parser = argparse.ArgumentParser(
+422:         description="Audit & pin GitHub Actions to immutable commit SHAs.",
+423:         formatter_class=argparse.RawDescriptionHelpFormatter,
+424:         epilog=__doc__,
+425:     )
+426:     sub = parser.add_subparsers(dest="command", required=True)
+427:     # audit
+428:     p_audit = sub.add_parser("audit", help="Report mutable action references")
+429:     p_audit.add_argument(
+430:         "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
+431:     )
+432:     # pin
+433:     p_pin = sub.add_parser("pin", help="Rewrite workflow files with SHA-pinned refs")
+434:     p_pin.add_argument(
+435:         "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
+436:     )
+437:     p_pin.add_argument(
+438:         "--dry-run", action="store_true", help="Show changes without writing files"
+439:     )
+440:     # verify
+441:     p_verify = sub.add_parser(
+442:         "verify", help="Exit 1 if any mutable refs exist (CI gate)"
+443:     )
+444:     p_verify.add_argument(
+445:         "--dir", default=_DEFAULT_WORKFLOW_DIR, help=_WORKFLOW_DIR_HELP,
+446:     )
+447:     args = parser.parse_args()
+448:     workflow_dir = Path(args.dir)
+449:     result = scan_workflows(workflow_dir)
+450:     if args.command == "audit":
+451:         print_audit(result)
+452:         sys.exit(1 if result.mutable else 0)
+453:     elif args.command == "pin":
+454:         print_audit(result)
+455:         if not result.mutable:
+456:             sys.exit(0)
+457:         pin_workflows(result, dry_run=args.dry_run)
+458:     elif args.command == "verify":
+459:         sys.exit(verify_workflows(result))
+460: if __name__ == "__main__":
+461:     main()
 ````
 
 ## File: package.json
