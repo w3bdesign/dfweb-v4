@@ -23,15 +23,14 @@ Environment:
 from __future__ import annotations
 
 import argparse
-import http.client
-import json
 import os
 import re
-import ssl
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
+
+import niquests
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -211,53 +210,41 @@ def scan_workflows(workflow_dir: Path) -> AuditResult:
 
 
 # ---------------------------------------------------------------------------
-# GitHub API — resolve ref to SHA (uses http.client, no urllib)
+# GitHub API — resolve ref to SHA (uses niquests for secure HTTPS)
 # ---------------------------------------------------------------------------
 
+# Reuse a single session for connection pooling and secure defaults
+_session: Optional[niquests.Session] = None
 
-def _create_ssl_context() -> ssl.SSLContext:
-    """Create a hardened SSL context with explicit certificate verification."""
-    if sys.version_info < (3, 10):
-        raise RuntimeError(
-            "Python 3.10+ is required for secure TLS defaults. "
-            f"Current version: {sys.version}"
-        )
 
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
-    ctx.check_hostname = True
-    ctx.verify_mode = ssl.CERT_REQUIRED
-    ctx.load_default_certs()
-    return ctx
+def _get_session(token: Optional[str] = None) -> niquests.Session:
+    """Return a shared niquests session with GitHub API headers."""
+    global _session  # noqa: PLW0603
+    if _session is None:
+        _session = niquests.Session()
+        _session.headers.update({
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "pin-actions/1.0",
+        })
+    if token and "Authorization" not in _session.headers:
+        _session.headers["Authorization"] = f"token {token}"
+    return _session
 
 
 def _https_get(path: str, token: Optional[str] = None) -> dict:
+    """Make an HTTPS GET request to the GitHub API using niquests.
+
+    Niquests provides secure TLS defaults (TLS 1.2+, certificate
+    verification) with HTTP/2 support and connection pooling.
     """
-    Make an HTTPS GET request to the GitHub API.
+    session = _get_session(token)
+    url = f"https://{_GITHUB_API_HOST}{path}"
+    resp = session.get(url, timeout=15)
 
-    Uses http.client.HTTPSConnection with explicit TLS 1.2+ and
-    certificate verification. Cannot open file:// or other schemes.
-    """
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "pin-actions/1.0",
-    }
-    if token:
-        headers["Authorization"] = f"token {token}"
+    if resp.status_code == 200:
+        return resp.json()
 
-    ctx = _create_ssl_context()
-    conn = http.client.HTTPSConnection(_GITHUB_API_HOST, timeout=15, context=ctx)
-    try:
-        conn.request("GET", path, headers=headers)
-        resp = conn.getresponse()
-        body = resp.read().decode()
-
-        if resp.status == 200:
-            return json.loads(body)
-
-        raise RuntimeError(f"GitHub API {resp.status}: {path}\n{body}")
-    finally:
-        conn.close()
+    raise RuntimeError(f"GitHub API {resp.status_code}: {path}\n{resp.text}")
 
 
 def _build_api_path(owner_repo: str, suffix: str) -> str:
