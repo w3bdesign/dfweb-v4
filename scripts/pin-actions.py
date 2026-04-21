@@ -1,24 +1,6 @@
 #!/usr/bin/env python3
-"""pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
-
-Zero external dependencies. Uses only the Python standard library.
-
-Modes:
-    audit   — Report mutable action references (default)
-    pin     — Rewrite workflow files with SHA-pinned references
-    verify  — Check that all references are already pinned
-
-Usage:
-    python scripts/pin-actions.py audit
-    python scripts/pin-actions.py audit --dir .github/workflows
-    python scripts/pin-actions.py pin
-    python scripts/pin-actions.py pin --dry-run
-    python scripts/pin-actions.py verify
-
-Environment:
-    GITHUB_TOKEN  — Optional. Raises API rate limit from 60/hr to 5000/hr.
-                    Only used for resolving refs → SHAs via api.github.com.
-"""
+# pin-actions.py — Audit & pin GitHub Actions to immutable commit SHAs.
+# Uses niquests for secure HTTPS. No other external dependencies.
 
 from __future__ import annotations
 
@@ -95,9 +77,6 @@ def dim(t: str) -> str:
 
 @dataclass
 class ActionRef:
-
-    """A single `uses:` reference found in a workflow file."""
-
     file: Path
     line_number: int
     line_text: str
@@ -122,12 +101,6 @@ class ActionRef:
 
     @staticmethod
     def _looks_like_branch(ref: str) -> bool:
-        """
-        Detect if a ref looks like a branch name rather than a version tag.
-
-        Branches are names like 'master', 'main', 'develop'.
-        Tags typically start with 'v' followed by digits.
-        """
         branch_names = {
             "master",
             "main",
@@ -149,9 +122,6 @@ class ActionRef:
 
 @dataclass
 class AuditResult:
-
-    """Collected results from scanning workflow files."""
-
     refs: list[ActionRef] = field(default_factory=list)
 
     @property
@@ -232,11 +202,6 @@ def _get_session(token: Optional[str] = None) -> niquests.Session:
 
 
 def _https_get(path: str, token: Optional[str] = None) -> dict:
-    """Make an HTTPS GET request to the GitHub API using niquests.
-
-    Niquests provides secure TLS defaults (TLS 1.2+, certificate
-    verification) with HTTP/2 support and connection pooling.
-    """
     session = _get_session(token)
     url = f"https://{_GITHUB_API_HOST}{path}"
     resp = session.get(url, timeout=15)
