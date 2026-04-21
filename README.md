@@ -153,7 +153,7 @@ Sanity.io and Typescript.
   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-  - Custom audit script at `scripts/pin-actions.py` (zero external dependencies, stdlib-only Python)
+  - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
     - `python scripts/pin-actions.py audit` — scan and report mutable references
     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
