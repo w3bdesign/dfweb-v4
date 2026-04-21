@@ -217,48 +217,63 @@ def _build_api_path(owner_repo: str, suffix: str) -> str:
     return f"/repos/{owner_repo}/{suffix}"
 
 
+def _peel_tag(owner_repo: str, obj: dict, token: Optional[str]) -> str:
+    """If obj is an annotated tag, peel to the underlying commit SHA."""
+    if obj["type"] == "tag":
+        tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
+        tag_data = _https_get(tag_path, token)
+        return tag_data["object"]["sha"]
+    return obj["sha"]
+
+
+def _try_matching_refs(
+    owner_repo: str, ref: str, token: Optional[str],
+) -> Optional[str]:
+    """Try resolving via the matching-refs endpoint."""
+    path = _build_api_path(owner_repo, f"git/matching-refs/tags/{ref}")
+    data = _https_get(path, token)
+    if not data:
+        return None
+    for item in data:
+        if item["ref"] == f"refs/tags/{ref}":
+            return _peel_tag(owner_repo, item["object"], token)
+    return None
+
+
+def _try_branch(
+    owner_repo: str, ref: str, token: Optional[str],
+) -> Optional[str]:
+    """Try resolving as a branch name."""
+    path = _build_api_path(owner_repo, f"branches/{ref}")
+    data = _https_get(path, token)
+    return data["commit"]["sha"]
+
+
+def _try_git_ref(
+    owner_repo: str, ref: str, token: Optional[str],
+) -> str:
+    """Try resolving via the direct git/ref endpoint."""
+    path = _build_api_path(owner_repo, f"git/ref/tags/{ref}")
+    data = _https_get(path, token)
+    return _peel_tag(owner_repo, data["object"], token)
+
+
 def resolve_ref_to_sha(
     owner_repo: str, ref: str, token: Optional[str] = None,
 ) -> str:
-    # Try tags first (annotated → peel to commit), then branches, then git/ref
-    path = _build_api_path(owner_repo, f"git/matching-refs/tags/{ref}")
-    try:
-        data = _https_get(path, token)
-        if data:
-            for item in data:
-                if item["ref"] == f"refs/tags/{ref}":
-                    obj = item["object"]
-                    if obj["type"] == "tag":
-                        # Annotated tag — peel to commit via object URL path
-                        tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
-                        tag_data = _https_get(tag_path, token)
-                        return tag_data["object"]["sha"]
-                    return obj["sha"]
-    except RuntimeError:
-        pass
+    # Try each strategy in order: matching-refs → branch → git/ref
+    strategies = [_try_matching_refs, _try_branch, _try_git_ref]
+    for strategy in strategies:
+        try:
+            result = strategy(owner_repo, ref, token)
+            if result:
+                return result
+        except RuntimeError:
+            continue
 
-    # Try as a branch
-    path = _build_api_path(owner_repo, f"branches/{ref}")
-    try:
-        data = _https_get(path, token)
-        return data["commit"]["sha"]
-    except RuntimeError:
-        pass
-
-    # Last resort: git/ref endpoint
-    path = _build_api_path(owner_repo, f"git/ref/tags/{ref}")
-    try:
-        data = _https_get(path, token)
-        obj = data["object"]
-        if obj["type"] == "tag":
-            tag_path = f"/repos/{owner_repo}/git/tags/{obj['sha']}"
-            tag_data = _https_get(tag_path, token)
-            return tag_data["object"]["sha"]
-        return obj["sha"]
-    except RuntimeError as exc:
-        raise RuntimeError(
-            f"Could not resolve {owner_repo}@{ref} — is it a valid tag/branch?"
-        ) from exc
+    raise RuntimeError(
+        f"Could not resolve {owner_repo}@{ref} — is it a valid tag/branch?"
+    )
 
 
 # ---------------------------------------------------------------------------
