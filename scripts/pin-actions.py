@@ -220,13 +220,7 @@ def _build_api_path(owner_repo: str, suffix: str) -> str:
 def resolve_ref_to_sha(
     owner_repo: str, ref: str, token: Optional[str] = None,
 ) -> str:
-    """
-    Resolve a tag or branch name to its full commit SHA.
-
-    Tries tags first (annotated tags are peeled to their commit),
-    then falls back to branches, then to the direct git/ref endpoint.
-    """
-    # Try as a git ref via the matching refs endpoint
+    # Try tags first (annotated → peel to commit), then branches, then git/ref
     path = _build_api_path(owner_repo, f"git/matching-refs/tags/{ref}")
     try:
         data = _https_get(path, token)
@@ -348,11 +342,6 @@ def _print_ref(ref: ActionRef, color_fn: Callable[[str], str]) -> None:
 def _resolve_shas(
     mutable: list[ActionRef], token: Optional[str],
 ) -> tuple[dict[tuple[str, str], str], list[str]]:
-    """
-    Resolve each unique action@ref pair to a commit SHA.
-
-    Returns a (cache, errors) tuple.
-    """
     cache: dict[tuple[str, str], str] = {}
     errors: list[str] = []
     total = len(mutable)
@@ -383,11 +372,6 @@ def _rewrite_file(
     ref_map: dict[tuple[Path, int], ActionRef],
     dry_run: bool,
 ) -> int:
-    """
-    Rewrite a single workflow file, replacing mutable refs with SHAs.
-
-    Returns the number of lines modified.
-    """
     with open(fpath, encoding="utf-8") as f:
         lines = f.readlines()
 
@@ -426,11 +410,6 @@ def _rewrite_file(
 
 
 def pin_workflows(result: AuditResult, dry_run: bool = False) -> int:
-    """
-    Resolve mutable refs to SHAs and rewrite workflow files.
-
-    Returns the number of references pinned.
-    """
     mutable = result.mutable
     if not mutable:
         print(green("✅ All action references are already SHA-pinned. Nothing to do."))
