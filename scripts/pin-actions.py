@@ -281,50 +281,41 @@ def resolve_ref_to_sha(
 # ---------------------------------------------------------------------------
 
 
-def print_audit(result: AuditResult) -> None:
-    """Print a detailed audit report to stdout."""
-    total = len(result.refs)
-    pinned = len(result.pinned)
-    tags = len(result.mutable_tags)
-    branches = len(result.mutable_branches)
+def _print_section(
+    title: str,
+    description: list[str],
+    refs: list[ActionRef],
+    color_fn: Callable[[str], str],
+) -> None:
+    """Print a colored audit section with title, description, and ref list."""
+    if not refs:
+        return
+    print(color_fn(bold(title)))
+    for line in description:
+        print(color_fn(line))
+    print()
+    for ref in refs:
+        _print_ref(ref, color_fn)
+    print()
 
+
+def _print_header(result: AuditResult) -> None:
+    """Print the audit header with totals."""
     print()
     print(bold("═══════════════════════════════════════════════════════════"))
     print(bold("  GitHub Actions Supply Chain Audit"))
     print(bold("═══════════════════════════════════════════════════════════"))
     print()
-    print(f"  Total action references:  {bold(str(total))}")
-    print(f"  ✅ SHA-pinned (safe):      {green(str(pinned))}")
-    print(f"  ⚠️  Mutable tag (@vN):      {yellow(str(tags))}")
-    print(f"  🔴 Mutable branch:         {red(str(branches))}")
+    print(f"  Total action references:  {bold(str(len(result.refs)))}")
+    print(f"  ✅ SHA-pinned (safe):      {green(str(len(result.pinned)))}")
+    print(f"  ⚠️  Mutable tag (@vN):      {yellow(str(len(result.mutable_tags)))}")
+    print(f"  🔴 Mutable branch:         {red(str(len(result.mutable_branches)))}")
     print()
 
-    if branches:
-        print(red(bold("── 🔴 CRITICAL: Branch References ──────────────────────")))
-        print(red("  These track a branch HEAD — any push silently changes"))
-        print(red("  what runs in your pipeline."))
-        print()
-        for ref in result.mutable_branches:
-            _print_ref(ref, red)
-        print()
 
-    if tags:
-        print(yellow(bold("── ⚠️  Mutable Tag References ──────────────────────────")))
-        print(yellow("  Tags can be force-pushed. This is the exact vector"))
-        print(yellow("  used in the tj-actions/changed-files compromise."))
-        print()
-        for ref in result.mutable_tags:
-            _print_ref(ref, yellow)
-        print()
-
-    if pinned:
-        print(green(bold("── ✅ SHA-Pinned (Safe) ─────────────────────────────────")))
-        print()
-        for ref in result.pinned:
-            _print_ref(ref, green)
-        print()
-
-    # Summary
+def _print_summary(result: AuditResult) -> None:
+    """Print the final summary line."""
+    total = len(result.refs)
     if result.mutable:
         pct = (len(result.mutable) / total * 100) if total else 0
         print(bold("── Summary ─────────────────────────────────────────────"))
@@ -337,6 +328,36 @@ def print_audit(result: AuditResult) -> None:
     else:
         print(green(bold("  ✅ All action references are SHA-pinned. You're safe.")))
         print()
+
+
+def print_audit(result: AuditResult) -> None:
+    """Print a detailed audit report to stdout."""
+    _print_header(result)
+
+    _print_section(
+        "── 🔴 CRITICAL: Branch References ──────────────────────",
+        ["  These track a branch HEAD — any push silently changes",
+         "  what runs in your pipeline."],
+        result.mutable_branches,
+        red,
+    )
+
+    _print_section(
+        "── ⚠️  Mutable Tag References ──────────────────────────",
+        ["  Tags can be force-pushed. This is the exact vector",
+         "  used in the tj-actions/changed-files compromise."],
+        result.mutable_tags,
+        yellow,
+    )
+
+    _print_section(
+        "── ✅ SHA-Pinned (Safe) ─────────────────────────────────",
+        [],
+        result.pinned,
+        green,
+    )
+
+    _print_summary(result)
 
 
 def _print_ref(ref: ActionRef, color_fn: Callable[[str], str]) -> None:
