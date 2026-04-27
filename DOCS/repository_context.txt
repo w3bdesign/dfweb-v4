@@ -1188,6 +1188,240 @@ tsconfig.json
 20: #   OpenAI: gpt-5.2, gpt-4o
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: #!/usr/bin/env python3
+  2: """
+  3: AI-Powered Git Commit Message Generator
+  4: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
+  5: Installation in another repo:
+  6: 1. Copy the entire commit/ folder to your repo
+  7: 2. Run: pip install openai anthropic python-dotenv
+  8: 3. Create .env with your API key (or run setup.sh/setup.ps1)
+  9: 4. Make a commit!
+ 10: """
+ 11: import subprocess
+ 12: import os
+ 13: import sys
+ 14: import json
+ 15: import codecs
+ 16: from typing import List, Tuple, Optional
+ 17: from pathlib import Path
+ 18: from dotenv import load_dotenv
+ 19: # Add this directory to path to import the providers module
+ 20: sys.path.insert(0, str(Path(__file__).parent))
+ 21: from providers import get_provider
+ 22: # =============================================================================
+ 23: # GIT COMMAND SECURITY
+ 24: # =============================================================================
+ 25: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+ 26: _GIT_ARG_CACHED = "--cached"
+ 27: _GIT_ARG_NAME_ONLY = "--name-only"
+ 28: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+ 29: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+ 30: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
+ 31: def _normalize_repo_path(path: str) -> str:
+ 32:     """Normalize paths to forward-slashed, workspace-relative form."""
+ 33:     return path.replace("\\", "/").lstrip("./")
+ 34: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
+ 35:     """Remove full per-file diff blocks for excluded paths."""
+ 36:     if not diff or not excluded_paths:
+ 37:         return diff
+ 38:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
+ 39:     kept: List[str] = []
+ 40:     skipping = False
+ 41:     for line in diff.splitlines(True):
+ 42:         if line.startswith("diff --git "):
+ 43:             parts = line.strip().split()
+ 44:             a_path = ""
+ 45:             b_path = ""
+ 46:             if len(parts) >= 4:
+ 47:                 a_token = parts[2]
+ 48:                 b_token = parts[3]
+ 49:                 if a_token.startswith("a/"):
+ 50:                     a_path = a_token[2:]
+ 51:                 if b_token.startswith("b/"):
+ 52:                     b_path = b_token[2:]
+ 53:             file_path = b_path or a_path
+ 54:             skipping = _normalize_repo_path(file_path) in excluded
+ 55:             if skipping:
+ 56:                 continue
+ 57:         if skipping:
+ 58:             continue
+ 59:         kept.append(line)
+ 60:     return "".join(kept)
+ 61: def _run_git_command(args: List[str]) -> str:
+ 62:     """
+ 63:     Safely execute a git command with strict whitelist validation.
+ 64:     """
+ 65:     if not args:
+ 66:         raise ValueError("Git command arguments cannot be empty")
+ 67:     subcommand = args[0]
+ 68:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+ 69:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
+ 70:     for arg in args[1:]:
+ 71:         if arg not in _ALLOWED_GIT_ARGS:
+ 72:             raise ValueError(f"Git argument '{arg}' not allowed")
+ 73:     full_command = ["git"] + list(args)
+ 74:     result = subprocess.check_output(
+ 75:         full_command,
+ 76:         shell=False,
+ 77:         stderr=subprocess.DEVNULL,
+ 78:     )
+ 79:     return result.decode("utf-8")
+ 80: # =============================================================================
+ 81: # DIFF ANALYSIS
+ 82: # =============================================================================
+ 83: def _is_lock_file(filename: str) -> bool:
+ 84:     """Check if a filename is a dependency lock file."""
+ 85:     lock_file_patterns = (
+ 86:         ".lock",
+ 87:         "lock.json",
+ 88:         "package-lock.json",
+ 89:         "yarn.lock",
+ 90:         "pnpm-lock.yaml",
+ 91:     )
+ 92:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+ 93: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
+ 94:     """
+ 95:     Get the diff of staged changes and list of changed files.
+ 96:     Returns:
+ 97:         Tuple of (diff_content, has_lock_files, changed_files)
+ 98:     """
+ 99:     try:
+100:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
+101:         staged_files = files_output.splitlines()
+102:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+103:         if any(_is_lock_file(f) for f in staged_files):
+104:             return None, True, staged_files
+105:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+106:             return "", False, staged_files
+107:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+108:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+109:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+110:         if not diff:
+111:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+112:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
+113:             staged_files = files_output.splitlines()
+114:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+115:             if any(_is_lock_file(f) for f in staged_files):
+116:                 return None, True, staged_files
+117:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+118:                 return "", False, staged_files
+119:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+120:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+121:         return diff, False, staged_files
+122:     except subprocess.CalledProcessError as e:
+123:         print(f"Error getting git diff: {e}")
+124:         return None, False, []
+125:     except ValueError as e:
+126:         print(f"Internal error - invalid git command: {e}")
+127:         return None, False, []
+128: # =============================================================================
+129: # COMMIT MESSAGE GENERATION
+130: # =============================================================================
+131: def generate_commit_message(diff: str) -> Optional[str]:
+132:     """Generate commit message using the configured LLM provider."""
+133:     try:
+134:         load_dotenv()
+135:         provider = get_provider()
+136:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
+137: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
+138: just the commit message exactly as it should appear in git.
+139:         The commit message MUST follow this format:
+140:         <emoji> <type>[optional scope]: <description>
+141:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+142:         [optional footer(s)]
+143:         Where:
+144:         1. Type MUST be one of (with corresponding emoji):
+145:            Core types:
+146:            - ✨ feat: A new feature
+147:            - 🐛 fix: A bug fix
+148:            - 📝 docs: Documentation only changes
+149:            - 🎨 style: Changes that don't affect the meaning of the code
+150:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+151:            - ⚡️ perf: A code change that improves performance
+152:            - ✅ test: Adding missing tests or correcting existing tests
+153:            - 🔧 chore: Changes to build process or auxiliary tools
+154:            - 👷 ci: Changes to CI configuration files and scripts
+155:            Additional specific types:
+156:            - 🔒 security: Security fixes
+157:            - 📦 deps: Dependencies
+158:            - 💥 breaking: Breaking changes
+159:            - 💄 ui: UI/style changes
+160:            - 🌐 i18n: Internationalization
+161:            - ✏️ typo: Fix typos
+162:            - 🎉 init: Initial commit
+163:            - 📄 license: License
+164:            - 🐳 docker: Docker
+165:            - ♿️ access: Accessibility
+166:            - 🔊 logs: Logging
+167:            - 🗃️ db: Database
+168:            - 🔥 cleanup: Remove code/files
+169:            - 🚧 wip: Work in progress
+170:            - 🚚 move: Move/rename files
+171:            - ⏪ revert: Revert changes
+172:            - 🔀 merge: Merge branches
+173:            - 📱 responsive: Responsive design
+174:            - 🚑 hotfix: Critical hotfix
+175:         2. Description MUST:
+176:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
+177:            - Start with lowercase
+178:            - Use imperative mood ("add" not "adds/added")
+179:            - No period at end
+180:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
+181:         3. Body (if included) MUST:
+182:            - Be separated from title by blank line
+183:            - Wrap at 72 characters
+184:            - Explain what and why vs. how
+185:            - Use proper punctuation
+186:         Git diff to analyze:
+187:         {diff}
+188:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+189:         message = provider.chat_completion(prompt)
+190:         if "Based on the diff" in message:
+191:             message = message.split("\n")[-1].strip()
+192:         return message
+193:     except Exception as e:
+194:         error_msg = str(e)
+195:         print(f"Error generating commit message: {error_msg}")
+196:         if "500" in error_msg:
+197:             print("\nServer error. Check MODEL_NAME if set.")
+198:         elif "401" in error_msg or "403" in error_msg:
+199:             print("\nAuth error. Check your API key.")
+200:         elif "404" in error_msg:
+201:             print("\nModel not found. Check MODEL_NAME.")
+202:         return None
+203: # =============================================================================
+204: # MAIN
+205: # =============================================================================
+206: def main():
+207:     diff, has_lock_files, changed_files = get_staged_diff()
+208:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
+209:     if has_lock_files:
+210:         commit_message = "📦 deps: update dependencies"
+211:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
+212:         commit_message = "📝 docs: update repository context"
+213:     elif not diff:
+214:         print("No changes to analyze")
+215:         sys.exit(1)
+216:     else:
+217:         commit_message = generate_commit_message(diff)
+218:     if not commit_message:
+219:         print("Failed to generate commit message")
+220:         sys.exit(1)
+221:     print("\nGenerated commit message:")
+222:     print("------------------------")
+223:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+224:     sys.stdout.buffer.flush()
+225:     print("\n------------------------")
+226:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+227:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+228:             f.write(commit_message)
+229: if __name__ == "__main__":
+230:     main()
+````
+
 ## File: commit/README.md
 ````markdown
  1: # AI Commit Message Generator
@@ -9507,6 +9741,144 @@ tsconfig.json
 23:   );
 24: };
 25: export default Grow;
+````
+
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: export interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrix-canvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 39:   }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useCallback(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:     [
+ 95:       fadeFactor,
+ 96:       rgbBackground,
+ 97:       rgbFont,
+ 98:       tileSize,
+ 99:       glowColor,
+100:       tileSet,
+101:       frameInterval,
+102:     ],
+103:   );
+104:   useEffect(() => {
+105:     const canvas = canvasRef.current;
+106:     if (!canvas) return;
+107:     const ctx = canvas.getContext("2d");
+108:     if (!ctx) return;
+109:     const handleResize = () => {
+110:       const boundingClientRect = canvas.getBoundingClientRect();
+111:       canvas.width = boundingClientRect.width;
+112:       canvas.height = boundingClientRect.height;
+113:       initMatrix(canvas);
+114:       isInitializedRef.current = true;
+115:     };
+116:     const debouncedResize = debounce(handleResize, 100);
+117:     window.addEventListener("resize", debouncedResize);
+118:     handleResize();
+119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+120:     return () => {
+121:       window.removeEventListener("resize", debouncedResize);
+122:     };
+123:   }, [initMatrix, tick]);
+124:   return (
+125:     <canvas
+126:       ref={canvasRef}
+127:       id={CANVAS_ID}
+128:       style={{ width: "100%", height: "100%" }}
+129:       data-testid="matrix-canvas"
+130:       className="absolute inset-0"
+131:     />
+132:   );
+133: };
+134: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/Animations/Matrix.renderer.ts
@@ -19862,376 +20234,178 @@ tsconfig.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
-## File: commit/commit_analyzer.py
-````python
-  1: #!/usr/bin/env python3
-  2: """
-  3: AI-Powered Git Commit Message Generator
-  4: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
-  5: Installation in another repo:
-  6: 1. Copy the entire commit/ folder to your repo
-  7: 2. Run: pip install openai anthropic python-dotenv
-  8: 3. Create .env with your API key (or run setup.sh/setup.ps1)
-  9: 4. Make a commit!
- 10: """
- 11: import subprocess
- 12: import os
- 13: import sys
- 14: import json
- 15: import codecs
- 16: from typing import List, Tuple, Optional
- 17: from pathlib import Path
- 18: from dotenv import load_dotenv
- 19: # Add this directory to path to import the providers module
- 20: sys.path.insert(0, str(Path(__file__).parent))
- 21: from providers import get_provider
- 22: # =============================================================================
- 23: # GIT COMMAND SECURITY
- 24: # =============================================================================
- 25: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
- 26: _GIT_ARG_CACHED = "--cached"
- 27: _GIT_ARG_NAME_ONLY = "--name-only"
- 28: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
- 29: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
- 30: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
- 31: def _normalize_repo_path(path: str) -> str:
- 32:     """Normalize paths to forward-slashed, workspace-relative form."""
- 33:     return path.replace("\\", "/").lstrip("./")
- 34: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
- 35:     """Remove full per-file diff blocks for excluded paths."""
- 36:     if not diff or not excluded_paths:
- 37:         return diff
- 38:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
- 39:     kept: List[str] = []
- 40:     skipping = False
- 41:     for line in diff.splitlines(True):
- 42:         if line.startswith("diff --git "):
- 43:             parts = line.strip().split()
- 44:             a_path = ""
- 45:             b_path = ""
- 46:             if len(parts) >= 4:
- 47:                 a_token = parts[2]
- 48:                 b_token = parts[3]
- 49:                 if a_token.startswith("a/"):
- 50:                     a_path = a_token[2:]
- 51:                 if b_token.startswith("b/"):
- 52:                     b_path = b_token[2:]
- 53:             file_path = b_path or a_path
- 54:             skipping = _normalize_repo_path(file_path) in excluded
- 55:             if skipping:
- 56:                 continue
- 57:         if skipping:
- 58:             continue
- 59:         kept.append(line)
- 60:     return "".join(kept)
- 61: def _run_git_command(args: List[str]) -> str:
- 62:     """
- 63:     Safely execute a git command with strict whitelist validation.
- 64:     """
- 65:     if not args:
- 66:         raise ValueError("Git command arguments cannot be empty")
- 67:     subcommand = args[0]
- 68:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
- 69:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
- 70:     for arg in args[1:]:
- 71:         if arg not in _ALLOWED_GIT_ARGS:
- 72:             raise ValueError(f"Git argument '{arg}' not allowed")
- 73:     full_command = ["git"] + list(args)
- 74:     result = subprocess.check_output(
- 75:         full_command,
- 76:         shell=False,
- 77:         stderr=subprocess.DEVNULL,
- 78:     )
- 79:     return result.decode("utf-8")
- 80: # =============================================================================
- 81: # DIFF ANALYSIS
- 82: # =============================================================================
- 83: def _is_lock_file(filename: str) -> bool:
- 84:     """Check if a filename is a dependency lock file."""
- 85:     lock_file_patterns = (
- 86:         ".lock",
- 87:         "lock.json",
- 88:         "package-lock.json",
- 89:         "yarn.lock",
- 90:         "pnpm-lock.yaml",
- 91:     )
- 92:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
- 93: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
- 94:     """
- 95:     Get the diff of staged changes and list of changed files.
- 96:     Returns:
- 97:         Tuple of (diff_content, has_lock_files, changed_files)
- 98:     """
- 99:     try:
-100:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
-101:         staged_files = files_output.splitlines()
-102:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-103:         if any(_is_lock_file(f) for f in staged_files):
-104:             return None, True, staged_files
-105:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-106:             return "", False, staged_files
-107:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
-108:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-109:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-110:         if not diff:
-111:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
-112:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
-113:             staged_files = files_output.splitlines()
-114:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-115:             if any(_is_lock_file(f) for f in staged_files):
-116:                 return None, True, staged_files
-117:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-118:                 return "", False, staged_files
-119:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-120:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-121:         return diff, False, staged_files
-122:     except subprocess.CalledProcessError as e:
-123:         print(f"Error getting git diff: {e}")
-124:         return None, False, []
-125:     except ValueError as e:
-126:         print(f"Internal error - invalid git command: {e}")
-127:         return None, False, []
-128: # =============================================================================
-129: # COMMIT MESSAGE GENERATION
-130: # =============================================================================
-131: def generate_commit_message(diff: str) -> Optional[str]:
-132:     """Generate commit message using the configured LLM provider."""
-133:     try:
-134:         load_dotenv()
-135:         provider = get_provider()
-136:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
-137: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
-138: just the commit message exactly as it should appear in git.
-139:         The commit message MUST follow this format:
-140:         <emoji> <type>[optional scope]: <description>
-141:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-142:         [optional footer(s)]
-143:         Where:
-144:         1. Type MUST be one of (with corresponding emoji):
-145:            Core types:
-146:            - ✨ feat: A new feature
-147:            - 🐛 fix: A bug fix
-148:            - 📝 docs: Documentation only changes
-149:            - 🎨 style: Changes that don't affect the meaning of the code
-150:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-151:            - ⚡️ perf: A code change that improves performance
-152:            - ✅ test: Adding missing tests or correcting existing tests
-153:            - 🔧 chore: Changes to build process or auxiliary tools
-154:            - 👷 ci: Changes to CI configuration files and scripts
-155:            Additional specific types:
-156:            - 🔒 security: Security fixes
-157:            - 📦 deps: Dependencies
-158:            - 💥 breaking: Breaking changes
-159:            - 💄 ui: UI/style changes
-160:            - 🌐 i18n: Internationalization
-161:            - ✏️ typo: Fix typos
-162:            - 🎉 init: Initial commit
-163:            - 📄 license: License
-164:            - 🐳 docker: Docker
-165:            - ♿️ access: Accessibility
-166:            - 🔊 logs: Logging
-167:            - 🗃️ db: Database
-168:            - 🔥 cleanup: Remove code/files
-169:            - 🚧 wip: Work in progress
-170:            - 🚚 move: Move/rename files
-171:            - ⏪ revert: Revert changes
-172:            - 🔀 merge: Merge branches
-173:            - 📱 responsive: Responsive design
-174:            - 🚑 hotfix: Critical hotfix
-175:         2. Description MUST:
-176:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
-177:            - Start with lowercase
-178:            - Use imperative mood ("add" not "adds/added")
-179:            - No period at end
-180:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
-181:         3. Body (if included) MUST:
-182:            - Be separated from title by blank line
-183:            - Wrap at 72 characters
-184:            - Explain what and why vs. how
-185:            - Use proper punctuation
-186:         Git diff to analyze:
-187:         {diff}
-188:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-189:         message = provider.chat_completion(prompt)
-190:         if "Based on the diff" in message:
-191:             message = message.split("\n")[-1].strip()
-192:         return message
-193:     except Exception as e:
-194:         error_msg = str(e)
-195:         print(f"Error generating commit message: {error_msg}")
-196:         if "500" in error_msg:
-197:             print("\nServer error. Check MODEL_NAME if set.")
-198:         elif "401" in error_msg or "403" in error_msg:
-199:             print("\nAuth error. Check your API key.")
-200:         elif "404" in error_msg:
-201:             print("\nModel not found. Check MODEL_NAME.")
-202:         return None
-203: # =============================================================================
-204: # MAIN
-205: # =============================================================================
-206: def main():
-207:     diff, has_lock_files, changed_files = get_staged_diff()
-208:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
-209:     if has_lock_files:
-210:         commit_message = "📦 deps: update dependencies"
-211:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
-212:         commit_message = "📝 docs: update repository context"
-213:     elif not diff:
-214:         print("No changes to analyze")
-215:         sys.exit(1)
-216:     else:
-217:         commit_message = generate_commit_message(diff)
-218:     if not commit_message:
-219:         print("Failed to generate commit message")
-220:         sys.exit(1)
-221:     print("\nGenerated commit message:")
-222:     print("------------------------")
-223:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-224:     sys.stdout.buffer.flush()
-225:     print("\n------------------------")
-226:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-227:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-228:             f.write(commit_message)
-229: if __name__ == "__main__":
-230:     main()
-````
-
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: export interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrix-canvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     const canvas = canvasRef.current;
-106:     if (!canvas) return;
-107:     const ctx = canvas.getContext("2d");
-108:     if (!ctx) return;
-109:     const handleResize = () => {
-110:       const boundingClientRect = canvas.getBoundingClientRect();
-111:       canvas.width = boundingClientRect.width;
-112:       canvas.height = boundingClientRect.height;
-113:       initMatrix(canvas);
-114:       isInitializedRef.current = true;
-115:     };
-116:     const debouncedResize = debounce(handleResize, 100);
-117:     window.addEventListener("resize", debouncedResize);
-118:     handleResize();
-119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-120:     return () => {
-121:       window.removeEventListener("resize", debouncedResize);
-122:     };
-123:   }, [initMatrix, tick]);
-124:   return (
-125:     <canvas
-126:       ref={canvasRef}
-127:       id={CANVAS_ID}
-128:       style={{ width: "100%", height: "100%" }}
-129:       data-testid="matrix-canvas"
-130:       className="absolute inset-0"
-131:     />
-132:   );
-133: };
-134: export default ReactMatrixAnimation;
+## File: src/app/globals.css
+````css
+  1: @import "tailwindcss";
+  2: @config '../../tailwind.config.ts';
+  3: @layer base {
+  4:   *,
+  5:   ::after,
+  6:   ::before,
+  7:   ::backdrop,
+  8:   ::file-selector-button {
+  9:     border-color: var(--color-gray-200, currentcolor);
+ 10:   }
+ 11: }
+ 12: :root {
+ 13:   /* Modern Color Scheme */
+ 14:   --primary: #00ff62;
+ 15:   --secondary: #00cc4e;
+ 16:   --accent: #008529;
+ 17:   --text: #e1e1e1;
+ 18:   --background: var(--color-slate-900, #0f172a);
+ 19:   /* Semantic Colors */
+ 20:   --success: #00cc4e;
+ 21:   --error: #ff4e4e;
+ 22:   --warning: #ffb74e;
+ 23:   --info: #4e9fff;
+ 24:   /* Matrix Theme Colors */
+ 25:   --matrix-light: #00ff62;
+ 26:   --matrix: #00cc4e;
+ 27:   --matrix-dark: #008529;
+ 28:   --matrix-glow: rgb(0 255 98 / 60%);
+ 29: }
+ 30: body {
+ 31:   background-color: var(--background);
+ 32:   color: var(--text);
+ 33:   font-family: "JetBrains Mono", monospace;
+ 34: }
+ 35: #matrix-canvas {
+ 36:   opacity: 0.7;
+ 37: }
+ 38: /* Touch interaction improvements */
+ 39: button,
+ 40: a,
+ 41: input,
+ 42: textarea,
+ 43: select {
+ 44:   touch-action: manipulation; /* Prevents double-tap zoom */
+ 45:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
+ 46: }
+ 47: /* Minimum touch targets for mobile */
+ 48: @media (pointer: coarse) {
+ 49:   button,
+ 50:   a[role="button"],
+ 51:   input[type="submit"],
+ 52:   input[type="button"] {
+ 53:     min-height: 44px;
+ 54:     min-width: 44px;
+ 55:   }
+ 56: }
+ 57: /* Scroll margin for anchor links */
+ 58: [id] {
+ 59:   scroll-margin-top: 100px;
+ 60: }
+ 61: h1[id],
+ 62: h2[id],
+ 63: h3[id],
+ 64: h4[id],
+ 65: h5[id],
+ 66: h6[id] {
+ 67:   scroll-margin-top: 120px;
+ 68: }
+ 69: /* Selection */
+ 70: ::selection {
+ 71:   background-color: var(--matrix-dark);
+ 72:   color: #fff;
+ 73: }
+ 74: /* Scrollbar */
+ 75: * {
+ 76:   scrollbar-width: thin;
+ 77:   scrollbar-color: var(--matrix-dark) #1a1a1a;
+ 78: }
+ 79: ::-webkit-scrollbar {
+ 80:   width: 6px;
+ 81: }
+ 82: ::-webkit-scrollbar-track {
+ 83:   background: #1a1a1a;
+ 84: }
+ 85: ::-webkit-scrollbar-thumb {
+ 86:   background: var(--matrix-dark);
+ 87:   border-radius: 3px;
+ 88: }
+ 89: ::-webkit-scrollbar-thumb:hover {
+ 90:   background: var(--matrix-light);
+ 91: }
+ 92: /* Enhanced keyboard focus indicators for accessibility */
+ 93: /* Exclude form elements which handle their own focus styling */
+ 94: :focus-visible:not(input, textarea, select) {
+ 95:   outline: 2px solid var(--matrix-dark);
+ 96:   outline-offset: 2px;
+ 97:   border-radius: 2px;
+ 98: }
+ 99: /* Focus within container styling - only for specific interactive containers */
+100: .focus-within-container:focus-within {
+101:   outline: 2px solid var(--matrix-dark);
+102:   outline-offset: 2px;
+103:   border-radius: 2px;
+104: }
+105: /* Button-specific focus styling */
+106: button:focus-visible,
+107: a:focus-visible {
+108:   outline: 2px solid var(--matrix-dark);
+109:   outline-offset: 3px;
+110:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
+111: }
+112: /* Input and textarea focus styling handled by individual components */
+113: /* Tab and interactive element focus */
+114: [role="tab"]:focus-visible,
+115: [role="button"]:focus-visible,
+116: [tabindex="0"]:focus-visible {
+117:   outline: 2px solid var(--matrix-dark);
+118:   outline-offset: 2px;
+119: }
+120: /* Skip link special focus styling for better visibility */
+121: .sr-only:focus,
+122: .sr-only:focus-within {
+123:   position: absolute;
+124:   width: auto;
+125:   height: auto;
+126:   padding: 0.5rem 1rem;
+127:   margin: 0;
+128:   overflow: visible;
+129:   clip: auto;
+130:   white-space: normal;
+131:   outline: 3px solid var(--matrix-light);
+132:   outline-offset: 2px;
+133:   z-index: 9999;
+134: }
+135: /* Skeleton shimmer effect */
+136: @keyframes shimmer {
+137:   0% {
+138:     background-position: -200% 0;
+139:   }
+140:   100% {
+141:     background-position: 200% 0;
+142:   }
+143: }
+144: .skeleton-shimmer::before {
+145:   content: "";
+146:   position: absolute;
+147:   inset: 0;
+148:   background: linear-gradient(
+149:     90deg,
+150:     transparent 0%,
+151:     rgb(255 255 255 / 4%) 50%,
+152:     transparent 100%
+153:   );
+154:   background-size: 200% 100%;
+155:   animation: shimmer 1.5s infinite;
+156: }
+157: /* Performance optimizations for animations */
+158: .contain-layout {
+159:   contain: layout style paint;
+160: }
+161: /* Reduced motion for accessibility */
+162: @media (prefers-reduced-motion: reduce) {
+163:   *,
+164:   *::before,
+165:   *::after {
+166:     animation-duration: 0.01ms !important;
+167:     animation-iteration-count: 1 !important;
+168:     transition-duration: 0.01ms !important;
+169:   }
+170: }
 ````
 
 ## File: src/utils/eslint/package.json
@@ -20548,180 +20722,6 @@ tsconfig.json
 261:     metadata:
 262:       owasp: A10:2021
 263:       cwe: CWE-918
-````
-
-## File: src/app/globals.css
-````css
-  1: @import "tailwindcss";
-  2: @config '../../tailwind.config.ts';
-  3: @layer base {
-  4:   *,
-  5:   ::after,
-  6:   ::before,
-  7:   ::backdrop,
-  8:   ::file-selector-button {
-  9:     border-color: var(--color-gray-200, currentcolor);
- 10:   }
- 11: }
- 12: :root {
- 13:   /* Modern Color Scheme */
- 14:   --primary: #00ff62;
- 15:   --secondary: #00cc4e;
- 16:   --accent: #008529;
- 17:   --text: #e1e1e1;
- 18:   --background: var(--color-slate-900, #0f172a);
- 19:   /* Semantic Colors */
- 20:   --success: #00cc4e;
- 21:   --error: #ff4e4e;
- 22:   --warning: #ffb74e;
- 23:   --info: #4e9fff;
- 24:   /* Matrix Theme Colors */
- 25:   --matrix-light: #00ff62;
- 26:   --matrix: #00cc4e;
- 27:   --matrix-dark: #008529;
- 28:   --matrix-glow: rgb(0 255 98 / 60%);
- 29: }
- 30: body {
- 31:   background-color: var(--background);
- 32:   color: var(--text);
- 33:   font-family: "JetBrains Mono", monospace;
- 34: }
- 35: #matrix-canvas {
- 36:   opacity: 0.7;
- 37: }
- 38: /* Touch interaction improvements */
- 39: button,
- 40: a,
- 41: input,
- 42: textarea,
- 43: select {
- 44:   touch-action: manipulation; /* Prevents double-tap zoom */
- 45:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
- 46: }
- 47: /* Minimum touch targets for mobile */
- 48: @media (pointer: coarse) {
- 49:   button,
- 50:   a[role="button"],
- 51:   input[type="submit"],
- 52:   input[type="button"] {
- 53:     min-height: 44px;
- 54:     min-width: 44px;
- 55:   }
- 56: }
- 57: /* Scroll margin for anchor links */
- 58: [id] {
- 59:   scroll-margin-top: 100px;
- 60: }
- 61: h1[id],
- 62: h2[id],
- 63: h3[id],
- 64: h4[id],
- 65: h5[id],
- 66: h6[id] {
- 67:   scroll-margin-top: 120px;
- 68: }
- 69: /* Selection */
- 70: ::selection {
- 71:   background-color: var(--matrix-dark);
- 72:   color: #fff;
- 73: }
- 74: /* Scrollbar */
- 75: * {
- 76:   scrollbar-width: thin;
- 77:   scrollbar-color: var(--matrix-dark) #1a1a1a;
- 78: }
- 79: ::-webkit-scrollbar {
- 80:   width: 6px;
- 81: }
- 82: ::-webkit-scrollbar-track {
- 83:   background: #1a1a1a;
- 84: }
- 85: ::-webkit-scrollbar-thumb {
- 86:   background: var(--matrix-dark);
- 87:   border-radius: 3px;
- 88: }
- 89: ::-webkit-scrollbar-thumb:hover {
- 90:   background: var(--matrix-light);
- 91: }
- 92: /* Enhanced keyboard focus indicators for accessibility */
- 93: /* Exclude form elements which handle their own focus styling */
- 94: :focus-visible:not(input, textarea, select) {
- 95:   outline: 2px solid var(--matrix-dark);
- 96:   outline-offset: 2px;
- 97:   border-radius: 2px;
- 98: }
- 99: /* Focus within container styling - only for specific interactive containers */
-100: .focus-within-container:focus-within {
-101:   outline: 2px solid var(--matrix-dark);
-102:   outline-offset: 2px;
-103:   border-radius: 2px;
-104: }
-105: /* Button-specific focus styling */
-106: button:focus-visible,
-107: a:focus-visible {
-108:   outline: 2px solid var(--matrix-dark);
-109:   outline-offset: 3px;
-110:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
-111: }
-112: /* Input and textarea focus styling handled by individual components */
-113: /* Tab and interactive element focus */
-114: [role="tab"]:focus-visible,
-115: [role="button"]:focus-visible,
-116: [tabindex="0"]:focus-visible {
-117:   outline: 2px solid var(--matrix-dark);
-118:   outline-offset: 2px;
-119: }
-120: /* Skip link special focus styling for better visibility */
-121: .sr-only:focus,
-122: .sr-only:focus-within {
-123:   position: absolute;
-124:   width: auto;
-125:   height: auto;
-126:   padding: 0.5rem 1rem;
-127:   margin: 0;
-128:   overflow: visible;
-129:   clip: auto;
-130:   white-space: normal;
-131:   outline: 3px solid var(--matrix-light);
-132:   outline-offset: 2px;
-133:   z-index: 9999;
-134: }
-135: /* Skeleton shimmer effect */
-136: @keyframes shimmer {
-137:   0% {
-138:     background-position: -200% 0;
-139:   }
-140:   100% {
-141:     background-position: 200% 0;
-142:   }
-143: }
-144: .skeleton-shimmer::before {
-145:   content: "";
-146:   position: absolute;
-147:   inset: 0;
-148:   background: linear-gradient(
-149:     90deg,
-150:     transparent 0%,
-151:     rgb(255 255 255 / 4%) 50%,
-152:     transparent 100%
-153:   );
-154:   background-size: 200% 100%;
-155:   animation: shimmer 1.5s infinite;
-156: }
-157: /* Performance optimizations for animations */
-158: .contain-layout {
-159:   contain: layout style paint;
-160: }
-161: /* Reduced motion for accessibility */
-162: @media (prefers-reduced-motion: reduce) {
-163:   *,
-164:   *::before,
-165:   *::after {
-166:     animation-duration: 0.01ms !important;
-167:     animation-iteration-count: 1 !important;
-168:     transition-duration: 0.01ms !important;
-169:   }
-170: }
 ````
 
 ## File: tsconfig.json
@@ -22020,7 +22020,7 @@ tsconfig.json
  29:     "@emailjs/browser": "^4.4.1",
  30:     "@hookform/resolvers": "^5.2.2",
  31:     "@portabletext/react": "^6.0.3",
- 32:     "@sanity/client": "^7.20.0",
+ 32:     "@sanity/client": "^7.21.0",
  33:     "@sanity/image-url": "^2.1.1",
  34:     "@vercel/speed-insights": "2.0.0",
  35:     "autoprefixer": "^10.4.27",
