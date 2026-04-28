@@ -20068,183 +20068,6 @@ tsconfig.json
 38:           retention-days: 30
 ````
 
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:         with:
- 47:           version: 10
- 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
- 49:         with:
- 50:           node-version: 24
- 51:           cache: ${{ steps.pm.outputs.cache }}
- 52:       - name: Install dependencies
- 53:         run: ${{ steps.pm.outputs.install }}
- 54:       - name: Run React Doctor
- 55:         id: doctor
- 56:         run: |
- 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 59:           # Strip ANSI escape codes for clean output
- 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 65:           else
- 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 67:           fi
- 68:           # Check for lint issues (the actionable part of the report)
- 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 71:           else
- 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 73:           fi
- 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 77:           # Extract just the numeric score for threshold check
- 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 81:       - name: Post PR comment with results
- 82:         if: github.event_name == 'pull_request'
- 83:         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
- 84:         with:
- 85:           script: |
- 86:             const fs = require('fs');
- 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 88:             const score = '${{ steps.doctor.outputs.score }}';
- 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 91:             const scoreDisplay = offline
- 92:               ? 'N/A (scoring server unreachable)'
- 93:               : score;
- 94:             const statusEmoji = offline
- 95:               ? (issuesFound ? '⚠️' : '✅')
- 96:               : '';
- 97:             const body = [
- 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 99:               '',
-100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
-101:               '',
-102:               '<details>',
-103:               '<summary>Full diagnostics</summary>',
-104:               '',
-105:               '```',
-106:               output.trim(),
-107:               '```',
-108:               '',
-109:               '</details>',
-110:               '',
-111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-112:             ].filter(Boolean).join('\n');
-113:             // Find existing comment to update instead of creating duplicates
-114:             const { data: comments } = await github.rest.issues.listComments({
-115:               owner: context.repo.owner,
-116:               repo: context.repo.repo,
-117:               issue_number: context.issue.number,
-118:             });
-119:             const botComment = comments.find(
-120:               (c) => c.body?.includes('🩺 React Doctor')
-121:             );
-122:             if (botComment) {
-123:               await github.rest.issues.updateComment({
-124:                 owner: context.repo.owner,
-125:                 repo: context.repo.repo,
-126:                 comment_id: botComment.id,
-127:                 body,
-128:               });
-129:             } else {
-130:               await github.rest.issues.createComment({
-131:                 owner: context.repo.owner,
-132:                 repo: context.repo.repo,
-133:                 issue_number: context.issue.number,
-134:                 body,
-135:               });
-136:             }
-137:       - name: Write job summary
-138:         if: always()
-139:         run: |
-140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-141:           if [ "$OFFLINE" = "true" ]; then
-142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-143:             echo "" >> "$GITHUB_STEP_SUMMARY"
-144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-145:           else
-146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-147:           fi
-148:           echo "" >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-152:       - name: Check score threshold
-153:         run: |
-154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-156:           # When offline, skip numeric threshold — only fail if lint issues were found
-157:           if [ "$OFFLINE" = "true" ]; then
-158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-159:             if [ "$ISSUES" = "true" ]; then
-160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-161:               exit 1
-162:             fi
-163:             echo "✅ No lint issues found (score unavailable due to offline)"
-164:             exit 0
-165:           fi
-166:           SCORE="${{ steps.doctor.outputs.score_num }}"
-167:           SCORE="${SCORE:-0}"
-168:           THRESHOLD=80
-169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-172:             exit 1
-173:           fi
-````
-
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -20422,6 +20245,183 @@ tsconfig.json
 10: # Build artifacts
 11: .next/
 12: node_modules/
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:         with:
+ 47:           version: 10
+ 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
+104:               '',
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
 ````
 
 ## File: .semgrep/owasp-top10.yml
@@ -21200,7 +21200,7 @@ tsconfig.json
 13:       contents: read
 14:       pull-requests: write
 15:     steps:
-16:       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+16:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 17:         with:
 18:           fetch-depth: 0
 19:       - name: Run gitleaks
@@ -21215,7 +21215,7 @@ tsconfig.json
 28:     container:
 29:       image: semgrep/semgrep:1.160.0
 30:     steps:
-31:       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+31:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 32:       - name: Run Semgrep with OWASP rules
 33:         run: |
 34:           semgrep scan \
@@ -21240,7 +21240,7 @@ tsconfig.json
 53:     permissions:
 54:       contents: read
 55:     steps:
-56:       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+56:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 57:       - name: Run Trivy vulnerability scanner
 58:         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
 59:         with:
