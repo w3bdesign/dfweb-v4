@@ -79,7 +79,6 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
             id="mobile-menu"
             data-testid="mobile-menu"
             data-cy="mobile-menu"
-            aria-hidden={!isExpanded}
             className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
             initial="closed"
             animate="open"
@@ -131,14 +130,14 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                         prefetch={true}
                         onClick={closeMenu}
                         className={`${linkClassName} ${
-                          pathname === href ? "text-green-400" : ""
+                          pathname === href ? "text-[var(--matrix-light)]" : ""
                         }`}
                       >
                         <div className="glitch relative" data-text={name}>
                           {name}
                           <m.span
                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-                              pathname === href ? "bg-green-400" : "bg-white"
+                              pathname === href ? "bg-[var(--matrix-light)]" : "bg-white"
                             }`}
                             initial={{
                               width: pathname === href ? "100%" : "0%",
