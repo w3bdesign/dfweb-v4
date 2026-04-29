@@ -55,7 +55,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
                   .quality(100)
                   .auto("format")
                   .url()}
-                alt={name}
+                alt={`Skjermbilde av prosjektet ${name}`}
               />
             )}
           </div>
@@ -64,7 +64,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
             {name}
           </h2>
-          <h3 className="text-md px-4 text-gray-300">{description}</h3>
+          <h3 className="text-base px-4 text-gray-300">{description}</h3>
           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
             {subdescription}
           </p>
