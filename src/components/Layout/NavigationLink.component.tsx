@@ -27,7 +27,7 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({
     <Link
       prefetch={true}
       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-        isActive ? "text-green-400" : ""
+        isActive ? "text-[var(--matrix-light)]" : ""
       }`}
       href={href}
     >
@@ -35,7 +35,7 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({
         {name}
         <m.span
           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-            isActive ? "bg-green-400" : "bg-white"
+            isActive ? "bg-[var(--matrix-light)]" : "bg-white"
           }`}
           initial={{
             width: isActive ? "100%" : "0%",
