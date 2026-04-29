@@ -37,7 +37,8 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({
           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
           }`}
-          initial={{
+          initial={false}
+          animate={{
             width: isActive ? "100%" : "0%",
           }}
           variants={{
