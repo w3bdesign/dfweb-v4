@@ -145,10 +145,10 @@ const ContactForm: React.FC<ContactFormProps> = ({
 
                       <div className="-mt-4">
                         <Button
-                          disabled={isSubmitting}
+                          loading={isSubmitting}
                           data-testid="submit-button"
                         >
-                          {isSubmitting ? "Sender..." : "Send skjema"}
+                          Send skjema
                         </Button>
                       </div>
                     </form>

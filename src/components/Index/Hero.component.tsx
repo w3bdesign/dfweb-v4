@@ -50,7 +50,7 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
           data-testid="fade-in"
         >
           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
-            <FadeIn delay={0.2}>
+            <FadeIn delay={0.3}>
               <h1
                 data-cy="hei"
                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
@@ -59,13 +59,13 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
               </h1>
             </FadeIn>
 
-            <FadeIn delay={1}>
+            <FadeIn delay={0.9}>
               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
                 {content?.length > 0 && content[1]?.text}
               </h2>
             </FadeIn>
 
-            <FadeIn delay={2}>
+            <FadeIn delay={1.5}>
               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
                 {content?.length > 0 && content[2]?.text}
               </p>

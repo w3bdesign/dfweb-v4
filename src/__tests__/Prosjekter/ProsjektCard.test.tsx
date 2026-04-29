@@ -75,7 +75,7 @@ describe("ProsjektCard", () => {
     it("renders project image with correct attributes", () => {
       // Arrange
       const expectedImage = {
-        alt: "Test Project",
+        alt: "Skjermbilde av prosjektet Test Project",
         src: "/test-image.jpg",
       };
 
