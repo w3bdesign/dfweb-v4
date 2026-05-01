@@ -488,6 +488,423 @@ tsconfig.json
 15: ]
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["master"]
+ 5:   pull_request:
+ 6:     branches: ["master"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: jobs:
+ 4:   cypress-run:
+ 5:     runs-on: ubuntu-24.04
+ 6:     timeout-minutes: 30
+ 7:     strategy:
+ 8:       fail-fast: false
+ 9:       matrix:
+10:         browser: [chrome, firefox, edge]
+11:     steps:
+12:       - name: Checkout
+13:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+14:       - name: Install pnpm
+15:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:         with:
+17:           version: 10
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:           restore-keys: |
+30:             ${{ runner.os }}-cypress-
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: jobs:
+ 4:   lighthouse:
+ 5:     runs-on: ubuntu-latest
+ 6:     timeout-minutes: 30
+ 7:     steps:
+ 8:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 9:       - name: Setup Node.js
+10:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+11:         with:
+12:           node-version: "24"
+13:       - name: Setup pnpm
+14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+15:         with:
+16:           version: 10
+17:           run_install: false
+18:       - name: Get pnpm store directory
+19:         shell: bash
+20:         run: |
+21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+22:       - name: Setup pnpm cache
+23:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+24:         with:
+25:           path: ${{ env.STORE_PATH }}
+26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+27:           restore-keys: |
+28:             ${{ runner.os }}-pnpm-store-
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: jobs:
+ 8:   pa11y:
+ 9:     runs-on: ubuntu-latest
+10:     timeout-minutes: 30
+11:     steps:
+12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+13:       - name: Setup Node.js
+14:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+15:         with:
+16:           node-version: "24"
+17:       - name: Install pnpm
+18:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+19:         with:
+20:           version: 10
+21:           run_install: false
+22:       - name: Get pnpm store directory
+23:         shell: bash
+24:         run: |
+25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+26:       - name: Setup pnpm cache
+27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+28:         with:
+29:           path: ${{ env.STORE_PATH }}
+30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+31:           restore-keys: |
+32:             ${{ runner.os }}-pnpm-store-
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: jobs:
+ 8:   test:
+ 9:     timeout-minutes: 60
+10:     runs-on: ubuntu-latest
+11:     steps:
+12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+13:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+14:         with:
+15:           version: 10
+16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile
+22:       - name: Install Playwright Browsers
+23:         run: pnpm exec playwright install --with-deps chromium firefox
+24:       - name: Build the project
+25:         run: pnpm build
+26:       - name: Start the application
+27:         run: pnpm start &
+28:       - name: Wait for the application to be ready
+29:         run: |
+30:           npx wait-on http://localhost:3000
+31:       - name: Run Playwright tests
+32:         run: pnpm exec playwright test
+33:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+34:         if: always()
+35:         with:
+36:           name: playwright-report
+37:           path: playwright-report/
+38:           retention-days: 30
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:         with:
+23:           version: 10
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: ""
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -18993,345 +19410,181 @@ tsconfig.json
 72:           name: Build Next.js project
 ````
 
-## File: .github/workflows/codeql.yml
+## File: .github/workflows/react-doctor.yml
 ````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["master"]
- 5:   pull_request:
- 6:     branches: ["master"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: jobs:
- 4:   cypress-run:
- 5:     runs-on: ubuntu-24.04
- 6:     timeout-minutes: 30
- 7:     strategy:
- 8:       fail-fast: false
- 9:       matrix:
-10:         browser: [chrome, firefox, edge]
-11:     steps:
-12:       - name: Checkout
-13:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-14:       - name: Install pnpm
-15:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:         with:
-17:           version: 10
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:           restore-keys: |
-30:             ${{ runner.os }}-cypress-
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@f790eee7a50d9505912f50c2095510be7de06aa7 # v6
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: jobs:
- 4:   lighthouse:
- 5:     runs-on: ubuntu-latest
- 6:     timeout-minutes: 30
- 7:     steps:
- 8:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 9:       - name: Setup Node.js
-10:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-11:         with:
-12:           node-version: "24"
-13:       - name: Setup pnpm
-14:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-15:         with:
-16:           version: 10
-17:           run_install: false
-18:       - name: Get pnpm store directory
-19:         shell: bash
-20:         run: |
-21:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-22:       - name: Setup pnpm cache
-23:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-24:         with:
-25:           path: ${{ env.STORE_PATH }}
-26:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-27:           restore-keys: |
-28:             ${{ runner.os }}-pnpm-store-
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: jobs:
- 8:   pa11y:
- 9:     runs-on: ubuntu-latest
-10:     timeout-minutes: 30
-11:     steps:
-12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-13:       - name: Setup Node.js
-14:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-15:         with:
-16:           node-version: "24"
-17:       - name: Install pnpm
-18:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-19:         with:
-20:           version: 10
-21:           run_install: false
-22:       - name: Get pnpm store directory
-23:         shell: bash
-24:         run: |
-25:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-26:       - name: Setup pnpm cache
-27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-28:         with:
-29:           path: ${{ env.STORE_PATH }}
-30:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-31:           restore-keys: |
-32:             ${{ runner.os }}-pnpm-store-
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: jobs:
- 8:   test:
- 9:     timeout-minutes: 60
-10:     runs-on: ubuntu-latest
-11:     steps:
-12:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-13:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-14:         with:
-15:           version: 10
-16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx wait-on http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:         with:
+ 47:           version: 10
+ 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
+104:               '',
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
 ````
 
 ## File: .github/workflows/security.yml
@@ -19400,82 +19653,6 @@ tsconfig.json
 62:           severity: CRITICAL,HIGH
 63:           exit-code: 1
 64:           format: table
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:         with:
-23:           version: 10
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: ""
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/__tests__/Layout/MobileMenu.test.tsx
@@ -20833,181 +21010,217 @@ tsconfig.json
 58: });
 ````
 
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:         with:
- 47:           version: 10
- 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
- 49:         with:
- 50:           node-version: 24
- 51:           cache: ${{ steps.pm.outputs.cache }}
- 52:       - name: Install dependencies
- 53:         run: ${{ steps.pm.outputs.install }}
- 54:       - name: Run React Doctor
- 55:         id: doctor
- 56:         run: |
- 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 59:           # Strip ANSI escape codes for clean output
- 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 65:           else
- 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 67:           fi
- 68:           # Check for lint issues (the actionable part of the report)
- 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 71:           else
- 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 73:           fi
- 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 77:           # Extract just the numeric score for threshold check
- 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 81:       - name: Post PR comment with results
- 82:         if: github.event_name == 'pull_request'
- 83:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 84:         with:
- 85:           script: |
- 86:             const fs = require('fs');
- 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 88:             const score = '${{ steps.doctor.outputs.score }}';
- 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 91:             const scoreDisplay = offline
- 92:               ? 'N/A (scoring server unreachable)'
- 93:               : score;
- 94:             const statusEmoji = offline
- 95:               ? (issuesFound ? '⚠️' : '✅')
- 96:               : '';
- 97:             const body = [
- 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 99:               '',
-100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
-101:               '',
-102:               '<details>',
-103:               '<summary>Full diagnostics</summary>',
-104:               '',
-105:               '```',
-106:               output.trim(),
-107:               '```',
-108:               '',
-109:               '</details>',
-110:               '',
-111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-112:             ].filter(Boolean).join('\n');
-113:             // Find existing comment to update instead of creating duplicates
-114:             const { data: comments } = await github.rest.issues.listComments({
-115:               owner: context.repo.owner,
-116:               repo: context.repo.repo,
-117:               issue_number: context.issue.number,
-118:             });
-119:             const botComment = comments.find(
-120:               (c) => c.body?.includes('🩺 React Doctor')
-121:             );
-122:             if (botComment) {
-123:               await github.rest.issues.updateComment({
-124:                 owner: context.repo.owner,
-125:                 repo: context.repo.repo,
-126:                 comment_id: botComment.id,
-127:                 body,
-128:               });
-129:             } else {
-130:               await github.rest.issues.createComment({
-131:                 owner: context.repo.owner,
-132:                 repo: context.repo.repo,
-133:                 issue_number: context.issue.number,
-134:                 body,
-135:               });
-136:             }
-137:       - name: Write job summary
-138:         if: always()
-139:         run: |
-140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-141:           if [ "$OFFLINE" = "true" ]; then
-142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-143:             echo "" >> "$GITHUB_STEP_SUMMARY"
-144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-145:           else
-146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-147:           fi
-148:           echo "" >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-152:       - name: Check score threshold
-153:         run: |
-154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-156:           # When offline, skip numeric threshold — only fail if lint issues were found
-157:           if [ "$OFFLINE" = "true" ]; then
-158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-159:             if [ "$ISSUES" = "true" ]; then
-160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-161:               exit 1
-162:             fi
-163:             echo "✅ No lint issues found (score unavailable due to offline)"
-164:             exit 0
-165:           fi
-166:           SCORE="${{ steps.doctor.outputs.score_num }}"
-167:           SCORE="${SCORE:-0}"
-168:           THRESHOLD=80
-169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-172:             exit 1
-173:           fi
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
+  4: 
+  5: Fourth version of my personal portfolio website with Next.js, Motion,
+  6: Sanity.io and Typescript.
+  7: 
+  8: ## Table of Contents
+  9: 
+ 10: - [Live URL](#live-url)
+ 11: - [Frontend (Next.js)](#frontend-nextjs)
+ 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 13: - [Google Lighthouse](#google-lighthouse)
+ 14: - [Features](#features)
+ 15:   - [General](#general)
+ 16:   - [Design](#design)
+ 17:   - [Accessibility](#accessibility)
+ 18:   - [Security](#security)
+ 19:   - [Devops and Code quality](#devops-and-code-quality)
+ 20:   - [Environment Variables](#environment-variables)
+ 21:   - [Testing Standards](#testing-standards)
+ 22: 
+ 23: ## Live URL
+ 24: 
+ 25: - <https://www.dfweb.no>
+ 26: 
+ 27: ## Frontend (Next.js)
+ 28: 
+ 29: ![Frontend Image](public/images/frontend.png)
+ 30: 
+ 31: ---
+ 32: 
+ 33: ## Backend (Sanity headless CMS)
+ 34: 
+ 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 36: 
+ 37: ---
+ 38: 
+ 39: ## Google Lighthouse
+ 40: 
+ 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 42: 
+ 43: ## Features
+ 44: 
+ 45: ### General
+ 46: 
+ 47: - Clean, modern, responsive and Matrix-inspired design
+ 48: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 49: - Matrix canvas rain effect on front page
+ 50: - Custom 404 page with Matrix rain effect
+ 51: - Next.js 16 with Typescript and App Router
+ 52:   - Server Components implementation for improved performance
+ 53:   - Streaming with Suspense boundaries
+ 54:   - Automatic static optimization with revalidation
+ 55:   - Server-side data fetching with proper error handling
+ 56: - React 19
+ 57: - Sanity headless CMS for all of the content, projects and navigation links
+ 58: - Ladle for component documentation
+ 59: - Animations with Motion
+ 60: - React testing library for unit testing
+ 61: - Cypress for E2E testing
+ 62: - Playwright for cross-browser E2E testing
+ 63: - Contact form with Email.js and CSRF protection
+ 64: - Polymorphic components
+ 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 66: - Google rich results for each individual page
+ 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 68: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 70: - Reusable GenericForm component for easy form creation and management
+ 71: - Error handling with react-error-boundary for improved user experience and
+ 72:   easier debugging
+ 73: - AI-friendly repository documentation with automated updates (Repomix with
+ 74:   Github action workflow)
+ 75: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 76:   - Main AGENTS.md with project-specific patterns and gotchas
+ 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: - Recommended:
+ 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+ 84:   for enhanced GROQ query development, including syntax highlighting when using
+ 85:   `defineQuery`.
+ 86: 
+ 87: ### Design
+ 88: 
+ 89: - Fully responsive design tested on all devices
+ 90: - React Icons for project icons
+ 91: - Tailwind 14 for styling
+ 92: - Animated reusable input fields
+ 93: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 94:   Matrix characters
+ 95: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 96: 
+ 97: ### Accessibility
+ 98: 
+ 99: - WCAG accessibility tested
+100: - Accessibility testing with Cypress Axe and Pa11y
+101: - Automated Pa11y accessibility testing on every PR and push to main
+102:   - Tests all main pages against WCAG2AA standards
+103:   - Captures screenshots for visual reference
+104:   - Detailed reports available as GitHub Actions artifacts
+105: - Builds will fail if any a11y errors are found
+106: 
+107: ### Devops and Code quality
+108: 
+109: - Continuous Integration with CircleCI
+110: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+111: - Github action workflow for Cypress
+112: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+113: - E2E testing with Cypress and Playwright integrated with Github actions
+114: - Unit testing with Jest and React Testing Library integrated with CircleCI
+115: - Test coverage setup with Codecov
+116: - 100% test coverage with Jest and React testing library
+117: - AI-powered commit message generation following Conventional Commits with
+118:   gitmojis
+119: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+120:   - Scans for security, performance, correctness, and architecture issues
+121:   - Outputs a 0–100 score with actionable diagnostics on every PR
+122:   - Posts results as PR comments and GitHub Actions job summaries
+123:   - Configurable score threshold (default: 80) to gate merges
+124:   - Auto-detects package manager (pnpm, yarn, npm)
+125: - Automated performance monitoring with Lighthouse CI
+126:   - Performance, accessibility, best practices, and SEO checks on every PR
+127:   - Configurable thresholds for quality metrics
+128:   - Both desktop and performance-focused testing
+129: - Automated repository documentation with Repomix
+130:   - AI-friendly documentation generation on every push to main
+131:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+132:   - Automated PR analysis with repository structure insights
+133:   - Security-focused documentation with sensitive information filtering
+134:   - Markdown formatting for improved readability
+135: 
+136: ### Security
+137: 
+138: - OWASP security scanning with Semgrep, Gitleaks and Trivy
+139:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+140:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+141:   - Secret detection with Gitleaks on every PR and push
+142:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+143:   - Runs automatically on every PR and push to main
+144: - Automated security vulnerability scanning with Snyk
+145:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+146:   - Integrates with GitHub Security tab for vulnerability tracking
+147: - Supply chain attack prevention with 7-day minimum release age
+148:   - Packages must be published for at least 7 days before installation
+149:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+150:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
+151:   - Protects against compromised package releases (like Shai Hulud incidents)
+152: - GitHub Actions supply chain hardening with SHA pinning
+153:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+154:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+155:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+156:   - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
+157:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+158:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+159:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+160:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
+161: 
+162: ### Environment Variables
+163: 
+164: - Type-safe environment variable validation with envalid
+165:   - Runtime validation of required environment variables
+166:   - Clear error messages with examples for missing variables
+167:   - Separate handling of client-side and server-side variables
+168:   - Default values where appropriate
+169:   - Required variables:
+170: 
+171:     ```env
+172:     # Email Configuration (client-side)
+173:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+174:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+175:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+176: 
+177:     # Security Configuration (server-side)
+178:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+179:     ```
+180: 
+181:   - Validation prevents application startup if required variables are missing
+182:   - TypeScript integration for type-safe access to environment variables
+183: 
+184: ### Testing Standards
+185: 
+186: - ISTQB-aligned comprehensive test strategy
+187:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+188:   - Multi-level test approach (Unit, Component, E2E)
+189:   - Risk-based testing methodology
+190:   - Defined test metrics and reporting
+191:   - Clear roles and responsibilities
+192:   - Structured defect management process
+193: 
+194: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+195:   - Each test must include the following comments:
+196: 
+197:     ```typescript
+198:     // Arrange - Set up test data and conditions
+199:     // Act - Perform the action being tested
+200:     // Assert - Verify the results
+201:     ```
+202: 
+203:   - This pattern ensures:
+204:     - Clear test structure and readability
+205:     - Consistent test organization across the codebase
+206:     - Easy identification of test setup, execution, and verification
+207:   - Simplified test maintenance and debugging
+208:   - Automated validation through custom ESLint rules
+209:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: src/components/Layout/NavigationLink.component.tsx
@@ -21251,219 +21464,6 @@ tsconfig.json
 27:     }
 28:   }
 29: }
-````
-
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
-  4: 
-  5: Fourth version of my personal portfolio website with Next.js, Motion,
-  6: Sanity.io and Typescript.
-  7: 
-  8: ## Table of Contents
-  9: 
- 10: - [Live URL](#live-url)
- 11: - [Frontend (Next.js)](#frontend-nextjs)
- 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 13: - [Google Lighthouse](#google-lighthouse)
- 14: - [Features](#features)
- 15:   - [General](#general)
- 16:   - [Design](#design)
- 17:   - [Accessibility](#accessibility)
- 18:   - [Security](#security)
- 19:   - [Devops and Code quality](#devops-and-code-quality)
- 20:   - [Environment Variables](#environment-variables)
- 21:   - [Testing Standards](#testing-standards)
- 22: 
- 23: ## Live URL
- 24: 
- 25: - <https://www.dfweb.no>
- 26: 
- 27: ## Frontend (Next.js)
- 28: 
- 29: ![Frontend Image](public/images/frontend.png)
- 30: 
- 31: ---
- 32: 
- 33: ## Backend (Sanity headless CMS)
- 34: 
- 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 36: 
- 37: ---
- 38: 
- 39: ## Google Lighthouse
- 40: 
- 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 42: 
- 43: ## Features
- 44: 
- 45: ### General
- 46: 
- 47: - Clean, modern, responsive and Matrix-inspired design
- 48: - The application is 100% typescript (the types are generated from Sanity typegen)
- 49: - Matrix canvas rain effect on front page
- 50: - Custom 404 page with Matrix rain effect
- 51: - Next.js 16 with Typescript and App Router
- 52:   - Server Components implementation for improved performance
- 53:   - Streaming with Suspense boundaries
- 54:   - Automatic static optimization with revalidation
- 55:   - Server-side data fetching with proper error handling
- 56: - React 19
- 57: - Sanity headless CMS for all of the content, projects and navigation links
- 58: - Ladle for component documentation
- 59: - Animations with Motion
- 60: - React testing library for unit testing
- 61: - Cypress for E2E testing
- 62: - Playwright for cross-browser E2E testing
- 63: - Contact form with Email.js and CSRF protection
- 64: - Polymorphic components
- 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 66: - Google rich results for each individual page
- 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 68: - Automated Lighthouse CI testing integrated with GitHub Actions
- 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 70: - Reusable GenericForm component for easy form creation and management
- 71: - Error handling with react-error-boundary for improved user experience and
- 72:   easier debugging
- 73: - AI-friendly repository documentation with automated updates (Repomix with
- 74:   Github action workflow)
- 75: - AI assistant guidance with AGENTS.md files for immediate productivity
- 76:   - Main AGENTS.md with project-specific patterns and gotchas
- 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 14 for styling
- 92: - Animated reusable input fields
- 93: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 94:   Matrix characters
- 95: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 96: 
- 97: ### Accessibility
- 98: 
- 99: - WCAG accessibility tested
-100: - Accessibility testing with Cypress Axe and Pa11y
-101: - Automated Pa11y accessibility testing on every PR and push to main
-102:   - Tests all main pages against WCAG2AA standards
-103:   - Captures screenshots for visual reference
-104:   - Detailed reports available as GitHub Actions artifacts
-105: - Builds will fail if any a11y errors are found
-106: 
-107: ### Devops and Code quality
-108: 
-109: - Continuous Integration with CircleCI
-110: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-111: - Github action workflow for Cypress
-112: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-113: - E2E testing with Cypress and Playwright integrated with Github actions
-114: - Unit testing with Jest and React Testing Library integrated with CircleCI
-115: - Test coverage setup with Codecov
-116: - 100% test coverage with Jest and React testing library
-117: - AI-powered commit message generation following Conventional Commits with
-118:   gitmojis
-119: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
-120:   - Scans for security, performance, correctness, and architecture issues
-121:   - Outputs a 0–100 score with actionable diagnostics on every PR
-122:   - Posts results as PR comments and GitHub Actions job summaries
-123:   - Configurable score threshold (default: 80) to gate merges
-124:   - Auto-detects package manager (pnpm, yarn, npm)
-125: - Automated performance monitoring with Lighthouse CI
-126:   - Performance, accessibility, best practices, and SEO checks on every PR
-127:   - Configurable thresholds for quality metrics
-128:   - Both desktop and performance-focused testing
-129: - Automated repository documentation with Repomix
-130:   - AI-friendly documentation generation on every push to main
-131:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-132:   - Automated PR analysis with repository structure insights
-133:   - Security-focused documentation with sensitive information filtering
-134:   - Markdown formatting for improved readability
-135: 
-136: ### Security
-137: 
-138: - OWASP security scanning with Semgrep, Gitleaks and Trivy
-139:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-140:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-141:   - Secret detection with Gitleaks on every PR and push
-142:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-143:   - Runs automatically on every PR and push to main
-144: - Automated security vulnerability scanning with Snyk
-145:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-146:   - Integrates with GitHub Security tab for vulnerability tracking
-147: - Supply chain attack prevention with 7-day minimum release age
-148:   - Packages must be published for at least 7 days before installation
-149:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-150:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
-151:   - Protects against compromised package releases (like Shai Hulud incidents)
-152: - GitHub Actions supply chain hardening with SHA pinning
-153:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
-154:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
-155:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-156:   - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
-157:     - `python scripts/pin-actions.py audit` — scan and report mutable references
-158:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
-159:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
-160:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
-161: 
-162: ### Environment Variables
-163: 
-164: - Type-safe environment variable validation with envalid
-165:   - Runtime validation of required environment variables
-166:   - Clear error messages with examples for missing variables
-167:   - Separate handling of client-side and server-side variables
-168:   - Default values where appropriate
-169:   - Required variables:
-170: 
-171:     ```env
-172:     # Email Configuration (client-side)
-173:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-174:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-175:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-176: 
-177:     # Security Configuration (server-side)
-178:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-179:     ```
-180: 
-181:   - Validation prevents application startup if required variables are missing
-182:   - TypeScript integration for type-safe access to environment variables
-183: 
-184: ### Testing Standards
-185: 
-186: - ISTQB-aligned comprehensive test strategy
-187:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-188:   - Multi-level test approach (Unit, Component, E2E)
-189:   - Risk-based testing methodology
-190:   - Defined test metrics and reporting
-191:   - Clear roles and responsibilities
-192:   - Structured defect management process
-193: 
-194: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-195:   - Each test must include the following comments:
-196: 
-197:     ```typescript
-198:     // Arrange - Set up test data and conditions
-199:     // Act - Perform the action being tested
-200:     // Assert - Verify the results
-201:     ```
-202: 
-203:   - This pattern ensures:
-204:     - Clear test structure and readability
-205:     - Consistent test organization across the codebase
-206:     - Easy identification of test setup, execution, and verification
-207:   - Simplified test maintenance and debugging
-208:   - Automated validation through custom ESLint rules
-209:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: tsconfig.json
@@ -22099,9 +22099,9 @@ tsconfig.json
  66:     "@types/node": "^24.12.2",
  67:     "@types/react": "^19.2.14",
  68:     "@types/react-dom": "^19.2.3",
- 69:     "@typescript-eslint/eslint-plugin": "^8.58.0",
- 70:     "@typescript-eslint/parser": "^8.58.0",
- 71:     "@typescript-eslint/utils": "^8.58.0",
+ 69:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+ 70:     "@typescript-eslint/parser": "^8.59.0",
+ 71:     "@typescript-eslint/utils": "^8.59.0",
  72:     "axe-core": "^4.11.3",
  73:     "cypress": "15.14.1",
  74:     "cypress-axe": "^1.7.0",
