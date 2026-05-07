@@ -88,7 +88,7 @@ Sanity.io and Typescript.
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind 14 for styling
+- Tailwind 4 for styling
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading
   Matrix characters
