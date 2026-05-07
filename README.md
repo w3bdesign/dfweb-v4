@@ -88,7 +88,10 @@ Sanity.io and Typescript.
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind 4 for styling
+- Tailwind 4 for styling with a CSS custom-property design token system
+  ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+  colors, surface palette, glow shadows, and custom animations all driven by
+  CSS variables defined in [`globals.css`](src/app/globals.css:33)
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading
   Matrix characters
