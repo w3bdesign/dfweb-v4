@@ -15820,6 +15820,39 @@ vercel.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.0",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.2.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.5",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -21073,37 +21106,76 @@ vercel.json
 58: });
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.2.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.5",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.15.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: sudo npm i -g pnpm@11.0.8
+19:       - run:
+20:           name: Install Dependencies
+21:           command: pnpm install --frozen-lockfile
+22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+23:       - save_cache:
+24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+25:           paths:
+26:             - ~/.pnpm-store
+27:   build:
+28:     working_directory: /home/circleci/dfweb
+29:     docker:
+30:       - image: cimg/node:24.15.0-browsers
+31:     steps:
+32:       - checkout
+33:       - restore_cache:
+34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+35:       - run:
+36:           name: Install pnpm package manager
+37:           command: sudo npm i -g pnpm@11.0.8
+38:       - run:
+39:           name: Install Dependencies
+40:           command: pnpm install --frozen-lockfile
+41:       - run:
+42:           name: Chrome key start setup
+43:           command: sudo apt update -y
+44:       - run:
+45:           name: Chrome key finish setup
+46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+47:       - run:
+48:           name: Chrome package download
+49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+50:       - save_cache:
+51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+52:           paths:
+53:             - ~/.pnpm-store
+54:       - store_artifacts:
+55:           path: /root/.npm/_logs
+56:       - run:
+57:           name: Run Jest Tests
+58:           command: pnpm test
+59:       - run:
+60:           name: Make sure ~/.gnupg directory exists
+61:           command: mkdir -p ~/.gnupg
+62:       - codecov/upload
+63:     parallelism: 6
+64: workflows:
+65:   chromatic-deploy:
+66:     jobs:
+67:       - build:
+68:           name: Build Next.js project
 ````
 
 ## File: .github/workflows/cypress.yml
@@ -21328,82 +21400,6 @@ vercel.json
 171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
 172:             exit 1
 173:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:         with:
-23:           version: 11
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/components/Layout/NavigationLink.component.tsx
@@ -21837,78 +21833,6 @@ vercel.json
 1: {}
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.15.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: sudo npm i -g pnpm@11.0.8
-19:       - run:
-20:           name: Install Dependencies
-21:           command: pnpm install --frozen-lockfile
-22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-23:       - save_cache:
-24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-25:           paths:
-26:             - ~/.pnpm-store
-27:   build:
-28:     working_directory: /home/circleci/dfweb
-29:     docker:
-30:       - image: cimg/node:24.15.0-browsers
-31:     steps:
-32:       - checkout
-33:       - restore_cache:
-34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-35:       - run:
-36:           name: Install pnpm package manager
-37:           command: sudo npm i -g pnpm@11.0.8
-38:       - run:
-39:           name: Install Dependencies
-40:           command: pnpm install --frozen-lockfile
-41:       - run:
-42:           name: Chrome key start setup
-43:           command: sudo apt update -y
-44:       - run:
-45:           name: Chrome key finish setup
-46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-47:       - run:
-48:           name: Chrome package download
-49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-50:       - save_cache:
-51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-52:           paths:
-53:             - ~/.pnpm-store
-54:       - store_artifacts:
-55:           path: /root/.npm/_logs
-56:       - run:
-57:           name: Run Jest Tests
-58:           command: pnpm test
-59:       - run:
-60:           name: Make sure ~/.gnupg directory exists
-61:           command: mkdir -p ~/.gnupg
-62:       - codecov/upload
-63:     parallelism: 6
-64: workflows:
-65:   chromatic-deploy:
-66:     jobs:
-67:       - build:
-68:           name: Build Next.js project
-````
-
 ## File: .github/workflows/security.yml
 ````yaml
  1: name: OWASP Security Scan
@@ -21977,12 +21901,104 @@ vercel.json
 64:           format: table
 ````
 
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:         with:
+23:           version: 11
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Install studio dependencies
+32:         run: cd studio && npm install --ignore-scripts --legacy-peer-deps
+33:       - name: Run Snyk to check main project vulnerabilities
+34:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+35:         env:
+36:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+37:         with:
+38:           command: "test"
+39:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+40:       - name: Run Snyk to check eslint plugin vulnerabilities
+41:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+42:         env:
+43:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+44:         with:
+45:           command: "test"
+46:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+47:       - name: Upload main project SARIF report to GitHub Security tab
+48:         if: always() && hashFiles('snyk-main.sarif') != ''
+49:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+50:         with:
+51:           sarif_file: snyk-main.sarif
+52:           category: snyk-main
+53:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+56:         with:
+57:           sarif_file: snyk-eslint.sarif
+58:           category: snyk-eslint
+59:       - name: Snyk Monitor main project (only for pushes to main branch)
+60:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+61:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+62:         env:
+63:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+64:         with:
+65:           command: "monitor"
+66:           args: "--all-projects"
+67:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+68:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+69:         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # master
+70:         env:
+71:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+72:         with:
+73:           command: "monitor"
+74:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - '.'
+ 3: allowBuilds:
+ 4:   '@swc/core': true
+ 5:   cypress: true
+ 6:   esbuild: true
+ 7:   msw: true
+ 8:   puppeteer: true
+ 9:   sharp: true
+10:   unrs-resolver: true
+````
+
 ## File: studio/package.json
 ````json
  1: {
  2:   "name": "dfweb-v4",
  3:   "private": true,
- 4:   "version": "1.0.3",
+ 4:   "version": "1.0.4",
  5:   "main": "package.json",
  6:   "scripts": {
  7:     "dev": "sanity dev",
@@ -22011,43 +22027,32 @@ vercel.json
 30:   "pnpm": {
 31:     "overrides": {
 32:       "basic-ftp": ">=6.0.1",
-33:       "brace-expansion": ">=2.0.3",
+33:       "brace-expansion": ">=5.0.6",
 34:       "dompurify": ">=3.4.2",
 35:       "flatted": ">=3.4.2",
-36:       "js-yaml": ">=3.14.2",
-37:       "lodash": ">=4.18.0",
-38:       "lodash-es": ">=4.18.0",
+36:       "js-yaml": ">=4.1.1",
+37:       "lodash": ">=4.18.1",
+38:       "lodash-es": ">=4.18.1",
 39:       "minimatch@>=5.0.0 <10.2.1": "10.2.5",
 40:       "picomatch@<2.3.2": "4.0.4",
 41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
 42:       "smol-toml": ">=1.6.1",
-43:       "undici": ">=6.24.0",
-44:       "vite": ">=7.3.2",
-45:       "yaml": ">=2.8.3",
+43:       "undici": ">=8.2.0",
+44:       "vite": ">=8.0.12",
+45:       "yaml": ">=2.9.0",
 46:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
 47:     }
 48:   },
-49:   "prettier": {
-50:     "semi": false,
-51:     "printWidth": 100,
-52:     "bracketSpacing": false,
-53:     "singleQuote": true
-54:   }
-55: }
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - '.'
- 3: allowBuilds:
- 4:   '@swc/core': true
- 5:   cypress: true
- 6:   esbuild: true
- 7:   msw: true
- 8:   puppeteer: true
- 9:   sharp: true
-10:   unrs-resolver: true
+49:   "overrides": {
+50:     "uuid": ">=14.0.0"
+51:   },
+52:   "prettier": {
+53:     "semi": false,
+54:     "printWidth": 100,
+55:     "bracketSpacing": false,
+56:     "singleQuote": true
+57:   }
+58: }
 ````
 
 ## File: package.json
