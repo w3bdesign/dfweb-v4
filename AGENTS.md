@@ -14,7 +14,7 @@ This file provides guidance to agents when working with code in this repository.
 - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
 - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
 - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
-- **Supply Chain Security**: 7-day minimum release age enforced via `.npmrc` and `renovate.json` - see Security section below
+- **Supply Chain Security**: Multi-layered defense — see Security section below
 
 ## Critical Commands
 
@@ -242,3 +242,60 @@ Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEV
 - MUST: Increase contrast on `:hover/:active/:focus`
 - SHOULD: Match browser UI to bg
 - SHOULD: Avoid gradient banding (use masks when needed)
+
+## Security — Supply Chain Defense
+
+This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
+
+### Package Installation Defenses
+
+| Defense | Config File | Notes |
+|---------|-------------|-------|
+| `ignore-scripts=true` | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
+| `allowBuilds` whitelist | `pnpm-workspace.yaml` | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
+| `minimum-release-age=2880` | `.npmrc` | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions |
+| `block-exotic-subdependencies=true` | `.npmrc` | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources |
+| `--frozen-lockfile` | All CI workflows | Prevents lockfile modification during CI installs |
+| `engine-strict=true` | `.npmrc` | Fails if Node.js version doesn't match engines field |
+| Vulnerability overrides | `studio/package.json` | Known CVEs patched via pnpm overrides |
+
+### Automated Dependency Updates
+
+| Defense | Config File | Notes |
+|---------|-------------|-------|
+| 7-day minimum release age | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h) |
+| OpenSSF Scorecard | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
+| Automerge only for minor/patch | `renovate.json` | Major updates require manual review |
+
+### CI/CD Security
+
+| Defense | Config File | Notes |
+|---------|-------------|-------|
+| SHA-pinned GitHub Actions | All workflows | All `uses:` references pinned to commit SHAs, never floating tags |
+| No `pull_request_target` | All workflows | NEVER use this trigger — it enables cache poisoning attacks |
+| Least-privilege permissions | All workflows | Every workflow specifies minimal `permissions` block |
+| No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches |
+| Pinned global installs | `repomix.yml` | Global npm packages pinned to exact versions |
+| Lockfile-backed studio installs | `snyk-scan.yml` | Uses `npm ci` with committed `package-lock.json` |
+
+### Security Scanning
+
+| Tool | Workflow | Purpose |
+|------|----------|---------|
+| Snyk | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring |
+| Trivy | `security.yml` | Filesystem vulnerability scanning (CRITICAL/HIGH) |
+| Semgrep | `security.yml` | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
+| CodeQL | `codeql.yml` | GitHub native code analysis with security-and-quality queries |
+| Gitleaks | `security.yml` | Secret detection in commits |
+
+### Rules for Agents
+
+- **NEVER** add `pull_request_target` to any workflow
+- **NEVER** use floating tags for GitHub Actions (always pin to SHA)
+- **NEVER** use `npm install -g <package>` without a pinned version in CI
+- **NEVER** add `restore-keys` fallbacks to cache steps in workflows
+- **NEVER** remove `ignore-scripts=true` from `.npmrc`
+- **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
+- **ALWAYS** add explicit `permissions` blocks to new workflows
+- When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
+- Full hardening plan available at `plans/supply-chain-hardening.md`
