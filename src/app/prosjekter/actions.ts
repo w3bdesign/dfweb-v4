@@ -1,20 +1,17 @@
 import { cache } from "react";
 import "server-only";
 
-import { client } from "@/lib/sanity/client";
+import { sanityFetch } from "@/lib/sanity/client";
 import { projectsQuery } from "@/lib/sanity/queries";
 
 import type { Project } from "@/types/sanity.types";
 import { isSanityApiError } from "@/types/sanity-errors";
 
 async function fetchProjectsFromSanity(): Promise<Project[]> {
-  return client.fetch(
-    projectsQuery,
-    {},
-    {
-      next: { revalidate: 3600 },
-    },
-  );
+  return sanityFetch<Project[]>({
+    query: projectsQuery,
+    revalidate: 3600,
+  });
 }
 
 function handleError(error: unknown): never {
