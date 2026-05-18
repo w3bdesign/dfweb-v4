@@ -5685,24 +5685,6 @@ vercel.json
 14: } = motion;
 ````
 
-## File: src/__mocks__/sanity-client.ts
-````typescript
- 1: export const client = {
- 2:   fetch: jest.fn().mockResolvedValue([]),
- 3: };
- 4: export function urlFor() {
- 5:   const imageUrlBuilder = {
- 6:     width: () => imageUrlBuilder,
- 7:     height: () => imageUrlBuilder,
- 8:     fit: () => imageUrlBuilder,
- 9:     quality: () => imageUrlBuilder,
-10:     auto: () => imageUrlBuilder,
-11:     url: () => "/mocked-image-url",
-12:   };
-13:   return imageUrlBuilder;
-14: }
-````
-
 ## File: src/__mocks__/utils.ts
 ````typescript
 1: // Mock implementation of src/utils
@@ -8203,152 +8185,166 @@ vercel.json
 114: });
 ````
 
-## File: src/__tests__/Prosjekter/actions.test.ts
+## File: src/__tests__/Layout/MobileMenu.test.tsx
 ````typescript
-  1: import { getProjects } from "@/app/prosjekter/actions";
-  2: import { client } from "@/lib/sanity/client";
-  3: import { projectsQuery } from "@/lib/sanity/queries";
-  4: // Mock the Sanity client
-  5: jest.mock("@/lib/sanity/client", () => ({
-  6:   client: {
-  7:     fetch: jest.fn(),
-  8:   },
-  9: }));
- 10: describe("getProjects", () => {
- 11:   beforeEach(() => {
- 12:     jest.clearAllMocks();
- 13:   });
- 14:   it("fetches projects successfully", async () => {
- 15:     // Arrange
- 16:     const mockProjects = [
- 17:       {
- 18:         id: "1",
- 19:         name: "Test Project",
- 20:         description: "Test Description",
- 21:         subdescription: "Test Subdescription",
- 22:         projectimage: { asset: { _ref: "test" } },
- 23:         urlwww: [],
- 24:         urlgithub: [],
- 25:       },
- 26:     ];
- 27:     const expectedFetchOptions = {
- 28:       next: { revalidate: 3600 },
- 29:     };
- 30:     (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 31:     // Act
- 32:     const result = await getProjects();
- 33:     // Assert
- 34:     expect(result).toStrictEqual(mockProjects);
- 35:     expect(client.fetch).toHaveBeenCalledWith(
- 36:       projectsQuery,
- 37:       {},
- 38:       expectedFetchOptions,
- 39:     );
- 40:   });
- 41:   describe("error handling", () => {
- 42:     it("handles authentication errors (401)", async () => {
- 43:       // Arrange
- 44:       const error = {
- 45:         statusCode: 401,
- 46:         message: "Invalid token",
- 47:         details: {
- 48:           type: "credentials",
- 49:           description: "Invalid token provided",
- 50:         },
- 51:       };
- 52:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 53:       // Act & Assert
- 54:       await expect(getProjects()).rejects.toThrow("Authentication failed");
- 55:     });
- 56:     it("handles permission errors (403)", async () => {
- 57:       // Arrange
- 58:       const error = {
- 59:         statusCode: 403,
- 60:         message: "Insufficient permissions",
- 61:         details: {
- 62:           type: "authorization",
- 63:           description: "Missing read access",
- 64:         },
- 65:       };
- 66:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 67:       // Act & Assert
- 68:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
- 69:     });
- 70:     it("handles rate limiting (429)", async () => {
- 71:       // Arrange
- 72:       const error = {
- 73:         statusCode: 429,
- 74:         message: "Too Many Requests",
- 75:         details: { type: "rate_limit", description: "Rate limit exceeded" },
- 76:       };
- 77:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 78:       // Act & Assert
- 79:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
- 80:     });
- 81:     it("handles malformed GROQ queries (400)", async () => {
- 82:       // Arrange
- 83:       const error = {
- 84:         statusCode: 400,
- 85:         message: "Invalid GROQ query",
- 86:         details: {
- 87:           type: "query_error",
- 88:           description: "Syntax error in GROQ query",
- 89:         },
- 90:       };
- 91:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
- 92:       // Act & Assert
- 93:       await expect(getProjects()).rejects.toThrow(
- 94:         "Sanity API error: Invalid GROQ query",
- 95:       );
- 96:     });
- 97:     it("handles network timeouts", async () => {
- 98:       // Arrange
- 99:       const error = Object.assign(new Error("Network timeout"), {
-100:         name: "TimeoutError",
-101:       });
-102:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-103:       // Act & Assert
-104:       await expect(getProjects()).rejects.toThrow("Request timed out");
-105:     });
-106:     it("handles generic fetch errors", async () => {
-107:       // Arrange
-108:       const error = {
-109:         message: "Fetch failed",
-110:       };
-111:       (client.fetch as jest.Mock).mockRejectedValueOnce(error);
-112:       // Act & Assert
-113:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-114:     });
-115:     it("recovers after temporary errors", async () => {
-116:       // Arrange
-117:       const rateError = {
-118:         statusCode: 429,
-119:         message: "Too Many Requests",
-120:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-121:       };
-122:       const mockProjects = [
-123:         {
-124:           id: "1",
-125:           name: "Test Project",
-126:           description: "Test Description",
-127:           subdescription: "Test Subdescription",
-128:           projectimage: { asset: { _ref: "test" } },
-129:           urlwww: [],
-130:           urlgithub: [],
-131:         },
-132:       ];
-133:       // First call fails with rate limit
-134:       (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
-135:       // Second call succeeds
-136:       (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-137:       // First call should fail
-138:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-139:       // Second call should succeed
-140:       const result = await getProjects();
-141:       expect(result).toStrictEqual(mockProjects);
-142:     });
-143:   });
-144: });
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import { fireEvent, render, screen } from "@testing-library/react";
+  5: import userEvent from "@testing-library/user-event";
+  6: import { usePathname } from "next/navigation";
+  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
+  8: const linksmock = [
+  9:   {
+ 10:     _key: "home",
+ 11:     title: "Hjem",
+ 12:     name: "Hjem",
+ 13:     href: "/",
+ 14:     hash: "",
+ 15:     externalLink: false,
+ 16:   },
+ 17:   {
+ 18:     _key: "projects",
+ 19:     title: "Prosjekter",
+ 20:     name: "Prosjekter",
+ 21:     href: "/prosjekter",
+ 22:     hash: "",
+ 23:     externalLink: false,
+ 24:   },
+ 25:   {
+ 26:     _key: "cv",
+ 27:     title: "CV",
+ 28:     name: "CV",
+ 29:     href: "/cv",
+ 30:     hash: "",
+ 31:     externalLink: false,
+ 32:   },
+ 33:   {
+ 34:     _key: "github",
+ 35:     title: "Github",
+ 36:     name: "Github",
+ 37:     href: "https://github.com/w3bdesign",
+ 38:     hash: "",
+ 39:     externalLink: true,
+ 40:   },
+ 41:   {
+ 42:     _key: "contact",
+ 43:     title: "Kontakt",
+ 44:     name: "Kontakt",
+ 45:     href: "/kontakt",
+ 46:     hash: "",
+ 47:     externalLink: false,
+ 48:   },
+ 49: ];
+ 50: // Mock next/navigation
+ 51: jest.mock("next/navigation", () => ({
+ 52:   usePathname: jest.fn(),
+ 53: }));
+ 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+ 55: describe("MobileMenu - elementer eksisterer", () => {
+ 56:   const testidMenu = "mobile-menu";
+ 57:   afterEach(() => {
+ 58:     jest.clearAllMocks();
+ 59:   });
+ 60:   it("renders mobile menu when hamburger is clicked", () => {
+ 61:     // Arrange
+ 62:     mockUsePathname.mockReturnValue("/");
+ 63:     render(<MobileMenu links={linksmock} />);
+ 64:     const hamburger = screen.getByTestId("hamburger");
+ 65:     // Act
+ 66:     fireEvent.click(hamburger);
+ 67:     const mobilemenu = screen.getByTestId(testidMenu);
+ 68:     // Assert
+ 69:     expect(mobilemenu).toBeInTheDocument();
+ 70:   });
+ 71:   it("toggles hamburger menu expansion state", () => {
+ 72:     // Arrange
+ 73:     mockUsePathname.mockReturnValue("/");
+ 74:     render(<MobileMenu links={linksmock} />);
+ 75:     const hamburger = screen.getByTestId("hamburger");
+ 76:     // Assert - Initial state
+ 77:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
+ 78:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
+ 79:     // Act - Open menu
+ 80:     fireEvent.click(hamburger);
+ 81:     // Assert - Open state
+ 82:     expect(hamburger).toHaveAttribute("aria-expanded", "true");
+ 83:     expect(hamburger).toHaveAttribute("aria-label", "Lukk meny");
+ 84:     // Act - Close menu
+ 85:     fireEvent.click(hamburger);
+ 86:     // Assert - Closed state
+ 87:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
+ 88:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
+ 89:   });
+ 90:   it("displays correct number of navigation links", () => {
+ 91:     // Arrange
+ 92:     mockUsePathname.mockReturnValue("/");
+ 93:     render(<MobileMenu links={linksmock} />);
+ 94:     const hamburger = screen.getByTestId("hamburger");
+ 95:     // Act
+ 96:     fireEvent.click(hamburger);
+ 97:     const menuItems = screen.getAllByRole("link");
+ 98:     // Assert
+ 99:     expect(menuItems).toHaveLength(linksmock.length);
+100:   });
+101:   it("renders internal links with correct active state", () => {
+102:     // Arrange
+103:     const currentPath = "/prosjekter";
+104:     mockUsePathname.mockReturnValue(currentPath);
+105:     render(<MobileMenu links={linksmock} />);
+106:     const hamburger = screen.getByTestId("hamburger");
+107:     // Act
+108:     fireEvent.click(hamburger);
+109:     // Assert - Test active link styling
+110:     const activeLink = screen.getByTestId("mobil-Prosjekter");
+111:     expect(activeLink).toHaveClass("text-[var(--matrix-light)]");
+112:     // Assert - Test non-active link styling
+113:     const inactiveLink = screen.getByTestId("mobil-Hjem");
+114:     expect(inactiveLink).not.toHaveClass("text-[var(--matrix-light)]");
+115:   });
+116:   it("renders internal links with glitch effect", () => {
+117:     // Arrange
+118:     mockUsePathname.mockReturnValue("/");
+119:     render(<MobileMenu links={linksmock} />);
+120:     const hamburger = screen.getByTestId("hamburger");
+121:     // Act
+122:     fireEvent.click(hamburger);
+123:     // Assert - Test that glitch effect is present for internal links
+124:     const internalLink = screen.getByTestId("mobil-Hjem");
+125:     expect(internalLink).toBeInTheDocument();
+126:     expect(internalLink).toHaveTextContent("Hjem");
+127:   });
+128:   it("opens external links in new tab with correct attributes", () => {
+129:     // Arrange
+130:     mockUsePathname.mockReturnValue("/");
+131:     render(<MobileMenu links={linksmock} />);
+132:     const hamburger = screen.getByTestId("hamburger");
+133:     // Act
+134:     fireEvent.click(hamburger);
+135:     const externalLink = screen.getByRole("link", { name: /github/i });
+136:     // Assert
+137:     expect(externalLink).toHaveAttribute("target", "_blank");
+138:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
+139:   });
+140:   it("navigates and closes menu when clicking a link", async () => {
+141:     // Arrange
+142:     mockUsePathname.mockReturnValue("/");
+143:     render(<MobileMenu links={linksmock} />);
+144:     const user = userEvent.setup();
+145:     const hamburger = screen.getByTestId("hamburger");
+146:     // Act - Open menu
+147:     await user.click(hamburger);
+148:     // Assert - Menu is open
+149:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
+150:     // Act - Click a link
+151:     const link = screen.getByTestId("mobil-Prosjekter");
+152:     await user.click(link);
+153:     // Wait for animation to complete
+154:     await new Promise((resolve) => setTimeout(resolve, 2500));
+155:     // Assert - Menu should close
+156:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
+157:   });
+158: });
 ````
 
 ## File: src/__tests__/Prosjekter/error.test.tsx
@@ -9639,21 +9635,6 @@ vercel.json
 30: export default siteMapGenerator;
 ````
 
-## File: src/app/cv/page.tsx
-````typescript
- 1: import CVContent from "@/components/CV/CVContent.component";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { cvQuery } from "@/lib/sanity/queries";
- 4: import { Metadata } from "next/types";
- 5: export const metadata: Metadata = {
- 6:   title: "CV - Dfweb",
- 7: };
- 8: export default async function CVPage() {
- 9:   const cvData = await client.fetch(cvQuery);
-10:   return <CVContent cvData={cvData} />;
-11: }
-````
-
 ## File: src/app/kontakt/page.tsx
 ````typescript
  1: import ContactForm from "@/components/Kontakt/ContactForm.component";
@@ -9667,54 +9648,6 @@ vercel.json
  9:   const csrfToken = generateCSRFToken();
 10:   return <ContactForm csrfToken={csrfToken} />;
 11: }
-````
-
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { cache } from "react";
- 2: import "server-only";
- 3: import { client } from "@/lib/sanity/client";
- 4: import { projectsQuery } from "@/lib/sanity/queries";
- 5: import type { Project } from "@/types/sanity.types";
- 6: import { isSanityApiError } from "@/types/sanity-errors";
- 7: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 8:   return client.fetch(
- 9:     projectsQuery,
-10:     {},
-11:     {
-12:       next: { revalidate: 3600 },
-13:     },
-14:   );
-15: }
-16: function handleError(error: unknown): never {
-17:   console.error("Error fetching projects:", error);
-18:   if (isSanityApiError(error)) {
-19:     switch (error.statusCode) {
-20:       case 401:
-21:         throw new Error("Authentication failed");
-22:       case 403:
-23:         throw new Error("Insufficient permissions");
-24:       case 429:
-25:         throw new Error("Rate limit exceeded");
-26:       default:
-27:         throw new Error(`Sanity API error: ${error.message}`);
-28:     }
-29:   }
-30:   if (error instanceof Error && error.name === "TimeoutError") {
-31:     throw new Error("Request timed out");
-32:   }
-33:   throw new Error("Failed to fetch projects");
-34: }
-35: export const getProjects = cache(async (): Promise<Project[]> => {
-36:   try {
-37:     return await fetchProjectsFromSanity();
-38:   } catch (error) {
-39:     handleError(error);
-40:   }
-41: });
-42: export function preloadProjects(): void {
-43:   getProjects();
-44: }
 ````
 
 ## File: src/app/prosjekter/error.tsx
@@ -10246,81 +10179,6 @@ vercel.json
 184: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { preconnect } from "react-dom";
- 4: import { SpeedInsights } from "@vercel/speed-insights/next";
- 5: import "./globals.css";
- 6: import "./glitch.css";
- 7: import { client } from "@/lib/sanity/client";
- 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 9: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
-10: import SkipLink from "@/components/UI/SkipLink.component";
-11: import Header from "@/components/Layout/Header.component";
-12: import Footer from "@/components/Layout/Footer.component";
-13: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-14: const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
-15: export const metadata: Metadata = {
-16:   title: "Forside - Dfweb",
-17:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-18: };
-19: export default async function RootLayout({
-20:   children,
-21: }: Readonly<{
-22:   children: React.ReactNode;
-23: }>) {
-24:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-25:   preconnect("https://cdn.sanity.io");
-26:   const [navigation, { footerCopyrightText }] = await Promise.all([
-27:     client.fetch(navigationQuery),
-28:     client.fetch(settingsQuery),
-29:   ]);
-30:   return (
-31:     <html lang="nb">
-32:       <head>
-33:         <meta
-34:           name="viewport"
-35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-36:         />
-37:         <link rel="icon" href="/favicon.ico" />
-38:         <link rel="apple-touch-icon" href="/logo.png" />
-39:         <meta property="og:title" content="Daniel Fjeldstad" />
-40:         <meta name="author" content="Daniel Fjeldstad" />
-41:         <meta property="og:locale" content="nb_NO" />
-42:         <meta
-43:           property="og:description"
-44:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-45:         />
-46:         <meta property="og:url" content="https://www.dfweb.no/" />
-47:         <meta property="og:site_name" content="dfweb.no" />
-48:         <meta name="theme-color" content="#004014" />
-49:       </head>
-50:       <body
-51:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-52:       >
-53:         <LazyMotionProvider>
-54:           <SkipLink />
-55:           <ErrorBoundary>
-56:             <div id="main-content" className="grow flex flex-col">
-57:               <Header navigation={navigation} />
-58:               <SpeedInsights />
-59:               <div className="grow">{children}</div>
-60:               <Footer
-61:                 footerCopyrightText={
-62:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-63:                 }
-64:               />
-65:             </div>
-66:           </ErrorBoundary>
-67:         </LazyMotionProvider>
-68:       </body>
-69:     </html>
-70:   );
-71: }
-````
-
 ## File: src/app/not-found.tsx
 ````typescript
  1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
@@ -10336,36 +10194,6 @@ vercel.json
 11:     </div>
 12:   );
 13: }
-````
-
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import { client } from "@/lib/sanity/client";
- 3: import { pageContentQuery } from "@/lib/sanity/queries";
- 4: import ContentLoader from "@/components/UI/ContentLoader.component";
- 5: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
- 6:   loading: () => <ContentLoader type="hero" />,
- 7: });
- 8: const DynamicIndexContent = dynamic(
- 9:   () => import("@/components/Index/IndexContent.component"),
-10:   {
-11:     loading: () => <ContentLoader type="section" sections={3} />,
-12:   },
-13: );
-14: export default async function HomePage() {
-15:   const pageContent = await client.fetch(pageContentQuery);
-16:   return (
-17:     <main>
-18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-19:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-20:       </div>
-21:       {pageContent?.content && (
-22:         <DynamicIndexContent pageContent={pageContent.content} />
-23:       )}
-24:     </main>
-25:   );
-26: }
 ````
 
 ## File: src/components/Animations/BounceInScroll.component.tsx
@@ -12082,6 +11910,60 @@ vercel.json
 153: export default MobileMenu;
 ````
 
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import * as m from "motion/react-m";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: export interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-[var(--matrix-light)]" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <m.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
+36:           }`}
+37:           initial={false}
+38:           animate={{
+39:             width: isActive ? "100%" : "0%",
+40:           }}
+41:           variants={{
+42:             hover: { width: "100%" },
+43:           }}
+44:           transition={{ duration: 0.3 }}
+45:         />
+46:       </div>
+47:     </Link>
+48:   </MotionDiv>
+49: );
+50: export default NavigationLink;
+````
+
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -12904,6 +12786,68 @@ vercel.json
 19: });
 ````
 
+## File: src/e2e/cypress/e2e/prosjekter.cy.ts
+````typescript
+ 1: /// <reference types="cypress"/>
+ 2: /// <reference types="cypress-axe"/>
+ 3: /// <reference types="axe-core"/>
+ 4: import { checkAccessibility } from "../support/functions";
+ 5: describe("Prosjekter Page", () => {
+ 6:   beforeEach(() => {
+ 7:     cy.visit("http://localhost:3000/prosjekter");
+ 8:   });
+ 9:   it("should load the prosjekter page", () => {
+10:     cy.url().should("include", "/prosjekter");
+11:     cy.get("h1").should("contain", "Prosjekter");
+12:   });
+13:   it("should display project cards", () => {
+14:     cy.get('[data-testid="project-card"]').should("have.length.at.least", 1);
+15:   });
+16:   it("should display project name, description, and subdescription", () => {
+17:     cy.get('[data-testid="project-card"]')
+18:       .first()
+19:       .within(() => {
+20:         cy.get("h2").should("have.class", "text-xl").and("not.be.empty");
+21:         cy.get("h3").should("have.class", "text-base").and("not.be.empty");
+22:         cy.get("p").should("have.class", "text-sm").and("not.be.empty");
+23:       });
+24:   });
+25:   it('should have functioning "Besøk" button if urlwww exists', () => {
+26:     cy.get('[data-testid="project-card"]')
+27:       .first()
+28:       .within(() => {
+29:         cy.get("a")
+30:           .contains("Besøk")
+31:           .should("have.attr", "href")
+32:           .and("not.be.empty");
+33:       });
+34:   });
+35:   it('should have functioning "GitHub" button if urlgithub exists', () => {
+36:     cy.get('[data-testid="project-card"]')
+37:       .first()
+38:       .within(() => {
+39:         cy.get("a")
+40:           .contains("GitHub")
+41:           .should("have.attr", "href")
+42:           .and("not.be.empty");
+43:       });
+44:   });
+45:   it('should have the correct URL for "GitHub" button', () => {
+46:     cy.get('[data-testid="project-card"]')
+47:       .first()
+48:       .within(() => {
+49:         cy.get("a")
+50:           .contains("GitHub")
+51:           .should("have.attr", "href")
+52:           .and("match", /^https:\/\/github\.com\/.+$/);
+53:       });
+54:   });
+55:   it("Prosjekter page should not have any a11y issues", () => {
+56:     checkAccessibility(5000);
+57:   });
+58: });
+````
+
 ## File: src/e2e/cypress/support/commands.ts
 ````typescript
  1: /// <reference types="cypress" />
@@ -13273,89 +13217,6 @@ vercel.json
  8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
  9: };
 10: export default LazyMotionProvider;
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: /**
- 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
- 3:  * pulling in the next-sanity dependency tree (which transitively includes
- 4:  * lodash via @sanity/visual-editing).
- 5:  */
- 6: function defineQuery<T extends string>(query: T): T {
- 7:   return query;
- 8: }
- 9: export const projectsQuery = defineQuery(`
-10:   *[_type == "project" && published == true] | order(featureOrder asc) {
-11:     id,
-12:     name,
-13:     description,
-14:     subdescription,
-15:     projectcategory->{
-16:       _id,
-17:       title
-18:     },
-19:     urlwww[]{
-20:       ...,
-21:       _key,
-22:     },
-23:     urlgithub[]{
-24:       ...,
-25:       _key,
-26:     },
-27:     projectimage,
-28:     featured,
-29:     featureOrder
-30:   }
-31: `);
-32: export const cvQuery = defineQuery(`
-33:   *[_type == "cv"][0] {
-34:     keyQualifications,
-35:     experience[] {
-36:       period,
-37:       company,
-38:       role,
-39:       description
-40:     },
-41:     education[] {
-42:       period,
-43:       institution,
-44:       degree,
-45:       description
-46:     },
-47:     volunteerWork[] {
-48:       period,
-49:       organization,
-50:       role,
-51:       description
-52:     }
-53:   }
-54: `);
-55: export const pageContentQuery = defineQuery(`
-56:   *[_type == 'page' && title match 'Hjem'][0]{
-57:     "id": _id,
-58:     title,
-59:     hero,
-60:     content
-61:   }
-62: `);
-63: export const navigationQuery = defineQuery(`
-64:   *[_type == "navigation"][0] {
-65:     title,
-66:     links[] {
-67:       title,
-68:       name,
-69:       hash,
-70:       href,
-71:       externalLink
-72:     }
-73:   }
-74: `);
-75: export const settingsQuery = defineQuery(`
-76:   *[_type == "settings"][0] {
-77:     footerCopyrightText
-78:   }
-79: `);
 ````
 
 ## File: src/lib/csrf.ts
@@ -16459,366 +16320,6 @@ vercel.json
 26: export default category
 ````
 
-## File: studio/schemaTypes/documents/cv.ts
-````typescript
-  1: interface PreviewSelection {
-  2:   keyQualifications?: string[]
-  3: }
-  4: export default {
-  5:   name: 'cv',
-  6:   title: 'CV',
-  7:   type: 'document',
-  8:   preview: {
-  9:     select: {
- 10:       keyQualifications: 'keyQualifications',
- 11:     },
- 12:     prepare(selection: PreviewSelection) {
- 13:       const {keyQualifications} = selection
- 14:       const mainQualification = keyQualifications?.[0] || 'No qualifications added'
- 15:       return {
- 16:         title: 'CV',
- 17:         subtitle: mainQualification,
- 18:       }
- 19:     },
- 20:   },
- 21:   fields: [
- 22:     {
- 23:       name: 'keyQualifications',
- 24:       title: 'Key Qualifications',
- 25:       type: 'array',
- 26:       of: [{type: 'text'}],
- 27:     },
- 28:     {
- 29:       name: 'experience',
- 30:       title: 'Experience',
- 31:       type: 'array',
- 32:       of: [
- 33:         {
- 34:           type: 'object',
- 35:           fields: [
- 36:             {name: 'period', title: 'Period', type: 'string'},
- 37:             {
- 38:               name: 'company',
- 39:               title: 'Company/Project',
- 40:               type: 'string',
- 41:               description: 'Company name or personal project/community name',
- 42:             },
- 43:             {
- 44:               name: 'role',
- 45:               title: 'Role',
- 46:               type: 'string',
- 47:               description: 'Job title or role in the project/community',
- 48:             },
- 49:             {name: 'description', title: 'Description', type: 'text'},
- 50:           ],
- 51:         },
- 52:       ],
- 53:     },
- 54:     {
- 55:       name: 'education',
- 56:       title: 'Education',
- 57:       type: 'array',
- 58:       of: [
- 59:         {
- 60:           type: 'object',
- 61:           fields: [
- 62:             {name: 'period', title: 'Period', type: 'string'},
- 63:             {name: 'institution', title: 'Institution', type: 'string'},
- 64:             {name: 'degree', title: 'Degree', type: 'string'},
- 65:             {name: 'description', title: 'Description', type: 'text'},
- 66:           ],
- 67:         },
- 68:       ],
- 69:     },
- 70:     {
- 71:       name: 'volunteerWork',
- 72:       title: 'Volunteer work',
- 73:       type: 'array',
- 74:       of: [
- 75:         {
- 76:           type: 'object',
- 77:           fields: [
- 78:             {name: 'period', title: 'Period', type: 'string'},
- 79:             {
- 80:               name: 'organization',
- 81:               title: 'Organization',
- 82:               type: 'string',
- 83:               description: 'Name of the community or organization',
- 84:             },
- 85:             {
- 86:               name: 'role',
- 87:               title: 'Role',
- 88:               type: 'string',
- 89:               description: 'Your role in the community',
- 90:             },
- 91:             {
- 92:               name: 'description',
- 93:               title: 'Description',
- 94:               type: 'text',
- 95:               description: 'Describe your contributions and impact',
- 96:             },
- 97:           ],
- 98:         },
- 99:       ],
-100:     },
-101:   ],
-102: }
-````
-
-## File: studio/schemaTypes/documents/navigation.ts
-````typescript
-  1: import {
-  2:   RiNavigationLine,
-  3:   RiHome4Line,
-  4:   RiProjectorLine,
-  5:   RiFileList3Line,
-  6:   RiGithubLine,
-  7:   RiMailLine,
-  8: } from 'react-icons/ri'
-  9: import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
- 10: const iconMap = {
- 11:   RiHome4Line,
- 12:   RiProjectorLine,
- 13:   RiFileList3Line,
- 14:   RiGithubLine,
- 15:   RiMailLine,
- 16: }
- 17: const requiredString = (rule: StringRule) => rule.required()
- 18: const requiredBoolean = (rule: BooleanRule) => rule.required()
- 19: export default defineType({
- 20:   name: 'navigation',
- 21:   title: 'Navigation',
- 22:   type: 'document',
- 23:   icon: RiNavigationLine,
- 24:   fields: [
- 25:     defineField({
- 26:       title: 'Title',
- 27:       name: 'title',
- 28:       type: 'string',
- 29:       validation: requiredString,
- 30:     }),
- 31:     defineField({
- 32:       name: 'links',
- 33:       title: 'Navigation Links',
- 34:       type: 'array',
- 35:       of: [
- 36:         {
- 37:           type: 'object',
- 38:           fields: [
- 39:             defineField({
- 40:               name: 'title',
- 41:               type: 'string',
- 42:               title: 'Title',
- 43:               validation: requiredString,
- 44:             }),
- 45:             defineField({
- 46:               name: 'name',
- 47:               type: 'string',
- 48:               title: 'Name',
- 49:               validation: requiredString,
- 50:             }),
- 51:             defineField({
- 52:               name: 'hash',
- 53:               type: 'string',
- 54:               title: 'Hash',
- 55:               validation: requiredString,
- 56:             }),
- 57:             defineField({
- 58:               name: 'href',
- 59:               type: 'string',
- 60:               title: 'Href',
- 61:               validation: requiredString,
- 62:             }),
- 63:             defineField({
- 64:               name: 'externalLink',
- 65:               type: 'boolean',
- 66:               title: 'External Link',
- 67:               validation: requiredBoolean,
- 68:             }),
- 69:             defineField({
- 70:               name: 'icon',
- 71:               title: 'Icon',
- 72:               type: 'string',
- 73:               options: {
- 74:                 list: [
- 75:                   {title: 'Home', value: 'RiHome4Line'},
- 76:                   {title: 'Projects', value: 'RiProjectorLine'},
- 77:                   {title: 'CV', value: 'RiFileList3Line'},
- 78:                   {title: 'GitHub', value: 'RiGithubLine'},
- 79:                   {title: 'Contact', value: 'RiMailLine'},
- 80:                 ],
- 81:               },
- 82:             }),
- 83:           ],
- 84:           preview: {
- 85:             select: {
- 86:               title: 'title',
- 87:               icon: 'icon',
- 88:             },
- 89:             prepare(selection) {
- 90:               const {title, icon} = selection
- 91:               return {
- 92:                 title,
- 93:                 media:
- 94:                   icon && icon in iconMap
- 95:                     ? iconMap[icon as keyof typeof iconMap]
- 96:                     : RiNavigationLine,
- 97:               }
- 98:             },
- 99:           },
-100:         },
-101:       ],
-102:     }),
-103:   ],
-104:   preview: {
-105:     select: {
-106:       title: 'title',
-107:     },
-108:     prepare(selection) {
-109:       const {title} = selection
-110:       return {
-111:         title,
-112:         media: RiNavigationLine,
-113:       }
-114:     },
-115:   },
-116: })
-````
-
-## File: studio/schemaTypes/documents/page.ts
-````typescript
- 1: import {RiPagesLine} from 'react-icons/ri'
- 2: import {defineField, defineType, SchemaTypeDefinition} from 'sanity'
- 3: const page: SchemaTypeDefinition = defineType({
- 4:   title: 'Page',
- 5:   name: 'page',
- 6:   icon: RiPagesLine,
- 7:   type: 'document',
- 8:   fields: [
- 9:     defineField({
-10:       title: 'Name',
-11:       name: 'title',
-12:       type: 'string',
-13:     }),
-14:     defineField({
-15:       title: 'Header',
-16:       name: 'header',
-17:       type: 'string',
-18:     }),
-19:     defineField({
-20:       title: 'Hero content',
-21:       description: 'Only supported in Hjem/Index page',
-22:       name: 'hero',
-23:       type: 'array',
-24:       of: [{type: 'herocontent'}],
-25:       hidden: ({document}) => document?.title !== 'Hjem',
-26:       validation: (Rule) => Rule.max(3),
-27:     }),
-28:     defineField({
-29:       title: 'Main content',
-30:       description: 'Only supported in Hjem/Index page',
-31:       name: 'content',
-32:       type: 'array',
-33:       of: [{type: 'pagecontent'}],
-34:       hidden: ({document}) => document?.title !== 'Hjem',
-35:     }),
-36:   ],
-37: })
-38: export default page
-````
-
-## File: studio/schemaTypes/documents/project.ts
-````typescript
- 1: import {RiEraserLine} from 'react-icons/ri'
- 2: import {defineField, defineType} from 'sanity'
- 3: const project = defineType({
- 4:   title: 'Project',
- 5:   name: 'project',
- 6:   icon: RiEraserLine,
- 7:   type: 'document',
- 8:   preview: {
- 9:     select: {
-10:       title: 'name',
-11:       media: 'projectimage',
-12:       published: 'published',
-13:     },
-14:     prepare({title, media, published}) {
-15:       return {
-16:         title: title ?? 'Untitled',
-17:         subtitle: published ? '✅ Visible on site' : '🚫 Hidden from site',
-18:         media,
-19:       }
-20:     },
-21:   },
-22:   fields: [
-23:     defineField({
-24:       title: 'Id',
-25:       name: 'id',
-26:       type: 'number',
-27:     }),
-28:     defineField({
-29:       title: 'Name',
-30:       name: 'name',
-31:       type: 'string',
-32:     }),
-33:     defineField({
-34:       title: 'Description',
-35:       name: 'description',
-36:       type: 'string',
-37:     }),
-38:     defineField({
-39:       title: 'Technologies',
-40:       name: 'subdescription',
-41:       type: 'string',
-42:     }),
-43:     defineField({
-44:       title: 'Project category',
-45:       name: 'projectcategory',
-46:       type: 'reference',
-47:       to: [{type: 'category'}],
-48:     }),
-49:     defineField({
-50:       title: 'Project URL',
-51:       name: 'urlwww',
-52:       type: 'array',
-53:       of: [{type: 'link'}],
-54:     }),
-55:     defineField({
-56:       title: 'Github URL',
-57:       name: 'urlgithub',
-58:       type: 'array',
-59:       of: [{type: 'link'}],
-60:     }),
-61:     defineField({
-62:       title: 'Project image',
-63:       name: 'projectimage',
-64:       type: 'image',
-65:     }),
-66:     defineField({
-67:       title: 'Visible on Site',
-68:       name: 'published',
-69:       type: 'boolean',
-70:       description: 'Set to false to hide this project from the portfolio site',
-71:       initialValue: true,
-72:     }),
-73:     defineField({
-74:       title: 'Featured',
-75:       name: 'featured',
-76:       type: 'boolean',
-77:       description: 'Set to true to feature this project at the top of the page',
-78:     }),
-79:     defineField({
-80:       title: 'Feature Order',
-81:       name: 'featureOrder',
-82:       type: 'number',
-83:       description: 'Order of the featured project (lower numbers appear first)',
-84:       hidden: ({document}) => !document?.featured,
-85:     }),
-86:   ],
-87: })
-88: export default project
-````
-
 ## File: studio/schemaTypes/documents/settings.ts
 ````typescript
  1: import {defineField, defineType} from 'sanity'
@@ -16921,41 +16422,6 @@ vercel.json
 43:   },
 44: })
 45: export default link
-````
-
-## File: studio/schemaTypes/objects/pagecontent.ts
-````typescript
- 1: import {RiArticleLine} from 'react-icons/ri'
- 2: const pagecontent = {
- 3:   // This is the display name for the type
- 4:   title: 'Page content',
- 5:   // The identifier for this document type used in the api's
- 6:   name: 'pagecontent',
- 7:   icon: RiArticleLine,
- 8:   // Documents have the type 'document'. Your schema may describe types beyond documents
- 9:   // but let's get back to that later.
-10:   type: 'object',
-11:   // Now we proceed to list the fields of our document
-12:   fields: [
-13:     {
-14:       title: 'Id',
-15:       name: 'id',
-16:       type: 'number',
-17:     },
-18:     {
-19:       title: 'Title',
-20:       name: 'title',
-21:       type: 'string',
-22:     },
-23:     {
-24:       title: 'Text',
-25:       name: 'text',
-26:       type: 'array',
-27:       of: [{type: 'block'}],
-28:     },
-29:   ],
-30: }
-31: export default pagecontent
 ````
 
 ## File: studio/schemaTypes/index.ts
@@ -19634,17 +19100,6 @@ vercel.json
 31: }
 ````
 
-## File: sanity.cli.ts
-````typescript
-1: import { defineCliConfig } from "sanity/cli";
-2: export default defineCliConfig({
-3:   api: {
-4:     projectId: "jgcz3b93",
-5:     dataset: "production",
-6:   },
-7: });
-````
-
 ## File: tailwind.config.ts
 ````typescript
  1: import type { Config } from "tailwindcss";
@@ -20086,6 +19541,74 @@ vercel.json
 83:           fi
 ````
 
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.161.0
+30:     steps:
+31:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: .roo/rules-code/AGENTS.md
 ````markdown
  1: # Project Coding Rules (Non-Obvious Only)
@@ -20101,6 +19624,25 @@ vercel.json
 11: - **Supply Chain Security**: Multi-layered defense — see `AGENTS.md` Security section and `plans/supply-chain-hardening.md`
 12: - **NEVER** add `pull_request_target` to any workflow, use floating tags for GitHub Actions, or remove `ignore-scripts=true` from `.npmrc`
 13: - **ALWAYS** pin GitHub Actions to SHA, use `--frozen-lockfile` in CI, add `permissions` blocks to workflows
+````
+
+## File: src/__mocks__/sanity-client.ts
+````typescript
+ 1: export const client = {
+ 2:   fetch: jest.fn().mockResolvedValue([]),
+ 3: };
+ 4: export const sanityFetch = jest.fn().mockResolvedValue(null);
+ 5: export function urlFor() {
+ 6:   const imageUrlBuilder = {
+ 7:     width: () => imageUrlBuilder,
+ 8:     height: () => imageUrlBuilder,
+ 9:     fit: () => imageUrlBuilder,
+10:     quality: () => imageUrlBuilder,
+11:     auto: () => imageUrlBuilder,
+12:     url: () => "/mocked-image-url",
+13:   };
+14:   return imageUrlBuilder;
+15: }
 ````
 
 ## File: src/__tests__/Animations/TestAnimation.test.tsx
@@ -20154,166 +19696,324 @@ vercel.json
 47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
-## File: src/__tests__/Layout/MobileMenu.test.tsx
+## File: src/__tests__/Prosjekter/actions.test.ts
 ````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import { fireEvent, render, screen } from "@testing-library/react";
-  5: import userEvent from "@testing-library/user-event";
-  6: import { usePathname } from "next/navigation";
-  7: import MobileMenu from "@/components/Layout/MobileMenu.component";
-  8: const linksmock = [
-  9:   {
- 10:     _key: "home",
- 11:     title: "Hjem",
- 12:     name: "Hjem",
- 13:     href: "/",
- 14:     hash: "",
- 15:     externalLink: false,
- 16:   },
- 17:   {
- 18:     _key: "projects",
- 19:     title: "Prosjekter",
- 20:     name: "Prosjekter",
- 21:     href: "/prosjekter",
- 22:     hash: "",
- 23:     externalLink: false,
- 24:   },
- 25:   {
- 26:     _key: "cv",
- 27:     title: "CV",
- 28:     name: "CV",
- 29:     href: "/cv",
- 30:     hash: "",
- 31:     externalLink: false,
- 32:   },
- 33:   {
- 34:     _key: "github",
- 35:     title: "Github",
- 36:     name: "Github",
- 37:     href: "https://github.com/w3bdesign",
- 38:     hash: "",
- 39:     externalLink: true,
- 40:   },
- 41:   {
- 42:     _key: "contact",
- 43:     title: "Kontakt",
- 44:     name: "Kontakt",
- 45:     href: "/kontakt",
- 46:     hash: "",
- 47:     externalLink: false,
- 48:   },
- 49: ];
- 50: // Mock next/navigation
- 51: jest.mock("next/navigation", () => ({
- 52:   usePathname: jest.fn(),
- 53: }));
- 54: const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
- 55: describe("MobileMenu - elementer eksisterer", () => {
- 56:   const testidMenu = "mobile-menu";
- 57:   afterEach(() => {
- 58:     jest.clearAllMocks();
- 59:   });
- 60:   it("renders mobile menu when hamburger is clicked", () => {
- 61:     // Arrange
- 62:     mockUsePathname.mockReturnValue("/");
- 63:     render(<MobileMenu links={linksmock} />);
- 64:     const hamburger = screen.getByTestId("hamburger");
- 65:     // Act
- 66:     fireEvent.click(hamburger);
- 67:     const mobilemenu = screen.getByTestId(testidMenu);
- 68:     // Assert
- 69:     expect(mobilemenu).toBeInTheDocument();
- 70:   });
- 71:   it("toggles hamburger menu expansion state", () => {
- 72:     // Arrange
- 73:     mockUsePathname.mockReturnValue("/");
- 74:     render(<MobileMenu links={linksmock} />);
- 75:     const hamburger = screen.getByTestId("hamburger");
- 76:     // Assert - Initial state
- 77:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
- 78:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
- 79:     // Act - Open menu
- 80:     fireEvent.click(hamburger);
- 81:     // Assert - Open state
- 82:     expect(hamburger).toHaveAttribute("aria-expanded", "true");
- 83:     expect(hamburger).toHaveAttribute("aria-label", "Lukk meny");
- 84:     // Act - Close menu
- 85:     fireEvent.click(hamburger);
- 86:     // Assert - Closed state
- 87:     expect(hamburger).toHaveAttribute("aria-expanded", "false");
- 88:     expect(hamburger).toHaveAttribute("aria-label", "Åpne meny");
- 89:   });
- 90:   it("displays correct number of navigation links", () => {
- 91:     // Arrange
- 92:     mockUsePathname.mockReturnValue("/");
- 93:     render(<MobileMenu links={linksmock} />);
- 94:     const hamburger = screen.getByTestId("hamburger");
- 95:     // Act
- 96:     fireEvent.click(hamburger);
- 97:     const menuItems = screen.getAllByRole("link");
- 98:     // Assert
- 99:     expect(menuItems).toHaveLength(linksmock.length);
-100:   });
-101:   it("renders internal links with correct active state", () => {
-102:     // Arrange
-103:     const currentPath = "/prosjekter";
-104:     mockUsePathname.mockReturnValue(currentPath);
-105:     render(<MobileMenu links={linksmock} />);
-106:     const hamburger = screen.getByTestId("hamburger");
-107:     // Act
-108:     fireEvent.click(hamburger);
-109:     // Assert - Test active link styling
-110:     const activeLink = screen.getByTestId("mobil-Prosjekter");
-111:     expect(activeLink).toHaveClass("text-[var(--matrix-light)]");
-112:     // Assert - Test non-active link styling
-113:     const inactiveLink = screen.getByTestId("mobil-Hjem");
-114:     expect(inactiveLink).not.toHaveClass("text-[var(--matrix-light)]");
-115:   });
-116:   it("renders internal links with glitch effect", () => {
-117:     // Arrange
-118:     mockUsePathname.mockReturnValue("/");
-119:     render(<MobileMenu links={linksmock} />);
-120:     const hamburger = screen.getByTestId("hamburger");
-121:     // Act
-122:     fireEvent.click(hamburger);
-123:     // Assert - Test that glitch effect is present for internal links
-124:     const internalLink = screen.getByTestId("mobil-Hjem");
-125:     expect(internalLink).toBeInTheDocument();
-126:     expect(internalLink).toHaveTextContent("Hjem");
-127:   });
-128:   it("opens external links in new tab with correct attributes", () => {
-129:     // Arrange
-130:     mockUsePathname.mockReturnValue("/");
-131:     render(<MobileMenu links={linksmock} />);
-132:     const hamburger = screen.getByTestId("hamburger");
-133:     // Act
-134:     fireEvent.click(hamburger);
-135:     const externalLink = screen.getByRole("link", { name: /github/i });
-136:     // Assert
-137:     expect(externalLink).toHaveAttribute("target", "_blank");
-138:     expect(externalLink).toHaveAttribute("rel", "noreferrer");
-139:   });
-140:   it("navigates and closes menu when clicking a link", async () => {
-141:     // Arrange
-142:     mockUsePathname.mockReturnValue("/");
-143:     render(<MobileMenu links={linksmock} />);
-144:     const user = userEvent.setup();
-145:     const hamburger = screen.getByTestId("hamburger");
-146:     // Act - Open menu
-147:     await user.click(hamburger);
-148:     // Assert - Menu is open
-149:     expect(screen.getByTestId(testidMenu)).toBeInTheDocument();
-150:     // Act - Click a link
-151:     const link = screen.getByTestId("mobil-Prosjekter");
-152:     await user.click(link);
-153:     // Wait for animation to complete
-154:     await new Promise((resolve) => setTimeout(resolve, 2500));
-155:     // Assert - Menu should close
-156:     expect(screen.queryByTestId(testidMenu)).not.toBeInTheDocument();
-157:   });
-158: });
+  1: import { getProjects } from "@/app/prosjekter/actions";
+  2: import { sanityFetch } from "@/lib/sanity/client";
+  3: // Mock the Sanity client
+  4: jest.mock("@/lib/sanity/client", () => ({
+  5:   sanityFetch: jest.fn(),
+  6: }));
+  7: describe("getProjects", () => {
+  8:   beforeEach(() => {
+  9:     jest.clearAllMocks();
+ 10:   });
+ 11:   it("fetches projects successfully", async () => {
+ 12:     // Arrange
+ 13:     const mockProjects = [
+ 14:       {
+ 15:         id: "1",
+ 16:         name: "Test Project",
+ 17:         description: "Test Description",
+ 18:         subdescription: "Test Subdescription",
+ 19:         projectimage: { asset: { _ref: "test" } },
+ 20:         urlwww: [],
+ 21:         urlgithub: [],
+ 22:       },
+ 23:     ];
+ 24:     (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 25:     // Act
+ 26:     const result = await getProjects();
+ 27:     // Assert
+ 28:     expect(result).toStrictEqual(mockProjects);
+ 29:     expect(sanityFetch).toHaveBeenCalledWith({
+ 30:       query: expect.any(String),
+ 31:       revalidate: 3600,
+ 32:     });
+ 33:   });
+ 34:   describe("error handling", () => {
+ 35:     it("handles authentication errors (401)", async () => {
+ 36:       // Arrange
+ 37:       const error = {
+ 38:         statusCode: 401,
+ 39:         message: "Invalid token",
+ 40:         details: {
+ 41:           type: "credentials",
+ 42:           description: "Invalid token provided",
+ 43:         },
+ 44:       };
+ 45:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 46:       // Act & Assert
+ 47:       await expect(getProjects()).rejects.toThrow("Authentication failed");
+ 48:     });
+ 49:     it("handles permission errors (403)", async () => {
+ 50:       // Arrange
+ 51:       const error = {
+ 52:         statusCode: 403,
+ 53:         message: "Insufficient permissions",
+ 54:         details: {
+ 55:           type: "authorization",
+ 56:           description: "Missing read access",
+ 57:         },
+ 58:       };
+ 59:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 60:       // Act & Assert
+ 61:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
+ 62:     });
+ 63:     it("handles rate limiting (429)", async () => {
+ 64:       // Arrange
+ 65:       const error = {
+ 66:         statusCode: 429,
+ 67:         message: "Too Many Requests",
+ 68:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 69:       };
+ 70:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 71:       // Act & Assert
+ 72:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+ 73:     });
+ 74:     it("handles malformed GROQ queries (400)", async () => {
+ 75:       // Arrange
+ 76:       const error = {
+ 77:         statusCode: 400,
+ 78:         message: "Invalid GROQ query",
+ 79:         details: {
+ 80:           type: "query_error",
+ 81:           description: "Syntax error in GROQ query",
+ 82:         },
+ 83:       };
+ 84:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 85:       // Act & Assert
+ 86:       await expect(getProjects()).rejects.toThrow(
+ 87:         "Sanity API error: Invalid GROQ query",
+ 88:       );
+ 89:     });
+ 90:     it("handles network timeouts", async () => {
+ 91:       // Arrange
+ 92:       const error = Object.assign(new Error("Network timeout"), {
+ 93:         name: "TimeoutError",
+ 94:       });
+ 95:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 96:       // Act & Assert
+ 97:       await expect(getProjects()).rejects.toThrow("Request timed out");
+ 98:     });
+ 99:     it("handles generic fetch errors", async () => {
+100:       // Arrange
+101:       const error = {
+102:         message: "Fetch failed",
+103:       };
+104:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+105:       // Act & Assert
+106:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+107:     });
+108:     it("recovers after temporary errors", async () => {
+109:       // Arrange
+110:       const rateError = {
+111:         statusCode: 429,
+112:         message: "Too Many Requests",
+113:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+114:       };
+115:       const mockProjects = [
+116:         {
+117:           id: "1",
+118:           name: "Test Project",
+119:           description: "Test Description",
+120:           subdescription: "Test Subdescription",
+121:           projectimage: { asset: { _ref: "test" } },
+122:           urlwww: [],
+123:           urlgithub: [],
+124:         },
+125:       ];
+126:       // First call fails with rate limit
+127:       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
+128:       // Second call succeeds
+129:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+130:       // First call should fail
+131:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+132:       // Second call should succeed
+133:       const result = await getProjects();
+134:       expect(result).toStrictEqual(mockProjects);
+135:     });
+136:   });
+137: });
+````
+
+## File: src/app/cv/page.tsx
+````typescript
+ 1: import { notFound } from "next/navigation";
+ 2: import CVContent from "@/components/CV/CVContent.component";
+ 3: import { sanityFetch } from "@/lib/sanity/client";
+ 4: import { cvQuery } from "@/lib/sanity/queries";
+ 5: import type { Cv } from "@/types/sanity.types";
+ 6: import { Metadata } from "next/types";
+ 7: export const metadata: Metadata = {
+ 8:   title: "CV - Dfweb",
+ 9: };
+10: export default async function CVPage() {
+11:   const cvData = await sanityFetch<Cv | null>({
+12:     query: cvQuery,
+13:     revalidate: 3600,
+14:   });
+15:   if (!cvData) notFound();
+16:   return <CVContent cvData={cvData} />;
+17: }
+````
+
+## File: src/app/prosjekter/actions.ts
+````typescript
+ 1: import { cache } from "react";
+ 2: import "server-only";
+ 3: import { sanityFetch } from "@/lib/sanity/client";
+ 4: import { projectsQuery } from "@/lib/sanity/queries";
+ 5: import type { Project } from "@/types/sanity.types";
+ 6: import { isSanityApiError } from "@/types/sanity-errors";
+ 7: async function fetchProjectsFromSanity(): Promise<Project[]> {
+ 8:   return sanityFetch<Project[]>({
+ 9:     query: projectsQuery,
+10:     revalidate: 3600,
+11:   });
+12: }
+13: function handleError(error: unknown): never {
+14:   console.error("Error fetching projects:", error);
+15:   if (isSanityApiError(error)) {
+16:     switch (error.statusCode) {
+17:       case 401:
+18:         throw new Error("Authentication failed");
+19:       case 403:
+20:         throw new Error("Insufficient permissions");
+21:       case 429:
+22:         throw new Error("Rate limit exceeded");
+23:       default:
+24:         throw new Error(`Sanity API error: ${error.message}`);
+25:     }
+26:   }
+27:   if (error instanceof Error && error.name === "TimeoutError") {
+28:     throw new Error("Request timed out");
+29:   }
+30:   throw new Error("Failed to fetch projects");
+31: }
+32: export const getProjects = cache(async (): Promise<Project[]> => {
+33:   try {
+34:     return await fetchProjectsFromSanity();
+35:   } catch (error) {
+36:     handleError(error);
+37:   }
+38: });
+39: export function preloadProjects(): void {
+40:   getProjects();
+41: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { preconnect } from "react-dom";
+ 4: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 5: import "./globals.css";
+ 6: import "./glitch.css";
+ 7: import { sanityFetch } from "@/lib/sanity/client";
+ 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 9: import type { Navigation, Settings } from "@/types/sanity.types";
+10: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+11: import SkipLink from "@/components/UI/SkipLink.component";
+12: import Header from "@/components/Layout/Header.component";
+13: import Footer from "@/components/Layout/Footer.component";
+14: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+15: const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
+16: export const metadata: Metadata = {
+17:   title: "Forside - Dfweb",
+18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+19: };
+20: export default async function RootLayout({
+21:   children,
+22: }: Readonly<{
+23:   children: React.ReactNode;
+24: }>) {
+25:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
+26:   preconnect("https://cdn.sanity.io");
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 3600 }),
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 3600 }),
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         <link rel="icon" href="/favicon.ico" />
+40:         <link rel="apple-touch-icon" href="/logo.png" />
+41:         <meta property="og:title" content="Daniel Fjeldstad" />
+42:         <meta name="author" content="Daniel Fjeldstad" />
+43:         <meta property="og:locale" content="nb_NO" />
+44:         <meta
+45:           property="og:description"
+46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+47:         />
+48:         <meta property="og:url" content="https://www.dfweb.no/" />
+49:         <meta property="og:site_name" content="dfweb.no" />
+50:         <meta name="theme-color" content="#004014" />
+51:       </head>
+52:       <body
+53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+54:       >
+55:         <LazyMotionProvider>
+56:           <SkipLink />
+57:           <ErrorBoundary>
+58:             <div id="main-content" className="grow flex flex-col">
+59:               <Header navigation={navigation} />
+60:               <SpeedInsights />
+61:               <div className="grow">{children}</div>
+62:               <Footer
+63:                 footerCopyrightText={
+64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+65:                 }
+66:               />
+67:             </div>
+68:           </ErrorBoundary>
+69:         </LazyMotionProvider>
+70:       </body>
+71:     </html>
+72:   );
+73: }
+````
+
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import { notFound } from "next/navigation";
+ 3: import { sanityFetch } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 6: import type { Page } from "@/types/sanity.types";
+ 7: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+ 8:   loading: () => <ContentLoader type="hero" />,
+ 9: });
+10: const DynamicIndexContent = dynamic(
+11:   () => import("@/components/Index/IndexContent.component"),
+12:   {
+13:     loading: () => <ContentLoader type="section" sections={3} />,
+14:   },
+15: );
+16: export default async function HomePage() {
+17:   const pageContent = await sanityFetch<Page | null>({
+18:     query: pageContentQuery,
+19:     revalidate: 3600,
+20:   });
+21:   if (!pageContent) notFound();
+22:   return (
+23:     <main>
+24:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+25:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+26:       </div>
+27:       {pageContent?.content && (
+28:         <DynamicIndexContent pageContent={pageContent.content} />
+29:       )}
+30:     </main>
+31:   );
+32: }
 ````
 
 ## File: src/components/Animations/types/Animations.types.ts
@@ -20557,140 +20257,421 @@ vercel.json
 145: export default ContactForm;
 ````
 
-## File: src/components/Layout/NavigationLink.component.tsx
+## File: studio/schemaTypes/documents/cv.ts
 ````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import * as m from "motion/react-m";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: export interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-[var(--matrix-light)]" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <m.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
-36:           }`}
-37:           initial={false}
-38:           animate={{
-39:             width: isActive ? "100%" : "0%",
-40:           }}
-41:           variants={{
-42:             hover: { width: "100%" },
-43:           }}
-44:           transition={{ duration: 0.3 }}
-45:         />
-46:       </div>
-47:     </Link>
-48:   </MotionDiv>
-49: );
-50: export default NavigationLink;
+  1: import {defineType, defineField, defineArrayMember} from 'sanity'
+  2: import {RiFileList3Line} from 'react-icons/ri'
+  3: interface PreviewSelection {
+  4:   keyQualifications?: string[]
+  5: }
+  6: export default defineType({
+  7:   name: 'cv',
+  8:   title: 'CV',
+  9:   type: 'document',
+ 10:   icon: RiFileList3Line,
+ 11:   preview: {
+ 12:     select: {
+ 13:       keyQualifications: 'keyQualifications',
+ 14:     },
+ 15:     prepare(selection: PreviewSelection) {
+ 16:       const {keyQualifications} = selection
+ 17:       const mainQualification = keyQualifications?.[0] || 'No qualifications added'
+ 18:       return {
+ 19:         title: 'CV',
+ 20:         subtitle: mainQualification,
+ 21:       }
+ 22:     },
+ 23:   },
+ 24:   fields: [
+ 25:     defineField({
+ 26:       name: 'keyQualifications',
+ 27:       title: 'Key Qualifications',
+ 28:       type: 'array',
+ 29:       of: [defineArrayMember({type: 'text'})],
+ 30:     }),
+ 31:     defineField({
+ 32:       name: 'experience',
+ 33:       title: 'Experience',
+ 34:       type: 'array',
+ 35:       of: [
+ 36:         defineArrayMember({
+ 37:           type: 'object',
+ 38:           fields: [
+ 39:             defineField({name: 'period', title: 'Period', type: 'string'}),
+ 40:             defineField({
+ 41:               name: 'company',
+ 42:               title: 'Company/Project',
+ 43:               type: 'string',
+ 44:               description: 'Company name or personal project/community name',
+ 45:             }),
+ 46:             defineField({
+ 47:               name: 'role',
+ 48:               title: 'Role',
+ 49:               type: 'string',
+ 50:               description: 'Job title or role in the project/community',
+ 51:             }),
+ 52:             defineField({name: 'description', title: 'Description', type: 'text'}),
+ 53:           ],
+ 54:         }),
+ 55:       ],
+ 56:     }),
+ 57:     defineField({
+ 58:       name: 'education',
+ 59:       title: 'Education',
+ 60:       type: 'array',
+ 61:       of: [
+ 62:         defineArrayMember({
+ 63:           type: 'object',
+ 64:           fields: [
+ 65:             defineField({name: 'period', title: 'Period', type: 'string'}),
+ 66:             defineField({name: 'institution', title: 'Institution', type: 'string'}),
+ 67:             defineField({name: 'degree', title: 'Degree', type: 'string'}),
+ 68:             defineField({name: 'description', title: 'Description', type: 'text'}),
+ 69:           ],
+ 70:         }),
+ 71:       ],
+ 72:     }),
+ 73:     defineField({
+ 74:       name: 'volunteerWork',
+ 75:       title: 'Volunteer work',
+ 76:       type: 'array',
+ 77:       of: [
+ 78:         defineArrayMember({
+ 79:           type: 'object',
+ 80:           fields: [
+ 81:             defineField({name: 'period', title: 'Period', type: 'string'}),
+ 82:             defineField({
+ 83:               name: 'organization',
+ 84:               title: 'Organization',
+ 85:               type: 'string',
+ 86:               description: 'Name of the community or organization',
+ 87:             }),
+ 88:             defineField({
+ 89:               name: 'role',
+ 90:               title: 'Role',
+ 91:               type: 'string',
+ 92:               description: 'Your role in the community',
+ 93:             }),
+ 94:             defineField({
+ 95:               name: 'description',
+ 96:               title: 'Description',
+ 97:               type: 'text',
+ 98:               description: 'Describe your contributions and impact',
+ 99:             }),
+100:           ],
+101:         }),
+102:       ],
+103:     }),
+104:   ],
+105: })
 ````
 
-## File: src/e2e/cypress/e2e/prosjekter.cy.ts
+## File: studio/schemaTypes/documents/navigation.ts
 ````typescript
- 1: /// <reference types="cypress"/>
- 2: /// <reference types="cypress-axe"/>
- 3: /// <reference types="axe-core"/>
- 4: import { checkAccessibility } from "../support/functions";
- 5: describe("Prosjekter Page", () => {
- 6:   beforeEach(() => {
- 7:     cy.visit("http://localhost:3000/prosjekter");
- 8:   });
- 9:   it("should load the prosjekter page", () => {
-10:     cy.url().should("include", "/prosjekter");
-11:     cy.get("h1").should("contain", "Prosjekter");
-12:   });
-13:   it("should display project cards", () => {
-14:     cy.get('[data-testid="project-card"]').should("have.length.at.least", 1);
-15:   });
-16:   it("should display project name, description, and subdescription", () => {
-17:     cy.get('[data-testid="project-card"]')
-18:       .first()
-19:       .within(() => {
-20:         cy.get("h2").should("have.class", "text-xl").and("not.be.empty");
-21:         cy.get("h3").should("have.class", "text-base").and("not.be.empty");
-22:         cy.get("p").should("have.class", "text-sm").and("not.be.empty");
-23:       });
-24:   });
-25:   it('should have functioning "Besøk" button if urlwww exists', () => {
-26:     cy.get('[data-testid="project-card"]')
-27:       .first()
-28:       .within(() => {
-29:         cy.get("a")
-30:           .contains("Besøk")
-31:           .should("have.attr", "href")
-32:           .and("not.be.empty");
-33:       });
-34:   });
-35:   it('should have functioning "GitHub" button if urlgithub exists', () => {
-36:     cy.get('[data-testid="project-card"]')
-37:       .first()
-38:       .within(() => {
-39:         cy.get("a")
-40:           .contains("GitHub")
-41:           .should("have.attr", "href")
-42:           .and("not.be.empty");
-43:       });
-44:   });
-45:   it('should have the correct URL for "GitHub" button', () => {
-46:     cy.get('[data-testid="project-card"]')
-47:       .first()
-48:       .within(() => {
-49:         cy.get("a")
-50:           .contains("GitHub")
-51:           .should("have.attr", "href")
-52:           .and("match", /^https:\/\/github\.com\/.+$/);
-53:       });
-54:   });
-55:   it("Prosjekter page should not have any a11y issues", () => {
-56:     checkAccessibility(5000);
-57:   });
-58: });
+  1: import {
+  2:   RiNavigationLine,
+  3:   RiHome4Line,
+  4:   RiProjectorLine,
+  5:   RiFileList3Line,
+  6:   RiGithubLine,
+  7:   RiMailLine,
+  8: } from 'react-icons/ri'
+  9: import {defineField, defineType, defineArrayMember, StringRule, BooleanRule} from 'sanity'
+ 10: const iconMap = {
+ 11:   RiHome4Line,
+ 12:   RiProjectorLine,
+ 13:   RiFileList3Line,
+ 14:   RiGithubLine,
+ 15:   RiMailLine,
+ 16: }
+ 17: const requiredString = (rule: StringRule) => rule.required()
+ 18: const requiredBoolean = (rule: BooleanRule) => rule.required()
+ 19: export default defineType({
+ 20:   name: 'navigation',
+ 21:   title: 'Navigation',
+ 22:   type: 'document',
+ 23:   icon: RiNavigationLine,
+ 24:   fields: [
+ 25:     defineField({
+ 26:       title: 'Title',
+ 27:       name: 'title',
+ 28:       type: 'string',
+ 29:       validation: requiredString,
+ 30:     }),
+ 31:     defineField({
+ 32:       name: 'links',
+ 33:       title: 'Navigation Links',
+ 34:       type: 'array',
+ 35:       of: [
+ 36:         defineArrayMember({
+ 37:           type: 'object',
+ 38:           fields: [
+ 39:             defineField({
+ 40:               name: 'title',
+ 41:               type: 'string',
+ 42:               title: 'Title',
+ 43:               validation: requiredString,
+ 44:             }),
+ 45:             defineField({
+ 46:               name: 'name',
+ 47:               type: 'string',
+ 48:               title: 'Name',
+ 49:               validation: requiredString,
+ 50:             }),
+ 51:             defineField({
+ 52:               name: 'hash',
+ 53:               type: 'string',
+ 54:               title: 'Hash',
+ 55:               validation: requiredString,
+ 56:             }),
+ 57:             defineField({
+ 58:               name: 'href',
+ 59:               type: 'string',
+ 60:               title: 'Href',
+ 61:               validation: requiredString,
+ 62:             }),
+ 63:             defineField({
+ 64:               name: 'externalLink',
+ 65:               type: 'boolean',
+ 66:               title: 'External Link',
+ 67:               validation: requiredBoolean,
+ 68:             }),
+ 69:             defineField({
+ 70:               name: 'icon',
+ 71:               title: 'Icon',
+ 72:               type: 'string',
+ 73:               options: {
+ 74:                 list: [
+ 75:                   {title: 'Home', value: 'RiHome4Line'},
+ 76:                   {title: 'Projects', value: 'RiProjectorLine'},
+ 77:                   {title: 'CV', value: 'RiFileList3Line'},
+ 78:                   {title: 'GitHub', value: 'RiGithubLine'},
+ 79:                   {title: 'Contact', value: 'RiMailLine'},
+ 80:                 ],
+ 81:               },
+ 82:             }),
+ 83:           ],
+ 84:           preview: {
+ 85:             select: {
+ 86:               title: 'title',
+ 87:               icon: 'icon',
+ 88:             },
+ 89:             prepare(selection) {
+ 90:               const {title, icon} = selection
+ 91:               return {
+ 92:                 title,
+ 93:                 media:
+ 94:                   icon && icon in iconMap
+ 95:                     ? iconMap[icon as keyof typeof iconMap]
+ 96:                     : RiNavigationLine,
+ 97:               }
+ 98:             },
+ 99:           },
+100:         }),
+101:       ],
+102:     }),
+103:   ],
+104:   preview: {
+105:     select: {
+106:       title: 'title',
+107:     },
+108:     prepare(selection) {
+109:       const {title} = selection
+110:       return {
+111:         title,
+112:         media: RiNavigationLine,
+113:       }
+114:     },
+115:   },
+116: })
 ````
 
-## File: src/lib/sanity/client.ts
+## File: studio/schemaTypes/documents/page.ts
 ````typescript
- 1: import { createImageUrlBuilder } from "@sanity/image-url";
- 2: import { createClient } from "@sanity/client";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2023-05-03";
- 7: export const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: const builder = createImageUrlBuilder(client);
-14: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-15:   return builder.image(source);
-16: }
+ 1: import {RiPagesLine} from 'react-icons/ri'
+ 2: import {defineField, defineType, defineArrayMember, SchemaTypeDefinition} from 'sanity'
+ 3: const page: SchemaTypeDefinition = defineType({
+ 4:   title: 'Page',
+ 5:   name: 'page',
+ 6:   icon: RiPagesLine,
+ 7:   type: 'document',
+ 8:   fields: [
+ 9:     defineField({
+10:       title: 'Name',
+11:       name: 'title',
+12:       type: 'string',
+13:     }),
+14:     defineField({
+15:       title: 'Slug',
+16:       name: 'slug',
+17:       type: 'slug',
+18:       description: 'URL-friendly identifier for this page',
+19:       options: {
+20:         source: 'title',
+21:         maxLength: 96,
+22:       },
+23:       validation: (rule) => rule.required(),
+24:     }),
+25:     defineField({
+26:       title: 'Header',
+27:       name: 'header',
+28:       type: 'string',
+29:     }),
+30:     defineField({
+31:       title: 'Hero content',
+32:       description: 'Only supported in Hjem/Index page',
+33:       name: 'hero',
+34:       type: 'array',
+35:       of: [defineArrayMember({type: 'herocontent'})],
+36:       hidden: ({document}) => document?.title !== 'Hjem',
+37:       validation: (Rule) => Rule.max(3),
+38:     }),
+39:     defineField({
+40:       title: 'Main content',
+41:       description: 'Only supported in Hjem/Index page',
+42:       name: 'content',
+43:       type: 'array',
+44:       of: [defineArrayMember({type: 'pagecontent'})],
+45:       hidden: ({document}) => document?.title !== 'Hjem',
+46:     }),
+47:   ],
+48: })
+49: export default page
+````
+
+## File: studio/schemaTypes/documents/project.ts
+````typescript
+  1: import {RiEraserLine} from 'react-icons/ri'
+  2: import {defineField, defineType, defineArrayMember} from 'sanity'
+  3: const project = defineType({
+  4:   title: 'Project',
+  5:   name: 'project',
+  6:   icon: RiEraserLine,
+  7:   type: 'document',
+  8:   preview: {
+  9:     select: {
+ 10:       title: 'name',
+ 11:       media: 'projectimage',
+ 12:       published: 'published',
+ 13:     },
+ 14:     prepare({title, media, published}) {
+ 15:       return {
+ 16:         title: title ?? 'Untitled',
+ 17:         subtitle: published ? '✅ Visible on site' : '🚫 Hidden from site',
+ 18:         media,
+ 19:       }
+ 20:     },
+ 21:   },
+ 22:   fields: [
+ 23:     defineField({
+ 24:       title: 'Id',
+ 25:       name: 'id',
+ 26:       type: 'number',
+ 27:     }),
+ 28:     defineField({
+ 29:       title: 'Name',
+ 30:       name: 'name',
+ 31:       type: 'string',
+ 32:     }),
+ 33:     defineField({
+ 34:       title: 'Description',
+ 35:       name: 'description',
+ 36:       type: 'string',
+ 37:     }),
+ 38:     defineField({
+ 39:       title: 'Technologies',
+ 40:       name: 'subdescription',
+ 41:       type: 'string',
+ 42:     }),
+ 43:     defineField({
+ 44:       title: 'Project category',
+ 45:       name: 'projectcategory',
+ 46:       type: 'reference',
+ 47:       to: [{type: 'category'}],
+ 48:     }),
+ 49:     defineField({
+ 50:       title: 'Project URL',
+ 51:       name: 'urlwww',
+ 52:       type: 'array',
+ 53:       of: [defineArrayMember({type: 'link'})],
+ 54:     }),
+ 55:     defineField({
+ 56:       title: 'Github URL',
+ 57:       name: 'urlgithub',
+ 58:       type: 'array',
+ 59:       of: [defineArrayMember({type: 'link'})],
+ 60:     }),
+ 61:     defineField({
+ 62:       title: 'Project image',
+ 63:       name: 'projectimage',
+ 64:       type: 'image',
+ 65:       options: {
+ 66:         hotspot: true,
+ 67:       },
+ 68:       fields: [
+ 69:         defineField({
+ 70:           name: 'alt',
+ 71:           type: 'string',
+ 72:           title: 'Alternative Text',
+ 73:           description: 'Describe the image for screen readers and SEO',
+ 74:           validation: (rule) => rule.warning('Alt text is important for accessibility and SEO'),
+ 75:         }),
+ 76:       ],
+ 77:     }),
+ 78:     defineField({
+ 79:       title: 'Visible on Site',
+ 80:       name: 'published',
+ 81:       type: 'boolean',
+ 82:       description: 'Set to false to hide this project from the portfolio site',
+ 83:       initialValue: true,
+ 84:     }),
+ 85:     defineField({
+ 86:       title: 'Featured',
+ 87:       name: 'featured',
+ 88:       type: 'boolean',
+ 89:       description: 'Set to true to feature this project at the top of the page',
+ 90:     }),
+ 91:     defineField({
+ 92:       title: 'Feature Order',
+ 93:       name: 'featureOrder',
+ 94:       type: 'number',
+ 95:       description: 'Order of the featured project (lower numbers appear first)',
+ 96:       hidden: ({document}) => !document?.featured,
+ 97:     }),
+ 98:   ],
+ 99: })
+100: export default project
+````
+
+## File: studio/schemaTypes/objects/pagecontent.ts
+````typescript
+ 1: import {RiArticleLine} from 'react-icons/ri'
+ 2: import {defineType, defineField, defineArrayMember} from 'sanity'
+ 3: const pagecontent = defineType({
+ 4:   title: 'Page content',
+ 5:   name: 'pagecontent',
+ 6:   icon: RiArticleLine,
+ 7:   type: 'object',
+ 8:   fields: [
+ 9:     defineField({
+10:       title: 'Id',
+11:       name: 'id',
+12:       type: 'number',
+13:     }),
+14:     defineField({
+15:       title: 'Title',
+16:       name: 'title',
+17:       type: 'string',
+18:     }),
+19:     defineField({
+20:       title: 'Text',
+21:       name: 'text',
+22:       type: 'array',
+23:       of: [defineArrayMember({type: 'block'})],
+24:     }),
+25:   ],
+26: })
+27: export default pagecontent
 ````
 
 ## File: .npmrc
@@ -20720,6 +20701,17 @@ vercel.json
 23: # Engine strict mode - fail if Node.js version doesn't match engines field
 24: engine-strict=true
 25: ignore-scripts=true
+````
+
+## File: sanity.cli.ts
+````typescript
+1: import { defineCliConfig } from "sanity/cli";
+2: export default defineCliConfig({
+3:   api: {
+4:     projectId: "41s7iutf",
+5:     dataset: "production",
+6:   },
+7: });
 ````
 
 ## File: .circleci/config.yml
@@ -20964,74 +20956,6 @@ vercel.json
 40:           retention-days: 30
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.161.0
-30:     steps:
-31:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: src/app/api/form/route.ts
 ````typescript
  1: import { NextRequest, NextResponse } from "next/server";
@@ -21116,6 +21040,131 @@ vercel.json
 80: export async function DELETE() {
 81:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 82: }
+````
+
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import { createImageUrlBuilder } from "@sanity/image-url";
+ 2: import { createClient, type QueryParams } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
+ 7: export const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: /**
+14:  * Typed fetch helper with consistent caching defaults.
+15:  * Applies time-based revalidation (default 3600s) or tag-based invalidation.
+16:  */
+17: export async function sanityFetch<T>({
+18:   query,
+19:   params = {},
+20:   revalidate = 3600,
+21:   tags = [],
+22: }: {
+23:   query: string;
+24:   params?: QueryParams;
+25:   revalidate?: number | false;
+26:   tags?: string[];
+27: }): Promise<T> {
+28:   return client.fetch<T>(query, params, {
+29:     next: {
+30:       revalidate: tags.length ? false : revalidate,
+31:       tags,
+32:     },
+33:   });
+34: }
+35: const builder = createImageUrlBuilder(client);
+36: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+37:   return builder.image(source);
+38: }
+````
+
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: /**
+ 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
+ 3:  * pulling in the next-sanity dependency tree (which transitively includes
+ 4:  * lodash via @sanity/visual-editing).
+ 5:  */
+ 6: function defineQuery<T extends string>(query: T): T {
+ 7:   return query;
+ 8: }
+ 9: export const projectsQuery = defineQuery(`
+10:   *[_type == "project" && published == true] | order(featureOrder asc) {
+11:     id,
+12:     name,
+13:     description,
+14:     subdescription,
+15:     projectcategory->{
+16:       _id,
+17:       title
+18:     },
+19:     urlwww[]{
+20:       ...,
+21:       _key,
+22:     },
+23:     urlgithub[]{
+24:       ...,
+25:       _key,
+26:     },
+27:     projectimage,
+28:     featured,
+29:     featureOrder
+30:   }
+31: `);
+32: export const cvQuery = defineQuery(`
+33:   *[_type == "cv"][0] {
+34:     keyQualifications,
+35:     experience[] {
+36:       period,
+37:       company,
+38:       role,
+39:       description
+40:     },
+41:     education[] {
+42:       period,
+43:       institution,
+44:       degree,
+45:       description
+46:     },
+47:     volunteerWork[] {
+48:       period,
+49:       organization,
+50:       role,
+51:       description
+52:     }
+53:   }
+54: `);
+55: export const pageContentQuery = defineQuery(`
+56:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+57:     "id": _id,
+58:     title,
+59:     hero,
+60:     content
+61:   }
+62: `);
+63: export const navigationQuery = defineQuery(`
+64:   *[_type == "navigation"][0] {
+65:     title,
+66:     links[] {
+67:       title,
+68:       name,
+69:       hash,
+70:       href,
+71:       externalLink
+72:     }
+73:   }
+74: `);
+75: export const settingsQuery = defineQuery(`
+76:   *[_type == "settings"][0] {
+77:     footerCopyrightText
+78:   }
+79: `);
 ````
 
 ## File: AGENTS.md
