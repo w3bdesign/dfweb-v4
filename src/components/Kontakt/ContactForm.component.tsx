@@ -39,11 +39,6 @@ const ContactForm: React.FC<ContactFormProps> = ({
 
   /**
    * Default form submission handler using EmailJS.
-   * @param {FormData} data - The form data.
-   * @return {Promise<string>} A promise that resolves to a success or error message.
-   */
-  /**
-   * Default form submission handler using EmailJS.
    * Dynamically imports @emailjs/browser only when the user submits,
    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
    */
@@ -108,7 +103,6 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           register={register}
                           error={errors.navn?.message}
                           isRequired
-                          inputPattern={/^[a-zA-ZæøåÆØÅ ]+$/}
                           title="Vennligst bruk norske bokstaver"
                           autoComplete="name"
                           spellCheck={false}
@@ -122,7 +116,6 @@ const ContactForm: React.FC<ContactFormProps> = ({
                           register={register}
                           error={errors.telefon?.message}
                           isRequired
-                          inputPattern={/^\d{8}$/}
                           title="Vennligst oppgi et gyldig telefonnummer"
                           autoComplete="tel"
                           inputMode="tel"
