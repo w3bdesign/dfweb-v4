@@ -1,12 +1,9 @@
 import { getProjects } from "@/app/prosjekter/actions";
-import { client } from "@/lib/sanity/client";
-import { projectsQuery } from "@/lib/sanity/queries";
+import { sanityFetch } from "@/lib/sanity/client";
 
 // Mock the Sanity client
 jest.mock("@/lib/sanity/client", () => ({
-  client: {
-    fetch: jest.fn(),
-  },
+  sanityFetch: jest.fn(),
 }));
 
 describe("getProjects", () => {
@@ -27,21 +24,17 @@ describe("getProjects", () => {
         urlgithub: [],
       },
     ];
-    const expectedFetchOptions = {
-      next: { revalidate: 3600 },
-    };
-    (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+    (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
 
     // Act
     const result = await getProjects();
 
     // Assert
     expect(result).toStrictEqual(mockProjects);
-    expect(client.fetch).toHaveBeenCalledWith(
-      projectsQuery,
-      {},
-      expectedFetchOptions,
-    );
+    expect(sanityFetch).toHaveBeenCalledWith({
+      query: expect.any(String),
+      revalidate: 3600,
+    });
   });
 
   describe("error handling", () => {
@@ -55,7 +48,7 @@ describe("getProjects", () => {
           description: "Invalid token provided",
         },
       };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Authentication failed");
@@ -71,7 +64,7 @@ describe("getProjects", () => {
           description: "Missing read access",
         },
       };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
@@ -84,7 +77,7 @@ describe("getProjects", () => {
         message: "Too Many Requests",
         details: { type: "rate_limit", description: "Rate limit exceeded" },
       };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
@@ -100,7 +93,7 @@ describe("getProjects", () => {
           description: "Syntax error in GROQ query",
         },
       };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow(
@@ -113,7 +106,7 @@ describe("getProjects", () => {
       const error = Object.assign(new Error("Network timeout"), {
         name: "TimeoutError",
       });
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Request timed out");
@@ -124,7 +117,7 @@ describe("getProjects", () => {
       const error = {
         message: "Fetch failed",
       };
-      (client.fetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
@@ -150,9 +143,9 @@ describe("getProjects", () => {
       ];
 
       // First call fails with rate limit
-      (client.fetch as jest.Mock).mockRejectedValueOnce(rateError);
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
       // Second call succeeds
-      (client.fetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
 
       // First call should fail
       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
