@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
     const result = formSchema.safeParse(formData);
 
     if (!result.success) {
-      const firstError = result.error.errors[0];
+      const firstIssue = result.error.issues[0];
       return NextResponse.json(
-        { error: firstError?.message ?? "Validation failed" },
+        { error: firstIssue?.message ?? "Validation failed" },
         { status: 400 },
       );
     }
