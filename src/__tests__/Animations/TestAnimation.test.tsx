@@ -7,17 +7,11 @@ import { render, screen } from "@testing-library/react";
 import { mockIntersectionObserver } from "jsdom-testing-mocks";
 
 import PageTransition from "@/components/Animations/PageTransition.component";
-import FadeDown from "@/components/Animations/FadeDown.component";
-import FadeUp from "@/components/Animations/FadeUp.component";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
 mockIntersectionObserver();
 
-type AnimationComponent =
-  | typeof PageTransition
-  | typeof FadeDown
-  | typeof FadeUp
-  | typeof BounceInScroll;
+type AnimationComponent = typeof PageTransition | typeof BounceInScroll;
 
 /**
  * Reusable tests for animation components.
@@ -62,6 +56,4 @@ function testAnimationComponent(
 }
 
 testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
-testAnimationComponent(FadeDown, "fadedown", "translateY");
-testAnimationComponent(FadeUp, "fadeup", "translateY");
 testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
