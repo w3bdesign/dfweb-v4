@@ -6,7 +6,7 @@ import {
   RiGithubLine,
   RiMailLine,
 } from 'react-icons/ri'
-import {defineField, defineType, StringRule, BooleanRule} from 'sanity'
+import {defineField, defineType, defineArrayMember, StringRule, BooleanRule} from 'sanity'
 
 const iconMap = {
   RiHome4Line,
@@ -36,7 +36,7 @@ export default defineType({
       title: 'Navigation Links',
       type: 'array',
       of: [
-        {
+        defineArrayMember({
           type: 'object',
           fields: [
             defineField({
@@ -100,7 +100,7 @@ export default defineType({
               }
             },
           },
-        },
+        }),
       ],
     }),
   ],

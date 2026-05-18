@@ -6,8 +6,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import "./glitch.css";
 
-import { client } from "@/lib/sanity/client";
+import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+import type { Navigation, Settings } from "@/types/sanity.types";
 import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 
 import SkipLink from "@/components/UI/SkipLink.component";
@@ -30,10 +31,12 @@ export default async function RootLayout({
   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
   preconnect("https://cdn.sanity.io");
 
-  const [navigation, { footerCopyrightText }] = await Promise.all([
-    client.fetch(navigationQuery),
-    client.fetch(settingsQuery),
+  const [navigation, settings] = await Promise.all([
+    sanityFetch<Navigation>({ query: navigationQuery, revalidate: 3600 }),
+    sanityFetch<Settings>({ query: settingsQuery, revalidate: 3600 }),
   ]);
+
+  const footerCopyrightText = settings?.footerCopyrightText;
 
   return (
     <html lang="nb">

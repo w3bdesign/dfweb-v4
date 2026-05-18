@@ -1,7 +1,9 @@
 import dynamic from "next/dynamic";
-import { client } from "@/lib/sanity/client";
+import { notFound } from "next/navigation";
+import { sanityFetch } from "@/lib/sanity/client";
 import { pageContentQuery } from "@/lib/sanity/queries";
 import ContentLoader from "@/components/UI/ContentLoader.component";
+import type { Page } from "@/types/sanity.types";
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
   loading: () => <ContentLoader type="hero" />,
@@ -15,7 +17,12 @@ const DynamicIndexContent = dynamic(
 );
 
 export default async function HomePage() {
-  const pageContent = await client.fetch(pageContentQuery);
+  const pageContent = await sanityFetch<Page | null>({
+    query: pageContentQuery,
+    revalidate: 3600,
+  });
+
+  if (!pageContent) notFound();
 
   return (
     <main>
