@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateCSRFToken } from "@/lib/csrf";
+import { formSchema } from "@/components/Kontakt/config/formConfig";
 
 /**
- * POST handler for form submissions with CSRF protection
+ * POST handler for form submissions with CSRF protection.
+ * Uses the shared Zod schema from formConfig.ts as the single source
+ * of truth for validation — same rules on client and server.
  * @param {NextRequest} request - The incoming request
  * @returns {NextResponse} JSON response
  */
@@ -43,31 +46,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Remove CSRF token from form data before processing
+    // Remove CSRF token from form data before validation
     delete formData._csrf;
     delete formData.csrfToken;
 
-    // Validate required fields
-    const { navn, telefon, tekst } = formData;
+    // Validate using the shared Zod schema — single source of truth
+    const result = formSchema.safeParse(formData);
 
-    if (!navn || !telefon || !tekst) {
+    if (!result.success) {
+      const firstIssue = result.error.issues[0];
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
-    }
-
-    // Basic validation
-    if (navn.length < 2 || navn.length > 100) {
-      return NextResponse.json(
-        { error: "Name must be between 2 and 100 characters" },
-        { status: 400 },
-      );
-    }
-
-    if (tekst.length < 10 || tekst.length > 1000) {
-      return NextResponse.json(
-        { error: "Message must be between 10 and 1000 characters" },
+        { error: firstIssue?.message ?? "Validation failed" },
         { status: 400 },
       );
     }

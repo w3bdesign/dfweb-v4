@@ -5,7 +5,7 @@ import {
   ErrorBoundary as ReactErrorBoundary,
   FallbackProps,
 } from "react-error-boundary";
-import Fallback from "./Fallback.component";
+import ErrorFallback from "./ErrorFallback.component";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -33,7 +33,9 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
   compact = false,
 }) => {
   const renderFallback = useCallback(
-    (props: FallbackProps) => <Fallback {...props} compact={compact} />,
+    (props: FallbackProps) => (
+      <ErrorFallback error={props.error} compact={compact} />
+    ),
     [compact],
   );
 

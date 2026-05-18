@@ -1,4 +1,4 @@
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 import { createClient } from "@sanity/client";
 import type { Project } from "@/types/sanity.types";
 
@@ -13,7 +13,7 @@ export const client = createClient({
   useCdn: true,
 });
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 
 export function urlFor(source: NonNullable<Project["projectimage"]>) {
   return builder.image(source);
