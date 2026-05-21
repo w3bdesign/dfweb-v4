@@ -4,7 +4,7 @@ import * as m from "motion/react-m";
 
 import { MotionDiv } from "@/lib/framer/client";
 
-export interface NavigationLinkProps {
+interface NavigationLinkProps {
   name: string;
   href: string;
   isActive: boolean;
