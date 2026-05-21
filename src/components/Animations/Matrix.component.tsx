@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useCallback } from "react";
 import { createMatrixRenderer } from "./Matrix.renderer";
 import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
 
-export interface ReactMatrixAnimationProps {
+interface ReactMatrixAnimationProps {
   tileSize?: number;
   fadeFactor?: number;
   backgroundColor?: string;

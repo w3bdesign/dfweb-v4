@@ -1,6 +1,6 @@
 import type { ElementType, ReactNode, MouseEventHandler } from "react";
 
-export interface IButtonProps {
+interface IButtonProps {
   children: ReactNode;
   href?: string;
   renderAs?: ElementType;

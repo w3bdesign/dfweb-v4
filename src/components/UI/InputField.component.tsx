@@ -6,7 +6,7 @@ import {
   Path,
 } from "react-hook-form";
 
-export interface InputProps<T extends FieldValues> {
+interface InputProps<T extends FieldValues> {
   readonly name: Path<T>;
   readonly label: string;
   readonly htmlFor: string;
