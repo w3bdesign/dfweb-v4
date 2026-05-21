@@ -1,6 +1,6 @@
 "use client";
 
-export interface IHamburgerProps {
+interface IHamburgerProps {
   onClick: () => void;
   animatetoX: boolean;
 }
