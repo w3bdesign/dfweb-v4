@@ -11,6 +11,7 @@ interface MatrixCursorProps {
 interface CursorStyles extends React.CSSProperties {
   "--cursor-x": string;
   "--cursor-y": string;
+  isolation?: "isolate" | "auto";
 }
 
 interface MatrixTrail {
