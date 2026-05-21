@@ -2,6 +2,7 @@
 
 import * as m from "motion/react-m";
 import { ReactNode, useRef } from "react";
+import { createWillChangeHandlers } from "./animation-utils";
 
 export interface FadeInScrollProps {
   children: ReactNode;
@@ -23,6 +24,8 @@ const FadeInScroll = ({
   "data-testid": dataTestId,
 }: FadeInScrollProps) => {
   const ref = useRef<HTMLDivElement>(null);
+  const { onAnimationStart, onAnimationComplete } =
+    createWillChangeHandlers(ref);
 
   return (
     <m.div
@@ -36,12 +39,8 @@ const FadeInScroll = ({
         duration,
         ease: "easeOut",
       }}
-      onAnimationStart={() => {
-        if (ref.current) ref.current.style.willChange = "opacity";
-      }}
-      onAnimationComplete={() => {
-        if (ref.current) ref.current.style.willChange = "auto";
-      }}
+      onAnimationStart={onAnimationStart}
+      onAnimationComplete={onAnimationComplete}
     >
       {children}
     </m.div>
