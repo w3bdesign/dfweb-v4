@@ -1,9 +1,15 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next/types";
 import { sanityFetch } from "@/lib/sanity/client";
 import { pageContentQuery } from "@/lib/sanity/queries";
 import ContentLoader from "@/components/UI/ContentLoader.component";
 import type { Page } from "@/types/sanity.types";
+
+export const metadata: Metadata = {
+  title: "Forside - Dfweb",
+  description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+};
 
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
   loading: () => <ContentLoader type="hero" />,
