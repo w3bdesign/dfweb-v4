@@ -1,6 +1,6 @@
 import { Result } from "axe-core";
 
-export function terminalLog(violations: Result[]) {
+function terminalLog(violations: Result[]) {
   cy.task(
     "log",
     `${violations.length} accessibility violation${violations.length === 1 ? "" : "s"} ${
