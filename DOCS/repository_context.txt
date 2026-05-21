@@ -201,7 +201,6 @@ src/
         route.ts
       form/
         route.ts
-      siteMapGenerator.ts
     cv/
       page.tsx
     kontakt/
@@ -217,10 +216,12 @@ src/
     layout.tsx
     not-found.tsx
     page.tsx
+    sitemap.ts
   components/
     Animations/
       types/
         Animations.types.ts
+      animation-utils.ts
       BounceInScroll.component.tsx
       FadeIn.component.tsx
       FadeInScroll.component.tsx
@@ -388,6 +389,7 @@ UTKAST/
   senior-developer-portfolio.zip
 .eslintrc-custom-rules.ts
 .eslintrc.json
+.fallowrc.json
 .gitattributes
 .gitignore
 .npmrc
@@ -417,6 +419,78 @@ vercel.json
 ```
 
 # Files
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@5.4.3
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.15.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: sudo npm i -g pnpm@11.0.8
+19:       - run:
+20:           name: Install Dependencies
+21:           command: pnpm install --frozen-lockfile
+22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+23:       - save_cache:
+24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+25:           paths:
+26:             - ~/.pnpm-store
+27:   build:
+28:     working_directory: /home/circleci/dfweb
+29:     docker:
+30:       - image: cimg/node:24.15.0-browsers
+31:     steps:
+32:       - checkout
+33:       - restore_cache:
+34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+35:       - run:
+36:           name: Install pnpm package manager
+37:           command: sudo npm i -g pnpm@11.0.8
+38:       - run:
+39:           name: Install Dependencies
+40:           command: pnpm install --frozen-lockfile
+41:       - run:
+42:           name: Chrome key start setup
+43:           command: sudo apt update -y
+44:       - run:
+45:           name: Chrome key finish setup
+46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+47:       - run:
+48:           name: Chrome package download
+49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+50:       - save_cache:
+51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+52:           paths:
+53:             - ~/.pnpm-store
+54:       - store_artifacts:
+55:           path: /root/.npm/_logs
+56:       - run:
+57:           name: Run Jest Tests
+58:           command: pnpm test
+59:       - run:
+60:           name: Make sure ~/.gnupg directory exists
+61:           command: mkdir -p ~/.gnupg
+62:       - codecov/upload
+63:     parallelism: 6
+64: workflows:
+65:   chromatic-deploy:
+66:     jobs:
+67:       - build:
+68:           name: Build Next.js project
+````
 
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
@@ -478,6 +552,251 @@ vercel.json
 13:     ]
 14:   }
 15: ]
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:         with:
+ 47:           version: 11
+ 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 49:         with:
+ 50:           node-version: 24
+ 51:           cache: ${{ steps.pm.outputs.cache }}
+ 52:       - name: Install dependencies
+ 53:         run: ${{ steps.pm.outputs.install }}
+ 54:       - name: Run React Doctor
+ 55:         id: doctor
+ 56:         run: |
+ 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 59:           # Strip ANSI escape codes for clean output
+ 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 65:           else
+ 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 67:           fi
+ 68:           # Check for lint issues (the actionable part of the report)
+ 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 71:           else
+ 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 73:           fi
+ 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 77:           # Extract just the numeric score for threshold check
+ 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 81:       - name: Post PR comment with results
+ 82:         if: github.event_name == 'pull_request'
+ 83:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 84:         with:
+ 85:           script: |
+ 86:             const fs = require('fs');
+ 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 88:             const score = '${{ steps.doctor.outputs.score }}';
+ 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 91:             const scoreDisplay = offline
+ 92:               ? 'N/A (scoring server unreachable)'
+ 93:               : score;
+ 94:             const statusEmoji = offline
+ 95:               ? (issuesFound ? '⚠️' : '✅')
+ 96:               : '';
+ 97:             const body = [
+ 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 99:               '',
+100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+101:               '',
+102:               '<details>',
+103:               '<summary>Full diagnostics</summary>',
+104:               '',
+105:               '```',
+106:               output.trim(),
+107:               '```',
+108:               '',
+109:               '</details>',
+110:               '',
+111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+112:             ].filter(Boolean).join('\n');
+113:             // Find existing comment to update instead of creating duplicates
+114:             const { data: comments } = await github.rest.issues.listComments({
+115:               owner: context.repo.owner,
+116:               repo: context.repo.repo,
+117:               issue_number: context.issue.number,
+118:             });
+119:             const botComment = comments.find(
+120:               (c) => c.body?.includes('🩺 React Doctor')
+121:             );
+122:             if (botComment) {
+123:               await github.rest.issues.updateComment({
+124:                 owner: context.repo.owner,
+125:                 repo: context.repo.repo,
+126:                 comment_id: botComment.id,
+127:                 body,
+128:               });
+129:             } else {
+130:               await github.rest.issues.createComment({
+131:                 owner: context.repo.owner,
+132:                 repo: context.repo.repo,
+133:                 issue_number: context.issue.number,
+134:                 body,
+135:               });
+136:             }
+137:       - name: Write job summary
+138:         if: always()
+139:         run: |
+140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+141:           if [ "$OFFLINE" = "true" ]; then
+142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+143:             echo "" >> "$GITHUB_STEP_SUMMARY"
+144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+145:           else
+146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+147:           fi
+148:           echo "" >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+152:       - name: Check score threshold
+153:         run: |
+154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+156:           # When offline, skip numeric threshold — only fail if lint issues were found
+157:           if [ "$OFFLINE" = "true" ]; then
+158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+159:             if [ "$ISSUES" = "true" ]; then
+160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+161:               exit 1
+162:             fi
+163:             echo "✅ No lint issues found (score unavailable due to offline)"
+164:             exit 0
+165:           fi
+166:           SCORE="${{ steps.doctor.outputs.score_num }}"
+167:           SCORE="${SCORE:-0}"
+168:           THRESHOLD=80
+169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+172:             exit 1
+173:           fi
+````
+
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.161.0
+30:     steps:
+31:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
 ````
 
 ## File: .github/copilot-instructions.md
@@ -5888,121 +6207,6 @@ vercel.json
 193: });
 ````
 
-## File: src/__tests__/Animations/BounceInScroll.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import "@testing-library/jest-dom";
-  3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-  4: import React from "react";
-  5: // Mock framer-motion
-  6: jest.mock("motion/react-m", () => ({
-  7:   div: ({
-  8:     children,
-  9:     className,
- 10:     "data-testid": testId,
- 11:   }: {
- 12:     children: React.ReactNode;
- 13:     className: string;
- 14:     "data-testid": string;
- 15:   }) => (
- 16:     <div className={className} data-testid={testId}>
- 17:       {children}
- 18:     </div>
- 19:   ),
- 20: }));
- 21: jest.mock("motion/react", () => ({
- 22:   Variants: {},
- 23: }));
- 24: describe("BounceInScroll", () => {
- 25:   it("renders children content", () => {
- 26:     // Arrange
- 27:     const testContent = "Test content";
- 28:     // Act
- 29:     render(
- 30:       <BounceInScroll>
- 31:         <div>{testContent}</div>
- 32:       </BounceInScroll>,
- 33:     );
- 34:     // Assert
- 35:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 36:   });
- 37:   it("applies custom CSS class", () => {
- 38:     // Arrange
- 39:     const testClass = "test-class";
- 40:     // Act
- 41:     render(
- 42:       <BounceInScroll cssClass={testClass}>
- 43:         <div>Test content</div>
- 44:       </BounceInScroll>,
- 45:     );
- 46:     // Assert
- 47:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
- 48:   });
- 49:   it("configures viewport with default amount when viewAmount not provided", () => {
- 50:     // Arrange
- 51:     const testContent = "Test content";
- 52:     // Act
- 53:     render(
- 54:       <BounceInScroll>
- 55:         <div>{testContent}</div>
- 56:       </BounceInScroll>,
- 57:     );
- 58:     // Assert
- 59:     const element = screen.getByTestId("bounceinscroll");
- 60:     expect(element).toBeInTheDocument();
- 61:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 62:   });
- 63:   it("configures viewport with custom amount when viewAmount provided", () => {
- 64:     // Arrange
- 65:     const testContent = "Test content";
- 66:     const viewAmount = 0.5;
- 67:     // Act
- 68:     render(
- 69:       <BounceInScroll viewAmount={viewAmount}>
- 70:         <div>{testContent}</div>
- 71:       </BounceInScroll>,
- 72:     );
- 73:     // Assert
- 74:     const element = screen.getByTestId("bounceinscroll");
- 75:     expect(element).toBeInTheDocument();
- 76:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 77:   });
- 78:   it("configures for instant animation when instant prop is true", () => {
- 79:     // Arrange
- 80:     const testContent = "Test content";
- 81:     // Act
- 82:     render(
- 83:       <BounceInScroll instant={true}>
- 84:         <div>{testContent}</div>
- 85:       </BounceInScroll>,
- 86:     );
- 87:     // Assert
- 88:     const element = screen.getByTestId("bounceinscroll");
- 89:     expect(element).toBeInTheDocument();
- 90:     expect(screen.getByText(testContent)).toBeInTheDocument();
- 91:   });
- 92:   it("handles all viewport amount types", () => {
- 93:     // Arrange
- 94:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
- 95:     const testContent = "Test content";
- 96:     amounts.forEach((amount) => {
- 97:       // Act
- 98:       const { unmount } = render(
- 99:         <BounceInScroll viewAmount={amount}>
-100:           <div>{testContent}</div>
-101:         </BounceInScroll>,
-102:       );
-103:       // Assert
-104:       const element = screen.getByTestId("bounceinscroll");
-105:       expect(element).toBeInTheDocument();
-106:       expect(screen.getByText(testContent)).toBeInTheDocument();
-107:       // Cleanup
-108:       unmount();
-109:     });
-110:   });
-111: });
-````
-
 ## File: src/__tests__/Animations/FadeIn.test.tsx
 ````typescript
   1: import React from "react";
@@ -9601,40 +9805,6 @@ vercel.json
 29: }
 ````
 
-## File: src/app/api/siteMapGenerator.ts
-````typescript
- 1: import { SitemapStream, streamToPromise } from "sitemap";
- 2: import { Readable } from "stream";
- 3: import type { NextApiRequest, NextApiResponse } from "next";
- 4: interface IData {
- 5:   toString: () => string;
- 6: }
- 7: interface ILinks {
- 8:   url: string;
- 9:   changefreq: string;
-10:   priority: number;
-11: }
-12: const siteMapGenerator = async (req: NextApiRequest, res: NextApiResponse) => {
-13:   // An array with your links
-14:   const links: ILinks[] = [
-15:     { url: "/", changefreq: "daily", priority: 0.3 },
-16:     { url: "/prosjekter", changefreq: "daily", priority: 0.3 },
-17:     { url: "/cv", changefreq: "daily", priority: 0.3 },
-18:     { url: "/kontakt", changefreq: "daily", priority: 0.3 },
-19:   ];
-20:   // Create a stream to write to
-21:   const stream = new SitemapStream({ hostname: `https://${req.headers.host}` });
-22:   res.writeHead(200, {
-23:     "Content-Type": "application/xml",
-24:   });
-25:   const xmlString = await streamToPromise(
-26:     Readable.from(links).pipe(stream),
-27:   ).then((data: IData) => data.toString());
-28:   res.end(xmlString);
-29: };
-30: export default siteMapGenerator;
-````
-
 ## File: src/app/kontakt/page.tsx
 ````typescript
  1: import ContactForm from "@/components/Kontakt/ContactForm.component";
@@ -10262,105 +10432,6 @@ vercel.json
 62: export default BounceInScroll;
 ````
 
-## File: src/components/Animations/FadeIn.component.tsx
-````typescript
- 1: import * as m from "motion/react-m";
- 2: import { ReactNode, useRef } from "react";
- 3: export interface FadeInProps {
- 4:   children: ReactNode;
- 5:   className?: string;
- 6:   duration?: number;
- 7:   delay?: number;
- 8:   "data-testid"?: string;
- 9: }
-10: /**
-11:  * Minimal fade-in animation component
-12:  * Only uses opacity for zero CLS impact
-13:  */
-14: const FadeIn = ({
-15:   children,
-16:   className = "",
-17:   duration = 1,
-18:   delay = 0,
-19:   "data-testid": dataTestId,
-20: }: FadeInProps) => {
-21:   const ref = useRef<HTMLDivElement>(null);
-22:   return (
-23:     <m.div
-24:       ref={ref}
-25:       className={className}
-26:       data-testid={dataTestId}
-27:       initial={{ opacity: 0 }}
-28:       animate={{ opacity: 1 }}
-29:       transition={{
-30:         duration,
-31:         delay,
-32:         ease: "easeOut",
-33:       }}
-34:       onAnimationStart={() => {
-35:         if (ref.current) ref.current.style.willChange = "opacity";
-36:       }}
-37:       onAnimationComplete={() => {
-38:         if (ref.current) ref.current.style.willChange = "auto";
-39:       }}
-40:     >
-41:       {children}
-42:     </m.div>
-43:   );
-44: };
-45: export default FadeIn;
-````
-
-## File: src/components/Animations/FadeInScroll.component.tsx
-````typescript
- 1: "use client";
- 2: import * as m from "motion/react-m";
- 3: import { ReactNode, useRef } from "react";
- 4: export interface FadeInScrollProps {
- 5:   children: ReactNode;
- 6:   className?: string;
- 7:   duration?: number;
- 8:   viewAmount?: "some" | "all" | number;
- 9:   "data-testid"?: string;
-10: }
-11: /**
-12:  * Minimal fade-in animation triggered on scroll
-13:  * Only uses opacity for zero CLS impact
-14:  */
-15: const FadeInScroll = ({
-16:   children,
-17:   className = "",
-18:   duration = 0.4,
-19:   viewAmount = 0.2,
-20:   "data-testid": dataTestId,
-21: }: FadeInScrollProps) => {
-22:   const ref = useRef<HTMLDivElement>(null);
-23:   return (
-24:     <m.div
-25:       ref={ref}
-26:       className={className}
-27:       data-testid={dataTestId}
-28:       initial={{ opacity: 0 }}
-29:       whileInView={{ opacity: 1 }}
-30:       viewport={{ once: true, amount: viewAmount }}
-31:       transition={{
-32:         duration,
-33:         ease: "easeOut",
-34:       }}
-35:       onAnimationStart={() => {
-36:         if (ref.current) ref.current.style.willChange = "opacity";
-37:       }}
-38:       onAnimationComplete={() => {
-39:         if (ref.current) ref.current.style.willChange = "auto";
-40:       }}
-41:     >
-42:       {children}
-43:     </m.div>
-44:   );
-45: };
-46: export default FadeInScroll;
-````
-
 ## File: src/components/Animations/Grow.component.tsx
 ````typescript
  1: import * as m from "motion/react-m";
@@ -10388,144 +10459,6 @@ vercel.json
 23:   );
 24: };
 25: export default Grow;
-````
-
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: export interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrix-canvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     const canvas = canvasRef.current;
-106:     if (!canvas) return;
-107:     const ctx = canvas.getContext("2d");
-108:     if (!ctx) return;
-109:     const handleResize = () => {
-110:       const boundingClientRect = canvas.getBoundingClientRect();
-111:       canvas.width = boundingClientRect.width;
-112:       canvas.height = boundingClientRect.height;
-113:       initMatrix(canvas);
-114:       isInitializedRef.current = true;
-115:     };
-116:     const debouncedResize = debounce(handleResize, 100);
-117:     window.addEventListener("resize", debouncedResize);
-118:     handleResize();
-119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-120:     return () => {
-121:       window.removeEventListener("resize", debouncedResize);
-122:     };
-123:   }, [initMatrix, tick]);
-124:   return (
-125:     <canvas
-126:       ref={canvasRef}
-127:       id={CANVAS_ID}
-128:       style={{ width: "100%", height: "100%" }}
-129:       data-testid="matrix-canvas"
-130:       className="absolute inset-0"
-131:     />
-132:   );
-133: };
-134: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/Animations/Matrix.renderer.ts
@@ -11271,85 +11204,6 @@ vercel.json
 57: export default ErrorFallback;
 ````
 
-## File: src/components/Index/Hero.component.tsx
-````typescript
- 1: "use client";
- 2: import React, { useRef } from "react";
- 3: import dynamic from "next/dynamic";
- 4: import type { Herocontent } from "@/types/sanity.types";
- 5: import Icons from "./Icons.component";
- 6: import FadeIn from "../Animations/FadeIn.component";
- 7: import RotatingLoader from "../Animations/RotatingLoader.component";
- 8: import MobileBackground from "./MobileBackground.component";
- 9: import MatrixCursor from "../Animations/MatrixCursor.component";
-10: const ReactMatrixAnimation = dynamic(
-11:   () => import("../Animations/Matrix.component"),
-12:   {
-13:     ssr: false,
-14:     loading: () => (
-15:       <div className="text-center">
-16:         <RotatingLoader />
-17:       </div>
-18:     ),
-19:   },
-20: );
-21: /**
-22:  * Hero component for rendering the main hero section of the page
-23:  * @param {Object} props - The props for the Hero component
-24:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
-25:  * @returns {JSX.Element} The rendered Hero component
-26:  */
-27: const Hero = ({ content }: { content: Herocontent[] }) => {
-28:   const heroRef = useRef<HTMLElement>(null);
-29:   return (
-30:     <article
-31:       aria-label="Kontainer for animasjoner av introtekst"
-32:       id="main-hero"
-33:       data-testid="main-hero"
-34:       ref={heroRef}
-35:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
-36:     >
-37:       <MatrixCursor heroRef={heroRef} />
-38:       <MobileBackground />
-39:       <div className="hidden md:block absolute inset-0 w-full h-full">
-40:         <ReactMatrixAnimation />
-41:       </div>
-42:       <div className="relative z-10">
-43:         <div
-44:           className="px-4 md:px-0"
-45:           data-testid="fade-in"
-46:         >
-47:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
-48:             <FadeIn delay={0.3}>
-49:               <h1
-50:                 data-cy="hei"
-51:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
-52:               >
-53:                 {content?.length > 0 ? content[0]?.text : "Hei!"}
-54:               </h1>
-55:             </FadeIn>
-56:             <FadeIn delay={0.9}>
-57:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
-58:                 {content?.length > 0 && content[1]?.text}
-59:               </h2>
-60:             </FadeIn>
-61:             <FadeIn delay={1.5}>
-62:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
-63:                 {content?.length > 0 && content[2]?.text}
-64:               </p>
-65:             </FadeIn>
-66:           </div>
-67:           <div className="mt-4">
-68:             <Icons />
-69:           </div>
-70:         </div>
-71:       </div>
-72:     </article>
-73:   );
-74: };
-75: export default Hero;
-````
-
 ## File: src/components/Index/Icons.component.tsx
 ````typescript
  1: import { IconType } from "react-icons";
@@ -11650,61 +11504,6 @@ vercel.json
 32: export default Footer;
 ````
 
-## File: src/components/Layout/Hamburger.component.tsx
-````typescript
- 1: "use client";
- 2: export interface IHamburgerProps {
- 3:   onClick: () => void;
- 4:   animatetoX: boolean;
- 5: }
- 6: /**
- 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
- 8:  * @function Hamburger
- 9:  * @param {() => void} onClick - onClick handler to respond to clicks
-10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
-11:  * @returns {JSX.Element} - Rendered component
-12:  */
-13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
-14:   const hamburgerLine =
-15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
-16:   const opacityFull = "opacity-100 group-hover:opacity-100";
-17:   return (
-18:     <button
-19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6 relative"
-20:       data-cy="hamburger"
-21:       data-testid="hamburger"
-22:       onClick={onClick}
-23:       aria-expanded={animatetoX}
-24:       aria-label={animatetoX ? "Lukk meny" : "Åpne meny"}
-25:       type="button"
-26:     >
-27:       <span className="sr-only text-white text-2xl">
-28:         {animatetoX ? "Lukk navigasjonsmeny" : "Åpne navigasjonsmeny"}
-29:       </span>
-30:       <span
-31:         data-testid="hamburgerline"
-32:         className={`${hamburgerLine} ${
-33:           animatetoX
-34:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
-35:             : opacityFull
-36:         }`}
-37:       />
-38:       <span
-39:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
-40:       />
-41:       <span
-42:         className={`${hamburgerLine} ${
-43:           animatetoX
-44:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
-45:             : opacityFull
-46:         }`}
-47:       />
-48:     </button>
-49:   );
-50: };
-51: export default Hamburger;
-````
-
 ## File: src/components/Layout/Header.component.tsx
 ````typescript
  1: "use client";
@@ -11910,60 +11709,6 @@ vercel.json
 153: export default MobileMenu;
 ````
 
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import * as m from "motion/react-m";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: export interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-[var(--matrix-light)]" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <m.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
-36:           }`}
-37:           initial={false}
-38:           animate={{
-39:             width: isActive ? "100%" : "0%",
-40:           }}
-41:           variants={{
-42:             hover: { width: "100%" },
-43:           }}
-44:           transition={{ duration: 0.3 }}
-45:         />
-46:       </div>
-47:     </Link>
-48:   </MotionDiv>
-49: );
-50: export default NavigationLink;
-````
-
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -12050,77 +11795,6 @@ vercel.json
 82: export default ProsjektCard;
 ````
 
-## File: src/components/UI/Button.component.tsx
-````typescript
- 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
- 2: export interface IButtonProps {
- 3:   children: ReactNode;
- 4:   href?: string;
- 5:   renderAs?: ElementType;
- 6:   type?: "button" | "submit" | "reset";
- 7:   disabled?: boolean;
- 8:   loading?: boolean;
- 9:   download?: boolean | string;
-10:   onClick?: MouseEventHandler<HTMLButtonElement>;
-11:   "aria-label"?: string;
-12: }
-13: /**
-14:  * Button component that can be rendered as various HTML elements
-15:  * @param {Object} props
-16:  * @param {ReactNode} props.children - The content of the button
-17:  * @param {string} [props.href] - The URL to link to if the button is an anchor
-18:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
-19:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
-20:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
-21:  * @param {boolean} [props.loading=false] - Whether the button is in a loading state
-22:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
-23:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
-24:  * @returns {JSX.Element} The rendered Button component
-25:  */
-26: const Button = ({
-27:   children,
-28:   href,
-29:   renderAs,
-30:   type = "submit",
-31:   disabled = false,
-32:   loading = false,
-33:   download,
-34:   onClick,
-35:   "aria-label": ariaLabel,
-36:   ...props
-37: }: IButtonProps) => {
-38:   const Component = renderAs ?? "button";
-39:   const isLink = renderAs === "a";
-40:   const targetLink = isLink ? "_blank" : undefined;
-41:   const isDisabled = disabled || loading;
-42:   return (
-43:     <Component
-44:       type={isLink ? undefined : type}
-45:       data-cy="submit"
-46:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-matrix-dark rounded-sm hover:bg-matrix-dark/80 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-glow-sm active:shadow-inner border border-matrix/20 hover:border-matrix/40 hover:brightness-110 active:brightness-95 cursor-pointer"
-47:       href={href}
-48:       target={targetLink}
-49:       disabled={isDisabled}
-50:       data-text={children}
-51:       download={download}
-52:       onClick={onClick}
-53:       aria-label={ariaLabel}
-54:       aria-busy={loading || undefined}
-55:       {...props}
-56:     >
-57:       {loading && (
-58:         <span
-59:           className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2 align-middle"
-60:           aria-hidden="true"
-61:         />
-62:       )}
-63:       {children}
-64:     </Component>
-65:   );
-66: };
-67: export default Button;
-````
-
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -12186,149 +11860,6 @@ vercel.json
 61:   );
 62: };
 63: export default ContentLoader;
-````
-
-## File: src/components/UI/InputField.component.tsx
-````typescript
-  1: import React from "react";
-  2: import {
-  3:   UseFormRegister,
-  4:   FieldValues,
-  5:   RegisterOptions,
-  6:   Path,
-  7: } from "react-hook-form";
-  8: export interface InputProps<T extends FieldValues> {
-  9:   readonly name: Path<T>;
- 10:   readonly label: string;
- 11:   readonly htmlFor: string;
- 12:   readonly isRequired?: boolean;
- 13:   readonly inputPattern?: RegExp;
- 14:   readonly title?: string;
- 15:   readonly type?: "input" | "textarea";
- 16:   readonly register: UseFormRegister<T>;
- 17:   readonly error?: string;
- 18:   readonly autoComplete?: string;
- 19:   readonly spellCheck?: boolean;
- 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
- 21: }
- 22: /**
- 23:  * Creates register options for react-hook-form
- 24:  * @template T - Type extending FieldValues
- 25:  * @param {boolean} [isRequired] - Whether the field is required
- 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
- 27:  * @param {string} [title] - Title for the input field
- 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
- 29:  */
- 30: export function createRegisterOptions<T extends FieldValues>(
- 31:   isRequired?: boolean,
- 32:   inputPattern?: RegExp,
- 33:   title?: string,
- 34: ): RegisterOptions<T, Path<T>> {
- 35:   return {
- 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
- 37:     ...(inputPattern
- 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
- 39:       : {}),
- 40:   };
- 41: }
- 42: /**
- 43:  * InputField component for rendering form inputs
- 44:  * @template T - Type extending FieldValues
- 45:  * @param {InputProps<T>} props - The props for the InputField component
- 46:  * @returns {JSX.Element} The rendered InputField component
- 47:  */
- 48: function InputField<T extends FieldValues>({
- 49:   name,
- 50:   label,
- 51:   inputPattern,
- 52:   isRequired,
- 53:   htmlFor,
- 54:   title,
- 55:   type = "input",
- 56:   register,
- 57:   error,
- 58:   autoComplete,
- 59:   spellCheck,
- 60:   inputMode,
- 61:   ...props
- 62: }: InputProps<T>) {
- 63:   const sharedClasses =
- 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
- 65:   const registerOptions = createRegisterOptions<T>(
- 66:     isRequired,
- 67:     inputPattern,
- 68:     title,
- 69:   );
- 70:   return (
- 71:     <div className="relative my-2 flex flex-col items-center">
- 72:       <div className="relative">
- 73:         {type === "input" ? (
- 74:           <input
- 75:             id={htmlFor}
- 76:             type="text"
- 77:             placeholder={label}
- 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 79:             autoComplete={autoComplete}
- 80:             spellCheck={spellCheck}
- 81:             inputMode={inputMode}
- 82:             {...register(name, {
- 83:               ...registerOptions,
- 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 85:             })}
- 86:             {...props}
- 87:           />
- 88:         ) : (
- 89:           <textarea
- 90:             id={htmlFor}
- 91:             placeholder={label}
- 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 93:             spellCheck={spellCheck}
- 94:             {...register(name, {
- 95:               ...registerOptions,
- 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 97:             })}
- 98:             {...props}
- 99:           ></textarea>
-100:         )}
-101:         <label
-102:           htmlFor={htmlFor}
-103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
-104:             // Removed peer-focus:text-primary
-105:             type === "textarea" ? "peer-focus:-top-4" : ""
-106:           }`}
-107:         >
-108:           {label}
-109:         </label>
-110:       </div>
-111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-112:     </div>
-113:   );
-114: }
-115: export default InputField;
-````
-
-## File: src/components/UI/PageHeader.component.tsx
-````typescript
- 1: import type { ReactNode } from "react";
- 2: export interface IPageHeaderProps {
- 3:   children: ReactNode;
- 4: }
- 5: /**
- 6:  * PageHeader component for rendering the header for each page
- 7:  * @function PageHeader
- 8:  * @param {children?} children - HTML children to render in the page header component
- 9:  * @returns {ReactNode} - Rendered component
-10:  */
-11: const PageHeader = ({ children }: IPageHeaderProps) => (
-12:   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-13:     <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
-14:       <h1 className="text-xl md:text-2xl text-center font-bold text-slate-100">
-15:         {children}
-16:       </h1>
-17:     </div>
-18:   </div>
-19: );
-20: export default PageHeader;
 ````
 
 ## File: src/components/UI/Pill.component.tsx
@@ -12908,35 +12439,6 @@ vercel.json
 14: </html>
 ````
 
-## File: src/e2e/cypress/support/component.ts
-````typescript
- 1: // ***********************************************************
- 2: // This example support/component.ts is processed and
- 3: // loaded automatically before your test files.
- 4: //
- 5: // This is a great place to put global configuration and
- 6: // behavior that modifies Cypress.
- 7: //
- 8: // You can change the location of this file or turn off
- 9: // automatically serving support files with the
-10: // 'supportFile' configuration option.
-11: //
-12: // You can read more here:
-13: // https://on.cypress.io/configuration
-14: // ***********************************************************
-15: // Import commands.js using ES2015 syntax:
-16: import "./commands";
-17: import "@/styles/globals.css";
-18: import { mount } from "cypress/react";
-19: // Augment the Cypress namespace to include type definitions for
-20: // your custom command.
-21: // Alternatively, can be defined in cypress/support/component.d.ts
-22: // with a <reference path="./component" /> at the top of your spec.
-23: Cypress.Commands.add("mount", mount);
-24: // Example use:
-25: // cy.mount(<MyComponent />)
-````
-
 ## File: src/e2e/cypress/support/e2e.ts
 ````typescript
  1: // ***********************************************************
@@ -12958,55 +12460,6 @@ vercel.json
 17: import "./commands";
 18: // Alternatively you can use CommonJS syntax:
 19: // require('./commands')
-````
-
-## File: src/e2e/cypress/support/functions.ts
-````typescript
- 1: import { Result } from "axe-core";
- 2: export function terminalLog(violations: Result[]) {
- 3:   cy.task(
- 4:     "log",
- 5:     `${violations.length} accessibility violation${violations.length === 1 ? "" : "s"} ${
- 6:       violations.length === 1 ? "was" : "were"
- 7:     } detected`,
- 8:   );
- 9:   const violationData = violations.map(
-10:     ({ id, impact, description, nodes }) => ({
-11:       id,
-12:       impact,
-13:       description,
-14:       nodes: nodes.length,
-15:     }),
-16:   );
-17:   cy.task("table", violationData);
-18:   console.error(violationData);
-19: }
-20: export function checkAccessibility(delay?: number) {
-21:   if (delay) {
-22:     cy.wait(delay);
-23:   }
-24:   cy.injectAxe();
-25:   cy.checkA11y(undefined, undefined, terminalLog);
-26: }
-````
-
-## File: src/e2e/cypress/tsconfig.json
-````json
- 1: {
- 2:   "extends": "../../../tsconfig.json",
- 3:   "compilerOptions": {
- 4:     "noEmit": true,
- 5:     "isolatedModules": false,
- 6:     "types": ["cypress", "@testing-library/cypress"]
- 7:   },
- 8:   "include": [
- 9:     "../../../node_modules/cypress",
-10:     "../../../node_modules/@testing-library/cypress",
-11:     "support/component.ts",
-12:     "support/component.d.ts",
-13:     "./**/*.ts"
-14:   ]
-15: }
 ````
 
 ## File: src/e2e/playwright/cv.spec.ts
@@ -16153,39 +15606,6 @@ vercel.json
 82: };
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.0",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.2.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.5",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
-````
-
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -19016,6 +18436,222 @@ vercel.json
 8: export default config;
 ````
 
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
+  4: 
+  5: Fourth version of my personal portfolio website with Next.js, Motion,
+  6: Sanity.io and Typescript.
+  7: 
+  8: ## Table of Contents
+  9: 
+ 10: - [Live URL](#live-url)
+ 11: - [Frontend (Next.js)](#frontend-nextjs)
+ 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 13: - [Google Lighthouse](#google-lighthouse)
+ 14: - [Features](#features)
+ 15:   - [General](#general)
+ 16:   - [Design](#design)
+ 17:   - [Accessibility](#accessibility)
+ 18:   - [Security](#security)
+ 19:   - [Devops and Code quality](#devops-and-code-quality)
+ 20:   - [Environment Variables](#environment-variables)
+ 21:   - [Testing Standards](#testing-standards)
+ 22: 
+ 23: ## Live URL
+ 24: 
+ 25: - <https://www.dfweb.no>
+ 26: 
+ 27: ## Frontend (Next.js)
+ 28: 
+ 29: ![Frontend Image](public/images/frontend.png)
+ 30: 
+ 31: ---
+ 32: 
+ 33: ## Backend (Sanity headless CMS)
+ 34: 
+ 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 36: 
+ 37: ---
+ 38: 
+ 39: ## Google Lighthouse
+ 40: 
+ 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 42: 
+ 43: ## Features
+ 44: 
+ 45: ### General
+ 46: 
+ 47: - Clean, modern, responsive and Matrix-inspired design
+ 48: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 49: - Matrix canvas rain effect on front page
+ 50: - Custom 404 page with Matrix rain effect
+ 51: - Next.js 16 with Typescript and App Router
+ 52:   - Server Components implementation for improved performance
+ 53:   - Streaming with Suspense boundaries
+ 54:   - Automatic static optimization with revalidation
+ 55:   - Server-side data fetching with proper error handling
+ 56: - React 19
+ 57: - Sanity headless CMS for all of the content, projects and navigation links
+ 58: - Ladle for component documentation
+ 59: - Animations with Motion
+ 60: - React testing library for unit testing
+ 61: - Cypress for E2E testing
+ 62: - Playwright for cross-browser E2E testing
+ 63: - Contact form with Email.js and CSRF protection
+ 64: - Polymorphic components
+ 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 66: - Google rich results for each individual page
+ 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 68: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 70: - Reusable GenericForm component for easy form creation and management
+ 71: - Error handling with react-error-boundary for improved user experience and
+ 72:   easier debugging
+ 73: - AI-friendly repository documentation with automated updates (Repomix with
+ 74:   Github action workflow)
+ 75: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 76:   - Main AGENTS.md with project-specific patterns and gotchas
+ 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: - Recommended:
+ 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+ 84:   for enhanced GROQ query development, including syntax highlighting when using
+ 85:   `defineQuery`.
+ 86: 
+ 87: ### Design
+ 88: 
+ 89: - Fully responsive design tested on all devices
+ 90: - React Icons for project icons
+ 91: - Tailwind 4 for styling with a CSS custom-property design token system
+ 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+ 93:   colors, surface palette, glow shadows, and custom animations all driven by
+ 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
+ 95: - Animated reusable input fields
+ 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 97:   Matrix characters
+ 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 99: 
+100: ### Accessibility
+101: 
+102: - WCAG accessibility tested
+103: - Accessibility testing with Cypress Axe and Pa11y
+104: - Automated Pa11y accessibility testing on every PR and push to main
+105:   - Tests all main pages against WCAG2AA standards
+106:   - Captures screenshots for visual reference
+107:   - Detailed reports available as GitHub Actions artifacts
+108: - Builds will fail if any a11y errors are found
+109: 
+110: ### Devops and Code quality
+111: 
+112: - Continuous Integration with CircleCI
+113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+114: - Github action workflow for Cypress
+115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+116: - E2E testing with Cypress and Playwright integrated with Github actions
+117: - Unit testing with Jest and React Testing Library integrated with CircleCI
+118: - Test coverage setup with Codecov
+119: - 100% test coverage with Jest and React testing library
+120: - AI-powered commit message generation following Conventional Commits with
+121:   gitmojis
+122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+123:   - Scans for security, performance, correctness, and architecture issues
+124:   - Outputs a 0–100 score with actionable diagnostics on every PR
+125:   - Posts results as PR comments and GitHub Actions job summaries
+126:   - Configurable score threshold (default: 80) to gate merges
+127:   - Auto-detects package manager (pnpm, yarn, npm)
+128: - Automated performance monitoring with Lighthouse CI
+129:   - Performance, accessibility, best practices, and SEO checks on every PR
+130:   - Configurable thresholds for quality metrics
+131:   - Both desktop and performance-focused testing
+132: - Automated repository documentation with Repomix
+133:   - AI-friendly documentation generation on every push to main
+134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+135:   - Automated PR analysis with repository structure insights
+136:   - Security-focused documentation with sensitive information filtering
+137:   - Markdown formatting for improved readability
+138: 
+139: ### Security
+140: 
+141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
+142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+144:   - Secret detection with Gitleaks on every PR and push
+145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+146:   - Runs automatically on every PR and push to main
+147: - Automated security vulnerability scanning with Snyk
+148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+149:   - Integrates with GitHub Security tab for vulnerability tracking
+150: - Supply chain attack prevention with 7-day minimum release age
+151:   - Packages must be published for at least 7 days before installation
+152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
+154:   - Protects against compromised package releases (like Shai Hulud incidents)
+155: - GitHub Actions supply chain hardening with SHA pinning
+156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+159:   - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
+160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
+164: 
+165: ### Environment Variables
+166: 
+167: - Type-safe environment variable validation with envalid
+168:   - Runtime validation of required environment variables
+169:   - Clear error messages with examples for missing variables
+170:   - Separate handling of client-side and server-side variables
+171:   - Default values where appropriate
+172:   - Required variables:
+173: 
+174:     ```env
+175:     # Email Configuration (client-side)
+176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+179: 
+180:     # Security Configuration (server-side)
+181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+182:     ```
+183: 
+184:   - Validation prevents application startup if required variables are missing
+185:   - TypeScript integration for type-safe access to environment variables
+186: 
+187: ### Testing Standards
+188: 
+189: - ISTQB-aligned comprehensive test strategy
+190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+191:   - Multi-level test approach (Unit, Component, E2E)
+192:   - Risk-based testing methodology
+193:   - Defined test metrics and reporting
+194:   - Clear roles and responsibilities
+195:   - Structured defect management process
+196: 
+197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+198:   - Each test must include the following comments:
+199: 
+200:     ```typescript
+201:     // Arrange - Set up test data and conditions
+202:     // Act - Perform the action being tested
+203:     // Assert - Verify the results
+204:     ```
+205: 
+206:   - This pattern ensures:
+207:     - Clear test structure and readability
+208:     - Consistent test organization across the codebase
+209:     - Easy identification of test setup, execution, and verification
+210:   - Simplified test maintenance and debugging
+211:   - Automated validation through custom ESLint rules
+212:   - Tests will fail if AAA pattern is not followed
+````
+
 ## File: renovate.json
 ````json
  1: {
@@ -19238,6 +18874,11 @@ vercel.json
 36: }
 ````
 
+## File: vercel.json
+````json
+1: {}
+````
+
 ## File: .github/workflows/codeql.yml
 ````yaml
  1: name: "CodeQL"
@@ -19277,181 +18918,221 @@ vercel.json
 35:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/react-doctor.yml
+## File: .github/workflows/cypress.yml
 ````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:         with:
- 47:           version: 11
- 48:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
- 49:         with:
- 50:           node-version: 24
- 51:           cache: ${{ steps.pm.outputs.cache }}
- 52:       - name: Install dependencies
- 53:         run: ${{ steps.pm.outputs.install }}
- 54:       - name: Run React Doctor
- 55:         id: doctor
- 56:         run: |
- 57:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 58:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 59:           # Strip ANSI escape codes for clean output
- 60:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 61:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 62:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 63:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 64:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 65:           else
- 66:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 67:           fi
- 68:           # Check for lint issues (the actionable part of the report)
- 69:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 70:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 71:           else
- 72:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 73:           fi
- 74:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 75:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 76:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 77:           # Extract just the numeric score for threshold check
- 78:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 79:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 80:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 81:       - name: Post PR comment with results
- 82:         if: github.event_name == 'pull_request'
- 83:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 84:         with:
- 85:           script: |
- 86:             const fs = require('fs');
- 87:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 88:             const score = '${{ steps.doctor.outputs.score }}';
- 89:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 90:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 91:             const scoreDisplay = offline
- 92:               ? 'N/A (scoring server unreachable)'
- 93:               : score;
- 94:             const statusEmoji = offline
- 95:               ? (issuesFound ? '⚠️' : '✅')
- 96:               : '';
- 97:             const body = [
- 98:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 99:               '',
-100:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
-101:               '',
-102:               '<details>',
-103:               '<summary>Full diagnostics</summary>',
-104:               '',
-105:               '```',
-106:               output.trim(),
-107:               '```',
-108:               '',
-109:               '</details>',
-110:               '',
-111:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-112:             ].filter(Boolean).join('\n');
-113:             // Find existing comment to update instead of creating duplicates
-114:             const { data: comments } = await github.rest.issues.listComments({
-115:               owner: context.repo.owner,
-116:               repo: context.repo.repo,
-117:               issue_number: context.issue.number,
-118:             });
-119:             const botComment = comments.find(
-120:               (c) => c.body?.includes('🩺 React Doctor')
-121:             );
-122:             if (botComment) {
-123:               await github.rest.issues.updateComment({
-124:                 owner: context.repo.owner,
-125:                 repo: context.repo.repo,
-126:                 comment_id: botComment.id,
-127:                 body,
-128:               });
-129:             } else {
-130:               await github.rest.issues.createComment({
-131:                 owner: context.repo.owner,
-132:                 repo: context.repo.repo,
-133:                 issue_number: context.issue.number,
-134:                 body,
-135:               });
-136:             }
-137:       - name: Write job summary
-138:         if: always()
-139:         run: |
-140:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-141:           if [ "$OFFLINE" = "true" ]; then
-142:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-143:             echo "" >> "$GITHUB_STEP_SUMMARY"
-144:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-145:           else
-146:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-147:           fi
-148:           echo "" >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-151:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-152:       - name: Check score threshold
-153:         run: |
-154:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-155:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-156:           # When offline, skip numeric threshold — only fail if lint issues were found
-157:           if [ "$OFFLINE" = "true" ]; then
-158:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-159:             if [ "$ISSUES" = "true" ]; then
-160:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-161:               exit 1
-162:             fi
-163:             echo "✅ No lint issues found (score unavailable due to offline)"
-164:             exit 0
-165:           fi
-166:           SCORE="${{ steps.doctor.outputs.score_num }}"
-167:           SCORE="${SCORE:-0}"
-168:           THRESHOLD=80
-169:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-170:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-171:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-172:             exit 1
-173:           fi
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:         with:
+19:           version: 11
+20:       - name: Setup Node.js
+21:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+22:         with:
+23:           node-version: 24
+24:           cache: "pnpm"
+25:           cache-dependency-path: pnpm-lock.yaml
+26:       - name: Cache Cypress binary
+27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+28:         with:
+29:           path: ~/.cache/Cypress
+30:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+13:         with:
+14:           node-version: "24"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:         with:
+18:           version: 11
+19:           run_install: false
+20:       - name: Get pnpm store directory
+21:         shell: bash
+22:         run: |
+23:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+24:       - name: Setup pnpm cache
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ${{ env.STORE_PATH }}
+28:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: "24"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:         with:
+22:           version: 11
+23:           run_install: false
+24:       - name: Get pnpm store directory
+25:         shell: bash
+26:         run: |
+27:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+28:       - name: Setup pnpm cache
+29:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+30:         with:
+31:           path: ${{ env.STORE_PATH }}
+32:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:         with:
+17:           version: 11
+18:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+19:         with:
+20:           node-version: 24
+21:           cache: "pnpm"
+22:       - name: Install dependencies
+23:         run: pnpm install --frozen-lockfile
+24:       - name: Install Playwright Browsers
+25:         run: pnpm exec playwright install --with-deps chromium firefox
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx wait-on http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
 ````
 
 ## File: .github/workflows/repomix.yml
@@ -19541,74 +19222,6 @@ vercel.json
 83:           fi
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.161.0
-30:     steps:
-31:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: .roo/rules-code/AGENTS.md
 ````markdown
  1: # Project Coding Rules (Non-Obvious Only)
@@ -19643,6 +19256,108 @@ vercel.json
 13:   };
 14:   return imageUrlBuilder;
 15: }
+````
+
+## File: src/__tests__/Animations/BounceInScroll.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import "@testing-library/jest-dom";
+ 3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 4: import React from "react";
+ 5: // Mock framer-motion
+ 6: jest.mock("motion/react-m", () => ({
+ 7:   div: ({
+ 8:     children,
+ 9:     className,
+10:     "data-testid": testId,
+11:   }: {
+12:     children: React.ReactNode;
+13:     className: string;
+14:     "data-testid": string;
+15:   }) => (
+16:     <div className={className} data-testid={testId}>
+17:       {children}
+18:     </div>
+19:   ),
+20: }));
+21: jest.mock("motion/react", () => ({
+22:   Variants: {},
+23: }));
+24: /**
+25:  * Helper to render BounceInScroll and assert element + content are present.
+26:  */
+27: function renderAndAssertBounceInScroll(
+28:   props: Partial<React.ComponentProps<typeof BounceInScroll>> = {},
+29:   testContent = "Test content",
+30: ) {
+31:   // Arrange & Act
+32:   const result = render(
+33:     <BounceInScroll {...props}>
+34:       <div>{testContent}</div>
+35:     </BounceInScroll>,
+36:   );
+37:   // Assert
+38:   const element = screen.getByTestId("bounceinscroll");
+39:   expect(element).toBeInTheDocument();
+40:   expect(screen.getByText(testContent)).toBeInTheDocument();
+41:   return { element, ...result };
+42: }
+43: describe("BounceInScroll", () => {
+44:   it("renders children content", () => {
+45:     // Arrange
+46:     const testContent = "Test content";
+47:     // Act
+48:     render(
+49:       <BounceInScroll>
+50:         <div>{testContent}</div>
+51:       </BounceInScroll>,
+52:     );
+53:     // Assert
+54:     expect(screen.getByText(testContent)).toBeInTheDocument();
+55:   });
+56:   it("applies custom CSS class", () => {
+57:     // Arrange
+58:     const testClass = "test-class";
+59:     // Act
+60:     render(
+61:       <BounceInScroll cssClass={testClass}>
+62:         <div>Test content</div>
+63:       </BounceInScroll>,
+64:     );
+65:     // Assert
+66:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
+67:   });
+68:   it("configures viewport with default amount when viewAmount not provided", () => {
+69:     // Arrange & Act & Assert
+70:     renderAndAssertBounceInScroll();
+71:   });
+72:   it("configures viewport with custom amount when viewAmount provided", () => {
+73:     // Arrange & Act & Assert
+74:     renderAndAssertBounceInScroll({ viewAmount: 0.5 });
+75:   });
+76:   it("configures for instant animation when instant prop is true", () => {
+77:     // Arrange & Act & Assert
+78:     renderAndAssertBounceInScroll({ instant: true });
+79:   });
+80:   it("handles all viewport amount types", () => {
+81:     // Arrange
+82:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
+83:     amounts.forEach((amount) => {
+84:       // Act
+85:       const { unmount } = render(
+86:         <BounceInScroll viewAmount={amount}>
+87:           <div>Test content</div>
+88:         </BounceInScroll>,
+89:       );
+90:       // Assert
+91:       const element = screen.getByTestId("bounceinscroll");
+92:       expect(element).toBeInTheDocument();
+93:       expect(screen.getByText("Test content")).toBeInTheDocument();
+94:       // Cleanup
+95:       unmount();
+96:     });
+97:   });
+98: });
 ````
 
 ## File: src/__tests__/Animations/TestAnimation.test.tsx
@@ -20016,6 +19731,40 @@ vercel.json
 32: }
 ````
 
+## File: src/app/sitemap.ts
+````typescript
+ 1: import type { MetadataRoute } from "next";
+ 2: const BASE_URL = "https://www.dfweb.no";
+ 3: export default function sitemap(): MetadataRoute.Sitemap {
+ 4:   return [
+ 5:     {
+ 6:       url: BASE_URL,
+ 7:       lastModified: new Date(),
+ 8:       changeFrequency: "monthly",
+ 9:       priority: 1,
+10:     },
+11:     {
+12:       url: `${BASE_URL}/cv`,
+13:       lastModified: new Date(),
+14:       changeFrequency: "monthly",
+15:       priority: 0.8,
+16:     },
+17:     {
+18:       url: `${BASE_URL}/prosjekter`,
+19:       lastModified: new Date(),
+20:       changeFrequency: "monthly",
+21:       priority: 0.8,
+22:     },
+23:     {
+24:       url: `${BASE_URL}/kontakt`,
+25:       lastModified: new Date(),
+26:       changeFrequency: "yearly",
+27:       priority: 0.5,
+28:     },
+29:   ];
+30: }
+````
+
 ## File: src/components/Animations/types/Animations.types.ts
 ````typescript
  1: import { ReactNode } from "react";
@@ -20036,6 +19785,241 @@ vercel.json
 16:   easing?: [number, number, number, number];
 17:   children: ReactNode;
 18: }
+````
+
+## File: src/components/Animations/FadeIn.component.tsx
+````typescript
+ 1: import * as m from "motion/react-m";
+ 2: import { ReactNode, useRef } from "react";
+ 3: import { createWillChangeHandlers } from "./animation-utils";
+ 4: export interface FadeInProps {
+ 5:   children: ReactNode;
+ 6:   className?: string;
+ 7:   duration?: number;
+ 8:   delay?: number;
+ 9:   "data-testid"?: string;
+10: }
+11: /**
+12:  * Minimal fade-in animation component
+13:  * Only uses opacity for zero CLS impact
+14:  */
+15: const FadeIn = ({
+16:   children,
+17:   className = "",
+18:   duration = 1,
+19:   delay = 0,
+20:   "data-testid": dataTestId,
+21: }: FadeInProps) => {
+22:   const ref = useRef<HTMLDivElement>(null);
+23:   const { onAnimationStart, onAnimationComplete } =
+24:     createWillChangeHandlers(ref);
+25:   return (
+26:     <m.div
+27:       ref={ref}
+28:       className={className}
+29:       data-testid={dataTestId}
+30:       initial={{ opacity: 0 }}
+31:       animate={{ opacity: 1 }}
+32:       transition={{
+33:         duration,
+34:         delay,
+35:         ease: "easeOut",
+36:       }}
+37:       onAnimationStart={onAnimationStart}
+38:       onAnimationComplete={onAnimationComplete}
+39:     >
+40:       {children}
+41:     </m.div>
+42:   );
+43: };
+44: export default FadeIn;
+````
+
+## File: src/components/Animations/FadeInScroll.component.tsx
+````typescript
+ 1: "use client";
+ 2: import * as m from "motion/react-m";
+ 3: import { ReactNode, useRef } from "react";
+ 4: import { createWillChangeHandlers } from "./animation-utils";
+ 5: export interface FadeInScrollProps {
+ 6:   children: ReactNode;
+ 7:   className?: string;
+ 8:   duration?: number;
+ 9:   viewAmount?: "some" | "all" | number;
+10:   "data-testid"?: string;
+11: }
+12: /**
+13:  * Minimal fade-in animation triggered on scroll
+14:  * Only uses opacity for zero CLS impact
+15:  */
+16: const FadeInScroll = ({
+17:   children,
+18:   className = "",
+19:   duration = 0.4,
+20:   viewAmount = 0.2,
+21:   "data-testid": dataTestId,
+22: }: FadeInScrollProps) => {
+23:   const ref = useRef<HTMLDivElement>(null);
+24:   const { onAnimationStart, onAnimationComplete } =
+25:     createWillChangeHandlers(ref);
+26:   return (
+27:     <m.div
+28:       ref={ref}
+29:       className={className}
+30:       data-testid={dataTestId}
+31:       initial={{ opacity: 0 }}
+32:       whileInView={{ opacity: 1 }}
+33:       viewport={{ once: true, amount: viewAmount }}
+34:       transition={{
+35:         duration,
+36:         ease: "easeOut",
+37:       }}
+38:       onAnimationStart={onAnimationStart}
+39:       onAnimationComplete={onAnimationComplete}
+40:     >
+41:       {children}
+42:     </m.div>
+43:   );
+44: };
+45: export default FadeInScroll;
+````
+
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrix-canvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 39:   }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useCallback(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:     [
+ 95:       fadeFactor,
+ 96:       rgbBackground,
+ 97:       rgbFont,
+ 98:       tileSize,
+ 99:       glowColor,
+100:       tileSet,
+101:       frameInterval,
+102:     ],
+103:   );
+104:   useEffect(() => {
+105:     const canvas = canvasRef.current;
+106:     if (!canvas) return;
+107:     const ctx = canvas.getContext("2d");
+108:     if (!ctx) return;
+109:     const handleResize = () => {
+110:       const boundingClientRect = canvas.getBoundingClientRect();
+111:       canvas.width = boundingClientRect.width;
+112:       canvas.height = boundingClientRect.height;
+113:       initMatrix(canvas);
+114:       isInitializedRef.current = true;
+115:     };
+116:     const debouncedResize = debounce(handleResize, 100);
+117:     window.addEventListener("resize", debouncedResize);
+118:     handleResize();
+119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+120:     return () => {
+121:       window.removeEventListener("resize", debouncedResize);
+122:     };
+123:   }, [initMatrix, tick]);
+124:   return (
+125:     <canvas
+126:       ref={canvasRef}
+127:       id={CANVAS_ID}
+128:       style={{ width: "100%", height: "100%" }}
+129:       data-testid="matrix-canvas"
+130:       className="absolute inset-0"
+131:     />
+132:   );
+133: };
+134: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
@@ -20083,6 +20067,95 @@ vercel.json
 41:   );
 42: };
 43: export default ErrorBoundary;
+````
+
+## File: src/components/Index/Hero.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useRef } from "react";
+ 3: import dynamic from "next/dynamic";
+ 4: import type { Herocontent } from "@/types/sanity.types";
+ 5: import Icons from "./Icons.component";
+ 6: import FadeIn from "../Animations/FadeIn.component";
+ 7: import RotatingLoader from "../Animations/RotatingLoader.component";
+ 8: import MobileBackground from "./MobileBackground.component";
+ 9: import MatrixCursor from "../Animations/MatrixCursor.component";
+10: const ReactMatrixAnimation = dynamic(
+11:   () => import("../Animations/Matrix.component"),
+12:   {
+13:     ssr: false,
+14:     loading: () => (
+15:       <div className="text-center">
+16:         <RotatingLoader />
+17:       </div>
+18:     ),
+19:   },
+20: );
+21: /**
+22:  * Safely retrieves hero text at a given index with a fallback.
+23:  */
+24: function getHeroText(
+25:   content: Herocontent[],
+26:   index: number,
+27:   fallback = "",
+28: ): string {
+29:   return content[index]?.text ?? fallback;
+30: }
+31: /**
+32:  * Hero component for rendering the main hero section of the page
+33:  * @param {Object} props - The props for the Hero component
+34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
+35:  * @returns {JSX.Element} The rendered Hero component
+36:  */
+37: const Hero = ({ content }: { content: Herocontent[] }) => {
+38:   const heroRef = useRef<HTMLElement>(null);
+39:   const heading = getHeroText(content, 0, "Hei!");
+40:   const subheading = getHeroText(content, 1);
+41:   const paragraph = getHeroText(content, 2);
+42:   return (
+43:     <article
+44:       aria-label="Kontainer for animasjoner av introtekst"
+45:       id="main-hero"
+46:       data-testid="main-hero"
+47:       ref={heroRef}
+48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
+49:     >
+50:       <MatrixCursor heroRef={heroRef} />
+51:       <MobileBackground />
+52:       <div className="hidden md:block absolute inset-0 w-full h-full">
+53:         <ReactMatrixAnimation />
+54:       </div>
+55:       <div className="relative z-10">
+56:         <div className="px-4 md:px-0" data-testid="fade-in">
+57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
+58:             <FadeIn delay={0.3}>
+59:               <h1
+60:                 data-cy="hei"
+61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
+62:               >
+63:                 {heading}
+64:               </h1>
+65:             </FadeIn>
+66:             <FadeIn delay={0.9}>
+67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
+68:                 {subheading}
+69:               </h2>
+70:             </FadeIn>
+71:             <FadeIn delay={1.5}>
+72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
+73:                 {paragraph}
+74:               </p>
+75:             </FadeIn>
+76:           </div>
+77:           <div className="mt-4">
+78:             <Icons />
+79:           </div>
+80:         </div>
+81:       </div>
+82:     </article>
+83:   );
+84: };
+85: export default Hero;
 ````
 
 ## File: src/components/Kontakt/config/formConfig.ts
@@ -20255,6 +20328,408 @@ vercel.json
 143:   );
 144: };
 145: export default ContactForm;
+````
+
+## File: src/components/Layout/Hamburger.component.tsx
+````typescript
+ 1: "use client";
+ 2: interface IHamburgerProps {
+ 3:   onClick: () => void;
+ 4:   animatetoX: boolean;
+ 5: }
+ 6: /**
+ 7:  * Hamburger component used in mobile menu. Animates to a X when clicked
+ 8:  * @function Hamburger
+ 9:  * @param {() => void} onClick - onClick handler to respond to clicks
+10:  * @param {boolean} animatetoX - Should the hamburger animate to a X?
+11:  * @returns {JSX.Element} - Rendered component
+12:  */
+13: const Hamburger = ({ onClick, animatetoX }: IHamburgerProps) => {
+14:   const hamburgerLine =
+15:     "h-1 w-10 my-1 rounded-full bg-white transition ease transform duration-300 not-sr-only";
+16:   const opacityFull = "opacity-100 group-hover:opacity-100";
+17:   return (
+18:     <button
+19:       className="flex flex-col w-16 rounded-sm justify-center items-center group z-50 pr-6 relative"
+20:       data-cy="hamburger"
+21:       data-testid="hamburger"
+22:       onClick={onClick}
+23:       aria-expanded={animatetoX}
+24:       aria-label={animatetoX ? "Lukk meny" : "Åpne meny"}
+25:       type="button"
+26:     >
+27:       <span className="sr-only text-white text-2xl">
+28:         {animatetoX ? "Lukk navigasjonsmeny" : "Åpne navigasjonsmeny"}
+29:       </span>
+30:       <span
+31:         data-testid="hamburgerline"
+32:         className={`${hamburgerLine} ${
+33:           animatetoX
+34:             ? "rotate-45 translate-y-3 opacity-100 group-hover:opacity-100"
+35:             : opacityFull
+36:         }`}
+37:       />
+38:       <span
+39:         className={`${hamburgerLine} ${animatetoX ? "opacity-0" : opacityFull}`}
+40:       />
+41:       <span
+42:         className={`${hamburgerLine} ${
+43:           animatetoX
+44:             ? "-rotate-45 -translate-y-3 opacity-100 group-hover:opacity-100"
+45:             : opacityFull
+46:         }`}
+47:       />
+48:     </button>
+49:   );
+50: };
+51: export default Hamburger;
+````
+
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import * as m from "motion/react-m";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-[var(--matrix-light)]" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <m.span
+34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
+36:           }`}
+37:           initial={false}
+38:           animate={{
+39:             width: isActive ? "100%" : "0%",
+40:           }}
+41:           variants={{
+42:             hover: { width: "100%" },
+43:           }}
+44:           transition={{ duration: 0.3 }}
+45:         />
+46:       </div>
+47:     </Link>
+48:   </MotionDiv>
+49: );
+50: export default NavigationLink;
+````
+
+## File: src/components/UI/Button.component.tsx
+````typescript
+ 1: import type { ElementType, ReactNode, MouseEventHandler } from "react";
+ 2: interface IButtonProps {
+ 3:   children: ReactNode;
+ 4:   href?: string;
+ 5:   renderAs?: ElementType;
+ 6:   type?: "button" | "submit" | "reset";
+ 7:   disabled?: boolean;
+ 8:   loading?: boolean;
+ 9:   download?: boolean | string;
+10:   onClick?: MouseEventHandler<HTMLButtonElement>;
+11:   "aria-label"?: string;
+12: }
+13: /**
+14:  * Button component that can be rendered as various HTML elements
+15:  * @param {Object} props
+16:  * @param {ReactNode} props.children - The content of the button
+17:  * @param {string} [props.href] - The URL to link to if the button is an anchor
+18:  * @param {ElementType} [props.renderAs] - The HTML element to render the button as
+19:  * @param {"button" | "submit" | "reset"} [props.type="submit"] - The type of the button
+20:  * @param {boolean} [props.disabled=false] - Whether the button is disabled
+21:  * @param {boolean} [props.loading=false] - Whether the button is in a loading state
+22:  * @param {boolean | string} [props.download] - Specifies that the target will be downloaded when clicked
+23:  * @param {MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click event handler
+24:  * @returns {JSX.Element} The rendered Button component
+25:  */
+26: const Button = ({
+27:   children,
+28:   href,
+29:   renderAs,
+30:   type = "submit",
+31:   disabled = false,
+32:   loading = false,
+33:   download,
+34:   onClick,
+35:   "aria-label": ariaLabel,
+36:   ...props
+37: }: IButtonProps) => {
+38:   const Component = renderAs ?? "button";
+39:   const isLink = renderAs === "a";
+40:   const targetLink = isLink ? "_blank" : undefined;
+41:   const isDisabled = disabled || loading;
+42:   return (
+43:     <Component
+44:       type={isLink ? undefined : type}
+45:       data-cy="submit"
+46:       className="glitch p-3 m-3 text-white font-medium transition-all duration-300 ease-in-out bg-matrix-dark rounded-sm hover:bg-matrix-dark/80 disabled:opacity-50 disabled:pointer-events-none shadow-sm hover:shadow-glow-sm active:shadow-inner border border-matrix/20 hover:border-matrix/40 hover:brightness-110 active:brightness-95 cursor-pointer"
+47:       href={href}
+48:       target={targetLink}
+49:       disabled={isDisabled}
+50:       data-text={children}
+51:       download={download}
+52:       onClick={onClick}
+53:       aria-label={ariaLabel}
+54:       aria-busy={loading || undefined}
+55:       {...props}
+56:     >
+57:       {loading && (
+58:         <span
+59:           className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2 align-middle"
+60:           aria-hidden="true"
+61:         />
+62:       )}
+63:       {children}
+64:     </Component>
+65:   );
+66: };
+67: export default Button;
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+  1: import React from "react";
+  2: import {
+  3:   UseFormRegister,
+  4:   FieldValues,
+  5:   RegisterOptions,
+  6:   Path,
+  7: } from "react-hook-form";
+  8: interface InputProps<T extends FieldValues> {
+  9:   readonly name: Path<T>;
+ 10:   readonly label: string;
+ 11:   readonly htmlFor: string;
+ 12:   readonly isRequired?: boolean;
+ 13:   readonly inputPattern?: RegExp;
+ 14:   readonly title?: string;
+ 15:   readonly type?: "input" | "textarea";
+ 16:   readonly register: UseFormRegister<T>;
+ 17:   readonly error?: string;
+ 18:   readonly autoComplete?: string;
+ 19:   readonly spellCheck?: boolean;
+ 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
+ 21: }
+ 22: /**
+ 23:  * Creates register options for react-hook-form
+ 24:  * @template T - Type extending FieldValues
+ 25:  * @param {boolean} [isRequired] - Whether the field is required
+ 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ 27:  * @param {string} [title] - Title for the input field
+ 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+ 29:  */
+ 30: export function createRegisterOptions<T extends FieldValues>(
+ 31:   isRequired?: boolean,
+ 32:   inputPattern?: RegExp,
+ 33:   title?: string,
+ 34: ): RegisterOptions<T, Path<T>> {
+ 35:   return {
+ 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
+ 37:     ...(inputPattern
+ 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+ 39:       : {}),
+ 40:   };
+ 41: }
+ 42: /**
+ 43:  * InputField component for rendering form inputs
+ 44:  * @template T - Type extending FieldValues
+ 45:  * @param {InputProps<T>} props - The props for the InputField component
+ 46:  * @returns {JSX.Element} The rendered InputField component
+ 47:  */
+ 48: function InputField<T extends FieldValues>({
+ 49:   name,
+ 50:   label,
+ 51:   inputPattern,
+ 52:   isRequired,
+ 53:   htmlFor,
+ 54:   title,
+ 55:   type = "input",
+ 56:   register,
+ 57:   error,
+ 58:   autoComplete,
+ 59:   spellCheck,
+ 60:   inputMode,
+ 61:   ...props
+ 62: }: InputProps<T>) {
+ 63:   const sharedClasses =
+ 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
+ 65:   const registerOptions = createRegisterOptions<T>(
+ 66:     isRequired,
+ 67:     inputPattern,
+ 68:     title,
+ 69:   );
+ 70:   return (
+ 71:     <div className="relative my-2 flex flex-col items-center">
+ 72:       <div className="relative">
+ 73:         {type === "input" ? (
+ 74:           <input
+ 75:             id={htmlFor}
+ 76:             type="text"
+ 77:             placeholder={label}
+ 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 79:             autoComplete={autoComplete}
+ 80:             spellCheck={spellCheck}
+ 81:             inputMode={inputMode}
+ 82:             {...register(name, {
+ 83:               ...registerOptions,
+ 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 85:             })}
+ 86:             {...props}
+ 87:           />
+ 88:         ) : (
+ 89:           <textarea
+ 90:             id={htmlFor}
+ 91:             placeholder={label}
+ 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+ 93:             spellCheck={spellCheck}
+ 94:             {...register(name, {
+ 95:               ...registerOptions,
+ 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+ 97:             })}
+ 98:             {...props}
+ 99:           ></textarea>
+100:         )}
+101:         <label
+102:           htmlFor={htmlFor}
+103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+104:             // Removed peer-focus:text-primary
+105:             type === "textarea" ? "peer-focus:-top-4" : ""
+106:           }`}
+107:         >
+108:           {label}
+109:         </label>
+110:       </div>
+111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+112:     </div>
+113:   );
+114: }
+115: export default InputField;
+````
+
+## File: src/components/UI/PageHeader.component.tsx
+````typescript
+ 1: import type { ReactNode } from "react";
+ 2: interface IPageHeaderProps {
+ 3:   children: ReactNode;
+ 4: }
+ 5: /**
+ 6:  * PageHeader component for rendering the header for each page
+ 7:  * @function PageHeader
+ 8:  * @param {children?} children - HTML children to render in the page header component
+ 9:  * @returns {ReactNode} - Rendered component
+10:  */
+11: const PageHeader = ({ children }: IPageHeaderProps) => (
+12:   <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+13:     <div className="container bg-slate-700 border border-matrix-dark/15 shadow-sm rounded-sm h-16 p-4 m-4 mx-auto">
+14:       <h1 className="text-xl md:text-2xl text-center font-bold text-slate-100">
+15:         {children}
+16:       </h1>
+17:     </div>
+18:   </div>
+19: );
+20: export default PageHeader;
+````
+
+## File: src/e2e/cypress/support/component.ts
+````typescript
+ 1: // ***********************************************************
+ 2: // This example support/component.ts is processed and
+ 3: // loaded automatically before your test files.
+ 4: //
+ 5: // This is a great place to put global configuration and
+ 6: // behavior that modifies Cypress.
+ 7: //
+ 8: // You can change the location of this file or turn off
+ 9: // automatically serving support files with the
+10: // 'supportFile' configuration option.
+11: //
+12: // You can read more here:
+13: // https://on.cypress.io/configuration
+14: // ***********************************************************
+15: // Import commands.js using ES2015 syntax:
+16: import "./commands";
+17: import "@/app/globals.css";
+18: import { mount } from "cypress/react";
+19: // Augment the Cypress namespace to include type definitions for
+20: // your custom command.
+21: // Alternatively, can be defined in cypress/support/component.d.ts
+22: // with a <reference path="./component" /> at the top of your spec.
+23: Cypress.Commands.add("mount", mount);
+24: // Example use:
+25: // cy.mount(<MyComponent />)
+````
+
+## File: src/e2e/cypress/support/functions.ts
+````typescript
+ 1: import { Result } from "axe-core";
+ 2: function terminalLog(violations: Result[]) {
+ 3:   cy.task(
+ 4:     "log",
+ 5:     `${violations.length} accessibility violation${violations.length === 1 ? "" : "s"} ${
+ 6:       violations.length === 1 ? "was" : "were"
+ 7:     } detected`,
+ 8:   );
+ 9:   const violationData = violations.map(
+10:     ({ id, impact, description, nodes }) => ({
+11:       id,
+12:       impact,
+13:       description,
+14:       nodes: nodes.length,
+15:     }),
+16:   );
+17:   cy.task("table", violationData);
+18:   console.error(violationData);
+19: }
+20: export function checkAccessibility(delay?: number) {
+21:   if (delay) {
+22:     cy.wait(delay);
+23:   }
+24:   cy.injectAxe();
+25:   cy.checkA11y(undefined, undefined, terminalLog);
+26: }
+````
+
+## File: src/e2e/cypress/tsconfig.json
+````json
+ 1: {
+ 2:   "extends": "../../../tsconfig.json",
+ 3:   "compilerOptions": {
+ 4:     "noEmit": true,
+ 5:     "isolatedModules": false,
+ 6:     "types": ["cypress", "@testing-library/cypress"]
+ 7:   },
+ 8:   "include": [
+ 9:     "../../../node_modules/cypress",
+10:     "../../../node_modules/@testing-library/cypress",
+11:     "../../../cypress.d.ts",
+12:     "support/component.ts",
+13:     "support/component.d.ts",
+14:     "./**/*.ts"
+15:   ]
+16: }
 ````
 
 ## File: studio/schemaTypes/documents/cv.ts
@@ -20703,6 +21178,22 @@ vercel.json
 25: ignore-scripts=true
 ````
 
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - '.'
+ 3: overrides:
+ 4:   "brace-expansion@^5.0.0": "5.0.6"
+ 5: allowBuilds:
+ 6:   '@swc/core': true
+ 7:   cypress: true
+ 8:   esbuild: true
+ 9:   msw: true
+10:   puppeteer: true
+11:   sharp: true
+12:   unrs-resolver: true
+````
+
 ## File: sanity.cli.ts
 ````typescript
 1: import { defineCliConfig } from "sanity/cli";
@@ -20714,374 +21205,23 @@ vercel.json
 7: });
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@5.4.3
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.15.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: sudo npm i -g pnpm@11.0.8
-19:       - run:
-20:           name: Install Dependencies
-21:           command: pnpm install --frozen-lockfile
-22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-23:       - save_cache:
-24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-25:           paths:
-26:             - ~/.pnpm-store
-27:   build:
-28:     working_directory: /home/circleci/dfweb
-29:     docker:
-30:       - image: cimg/node:24.15.0-browsers
-31:     steps:
-32:       - checkout
-33:       - restore_cache:
-34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-35:       - run:
-36:           name: Install pnpm package manager
-37:           command: sudo npm i -g pnpm@11.0.8
-38:       - run:
-39:           name: Install Dependencies
-40:           command: pnpm install --frozen-lockfile
-41:       - run:
-42:           name: Chrome key start setup
-43:           command: sudo apt update -y
-44:       - run:
-45:           name: Chrome key finish setup
-46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-47:       - run:
-48:           name: Chrome package download
-49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-50:       - save_cache:
-51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-52:           paths:
-53:             - ~/.pnpm-store
-54:       - store_artifacts:
-55:           path: /root/.npm/_logs
-56:       - run:
-57:           name: Run Jest Tests
-58:           command: pnpm test
-59:       - run:
-60:           name: Make sure ~/.gnupg directory exists
-61:           command: mkdir -p ~/.gnupg
-62:       - codecov/upload
-63:     parallelism: 6
-64: workflows:
-65:   chromatic-deploy:
-66:     jobs:
-67:       - build:
-68:           name: Build Next.js project
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-13:         with:
-14:           node-version: "24"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:         with:
-18:           version: 11
-19:           run_install: false
-20:       - name: Get pnpm store directory
-21:         shell: bash
-22:         run: |
-23:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-24:       - name: Setup pnpm cache
-25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-26:         with:
-27:           path: ${{ env.STORE_PATH }}
-28:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: "24"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:         with:
-22:           version: 11
-23:           run_install: false
-24:       - name: Get pnpm store directory
-25:         shell: bash
-26:         run: |
-27:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-28:       - name: Setup pnpm cache
-29:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-30:         with:
-31:           path: ${{ env.STORE_PATH }}
-32:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:         with:
-17:           version: 11
-18:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:       - name: Install dependencies
-23:         run: pnpm install --frozen-lockfile
-24:       - name: Install Playwright Browsers
-25:         run: pnpm exec playwright install --with-deps chromium firefox
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx wait-on http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
-````
-
-## File: src/app/api/form/route.ts
+## File: src/components/Animations/animation-utils.ts
 ````typescript
- 1: import { NextRequest, NextResponse } from "next/server";
- 2: import { validateCSRFToken } from "@/lib/csrf";
- 3: import { formSchema } from "@/components/Kontakt/config/formConfig";
- 4: /**
- 5:  * POST handler for form submissions with CSRF protection.
- 6:  * Uses the shared Zod schema from formConfig.ts as the single source
- 7:  * of truth for validation — same rules on client and server.
- 8:  * @param {NextRequest} request - The incoming request
- 9:  * @returns {NextResponse} JSON response
-10:  */
-11: export async function POST(request: NextRequest) {
-12:   try {
-13:     const contentType = request.headers.get("content-type");
-14:     let formData: Record<string, string> = {};
-15:     // Parse form data based on content type
-16:     if (contentType?.includes("application/x-www-form-urlencoded")) {
-17:       const body = await request.formData();
-18:       for (const [key, value] of body.entries()) {
-19:         formData[key] = value.toString();
-20:       }
-21:     } else if (contentType?.includes("application/json")) {
-22:       formData = await request.json();
-23:     } else {
-24:       return NextResponse.json(
-25:         { error: "Unsupported content type" },
-26:         { status: 400 },
-27:       );
-28:     }
-29:     // Extract and validate CSRF token
-30:     const csrfToken = formData._csrf || formData.csrfToken;
-31:     if (!csrfToken) {
-32:       return NextResponse.json(
-33:         { error: "CSRF token missing" },
-34:         { status: 403 },
-35:       );
-36:     }
-37:     if (!validateCSRFToken(csrfToken)) {
-38:       return NextResponse.json(
-39:         { error: "Invalid or expired CSRF token" },
-40:         { status: 403 },
-41:       );
-42:     }
-43:     // Remove CSRF token from form data before validation
-44:     delete formData._csrf;
-45:     delete formData.csrfToken;
-46:     // Validate using the shared Zod schema — single source of truth
-47:     const result = formSchema.safeParse(formData);
-48:     if (!result.success) {
-49:       const firstIssue = result.error.issues[0];
-50:       return NextResponse.json(
-51:         { error: firstIssue?.message ?? "Validation failed" },
-52:         { status: 400 },
-53:       );
-54:     }
-55:     // Return success response
-56:     return NextResponse.json(
-57:       {
-58:         message: "Form submitted successfully",
-59:         success: true,
-60:       },
-61:       { status: 200 },
-62:     );
-63:   } catch (error) {
-64:     console.error("Error processing form submission:", error);
-65:     return NextResponse.json(
-66:       { error: "Internal server error" },
-67:       { status: 500 },
-68:     );
-69:   }
-70: }
-71: /**
-72:  * Handle other HTTP methods
-73:  */
-74: export async function GET() {
-75:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-76: }
-77: export async function PUT() {
-78:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-79: }
-80: export async function DELETE() {
-81:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-82: }
-````
-
-## File: src/lib/sanity/client.ts
-````typescript
- 1: import { createImageUrlBuilder } from "@sanity/image-url";
- 2: import { createClient, type QueryParams } from "@sanity/client";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
- 7: export const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: /**
-14:  * Typed fetch helper with consistent caching defaults.
-15:  * Applies time-based revalidation (default 3600s) or tag-based invalidation.
-16:  */
-17: export async function sanityFetch<T>({
-18:   query,
-19:   params = {},
-20:   revalidate = 3600,
-21:   tags = [],
-22: }: {
-23:   query: string;
-24:   params?: QueryParams;
-25:   revalidate?: number | false;
-26:   tags?: string[];
-27: }): Promise<T> {
-28:   return client.fetch<T>(query, params, {
-29:     next: {
-30:       revalidate: tags.length ? false : revalidate,
-31:       tags,
-32:     },
-33:   });
-34: }
-35: const builder = createImageUrlBuilder(client);
-36: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-37:   return builder.image(source);
-38: }
+ 1: import type { RefObject } from "react";
+ 2: /**
+ 3:  * Creates animation lifecycle handlers that manage `will-change` for performance.
+ 4:  * Sets `will-change: opacity` on start, resets to `auto` on complete.
+ 5:  */
+ 6: export function createWillChangeHandlers(ref: RefObject<HTMLDivElement | null>) {
+ 7:   return {
+ 8:     onAnimationStart: () => {
+ 9:       if (ref.current) ref.current.style.willChange = "opacity";
+10:     },
+11:     onAnimationComplete: () => {
+12:       if (ref.current) ref.current.style.willChange = "auto";
+13:     },
+14:   };
+15: }
 ````
 
 ## File: src/lib/sanity/queries.ts
@@ -21165,6 +21305,39 @@ vercel.json
 77:     footerCopyrightText
 78:   }
 79: `);
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.4.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.6",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
 ````
 
 ## File: AGENTS.md
@@ -21472,286 +21645,181 @@ vercel.json
 301: - Full hardening plan available at `plans/supply-chain-hardening.md`
 ````
 
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
-  4: 
-  5: Fourth version of my personal portfolio website with Next.js, Motion,
-  6: Sanity.io and Typescript.
-  7: 
-  8: ## Table of Contents
-  9: 
- 10: - [Live URL](#live-url)
- 11: - [Frontend (Next.js)](#frontend-nextjs)
- 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 13: - [Google Lighthouse](#google-lighthouse)
- 14: - [Features](#features)
- 15:   - [General](#general)
- 16:   - [Design](#design)
- 17:   - [Accessibility](#accessibility)
- 18:   - [Security](#security)
- 19:   - [Devops and Code quality](#devops-and-code-quality)
- 20:   - [Environment Variables](#environment-variables)
- 21:   - [Testing Standards](#testing-standards)
- 22: 
- 23: ## Live URL
- 24: 
- 25: - <https://www.dfweb.no>
- 26: 
- 27: ## Frontend (Next.js)
- 28: 
- 29: ![Frontend Image](public/images/frontend.png)
- 30: 
- 31: ---
- 32: 
- 33: ## Backend (Sanity headless CMS)
- 34: 
- 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 36: 
- 37: ---
- 38: 
- 39: ## Google Lighthouse
- 40: 
- 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 42: 
- 43: ## Features
- 44: 
- 45: ### General
- 46: 
- 47: - Clean, modern, responsive and Matrix-inspired design
- 48: - The application is 100% typescript (the types are generated from Sanity typegen)
- 49: - Matrix canvas rain effect on front page
- 50: - Custom 404 page with Matrix rain effect
- 51: - Next.js 16 with Typescript and App Router
- 52:   - Server Components implementation for improved performance
- 53:   - Streaming with Suspense boundaries
- 54:   - Automatic static optimization with revalidation
- 55:   - Server-side data fetching with proper error handling
- 56: - React 19
- 57: - Sanity headless CMS for all of the content, projects and navigation links
- 58: - Ladle for component documentation
- 59: - Animations with Motion
- 60: - React testing library for unit testing
- 61: - Cypress for E2E testing
- 62: - Playwright for cross-browser E2E testing
- 63: - Contact form with Email.js and CSRF protection
- 64: - Polymorphic components
- 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 66: - Google rich results for each individual page
- 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 68: - Automated Lighthouse CI testing integrated with GitHub Actions
- 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 70: - Reusable GenericForm component for easy form creation and management
- 71: - Error handling with react-error-boundary for improved user experience and
- 72:   easier debugging
- 73: - AI-friendly repository documentation with automated updates (Repomix with
- 74:   Github action workflow)
- 75: - AI assistant guidance with AGENTS.md files for immediate productivity
- 76:   - Main AGENTS.md with project-specific patterns and gotchas
- 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 4 for styling with a CSS custom-property design token system
- 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
- 93:   colors, surface palette, glow shadows, and custom animations all driven by
- 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
- 95: - Animated reusable input fields
- 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 97:   Matrix characters
- 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 99: 
-100: ### Accessibility
-101: 
-102: - WCAG accessibility tested
-103: - Accessibility testing with Cypress Axe and Pa11y
-104: - Automated Pa11y accessibility testing on every PR and push to main
-105:   - Tests all main pages against WCAG2AA standards
-106:   - Captures screenshots for visual reference
-107:   - Detailed reports available as GitHub Actions artifacts
-108: - Builds will fail if any a11y errors are found
-109: 
-110: ### Devops and Code quality
-111: 
-112: - Continuous Integration with CircleCI
-113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-114: - Github action workflow for Cypress
-115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-116: - E2E testing with Cypress and Playwright integrated with Github actions
-117: - Unit testing with Jest and React Testing Library integrated with CircleCI
-118: - Test coverage setup with Codecov
-119: - 100% test coverage with Jest and React testing library
-120: - AI-powered commit message generation following Conventional Commits with
-121:   gitmojis
-122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
-123:   - Scans for security, performance, correctness, and architecture issues
-124:   - Outputs a 0–100 score with actionable diagnostics on every PR
-125:   - Posts results as PR comments and GitHub Actions job summaries
-126:   - Configurable score threshold (default: 80) to gate merges
-127:   - Auto-detects package manager (pnpm, yarn, npm)
-128: - Automated performance monitoring with Lighthouse CI
-129:   - Performance, accessibility, best practices, and SEO checks on every PR
-130:   - Configurable thresholds for quality metrics
-131:   - Both desktop and performance-focused testing
-132: - Automated repository documentation with Repomix
-133:   - AI-friendly documentation generation on every push to main
-134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-135:   - Automated PR analysis with repository structure insights
-136:   - Security-focused documentation with sensitive information filtering
-137:   - Markdown formatting for improved readability
-138: 
-139: ### Security
-140: 
-141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
-142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-144:   - Secret detection with Gitleaks on every PR and push
-145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-146:   - Runs automatically on every PR and push to main
-147: - Automated security vulnerability scanning with Snyk
-148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-149:   - Integrates with GitHub Security tab for vulnerability tracking
-150: - Supply chain attack prevention with 7-day minimum release age
-151:   - Packages must be published for at least 7 days before installation
-152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
-154:   - Protects against compromised package releases (like Shai Hulud incidents)
-155: - GitHub Actions supply chain hardening with SHA pinning
-156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
-157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
-158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-159:   - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
-160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
-161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
-162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
-163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
-164: 
-165: ### Environment Variables
-166: 
-167: - Type-safe environment variable validation with envalid
-168:   - Runtime validation of required environment variables
-169:   - Clear error messages with examples for missing variables
-170:   - Separate handling of client-side and server-side variables
-171:   - Default values where appropriate
-172:   - Required variables:
-173: 
-174:     ```env
-175:     # Email Configuration (client-side)
-176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-179: 
-180:     # Security Configuration (server-side)
-181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-182:     ```
-183: 
-184:   - Validation prevents application startup if required variables are missing
-185:   - TypeScript integration for type-safe access to environment variables
-186: 
-187: ### Testing Standards
-188: 
-189: - ISTQB-aligned comprehensive test strategy
-190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-191:   - Multi-level test approach (Unit, Component, E2E)
-192:   - Risk-based testing methodology
-193:   - Defined test metrics and reporting
-194:   - Clear roles and responsibilities
-195:   - Structured defect management process
-196: 
-197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-198:   - Each test must include the following comments:
-199: 
-200:     ```typescript
-201:     // Arrange - Set up test data and conditions
-202:     // Act - Perform the action being tested
-203:     // Assert - Verify the results
-204:     ```
-205: 
-206:   - This pattern ensures:
-207:     - Clear test structure and readability
-208:     - Consistent test organization across the codebase
-209:     - Easy identification of test setup, execution, and verification
-210:   - Simplified test maintenance and debugging
-211:   - Automated validation through custom ESLint rules
-212:   - Tests will fail if AAA pattern is not followed
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import { createImageUrlBuilder } from "@sanity/image-url";
+ 2: import { createClient, type QueryParams } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
+ 7: const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: /**
+14:  * Typed fetch helper with consistent caching defaults.
+15:  * Applies time-based revalidation (default 3600s) or tag-based invalidation.
+16:  */
+17: export async function sanityFetch<T>({
+18:   query,
+19:   params = {},
+20:   revalidate = 3600,
+21:   tags = [],
+22: }: {
+23:   query: string;
+24:   params?: QueryParams;
+25:   revalidate?: number | false;
+26:   tags?: string[];
+27: }): Promise<T> {
+28:   return client.fetch<T>(query, params, {
+29:     next: {
+30:       revalidate: tags.length ? false : revalidate,
+31:       tags,
+32:     },
+33:   });
+34: }
+35: const builder = createImageUrlBuilder(client);
+36: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+37:   return builder.image(source);
+38: }
 ````
 
-## File: vercel.json
+## File: src/app/api/form/route.ts
+````typescript
+  1: import { NextRequest, NextResponse } from "next/server";
+  2: import { validateCSRFToken } from "@/lib/csrf";
+  3: import { formSchema } from "@/components/Kontakt/config/formConfig";
+  4: /**
+  5:  * Parse the request body based on content type.
+  6:  * Returns the parsed form data or a NextResponse error.
+  7:  */
+  8: async function parseRequestBody(
+  9:   request: NextRequest,
+ 10: ): Promise<Record<string, string> | NextResponse> {
+ 11:   const contentType = request.headers.get("content-type");
+ 12:   if (contentType?.includes("application/x-www-form-urlencoded")) {
+ 13:     const body = await request.formData();
+ 14:     const formData: Record<string, string> = {};
+ 15:     for (const [key, value] of body.entries()) {
+ 16:       formData[key] = value.toString();
+ 17:     }
+ 18:     return formData;
+ 19:   }
+ 20:   if (contentType?.includes("application/json")) {
+ 21:     return await request.json();
+ 22:   }
+ 23:   return NextResponse.json(
+ 24:     { error: "Unsupported content type" },
+ 25:     { status: 400 },
+ 26:   );
+ 27: }
+ 28: /**
+ 29:  * Validate the CSRF token from form data.
+ 30:  * Returns a NextResponse error if invalid, or null if valid.
+ 31:  */
+ 32: function validateCsrf(formData: Record<string, string>): NextResponse | null {
+ 33:   const csrfToken = formData._csrf || formData.csrfToken;
+ 34:   if (!csrfToken) {
+ 35:     return NextResponse.json(
+ 36:       { error: "CSRF token missing" },
+ 37:       { status: 403 },
+ 38:     );
+ 39:   }
+ 40:   if (!validateCSRFToken(csrfToken)) {
+ 41:     return NextResponse.json(
+ 42:       { error: "Invalid or expired CSRF token" },
+ 43:       { status: 403 },
+ 44:     );
+ 45:   }
+ 46:   return null;
+ 47: }
+ 48: /**
+ 49:  * Validate form data against the shared Zod schema.
+ 50:  * Returns a NextResponse error if invalid, or null if valid.
+ 51:  */
+ 52: function validateFormData(
+ 53:   formData: Record<string, string>,
+ 54: ): NextResponse | null {
+ 55:   const result = formSchema.safeParse(formData);
+ 56:   if (!result.success) {
+ 57:     const firstIssue = result.error.issues[0];
+ 58:     return NextResponse.json(
+ 59:       { error: firstIssue?.message ?? "Validation failed" },
+ 60:       { status: 400 },
+ 61:     );
+ 62:   }
+ 63:   return null;
+ 64: }
+ 65: /**
+ 66:  * POST handler for form submissions with CSRF protection.
+ 67:  * Uses the shared Zod schema from formConfig.ts as the single source
+ 68:  * of truth for validation — same rules on client and server.
+ 69:  * @param {NextRequest} request - The incoming request
+ 70:  * @returns {NextResponse} JSON response
+ 71:  */
+ 72: export async function POST(request: NextRequest) {
+ 73:   try {
+ 74:     const parsed = await parseRequestBody(request);
+ 75:     if (parsed instanceof NextResponse) return parsed;
+ 76:     const formData = parsed;
+ 77:     const csrfError = validateCsrf(formData);
+ 78:     if (csrfError) return csrfError;
+ 79:     // Remove CSRF tokens before validation
+ 80:     delete formData._csrf;
+ 81:     delete formData.csrfToken;
+ 82:     const validationError = validateFormData(formData);
+ 83:     if (validationError) return validationError;
+ 84:     return NextResponse.json(
+ 85:       { message: "Form submitted successfully", success: true },
+ 86:       { status: 200 },
+ 87:     );
+ 88:   } catch (error) {
+ 89:     console.error("Error processing form submission:", error);
+ 90:     return NextResponse.json(
+ 91:       { error: "Internal server error" },
+ 92:       { status: 500 },
+ 93:     );
+ 94:   }
+ 95: }
+ 96: /**
+ 97:  * Handle other HTTP methods
+ 98:  */
+ 99: export async function GET() {
+100:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+101: }
+102: export async function PUT() {
+103:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+104: }
+105: export async function DELETE() {
+106:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+107: }
+````
+
+## File: .fallowrc.json
 ````json
-1: {}
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:         with:
-19:           version: 11
-20:       - name: Setup Node.js
-21:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-22:         with:
-23:           node-version: 24
-24:           cache: "pnpm"
-25:           cache-dependency-path: pnpm-lock.yaml
-26:       - name: Cache Cypress binary
-27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-28:         with:
-29:           path: ~/.cache/Cypress
-30:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - '.'
- 3: allowBuilds:
- 4:   '@swc/core': true
- 5:   cypress: true
- 6:   esbuild: true
- 7:   msw: true
- 8:   puppeteer: true
- 9:   sharp: true
-10:   unrs-resolver: true
+ 1: {
+ 2:   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+ 3:   "entry": ["src/stories/**/*.stories.tsx"],
+ 4:   "ignorePatterns": [
+ 5:     "src/types/sanity.types.ts",
+ 6:     ".eslintrc-custom-rules.ts",
+ 7:     "studio/**",
+ 8:     "src/utils/eslint/**"
+ 9:   ],
+10:   "ignoreDependencies": [
+11:     "eslint-config-next",
+12:     "eslint-config-prettier",
+13:     "@typescript-eslint/utils"
+14:   ],
+15:   "rules": {
+16:     "unused-files": "warn",
+17:     "unused-exports": "warn",
+18:     "unused-types": "warn"
+19:   }
+20: }
 ````
 
 ## File: .github/workflows/snyk-scan.yml
@@ -21832,6 +21900,108 @@ vercel.json
 74:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "version": "1.0.8",
+ 4:   "private": true,
+ 5:   "type": "module",
+ 6:   "scripts": {
+ 7:     "dev": "next dev --turbopack",
+ 8:     "lhci": "lhci autorun",
+ 9:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+10:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+11:     "build": "next build",
+12:     "start": "next start",
+13:     "lint": "next lint",
+14:     "lint:css": "stylelint \"src/**/*.css\"",
+15:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate",
+25:     "doctor": "react-doctor . --verbose"
+26:   },
+27:   "dependencies": {
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.2.2",
+30:     "@portabletext/react": "^6.0.3",
+31:     "@sanity/client": "^7.22.0",
+32:     "@sanity/image-url": "^2.1.1",
+33:     "@vercel/speed-insights": "2.0.0",
+34:     "babel-jest": "30.3.0",
+35:     "jest": "30.3.0",
+36:     "motion": "^12.38.0",
+37:     "next": "^16.2.6",
+38:     "react": "^19.2.5",
+39:     "react-dom": "^19.2.5",
+40:     "react-error-boundary": "^5.0.0",
+41:     "react-hook-form": "^7.73.1",
+42:     "react-icons": "^5.6.0",
+43:     "ts-node": "^10.9.2",
+44:     "zod": "^4.3.6"
+45:   },
+46:   "devDependencies": {
+47:     "@jest/expect": "^30.3.0",
+48:     "@jest/globals": "^30.3.0",
+49:     "@ladle/react": "^5.1.1",
+50:     "@lhci/cli": "^0.15.1",
+51:     "@playwright/test": "^1.59.1",
+52:     "@tailwindcss/postcss": "^4.2.4",
+53:     "@testing-library/cypress": "^10.1.0",
+54:     "@testing-library/jest-dom": "^6.9.1",
+55:     "@testing-library/react": "^16.3.2",
+56:     "@testing-library/user-event": "^14.6.1",
+57:     "@types/jest": "^30.0.0",
+58:     "@types/node": "^24.12.2",
+59:     "@types/react": "^19.2.14",
+60:     "@types/react-dom": "^19.2.3",
+61:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+62:     "@typescript-eslint/parser": "^8.59.0",
+63:     "@typescript-eslint/utils": "^8.59.0",
+64:     "axe-core": "^4.11.3",
+65:     "cypress": "15.14.1",
+66:     "cypress-axe": "^1.7.0",
+67:     "eslint": "10.2.1",
+68:     "eslint-config-next": "16.2.4",
+69:     "eslint-config-prettier": "^10.1.8",
+70:     "eslint-plugin-jest": "^29.15.2",
+71:     "eslint-plugin-jsx-a11y": "^6.10.2",
+72:     "eslint-plugin-prettier": "^5.5.5",
+73:     "eslint-plugin-react": "^7.37.5",
+74:     "eslint-plugin-react-hooks": "^7.1.1",
+75:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+76:     "eslint-plugin-testing-library": "^7.16.2",
+77:     "jest-environment-jsdom": "^30.3.0",
+78:     "jest-extended": "^7.0.0",
+79:     "jsdom-testing-mocks": "^1.16.0",
+80:     "pa11y": "^9.1.1",
+81:     "postcss": "^8.5.10",
+82:     "postcss-load-config": "^6.0.1",
+83:     "prettier": "3.8.3",
+84:     "react-doctor": "^0.0.39",
+85:     "sanity": "5.22.0",
+86:     "stylelint": "^17.9.0",
+87:     "stylelint-config-standard": "^40.0.0",
+88:     "tailwindcss": "^4.2.4",
+89:     "ts-jest": "^29.4.9",
+90:     "typescript": "^6.0.3",
+91:     "wait-on": "^9.0.5"
+92:   },
+93:   "pnpm": {
+94:     "overrides": {
+95:       "brace-expansion@^5.0.0": "5.0.6"
+96:     }
+97:   }
+98: }
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -21867,135 +22037,31 @@ vercel.json
 31:     "overrides": {
 32:       "basic-ftp": ">=6.0.1",
 33:       "brace-expansion": ">=5.0.6",
-34:       "dompurify": ">=3.4.3",
+34:       "dompurify": ">=3.4.5",
 35:       "flatted": ">=3.4.2",
 36:       "js-yaml": ">=4.1.1",
 37:       "lodash": ">=4.18.1",
 38:       "lodash-es": ">=4.18.1",
-39:       "minimatch@>=5.0.0 <10.2.1": "10.2.5",
+39:       "minimatch": "10.2.5",
 40:       "picomatch@<2.3.2": "4.0.4",
 41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
 42:       "smol-toml": ">=1.6.1",
-43:       "undici": ">=8.2.0",
-44:       "vite": ">=8.0.12",
+43:       "undici": ">=8.3.0",
+44:       "vite": ">=8.0.13",
 45:       "yaml": ">=2.9.0",
 46:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
 47:     }
 48:   },
 49:   "overrides": {
-50:     "uuid": ">=14.0.0",
-51:     "js-yaml": ">=4.1.1"
-52:   },
-53:   "prettier": {
-54:     "semi": false,
-55:     "printWidth": 100,
-56:     "bracketSpacing": false,
-57:     "singleQuote": true
-58:   }
-59: }
-````
-
-## File: package.json
-````json
-  1: {
-  2:   "name": "dfweb-v4",
-  3:   "version": "1.0.8",
-  4:   "private": true,
-  5:   "type": "module",
-  6:   "scripts": {
-  7:     "dev": "next dev --turbopack",
-  8:     "lhci": "lhci autorun",
-  9:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 10:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 11:     "build": "next build",
- 12:     "start": "next start",
- 13:     "lint": "next lint",
- 14:     "lint:css": "stylelint \"src/**/*.css\"",
- 15:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
- 16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 19:     "cypress:open": "cypress open",
- 20:     "cypress:headless": "cypress run",
- 21:     "e2e": "start-test dev 3000 cypress:headless",
- 22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 23:     "ladle": "ladle serve",
- 24:     "typegen": "npx sanity typegen generate",
- 25:     "doctor": "react-doctor . --verbose"
- 26:   },
- 27:   "dependencies": {
- 28:     "@babel/helpers": ">=7.29.2",
- 29:     "@emailjs/browser": "^4.4.1",
- 30:     "@hookform/resolvers": "^5.2.2",
- 31:     "@portabletext/react": "^6.0.3",
- 32:     "@sanity/client": "^7.22.0",
- 33:     "@sanity/image-url": "^2.1.1",
- 34:     "@vercel/speed-insights": "2.0.0",
- 35:     "autoprefixer": "^10.5.0",
- 36:     "babel-jest": "30.3.0",
- 37:     "clsx": "^2.1.1",
- 38:     "cookie": ">=1.1.1",
- 39:     "envalid": "^8.1.1",
- 40:     "jest": "30.3.0",
- 41:     "motion": "^12.38.0",
- 42:     "next": "^16.2.6",
- 43:     "path-to-regexp": "^8.4.2",
- 44:     "react": "^19.2.5",
- 45:     "react-dom": "^19.2.5",
- 46:     "react-error-boundary": "^5.0.0",
- 47:     "react-hook-form": "^7.73.1",
- 48:     "react-icons": "^5.6.0",
- 49:     "sitemap": "^9.0.1",
- 50:     "tar-fs": "^3.1.2",
- 51:     "ts-node": "^10.9.2",
- 52:     "zod": "^4.3.6"
- 53:   },
- 54:   "devDependencies": {
- 55:     "@jest/expect": "^30.3.0",
- 56:     "@jest/globals": "^30.3.0",
- 57:     "@ladle/react": "^5.1.1",
- 58:     "@lhci/cli": "^0.15.1",
- 59:     "@playwright/test": "^1.59.1",
- 60:     "@tailwindcss/postcss": "^4.2.4",
- 61:     "@testing-library/cypress": "^10.1.0",
- 62:     "@testing-library/jest-dom": "^6.9.1",
- 63:     "@testing-library/react": "^16.3.2",
- 64:     "@testing-library/user-event": "^14.6.1",
- 65:     "@types/jest": "^30.0.0",
- 66:     "@types/node": "^24.12.2",
- 67:     "@types/react": "^19.2.14",
- 68:     "@types/react-dom": "^19.2.3",
- 69:     "@typescript-eslint/eslint-plugin": "^8.59.0",
- 70:     "@typescript-eslint/parser": "^8.59.0",
- 71:     "@typescript-eslint/utils": "^8.59.0",
- 72:     "axe-core": "^4.11.3",
- 73:     "cypress": "15.14.1",
- 74:     "cypress-axe": "^1.7.0",
- 75:     "eslint": "10.2.1",
- 76:     "eslint-config-next": "16.2.4",
- 77:     "eslint-config-prettier": "^10.1.8",
- 78:     "eslint-plugin-jest": "^29.15.2",
- 79:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 80:     "eslint-plugin-prettier": "^5.5.5",
- 81:     "eslint-plugin-react": "^7.37.5",
- 82:     "eslint-plugin-react-hooks": "^7.1.1",
- 83:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 84:     "eslint-plugin-testing-library": "^7.16.2",
- 85:     "expect": "^30.3.0",
- 86:     "jest-environment-jsdom": "^30.3.0",
- 87:     "jest-extended": "^7.0.0",
- 88:     "jsdom-testing-mocks": "^1.16.0",
- 89:     "pa11y": "^9.1.1",
- 90:     "postcss": "^8.5.10",
- 91:     "prettier": "3.8.3",
- 92:     "react-doctor": "^0.0.39",
- 93:     "sanity": "5.22.0",
- 94:     "stylelint": "^17.9.0",
- 95:     "stylelint-config-standard": "^40.0.0",
- 96:     "tailwindcss": "^4.2.4",
- 97:     "ts-jest": "^29.4.9",
- 98:     "typescript": "^6.0.3",
- 99:     "wait-on": "^9.0.5"
-100:   }
-101: }
+50:     "brace-expansion@^5.0.0": "5.0.6",
+51:     "uuid": ">=14.0.0",
+52:     "js-yaml": ">=4.1.1"
+53:   },
+54:   "prettier": {
+55:     "semi": false,
+56:     "printWidth": 100,
+57:     "bracketSpacing": false,
+58:     "singleQuote": true
+59:   }
+60: }
 ````
