@@ -55,6 +55,26 @@ function validateCsrf(formData: Record<string, string>): NextResponse | null {
 }
 
 /**
+ * Validate form data against the shared Zod schema.
+ * Returns a NextResponse error if invalid, or null if valid.
+ */
+function validateFormData(
+  formData: Record<string, string>,
+): NextResponse | null {
+  const result = formSchema.safeParse(formData);
+
+  if (!result.success) {
+    const firstIssue = result.error.issues[0];
+    return NextResponse.json(
+      { error: firstIssue?.message ?? "Validation failed" },
+      { status: 400 },
+    );
+  }
+
+  return null;
+}
+
+/**
  * POST handler for form submissions with CSRF protection.
  * Uses the shared Zod schema from formConfig.ts as the single source
  * of truth for validation — same rules on client and server.
@@ -64,29 +84,18 @@ function validateCsrf(formData: Record<string, string>): NextResponse | null {
 export async function POST(request: NextRequest) {
   try {
     const parsed = await parseRequestBody(request);
-
-    if (parsed instanceof NextResponse) {
-      return parsed;
-    }
+    if (parsed instanceof NextResponse) return parsed;
 
     const formData = parsed;
     const csrfError = validateCsrf(formData);
     if (csrfError) return csrfError;
 
-    // Remove CSRF token from form data before validation
+    // Remove CSRF tokens before validation
     delete formData._csrf;
     delete formData.csrfToken;
 
-    // Validate using the shared Zod schema — single source of truth
-    const result = formSchema.safeParse(formData);
-
-    if (!result.success) {
-      const firstIssue = result.error.issues[0];
-      return NextResponse.json(
-        { error: firstIssue?.message ?? "Validation failed" },
-        { status: 400 },
-      );
-    }
+    const validationError = validateFormData(formData);
+    if (validationError) return validationError;
 
     return NextResponse.json(
       { message: "Form submitted successfully", success: true },
