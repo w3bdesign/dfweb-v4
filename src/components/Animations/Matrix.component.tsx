@@ -161,6 +161,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     <canvas
       ref={canvasRef}
       id={CANVAS_ID}
+      aria-hidden="true"
       style={{ width: "100%", height: "100%" }}
       data-testid="matrix-canvas"
       className="absolute inset-0"
