@@ -4,6 +4,21 @@ import "jest-extended";
 import { checkAAAPattern } from "./src/utils/test-utils";
 import fs from "fs/promises";
 
+// Mock matchMedia for prefers-reduced-motion and other media queries
+Object.defineProperty(globalThis, "matchMedia", {
+  writable: true,
+  value: jest.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
+
 declare global {
   namespace jest {
     interface Matchers<R> {
