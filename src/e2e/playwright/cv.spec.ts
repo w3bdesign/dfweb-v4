@@ -1,21 +1,12 @@
 import { test, expect } from "@playwright/test";
 
-/**
- * Helper: click a start tab for focus, press a key, and verify the expected tab receives focus.
- */
-async function pressKeyAndExpectTab(
-  page: import("@playwright/test").Page,
-  startTabName: string,
-  key: string,
-  expectedTabName: string,
-) {
-  const startTab = page.getByRole("tab", { name: startTabName });
-  await startTab.click();
-  await page.keyboard.press(key);
-  const expectedTab = page.getByRole("tab", { name: expectedTabName });
-  await expect(expectedTab).toBeFocused();
-  await expect(expectedTab).toHaveAttribute("aria-selected", "true");
-}
+const keyboardNavigationCases = [
+  { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
+  { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
+  { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
+  { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
+  { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
+] as const;
 
 test.describe("CV page", () => {
   test.beforeEach(async ({ page }) => {
@@ -47,25 +38,16 @@ test.describe("CV page", () => {
     );
   });
 
-  test("ArrowDown moves focus to next tab", async ({ page }) => {
-    await pressKeyAndExpectTab(page, "Nøkkelkvalifikasjoner", "ArrowDown", "Erfaring");
-  });
-
-  test("ArrowUp moves focus to previous tab", async ({ page }) => {
-    await pressKeyAndExpectTab(page, "Erfaring", "ArrowUp", "Nøkkelkvalifikasjoner");
-  });
-
-  test("ArrowDown wraps from last tab to first tab", async ({ page }) => {
-    await pressKeyAndExpectTab(page, "Frivillig arbeid", "ArrowDown", "Nøkkelkvalifikasjoner");
-  });
-
-  test("Home key moves focus to first tab", async ({ page }) => {
-    await pressKeyAndExpectTab(page, "Erfaring", "Home", "Nøkkelkvalifikasjoner");
-  });
-
-  test("End key moves focus to last tab", async ({ page }) => {
-    await pressKeyAndExpectTab(page, "Nøkkelkvalifikasjoner", "End", "Frivillig arbeid");
-  });
+  for (const { name, start, key, expected } of keyboardNavigationCases) {
+    test(name, async ({ page }) => {
+      const startTab = page.getByRole("tab", { name: start });
+      await startTab.click();
+      await page.keyboard.press(key);
+      const expectedTab = page.getByRole("tab", { name: expected });
+      await expect(expectedTab).toBeFocused();
+      await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+    });
+  }
 
   test("tablist has aria-orientation=vertical", async ({ page }) => {
     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
