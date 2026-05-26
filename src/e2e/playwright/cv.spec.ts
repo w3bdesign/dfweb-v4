@@ -37,28 +37,28 @@ test.describe("CV page", () => {
   });
 });
 
+/**
+ * Helper: click a start tab for focus, press a key, and verify the expected tab receives focus.
+ */
+async function pressKeyAndExpectTab(
+  page: import("@playwright/test").Page,
+  startTabName: string,
+  key: string,
+  expectedTabName: string,
+) {
+  const startTab = page.getByRole("tab", { name: startTabName });
+  await startTab.click();
+  await page.keyboard.press(key);
+  const expectedTab = page.getByRole("tab", { name: expectedTabName });
+  await expect(expectedTab).toBeFocused();
+  await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+}
+
 test.describe("CV page — Tabs keyboard navigation (WAI-ARIA APG)", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/cv");
     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
   });
-
-  /**
-   * Helper: click a start tab for focus, press a key, and verify the expected tab receives focus.
-   */
-  async function pressKeyAndExpectTab(
-    page: import("@playwright/test").Page,
-    startTabName: string,
-    key: string,
-    expectedTabName: string,
-  ) {
-    const startTab = page.getByRole("tab", { name: startTabName });
-    await startTab.click();
-    await page.keyboard.press(key);
-    const expectedTab = page.getByRole("tab", { name: expectedTabName });
-    await expect(expectedTab).toBeFocused();
-    await expect(expectedTab).toHaveAttribute("aria-selected", "true");
-  }
 
   test("ArrowDown moves focus to next tab", async ({ page }) => {
     await pressKeyAndExpectTab(page, "Nøkkelkvalifikasjoner", "ArrowDown", "Erfaring");
