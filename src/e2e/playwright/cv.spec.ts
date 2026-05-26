@@ -1,8 +1,26 @@
 import { test, expect } from "@playwright/test";
 
+/**
+ * Helper: click a start tab for focus, press a key, and verify the expected tab receives focus.
+ */
+async function pressKeyAndExpectTab(
+  page: import("@playwright/test").Page,
+  startTabName: string,
+  key: string,
+  expectedTabName: string,
+) {
+  const startTab = page.getByRole("tab", { name: startTabName });
+  await startTab.click();
+  await page.keyboard.press(key);
+  const expectedTab = page.getByRole("tab", { name: expectedTabName });
+  await expect(expectedTab).toBeFocused();
+  await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+}
+
 test.describe("CV page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/cv");
+    await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
   });
 
   test("loads and displays main content correctly", async ({ page }) => {
@@ -28,30 +46,6 @@ test.describe("CV page", () => {
       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
     );
   });
-});
-
-/**
- * Helper: click a start tab for focus, press a key, and verify the expected tab receives focus.
- */
-async function pressKeyAndExpectTab(
-  page: import("@playwright/test").Page,
-  startTabName: string,
-  key: string,
-  expectedTabName: string,
-) {
-  const startTab = page.getByRole("tab", { name: startTabName });
-  await startTab.click();
-  await page.keyboard.press(key);
-  const expectedTab = page.getByRole("tab", { name: expectedTabName });
-  await expect(expectedTab).toBeFocused();
-  await expect(expectedTab).toHaveAttribute("aria-selected", "true");
-}
-
-test.describe("CV page — Tabs keyboard navigation (WAI-ARIA APG)", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/cv");
-    await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
-  });
 
   test("ArrowDown moves focus to next tab", async ({ page }) => {
     await pressKeyAndExpectTab(page, "Nøkkelkvalifikasjoner", "ArrowDown", "Erfaring");
@@ -74,12 +68,10 @@ test.describe("CV page — Tabs keyboard navigation (WAI-ARIA APG)", () => {
   });
 
   test("tablist has aria-orientation=vertical", async ({ page }) => {
-    // Arrange & Act & Assert
     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
   });
 
   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
-    // Arrange & Act & Assert
     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
   });
