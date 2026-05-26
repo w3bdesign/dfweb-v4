@@ -167,6 +167,30 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
 
+  /** Helper: press keys from a starting tab and assert focus lands on expected index */
+  async function pressKeysAndExpectFocus(
+    orientation: "horizontal" | "vertical",
+    startIndex: number,
+    keys: string[],
+    expectedFocusIndex: number,
+  ) {
+    // Arrange
+    const user = userEvent.setup();
+    renderKeyboardTabs(orientation);
+    const tabs = screen.getAllByRole("tab");
+
+    // Act
+    if (startIndex > 0) fireEvent.click(tabs[startIndex]);
+    tabs[startIndex].focus();
+    for (const key of keys) {
+      await user.keyboard(key);
+    }
+
+    // Assert
+    expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
+    expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
+  }
+
   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
     // Arrange
     renderKeyboardTabs();
@@ -180,147 +204,60 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
   });
 
-  it("moves focus to next tab on ArrowDown in vertical orientation", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowDown}");
-
-    // Assert
-    expect(tabs[1]).toHaveFocus();
-    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+  it("ArrowDown moves to next tab in vertical orientation", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
   });
 
-  it("moves focus to previous tab on ArrowUp in vertical orientation", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowDown}");
-    await user.keyboard("{ArrowUp}");
-
-    // Assert
-    expect(tabs[0]).toHaveFocus();
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+  it("ArrowUp moves to previous tab in vertical orientation", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
   });
 
-  it("moves focus to next tab on ArrowRight in horizontal orientation", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("horizontal");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowRight}");
-
-    // Assert
-    expect(tabs[1]).toHaveFocus();
-    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+  it("ArrowRight moves to next tab in horizontal orientation", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
   });
 
-  it("moves focus to previous tab on ArrowLeft in horizontal orientation", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("horizontal");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowRight}");
-    await user.keyboard("{ArrowLeft}");
-
-    // Assert
-    expect(tabs[0]).toHaveFocus();
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+  it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
   });
 
   it("wraps focus from last tab to first tab on ArrowDown", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[2].focus();
-    fireEvent.click(tabs[2]);
-    await user.keyboard("{ArrowDown}");
-
-    // Assert
-    expect(tabs[0]).toHaveFocus();
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
   });
 
   it("wraps focus from first tab to last tab on ArrowUp", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowUp}");
-
-    // Assert
-    expect(tabs[2]).toHaveFocus();
-    expect(tabs[2]).toHaveAttribute("aria-selected", "true");
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
   });
 
-  it("moves focus to first tab on Home key", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{ArrowDown}");
-    await user.keyboard("{ArrowDown}");
-    await user.keyboard("{Home}");
-
-    // Assert
-    expect(tabs[0]).toHaveFocus();
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+  it("Home key moves focus to first tab from any position", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
   });
 
-  it("moves focus to last tab on End key", async () => {
-    // Arrange
-    const user = userEvent.setup();
-    renderKeyboardTabs("vertical");
-    const tabs = screen.getAllByRole("tab");
-
-    // Act
-    tabs[0].focus();
-    await user.keyboard("{End}");
-
-    // Assert
-    expect(tabs[2]).toHaveFocus();
-    expect(tabs[2]).toHaveAttribute("aria-selected", "true");
+  it("End key moves focus to last tab", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
   });
 
-  it("sets aria-orientation on the tablist", () => {
+  it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
     // Arrange & Act
     renderKeyboardTabs("vertical");
-    const tablist = screen.getByRole("tablist");
 
     // Assert
-    expect(tablist).toHaveAttribute("aria-orientation", "vertical");
+    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
   });
 
-  it("sets aria-orientation to horizontal when orientation is horizontal", () => {
+  it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
     // Arrange & Act
     renderKeyboardTabs("horizontal");
-    const tablist = screen.getByRole("tablist");
 
     // Assert
-    expect(tablist).toHaveAttribute("aria-orientation", "horizontal");
+    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
   });
 
   it("tab panel is focusable with tabIndex=0", () => {
