@@ -2,21 +2,6 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 
-// Mock matchMedia for prefers-reduced-motion check
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: jest.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
-
 const mockFillRect = jest.fn();
 const mockFillText = jest.fn();
 
