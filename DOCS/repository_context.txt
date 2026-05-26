@@ -1430,6 +1430,23 @@ vercel.json
 11: - **Refresh Command**: `pnpm refresh` does complete cleanup including store prune and lock file removal
 ````
 
+## File: .roo/rules-code/AGENTS.md
+````markdown
+ 1: # Project Coding Rules (Non-Obvious Only)
+ 2: 
+ 3: - **AAA Pattern Enforcement**: Tests MUST include `// Arrange`, `// Act`, `// Assert` comments - enforced by custom ESLint plugin in `src/utils/eslint/` AND runtime validation in `jest.setup.ts`
+ 4: - **Component Naming**: Use `.component.tsx` suffix (not standard React convention)
+ 5: - **Matrix Component**: Intentionally excluded from test coverage via package.json script
+ 6: - **Custom ESLint Plugin**: Local plugin at `src/utils/eslint/` provides `test-rules/arrange-act-assert` rule
+ 7: - **Test Utils**: Use `checkAAAPattern()` from `src/utils/test-utils.ts` for AAA validation
+ 8: - **Sanity Client**: Hardcoded fallbacks in `src/lib/sanity/client.ts` (projectId: "41s7iutf", dataset: "production")
+ 9: - **CSP Headers**: Custom Content Security Policy allows `https://presentasjon.dfweb.no` for iframe embedding
+10: - **Turbopack Dev**: Development server uses `--turbopack` flag (non-standard Next.js setup)
+11: - **Supply Chain Security**: Multi-layered defense — see `AGENTS.md` Security section and `plans/supply-chain-hardening.md`
+12: - **NEVER** add `pull_request_target` to any workflow, use floating tags for GitHub Actions, or remove `ignore-scripts=true` from `.npmrc`
+13: - **ALWAYS** pin GitHub Actions to SHA, use `--frozen-lockfile` in CI, add `permissions` blocks to workflows
+````
+
 ## File: .roo/rules-debug/AGENTS.md
 ````markdown
 1: # Project Debug Rules (Non-Obvious Only)
@@ -7176,118 +7193,6 @@ vercel.json
 163: });
 ````
 
-## File: src/__tests__/Animations/Matrix.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
-  5: const mockFillRect = jest.fn();
-  6: const mockFillText = jest.fn();
-  7: const mock2DContext = {
-  8:   fillRect: mockFillRect,
-  9:   fillText: mockFillText,
- 10:   canvas: document.createElement("canvas"),
- 11:   getContextAttributes: () => ({}),
- 12:   globalAlpha: 1,
- 13:   globalCompositeOperation: "source-over",
- 14:   save: jest.fn(),
- 15:   restore: jest.fn(),
- 16:   font: "",
- 17:   fillStyle: "",
- 18:   shadowColor: "",
- 19:   shadowBlur: 0,
- 20: } as unknown as CanvasRenderingContext2D;
- 21: const mockBitmapContext = {
- 22:   canvas: document.createElement("canvas"),
- 23:   transferFromImageBitmap: jest.fn(),
- 24: } as unknown as ImageBitmapRenderingContext;
- 25: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
- 26:   switch (contextId) {
- 27:     case "2d":
- 28:       return mock2DContext;
- 29:     case "bitmaprenderer":
- 30:       return mockBitmapContext;
- 31:     case "webgl":
- 32:     case "webgl2":
- 33:       return null;
- 34:     default:
- 35:       return null;
- 36:   }
- 37: } as typeof HTMLCanvasElement.prototype.getContext;
- 38: jest
- 39:   .spyOn(global, "requestAnimationFrame")
- 40:   .mockImplementation((cb) => setTimeout(cb, 0));
- 41: describe("ReactMatrixAnimation", () => {
- 42:   beforeEach(() => {
- 43:     jest.useFakeTimers();
- 44:     jest
- 45:       .spyOn(window, "requestAnimationFrame")
- 46:       .mockImplementation((cb) => setTimeout(cb, 0));
- 47:   });
- 48:   afterEach(() => {
- 49:     jest.useRealTimers();
- 50:     jest.restoreAllMocks();
- 51:   });
- 52:   describe("rendering", () => {
- 53:     it("renders canvas element with default props", () => {
- 54:       // Arrange
- 55:       const expectedTestId = "matrix-canvas";
- 56:       // Act
- 57:       render(<ReactMatrixAnimation />);
- 58:       const canvas = screen.getByTestId(expectedTestId);
- 59:       // Assert
- 60:       expect(canvas).toBeInTheDocument();
- 61:       expect(canvas).toHaveStyle({
- 62:         width: "100%",
- 63:         height: "100%",
- 64:       });
- 65:     });
- 66:     it("renders canvas element with custom props", () => {
- 67:       // Arrange
- 68:       const customProps = {
- 69:         tileSize: 30,
- 70:         fadeFactor: 0.7,
- 71:         backgroundColor: "#000000",
- 72:         fontColor: "#ffffff",
- 73:         tileSet: ["A", "B", "C"],
- 74:       };
- 75:       const expectedTestId = "matrix-canvas";
- 76:       // Act
- 77:       render(<ReactMatrixAnimation {...customProps} />);
- 78:       const canvas = screen.getByTestId(expectedTestId);
- 79:       // Assert
- 80:       expect(canvas).toBeInTheDocument();
- 81:     });
- 82:   });
- 83:   describe("validation", () => {
- 84:     beforeEach(() => {
- 85:       // Arrange - Suppress console.error for validation tests
- 86:       jest.spyOn(console, "error").mockImplementation(() => {});
- 87:     });
- 88:     it("throws error for invalid background color", () => {
- 89:       // Arrange
- 90:       const invalidProps = { backgroundColor: "invalid" };
- 91:       const expectedError =
- 92:         "Invalid background color. Use a hex value e.g. #030303";
- 93:       // Act & Assert
- 94:       expect(() => {
- 95:         render(<ReactMatrixAnimation {...invalidProps} />);
- 96:       }).toThrow(expectedError);
- 97:     });
- 98:     it("throws error for invalid font color", () => {
- 99:       // Arrange
-100:       const invalidProps = { fontColor: "invalid" };
-101:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
-102:       // Act & Assert
-103:       expect(() => {
-104:         render(<ReactMatrixAnimation {...invalidProps} />);
-105:       }).toThrow(expectedError);
-106:     });
-107:   });
-108: });
-````
-
 ## File: src/__tests__/Animations/Matrix.utils.test.ts
 ````typescript
   1: import {
@@ -7641,6 +7546,57 @@ vercel.json
 43:     });
 44:   });
 45: });
+````
+
+## File: src/__tests__/Animations/TestAnimation.test.tsx
+````typescript
+ 1: /**
+ 2:  * @jest-environment jsdom
+ 3:  */
+ 4: import React from "react";
+ 5: import { render, screen } from "@testing-library/react";
+ 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
+ 7: import PageTransition from "@/components/Animations/PageTransition.component";
+ 8: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 9: mockIntersectionObserver();
+10: type AnimationComponent = typeof PageTransition | typeof BounceInScroll;
+11: /**
+12:  * Reusable tests for animation components.
+13:  *
+14:  * @param {AnimationComponent} Component - The animation component to test.
+15:  * @param {string} testId - The test ID for the component.
+16:  * @param {string} expectedAttribute - The expected attribute value for the component.
+17:  * @return {void} This function does not return anything.
+18:  */
+19: function testAnimationComponent(
+20:   Component: AnimationComponent,
+21:   testId: string,
+22:   expectedAttribute: string,
+23: ) {
+24:   describe(`${Component.name}`, () => {
+25:     // Arrange - Set up test data and conditions
+26:     const testContent = Component.name;
+27:     it(`loads and can be displayed`, () => {
+28:       // Arrange - Set up test data and conditions
+29:       const expectedTestId = testId;
+30:       // Act - Perform the action being tested
+31:       render(<Component delay={1}>{testContent}</Component>);
+32:       const element = screen.getByTestId(expectedTestId);
+33:       expect(element).toBeInTheDocument();
+34:     });
+35:     it(`Framer motion sets ${expectedAttribute}`, () => {
+36:       // Arrange - Set up test data and conditions
+37:       const expectedTestId = testId;
+38:       // Act - Perform the action being tested
+39:       render(<Component delay={1}>{testContent}</Component>);
+40:       const element = screen.getByTestId(expectedTestId);
+41:       // Assert - Verify the results
+42:       expect(element).toContainHTML(expectedAttribute);
+43:     });
+44:   });
+45: }
+46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
+47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
 ## File: src/__tests__/CV/CVContent.test.tsx
@@ -10364,6 +10320,28 @@ vercel.json
 155: }
 ````
 
+## File: src/components/Animations/types/Animations.types.ts
+````typescript
+ 1: import { ReactNode } from "react";
+ 2: export interface IAnimateProps {
+ 3:   children: ReactNode;
+ 4:   cssClass?: string;
+ 5: }
+ 6: export interface IAnimateBounceProps {
+ 7:   children: ReactNode;
+ 8:   cssClass?: string;
+ 9:   viewAmount?: "some" | "all" | number;
+10:   instant?: boolean;
+11:   delay?: number;
+12: }
+13: export interface IGrowProps {
+14:   duration?: number;
+15:   delay?: number;
+16:   easing?: [number, number, number, number];
+17:   children: ReactNode;
+18: }
+````
+
 ## File: src/components/Animations/BounceInScroll.component.tsx
 ````typescript
  1: "use client";
@@ -10964,6 +10942,53 @@ vercel.json
 28: export default VolunteerWorkTabContent;
 ````
 
+## File: src/components/ErrorBoundary/ErrorBoundary.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
+ 3: import {
+ 4:   ErrorBoundary as ReactErrorBoundary,
+ 5:   FallbackProps,
+ 6: } from "react-error-boundary";
+ 7: import ErrorFallback from "./ErrorFallback.component";
+ 8: interface ErrorBoundaryProps {
+ 9:   children: ReactNode;
+10:   compact?: boolean;
+11: }
+12: const handleError = (error: Error, info: ErrorInfo) => {
+13:   console.error("Uventet feil i Matrix:", error, info);
+14: };
+15: /**
+16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
+17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+18:  *
+19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
+21:  *
+22:  * @param {Object} props - The component props
+23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
+25:  * @returns {JSX.Element} A React component that catches errors in its child components
+26:  */
+27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
+28:   children,
+29:   compact = false,
+30: }) => {
+31:   const renderFallback = useCallback(
+32:     (props: FallbackProps) => (
+33:       <ErrorFallback error={props.error} compact={compact} />
+34:     ),
+35:     [compact],
+36:   );
+37:   return (
+38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
+39:       {children}
+40:     </ReactErrorBoundary>
+41:   );
+42: };
+43: export default ErrorBoundary;
+````
+
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
 ````typescript
  1: import React from "react";
@@ -11235,6 +11260,178 @@ vercel.json
 82:   );
 83: };
 84: export default Section;
+````
+
+## File: src/components/Kontakt/config/formConfig.ts
+````typescript
+ 1: import { z } from "zod";
+ 2: export const formSchema = z.object({
+ 3:   navn: z
+ 4:     .string()
+ 5:     .min(1, "Fullt navn er påkrevd")
+ 6:     .min(2, "Navn må være minst 2 tegn")
+ 7:     .max(100, "Navn kan ikke være mer enn 100 tegn")
+ 8:     .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
+ 9:   telefon: z
+10:     .string()
+11:     .min(1, "Telefonnummer er påkrevd")
+12:     .regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
+13:   tekst: z
+14:     .string()
+15:     .min(1, "Beskjed er påkrevd")
+16:     .min(10, "Beskjed må være minst 10 tegn")
+17:     .max(1000, "Beskjed kan ikke være mer enn 1000 tegn"),
+18: });
+19: export type FormData = z.infer<typeof formSchema>;
+````
+
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import PageHeader from "@/components/UI/PageHeader.component";
+  6: import Button from "@/components/UI/Button.component";
+  7: import InputField from "@/components/UI/InputField.component";
+  8: import { formSchema, FormData } from "./config/formConfig";
+  9: interface ContactFormProps {
+ 10:   csrfToken?: string;
+ 11:   onSubmit?: (data: FormData) => Promise<string>;
+ 12:   initialResponse?: string;
+ 13: }
+ 14: /**
+ 15:  * ContactForm component - A complete contact form with EmailJS integration
+ 16:  * Handles both the form UI and submission logic in a single, clear component
+ 17:  */
+ 18: const ContactForm: React.FC<ContactFormProps> = ({
+ 19:   csrfToken = "",
+ 20:   onSubmit: onSubmitProp,
+ 21:   initialResponse = "",
+ 22: }) => {
+ 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
+ 24:     null,
+ 25:   );
+ 26:   const serverResponse = submittedResponse ?? initialResponse;
+ 27:   const {
+ 28:     register,
+ 29:     handleSubmit,
+ 30:     formState: { errors, isSubmitting },
+ 31:   } = useForm<FormData>({
+ 32:     resolver: zodResolver(formSchema),
+ 33:   });
+ 34:   /**
+ 35:    * Default form submission handler using EmailJS.
+ 36:    * Dynamically imports @emailjs/browser only when the user submits,
+ 37:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
+ 38:    */
+ 39:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 40:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 41:     const TEMPLATE_KEY =
+ 42:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 43:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 44:     try {
+ 45:       const emailjs = (await import("@emailjs/browser")).default;
+ 46:       emailjs.init(EMAIL_API_KEY);
+ 47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 48:       return "Takk for din beskjed";
+ 49:     } catch {
+ 50:       return "Feil under sending av skjema";
+ 51:     }
+ 52:   };
+ 53:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 54:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 55:     const message = await submitHandler(data);
+ 56:     setSubmittedResponse(message);
+ 57:   };
+ 58:   return (
+ 59:     <main data-testid="kontaktcontent" id="maincontent">
+ 60:       <div className="mt-32 bg-graybg">
+ 61:         <PageHeader>Kontakt</PageHeader>
+ 62:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 63:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 64:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 65:               <div className="p-2 md:p-6 pt-8">
+ 66:                 {serverResponse ? (
+ 67:                   <div aria-live="polite" aria-atomic="true">
+ 68:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 69:                       {serverResponse}
+ 70:                     </h3>
+ 71:                   </div>
+ 72:                 ) : (
+ 73:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 74:                     <form
+ 75:                       id="contact-form"
+ 76:                       className="text-center"
+ 77:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 78:                       method="POST"
+ 79:                       action="/api/form"
+ 80:                       aria-label="Contact Form"
+ 81:                     >
+ 82:                       {csrfToken && (
+ 83:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 84:                       )}
+ 85:                       <fieldset>
+ 86:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 87:                           Kontaktskjema
+ 88:                         </legend>
+ 89:                         <InputField<FormData>
+ 90:                           name="navn"
+ 91:                           label="Fullt navn"
+ 92:                           htmlFor="navn"
+ 93:                           register={register}
+ 94:                           error={errors.navn?.message}
+ 95:                           isRequired
+ 96:                           title="Vennligst bruk norske bokstaver"
+ 97:                           autoComplete="name"
+ 98:                           spellCheck={false}
+ 99:                         />
+100:                         <br />
+101:                         <InputField<FormData>
+102:                           name="telefon"
+103:                           label="Telefonnummer"
+104:                           htmlFor="telefon"
+105:                           register={register}
+106:                           error={errors.telefon?.message}
+107:                           isRequired
+108:                           title="Vennligst oppgi et gyldig telefonnummer"
+109:                           autoComplete="tel"
+110:                           inputMode="tel"
+111:                           spellCheck={false}
+112:                         />
+113:                         <br />
+114:                         <InputField<FormData>
+115:                           name="tekst"
+116:                           label="Hva ønsker du å si?"
+117:                           htmlFor="tekst"
+118:                           register={register}
+119:                           error={errors.tekst?.message}
+120:                           isRequired
+121:                           type="textarea"
+122:                           spellCheck={true}
+123:                         />
+124:                         <br />
+125:                       </fieldset>
+126:                       <div className="-mt-4">
+127:                         <Button
+128:                           loading={isSubmitting}
+129:                           data-testid="submit-button"
+130:                         >
+131:                           Send skjema
+132:                         </Button>
+133:                       </div>
+134:                     </form>
+135:                   </div>
+136:                 )}
+137:               </div>
+138:             </div>
+139:           </div>
+140:         </div>
+141:       </div>
+142:     </main>
+143:   );
+144: };
+145: export default ContactForm;
 ````
 
 ## File: src/components/Layout/DesktopNavigation.component.tsx
@@ -17667,6 +17864,311 @@ vercel.json
 18: }
 ````
 
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
+ 18: 
+ 19: ## Critical Commands
+ 20: 
+ 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 25: 
+ 26: ## Testing Gotchas
+ 27: 
+ 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 30: - Matrix component intentionally excluded from test coverage
+ 31: - Cypress and Playwright have different ESLint rule overrides
+ 32: 
+ 33: ## Code Quality Principles
+ 34: 
+ 35: ### SOLID Principles
+ 36: 
+ 37: #### Single Responsibility Principle (SRP)
+ 38: 
+ 39: Each component/function should have one reason to change.
+ 40: 
+ 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 42: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 44: 
+ 45: #### Open/Closed Principle (OCP)
+ 46: 
+ 47: Software should be open for extension, closed for modification.
+ 48: 
+ 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 50: - Create generic components that can be customized without modifying source
+ 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 52: 
+ 53: #### Liskov Substitution Principle (LSP)
+ 54: 
+ 55: Components accepting a type should work with any subtype.
+ 56: 
+ 57: - Ensure prop interfaces are respected by all implementations
+ 58: - Don't throw unexpected errors or require undocumented props
+ 59: - **Benefits**: Predictable behavior, safer component hierarchies
+ 60: 
+ 61: #### Interface Segregation Principle (ISP)
+ 62: 
+ 63: Don't force components to depend on props they don't use.
+ 64: 
+ 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 66: - Split large prop types into smaller, composable ones
+ 67: - **Benefits**: More flexible components, easier to implement and test
+ 68: 
+ 69: #### Dependency Inversion Principle (DIP)
+ 70: 
+ 71: Depend on abstractions, not concrete implementations.
+ 72: 
+ 73: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 74: - Define abstract types/interfaces, inject implementations
+ 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 76: 
+ 77: ### DRY Principle (Don't Repeat Yourself)
+ 78: 
+ 79: - Extract repeated UI patterns into reusable components
+ 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 81: - Use custom hooks for shared stateful logic
+ 82: - Avoid duplicating business logic across components
+ 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 84: 
+ 85: ### KISS Principle (Keep It Simple, Stupid)
+ 86: 
+ 87: - Use React/Next.js built-in features before custom solutions
+ 88: - Write self-explanatory code with clear naming
+ 89: - Avoid over-engineering simple problems
+ 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 91: - Minimize dependencies
+ 92: - Start simple, add complexity only when necessary
+ 93: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 94: 
+ 95: ### YAGNI Principle (You Aren't Gonna Need It)
+ 96: 
+ 97: Don't implement functionality until it's actually needed.
+ 98: 
+ 99: - Focus on current requirements, not hypothetical future needs
+100: - Don't create abstraction layers for single implementations
+101: - Avoid premature optimization before measuring performance
+102: - Don't build configuration systems until configurability is required
+103: - Wait for actual use cases before adding flexibility
+104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+105: 
+106: ### Code Quality Summary
+107: 
+108: Following these principles results in:
+109: 
+110: - Maintainable, extendable code
+111: - Fewer bugs and faster debugging
+112: - Better team collaboration
+113: - Professional quality standards
+114: - Easier testing and refactoring
+115: 
+116: ## UI Development Rules
+117: 
+118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+119: 
+120: ### Interactions
+121: 
+122: #### Keyboard
+123: 
+124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+126: - MUST: Manage focus (trap, move, and return) per APG patterns
+127: 
+128: #### Targets & Input
+129: 
+130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+131: - MUST: Mobile `<input>` font-size ≥16px or set:
+132:   ```html
+133:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+134:   ```
+135: - NEVER: Disable browser zoom
+136: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+137: 
+138: #### Inputs & Forms (Behavior)
+139: 
+140: - MUST: Hydration-safe inputs (no lost focus/value)
+141: - NEVER: Block paste in `<input>/<textarea>`
+142: - MUST: Loading buttons show spinner and keep original label
+143: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+144: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+145: - MUST: Don't block typing; accept free text and validate after
+146: - MUST: Allow submitting incomplete forms to surface validation
+147: - MUST: Errors inline next to fields; on submit, focus first error
+148: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+149: - SHOULD: Disable spellcheck for emails/codes/usernames
+150: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+151: - MUST: Warn on unsaved changes before navigation
+152: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+153: - MUST: Trim values to handle text expansion trailing spaces
+154: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+155: 
+156: #### State & Navigation
+157: 
+158: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+159: - MUST: Back/Forward restores scroll
+160: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+161: 
+162: #### Feedback
+163: 
+164: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+165: - MUST: Confirm destructive actions or provide Undo window
+166: - MUST: Use polite `aria-live` for toasts/inline validation
+167: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+168: 
+169: #### Touch/Drag/Scroll
+170: 
+171: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+172: - MUST: Delay first tooltip in a group; subsequent peers no delay
+173: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+174: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+175: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+176: 
+177: #### Autofocus
+178: 
+179: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+180: 
+181: ### Animation
+182: 
+183: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+184: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+185: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+186: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+187: - SHOULD: Choose easing to match the change (size/distance/trigger)
+188: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+189: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+190: 
+191: ### Layout
+192: 
+193: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+194: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+195: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+196: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+197: - MUST: Respect safe areas (use env(safe-area-inset-*))
+198: - MUST: Avoid unwanted scrollbars; fix overflows
+199: 
+200: ### Content & Accessibility
+201: 
+202: - SHOULD: Inline help first; tooltips last resort
+203: - MUST: Skeletons mirror final content to avoid layout shift
+204: - MUST: `<title>` matches current context
+205: - MUST: No dead ends; always offer next step/recovery
+206: - MUST: Design empty/sparse/dense/error states
+207: - SHOULD: Curly quotes (" "); avoid widows/orphans
+208: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+209: - MUST: Redundant status cues (not color-only); icons have text labels
+210: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+211: - MUST: Use the ellipsis character `…` (not `...`)
+212: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+213: - MUST: Resilient to user-generated content (short/avg/very long)
+214: - MUST: Locale-aware dates/times/numbers/currency
+215: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+216: - MUST: Icon-only buttons have descriptive `aria-label`
+217: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+218: - SHOULD: Right-clicking the nav logo surfaces brand assets
+219: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+220: 
+221: ### Performance
+222: 
+223: - SHOULD: Test iOS Low Power Mode and macOS Safari
+224: - MUST: Measure reliably (disable extensions that skew runtime)
+225: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+226: - MUST: Profile with CPU/network throttling
+227: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+228: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+229: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+230: - MUST: Virtualize large lists (eg, `virtua`)
+231: - MUST: Preload only above-the-fold images; lazy-load the rest
+232: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+233: 
+234: ### Design
+235: 
+236: - SHOULD: Layered shadows (ambient + direct)
+237: - SHOULD: Crisp edges via semi-transparent borders + shadows
+238: - SHOULD: Nested radii: child ≤ parent; concentric
+239: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+240: - MUST: Accessible charts (color-blind-friendly palettes)
+241: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+242: - MUST: Increase contrast on `:hover/:active/:focus`
+243: - SHOULD: Match browser UI to bg
+244: - SHOULD: Avoid gradient banding (use masks when needed)
+245: 
+246: ## Security — Supply Chain Defense
+247: 
+248: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
+249: 
+250: ### Package Installation Defenses
+251: 
+252: | Defense | Config File | Notes |
+253: |---------|-------------|-------|
+254: | `ignore-scripts=true` | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
+255: | `allowBuilds` whitelist | `pnpm-workspace.yaml` | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
+256: | `minimum-release-age=2880` | `.npmrc` | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions |
+257: | `block-exotic-subdependencies=true` | `.npmrc` | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources |
+258: | `--frozen-lockfile` | All CI workflows | Prevents lockfile modification during CI installs |
+259: | `engine-strict=true` | `.npmrc` | Fails if Node.js version doesn't match engines field |
+260: | Vulnerability overrides | `studio/package.json` | Known CVEs patched via pnpm overrides |
+261: 
+262: ### Automated Dependency Updates
+263: 
+264: | Defense | Config File | Notes |
+265: |---------|-------------|-------|
+266: | 7-day minimum release age | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h) |
+267: | OpenSSF Scorecard | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
+268: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review |
+269: 
+270: ### CI/CD Security
+271: 
+272: | Defense | Config File | Notes |
+273: |---------|-------------|-------|
+274: | SHA-pinned GitHub Actions | All workflows | All `uses:` references pinned to commit SHAs, never floating tags |
+275: | No `pull_request_target` | All workflows | NEVER use this trigger — it enables cache poisoning attacks |
+276: | Least-privilege permissions | All workflows | Every workflow specifies minimal `permissions` block |
+277: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches |
+278: | Pinned global installs | `repomix.yml` | Global npm packages pinned to exact versions |
+279: | Lockfile-backed studio installs | `snyk-scan.yml` | Uses `npm ci` with committed `package-lock.json` |
+280: 
+281: ### Security Scanning
+282: 
+283: | Tool | Workflow | Purpose |
+284: |------|----------|---------|
+285: | Snyk | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring |
+286: | Trivy | `security.yml` | Filesystem vulnerability scanning (CRITICAL/HIGH) |
+287: | Semgrep | `security.yml` | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
+288: | CodeQL | `codeql.yml` | GitHub native code analysis with security-and-quality queries |
+289: | Gitleaks | `security.yml` | Secret detection in commits |
+290: 
+291: ### Rules for Agents
+292: 
+293: - **NEVER** add `pull_request_target` to any workflow
+294: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
+295: - **NEVER** use `npm install -g <package>` without a pinned version in CI
+296: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
+297: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
+298: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
+299: - **ALWAYS** add explicit `permissions` blocks to new workflows
+300: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
+301: - Full hardening plan available at `plans/supply-chain-hardening.md`
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -17754,88 +18256,6 @@ vercel.json
 24:   ],
 25: };
 26: export default createJestConfig(customJestConfig);
-````
-
-## File: jest.setup.ts
-````typescript
- 1: /// <reference types="jest" />
- 2: import "@testing-library/jest-dom";
- 3: import "jest-extended";
- 4: import { checkAAAPattern } from "./src/utils/test-utils";
- 5: import fs from "fs/promises";
- 6: declare global {
- 7:   namespace jest {
- 8:     interface Matchers<R> {
- 9:       // Testing Library matchers
-10:       toBeInTheDocument(): R;
-11:       toHaveTextContent(text: string): R;
-12:       toBeVisible(): R;
-13:       toBeDisabled(): R;
-14:       toBeEnabled(): R;
-15:       toHaveAttribute(attr: string, value?: string): R;
-16:       toHaveClass(...classNames: string[]): R;
-17:       toHaveStyle(css: Record<string, unknown>): R;
-18:       toContainElement(element: Element | null): R;
-19:       toContainHTML(html: string): R;
-20:       toHaveLength(length: number): R;
-21:       // Jest matchers
-22:       toBe(expected: unknown): R;
-23:       toEqual(expected: unknown): R;
-24:       toStrictEqual(expected: unknown): R;
-25:       toBeNull(): R;
-26:       toBeDefined(): R;
-27:       toBeUndefined(): R;
-28:       toBeTruthy(): R;
-29:       toBeFalsy(): R;
-30:       toBeGreaterThan(number: number): R;
-31:       toBeLessThan(number: number): R;
-32:       toBeLessThanOrEqual(number: number): R;
-33:       toBeGreaterThanOrEqual(number: number): R;
-34:       toContain(item: unknown): R;
-35:       toHaveBeenCalled(): R;
-36:       toHaveBeenCalledTimes(number: number): R;
-37:       toHaveBeenCalledWith(...args: unknown[]): R;
-38:       toHaveBeenCalledExactly(times: number): R;
-39:       toThrow(error?: string | Error | RegExp): R;
-40:       toMatch(regexpOrString: string | RegExp): R;
-41:       rejects: {
-42:         toThrow(error?: string | Error | RegExp): Promise<R>;
-43:       };
-44:     }
-45:   }
-46: }
-47: function getTestPath(): string | undefined {
-48:   return (
-49:     expect as unknown as { getState: () => { testPath?: string } }
-50:   ).getState().testPath;
-51: }
-52: beforeEach(async () => {
-53:   const testPath = getTestPath();
-54:   if (
-55:     testPath &&
-56:     !testPath.includes("test-rule.test.tsx") &&
-57:     !testPath.includes("node_modules")
-58:   ) {
-59:     try {
-60:       const content = await fs.readFile(testPath, "utf8");
-61:       const result = checkAAAPattern(content);
-62:       if (!result.isValid) {
-63:         throw new Error(
-64:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-65:             "Each test should include:\n" +
-66:             "// Arrange - Set up test data and conditions\n" +
-67:             "// Act - Perform the action being tested\n" +
-68:             "// Assert - Verify the results",
-69:         );
-70:       }
-71:     } catch (error) {
-72:       if (error instanceof Error) {
-73:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-74:       }
-75:       throw error;
-76:     }
-77:   }
-78: });
 ````
 
 ## File: LICENSE
@@ -18418,23 +18838,6 @@ vercel.json
 1: {}
 ````
 
-## File: .roo/rules-code/AGENTS.md
-````markdown
- 1: # Project Coding Rules (Non-Obvious Only)
- 2: 
- 3: - **AAA Pattern Enforcement**: Tests MUST include `// Arrange`, `// Act`, `// Assert` comments - enforced by custom ESLint plugin in `src/utils/eslint/` AND runtime validation in `jest.setup.ts`
- 4: - **Component Naming**: Use `.component.tsx` suffix (not standard React convention)
- 5: - **Matrix Component**: Intentionally excluded from test coverage via package.json script
- 6: - **Custom ESLint Plugin**: Local plugin at `src/utils/eslint/` provides `test-rules/arrange-act-assert` rule
- 7: - **Test Utils**: Use `checkAAAPattern()` from `src/utils/test-utils.ts` for AAA validation
- 8: - **Sanity Client**: Hardcoded fallbacks in `src/lib/sanity/client.ts` (projectId: "41s7iutf", dataset: "production")
- 9: - **CSP Headers**: Custom Content Security Policy allows `https://presentasjon.dfweb.no` for iframe embedding
-10: - **Turbopack Dev**: Development server uses `--turbopack` flag (non-standard Next.js setup)
-11: - **Supply Chain Security**: Multi-layered defense — see `AGENTS.md` Security section and `plans/supply-chain-hardening.md`
-12: - **NEVER** add `pull_request_target` to any workflow, use floating tags for GitHub Actions, or remove `ignore-scripts=true` from `.npmrc`
-13: - **ALWAYS** pin GitHub Actions to SHA, use `--frozen-lockfile` in CI, add `permissions` blocks to workflows
-````
-
 ## File: src/__mocks__/sanity-client.ts
 ````typescript
  1: export const client = {
@@ -18554,57 +18957,6 @@ vercel.json
 96:     });
 97:   });
 98: });
-````
-
-## File: src/__tests__/Animations/TestAnimation.test.tsx
-````typescript
- 1: /**
- 2:  * @jest-environment jsdom
- 3:  */
- 4: import React from "react";
- 5: import { render, screen } from "@testing-library/react";
- 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
- 7: import PageTransition from "@/components/Animations/PageTransition.component";
- 8: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 9: mockIntersectionObserver();
-10: type AnimationComponent = typeof PageTransition | typeof BounceInScroll;
-11: /**
-12:  * Reusable tests for animation components.
-13:  *
-14:  * @param {AnimationComponent} Component - The animation component to test.
-15:  * @param {string} testId - The test ID for the component.
-16:  * @param {string} expectedAttribute - The expected attribute value for the component.
-17:  * @return {void} This function does not return anything.
-18:  */
-19: function testAnimationComponent(
-20:   Component: AnimationComponent,
-21:   testId: string,
-22:   expectedAttribute: string,
-23: ) {
-24:   describe(`${Component.name}`, () => {
-25:     // Arrange - Set up test data and conditions
-26:     const testContent = Component.name;
-27:     it(`loads and can be displayed`, () => {
-28:       // Arrange - Set up test data and conditions
-29:       const expectedTestId = testId;
-30:       // Act - Perform the action being tested
-31:       render(<Component delay={1}>{testContent}</Component>);
-32:       const element = screen.getByTestId(expectedTestId);
-33:       expect(element).toBeInTheDocument();
-34:     });
-35:     it(`Framer motion sets ${expectedAttribute}`, () => {
-36:       // Arrange - Set up test data and conditions
-37:       const expectedTestId = testId;
-38:       // Act - Perform the action being tested
-39:       render(<Component delay={1}>{testContent}</Component>);
-40:       const element = screen.getByTestId(expectedTestId);
-41:       // Assert - Verify the results
-42:       expect(element).toContainHTML(expectedAttribute);
-43:     });
-44:   });
-45: }
-46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
-47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
 ## File: src/__tests__/Prosjekter/actions.test.ts
@@ -18746,286 +19098,6 @@ vercel.json
 135:     });
 136:   });
 137: });
-````
-
-## File: src/__tests__/UI/Tabs.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen, fireEvent } from "@testing-library/react";
-  6: import userEvent from "@testing-library/user-event";
-  7: import "@testing-library/jest-dom";
-  8: import Tabs from "@/components/UI/Tabs.component";
-  9: // Component that throws an error immediately
- 10: const ImmediateCrash = () => {
- 11:   throw new Error("Immediate crash!");
- 12: };
- 13: const mockMotion = {
- 14:   motion: {
- 15:     div: (props: React.ComponentProps<"div">) => (
- 16:       <div {...props}>{props.children}</div>
- 17:     ),
- 18:     button: (props: React.ComponentProps<"button">) => (
- 19:       <button type="button" {...props}>
- 20:         {props.children}
- 21:       </button>
- 22:     ),
- 23:   },
- 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
- 25:     <>{children}</>
- 26:   ),
- 27: };
- 28: jest.mock("motion", () => mockMotion);
- 29: const mockTabs = [
- 30:   {
- 31:     id: "tab1",
- 32:     label: "Normal Tab",
- 33:     content: <div>Normal content</div>,
- 34:   },
- 35:   {
- 36:     id: "tab2",
- 37:     label: "Crashing Tab",
- 38:     content: <ImmediateCrash />,
- 39:   },
- 40: ];
- 41: const keyboardTestTabs = [
- 42:   {
- 43:     id: "tab1",
- 44:     label: "First Tab",
- 45:     content: <div>First content</div>,
- 46:   },
- 47:   {
- 48:     id: "tab2",
- 49:     label: "Second Tab",
- 50:     content: <div>Second content</div>,
- 51:   },
- 52:   {
- 53:     id: "tab3",
- 54:     label: "Third Tab",
- 55:     content: <div>Third content</div>,
- 56:   },
- 57: ];
- 58: describe("Tabs", () => {
- 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
- 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
- 61:   it("renders tabs with correct layout in vertical orientation", () => {
- 62:     // Arrange
- 63:     const orientation = undefined; // default vertical orientation
- 64:     // Act
- 65:     renderTabs(orientation);
- 66:     const tabList = screen.getByRole("tablist");
- 67:     // Assert
- 68:     expect(tabList).toHaveClass("sm:flex-col");
- 69:   });
- 70:   it("renders tabs with correct layout in horizontal orientation", () => {
- 71:     // Arrange
- 72:     const orientation = "horizontal";
- 73:     // Act
- 74:     renderTabs(orientation);
- 75:     const tabList = screen.getByRole("tablist");
- 76:     // Assert
- 77:     expect(tabList).toHaveClass("flex-row");
- 78:     expect(tabList).not.toHaveClass("sm:flex-col");
- 79:   });
- 80:   it("applies correct ARIA attributes to tabs", () => {
- 81:     // Arrange
- 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
- 83:       tab,
- 84:       isSelected: index === 0,
- 85:       controlsId: `tabpanel-${tab.id}`,
- 86:     }));
- 87:     // Act
- 88:     renderTabs();
- 89:     // Assert
- 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
- 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
- 92:       expect(tabElement).toHaveAttribute(
- 93:         "aria-selected",
- 94:         isSelected.toString(),
- 95:       );
- 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
- 97:     });
- 98:   });
- 99:   it("switches tab content when clicking tabs", () => {
-100:     // Arrange
-101:     renderTabs();
-102:     const initialContent = "Normal content";
-103:     // Act & Assert - Initial state
-104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
-105:     // Act & Assert - Click handling
-106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
-107:     expect(() => {
-108:       fireEvent.click(crashingTab);
-109:       render(<ImmediateCrash />);
-110:     }).toThrow("Immediate crash!");
-111:   });
-112:   it("applies correct border styles to tabs", () => {
-113:     // Arrange
-114:     renderTabs();
-115:     // Act
-116:     const tabs = screen.getAllByRole("tab");
-117:     // Assert
-118:     expect(tabs[0]).not.toHaveClass("border-t");
-119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
-120:   });
-121:   it("renders tab panels with correct attributes", () => {
-122:     // Arrange
-123:     const expectedAttributes = {
-124:       id: "tabpanel-tab1",
-125:       labelledBy: "tab-tab1",
-126:       className: "px-8",
-127:     };
-128:     // Act
-129:     renderTabs();
-130:     const activePanel = screen.getByRole("tabpanel");
-131:     // Assert
-132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
-133:     expect(activePanel).toHaveAttribute(
-134:       "aria-labelledby",
-135:       expectedAttributes.labelledBy,
-136:     );
-137:     expect(activePanel).toHaveClass(expectedAttributes.className);
-138:   });
-139: });
-140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
-141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
-142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
-143:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
-144:     // Arrange
-145:     renderKeyboardTabs();
-146:     // Act
-147:     const tabs = screen.getAllByRole("tab");
-148:     // Assert
-149:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
-150:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
-151:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
-152:   });
-153:   it("moves focus to next tab on ArrowDown in vertical orientation", async () => {
-154:     // Arrange
-155:     const user = userEvent.setup();
-156:     renderKeyboardTabs("vertical");
-157:     const tabs = screen.getAllByRole("tab");
-158:     // Act
-159:     tabs[0].focus();
-160:     await user.keyboard("{ArrowDown}");
-161:     // Assert
-162:     expect(tabs[1]).toHaveFocus();
-163:     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-164:   });
-165:   it("moves focus to previous tab on ArrowUp in vertical orientation", async () => {
-166:     // Arrange
-167:     const user = userEvent.setup();
-168:     renderKeyboardTabs("vertical");
-169:     const tabs = screen.getAllByRole("tab");
-170:     // Act
-171:     tabs[0].focus();
-172:     await user.keyboard("{ArrowDown}");
-173:     await user.keyboard("{ArrowUp}");
-174:     // Assert
-175:     expect(tabs[0]).toHaveFocus();
-176:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
-177:   });
-178:   it("moves focus to next tab on ArrowRight in horizontal orientation", async () => {
-179:     // Arrange
-180:     const user = userEvent.setup();
-181:     renderKeyboardTabs("horizontal");
-182:     const tabs = screen.getAllByRole("tab");
-183:     // Act
-184:     tabs[0].focus();
-185:     await user.keyboard("{ArrowRight}");
-186:     // Assert
-187:     expect(tabs[1]).toHaveFocus();
-188:     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-189:   });
-190:   it("moves focus to previous tab on ArrowLeft in horizontal orientation", async () => {
-191:     // Arrange
-192:     const user = userEvent.setup();
-193:     renderKeyboardTabs("horizontal");
-194:     const tabs = screen.getAllByRole("tab");
-195:     // Act
-196:     tabs[0].focus();
-197:     await user.keyboard("{ArrowRight}");
-198:     await user.keyboard("{ArrowLeft}");
-199:     // Assert
-200:     expect(tabs[0]).toHaveFocus();
-201:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
-202:   });
-203:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
-204:     // Arrange
-205:     const user = userEvent.setup();
-206:     renderKeyboardTabs("vertical");
-207:     const tabs = screen.getAllByRole("tab");
-208:     // Act
-209:     tabs[2].focus();
-210:     fireEvent.click(tabs[2]);
-211:     await user.keyboard("{ArrowDown}");
-212:     // Assert
-213:     expect(tabs[0]).toHaveFocus();
-214:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
-215:   });
-216:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
-217:     // Arrange
-218:     const user = userEvent.setup();
-219:     renderKeyboardTabs("vertical");
-220:     const tabs = screen.getAllByRole("tab");
-221:     // Act
-222:     tabs[0].focus();
-223:     await user.keyboard("{ArrowUp}");
-224:     // Assert
-225:     expect(tabs[2]).toHaveFocus();
-226:     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
-227:   });
-228:   it("moves focus to first tab on Home key", async () => {
-229:     // Arrange
-230:     const user = userEvent.setup();
-231:     renderKeyboardTabs("vertical");
-232:     const tabs = screen.getAllByRole("tab");
-233:     // Act
-234:     tabs[0].focus();
-235:     await user.keyboard("{ArrowDown}");
-236:     await user.keyboard("{ArrowDown}");
-237:     await user.keyboard("{Home}");
-238:     // Assert
-239:     expect(tabs[0]).toHaveFocus();
-240:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
-241:   });
-242:   it("moves focus to last tab on End key", async () => {
-243:     // Arrange
-244:     const user = userEvent.setup();
-245:     renderKeyboardTabs("vertical");
-246:     const tabs = screen.getAllByRole("tab");
-247:     // Act
-248:     tabs[0].focus();
-249:     await user.keyboard("{End}");
-250:     // Assert
-251:     expect(tabs[2]).toHaveFocus();
-252:     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
-253:   });
-254:   it("sets aria-orientation on the tablist", () => {
-255:     // Arrange & Act
-256:     renderKeyboardTabs("vertical");
-257:     const tablist = screen.getByRole("tablist");
-258:     // Assert
-259:     expect(tablist).toHaveAttribute("aria-orientation", "vertical");
-260:   });
-261:   it("sets aria-orientation to horizontal when orientation is horizontal", () => {
-262:     // Arrange & Act
-263:     renderKeyboardTabs("horizontal");
-264:     const tablist = screen.getByRole("tablist");
-265:     // Assert
-266:     expect(tablist).toHaveAttribute("aria-orientation", "horizontal");
-267:   });
-268:   it("tab panel is focusable with tabIndex=0", () => {
-269:     // Arrange
-270:     renderKeyboardTabs();
-271:     // Act
-272:     const tabpanel = screen.getByRole("tabpanel");
-273:     // Assert
-274:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
-275:   });
-276: });
 ````
 
 ## File: src/app/cv/page.tsx
@@ -19510,28 +19582,6 @@ vercel.json
 30: }
 ````
 
-## File: src/components/Animations/types/Animations.types.ts
-````typescript
- 1: import { ReactNode } from "react";
- 2: export interface IAnimateProps {
- 3:   children: ReactNode;
- 4:   cssClass?: string;
- 5: }
- 6: export interface IAnimateBounceProps {
- 7:   children: ReactNode;
- 8:   cssClass?: string;
- 9:   viewAmount?: "some" | "all" | number;
-10:   instant?: boolean;
-11:   delay?: number;
-12: }
-13: export interface IGrowProps {
-14:   duration?: number;
-15:   delay?: number;
-16:   easing?: [number, number, number, number];
-17:   children: ReactNode;
-18: }
-````
-
 ## File: src/components/Animations/FadeIn.component.tsx
 ````typescript
  1: import * as m from "motion/react-m";
@@ -19629,191 +19679,6 @@ vercel.json
 45: export default FadeInScroll;
 ````
 
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrix-canvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     const canvas = canvasRef.current;
-106:     if (!canvas) return;
-107:     const ctx = canvas.getContext("2d");
-108:     if (!ctx) return;
-109:     const handleResize = () => {
-110:       const boundingClientRect = canvas.getBoundingClientRect();
-111:       canvas.width = boundingClientRect.width;
-112:       canvas.height = boundingClientRect.height;
-113:       initMatrix(canvas);
-114:       isInitializedRef.current = true;
-115:     };
-116:     const debouncedResize = debounce(handleResize, 100);
-117:     window.addEventListener("resize", debouncedResize);
-118:     handleResize();
-119:     requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
-120:     return () => {
-121:       window.removeEventListener("resize", debouncedResize);
-122:     };
-123:   }, [initMatrix, tick]);
-124:   return (
-125:     <canvas
-126:       ref={canvasRef}
-127:       id={CANVAS_ID}
-128:       style={{ width: "100%", height: "100%" }}
-129:       data-testid="matrix-canvas"
-130:       className="absolute inset-0"
-131:     />
-132:   );
-133: };
-134: export default ReactMatrixAnimation;
-````
-
-## File: src/components/ErrorBoundary/ErrorBoundary.tsx
-````typescript
- 1: "use client";
- 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
- 3: import {
- 4:   ErrorBoundary as ReactErrorBoundary,
- 5:   FallbackProps,
- 6: } from "react-error-boundary";
- 7: import ErrorFallback from "./ErrorFallback.component";
- 8: interface ErrorBoundaryProps {
- 9:   children: ReactNode;
-10:   compact?: boolean;
-11: }
-12: const handleError = (error: Error, info: ErrorInfo) => {
-13:   console.error("Uventet feil i Matrix:", error, info);
-14: };
-15: /**
-16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
-17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
-18:  *
-19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
-20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
-21:  *
-22:  * @param {Object} props - The component props
-23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
-24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
-25:  * @returns {JSX.Element} A React component that catches errors in its child components
-26:  */
-27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
-28:   children,
-29:   compact = false,
-30: }) => {
-31:   const renderFallback = useCallback(
-32:     (props: FallbackProps) => (
-33:       <ErrorFallback error={props.error} compact={compact} />
-34:     ),
-35:     [compact],
-36:   );
-37:   return (
-38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
-39:       {children}
-40:     </ReactErrorBoundary>
-41:   );
-42: };
-43: export default ErrorBoundary;
-````
-
 ## File: src/components/Index/Hero.component.tsx
 ````typescript
  1: "use client";
@@ -19901,178 +19766,6 @@ vercel.json
 83:   );
 84: };
 85: export default Hero;
-````
-
-## File: src/components/Kontakt/config/formConfig.ts
-````typescript
- 1: import { z } from "zod";
- 2: export const formSchema = z.object({
- 3:   navn: z
- 4:     .string()
- 5:     .min(1, "Fullt navn er påkrevd")
- 6:     .min(2, "Navn må være minst 2 tegn")
- 7:     .max(100, "Navn kan ikke være mer enn 100 tegn")
- 8:     .regex(/^[a-zA-ZæøåÆØÅ ]+$/, "Vennligst bruk norske bokstaver"),
- 9:   telefon: z
-10:     .string()
-11:     .min(1, "Telefonnummer er påkrevd")
-12:     .regex(/^\d{8}$/, "Vennligst oppgi et gyldig telefonnummer"),
-13:   tekst: z
-14:     .string()
-15:     .min(1, "Beskjed er påkrevd")
-16:     .min(10, "Beskjed må være minst 10 tegn")
-17:     .max(1000, "Beskjed kan ikke være mer enn 1000 tegn"),
-18: });
-19: export type FormData = z.infer<typeof formSchema>;
-````
-
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import PageHeader from "@/components/UI/PageHeader.component";
-  6: import Button from "@/components/UI/Button.component";
-  7: import InputField from "@/components/UI/InputField.component";
-  8: import { formSchema, FormData } from "./config/formConfig";
-  9: interface ContactFormProps {
- 10:   csrfToken?: string;
- 11:   onSubmit?: (data: FormData) => Promise<string>;
- 12:   initialResponse?: string;
- 13: }
- 14: /**
- 15:  * ContactForm component - A complete contact form with EmailJS integration
- 16:  * Handles both the form UI and submission logic in a single, clear component
- 17:  */
- 18: const ContactForm: React.FC<ContactFormProps> = ({
- 19:   csrfToken = "",
- 20:   onSubmit: onSubmitProp,
- 21:   initialResponse = "",
- 22: }) => {
- 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
- 24:     null,
- 25:   );
- 26:   const serverResponse = submittedResponse ?? initialResponse;
- 27:   const {
- 28:     register,
- 29:     handleSubmit,
- 30:     formState: { errors, isSubmitting },
- 31:   } = useForm<FormData>({
- 32:     resolver: zodResolver(formSchema),
- 33:   });
- 34:   /**
- 35:    * Default form submission handler using EmailJS.
- 36:    * Dynamically imports @emailjs/browser only when the user submits,
- 37:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
- 38:    */
- 39:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 40:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 41:     const TEMPLATE_KEY =
- 42:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 43:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 44:     try {
- 45:       const emailjs = (await import("@emailjs/browser")).default;
- 46:       emailjs.init(EMAIL_API_KEY);
- 47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 48:       return "Takk for din beskjed";
- 49:     } catch {
- 50:       return "Feil under sending av skjema";
- 51:     }
- 52:   };
- 53:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 54:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 55:     const message = await submitHandler(data);
- 56:     setSubmittedResponse(message);
- 57:   };
- 58:   return (
- 59:     <main data-testid="kontaktcontent" id="maincontent">
- 60:       <div className="mt-32 bg-graybg">
- 61:         <PageHeader>Kontakt</PageHeader>
- 62:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 63:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 64:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 65:               <div className="p-2 md:p-6 pt-8">
- 66:                 {serverResponse ? (
- 67:                   <div aria-live="polite" aria-atomic="true">
- 68:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 69:                       {serverResponse}
- 70:                     </h3>
- 71:                   </div>
- 72:                 ) : (
- 73:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 74:                     <form
- 75:                       id="contact-form"
- 76:                       className="text-center"
- 77:                       onSubmit={handleSubmit(handleFormSubmit)}
- 78:                       method="POST"
- 79:                       action="/api/form"
- 80:                       aria-label="Contact Form"
- 81:                     >
- 82:                       {csrfToken && (
- 83:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 84:                       )}
- 85:                       <fieldset>
- 86:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 87:                           Kontaktskjema
- 88:                         </legend>
- 89:                         <InputField<FormData>
- 90:                           name="navn"
- 91:                           label="Fullt navn"
- 92:                           htmlFor="navn"
- 93:                           register={register}
- 94:                           error={errors.navn?.message}
- 95:                           isRequired
- 96:                           title="Vennligst bruk norske bokstaver"
- 97:                           autoComplete="name"
- 98:                           spellCheck={false}
- 99:                         />
-100:                         <br />
-101:                         <InputField<FormData>
-102:                           name="telefon"
-103:                           label="Telefonnummer"
-104:                           htmlFor="telefon"
-105:                           register={register}
-106:                           error={errors.telefon?.message}
-107:                           isRequired
-108:                           title="Vennligst oppgi et gyldig telefonnummer"
-109:                           autoComplete="tel"
-110:                           inputMode="tel"
-111:                           spellCheck={false}
-112:                         />
-113:                         <br />
-114:                         <InputField<FormData>
-115:                           name="tekst"
-116:                           label="Hva ønsker du å si?"
-117:                           htmlFor="tekst"
-118:                           register={register}
-119:                           error={errors.tekst?.message}
-120:                           isRequired
-121:                           type="textarea"
-122:                           spellCheck={true}
-123:                         />
-124:                         <br />
-125:                       </fieldset>
-126:                       <div className="-mt-4">
-127:                         <Button
-128:                           loading={isSubmitting}
-129:                           data-testid="submit-button"
-130:                         >
-131:                           Send skjema
-132:                         </Button>
-133:                       </div>
-134:                     </form>
-135:                   </div>
-136:                 )}
-137:               </div>
-138:             </div>
-139:           </div>
-140:         </div>
-141:       </div>
-142:     </main>
-143:   );
-144: };
-145: export default ContactForm;
 ````
 
 ## File: src/components/Layout/Hamburger.component.tsx
@@ -20716,116 +20409,6 @@ vercel.json
 16: }
 ````
 
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
-  1: import { test, expect } from "@playwright/test";
-  2: test.describe("CV page", () => {
-  3:   test("loads and displays main content correctly", async ({ page }) => {
-  4:     await page.goto("/cv");
-  5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
-  6:     await expect(
-  7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
-  8:     ).toBeVisible();
-  9:   });
- 10:   test("navigates to and displays Experience section correctly", async ({
- 11:     page,
- 12:   }) => {
- 13:     await page.goto("/cv");
- 14:     // Click on 'Erfaring' tab
- 15:     await page.getByRole("tab", { name: "Erfaring" }).click();
- 16:     // Check if a specific experience entry is visible
- 17:     await expect(
- 18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
- 19:     ).toBeVisible();
- 20:   });
- 21:   test("displays Education section correctly", async ({ page }) => {
- 22:     await page.goto("/cv");
- 23:     // Click on 'Erfaring' tab
- 24:     await page.getByRole("tab", { name: "Utdanning" }).click();
- 25:     // Check if education information is present
- 26:     await expect(page.getByLabel("Utdanning")).toContainText(
- 27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
- 28:     );
- 29:   });
- 30: });
- 31: test.describe("CV page — Tabs keyboard navigation (WAI-ARIA APG)", () => {
- 32:   test.beforeEach(async ({ page }) => {
- 33:     await page.goto("/cv");
- 34:   });
- 35:   test("navigates tabs with ArrowDown key in vertical orientation", async ({
- 36:     page,
- 37:   }) => {
- 38:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
- 39:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
- 40:     // Focus the first tab
- 41:     await firstTab.focus();
- 42:     await expect(firstTab).toBeFocused();
- 43:     // Press ArrowDown to move to the next tab
- 44:     await page.keyboard.press("ArrowDown");
- 45:     await expect(secondTab).toBeFocused();
- 46:     await expect(secondTab).toHaveAttribute("aria-selected", "true");
- 47:   });
- 48:   test("navigates tabs with ArrowUp key in vertical orientation", async ({
- 49:     page,
- 50:   }) => {
- 51:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
- 52:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
- 53:     // Focus the second tab by clicking it first, then use keyboard
- 54:     await secondTab.click();
- 55:     await secondTab.focus();
- 56:     // Press ArrowUp to move to the previous tab
- 57:     await page.keyboard.press("ArrowUp");
- 58:     await expect(firstTab).toBeFocused();
- 59:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
- 60:   });
- 61:   test("wraps from last tab to first tab on ArrowDown", async ({ page }) => {
- 62:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
- 63:     const tabs = page.getByRole("tab");
- 64:     const lastTab = tabs.last();
- 65:     // Click and focus the last tab
- 66:     await lastTab.click();
- 67:     await lastTab.focus();
- 68:     // Press ArrowDown should wrap to first tab
- 69:     await page.keyboard.press("ArrowDown");
- 70:     await expect(firstTab).toBeFocused();
- 71:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
- 72:   });
- 73:   test("Home key moves focus to first tab", async ({ page }) => {
- 74:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
- 75:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
- 76:     // Click the second tab, then press Home
- 77:     await secondTab.click();
- 78:     await secondTab.focus();
- 79:     await page.keyboard.press("Home");
- 80:     await expect(firstTab).toBeFocused();
- 81:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
- 82:   });
- 83:   test("End key moves focus to last tab", async ({ page }) => {
- 84:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
- 85:     const tabs = page.getByRole("tab");
- 86:     const lastTab = tabs.last();
- 87:     // Focus the first tab, then press End
- 88:     await firstTab.focus();
- 89:     await page.keyboard.press("End");
- 90:     await expect(lastTab).toBeFocused();
- 91:     await expect(lastTab).toHaveAttribute("aria-selected", "true");
- 92:   });
- 93:   test("tablist has aria-orientation attribute", async ({ page }) => {
- 94:     const tablist = page.getByRole("tablist");
- 95:     await expect(tablist).toHaveAttribute("aria-orientation", "vertical");
- 96:   });
- 97:   test("only active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({
- 98:     page,
- 99:   }) => {
-100:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
-101:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
-102:     // First tab is active by default
-103:     await expect(firstTab).toHaveAttribute("tabindex", "0");
-104:     await expect(secondTab).toHaveAttribute("tabindex", "-1");
-105:   });
-106: });
-````
-
 ## File: studio/schemaTypes/documents/cv.ts
 ````typescript
   1: import {defineType, defineField, defineArrayMember} from 'sanity'
@@ -21280,311 +20863,6 @@ vercel.json
 33: }
 ````
 
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
- 18: 
- 19: ## Critical Commands
- 20: 
- 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 25: 
- 26: ## Testing Gotchas
- 27: 
- 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 30: - Matrix component intentionally excluded from test coverage
- 31: - Cypress and Playwright have different ESLint rule overrides
- 32: 
- 33: ## Code Quality Principles
- 34: 
- 35: ### SOLID Principles
- 36: 
- 37: #### Single Responsibility Principle (SRP)
- 38: 
- 39: Each component/function should have one reason to change.
- 40: 
- 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 42: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
- 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 44: 
- 45: #### Open/Closed Principle (OCP)
- 46: 
- 47: Software should be open for extension, closed for modification.
- 48: 
- 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 50: - Create generic components that can be customized without modifying source
- 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 52: 
- 53: #### Liskov Substitution Principle (LSP)
- 54: 
- 55: Components accepting a type should work with any subtype.
- 56: 
- 57: - Ensure prop interfaces are respected by all implementations
- 58: - Don't throw unexpected errors or require undocumented props
- 59: - **Benefits**: Predictable behavior, safer component hierarchies
- 60: 
- 61: #### Interface Segregation Principle (ISP)
- 62: 
- 63: Don't force components to depend on props they don't use.
- 64: 
- 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 66: - Split large prop types into smaller, composable ones
- 67: - **Benefits**: More flexible components, easier to implement and test
- 68: 
- 69: #### Dependency Inversion Principle (DIP)
- 70: 
- 71: Depend on abstractions, not concrete implementations.
- 72: 
- 73: - Use dependency injection for services (e.g., pass clients as props or use context)
- 74: - Define abstract types/interfaces, inject implementations
- 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 76: 
- 77: ### DRY Principle (Don't Repeat Yourself)
- 78: 
- 79: - Extract repeated UI patterns into reusable components
- 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 81: - Use custom hooks for shared stateful logic
- 82: - Avoid duplicating business logic across components
- 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 84: 
- 85: ### KISS Principle (Keep It Simple, Stupid)
- 86: 
- 87: - Use React/Next.js built-in features before custom solutions
- 88: - Write self-explanatory code with clear naming
- 89: - Avoid over-engineering simple problems
- 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 91: - Minimize dependencies
- 92: - Start simple, add complexity only when necessary
- 93: - **Benefits**: Easier to understand, faster development, fewer bugs
- 94: 
- 95: ### YAGNI Principle (You Aren't Gonna Need It)
- 96: 
- 97: Don't implement functionality until it's actually needed.
- 98: 
- 99: - Focus on current requirements, not hypothetical future needs
-100: - Don't create abstraction layers for single implementations
-101: - Avoid premature optimization before measuring performance
-102: - Don't build configuration systems until configurability is required
-103: - Wait for actual use cases before adding flexibility
-104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
-105: 
-106: ### Code Quality Summary
-107: 
-108: Following these principles results in:
-109: 
-110: - Maintainable, extendable code
-111: - Fewer bugs and faster debugging
-112: - Better team collaboration
-113: - Professional quality standards
-114: - Easier testing and refactoring
-115: 
-116: ## UI Development Rules
-117: 
-118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-119: 
-120: ### Interactions
-121: 
-122: #### Keyboard
-123: 
-124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-126: - MUST: Manage focus (trap, move, and return) per APG patterns
-127: 
-128: #### Targets & Input
-129: 
-130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-131: - MUST: Mobile `<input>` font-size ≥16px or set:
-132:   ```html
-133:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-134:   ```
-135: - NEVER: Disable browser zoom
-136: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-137: 
-138: #### Inputs & Forms (Behavior)
-139: 
-140: - MUST: Hydration-safe inputs (no lost focus/value)
-141: - NEVER: Block paste in `<input>/<textarea>`
-142: - MUST: Loading buttons show spinner and keep original label
-143: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-144: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-145: - MUST: Don't block typing; accept free text and validate after
-146: - MUST: Allow submitting incomplete forms to surface validation
-147: - MUST: Errors inline next to fields; on submit, focus first error
-148: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-149: - SHOULD: Disable spellcheck for emails/codes/usernames
-150: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-151: - MUST: Warn on unsaved changes before navigation
-152: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-153: - MUST: Trim values to handle text expansion trailing spaces
-154: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-155: 
-156: #### State & Navigation
-157: 
-158: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-159: - MUST: Back/Forward restores scroll
-160: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-161: 
-162: #### Feedback
-163: 
-164: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-165: - MUST: Confirm destructive actions or provide Undo window
-166: - MUST: Use polite `aria-live` for toasts/inline validation
-167: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-168: 
-169: #### Touch/Drag/Scroll
-170: 
-171: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-172: - MUST: Delay first tooltip in a group; subsequent peers no delay
-173: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-174: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-175: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-176: 
-177: #### Autofocus
-178: 
-179: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-180: 
-181: ### Animation
-182: 
-183: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-184: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-185: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-186: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-187: - SHOULD: Choose easing to match the change (size/distance/trigger)
-188: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-189: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-190: 
-191: ### Layout
-192: 
-193: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-194: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-195: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-196: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-197: - MUST: Respect safe areas (use env(safe-area-inset-*))
-198: - MUST: Avoid unwanted scrollbars; fix overflows
-199: 
-200: ### Content & Accessibility
-201: 
-202: - SHOULD: Inline help first; tooltips last resort
-203: - MUST: Skeletons mirror final content to avoid layout shift
-204: - MUST: `<title>` matches current context
-205: - MUST: No dead ends; always offer next step/recovery
-206: - MUST: Design empty/sparse/dense/error states
-207: - SHOULD: Curly quotes (" "); avoid widows/orphans
-208: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-209: - MUST: Redundant status cues (not color-only); icons have text labels
-210: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-211: - MUST: Use the ellipsis character `…` (not `...`)
-212: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-213: - MUST: Resilient to user-generated content (short/avg/very long)
-214: - MUST: Locale-aware dates/times/numbers/currency
-215: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-216: - MUST: Icon-only buttons have descriptive `aria-label`
-217: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-218: - SHOULD: Right-clicking the nav logo surfaces brand assets
-219: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-220: 
-221: ### Performance
-222: 
-223: - SHOULD: Test iOS Low Power Mode and macOS Safari
-224: - MUST: Measure reliably (disable extensions that skew runtime)
-225: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-226: - MUST: Profile with CPU/network throttling
-227: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-228: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-229: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-230: - MUST: Virtualize large lists (eg, `virtua`)
-231: - MUST: Preload only above-the-fold images; lazy-load the rest
-232: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-233: 
-234: ### Design
-235: 
-236: - SHOULD: Layered shadows (ambient + direct)
-237: - SHOULD: Crisp edges via semi-transparent borders + shadows
-238: - SHOULD: Nested radii: child ≤ parent; concentric
-239: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-240: - MUST: Accessible charts (color-blind-friendly palettes)
-241: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-242: - MUST: Increase contrast on `:hover/:active/:focus`
-243: - SHOULD: Match browser UI to bg
-244: - SHOULD: Avoid gradient banding (use masks when needed)
-245: 
-246: ## Security — Supply Chain Defense
-247: 
-248: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
-249: 
-250: ### Package Installation Defenses
-251: 
-252: | Defense | Config File | Notes |
-253: |---------|-------------|-------|
-254: | `ignore-scripts=true` | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
-255: | `allowBuilds` whitelist | `pnpm-workspace.yaml` | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
-256: | `minimum-release-age=2880` | `.npmrc` | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions |
-257: | `block-exotic-subdependencies=true` | `.npmrc` | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources |
-258: | `--frozen-lockfile` | All CI workflows | Prevents lockfile modification during CI installs |
-259: | `engine-strict=true` | `.npmrc` | Fails if Node.js version doesn't match engines field |
-260: | Vulnerability overrides | `studio/package.json` | Known CVEs patched via pnpm overrides |
-261: 
-262: ### Automated Dependency Updates
-263: 
-264: | Defense | Config File | Notes |
-265: |---------|-------------|-------|
-266: | 7-day minimum release age | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h) |
-267: | OpenSSF Scorecard | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
-268: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review |
-269: 
-270: ### CI/CD Security
-271: 
-272: | Defense | Config File | Notes |
-273: |---------|-------------|-------|
-274: | SHA-pinned GitHub Actions | All workflows | All `uses:` references pinned to commit SHAs, never floating tags |
-275: | No `pull_request_target` | All workflows | NEVER use this trigger — it enables cache poisoning attacks |
-276: | Least-privilege permissions | All workflows | Every workflow specifies minimal `permissions` block |
-277: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches |
-278: | Pinned global installs | `repomix.yml` | Global npm packages pinned to exact versions |
-279: | Lockfile-backed studio installs | `snyk-scan.yml` | Uses `npm ci` with committed `package-lock.json` |
-280: 
-281: ### Security Scanning
-282: 
-283: | Tool | Workflow | Purpose |
-284: |------|----------|---------|
-285: | Snyk | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring |
-286: | Trivy | `security.yml` | Filesystem vulnerability scanning (CRITICAL/HIGH) |
-287: | Semgrep | `security.yml` | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
-288: | CodeQL | `codeql.yml` | GitHub native code analysis with security-and-quality queries |
-289: | Gitleaks | `security.yml` | Secret detection in commits |
-290: 
-291: ### Rules for Agents
-292: 
-293: - **NEVER** add `pull_request_target` to any workflow
-294: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
-295: - **NEVER** use `npm install -g <package>` without a pinned version in CI
-296: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
-297: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
-298: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
-299: - **ALWAYS** add explicit `permissions` blocks to new workflows
-300: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
-301: - Full hardening plan available at `plans/supply-chain-hardening.md`
-````
-
 ## File: playwright.config.ts
 ````typescript
  1: import { defineConfig, devices } from "@playwright/test";
@@ -21676,6 +20954,347 @@ vercel.json
 5:     dataset: "production",
 6:   },
 7: });
+````
+
+## File: src/__tests__/Animations/Matrix.test.tsx
+````typescript
+  1: import { render, screen } from "@testing-library/react";
+  2: import "@testing-library/jest-dom";
+  3: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+  4: const mockFillRect = jest.fn();
+  5: const mockFillText = jest.fn();
+  6: const mock2DContext = {
+  7:   fillRect: mockFillRect,
+  8:   fillText: mockFillText,
+  9:   canvas: document.createElement("canvas"),
+ 10:   getContextAttributes: () => ({}),
+ 11:   globalAlpha: 1,
+ 12:   globalCompositeOperation: "source-over",
+ 13:   save: jest.fn(),
+ 14:   restore: jest.fn(),
+ 15:   font: "",
+ 16:   fillStyle: "",
+ 17:   shadowColor: "",
+ 18:   shadowBlur: 0,
+ 19: } as unknown as CanvasRenderingContext2D;
+ 20: const mockBitmapContext = {
+ 21:   canvas: document.createElement("canvas"),
+ 22:   transferFromImageBitmap: jest.fn(),
+ 23: } as unknown as ImageBitmapRenderingContext;
+ 24: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
+ 25:   switch (contextId) {
+ 26:     case "2d":
+ 27:       return mock2DContext;
+ 28:     case "bitmaprenderer":
+ 29:       return mockBitmapContext;
+ 30:     case "webgl":
+ 31:     case "webgl2":
+ 32:       return null;
+ 33:     default:
+ 34:       return null;
+ 35:   }
+ 36: } as typeof HTMLCanvasElement.prototype.getContext;
+ 37: jest
+ 38:   .spyOn(global, "requestAnimationFrame")
+ 39:   .mockImplementation((cb) => setTimeout(cb, 0));
+ 40: describe("ReactMatrixAnimation", () => {
+ 41:   beforeEach(() => {
+ 42:     jest.useFakeTimers();
+ 43:     jest
+ 44:       .spyOn(window, "requestAnimationFrame")
+ 45:       .mockImplementation((cb) => setTimeout(cb, 0));
+ 46:   });
+ 47:   afterEach(() => {
+ 48:     jest.useRealTimers();
+ 49:     jest.restoreAllMocks();
+ 50:   });
+ 51:   describe("rendering", () => {
+ 52:     it("renders canvas element with default props", () => {
+ 53:       // Arrange
+ 54:       const expectedTestId = "matrix-canvas";
+ 55:       // Act
+ 56:       render(<ReactMatrixAnimation />);
+ 57:       const canvas = screen.getByTestId(expectedTestId);
+ 58:       // Assert
+ 59:       expect(canvas).toBeInTheDocument();
+ 60:       expect(canvas).toHaveStyle({
+ 61:         width: "100%",
+ 62:         height: "100%",
+ 63:       });
+ 64:     });
+ 65:     it("renders canvas element with custom props", () => {
+ 66:       // Arrange
+ 67:       const customProps = {
+ 68:         tileSize: 30,
+ 69:         fadeFactor: 0.7,
+ 70:         backgroundColor: "#000000",
+ 71:         fontColor: "#ffffff",
+ 72:         tileSet: ["A", "B", "C"],
+ 73:       };
+ 74:       const expectedTestId = "matrix-canvas";
+ 75:       // Act
+ 76:       render(<ReactMatrixAnimation {...customProps} />);
+ 77:       const canvas = screen.getByTestId(expectedTestId);
+ 78:       // Assert
+ 79:       expect(canvas).toBeInTheDocument();
+ 80:     });
+ 81:   });
+ 82:   describe("validation", () => {
+ 83:     beforeEach(() => {
+ 84:       // Arrange - Suppress console.error for validation tests
+ 85:       jest.spyOn(console, "error").mockImplementation(() => {});
+ 86:     });
+ 87:     it("throws error for invalid background color", () => {
+ 88:       // Arrange
+ 89:       const invalidProps = { backgroundColor: "invalid" };
+ 90:       const expectedError =
+ 91:         "Invalid background color. Use a hex value e.g. #030303";
+ 92:       // Act & Assert
+ 93:       expect(() => {
+ 94:         render(<ReactMatrixAnimation {...invalidProps} />);
+ 95:       }).toThrow(expectedError);
+ 96:     });
+ 97:     it("throws error for invalid font color", () => {
+ 98:       // Arrange
+ 99:       const invalidProps = { fontColor: "invalid" };
+100:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
+101:       // Act & Assert
+102:       expect(() => {
+103:         render(<ReactMatrixAnimation {...invalidProps} />);
+104:       }).toThrow(expectedError);
+105:     });
+106:   });
+107: });
+````
+
+## File: src/__tests__/UI/Tabs.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen, fireEvent } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import "@testing-library/jest-dom";
+  8: import Tabs from "@/components/UI/Tabs.component";
+  9: // Component that throws an error immediately
+ 10: const ImmediateCrash = () => {
+ 11:   throw new Error("Immediate crash!");
+ 12: };
+ 13: const mockMotion = {
+ 14:   motion: {
+ 15:     div: (props: React.ComponentProps<"div">) => (
+ 16:       <div {...props}>{props.children}</div>
+ 17:     ),
+ 18:     button: (props: React.ComponentProps<"button">) => (
+ 19:       <button type="button" {...props}>
+ 20:         {props.children}
+ 21:       </button>
+ 22:     ),
+ 23:   },
+ 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+ 25:     <>{children}</>
+ 26:   ),
+ 27: };
+ 28: jest.mock("motion", () => mockMotion);
+ 29: const mockTabs = [
+ 30:   {
+ 31:     id: "tab1",
+ 32:     label: "Normal Tab",
+ 33:     content: <div>Normal content</div>,
+ 34:   },
+ 35:   {
+ 36:     id: "tab2",
+ 37:     label: "Crashing Tab",
+ 38:     content: <ImmediateCrash />,
+ 39:   },
+ 40: ];
+ 41: const keyboardTestTabs = [
+ 42:   {
+ 43:     id: "tab1",
+ 44:     label: "First Tab",
+ 45:     content: <div>First content</div>,
+ 46:   },
+ 47:   {
+ 48:     id: "tab2",
+ 49:     label: "Second Tab",
+ 50:     content: <div>Second content</div>,
+ 51:   },
+ 52:   {
+ 53:     id: "tab3",
+ 54:     label: "Third Tab",
+ 55:     content: <div>Third content</div>,
+ 56:   },
+ 57: ];
+ 58: describe("Tabs", () => {
+ 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
+ 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
+ 61:   it("renders tabs with correct layout in vertical orientation", () => {
+ 62:     // Arrange
+ 63:     const orientation = undefined; // default vertical orientation
+ 64:     // Act
+ 65:     renderTabs(orientation);
+ 66:     const tabList = screen.getByRole("tablist");
+ 67:     // Assert
+ 68:     expect(tabList).toHaveClass("sm:flex-col");
+ 69:   });
+ 70:   it("renders tabs with correct layout in horizontal orientation", () => {
+ 71:     // Arrange
+ 72:     const orientation = "horizontal";
+ 73:     // Act
+ 74:     renderTabs(orientation);
+ 75:     const tabList = screen.getByRole("tablist");
+ 76:     // Assert
+ 77:     expect(tabList).toHaveClass("flex-row");
+ 78:     expect(tabList).not.toHaveClass("sm:flex-col");
+ 79:   });
+ 80:   it("applies correct ARIA attributes to tabs", () => {
+ 81:     // Arrange
+ 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
+ 83:       tab,
+ 84:       isSelected: index === 0,
+ 85:       controlsId: `tabpanel-${tab.id}`,
+ 86:     }));
+ 87:     // Act
+ 88:     renderTabs();
+ 89:     // Assert
+ 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
+ 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
+ 92:       expect(tabElement).toHaveAttribute(
+ 93:         "aria-selected",
+ 94:         isSelected.toString(),
+ 95:       );
+ 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
+ 97:     });
+ 98:   });
+ 99:   it("switches tab content when clicking tabs", () => {
+100:     // Arrange
+101:     renderTabs();
+102:     const initialContent = "Normal content";
+103:     // Act & Assert - Initial state
+104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
+105:     // Act & Assert - Click handling
+106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+107:     expect(() => {
+108:       fireEvent.click(crashingTab);
+109:       render(<ImmediateCrash />);
+110:     }).toThrow("Immediate crash!");
+111:   });
+112:   it("applies correct border styles to tabs", () => {
+113:     // Arrange
+114:     renderTabs();
+115:     // Act
+116:     const tabs = screen.getAllByRole("tab");
+117:     // Assert
+118:     expect(tabs[0]).not.toHaveClass("border-t");
+119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+120:   });
+121:   it("renders tab panels with correct attributes", () => {
+122:     // Arrange
+123:     const expectedAttributes = {
+124:       id: "tabpanel-tab1",
+125:       labelledBy: "tab-tab1",
+126:       className: "px-8",
+127:     };
+128:     // Act
+129:     renderTabs();
+130:     const activePanel = screen.getByRole("tabpanel");
+131:     // Assert
+132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
+133:     expect(activePanel).toHaveAttribute(
+134:       "aria-labelledby",
+135:       expectedAttributes.labelledBy,
+136:     );
+137:     expect(activePanel).toHaveClass(expectedAttributes.className);
+138:   });
+139: });
+140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
+141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
+142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
+143:   /** Helper: press keys from a starting tab and assert focus lands on expected index */
+144:   async function pressKeysAndExpectFocus(
+145:     orientation: "horizontal" | "vertical",
+146:     startIndex: number,
+147:     keys: string[],
+148:     expectedFocusIndex: number,
+149:   ) {
+150:     // Arrange
+151:     const user = userEvent.setup();
+152:     renderKeyboardTabs(orientation);
+153:     const tabs = screen.getAllByRole("tab");
+154:     // Act
+155:     if (startIndex > 0) fireEvent.click(tabs[startIndex]);
+156:     tabs[startIndex].focus();
+157:     for (const key of keys) {
+158:       await user.keyboard(key);
+159:     }
+160:     // Assert
+161:     expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
+162:     expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
+163:   }
+164:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
+165:     // Arrange
+166:     renderKeyboardTabs();
+167:     // Act
+168:     const tabs = screen.getAllByRole("tab");
+169:     // Assert
+170:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
+171:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
+172:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
+173:   });
+174:   it("ArrowDown moves to next tab in vertical orientation", async () => {
+175:     // Arrange, Act & Assert
+176:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
+177:   });
+178:   it("ArrowUp moves to previous tab in vertical orientation", async () => {
+179:     // Arrange, Act & Assert
+180:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
+181:   });
+182:   it("ArrowRight moves to next tab in horizontal orientation", async () => {
+183:     // Arrange, Act & Assert
+184:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
+185:   });
+186:   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
+187:     // Arrange, Act & Assert
+188:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
+189:   });
+190:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
+191:     // Arrange, Act & Assert
+192:     await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
+193:   });
+194:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
+195:     // Arrange, Act & Assert
+196:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
+197:   });
+198:   it("Home key moves focus to first tab from any position", async () => {
+199:     // Arrange, Act & Assert
+200:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
+201:   });
+202:   it("End key moves focus to last tab", async () => {
+203:     // Arrange, Act & Assert
+204:     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
+205:   });
+206:   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
+207:     // Arrange & Act
+208:     renderKeyboardTabs("vertical");
+209:     // Assert
+210:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+211:   });
+212:   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
+213:     // Arrange & Act
+214:     renderKeyboardTabs("horizontal");
+215:     // Assert
+216:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+217:   });
+218:   it("tab panel is focusable with tabIndex=0", () => {
+219:     // Arrange
+220:     renderKeyboardTabs();
+221:     // Act
+222:     const tabpanel = screen.getByRole("tabpanel");
+223:     // Assert
+224:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
+225:   });
+226: });
 ````
 
 ## File: src/app/page.tsx
@@ -21852,6 +21471,277 @@ vercel.json
 27:     }
 28:   }
 29: }
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.6",
+18:     "react-dom": "^19.2.6",
+19:     "react-icons": "^5.6.0",
+20:     "sanity": "^5.25.0",
+21:     "styled-components": "^6.4.1"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.14",
+26:     "eslint": "^10.3.0",
+27:     "prettier": "^3.8.3",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=6.0.1",
+33:       "brace-expansion": ">=5.0.6",
+34:       "dompurify": ">=3.4.5",
+35:       "flatted": ">=3.4.2",
+36:       "js-yaml": ">=4.1.1",
+37:       "lodash": ">=4.18.1",
+38:       "lodash-es": ">=4.18.1",
+39:       "minimatch": "10.2.5",
+40:       "picomatch@<2.3.2": "4.0.4",
+41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
+42:       "smol-toml": ">=1.6.1",
+43:       "undici": ">=8.3.0",
+44:       "vite": ">=8.0.13",
+45:       "yaml": ">=2.9.0",
+46:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
+47:     }
+48:   },
+49:   "overrides": {
+50:     "brace-expansion@^5.0.0": "5.0.6",
+51:     "uuid": ">=14.0.0",
+52:     "js-yaml": ">=4.1.1"
+53:   },
+54:   "prettier": {
+55:     "semi": false,
+56:     "printWidth": 100,
+57:     "bracketSpacing": false,
+58:     "singleQuote": true
+59:   }
+60: }
+````
+
+## File: jest.setup.ts
+````typescript
+ 1: /// <reference types="jest" />
+ 2: import "@testing-library/jest-dom";
+ 3: import "jest-extended";
+ 4: import { checkAAAPattern } from "./src/utils/test-utils";
+ 5: import fs from "fs/promises";
+ 6: // Mock matchMedia for prefers-reduced-motion and other media queries
+ 7: Object.defineProperty(globalThis, "matchMedia", {
+ 8:   writable: true,
+ 9:   value: jest.fn().mockImplementation((query: string) => ({
+10:     matches: false,
+11:     media: query,
+12:     onchange: null,
+13:     addListener: jest.fn(),
+14:     removeListener: jest.fn(),
+15:     addEventListener: jest.fn(),
+16:     removeEventListener: jest.fn(),
+17:     dispatchEvent: jest.fn(),
+18:   })),
+19: });
+20: declare global {
+21:   namespace jest {
+22:     interface Matchers<R> {
+23:       // Testing Library matchers
+24:       toBeInTheDocument(): R;
+25:       toHaveTextContent(text: string): R;
+26:       toBeVisible(): R;
+27:       toBeDisabled(): R;
+28:       toBeEnabled(): R;
+29:       toHaveAttribute(attr: string, value?: string): R;
+30:       toHaveClass(...classNames: string[]): R;
+31:       toHaveStyle(css: Record<string, unknown>): R;
+32:       toContainElement(element: Element | null): R;
+33:       toContainHTML(html: string): R;
+34:       toHaveLength(length: number): R;
+35:       // Jest matchers
+36:       toBe(expected: unknown): R;
+37:       toEqual(expected: unknown): R;
+38:       toStrictEqual(expected: unknown): R;
+39:       toBeNull(): R;
+40:       toBeDefined(): R;
+41:       toBeUndefined(): R;
+42:       toBeTruthy(): R;
+43:       toBeFalsy(): R;
+44:       toBeGreaterThan(number: number): R;
+45:       toBeLessThan(number: number): R;
+46:       toBeLessThanOrEqual(number: number): R;
+47:       toBeGreaterThanOrEqual(number: number): R;
+48:       toContain(item: unknown): R;
+49:       toHaveBeenCalled(): R;
+50:       toHaveBeenCalledTimes(number: number): R;
+51:       toHaveBeenCalledWith(...args: unknown[]): R;
+52:       toHaveBeenCalledExactly(times: number): R;
+53:       toThrow(error?: string | Error | RegExp): R;
+54:       toMatch(regexpOrString: string | RegExp): R;
+55:       rejects: {
+56:         toThrow(error?: string | Error | RegExp): Promise<R>;
+57:       };
+58:     }
+59:   }
+60: }
+61: function getTestPath(): string | undefined {
+62:   return (
+63:     expect as unknown as { getState: () => { testPath?: string } }
+64:   ).getState().testPath;
+65: }
+66: beforeEach(async () => {
+67:   const testPath = getTestPath();
+68:   if (
+69:     testPath &&
+70:     !testPath.includes("test-rule.test.tsx") &&
+71:     !testPath.includes("node_modules")
+72:   ) {
+73:     try {
+74:       const content = await fs.readFile(testPath, "utf8");
+75:       const result = checkAAAPattern(content);
+76:       if (!result.isValid) {
+77:         throw new Error(
+78:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+79:             "Each test should include:\n" +
+80:             "// Arrange - Set up test data and conditions\n" +
+81:             "// Act - Perform the action being tested\n" +
+82:             "// Assert - Verify the results",
+83:         );
+84:       }
+85:     } catch (error) {
+86:       if (error instanceof Error) {
+87:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
+88:       }
+89:       throw error;
+90:     }
+91:   }
+92: });
+````
+
+## File: src/app/api/form/route.ts
+````typescript
+  1: import { NextRequest, NextResponse } from "next/server";
+  2: import { validateCSRFToken } from "@/lib/csrf";
+  3: import { formSchema } from "@/components/Kontakt/config/formConfig";
+  4: /**
+  5:  * Parse the request body based on content type.
+  6:  * Returns the parsed form data or a NextResponse error.
+  7:  */
+  8: async function parseRequestBody(
+  9:   request: NextRequest,
+ 10: ): Promise<Record<string, string> | NextResponse> {
+ 11:   const contentType = request.headers.get("content-type");
+ 12:   if (contentType?.includes("application/x-www-form-urlencoded")) {
+ 13:     const body = await request.formData();
+ 14:     const formData: Record<string, string> = {};
+ 15:     for (const [key, value] of body.entries()) {
+ 16:       formData[key] = value.toString();
+ 17:     }
+ 18:     return formData;
+ 19:   }
+ 20:   if (contentType?.includes("application/json")) {
+ 21:     return await request.json();
+ 22:   }
+ 23:   return NextResponse.json(
+ 24:     { error: "Unsupported content type" },
+ 25:     { status: 400 },
+ 26:   );
+ 27: }
+ 28: /**
+ 29:  * Validate the CSRF token from form data.
+ 30:  * Returns a NextResponse error if invalid, or null if valid.
+ 31:  */
+ 32: function validateCsrf(formData: Record<string, string>): NextResponse | null {
+ 33:   const csrfToken = formData._csrf || formData.csrfToken;
+ 34:   if (!csrfToken) {
+ 35:     return NextResponse.json(
+ 36:       { error: "CSRF token missing" },
+ 37:       { status: 403 },
+ 38:     );
+ 39:   }
+ 40:   if (!validateCSRFToken(csrfToken)) {
+ 41:     return NextResponse.json(
+ 42:       { error: "Invalid or expired CSRF token" },
+ 43:       { status: 403 },
+ 44:     );
+ 45:   }
+ 46:   return null;
+ 47: }
+ 48: /**
+ 49:  * Validate form data against the shared Zod schema.
+ 50:  * Returns a NextResponse error if invalid, or null if valid.
+ 51:  */
+ 52: function validateFormData(
+ 53:   formData: Record<string, string>,
+ 54: ): NextResponse | null {
+ 55:   const result = formSchema.safeParse(formData);
+ 56:   if (!result.success) {
+ 57:     const firstIssue = result.error.issues[0];
+ 58:     return NextResponse.json(
+ 59:       { error: firstIssue?.message ?? "Validation failed" },
+ 60:       { status: 400 },
+ 61:     );
+ 62:   }
+ 63:   return null;
+ 64: }
+ 65: /**
+ 66:  * POST handler for form submissions with CSRF protection.
+ 67:  * Uses the shared Zod schema from formConfig.ts as the single source
+ 68:  * of truth for validation — same rules on client and server.
+ 69:  * @param {NextRequest} request - The incoming request
+ 70:  * @returns {NextResponse} JSON response
+ 71:  */
+ 72: export async function POST(request: NextRequest) {
+ 73:   try {
+ 74:     const parsed = await parseRequestBody(request);
+ 75:     if (parsed instanceof NextResponse) return parsed;
+ 76:     const formData = parsed;
+ 77:     const csrfError = validateCsrf(formData);
+ 78:     if (csrfError) return csrfError;
+ 79:     // Remove CSRF tokens before validation
+ 80:     delete formData._csrf;
+ 81:     delete formData.csrfToken;
+ 82:     const validationError = validateFormData(formData);
+ 83:     if (validationError) return validationError;
+ 84:     return NextResponse.json(
+ 85:       { message: "Form submitted successfully", success: true },
+ 86:       { status: 200 },
+ 87:     );
+ 88:   } catch (error) {
+ 89:     console.error("Error processing form submission:", error);
+ 90:     return NextResponse.json(
+ 91:       { error: "Internal server error" },
+ 92:       { status: 500 },
+ 93:     );
+ 94:   }
+ 95: }
+ 96: /**
+ 97:  * Handle other HTTP methods
+ 98:  */
+ 99: export async function GET() {
+100:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+101: }
+102: export async function PUT() {
+103:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+104: }
+105: export async function DELETE() {
+106:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+107: }
 ````
 
 ## File: src/components/Animations/MatrixCursor.component.tsx
@@ -22074,179 +21964,155 @@ vercel.json
 38: }
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.6",
-18:     "react-dom": "^19.2.6",
-19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.25.0",
-21:     "styled-components": "^6.4.1"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.3.0",
-27:     "prettier": "^3.8.3",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "basic-ftp": ">=6.0.1",
-33:       "brace-expansion": ">=5.0.6",
-34:       "dompurify": ">=3.4.5",
-35:       "flatted": ">=3.4.2",
-36:       "js-yaml": ">=4.1.1",
-37:       "lodash": ">=4.18.1",
-38:       "lodash-es": ">=4.18.1",
-39:       "minimatch": "10.2.5",
-40:       "picomatch@<2.3.2": "4.0.4",
-41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
-42:       "smol-toml": ">=1.6.1",
-43:       "undici": ">=8.3.0",
-44:       "vite": ">=8.0.13",
-45:       "yaml": ">=2.9.0",
-46:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
-47:     }
-48:   },
-49:   "overrides": {
-50:     "brace-expansion@^5.0.0": "5.0.6",
-51:     "uuid": ">=14.0.0",
-52:     "js-yaml": ">=4.1.1"
-53:   },
-54:   "prettier": {
-55:     "semi": false,
-56:     "printWidth": 100,
-57:     "bracketSpacing": false,
-58:     "singleQuote": true
-59:   }
-60: }
-````
-
-## File: src/app/api/form/route.ts
+## File: src/components/Animations/Matrix.component.tsx
 ````typescript
-  1: import { NextRequest, NextResponse } from "next/server";
-  2: import { validateCSRFToken } from "@/lib/csrf";
-  3: import { formSchema } from "@/components/Kontakt/config/formConfig";
-  4: /**
-  5:  * Parse the request body based on content type.
-  6:  * Returns the parsed form data or a NextResponse error.
-  7:  */
-  8: async function parseRequestBody(
-  9:   request: NextRequest,
- 10: ): Promise<Record<string, string> | NextResponse> {
- 11:   const contentType = request.headers.get("content-type");
- 12:   if (contentType?.includes("application/x-www-form-urlencoded")) {
- 13:     const body = await request.formData();
- 14:     const formData: Record<string, string> = {};
- 15:     for (const [key, value] of body.entries()) {
- 16:       formData[key] = value.toString();
- 17:     }
- 18:     return formData;
- 19:   }
- 20:   if (contentType?.includes("application/json")) {
- 21:     return await request.json();
- 22:   }
- 23:   return NextResponse.json(
- 24:     { error: "Unsupported content type" },
- 25:     { status: 400 },
- 26:   );
- 27: }
- 28: /**
- 29:  * Validate the CSRF token from form data.
- 30:  * Returns a NextResponse error if invalid, or null if valid.
- 31:  */
- 32: function validateCsrf(formData: Record<string, string>): NextResponse | null {
- 33:   const csrfToken = formData._csrf || formData.csrfToken;
- 34:   if (!csrfToken) {
- 35:     return NextResponse.json(
- 36:       { error: "CSRF token missing" },
- 37:       { status: 403 },
- 38:     );
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrix-canvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
  39:   }
- 40:   if (!validateCSRFToken(csrfToken)) {
- 41:     return NextResponse.json(
- 42:       { error: "Invalid or expired CSRF token" },
- 43:       { status: 403 },
- 44:     );
- 45:   }
- 46:   return null;
- 47: }
- 48: /**
- 49:  * Validate form data against the shared Zod schema.
- 50:  * Returns a NextResponse error if invalid, or null if valid.
- 51:  */
- 52: function validateFormData(
- 53:   formData: Record<string, string>,
- 54: ): NextResponse | null {
- 55:   const result = formSchema.safeParse(formData);
- 56:   if (!result.success) {
- 57:     const firstIssue = result.error.issues[0];
- 58:     return NextResponse.json(
- 59:       { error: firstIssue?.message ?? "Validation failed" },
- 60:       { status: 400 },
- 61:     );
- 62:   }
- 63:   return null;
- 64: }
- 65: /**
- 66:  * POST handler for form submissions with CSRF protection.
- 67:  * Uses the shared Zod schema from formConfig.ts as the single source
- 68:  * of truth for validation — same rules on client and server.
- 69:  * @param {NextRequest} request - The incoming request
- 70:  * @returns {NextResponse} JSON response
- 71:  */
- 72: export async function POST(request: NextRequest) {
- 73:   try {
- 74:     const parsed = await parseRequestBody(request);
- 75:     if (parsed instanceof NextResponse) return parsed;
- 76:     const formData = parsed;
- 77:     const csrfError = validateCsrf(formData);
- 78:     if (csrfError) return csrfError;
- 79:     // Remove CSRF tokens before validation
- 80:     delete formData._csrf;
- 81:     delete formData.csrfToken;
- 82:     const validationError = validateFormData(formData);
- 83:     if (validationError) return validationError;
- 84:     return NextResponse.json(
- 85:       { message: "Form submitted successfully", success: true },
- 86:       { status: 200 },
- 87:     );
- 88:   } catch (error) {
- 89:     console.error("Error processing form submission:", error);
- 90:     return NextResponse.json(
- 91:       { error: "Internal server error" },
- 92:       { status: 500 },
- 93:     );
- 94:   }
- 95: }
- 96: /**
- 97:  * Handle other HTTP methods
- 98:  */
- 99: export async function GET() {
-100:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-101: }
-102: export async function PUT() {
-103:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-104: }
-105: export async function DELETE() {
-106:   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-107: }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useCallback(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:     [
+ 95:       fadeFactor,
+ 96:       rgbBackground,
+ 97:       rgbFont,
+ 98:       tileSize,
+ 99:       glowColor,
+100:       tileSet,
+101:       frameInterval,
+102:     ],
+103:   );
+104:   useEffect(() => {
+105:     // Respect prefers-reduced-motion — skip animation entirely
+106:     const prefersReducedMotion = globalThis.matchMedia(
+107:       "(prefers-reduced-motion: reduce)",
+108:     ).matches;
+109:     if (prefersReducedMotion) return;
+110:     const canvas = canvasRef.current;
+111:     if (!canvas) return;
+112:     const ctx = canvas.getContext("2d");
+113:     if (!ctx) return;
+114:     let animationFrameId: number;
+115:     const handleResize = () => {
+116:       const boundingClientRect = canvas.getBoundingClientRect();
+117:       canvas.width = boundingClientRect.width;
+118:       canvas.height = boundingClientRect.height;
+119:       initMatrix(canvas);
+120:       isInitializedRef.current = true;
+121:     };
+122:     const debouncedResize = debounce(handleResize, 100);
+123:     window.addEventListener("resize", debouncedResize);
+124:     handleResize();
+125:     const animateTick = (timestamp: number) => {
+126:       animationFrameId = requestAnimationFrame(animateTick);
+127:       tick(timestamp, ctx, canvas);
+128:     };
+129:     animationFrameId = requestAnimationFrame(animateTick);
+130:     return () => {
+131:       window.removeEventListener("resize", debouncedResize);
+132:       cancelAnimationFrame(animationFrameId);
+133:     };
+134:   }, [initMatrix, tick]);
+135:   return (
+136:     <canvas
+137:       ref={canvasRef}
+138:       id={CANVAS_ID}
+139:       aria-hidden="true"
+140:       tabIndex={-1}
+141:       style={{ width: "100%", height: "100%" }}
+142:       data-testid="matrix-canvas"
+143:       className="absolute inset-0"
+144:     />
+145:   );
+146: };
+147: export default ReactMatrixAnimation;
 ````
 
 ## File: .fallowrc.json
@@ -22271,6 +22137,60 @@ vercel.json
 18:     "unused-types": "warn"
 19:   }
 20: }
+````
+
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: const keyboardNavigationCases = [
+ 3:   { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
+ 4:   { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
+ 5:   { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
+ 6:   { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
+ 7:   { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
+ 8: ] as const;
+ 9: test.describe("CV page", () => {
+10:   test.beforeEach(async ({ page }) => {
+11:     await page.goto("/cv");
+12:     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
+13:   });
+14:   test("loads and displays main content correctly", async ({ page }) => {
+15:     await expect(
+16:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+17:     ).toBeVisible();
+18:   });
+19:   test("navigates to and displays Experience section correctly", async ({
+20:     page,
+21:   }) => {
+22:     await page.getByRole("tab", { name: "Erfaring" }).click();
+23:     await expect(
+24:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+25:     ).toBeVisible();
+26:   });
+27:   test("displays Education section correctly", async ({ page }) => {
+28:     await page.getByRole("tab", { name: "Utdanning" }).click();
+29:     await expect(page.getByLabel("Utdanning")).toContainText(
+30:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+31:     );
+32:   });
+33:   for (const { name, start, key, expected } of keyboardNavigationCases) {
+34:     test(name, async ({ page }) => {
+35:       const startTab = page.getByRole("tab", { name: start });
+36:       await startTab.click();
+37:       await page.keyboard.press(key);
+38:       const expectedTab = page.getByRole("tab", { name: expected });
+39:       await expect(expectedTab).toBeFocused();
+40:       await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+41:     });
+42:   }
+43:   test("tablist has aria-orientation=vertical", async ({ page }) => {
+44:     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+45:   });
+46:   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
+47:     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
+48:     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
+49:   });
+50: });
 ````
 
 ## File: package.json
