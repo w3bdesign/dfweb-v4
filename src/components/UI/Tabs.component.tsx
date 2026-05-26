@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { AnimatePresence, LazyMotion, domMax } from "motion/react";
 import * as m from "motion/react-m";
 
@@ -24,6 +24,9 @@ interface TabButtonProps {
   index: number;
   totalTabs: number;
   onClick: () => void;
+  tabIndex: number;
+  buttonRef: (el: HTMLButtonElement | null) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 }
 
 const getTabButtonClassName = (
@@ -52,15 +55,21 @@ const TabButton: React.FC<TabButtonProps> = ({
   index,
   totalTabs,
   onClick,
+  tabIndex,
+  buttonRef,
+  onKeyDown,
 }) => (
   <m.button
     key={tab.id}
+    ref={buttonRef}
     onClick={onClick}
+    onKeyDown={onKeyDown}
     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
     role="tab"
     aria-selected={isActive}
     aria-controls={`tabpanel-${tab.id}`}
     id={`tab-${tab.id}`}
+    tabIndex={tabIndex}
   >
     {isActive && (
       <m.div
@@ -89,6 +98,7 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
       id={`tabpanel-${tab.id}`}
       aria-labelledby={`tab-${tab.id}`}
       className="px-8"
+      tabIndex={0}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -101,6 +111,11 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
 
 /**
  * Renders a set of tabs with content.
+ * Implements WAI-ARIA APG Tabs Pattern keyboard navigation:
+ * - Arrow Left/Up: Move to previous tab
+ * - Arrow Right/Down: Move to next tab
+ * - Home: Move to first tab
+ * - End: Move to last tab
  *
  * @param {TabsProps} props - The props object containing the tabs and orientation.
  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
@@ -110,6 +125,58 @@ const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
 const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
   const isVertical = orientation === "vertical";
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const setTabRef = useCallback(
+    (index: number) => (el: HTMLButtonElement | null) => {
+      tabRefs.current[index] = el;
+    },
+    [],
+  );
+
+  const focusTab = useCallback(
+    (index: number) => {
+      const tab = tabs[index];
+      if (tab) {
+        setActiveTab(tab.id);
+        tabRefs.current[index]?.focus();
+      }
+    },
+    [tabs],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+      const prevKey = isVertical ? "ArrowUp" : "ArrowLeft";
+      const nextKey = isVertical ? "ArrowDown" : "ArrowRight";
+
+      let newIndex: number | null = null;
+
+      switch (e.key) {
+        case nextKey:
+          e.preventDefault();
+          newIndex = (index + 1) % tabs.length;
+          break;
+        case prevKey:
+          e.preventDefault();
+          newIndex = (index - 1 + tabs.length) % tabs.length;
+          break;
+        case "Home":
+          e.preventDefault();
+          newIndex = 0;
+          break;
+        case "End":
+          e.preventDefault();
+          newIndex = tabs.length - 1;
+          break;
+      }
+
+      if (newIndex !== null) {
+        focusTab(newIndex);
+      }
+    },
+    [tabs.length, isVertical, focusTab],
+  );
 
   return (
     <LazyMotion features={domMax}>
@@ -127,6 +194,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
             <div
               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
               role="tablist"
+              aria-orientation={isVertical ? "vertical" : "horizontal"}
             >
               {tabs.map((tab, index) => (
                 <TabButton
@@ -137,6 +205,9 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
                   index={index}
                   totalTabs={tabs.length}
                   onClick={() => setActiveTab(tab.id)}
+                  tabIndex={activeTab === tab.id ? 0 : -1}
+                  buttonRef={setTabRef(index)}
+                  onKeyDown={(e) => handleKeyDown(e, index)}
                 />
               ))}
             </div>
