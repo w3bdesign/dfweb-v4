@@ -554,6 +554,262 @@ vercel.json
 15: ]
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["main"]
+ 5:   pull_request:
+ 6:     branches: ["main"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:         with:
+19:           version: 11
+20:       - name: Setup Node.js
+21:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+22:         with:
+23:           node-version: 24
+24:           cache: "pnpm"
+25:           cache-dependency-path: pnpm-lock.yaml
+26:       - name: Cache Cypress binary
+27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+28:         with:
+29:           path: ~/.cache/Cypress
+30:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+31:       - name: Install dependencies
+32:         run: pnpm install --frozen-lockfile
+33:       - name: Verify and install Cypress binary
+34:         run: npx cypress verify || npx cypress install
+35:       - name: Cypress run
+36:         uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
+37:         with:
+38:           install: false
+39:           build: pnpm build
+40:           start: pnpm dev
+41:           wait-on: "http://localhost:3000"
+42:           wait-on-timeout: 120
+43:           browser: ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+13:         with:
+14:           node-version: "24"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:         with:
+18:           version: 11
+19:           run_install: false
+20:       - name: Get pnpm store directory
+21:         shell: bash
+22:         run: |
+23:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+24:       - name: Setup pnpm cache
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ${{ env.STORE_PATH }}
+28:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Build project
+32:         run: pnpm build
+33:       - name: Start server
+34:         run: |
+35:           pnpm start &
+36:           echo "Waiting for server to be ready..."
+37:           while ! nc -z localhost 3000; do
+38:             sleep 5
+39:           done
+40:           # Additional wait to ensure full initialization
+41:           sleep 20
+42:       - name: Run Lighthouse CI (Mobile)
+43:         run: pnpm lhci:perf
+44:         env:
+45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+46:       - name: Run Lighthouse CI (Desktop)
+47:         run: pnpm lhci:desktop
+48:         env:
+49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+50:       - name: Stop server
+51:         if: always()
+52:         run: |
+53:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: "24"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:         with:
+22:           version: 11
+23:           run_install: false
+24:       - name: Get pnpm store directory
+25:         shell: bash
+26:         run: |
+27:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+28:       - name: Setup pnpm cache
+29:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+30:         with:
+31:           path: ${{ env.STORE_PATH }}
+32:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+33:       - name: Install dependencies
+34:         run: pnpm install --frozen-lockfile
+35:       - name: Create pa11y config
+36:         run: |
+37:           # Create pa11y config file
+38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+39:       - name: Build Next.js app
+40:         run: pnpm build
+41:       - name: Start Next.js app
+42:         run: pnpm start &
+43:       - name: Wait for the application to be ready
+44:         run: pnpm exec wait-on http://localhost:3000
+45:       - name: Run pa11y
+46:         run: |
+47:           # Create a directory for the reports
+48:           mkdir -p pa11y-reports
+49:           # Run pa11y on main pages with config
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+54:       - name: Upload pa11y results
+55:         if: always()
+56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+57:         with:
+58:           name: pa11y-reports
+59:           path: pa11y-reports/
+60:       - name: Check for accessibility issues
+61:         run: |
+62:           if grep -q "Error:" pa11y-reports/*.txt; then
+63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+64:             exit 1
+65:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:         with:
+17:           version: 11
+18:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+19:         with:
+20:           node-version: 24
+21:           cache: "pnpm"
+22:       - name: Install dependencies
+23:         run: pnpm install --frozen-lockfile
+24:       - name: Install Playwright Browsers
+25:         run: pnpm exec playwright install --with-deps chromium firefox
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx wait-on http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
+````
+
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
@@ -731,6 +987,93 @@ vercel.json
 173:           fi
 ````
 
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix@1.14.0
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
+````
+
 ## File: .github/workflows/security.yml
 ````yaml
  1: name: OWASP Security Scan
@@ -797,6 +1140,84 @@ vercel.json
 62:           severity: CRITICAL,HIGH
 63:           exit-code: 1
 64:           format: table
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:         with:
+23:           version: 11
+24:       - name: Set up Node.js
+25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+26:         with:
+27:           node-version: "24.x"
+28:           cache: "pnpm"
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile
+31:       - name: Install studio dependencies
+32:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+33:       - name: Run Snyk to check main project vulnerabilities
+34:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+35:         env:
+36:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+37:         with:
+38:           command: "test"
+39:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+40:       - name: Run Snyk to check eslint plugin vulnerabilities
+41:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+42:         env:
+43:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+44:         with:
+45:           command: "test"
+46:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+47:       - name: Upload main project SARIF report to GitHub Security tab
+48:         if: always() && hashFiles('snyk-main.sarif') != ''
+49:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+50:         with:
+51:           sarif_file: snyk-main.sarif
+52:           category: snyk-main
+53:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+54:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+55:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+56:         with:
+57:           sarif_file: snyk-eslint.sarif
+58:           category: snyk-eslint
+59:       - name: Snyk Monitor main project (only for pushes to main branch)
+60:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+61:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+62:         env:
+63:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+64:         with:
+65:           command: "monitor"
+66:           args: "--all-projects"
+67:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+68:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+69:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+70:         env:
+71:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+72:         with:
+73:           command: "monitor"
+74:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: .github/copilot-instructions.md
@@ -9359,131 +9780,6 @@ vercel.json
 46: });
 ````
 
-## File: src/__tests__/UI/Tabs.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen, fireEvent } from "@testing-library/react";
-  6: import "@testing-library/jest-dom";
-  7: import Tabs from "@/components/UI/Tabs.component";
-  8: // Component that throws an error immediately
-  9: const ImmediateCrash = () => {
- 10:   throw new Error("Immediate crash!");
- 11: };
- 12: const mockMotion = {
- 13:   motion: {
- 14:     div: (props: React.ComponentProps<"div">) => (
- 15:       <div {...props}>{props.children}</div>
- 16:     ),
- 17:     button: (props: React.ComponentProps<"button">) => (
- 18:       <button type="button" {...props}>
- 19:         {props.children}
- 20:       </button>
- 21:     ),
- 22:   },
- 23:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
- 24:     <>{children}</>
- 25:   ),
- 26: };
- 27: jest.mock("motion", () => mockMotion);
- 28: const mockTabs = [
- 29:   {
- 30:     id: "tab1",
- 31:     label: "Normal Tab",
- 32:     content: <div>Normal content</div>,
- 33:   },
- 34:   {
- 35:     id: "tab2",
- 36:     label: "Crashing Tab",
- 37:     content: <ImmediateCrash />,
- 38:   },
- 39: ];
- 40: describe("Tabs", () => {
- 41:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
- 42:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
- 43:   it("renders tabs with correct layout in vertical orientation", () => {
- 44:     // Arrange
- 45:     const orientation = undefined; // default vertical orientation
- 46:     // Act
- 47:     renderTabs(orientation);
- 48:     const tabList = screen.getByRole("tablist");
- 49:     // Assert
- 50:     expect(tabList).toHaveClass("sm:flex-col");
- 51:   });
- 52:   it("renders tabs with correct layout in horizontal orientation", () => {
- 53:     // Arrange
- 54:     const orientation = "horizontal";
- 55:     // Act
- 56:     renderTabs(orientation);
- 57:     const tabList = screen.getByRole("tablist");
- 58:     // Assert
- 59:     expect(tabList).toHaveClass("flex-row");
- 60:     expect(tabList).not.toHaveClass("sm:flex-col");
- 61:   });
- 62:   it("applies correct ARIA attributes to tabs", () => {
- 63:     // Arrange
- 64:     const expectedAttributes = mockTabs.map((tab, index) => ({
- 65:       tab,
- 66:       isSelected: index === 0,
- 67:       controlsId: `tabpanel-${tab.id}`,
- 68:     }));
- 69:     // Act
- 70:     renderTabs();
- 71:     // Assert
- 72:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
- 73:       const tabElement = screen.getByRole("tab", { name: tab.label });
- 74:       expect(tabElement).toHaveAttribute(
- 75:         "aria-selected",
- 76:         isSelected.toString(),
- 77:       );
- 78:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
- 79:     });
- 80:   });
- 81:   it("switches tab content when clicking tabs", () => {
- 82:     // Arrange
- 83:     renderTabs();
- 84:     const initialContent = "Normal content";
- 85:     // Act & Assert - Initial state
- 86:     expect(screen.getByText(initialContent)).toBeInTheDocument();
- 87:     // Act & Assert - Click handling
- 88:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
- 89:     expect(() => {
- 90:       fireEvent.click(crashingTab);
- 91:       render(<ImmediateCrash />);
- 92:     }).toThrow("Immediate crash!");
- 93:   });
- 94:   it("applies correct border styles to tabs", () => {
- 95:     // Arrange
- 96:     renderTabs();
- 97:     // Act
- 98:     const tabs = screen.getAllByRole("tab");
- 99:     // Assert
-100:     expect(tabs[0]).not.toHaveClass("border-t");
-101:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
-102:   });
-103:   it("renders tab panels with correct attributes", () => {
-104:     // Arrange
-105:     const expectedAttributes = {
-106:       id: "tabpanel-tab1",
-107:       labelledBy: "tab-tab1",
-108:       className: "px-8",
-109:     };
-110:     // Act
-111:     renderTabs();
-112:     const activePanel = screen.getByRole("tabpanel");
-113:     // Assert
-114:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
-115:     expect(activePanel).toHaveAttribute(
-116:       "aria-labelledby",
-117:       expectedAttributes.labelledBy,
-118:     );
-119:     expect(activePanel).toHaveClass(expectedAttributes.className);
-120:   });
-121: });
-````
-
 ## File: src/__tests__/utils/portableTextComponents.test.tsx
 ````typescript
   1: import React from "react";
@@ -11507,162 +11803,6 @@ vercel.json
 12: export default SkipLink;
 ````
 
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
-  4: import * as m from "motion/react-m";
-  5: type TabOrientation = "horizontal" | "vertical";
-  6: interface Tab {
-  7:   id: string;
-  8:   label: string;
-  9:   content: React.ReactNode;
- 10: }
- 11: interface TabsProps {
- 12:   tabs: Tab[];
- 13:   orientation?: TabOrientation;
- 14: }
- 15: interface TabButtonProps {
- 16:   tab: Tab;
- 17:   isActive: boolean;
- 18:   isVertical: boolean;
- 19:   index: number;
- 20:   totalTabs: number;
- 21:   onClick: () => void;
- 22: }
- 23: const getTabButtonClassName = (
- 24:   isActive: boolean,
- 25:   isVertical: boolean,
- 26:   index: number,
- 27:   totalTabs: number,
- 28: ) => {
- 29:   const baseClasses =
- 30:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
- 31:   const activeClasses = isActive
- 32:     ? "text-white"
- 33:     : "text-gray-300 hover:text-white hover:bg-gray-600";
- 34:   const orientationClasses = isVertical
- 35:     ? "w-full text-left"
- 36:     : "grow text-center";
- 37:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
- 38:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 39: };
- 40: const TabButton: React.FC<TabButtonProps> = ({
- 41:   tab,
- 42:   isActive,
- 43:   isVertical,
- 44:   index,
- 45:   totalTabs,
- 46:   onClick,
- 47: }) => (
- 48:   <m.button
- 49:     key={tab.id}
- 50:     onClick={onClick}
- 51:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 52:     role="tab"
- 53:     aria-selected={isActive}
- 54:     aria-controls={`tabpanel-${tab.id}`}
- 55:     id={`tab-${tab.id}`}
- 56:   >
- 57:     {isActive && (
- 58:       <m.div
- 59:         layoutId="active-tab"
- 60:         className={`absolute ${
- 61:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 62:         } bg-[var(--matrix-dark)]`}
- 63:         initial={false}
- 64:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 65:       />
- 66:     )}
- 67:     <span className="relative z-10">{tab.label}</span>
- 68:   </m.button>
- 69: );
- 70: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 71:   tab,
- 72:   isActive,
- 73: }) => {
- 74:   if (!isActive) return null;
- 75:   return (
- 76:     <m.div
- 77:       key={tab.id}
- 78:       role="tabpanel"
- 79:       id={`tabpanel-${tab.id}`}
- 80:       aria-labelledby={`tab-${tab.id}`}
- 81:       className="px-8"
- 82:       initial={{ opacity: 0, y: 20 }}
- 83:       animate={{ opacity: 1, y: 0 }}
- 84:       exit={{ opacity: 0, y: -20 }}
- 85:       transition={{ duration: 0.3 }}
- 86:     >
- 87:       {tab.content}
- 88:     </m.div>
- 89:   );
- 90: };
- 91: /**
- 92:  * Renders a set of tabs with content.
- 93:  *
- 94:  * @param {TabsProps} props - The props object containing the tabs and orientation.
- 95:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
- 96:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
- 97:  * @return {JSX.Element} The rendered Tabs component.
- 98:  */
- 99: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-100:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-101:   const isVertical = orientation === "vertical";
-102:   return (
-103:     <LazyMotion features={domMax}>
-104:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-105:         <div
-106:           className={`flex ${
-107:             isVertical ? "flex-col sm:flex-row" : "flex-col"
-108:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-109:         >
-110:           <div
-111:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-112:               isVertical ? "sm:h-fit" : ""
-113:             }`}
-114:           >
-115:             <div
-116:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-117:               role="tablist"
-118:             >
-119:               {tabs.map((tab, index) => (
-120:                 <TabButton
-121:                   key={tab.id}
-122:                   tab={tab}
-123:                   isActive={activeTab === tab.id}
-124:                   isVertical={isVertical}
-125:                   index={index}
-126:                   totalTabs={tabs.length}
-127:                   onClick={() => setActiveTab(tab.id)}
-128:                 />
-129:               ))}
-130:             </div>
-131:           </div>
-132:           <div
-133:             className={`${
-134:               isVertical ? "sm:w-3/4 w-full" : "w-full"
-135:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
-136:           >
-137:             <AnimatePresence mode="wait">
-138:               {tabs.map((tab) => (
-139:                 <TabPanel
-140:                   key={tab.id}
-141:                   tab={tab}
-142:                   isActive={activeTab === tab.id}
-143:                 />
-144:               ))}
-145:             </AnimatePresence>
-146:           </div>
-147:         </div>
-148:       </div>
-149:     </LazyMotion>
-150:   );
-151: };
-152: export default Tabs;
-````
-
 ## File: src/e2e/cypress/component/Button.cy.tsx
 ````typescript
  1: /// <reference types="cypress" />
@@ -11967,40 +12107,6 @@ vercel.json
 17: import "./commands";
 18: // Alternatively you can use CommonJS syntax:
 19: // require('./commands')
-````
-
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: test.describe("CV page", () => {
- 3:   test("loads and displays main content correctly", async ({ page }) => {
- 4:     await page.goto("/cv");
- 5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
- 6:     await expect(
- 7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
- 8:     ).toBeVisible();
- 9:   });
-10:   test("navigates to and displays Experience section correctly", async ({
-11:     page,
-12:   }) => {
-13:     await page.goto("/cv");
-14:     // Click on 'Erfaring' tab
-15:     await page.getByRole("tab", { name: "Erfaring" }).click();
-16:     // Check if a specific experience entry is visible
-17:     await expect(
-18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
-19:     ).toBeVisible();
-20:   });
-21:   test("displays Education section correctly", async ({ page }) => {
-22:     await page.goto("/cv");
-23:     // Click on 'Erfaring' tab
-24:     await page.getByRole("tab", { name: "Utdanning" }).click();
-25:     // Check if education information is present
-26:     await expect(page.getByLabel("Utdanning")).toContainText(
-27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
-28:     );
-29:   });
-30: });
 ````
 
 ## File: src/e2e/playwright/index.spec.ts
@@ -17857,72 +17963,6 @@ vercel.json
 56: export default nextConfig;
 ````
 
-## File: playwright.config.ts
-````typescript
- 1: import { defineConfig, devices } from "@playwright/test";
- 2: /**
- 3:  * See https://playwright.dev/docs/test-configuration.
- 4:  */
- 5: export default defineConfig({
- 6:   testDir: "./src/e2e/playwright",
- 7:   /* Run tests in files in parallel */
- 8:   fullyParallel: true,
- 9:   /* Fail the build on CI if you accidentally left test.only in the source code. */
-10:   forbidOnly: !!process.env.CI,
-11:   /* Retry on CI only */
-12:   retries: process.env.CI ? 2 : 0,
-13:   /* Opt out of parallel tests on CI. */
-14:   workers: process.env.CI ? 1 : undefined,
-15:   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-16:   reporter: "html",
-17:   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-18:   use: {
-19:     /* Base URL to use in actions like `await page.goto('/')`. */
-20:     baseURL: "http://127.0.0.1:3000",
-21:     //baseURL: 'https://www.dfweb.no',
-22:     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-23:     trace: "on-first-retry",
-24:   },
-25:   /* Configure projects for major browsers */
-26:   projects: [
-27:     {
-28:       name: "chromium",
-29:       use: { ...devices["Desktop Chrome"] },
-30:     },
-31:     {
-32:       name: "firefox",
-33:       use: { ...devices["Desktop Firefox"] },
-34:     },
-35:     /* Test against mobile viewports. */
-36:     /*
-37:     {
-38:       name: "Mobile Chrome",
-39:       use: { ...devices["Pixel 5"] },
-40:     },
-41:     */
-42:     // {
-43:     //   name: 'Mobile Safari',
-44:     //   use: { ...devices['iPhone 12'] },
-45:     // },
-46:     /* Test against branded browsers. */
-47:     // {
-48:     //   name: 'Microsoft Edge',
-49:     //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-50:     // },
-51:     // {
-52:     //   name: 'Google Chrome',
-53:     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-54:     // },
-55:   ],
-56:   /* Run your local dev server before starting the tests */
-57:   // webServer: {
-58:   //   command: 'npm run start',
-59:   //   url: 'http://127.0.0.1:3000',
-60:   //   reuseExistingServer: !process.env.CI,
-61:   // },
-62: });
-````
-
 ## File: postcss.config.mjs
 ````javascript
 1: /** @type {import('postcss-load-config').Config} */
@@ -18378,427 +18418,6 @@ vercel.json
 1: {}
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["main"]
- 5:   pull_request:
- 6:     branches: ["main"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:         with:
-19:           version: 11
-20:       - name: Setup Node.js
-21:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-22:         with:
-23:           node-version: 24
-24:           cache: "pnpm"
-25:           cache-dependency-path: pnpm-lock.yaml
-26:       - name: Cache Cypress binary
-27:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-28:         with:
-29:           path: ~/.cache/Cypress
-30:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-31:       - name: Install dependencies
-32:         run: pnpm install --frozen-lockfile
-33:       - name: Verify and install Cypress binary
-34:         run: npx cypress verify || npx cypress install
-35:       - name: Cypress run
-36:         uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
-37:         with:
-38:           install: false
-39:           build: pnpm build
-40:           start: pnpm dev
-41:           wait-on: "http://localhost:3000"
-42:           wait-on-timeout: 120
-43:           browser: ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-13:         with:
-14:           node-version: "24"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:         with:
-18:           version: 11
-19:           run_install: false
-20:       - name: Get pnpm store directory
-21:         shell: bash
-22:         run: |
-23:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-24:       - name: Setup pnpm cache
-25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-26:         with:
-27:           path: ${{ env.STORE_PATH }}
-28:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Build project
-32:         run: pnpm build
-33:       - name: Start server
-34:         run: |
-35:           pnpm start &
-36:           echo "Waiting for server to be ready..."
-37:           while ! nc -z localhost 3000; do
-38:             sleep 5
-39:           done
-40:           # Additional wait to ensure full initialization
-41:           sleep 20
-42:       - name: Run Lighthouse CI (Mobile)
-43:         run: pnpm lhci:perf
-44:         env:
-45:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-46:       - name: Run Lighthouse CI (Desktop)
-47:         run: pnpm lhci:desktop
-48:         env:
-49:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-50:       - name: Stop server
-51:         if: always()
-52:         run: |
-53:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: "24"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:         with:
-22:           version: 11
-23:           run_install: false
-24:       - name: Get pnpm store directory
-25:         shell: bash
-26:         run: |
-27:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-28:       - name: Setup pnpm cache
-29:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-30:         with:
-31:           path: ${{ env.STORE_PATH }}
-32:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-33:       - name: Install dependencies
-34:         run: pnpm install --frozen-lockfile
-35:       - name: Create pa11y config
-36:         run: |
-37:           # Create pa11y config file
-38:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-39:       - name: Build Next.js app
-40:         run: pnpm build
-41:       - name: Start Next.js app
-42:         run: pnpm start &
-43:       - name: Wait for the application to be ready
-44:         run: pnpm exec wait-on http://localhost:3000
-45:       - name: Run pa11y
-46:         run: |
-47:           # Create a directory for the reports
-48:           mkdir -p pa11y-reports
-49:           # Run pa11y on main pages with config
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-51:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-52:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-53:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-54:       - name: Upload pa11y results
-55:         if: always()
-56:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-57:         with:
-58:           name: pa11y-reports
-59:           path: pa11y-reports/
-60:       - name: Check for accessibility issues
-61:         run: |
-62:           if grep -q "Error:" pa11y-reports/*.txt; then
-63:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-64:             exit 1
-65:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:         with:
-17:           version: 11
-18:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-19:         with:
-20:           node-version: 24
-21:           cache: "pnpm"
-22:       - name: Install dependencies
-23:         run: pnpm install --frozen-lockfile
-24:       - name: Install Playwright Browsers
-25:         run: pnpm exec playwright install --with-deps chromium firefox
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx wait-on http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix@1.14.0
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:         with:
-23:           version: 11
-24:       - name: Set up Node.js
-25:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-26:         with:
-27:           node-version: "24.x"
-28:           cache: "pnpm"
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile
-31:       - name: Install studio dependencies
-32:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-33:       - name: Run Snyk to check main project vulnerabilities
-34:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-35:         env:
-36:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-37:         with:
-38:           command: "test"
-39:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-40:       - name: Run Snyk to check eslint plugin vulnerabilities
-41:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-42:         env:
-43:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-44:         with:
-45:           command: "test"
-46:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-47:       - name: Upload main project SARIF report to GitHub Security tab
-48:         if: always() && hashFiles('snyk-main.sarif') != ''
-49:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-50:         with:
-51:           sarif_file: snyk-main.sarif
-52:           category: snyk-main
-53:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-54:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-55:         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
-56:         with:
-57:           sarif_file: snyk-eslint.sarif
-58:           category: snyk-eslint
-59:       - name: Snyk Monitor main project (only for pushes to main branch)
-60:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-61:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-62:         env:
-63:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-64:         with:
-65:           command: "monitor"
-66:           args: "--all-projects"
-67:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-68:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-69:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-70:         env:
-71:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-72:         with:
-73:           command: "monitor"
-74:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: .roo/rules-code/AGENTS.md
 ````markdown
  1: # Project Coding Rules (Non-Obvious Only)
@@ -19127,6 +18746,286 @@ vercel.json
 135:     });
 136:   });
 137: });
+````
+
+## File: src/__tests__/UI/Tabs.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen, fireEvent } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import "@testing-library/jest-dom";
+  8: import Tabs from "@/components/UI/Tabs.component";
+  9: // Component that throws an error immediately
+ 10: const ImmediateCrash = () => {
+ 11:   throw new Error("Immediate crash!");
+ 12: };
+ 13: const mockMotion = {
+ 14:   motion: {
+ 15:     div: (props: React.ComponentProps<"div">) => (
+ 16:       <div {...props}>{props.children}</div>
+ 17:     ),
+ 18:     button: (props: React.ComponentProps<"button">) => (
+ 19:       <button type="button" {...props}>
+ 20:         {props.children}
+ 21:       </button>
+ 22:     ),
+ 23:   },
+ 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+ 25:     <>{children}</>
+ 26:   ),
+ 27: };
+ 28: jest.mock("motion", () => mockMotion);
+ 29: const mockTabs = [
+ 30:   {
+ 31:     id: "tab1",
+ 32:     label: "Normal Tab",
+ 33:     content: <div>Normal content</div>,
+ 34:   },
+ 35:   {
+ 36:     id: "tab2",
+ 37:     label: "Crashing Tab",
+ 38:     content: <ImmediateCrash />,
+ 39:   },
+ 40: ];
+ 41: const keyboardTestTabs = [
+ 42:   {
+ 43:     id: "tab1",
+ 44:     label: "First Tab",
+ 45:     content: <div>First content</div>,
+ 46:   },
+ 47:   {
+ 48:     id: "tab2",
+ 49:     label: "Second Tab",
+ 50:     content: <div>Second content</div>,
+ 51:   },
+ 52:   {
+ 53:     id: "tab3",
+ 54:     label: "Third Tab",
+ 55:     content: <div>Third content</div>,
+ 56:   },
+ 57: ];
+ 58: describe("Tabs", () => {
+ 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
+ 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
+ 61:   it("renders tabs with correct layout in vertical orientation", () => {
+ 62:     // Arrange
+ 63:     const orientation = undefined; // default vertical orientation
+ 64:     // Act
+ 65:     renderTabs(orientation);
+ 66:     const tabList = screen.getByRole("tablist");
+ 67:     // Assert
+ 68:     expect(tabList).toHaveClass("sm:flex-col");
+ 69:   });
+ 70:   it("renders tabs with correct layout in horizontal orientation", () => {
+ 71:     // Arrange
+ 72:     const orientation = "horizontal";
+ 73:     // Act
+ 74:     renderTabs(orientation);
+ 75:     const tabList = screen.getByRole("tablist");
+ 76:     // Assert
+ 77:     expect(tabList).toHaveClass("flex-row");
+ 78:     expect(tabList).not.toHaveClass("sm:flex-col");
+ 79:   });
+ 80:   it("applies correct ARIA attributes to tabs", () => {
+ 81:     // Arrange
+ 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
+ 83:       tab,
+ 84:       isSelected: index === 0,
+ 85:       controlsId: `tabpanel-${tab.id}`,
+ 86:     }));
+ 87:     // Act
+ 88:     renderTabs();
+ 89:     // Assert
+ 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
+ 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
+ 92:       expect(tabElement).toHaveAttribute(
+ 93:         "aria-selected",
+ 94:         isSelected.toString(),
+ 95:       );
+ 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
+ 97:     });
+ 98:   });
+ 99:   it("switches tab content when clicking tabs", () => {
+100:     // Arrange
+101:     renderTabs();
+102:     const initialContent = "Normal content";
+103:     // Act & Assert - Initial state
+104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
+105:     // Act & Assert - Click handling
+106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+107:     expect(() => {
+108:       fireEvent.click(crashingTab);
+109:       render(<ImmediateCrash />);
+110:     }).toThrow("Immediate crash!");
+111:   });
+112:   it("applies correct border styles to tabs", () => {
+113:     // Arrange
+114:     renderTabs();
+115:     // Act
+116:     const tabs = screen.getAllByRole("tab");
+117:     // Assert
+118:     expect(tabs[0]).not.toHaveClass("border-t");
+119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+120:   });
+121:   it("renders tab panels with correct attributes", () => {
+122:     // Arrange
+123:     const expectedAttributes = {
+124:       id: "tabpanel-tab1",
+125:       labelledBy: "tab-tab1",
+126:       className: "px-8",
+127:     };
+128:     // Act
+129:     renderTabs();
+130:     const activePanel = screen.getByRole("tabpanel");
+131:     // Assert
+132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
+133:     expect(activePanel).toHaveAttribute(
+134:       "aria-labelledby",
+135:       expectedAttributes.labelledBy,
+136:     );
+137:     expect(activePanel).toHaveClass(expectedAttributes.className);
+138:   });
+139: });
+140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
+141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
+142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
+143:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
+144:     // Arrange
+145:     renderKeyboardTabs();
+146:     // Act
+147:     const tabs = screen.getAllByRole("tab");
+148:     // Assert
+149:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
+150:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
+151:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
+152:   });
+153:   it("moves focus to next tab on ArrowDown in vertical orientation", async () => {
+154:     // Arrange
+155:     const user = userEvent.setup();
+156:     renderKeyboardTabs("vertical");
+157:     const tabs = screen.getAllByRole("tab");
+158:     // Act
+159:     tabs[0].focus();
+160:     await user.keyboard("{ArrowDown}");
+161:     // Assert
+162:     expect(tabs[1]).toHaveFocus();
+163:     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+164:   });
+165:   it("moves focus to previous tab on ArrowUp in vertical orientation", async () => {
+166:     // Arrange
+167:     const user = userEvent.setup();
+168:     renderKeyboardTabs("vertical");
+169:     const tabs = screen.getAllByRole("tab");
+170:     // Act
+171:     tabs[0].focus();
+172:     await user.keyboard("{ArrowDown}");
+173:     await user.keyboard("{ArrowUp}");
+174:     // Assert
+175:     expect(tabs[0]).toHaveFocus();
+176:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+177:   });
+178:   it("moves focus to next tab on ArrowRight in horizontal orientation", async () => {
+179:     // Arrange
+180:     const user = userEvent.setup();
+181:     renderKeyboardTabs("horizontal");
+182:     const tabs = screen.getAllByRole("tab");
+183:     // Act
+184:     tabs[0].focus();
+185:     await user.keyboard("{ArrowRight}");
+186:     // Assert
+187:     expect(tabs[1]).toHaveFocus();
+188:     expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+189:   });
+190:   it("moves focus to previous tab on ArrowLeft in horizontal orientation", async () => {
+191:     // Arrange
+192:     const user = userEvent.setup();
+193:     renderKeyboardTabs("horizontal");
+194:     const tabs = screen.getAllByRole("tab");
+195:     // Act
+196:     tabs[0].focus();
+197:     await user.keyboard("{ArrowRight}");
+198:     await user.keyboard("{ArrowLeft}");
+199:     // Assert
+200:     expect(tabs[0]).toHaveFocus();
+201:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+202:   });
+203:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
+204:     // Arrange
+205:     const user = userEvent.setup();
+206:     renderKeyboardTabs("vertical");
+207:     const tabs = screen.getAllByRole("tab");
+208:     // Act
+209:     tabs[2].focus();
+210:     fireEvent.click(tabs[2]);
+211:     await user.keyboard("{ArrowDown}");
+212:     // Assert
+213:     expect(tabs[0]).toHaveFocus();
+214:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+215:   });
+216:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
+217:     // Arrange
+218:     const user = userEvent.setup();
+219:     renderKeyboardTabs("vertical");
+220:     const tabs = screen.getAllByRole("tab");
+221:     // Act
+222:     tabs[0].focus();
+223:     await user.keyboard("{ArrowUp}");
+224:     // Assert
+225:     expect(tabs[2]).toHaveFocus();
+226:     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
+227:   });
+228:   it("moves focus to first tab on Home key", async () => {
+229:     // Arrange
+230:     const user = userEvent.setup();
+231:     renderKeyboardTabs("vertical");
+232:     const tabs = screen.getAllByRole("tab");
+233:     // Act
+234:     tabs[0].focus();
+235:     await user.keyboard("{ArrowDown}");
+236:     await user.keyboard("{ArrowDown}");
+237:     await user.keyboard("{Home}");
+238:     // Assert
+239:     expect(tabs[0]).toHaveFocus();
+240:     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
+241:   });
+242:   it("moves focus to last tab on End key", async () => {
+243:     // Arrange
+244:     const user = userEvent.setup();
+245:     renderKeyboardTabs("vertical");
+246:     const tabs = screen.getAllByRole("tab");
+247:     // Act
+248:     tabs[0].focus();
+249:     await user.keyboard("{End}");
+250:     // Assert
+251:     expect(tabs[2]).toHaveFocus();
+252:     expect(tabs[2]).toHaveAttribute("aria-selected", "true");
+253:   });
+254:   it("sets aria-orientation on the tablist", () => {
+255:     // Arrange & Act
+256:     renderKeyboardTabs("vertical");
+257:     const tablist = screen.getByRole("tablist");
+258:     // Assert
+259:     expect(tablist).toHaveAttribute("aria-orientation", "vertical");
+260:   });
+261:   it("sets aria-orientation to horizontal when orientation is horizontal", () => {
+262:     // Arrange & Act
+263:     renderKeyboardTabs("horizontal");
+264:     const tablist = screen.getByRole("tablist");
+265:     // Assert
+266:     expect(tablist).toHaveAttribute("aria-orientation", "horizontal");
+267:   });
+268:   it("tab panel is focusable with tabIndex=0", () => {
+269:     // Arrange
+270:     renderKeyboardTabs();
+271:     // Act
+272:     const tabpanel = screen.getByRole("tabpanel");
+273:     // Assert
+274:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
+275:   });
+276: });
 ````
 
 ## File: src/app/cv/page.tsx
@@ -20499,6 +20398,227 @@ vercel.json
 20: export default PageHeader;
 ````
 
+## File: src/components/UI/Tabs.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState, useRef, useCallback } from "react";
+  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
+  4: import * as m from "motion/react-m";
+  5: type TabOrientation = "horizontal" | "vertical";
+  6: interface Tab {
+  7:   id: string;
+  8:   label: string;
+  9:   content: React.ReactNode;
+ 10: }
+ 11: interface TabsProps {
+ 12:   tabs: Tab[];
+ 13:   orientation?: TabOrientation;
+ 14: }
+ 15: interface TabButtonProps {
+ 16:   tab: Tab;
+ 17:   isActive: boolean;
+ 18:   isVertical: boolean;
+ 19:   index: number;
+ 20:   totalTabs: number;
+ 21:   onClick: () => void;
+ 22:   tabIndex: number;
+ 23:   buttonRef: (el: HTMLButtonElement | null) => void;
+ 24:   onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+ 25: }
+ 26: const getTabButtonClassName = (
+ 27:   isActive: boolean,
+ 28:   isVertical: boolean,
+ 29:   index: number,
+ 30:   totalTabs: number,
+ 31: ) => {
+ 32:   const baseClasses =
+ 33:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
+ 34:   const activeClasses = isActive
+ 35:     ? "text-white"
+ 36:     : "text-gray-300 hover:text-white hover:bg-gray-600";
+ 37:   const orientationClasses = isVertical
+ 38:     ? "w-full text-left"
+ 39:     : "grow text-center";
+ 40:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
+ 41:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 42: };
+ 43: const TabButton: React.FC<TabButtonProps> = ({
+ 44:   tab,
+ 45:   isActive,
+ 46:   isVertical,
+ 47:   index,
+ 48:   totalTabs,
+ 49:   onClick,
+ 50:   tabIndex,
+ 51:   buttonRef,
+ 52:   onKeyDown,
+ 53: }) => (
+ 54:   <m.button
+ 55:     key={tab.id}
+ 56:     ref={buttonRef}
+ 57:     onClick={onClick}
+ 58:     onKeyDown={onKeyDown}
+ 59:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 60:     role="tab"
+ 61:     aria-selected={isActive}
+ 62:     aria-controls={`tabpanel-${tab.id}`}
+ 63:     id={`tab-${tab.id}`}
+ 64:     tabIndex={tabIndex}
+ 65:   >
+ 66:     {isActive && (
+ 67:       <m.div
+ 68:         layoutId="active-tab"
+ 69:         className={`absolute ${
+ 70:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 71:         } bg-[var(--matrix-dark)]`}
+ 72:         initial={false}
+ 73:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 74:       />
+ 75:     )}
+ 76:     <span className="relative z-10">{tab.label}</span>
+ 77:   </m.button>
+ 78: );
+ 79: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 80:   tab,
+ 81:   isActive,
+ 82: }) => {
+ 83:   if (!isActive) return null;
+ 84:   return (
+ 85:     <m.div
+ 86:       key={tab.id}
+ 87:       role="tabpanel"
+ 88:       id={`tabpanel-${tab.id}`}
+ 89:       aria-labelledby={`tab-${tab.id}`}
+ 90:       className="px-8"
+ 91:       tabIndex={0}
+ 92:       initial={{ opacity: 0, y: 20 }}
+ 93:       animate={{ opacity: 1, y: 0 }}
+ 94:       exit={{ opacity: 0, y: -20 }}
+ 95:       transition={{ duration: 0.3 }}
+ 96:     >
+ 97:       {tab.content}
+ 98:     </m.div>
+ 99:   );
+100: };
+101: /**
+102:  * Renders a set of tabs with content.
+103:  * Implements WAI-ARIA APG Tabs Pattern keyboard navigation:
+104:  * - Arrow Left/Up: Move to previous tab
+105:  * - Arrow Right/Down: Move to next tab
+106:  * - Home: Move to first tab
+107:  * - End: Move to last tab
+108:  *
+109:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+110:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+111:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+112:  * @return {JSX.Element} The rendered Tabs component.
+113:  */
+114: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+115:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+116:   const isVertical = orientation === "vertical";
+117:   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+118:   const setTabRef = useCallback(
+119:     (index: number) => (el: HTMLButtonElement | null) => {
+120:       tabRefs.current[index] = el;
+121:     },
+122:     [],
+123:   );
+124:   const focusTab = useCallback(
+125:     (index: number) => {
+126:       const tab = tabs[index];
+127:       if (tab) {
+128:         setActiveTab(tab.id);
+129:         tabRefs.current[index]?.focus();
+130:       }
+131:     },
+132:     [tabs],
+133:   );
+134:   const handleKeyDown = useCallback(
+135:     (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+136:       const prevKey = isVertical ? "ArrowUp" : "ArrowLeft";
+137:       const nextKey = isVertical ? "ArrowDown" : "ArrowRight";
+138:       let newIndex: number | null = null;
+139:       switch (e.key) {
+140:         case nextKey:
+141:           e.preventDefault();
+142:           newIndex = (index + 1) % tabs.length;
+143:           break;
+144:         case prevKey:
+145:           e.preventDefault();
+146:           newIndex = (index - 1 + tabs.length) % tabs.length;
+147:           break;
+148:         case "Home":
+149:           e.preventDefault();
+150:           newIndex = 0;
+151:           break;
+152:         case "End":
+153:           e.preventDefault();
+154:           newIndex = tabs.length - 1;
+155:           break;
+156:       }
+157:       if (newIndex !== null) {
+158:         focusTab(newIndex);
+159:       }
+160:     },
+161:     [tabs.length, isVertical, focusTab],
+162:   );
+163:   return (
+164:     <LazyMotion features={domMax}>
+165:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
+166:         <div
+167:           className={`flex ${
+168:             isVertical ? "flex-col sm:flex-row" : "flex-col"
+169:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
+170:         >
+171:           <div
+172:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+173:               isVertical ? "sm:h-fit" : ""
+174:             }`}
+175:           >
+176:             <div
+177:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+178:               role="tablist"
+179:               aria-orientation={isVertical ? "vertical" : "horizontal"}
+180:             >
+181:               {tabs.map((tab, index) => (
+182:                 <TabButton
+183:                   key={tab.id}
+184:                   tab={tab}
+185:                   isActive={activeTab === tab.id}
+186:                   isVertical={isVertical}
+187:                   index={index}
+188:                   totalTabs={tabs.length}
+189:                   onClick={() => setActiveTab(tab.id)}
+190:                   tabIndex={activeTab === tab.id ? 0 : -1}
+191:                   buttonRef={setTabRef(index)}
+192:                   onKeyDown={(e) => handleKeyDown(e, index)}
+193:                 />
+194:               ))}
+195:             </div>
+196:           </div>
+197:           <div
+198:             className={`${
+199:               isVertical ? "sm:w-3/4 w-full" : "w-full"
+200:             } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+201:           >
+202:             <AnimatePresence mode="wait">
+203:               {tabs.map((tab) => (
+204:                 <TabPanel
+205:                   key={tab.id}
+206:                   tab={tab}
+207:                   isActive={activeTab === tab.id}
+208:                 />
+209:               ))}
+210:             </AnimatePresence>
+211:           </div>
+212:         </div>
+213:       </div>
+214:     </LazyMotion>
+215:   );
+216: };
+217: export default Tabs;
+````
+
 ## File: src/e2e/cypress/support/component-index.html
 ````html
  1: <!doctype html>
@@ -20594,6 +20714,116 @@ vercel.json
 14:     "./**/*.ts"
 15:   ]
 16: }
+````
+
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+  1: import { test, expect } from "@playwright/test";
+  2: test.describe("CV page", () => {
+  3:   test("loads and displays main content correctly", async ({ page }) => {
+  4:     await page.goto("/cv");
+  5:     // Check if 'Nøkkelkvalifikasjoner' tab is visible
+  6:     await expect(
+  7:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+  8:     ).toBeVisible();
+  9:   });
+ 10:   test("navigates to and displays Experience section correctly", async ({
+ 11:     page,
+ 12:   }) => {
+ 13:     await page.goto("/cv");
+ 14:     // Click on 'Erfaring' tab
+ 15:     await page.getByRole("tab", { name: "Erfaring" }).click();
+ 16:     // Check if a specific experience entry is visible
+ 17:     await expect(
+ 18:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+ 19:     ).toBeVisible();
+ 20:   });
+ 21:   test("displays Education section correctly", async ({ page }) => {
+ 22:     await page.goto("/cv");
+ 23:     // Click on 'Erfaring' tab
+ 24:     await page.getByRole("tab", { name: "Utdanning" }).click();
+ 25:     // Check if education information is present
+ 26:     await expect(page.getByLabel("Utdanning")).toContainText(
+ 27:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+ 28:     );
+ 29:   });
+ 30: });
+ 31: test.describe("CV page — Tabs keyboard navigation (WAI-ARIA APG)", () => {
+ 32:   test.beforeEach(async ({ page }) => {
+ 33:     await page.goto("/cv");
+ 34:   });
+ 35:   test("navigates tabs with ArrowDown key in vertical orientation", async ({
+ 36:     page,
+ 37:   }) => {
+ 38:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+ 39:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
+ 40:     // Focus the first tab
+ 41:     await firstTab.focus();
+ 42:     await expect(firstTab).toBeFocused();
+ 43:     // Press ArrowDown to move to the next tab
+ 44:     await page.keyboard.press("ArrowDown");
+ 45:     await expect(secondTab).toBeFocused();
+ 46:     await expect(secondTab).toHaveAttribute("aria-selected", "true");
+ 47:   });
+ 48:   test("navigates tabs with ArrowUp key in vertical orientation", async ({
+ 49:     page,
+ 50:   }) => {
+ 51:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+ 52:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
+ 53:     // Focus the second tab by clicking it first, then use keyboard
+ 54:     await secondTab.click();
+ 55:     await secondTab.focus();
+ 56:     // Press ArrowUp to move to the previous tab
+ 57:     await page.keyboard.press("ArrowUp");
+ 58:     await expect(firstTab).toBeFocused();
+ 59:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
+ 60:   });
+ 61:   test("wraps from last tab to first tab on ArrowDown", async ({ page }) => {
+ 62:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+ 63:     const tabs = page.getByRole("tab");
+ 64:     const lastTab = tabs.last();
+ 65:     // Click and focus the last tab
+ 66:     await lastTab.click();
+ 67:     await lastTab.focus();
+ 68:     // Press ArrowDown should wrap to first tab
+ 69:     await page.keyboard.press("ArrowDown");
+ 70:     await expect(firstTab).toBeFocused();
+ 71:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
+ 72:   });
+ 73:   test("Home key moves focus to first tab", async ({ page }) => {
+ 74:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+ 75:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
+ 76:     // Click the second tab, then press Home
+ 77:     await secondTab.click();
+ 78:     await secondTab.focus();
+ 79:     await page.keyboard.press("Home");
+ 80:     await expect(firstTab).toBeFocused();
+ 81:     await expect(firstTab).toHaveAttribute("aria-selected", "true");
+ 82:   });
+ 83:   test("End key moves focus to last tab", async ({ page }) => {
+ 84:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+ 85:     const tabs = page.getByRole("tab");
+ 86:     const lastTab = tabs.last();
+ 87:     // Focus the first tab, then press End
+ 88:     await firstTab.focus();
+ 89:     await page.keyboard.press("End");
+ 90:     await expect(lastTab).toBeFocused();
+ 91:     await expect(lastTab).toHaveAttribute("aria-selected", "true");
+ 92:   });
+ 93:   test("tablist has aria-orientation attribute", async ({ page }) => {
+ 94:     const tablist = page.getByRole("tablist");
+ 95:     await expect(tablist).toHaveAttribute("aria-orientation", "vertical");
+ 96:   });
+ 97:   test("only active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({
+ 98:     page,
+ 99:   }) => {
+100:     const firstTab = page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" });
+101:     const secondTab = page.getByRole("tab", { name: "Erfaring" });
+102:     // First tab is active by default
+103:     await expect(firstTab).toHaveAttribute("tabindex", "0");
+104:     await expect(secondTab).toHaveAttribute("tabindex", "-1");
+105:   });
+106: });
 ````
 
 ## File: studio/schemaTypes/documents/cv.ts
@@ -21050,209 +21280,6 @@ vercel.json
 33: }
 ````
 
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - '.'
- 3: overrides:
- 4:   "brace-expansion@^5.0.0": "5.0.6"
- 5: allowBuilds:
- 6:   '@swc/core': true
- 7:   cypress: true
- 8:   esbuild: true
- 9:   msw: true
-10:   puppeteer: true
-11:   sharp: true
-12:   unrs-resolver: true
-````
-
-## File: sanity.cli.ts
-````typescript
-1: import { defineCliConfig } from "sanity/cli";
-2: export default defineCliConfig({
-3:   api: {
-4:     projectId: "41s7iutf",
-5:     dataset: "production",
-6:   },
-7: });
-````
-
-## File: src/app/page.tsx
-````typescript
- 1: import dynamic from "next/dynamic";
- 2: import { notFound } from "next/navigation";
- 3: import type { Metadata } from "next/types";
- 4: import { sanityFetch } from "@/lib/sanity/client";
- 5: import { pageContentQuery } from "@/lib/sanity/queries";
- 6: import ContentLoader from "@/components/UI/ContentLoader.component";
- 7: import type { Page } from "@/types/sanity.types";
- 8: export const metadata: Metadata = {
- 9:   title: "Forside - Dfweb",
-10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-11: };
-12: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
-13:   loading: () => <ContentLoader type="hero" />,
-14: });
-15: const DynamicIndexContent = dynamic(
-16:   () => import("@/components/Index/IndexContent.component"),
-17:   {
-18:     loading: () => <ContentLoader type="section" sections={3} />,
-19:   },
-20: );
-21: export default async function HomePage() {
-22:   const pageContent = await sanityFetch<Page | null>({
-23:     query: pageContentQuery,
-24:     revalidate: 3600,
-25:   });
-26:   if (!pageContent) notFound();
-27:   return (
-28:     <main>
-29:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-30:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
-31:       </div>
-32:       {pageContent?.content && (
-33:         <DynamicIndexContent pageContent={pageContent.content} />
-34:       )}
-35:     </main>
-36:   );
-37: }
-````
-
-## File: src/components/Animations/animation-utils.ts
-````typescript
- 1: import type { RefObject } from "react";
- 2: /**
- 3:  * Creates animation lifecycle handlers that manage `will-change` for performance.
- 4:  * Sets `will-change: opacity` on start, resets to `auto` on complete.
- 5:  */
- 6: export function createWillChangeHandlers(ref: RefObject<HTMLDivElement | null>) {
- 7:   return {
- 8:     onAnimationStart: () => {
- 9:       if (ref.current) ref.current.style.willChange = "opacity";
-10:     },
-11:     onAnimationComplete: () => {
-12:       if (ref.current) ref.current.style.willChange = "auto";
-13:     },
-14:   };
-15: }
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: /**
- 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
- 3:  * pulling in the next-sanity dependency tree (which transitively includes
- 4:  * lodash via @sanity/visual-editing).
- 5:  */
- 6: function defineQuery<T extends string>(query: T): T {
- 7:   return query;
- 8: }
- 9: export const projectsQuery = defineQuery(`
-10:   *[_type == "project" && published == true] | order(featureOrder asc) {
-11:     id,
-12:     name,
-13:     description,
-14:     subdescription,
-15:     projectcategory->{
-16:       _id,
-17:       title
-18:     },
-19:     urlwww[]{
-20:       ...,
-21:       _key,
-22:     },
-23:     urlgithub[]{
-24:       ...,
-25:       _key,
-26:     },
-27:     projectimage,
-28:     featured,
-29:     featureOrder
-30:   }
-31: `);
-32: export const cvQuery = defineQuery(`
-33:   *[_type == "cv"][0] {
-34:     keyQualifications,
-35:     experience[] {
-36:       period,
-37:       company,
-38:       role,
-39:       description
-40:     },
-41:     education[] {
-42:       period,
-43:       institution,
-44:       degree,
-45:       description
-46:     },
-47:     volunteerWork[] {
-48:       period,
-49:       organization,
-50:       role,
-51:       description
-52:     }
-53:   }
-54: `);
-55: export const pageContentQuery = defineQuery(`
-56:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
-57:     "id": _id,
-58:     title,
-59:     hero,
-60:     content
-61:   }
-62: `);
-63: export const navigationQuery = defineQuery(`
-64:   *[_type == "navigation"][0] {
-65:     title,
-66:     links[] {
-67:       title,
-68:       name,
-69:       hash,
-70:       href,
-71:       externalLink
-72:     }
-73:   }
-74: `);
-75: export const settingsQuery = defineQuery(`
-76:   *[_type == "settings"][0] {
-77:     footerCopyrightText
-78:   }
-79: `);
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.4.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.6",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
-````
-
 ## File: AGENTS.md
 ````markdown
   1: # AGENTS.md
@@ -21556,6 +21583,275 @@ vercel.json
 299: - **ALWAYS** add explicit `permissions` blocks to new workflows
 300: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
 301: - Full hardening plan available at `plans/supply-chain-hardening.md`
+````
+
+## File: playwright.config.ts
+````typescript
+ 1: import { defineConfig, devices } from "@playwright/test";
+ 2: /**
+ 3:  * See https://playwright.dev/docs/test-configuration.
+ 4:  */
+ 5: export default defineConfig({
+ 6:   testDir: "./src/e2e/playwright",
+ 7:   /* Run tests in files in parallel */
+ 8:   fullyParallel: true,
+ 9:   /* Fail the build on CI if you accidentally left test.only in the source code. */
+10:   forbidOnly: !!process.env.CI,
+11:   /* Retry on CI only */
+12:   retries: process.env.CI ? 2 : 0,
+13:   /* Opt out of parallel tests on CI. */
+14:   workers: process.env.CI ? 1 : undefined,
+15:   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+16:   reporter: "html",
+17:   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+18:   use: {
+19:     /* Base URL to use in actions like `await page.goto('/')`. */
+20:     baseURL: "http://localhost:3000",
+21:     //baseURL: 'https://www.dfweb.no',
+22:     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+23:     trace: "on-first-retry",
+24:   },
+25:   /* Configure projects for major browsers */
+26:   projects: [
+27:     {
+28:       name: "chromium",
+29:       use: { ...devices["Desktop Chrome"] },
+30:     },
+31:     {
+32:       name: "firefox",
+33:       use: { ...devices["Desktop Firefox"] },
+34:     },
+35:     /* Test against mobile viewports. */
+36:     /*
+37:     {
+38:       name: "Mobile Chrome",
+39:       use: { ...devices["Pixel 5"] },
+40:     },
+41:     */
+42:     // {
+43:     //   name: 'Mobile Safari',
+44:     //   use: { ...devices['iPhone 12'] },
+45:     // },
+46:     /* Test against branded browsers. */
+47:     // {
+48:     //   name: 'Microsoft Edge',
+49:     //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+50:     // },
+51:     // {
+52:     //   name: 'Google Chrome',
+53:     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+54:     // },
+55:   ],
+56:   /* Run your local dev server before starting the tests */
+57:   // webServer: {
+58:   //   command: 'npm run start',
+59:   //   url: 'http://127.0.0.1:3000',
+60:   //   reuseExistingServer: !process.env.CI,
+61:   // },
+62: });
+````
+
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - '.'
+ 3: overrides:
+ 4:   "brace-expansion@^5.0.0": "5.0.6"
+ 5: allowBuilds:
+ 6:   '@swc/core': true
+ 7:   cypress: true
+ 8:   esbuild: true
+ 9:   msw: true
+10:   puppeteer: true
+11:   sharp: true
+12:   unrs-resolver: true
+````
+
+## File: sanity.cli.ts
+````typescript
+1: import { defineCliConfig } from "sanity/cli";
+2: export default defineCliConfig({
+3:   api: {
+4:     projectId: "41s7iutf",
+5:     dataset: "production",
+6:   },
+7: });
+````
+
+## File: src/app/page.tsx
+````typescript
+ 1: import dynamic from "next/dynamic";
+ 2: import { notFound } from "next/navigation";
+ 3: import type { Metadata } from "next/types";
+ 4: import { sanityFetch } from "@/lib/sanity/client";
+ 5: import { pageContentQuery } from "@/lib/sanity/queries";
+ 6: import ContentLoader from "@/components/UI/ContentLoader.component";
+ 7: import type { Page } from "@/types/sanity.types";
+ 8: export const metadata: Metadata = {
+ 9:   title: "Forside - Dfweb",
+10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+11: };
+12: const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
+13:   loading: () => <ContentLoader type="hero" />,
+14: });
+15: const DynamicIndexContent = dynamic(
+16:   () => import("@/components/Index/IndexContent.component"),
+17:   {
+18:     loading: () => <ContentLoader type="section" sections={3} />,
+19:   },
+20: );
+21: export default async function HomePage() {
+22:   const pageContent = await sanityFetch<Page | null>({
+23:     query: pageContentQuery,
+24:     revalidate: 3600,
+25:   });
+26:   if (!pageContent) notFound();
+27:   return (
+28:     <main>
+29:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+30:         {pageContent?.hero && <DynamicHero content={pageContent.hero} />}
+31:       </div>
+32:       {pageContent?.content && (
+33:         <DynamicIndexContent pageContent={pageContent.content} />
+34:       )}
+35:     </main>
+36:   );
+37: }
+````
+
+## File: src/components/Animations/animation-utils.ts
+````typescript
+ 1: import type { RefObject } from "react";
+ 2: /**
+ 3:  * Creates animation lifecycle handlers that manage `will-change` for performance.
+ 4:  * Sets `will-change: opacity` on start, resets to `auto` on complete.
+ 5:  */
+ 6: export function createWillChangeHandlers(ref: RefObject<HTMLDivElement | null>) {
+ 7:   return {
+ 8:     onAnimationStart: () => {
+ 9:       if (ref.current) ref.current.style.willChange = "opacity";
+10:     },
+11:     onAnimationComplete: () => {
+12:       if (ref.current) ref.current.style.willChange = "auto";
+13:     },
+14:   };
+15: }
+````
+
+## File: src/lib/sanity/queries.ts
+````typescript
+ 1: /**
+ 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
+ 3:  * pulling in the next-sanity dependency tree (which transitively includes
+ 4:  * lodash via @sanity/visual-editing).
+ 5:  */
+ 6: function defineQuery<T extends string>(query: T): T {
+ 7:   return query;
+ 8: }
+ 9: export const projectsQuery = defineQuery(`
+10:   *[_type == "project" && published == true] | order(featureOrder asc) {
+11:     id,
+12:     name,
+13:     description,
+14:     subdescription,
+15:     projectcategory->{
+16:       _id,
+17:       title
+18:     },
+19:     urlwww[]{
+20:       ...,
+21:       _key,
+22:     },
+23:     urlgithub[]{
+24:       ...,
+25:       _key,
+26:     },
+27:     projectimage,
+28:     featured,
+29:     featureOrder
+30:   }
+31: `);
+32: export const cvQuery = defineQuery(`
+33:   *[_type == "cv"][0] {
+34:     keyQualifications,
+35:     experience[] {
+36:       period,
+37:       company,
+38:       role,
+39:       description
+40:     },
+41:     education[] {
+42:       period,
+43:       institution,
+44:       degree,
+45:       description
+46:     },
+47:     volunteerWork[] {
+48:       period,
+49:       organization,
+50:       role,
+51:       description
+52:     }
+53:   }
+54: `);
+55: export const pageContentQuery = defineQuery(`
+56:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+57:     "id": _id,
+58:     title,
+59:     hero,
+60:     content
+61:   }
+62: `);
+63: export const navigationQuery = defineQuery(`
+64:   *[_type == "navigation"][0] {
+65:     title,
+66:     links[] {
+67:       title,
+68:       name,
+69:       hash,
+70:       href,
+71:       externalLink
+72:     }
+73:   }
+74: `);
+75: export const settingsQuery = defineQuery(`
+76:   *[_type == "settings"][0] {
+77:     footerCopyrightText
+78:   }
+79: `);
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.4.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.6",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
 ````
 
 ## File: src/components/Animations/MatrixCursor.component.tsx
