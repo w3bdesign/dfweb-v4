@@ -118,7 +118,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
   useEffect(() => {
     // Respect prefers-reduced-motion — skip animation entirely
-    const prefersReducedMotion = window.matchMedia(
+    const prefersReducedMotion = globalThis.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     if (prefersReducedMotion) return;
@@ -162,6 +162,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       ref={canvasRef}
       id={CANVAS_ID}
       aria-hidden="true"
+      tabIndex={-1}
       style={{ width: "100%", height: "100%" }}
       data-testid="matrix-canvas"
       className="absolute inset-0"

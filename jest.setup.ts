@@ -4,8 +4,8 @@ import "jest-extended";
 import { checkAAAPattern } from "./src/utils/test-utils";
 import fs from "fs/promises";
 
-// Mock window.matchMedia for prefers-reduced-motion and other media queries
-Object.defineProperty(window, "matchMedia", {
+// Mock matchMedia for prefers-reduced-motion and other media queries
+Object.defineProperty(globalThis, "matchMedia", {
   writable: true,
   value: jest.fn().mockImplementation((query: string) => ({
     matches: false,
