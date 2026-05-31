@@ -1,4 +1,5 @@
-"""Provider factory with auto-detection and explicit selection support.
+"""
+Provider factory with auto-detection and explicit selection support.
 
 This module provides a factory function to get the appropriate LLM provider
 based on environment configuration.
@@ -26,7 +27,8 @@ class InvalidProviderError(Exception):
 
 
 def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
-    """Get an LLM provider instance.
+    """
+    Get an LLM provider instance.
 
     If provider_name is specified, returns that specific provider.
     Otherwise, checks the PROVIDER environment variable.
@@ -68,7 +70,8 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
 
 
 def _create_provider(name: str) -> BaseProvider:
-    """Create a provider instance by name.
+    """
+    Create a provider instance by name.
 
     Args
     ----
@@ -90,7 +93,8 @@ def _create_provider(name: str) -> BaseProvider:
 
 
 def _auto_detect_provider() -> BaseProvider:
-    """Auto-detect and return the appropriate provider based on available API keys.
+    """
+    Auto-detect and return the appropriate provider based on available API keys.
 
     Returns
     -------
