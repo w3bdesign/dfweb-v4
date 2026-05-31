@@ -1,4 +1,5 @@
-"""Provider abstraction layer for LLM API integrations.
+"""
+Provider abstraction layer for LLM API integrations.
 
 This module provides a unified interface for interacting with different LLM providers
 (OpenAI, Anthropic, and OpenAI-compatible endpoints) through a common API.
