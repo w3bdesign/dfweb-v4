@@ -1,12 +1,10 @@
-"""Base provider abstract class defining the interface all LLM providers must
-implement."""
+"""Base provider abstract class defining the interface all LLM providers must implement."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
 
 
 class BaseProvider(ABC):
-
     """Abstract base class for LLM providers.
 
     All provider implementations must inherit from this class and
