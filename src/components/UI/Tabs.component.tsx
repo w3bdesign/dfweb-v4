@@ -215,7 +215,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
           <div
             className={`${
               isVertical ? "sm:w-3/4 w-full" : "w-full"
-            } bg-gray-800 overflow-y-auto [scrollbar-gutter:stable]`}
+            } bg-gray-800 overflow-y-auto scrollbar-gutter-stable`}
           >
             <AnimatePresence mode="wait">
               {tabs.map((tab) => (
