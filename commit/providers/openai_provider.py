@@ -1,6 +1,4 @@
-"""
-OpenAI provider implementation using the official OpenAI Python SDK.
-"""
+"""OpenAI provider implementation using the official OpenAI Python SDK."""
 
 import os
 from typing import Optional
@@ -11,8 +9,7 @@ from providers.base import BaseProvider
 
 
 class OpenAIProvider(BaseProvider):
-    """
-    Provider implementation for OpenAI's API.
+    """Provider implementation for OpenAI's API.
 
     Uses the official OpenAI Python SDK to interact with GPT models.
 
@@ -24,14 +21,16 @@ class OpenAIProvider(BaseProvider):
     DEFAULT_MODEL = "gpt-5.2"
 
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize the OpenAI provider.
+        """Initialize the OpenAI provider.
 
-        Args:
+        Args
+        ----
             api_key: Optional API key. If not provided, reads from OPENAI_API_KEY env var.
 
-        Raises:
+        Raises
+        ------
             ValueError: If no API key is found.
+
         """
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self._api_key:
