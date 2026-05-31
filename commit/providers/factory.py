@@ -68,14 +68,16 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
 
 
 def _create_provider(name: str) -> BaseProvider:
-    """
-    Create a provider instance by name.
+    """Create a provider instance by name.
 
-    Args:
+    Args
+    ----
         name: The provider name.
 
-    Returns:
+    Returns
+    -------
         A configured provider instance.
+
     """
     if name == "anthropic":
         return AnthropicProvider()
@@ -88,14 +90,16 @@ def _create_provider(name: str) -> BaseProvider:
 
 
 def _auto_detect_provider() -> BaseProvider:
-    """
-    Auto-detect and return the appropriate provider based on available API keys.
+    """Auto-detect and return the appropriate provider based on available API keys.
 
-    Returns:
+    Returns
+    -------
         A configured provider instance.
 
-    Raises:
+    Raises
+    ------
         ProviderConfigurationError: If no API keys are found.
+
     """
     # Check for Anthropic (highest priority)
     if os.getenv("ANTHROPIC_API_KEY"):
