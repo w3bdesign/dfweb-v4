@@ -22,7 +22,8 @@ class OpenAIProvider(BaseProvider):
     DEFAULT_MODEL = "gpt-5.5"
 
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize the OpenAI provider.
+        """
+        Initialize the OpenAI provider.
 
         Args
         ----
@@ -31,6 +32,7 @@ class OpenAIProvider(BaseProvider):
         Raises
         ------
             ValueError: If no API key is found.
+
         """
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self._api_key:
