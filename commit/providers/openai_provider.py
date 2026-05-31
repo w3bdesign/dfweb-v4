@@ -9,6 +9,7 @@ from providers.base import BaseProvider
 
 
 class OpenAIProvider(BaseProvider):
+
     """Provider implementation for OpenAI's API.
 
     Uses the official OpenAI Python SDK to interact with GPT models.

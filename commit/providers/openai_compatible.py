@@ -14,6 +14,7 @@ from providers.base import BaseProvider
 
 
 class OpenAICompatibleProvider(BaseProvider):
+
     """Provider implementation for OpenAI-compatible APIs.
 
     Uses the OpenAI Python SDK with a custom base_url to interact with
