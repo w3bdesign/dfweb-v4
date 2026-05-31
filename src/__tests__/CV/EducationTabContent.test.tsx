@@ -19,7 +19,9 @@ describe("EducationTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2020-2024 - University of Technology"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2020-2024 - University of Technology";
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Bachelor of Computer Science"),
@@ -42,7 +44,9 @@ describe("EducationTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2020-2024 - University of Technology"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2020-2024 - University of Technology";
+      }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Bachelor of Computer Science"),
@@ -65,7 +69,9 @@ describe("EducationTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2020-2024 - University of Technology"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2020-2024 - University of Technology";
+      }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText("Bachelor of Computer Science"),
