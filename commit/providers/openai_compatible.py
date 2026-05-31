@@ -1,8 +1,8 @@
-"""
-Generic OpenAI-compatible provider implementation.
+"""Generic OpenAI-compatible provider implementation.
 
-This provider supports any API endpoint that implements the OpenAI API format,
-such as LM Studio, Ollama, vLLM, and other local or self-hosted LLM services.
+This provider supports any API endpoint that implements the OpenAI API
+format, such as LM Studio, Ollama, vLLM, and other local or self-hosted
+LLM services.
 """
 
 import os
@@ -14,8 +14,7 @@ from providers.base import BaseProvider
 
 
 class OpenAICompatibleProvider(BaseProvider):
-    """
-    Provider implementation for OpenAI-compatible APIs.
+    """Provider implementation for OpenAI-compatible APIs.
 
     Uses the OpenAI Python SDK with a custom base_url to interact with
     any OpenAI-compatible endpoint.
@@ -31,8 +30,7 @@ class OpenAICompatibleProvider(BaseProvider):
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
     ):
-        """
-        Initialize the OpenAI-compatible provider.
+        """Initialize the OpenAI-compatible provider.
 
         Args
         ----
@@ -42,7 +40,6 @@ class OpenAICompatibleProvider(BaseProvider):
         Raises
         ------
             ValueError: If API key or base URL is not found.
-
         """
         self._api_key = api_key or os.getenv("OPENAI_COMPATIBLE_API_KEY")
         self._base_url = base_url or os.getenv("OPENAI_COMPATIBLE_BASE_URL")
@@ -66,8 +63,7 @@ class OpenAICompatibleProvider(BaseProvider):
         return "openai-compatible"
 
     def get_default_model(self) -> str:
-        """
-        Return the default model for this provider.
+        """Return the default model for this provider.
 
         Note: For OpenAI-compatible providers, the model must be specified
         via MODEL_NAME environment variable as there's no universal default.
@@ -81,8 +77,7 @@ class OpenAICompatibleProvider(BaseProvider):
         return model
 
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-        """
-        Send a chat completion request to the OpenAI-compatible endpoint.
+        """Send a chat completion request to the OpenAI-compatible endpoint.
 
         Args
         ----
@@ -92,7 +87,6 @@ class OpenAICompatibleProvider(BaseProvider):
         Returns
         -------
             The text response from the model.
-
         """
         model_to_use = model or self.get_default_model()
 
