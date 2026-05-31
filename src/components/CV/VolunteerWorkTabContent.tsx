@@ -14,7 +14,8 @@ interface VolunteerWorkTabContentProps {
 
 const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
   <>
-    {vol.period ?? ""} - {vol.organization ?? ""}
+    <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
+    {vol.organization ?? ""}
   </>
 );
 
