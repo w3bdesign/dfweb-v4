@@ -28,7 +28,8 @@ class InvalidProviderError(Exception):
 
 
 def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
-    """Get an LLM provider instance.
+    """
+    Get an LLM provider instance.
 
     If provider_name is specified, returns that specific provider.
     Otherwise, checks the PROVIDER environment variable.
@@ -51,6 +52,7 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
     ------
         InvalidProviderError: If an invalid provider name is specified.
         ProviderConfigurationError: If no provider can be configured.
+
     """
     # Determine provider name
     name = provider_name or os.getenv("PROVIDER")
@@ -90,8 +92,8 @@ def _create_provider(name: str) -> BaseProvider:
 
 
 def _auto_detect_provider() -> BaseProvider:
-    """Auto-detect and return the appropriate provider based on available API
-    keys.
+    """
+    Auto-detect and return the appropriate provider based on available API keys.
 
     Returns
     -------
