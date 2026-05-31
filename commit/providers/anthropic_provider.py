@@ -1,6 +1,5 @@
-"""
-Anthropic provider implementation using the official Anthropic Python SDK.
-"""
+"""Anthropic provider implementation using the official Anthropic Python
+SDK."""
 
 import os
 from typing import Optional
@@ -11,8 +10,8 @@ from providers.base import BaseProvider
 
 
 class AnthropicProvider(BaseProvider):
-    """
-    Provider implementation for Anthropic's API.
+
+    """Provider implementation for Anthropic's API.
 
     Uses the official Anthropic Python SDK to interact with Claude models.
 
@@ -24,8 +23,7 @@ class AnthropicProvider(BaseProvider):
     DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
 
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize the Anthropic provider.
+        """Initialize the Anthropic provider.
 
         Args
         ----
@@ -34,7 +32,6 @@ class AnthropicProvider(BaseProvider):
         Raises
         ------
             ValueError: If no API key is found.
-
         """
         self._api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self._api_key:
@@ -53,8 +50,7 @@ class AnthropicProvider(BaseProvider):
         return os.getenv("MODEL_NAME", self.DEFAULT_MODEL)
 
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-        """
-        Send a chat completion request to Anthropic.
+        """Send a chat completion request to Anthropic.
 
         Args
         ----
@@ -64,7 +60,6 @@ class AnthropicProvider(BaseProvider):
         Returns
         -------
             The text response from the model.
-
         """
         model_to_use = model or self.get_default_model()
 

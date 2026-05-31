@@ -1,8 +1,7 @@
-"""
-Provider factory with auto-detection and explicit selection support.
+"""Provider factory with auto-detection and explicit selection support.
 
-This module provides a factory function to get the appropriate LLM provider
-based on environment configuration.
+This module provides a factory function to get the appropriate LLM
+provider based on environment configuration.
 """
 
 import os
@@ -19,16 +18,17 @@ VALID_PROVIDERS = frozenset(["anthropic", "openai", "openai-compatible"])
 
 
 class ProviderConfigurationError(Exception):
+
     """Raised when provider configuration is invalid or missing."""
 
 
 class InvalidProviderError(Exception):
+
     """Raised when an invalid provider name is specified."""
 
 
 def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
-    """
-    Get an LLM provider instance.
+    """Get an LLM provider instance.
 
     If provider_name is specified, returns that specific provider.
     Otherwise, checks the PROVIDER environment variable.
@@ -51,7 +51,6 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
     ------
         InvalidProviderError: If an invalid provider name is specified.
         ProviderConfigurationError: If no provider can be configured.
-
     """
     # Determine provider name
     name = provider_name or os.getenv("PROVIDER")
@@ -70,8 +69,7 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
 
 
 def _create_provider(name: str) -> BaseProvider:
-    """
-    Create a provider instance by name.
+    """Create a provider instance by name.
 
     Args
     ----
@@ -80,7 +78,6 @@ def _create_provider(name: str) -> BaseProvider:
     Returns
     -------
         A configured provider instance.
-
     """
     if name == "anthropic":
         return AnthropicProvider()
@@ -93,8 +90,8 @@ def _create_provider(name: str) -> BaseProvider:
 
 
 def _auto_detect_provider() -> BaseProvider:
-    """
-    Auto-detect and return the appropriate provider based on available API keys.
+    """Auto-detect and return the appropriate provider based on available API
+    keys.
 
     Returns
     -------
@@ -103,7 +100,6 @@ def _auto_detect_provider() -> BaseProvider:
     Raises
     ------
         ProviderConfigurationError: If no API keys are found.
-
     """
     # Check for Anthropic (highest priority)
     if os.getenv("ANTHROPIC_API_KEY"):
