@@ -21,7 +21,7 @@ class OpenAIProvider(BaseProvider):
         MODEL_NAME: Optional. Override the default model.
     """
 
-    DEFAULT_MODEL = "gpt-5.2"
+    DEFAULT_MODEL = "gpt-5.5"
 
     def __init__(self, api_key: Optional[str] = None):
         """
