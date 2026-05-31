@@ -2,8 +2,8 @@
 import "@testing-library/jest-dom";
 import "jest-extended";
 import { checkAAAPattern } from "./src/utils/test-utils";
-import fs from "fs/promises";
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 // Mock matchMedia for prefers-reduced-motion and other media queries
 Object.defineProperty(globalThis, "matchMedia", {
