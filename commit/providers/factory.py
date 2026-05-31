@@ -18,10 +18,12 @@ VALID_PROVIDERS = frozenset(["anthropic", "openai", "openai-compatible"])
 
 
 class ProviderConfigurationError(Exception):
+
     """Raised when provider configuration is invalid or missing."""
 
 
 class InvalidProviderError(Exception):
+
     """Raised when an invalid provider name is specified."""
 
 
