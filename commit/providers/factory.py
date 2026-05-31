@@ -1,5 +1,4 @@
-"""
-Provider factory with auto-detection and explicit selection support.
+"""Provider factory with auto-detection and explicit selection support.
 
 This module provides a factory function to get the appropriate LLM provider
 based on environment configuration.
@@ -27,8 +26,7 @@ class InvalidProviderError(Exception):
 
 
 def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
-    """
-    Get an LLM provider instance.
+    """Get an LLM provider instance.
 
     If provider_name is specified, returns that specific provider.
     Otherwise, checks the PROVIDER environment variable.
@@ -39,15 +37,19 @@ def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
     2. OpenAI (if OPENAI_API_KEY is set)
     3. OpenAI-compatible (if OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL are set)
 
-    Args:
+    Args
+    ----
         provider_name: Optional explicit provider name ('anthropic', 'openai', 'openai-compatible').
 
-    Returns:
+    Returns
+    -------
         A configured provider instance.
 
-    Raises:
+    Raises
+    ------
         InvalidProviderError: If an invalid provider name is specified.
         ProviderConfigurationError: If no provider can be configured.
+
     """
     # Determine provider name
     name = provider_name or os.getenv("PROVIDER")
