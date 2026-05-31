@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-AI-Powered Git Commit Message Generator
+"""AI-Powered Git Commit Message Generator.
 
 Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
 
@@ -80,9 +79,7 @@ def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
 
 
 def _run_git_command(args: List[str]) -> str:
-    """
-    Safely execute a git command with strict whitelist validation.
-    """
+    """Safely execute a git command with strict whitelist validation."""
     if not args:
         raise ValueError("Git command arguments cannot be empty")
 
@@ -120,11 +117,12 @@ def _is_lock_file(filename: str) -> bool:
 
 
 def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
-    """
-    Get the diff of staged changes and list of changed files.
+    """Get the diff of staged changes and list of changed files.
 
-    Returns:
+    Returns
+    -------
         Tuple of (diff_content, has_lock_files, changed_files)
+
     """
     try:
         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
