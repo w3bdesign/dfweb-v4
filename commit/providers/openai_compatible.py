@@ -1,4 +1,5 @@
-"""Generic OpenAI-compatible provider implementation.
+"""
+Generic OpenAI-compatible provider implementation.
 
 This provider supports any API endpoint that implements the OpenAI API format,
 such as LM Studio, Ollama, vLLM, and other local or self-hosted LLM services.
@@ -13,7 +14,8 @@ from providers.base import BaseProvider
 
 
 class OpenAICompatibleProvider(BaseProvider):
-    """Provider implementation for OpenAI-compatible APIs.
+    """
+    Provider implementation for OpenAI-compatible APIs.
 
     Uses the OpenAI Python SDK with a custom base_url to interact with
     any OpenAI-compatible endpoint.
@@ -29,7 +31,8 @@ class OpenAICompatibleProvider(BaseProvider):
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
     ):
-        """Initialize the OpenAI-compatible provider.
+        """
+        Initialize the OpenAI-compatible provider.
 
         Args
         ----
@@ -81,12 +84,15 @@ class OpenAICompatibleProvider(BaseProvider):
         """
         Send a chat completion request to the OpenAI-compatible endpoint.
 
-        Args:
+        Args
+        ----
             prompt: The user prompt to send.
             model: Optional model override.
 
-        Returns:
+        Returns
+        -------
             The text response from the model.
+
         """
         model_to_use = model or self.get_default_model()
 
