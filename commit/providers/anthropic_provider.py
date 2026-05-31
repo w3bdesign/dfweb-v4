@@ -10,6 +10,7 @@ from providers.base import BaseProvider
 
 
 class AnthropicProvider(BaseProvider):
+
     """Provider implementation for Anthropic's API.
 
     Uses the official Anthropic Python SDK to interact with Claude models.
