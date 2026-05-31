@@ -14,7 +14,8 @@ interface EducationTabContentProps {
 
 const renderEducationHeader = (edu: Education): React.ReactNode => (
   <>
-    {edu.period ?? ""} - {edu.institution ?? ""}
+    <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
+    {edu.institution ?? ""}
   </>
 );
 

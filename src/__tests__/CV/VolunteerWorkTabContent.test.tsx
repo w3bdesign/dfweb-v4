@@ -19,7 +19,9 @@ describe("VolunteerWorkTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2020-2022 - Open Source Foundation"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2020-2022 - Open Source Foundation";
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Maintainer")).toBeInTheDocument();
     expect(
@@ -59,7 +61,9 @@ describe("VolunteerWorkTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2021-2023 - Community Group"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2021-2023 - Community Group";
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
   });

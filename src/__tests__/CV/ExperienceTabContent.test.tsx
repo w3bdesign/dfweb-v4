@@ -19,7 +19,9 @@ describe("ExperienceTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2022-2024 - Tech Company Inc"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2022-2024 - Tech Company Inc";
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
   });
@@ -40,7 +42,9 @@ describe("ExperienceTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2022-2024 - Tech Company Inc"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2022-2024 - Tech Company Inc";
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
   });
@@ -61,7 +65,9 @@ describe("ExperienceTabContent", () => {
 
     // Assert
     expect(
-      screen.getByText("2022-2024 - Tech Company Inc"),
+      screen.getByText((content, element) => {
+        return element?.textContent === "2022-2024 - Tech Company Inc";
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
   });
