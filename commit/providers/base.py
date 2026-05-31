@@ -6,6 +6,7 @@ from typing import Optional
 
 
 class BaseProvider(ABC):
+
     """Abstract base class for LLM providers.
 
     All provider implementations must inherit from this class and
@@ -16,7 +17,7 @@ class BaseProvider(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Return the provider name."""
+        """Get the provider name."""
 
     @abstractmethod
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
