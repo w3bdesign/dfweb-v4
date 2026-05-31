@@ -16,8 +16,7 @@ class BaseProvider(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Return the provider name (e.g., 'openai', 'anthropic', 'openai-
-        compatible')."""
+        """Return the provider name."""
 
     @abstractmethod
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
