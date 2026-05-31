@@ -21,7 +21,8 @@ class BaseProvider(ABC):
 
     @abstractmethod
     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-        """Send a chat completion request and return the response text.
+        """
+        Send a chat completion request and return the response text.
 
         Args
         ----
@@ -35,6 +36,7 @@ class BaseProvider(ABC):
         Raises
         ------
             Exception: If the API request fails.
+
         """
 
     @abstractmethod
