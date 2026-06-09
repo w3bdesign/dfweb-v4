@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 
-interface ErrorBoundaryProps {
+type ErrorBoundaryProps = Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
-}
+}>;
 
 export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
   useEffect(() => {
