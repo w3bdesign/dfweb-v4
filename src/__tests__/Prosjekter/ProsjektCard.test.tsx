@@ -76,7 +76,6 @@ describe("ProsjektCard", () => {
       // Arrange
       const expectedImage = {
         alt: "Skjermbilde av prosjektet Test Project",
-        src: "/test-image.jpg",
       };
 
       // Act
@@ -85,7 +84,9 @@ describe("ProsjektCard", () => {
 
       // Assert
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute("src", expectedImage.src);
+      // Next.js Image component transforms src to use image optimization
+      expect(img).toHaveAttribute("src");
+      expect(img.getAttribute("src")).toContain("/test-image.jpg");
     });
 
     it("renders navigation buttons with correct hrefs", () => {
