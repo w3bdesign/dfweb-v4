@@ -84,9 +84,13 @@ describe("ProsjektCard", () => {
 
       // Assert
       expect(img).toBeInTheDocument();
-      // Next.js Image component transforms src to use image optimization
+      // Next.js Image component transforms src to use image optimization URL
       expect(img).toHaveAttribute("src");
-      expect(img.getAttribute("src")).toContain("/test-image.jpg");
+      const src = img.getAttribute("src");
+      // Check for either raw path or URL-encoded path (%2F = /)
+      expect(
+        src?.includes("/test-image.jpg") || src?.includes("%2Ftest-image.jpg")
+      ).toBe(true);
     });
 
     it("renders navigation buttons with correct hrefs", () => {
