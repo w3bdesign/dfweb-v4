@@ -45,7 +45,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
     >
       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
         <div className="relative w-full md:h-60">
-          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[400px]">
+          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[370px]">
             {projectimage && (
               <Image
                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
