@@ -23,6 +23,7 @@ const CVListItem = <T extends BaseItem>({
 }: CVListItemProps<T>) => (
   <div className="mb-6">
     <h3 className="font-semibold text-slate-100">
+      {/* eslint-disable-next-line react/no-unstable-nested-components */}
       {renderHeaderContent(item)}
     </h3>
     {renderSubHeaderContent?.(item)}
