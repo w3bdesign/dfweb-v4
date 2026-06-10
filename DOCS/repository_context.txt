@@ -7968,6 +7968,23 @@ vercel.json
 73: }
 ````
 
+## File: src/app/not-found.tsx
+````typescript
+ 1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+ 2: import Pill from "@/components/UI/Pill.component";
+ 3: export default function Custom404() {
+ 4:   return (
+ 5:     <main className="absolute w-full h-full">
+ 6:       <ReactMatrixAnimation />
+ 7:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+ 8:         <h1 className="text-white text-5xl m-6">Har du gått deg vill, Neo?</h1>
+ 9:         <Pill href="/" text="Returner til Matrix" />
+10:       </div>
+11:     </main>
+12:   );
+13: }
+````
+
 ## File: src/app/page.tsx
 ````typescript
  1: import dynamic from "next/dynamic";
@@ -16515,6 +16532,43 @@ vercel.json
 25: ignore-scripts=true
 ````
 
+## File: .pa11yci.json
+````json
+ 1: {
+ 2:   "defaults": {
+ 3:     "standard": "WCAG2AA",
+ 4:     "timeout": 30000,
+ 5:     "wait": 1000,
+ 6:     "viewport": {
+ 7:       "width": 1280,
+ 8:       "height": 800
+ 9:     },
+10:     "ignore": [],
+11:     "chromeLaunchConfig": {
+12:       "args": ["--no-sandbox"]
+13:     }
+14:   },
+15:   "urls": [
+16:     {
+17:       "url": "http://localhost:3000",
+18:       "screenCapture": "pa11y-reports/home.png"
+19:     },
+20:     {
+21:       "url": "http://localhost:3000/cv",
+22:       "screenCapture": "pa11y-reports/cv.png"
+23:     },
+24:     {
+25:       "url": "http://localhost:3000/prosjekter",
+26:       "screenCapture": "pa11y-reports/prosjekter.png"
+27:     },
+28:     {
+29:       "url": "http://localhost:3000/kontakt",
+30:       "screenCapture": "pa11y-reports/kontakt.png"
+31:     }
+32:   ]
+33: }
+````
+
 ## File: .semgrepignore
 ````
  1: # Auto-generated files
@@ -17070,6 +17124,72 @@ vercel.json
 54:   },
 55: };
 56: export default nextConfig;
+````
+
+## File: playwright.config.ts
+````typescript
+ 1: import { defineConfig, devices } from "@playwright/test";
+ 2: /**
+ 3:  * See https://playwright.dev/docs/test-configuration.
+ 4:  */
+ 5: export default defineConfig({
+ 6:   testDir: "./src/e2e/playwright",
+ 7:   /* Run tests in files in parallel */
+ 8:   fullyParallel: true,
+ 9:   /* Fail the build on CI if you accidentally left test.only in the source code. */
+10:   forbidOnly: !!process.env.CI,
+11:   /* Retry on CI only */
+12:   retries: process.env.CI ? 2 : 0,
+13:   /* Opt out of parallel tests on CI. */
+14:   workers: process.env.CI ? 1 : undefined,
+15:   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+16:   reporter: "html",
+17:   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+18:   use: {
+19:     /* Base URL to use in actions like `await page.goto('/')`. */
+20:     baseURL: "http://localhost:3000",
+21:     //baseURL: 'https://www.dfweb.no',
+22:     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+23:     trace: "on-first-retry",
+24:   },
+25:   /* Configure projects for major browsers */
+26:   projects: [
+27:     {
+28:       name: "chromium",
+29:       use: { ...devices["Desktop Chrome"] },
+30:     },
+31:     {
+32:       name: "firefox",
+33:       use: { ...devices["Desktop Firefox"] },
+34:     },
+35:     /* Test against mobile viewports. */
+36:     /*
+37:     {
+38:       name: "Mobile Chrome",
+39:       use: { ...devices["Pixel 5"] },
+40:     },
+41:     */
+42:     // {
+43:     //   name: 'Mobile Safari',
+44:     //   use: { ...devices['iPhone 12'] },
+45:     // },
+46:     /* Test against branded browsers. */
+47:     // {
+48:     //   name: 'Microsoft Edge',
+49:     //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+50:     // },
+51:     // {
+52:     //   name: 'Google Chrome',
+53:     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+54:     // },
+55:   ],
+56:   /* Run your local dev server before starting the tests */
+57:   // webServer: {
+58:   //   command: 'npm run start',
+59:   //   url: 'http://127.0.0.1:3000',
+60:   //   reuseExistingServer: !process.env.CI,
+61:   // },
+62: });
 ````
 
 ## File: pnpm-workspace.yaml
@@ -17807,6 +17927,236 @@ vercel.json
 77: });
 ````
 
+## File: src/__tests__/UI/Tabs.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen, fireEvent } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import "@testing-library/jest-dom";
+  8: import Tabs from "@/components/UI/Tabs.component";
+  9: // Component that throws an error immediately
+ 10: const ImmediateCrash = () => {
+ 11:   throw new Error("Immediate crash!");
+ 12: };
+ 13: const mockMotion = {
+ 14:   motion: {
+ 15:     div: (props: React.ComponentProps<"div">) => (
+ 16:       <div {...props}>{props.children}</div>
+ 17:     ),
+ 18:     button: (props: React.ComponentProps<"button">) => (
+ 19:       <button type="button" {...props}>
+ 20:         {props.children}
+ 21:       </button>
+ 22:     ),
+ 23:   },
+ 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+ 25:     <>{children}</>
+ 26:   ),
+ 27: };
+ 28: jest.mock("motion", () => mockMotion);
+ 29: const mockTabs = [
+ 30:   {
+ 31:     id: "tab1",
+ 32:     label: "Normal Tab",
+ 33:     content: <div>Normal content</div>,
+ 34:   },
+ 35:   {
+ 36:     id: "tab2",
+ 37:     label: "Crashing Tab",
+ 38:     content: <ImmediateCrash />,
+ 39:   },
+ 40: ];
+ 41: const keyboardTestTabs = [
+ 42:   {
+ 43:     id: "tab1",
+ 44:     label: "First Tab",
+ 45:     content: <div>First content</div>,
+ 46:   },
+ 47:   {
+ 48:     id: "tab2",
+ 49:     label: "Second Tab",
+ 50:     content: <div>Second content</div>,
+ 51:   },
+ 52:   {
+ 53:     id: "tab3",
+ 54:     label: "Third Tab",
+ 55:     content: <div>Third content</div>,
+ 56:   },
+ 57: ];
+ 58: describe("Tabs", () => {
+ 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
+ 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
+ 61:   it("renders tabs with correct layout in vertical orientation", () => {
+ 62:     // Arrange
+ 63:     const orientation = undefined; // default vertical orientation
+ 64:     // Act
+ 65:     renderTabs(orientation);
+ 66:     const tabList = screen.getByRole("tablist");
+ 67:     // Assert
+ 68:     expect(tabList).toHaveClass("sm:flex-col");
+ 69:   });
+ 70:   it("renders tabs with correct layout in horizontal orientation", () => {
+ 71:     // Arrange
+ 72:     const orientation = "horizontal";
+ 73:     // Act
+ 74:     renderTabs(orientation);
+ 75:     const tabList = screen.getByRole("tablist");
+ 76:     // Assert
+ 77:     expect(tabList).toHaveClass("flex-row");
+ 78:     expect(tabList).not.toHaveClass("sm:flex-col");
+ 79:   });
+ 80:   it("applies correct ARIA attributes to tabs", () => {
+ 81:     // Arrange
+ 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
+ 83:       tab,
+ 84:       isSelected: index === 0,
+ 85:       controlsId: `tabpanel-${tab.id}`,
+ 86:     }));
+ 87:     // Act
+ 88:     renderTabs();
+ 89:     // Assert
+ 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
+ 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
+ 92:       expect(tabElement).toHaveAttribute(
+ 93:         "aria-selected",
+ 94:         isSelected.toString(),
+ 95:       );
+ 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
+ 97:     });
+ 98:   });
+ 99:   it("switches tab content when clicking tabs", () => {
+100:     // Arrange
+101:     renderTabs();
+102:     const initialContent = "Normal content";
+103:     // Act & Assert - Initial state
+104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
+105:     // Act & Assert - Click handling
+106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+107:     expect(() => {
+108:       fireEvent.click(crashingTab);
+109:       render(<ImmediateCrash />);
+110:     }).toThrow("Immediate crash!");
+111:   });
+112:   it("applies correct border styles to tabs", () => {
+113:     // Arrange
+114:     renderTabs();
+115:     // Act
+116:     const tabs = screen.getAllByRole("tab");
+117:     // Assert
+118:     expect(tabs[0]).not.toHaveClass("border-t");
+119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+120:   });
+121:   it("renders tab panels with correct attributes", () => {
+122:     // Arrange
+123:     const expectedAttributes = {
+124:       id: "tabpanel-tab1",
+125:       labelledBy: "tab-tab1",
+126:       className: "px-8",
+127:     };
+128:     // Act
+129:     renderTabs();
+130:     const activePanel = screen.getByRole("tabpanel");
+131:     // Assert
+132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
+133:     expect(activePanel).toHaveAttribute(
+134:       "aria-labelledby",
+135:       expectedAttributes.labelledBy,
+136:     );
+137:     expect(activePanel).toHaveClass(expectedAttributes.className);
+138:   });
+139: });
+140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
+141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
+142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
+143:   /** Helper: press keys from a starting tab and assert focus lands on expected index */
+144:   async function pressKeysAndExpectFocus(
+145:     orientation: "horizontal" | "vertical",
+146:     startIndex: number,
+147:     keys: string[],
+148:     expectedFocusIndex: number,
+149:   ) {
+150:     // Arrange
+151:     const user = userEvent.setup();
+152:     renderKeyboardTabs(orientation);
+153:     const tabs = screen.getAllByRole("tab");
+154:     // Act
+155:     if (startIndex > 0) fireEvent.click(tabs[startIndex]);
+156:     tabs[startIndex].focus();
+157:     for (const key of keys) {
+158:       await user.keyboard(key);
+159:     }
+160:     // Assert
+161:     expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
+162:     expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
+163:   }
+164:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
+165:     // Arrange
+166:     renderKeyboardTabs();
+167:     // Act
+168:     const tabs = screen.getAllByRole("tab");
+169:     // Assert
+170:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
+171:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
+172:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
+173:   });
+174:   it("ArrowDown moves to next tab in vertical orientation", async () => {
+175:     // Arrange, Act & Assert
+176:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
+177:   });
+178:   it("ArrowUp moves to previous tab in vertical orientation", async () => {
+179:     // Arrange, Act & Assert
+180:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
+181:   });
+182:   it("ArrowRight moves to next tab in horizontal orientation", async () => {
+183:     // Arrange, Act & Assert
+184:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
+185:   });
+186:   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
+187:     // Arrange, Act & Assert
+188:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
+189:   });
+190:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
+191:     // Arrange, Act & Assert
+192:     await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
+193:   });
+194:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
+195:     // Arrange, Act & Assert
+196:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
+197:   });
+198:   it("Home key moves focus to first tab from any position", async () => {
+199:     // Arrange, Act & Assert
+200:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
+201:   });
+202:   it("End key moves focus to last tab", async () => {
+203:     // Arrange, Act & Assert
+204:     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
+205:   });
+206:   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
+207:     // Arrange & Act
+208:     renderKeyboardTabs("vertical");
+209:     // Assert
+210:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+211:   });
+212:   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
+213:     // Arrange & Act
+214:     renderKeyboardTabs("horizontal");
+215:     // Assert
+216:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+217:   });
+218:   it("tab panel is focusable with tabIndex=0", () => {
+219:     // Arrange
+220:     renderKeyboardTabs();
+221:     // Act
+222:     const tabpanel = screen.getByRole("tabpanel");
+223:     // Assert
+224:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
+225:   });
+226: });
+````
+
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -18025,23 +18375,6 @@ vercel.json
 6:     </main>
 7:   );
 8: }
-````
-
-## File: src/app/not-found.tsx
-````typescript
- 1: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
- 2: import Pill from "@/components/UI/Pill.component";
- 3: export default function Custom404() {
- 4:   return (
- 5:     <main className="absolute w-full h-full">
- 6:       <ReactMatrixAnimation />
- 7:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
- 8:         <h1 className="text-white text-5xl m-6">Har du gått deg vill, Neo?</h1>
- 9:         <Pill href="/" text="Returner til Matrix" />
-10:       </div>
-11:     </main>
-12:   );
-13: }
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -18385,130 +18718,225 @@ vercel.json
 153: export default MobileMenu;
 ````
 
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
+## File: src/components/UI/Tabs.component.tsx
 ````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Image from "next/image";
- 4: import Button from "@/components/UI/Button.component";
- 5: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 6: import { urlFor } from "@/lib/sanity/client";
- 7: import type { Project } from "@/types/sanity.types";
- 8: interface ProsjektCardProps extends Project {
- 9:   /** Stagger delay in seconds for coordinated group animations */
-10:   staggerDelay?: number;
-11: }
-12: /**
-13:  * Renders a card displaying information about a single project.
-14:  * Uses the Project type definition from Sanity types.
-15:  *
-16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-17:  * @param {string} props.name - The name of the project.
-18:  * @param {string} [props.description] - A brief description of the project (optional).
-19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-24:  * @returns {JSX.Element} The rendered ProsjektCard component.
-25:  */
-26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-27:   name,
-28:   description,
-29:   subdescription,
-30:   projectimage,
-31:   urlwww,
-32:   urlgithub,
-33:   staggerDelay = 0,
-34: }) => {
-35:   return (
-36:     <div
-37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
-38:       data-testid="project-card"
-39:     >
-40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-41:         <div className="relative w-full md:h-60">
-42:           <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
-43:             {projectimage && (
-44:               <Image
-45:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
-46:                 width={600}
-47:                 height={400}
-48:                 src={urlFor(projectimage)
-49:                   .width(600)
-50:                   .fit("max")
-51:                   .quality(100)
-52:                   .auto("format")
-53:                   .url()}
-54:                 alt={`Skjermbilde av prosjektet ${name}`}
-55:                 sizes="(max-width: 768px) 100vw, 600px"
-56:               />
-57:             )}
-58:           </div>
-59:         </div>
-60:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-61:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-62:             {name}
-63:           </h2>
-64:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
-65:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-66:             {subdescription}
-67:           </p>
-68:           <div className="flex justify-center mt-4">
-69:             {urlwww && urlwww.length > 0 && (
-70:               <Button href={urlwww?.[0]?.url} renderAs="a">
-71:                 Besøk
-72:               </Button>
-73:             )}
-74:             {urlgithub && urlgithub.length > 0 && (
-75:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-76:                 GitHub
-77:               </Button>
-78:             )}
-79:           </div>
-80:         </div>
-81:       </BounceInScroll>
-82:     </div>
-83:   );
-84: };
-85: export default ProsjektCard;
-````
-
-## File: .pa11yci.json
-````json
- 1: {
- 2:   "defaults": {
- 3:     "standard": "WCAG2AA",
- 4:     "timeout": 30000,
- 5:     "wait": 1000,
- 6:     "viewport": {
- 7:       "width": 1280,
- 8:       "height": 800
- 9:     },
-10:     "ignore": [],
-11:     "chromeLaunchConfig": {
-12:       "args": ["--no-sandbox"]
-13:     }
-14:   },
-15:   "urls": [
-16:     {
-17:       "url": "http://localhost:3000",
-18:       "screenCapture": "pa11y-reports/home.png"
-19:     },
-20:     {
-21:       "url": "http://localhost:3000/cv",
-22:       "screenCapture": "pa11y-reports/cv.png"
-23:     },
-24:     {
-25:       "url": "http://localhost:3000/prosjekter",
-26:       "screenCapture": "pa11y-reports/prosjekter.png"
-27:     },
-28:     {
-29:       "url": "http://localhost:3000/kontakt",
-30:       "screenCapture": "pa11y-reports/kontakt.png"
-31:     }
-32:   ]
-33: }
+  1: "use client";
+  2: import React, { useState, useRef, useCallback } from "react";
+  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
+  4: import * as m from "motion/react-m";
+  5: type TabOrientation = "horizontal" | "vertical";
+  6: interface Tab {
+  7:   id: string;
+  8:   label: string;
+  9:   content: React.ReactNode;
+ 10: }
+ 11: interface TabsProps {
+ 12:   tabs: Tab[];
+ 13:   orientation?: TabOrientation;
+ 14: }
+ 15: interface TabButtonProps {
+ 16:   tab: Tab;
+ 17:   isActive: boolean;
+ 18:   isVertical: boolean;
+ 19:   index: number;
+ 20:   totalTabs: number;
+ 21:   onClick: () => void;
+ 22:   tabIndex: number;
+ 23:   buttonRef: (el: HTMLButtonElement | null) => void;
+ 24:   onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+ 25: }
+ 26: const getTabButtonClassName = (
+ 27:   isActive: boolean,
+ 28:   isVertical: boolean,
+ 29:   index: number,
+ 30:   totalTabs: number,
+ 31: ) => {
+ 32:   const baseClasses =
+ 33:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
+ 34:   const activeClasses = isActive
+ 35:     ? "text-white"
+ 36:     : "text-gray-300 hover:text-white hover:bg-gray-600";
+ 37:   const orientationClasses = isVertical
+ 38:     ? "w-full text-left"
+ 39:     : "grow text-center";
+ 40:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
+ 41:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
+ 42: };
+ 43: const TabButton: React.FC<TabButtonProps> = ({
+ 44:   tab,
+ 45:   isActive,
+ 46:   isVertical,
+ 47:   index,
+ 48:   totalTabs,
+ 49:   onClick,
+ 50:   tabIndex,
+ 51:   buttonRef,
+ 52:   onKeyDown,
+ 53: }) => (
+ 54:   <m.button
+ 55:     key={tab.id}
+ 56:     ref={buttonRef}
+ 57:     onClick={onClick}
+ 58:     onKeyDown={onKeyDown}
+ 59:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
+ 60:     role="tab"
+ 61:     aria-selected={isActive}
+ 62:     aria-controls={`tabpanel-${tab.id}`}
+ 63:     id={`tab-${tab.id}`}
+ 64:     tabIndex={tabIndex}
+ 65:   >
+ 66:     {isActive && (
+ 67:       <m.div
+ 68:         layoutId="active-tab"
+ 69:         className={`absolute ${
+ 70:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
+ 71:         } bg-[var(--matrix-dark)]`}
+ 72:         initial={false}
+ 73:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+ 74:       />
+ 75:     )}
+ 76:     <span className="relative z-10">{tab.label}</span>
+ 77:   </m.button>
+ 78: );
+ 79: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
+ 80:   tab,
+ 81:   isActive,
+ 82: }) => {
+ 83:   if (!isActive) return null;
+ 84:   return (
+ 85:     <m.div
+ 86:       key={tab.id}
+ 87:       role="tabpanel"
+ 88:       id={`tabpanel-${tab.id}`}
+ 89:       aria-labelledby={`tab-${tab.id}`}
+ 90:       className="px-8"
+ 91:       tabIndex={0}
+ 92:       initial={{ opacity: 0, y: 20 }}
+ 93:       animate={{ opacity: 1, y: 0 }}
+ 94:       exit={{ opacity: 0, y: -20 }}
+ 95:       transition={{ duration: 0.3 }}
+ 96:     >
+ 97:       {tab.content}
+ 98:     </m.div>
+ 99:   );
+100: };
+101: /**
+102:  * Renders a set of tabs with content.
+103:  * Implements WAI-ARIA APG Tabs Pattern keyboard navigation:
+104:  * - Arrow Left/Up: Move to previous tab
+105:  * - Arrow Right/Down: Move to next tab
+106:  * - Home: Move to first tab
+107:  * - End: Move to last tab
+108:  *
+109:  * @param {TabsProps} props - The props object containing the tabs and orientation.
+110:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
+111:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
+112:  * @return {JSX.Element} The rendered Tabs component.
+113:  */
+114: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
+115:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
+116:   const isVertical = orientation === "vertical";
+117:   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+118:   const setTabRef = useCallback(
+119:     (index: number) => (el: HTMLButtonElement | null) => {
+120:       tabRefs.current[index] = el;
+121:     },
+122:     [],
+123:   );
+124:   const focusTab = useCallback(
+125:     (index: number) => {
+126:       const tab = tabs[index];
+127:       if (tab) {
+128:         setActiveTab(tab.id);
+129:         tabRefs.current[index]?.focus();
+130:       }
+131:     },
+132:     [tabs],
+133:   );
+134:   const handleKeyDown = useCallback(
+135:     (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+136:       const prevKey = isVertical ? "ArrowUp" : "ArrowLeft";
+137:       const nextKey = isVertical ? "ArrowDown" : "ArrowRight";
+138:       let newIndex: number | null = null;
+139:       switch (e.key) {
+140:         case nextKey:
+141:           e.preventDefault();
+142:           newIndex = (index + 1) % tabs.length;
+143:           break;
+144:         case prevKey:
+145:           e.preventDefault();
+146:           newIndex = (index - 1 + tabs.length) % tabs.length;
+147:           break;
+148:         case "Home":
+149:           e.preventDefault();
+150:           newIndex = 0;
+151:           break;
+152:         case "End":
+153:           e.preventDefault();
+154:           newIndex = tabs.length - 1;
+155:           break;
+156:       }
+157:       if (newIndex !== null) {
+158:         focusTab(newIndex);
+159:       }
+160:     },
+161:     [tabs.length, isVertical, focusTab],
+162:   );
+163:   return (
+164:     <LazyMotion features={domMax}>
+165:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
+166:         <div
+167:           className={`flex ${
+168:             isVertical ? "flex-col sm:flex-row" : "flex-col"
+169:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
+170:         >
+171:           <div
+172:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
+173:               isVertical ? "sm:h-fit" : ""
+174:             }`}
+175:           >
+176:             <div
+177:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
+178:               role="tablist"
+179:               aria-orientation={isVertical ? "vertical" : "horizontal"}
+180:             >
+181:               {tabs.map((tab, index) => (
+182:                 <TabButton
+183:                   key={tab.id}
+184:                   tab={tab}
+185:                   isActive={activeTab === tab.id}
+186:                   isVertical={isVertical}
+187:                   index={index}
+188:                   totalTabs={tabs.length}
+189:                   onClick={() => setActiveTab(tab.id)}
+190:                   tabIndex={activeTab === tab.id ? 0 : -1}
+191:                   buttonRef={setTabRef(index)}
+192:                   onKeyDown={(e) => handleKeyDown(e, index)}
+193:                 />
+194:               ))}
+195:             </div>
+196:           </div>
+197:           <div
+198:             className={`${
+199:               isVertical ? "sm:w-3/4 w-full" : "w-full"
+200:             } bg-gray-800 overflow-y-auto scrollbar-gutter-stable`}
+201:           >
+202:             <AnimatePresence mode="wait">
+203:               {tabs.map((tab) => (
+204:                 <TabPanel
+205:                   key={tab.id}
+206:                   tab={tab}
+207:                   isActive={activeTab === tab.id}
+208:                 />
+209:               ))}
+210:             </AnimatePresence>
+211:           </div>
+212:         </div>
+213:       </div>
+214:     </LazyMotion>
+215:   );
+216: };
+217: export default Tabs;
 ````
 
 ## File: package.json
@@ -18611,72 +19039,6 @@ vercel.json
 96:     }
 97:   }
 98: }
-````
-
-## File: playwright.config.ts
-````typescript
- 1: import { defineConfig, devices } from "@playwright/test";
- 2: /**
- 3:  * See https://playwright.dev/docs/test-configuration.
- 4:  */
- 5: export default defineConfig({
- 6:   testDir: "./src/e2e/playwright",
- 7:   /* Run tests in files in parallel */
- 8:   fullyParallel: true,
- 9:   /* Fail the build on CI if you accidentally left test.only in the source code. */
-10:   forbidOnly: !!process.env.CI,
-11:   /* Retry on CI only */
-12:   retries: process.env.CI ? 2 : 0,
-13:   /* Opt out of parallel tests on CI. */
-14:   workers: process.env.CI ? 1 : undefined,
-15:   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-16:   reporter: "html",
-17:   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-18:   use: {
-19:     /* Base URL to use in actions like `await page.goto('/')`. */
-20:     baseURL: "http://localhost:3000",
-21:     //baseURL: 'https://www.dfweb.no',
-22:     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-23:     trace: "on-first-retry",
-24:   },
-25:   /* Configure projects for major browsers */
-26:   projects: [
-27:     {
-28:       name: "chromium",
-29:       use: { ...devices["Desktop Chrome"] },
-30:     },
-31:     {
-32:       name: "firefox",
-33:       use: { ...devices["Desktop Firefox"] },
-34:     },
-35:     /* Test against mobile viewports. */
-36:     /*
-37:     {
-38:       name: "Mobile Chrome",
-39:       use: { ...devices["Pixel 5"] },
-40:     },
-41:     */
-42:     // {
-43:     //   name: 'Mobile Safari',
-44:     //   use: { ...devices['iPhone 12'] },
-45:     // },
-46:     /* Test against branded browsers. */
-47:     // {
-48:     //   name: 'Microsoft Edge',
-49:     //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-50:     // },
-51:     // {
-52:     //   name: 'Google Chrome',
-53:     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-54:     // },
-55:   ],
-56:   /* Run your local dev server before starting the tests */
-57:   // webServer: {
-58:   //   command: 'npm run start',
-59:   //   url: 'http://127.0.0.1:3000',
-60:   //   reuseExistingServer: !process.env.CI,
-61:   // },
-62: });
 ````
 
 ## File: commit/providers/__init__.py
@@ -18936,236 +19298,6 @@ vercel.json
 127: });
 ````
 
-## File: src/__tests__/UI/Tabs.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen, fireEvent } from "@testing-library/react";
-  6: import userEvent from "@testing-library/user-event";
-  7: import "@testing-library/jest-dom";
-  8: import Tabs from "@/components/UI/Tabs.component";
-  9: // Component that throws an error immediately
- 10: const ImmediateCrash = () => {
- 11:   throw new Error("Immediate crash!");
- 12: };
- 13: const mockMotion = {
- 14:   motion: {
- 15:     div: (props: React.ComponentProps<"div">) => (
- 16:       <div {...props}>{props.children}</div>
- 17:     ),
- 18:     button: (props: React.ComponentProps<"button">) => (
- 19:       <button type="button" {...props}>
- 20:         {props.children}
- 21:       </button>
- 22:     ),
- 23:   },
- 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
- 25:     <>{children}</>
- 26:   ),
- 27: };
- 28: jest.mock("motion", () => mockMotion);
- 29: const mockTabs = [
- 30:   {
- 31:     id: "tab1",
- 32:     label: "Normal Tab",
- 33:     content: <div>Normal content</div>,
- 34:   },
- 35:   {
- 36:     id: "tab2",
- 37:     label: "Crashing Tab",
- 38:     content: <ImmediateCrash />,
- 39:   },
- 40: ];
- 41: const keyboardTestTabs = [
- 42:   {
- 43:     id: "tab1",
- 44:     label: "First Tab",
- 45:     content: <div>First content</div>,
- 46:   },
- 47:   {
- 48:     id: "tab2",
- 49:     label: "Second Tab",
- 50:     content: <div>Second content</div>,
- 51:   },
- 52:   {
- 53:     id: "tab3",
- 54:     label: "Third Tab",
- 55:     content: <div>Third content</div>,
- 56:   },
- 57: ];
- 58: describe("Tabs", () => {
- 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
- 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
- 61:   it("renders tabs with correct layout in vertical orientation", () => {
- 62:     // Arrange
- 63:     const orientation = undefined; // default vertical orientation
- 64:     // Act
- 65:     renderTabs(orientation);
- 66:     const tabList = screen.getByRole("tablist");
- 67:     // Assert
- 68:     expect(tabList).toHaveClass("sm:flex-col");
- 69:   });
- 70:   it("renders tabs with correct layout in horizontal orientation", () => {
- 71:     // Arrange
- 72:     const orientation = "horizontal";
- 73:     // Act
- 74:     renderTabs(orientation);
- 75:     const tabList = screen.getByRole("tablist");
- 76:     // Assert
- 77:     expect(tabList).toHaveClass("flex-row");
- 78:     expect(tabList).not.toHaveClass("sm:flex-col");
- 79:   });
- 80:   it("applies correct ARIA attributes to tabs", () => {
- 81:     // Arrange
- 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
- 83:       tab,
- 84:       isSelected: index === 0,
- 85:       controlsId: `tabpanel-${tab.id}`,
- 86:     }));
- 87:     // Act
- 88:     renderTabs();
- 89:     // Assert
- 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
- 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
- 92:       expect(tabElement).toHaveAttribute(
- 93:         "aria-selected",
- 94:         isSelected.toString(),
- 95:       );
- 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
- 97:     });
- 98:   });
- 99:   it("switches tab content when clicking tabs", () => {
-100:     // Arrange
-101:     renderTabs();
-102:     const initialContent = "Normal content";
-103:     // Act & Assert - Initial state
-104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
-105:     // Act & Assert - Click handling
-106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
-107:     expect(() => {
-108:       fireEvent.click(crashingTab);
-109:       render(<ImmediateCrash />);
-110:     }).toThrow("Immediate crash!");
-111:   });
-112:   it("applies correct border styles to tabs", () => {
-113:     // Arrange
-114:     renderTabs();
-115:     // Act
-116:     const tabs = screen.getAllByRole("tab");
-117:     // Assert
-118:     expect(tabs[0]).not.toHaveClass("border-t");
-119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
-120:   });
-121:   it("renders tab panels with correct attributes", () => {
-122:     // Arrange
-123:     const expectedAttributes = {
-124:       id: "tabpanel-tab1",
-125:       labelledBy: "tab-tab1",
-126:       className: "px-8",
-127:     };
-128:     // Act
-129:     renderTabs();
-130:     const activePanel = screen.getByRole("tabpanel");
-131:     // Assert
-132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
-133:     expect(activePanel).toHaveAttribute(
-134:       "aria-labelledby",
-135:       expectedAttributes.labelledBy,
-136:     );
-137:     expect(activePanel).toHaveClass(expectedAttributes.className);
-138:   });
-139: });
-140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
-141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
-142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
-143:   /** Helper: press keys from a starting tab and assert focus lands on expected index */
-144:   async function pressKeysAndExpectFocus(
-145:     orientation: "horizontal" | "vertical",
-146:     startIndex: number,
-147:     keys: string[],
-148:     expectedFocusIndex: number,
-149:   ) {
-150:     // Arrange
-151:     const user = userEvent.setup();
-152:     renderKeyboardTabs(orientation);
-153:     const tabs = screen.getAllByRole("tab");
-154:     // Act
-155:     if (startIndex > 0) fireEvent.click(tabs[startIndex]);
-156:     tabs[startIndex].focus();
-157:     for (const key of keys) {
-158:       await user.keyboard(key);
-159:     }
-160:     // Assert
-161:     expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
-162:     expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
-163:   }
-164:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
-165:     // Arrange
-166:     renderKeyboardTabs();
-167:     // Act
-168:     const tabs = screen.getAllByRole("tab");
-169:     // Assert
-170:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
-171:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
-172:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
-173:   });
-174:   it("ArrowDown moves to next tab in vertical orientation", async () => {
-175:     // Arrange, Act & Assert
-176:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
-177:   });
-178:   it("ArrowUp moves to previous tab in vertical orientation", async () => {
-179:     // Arrange, Act & Assert
-180:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
-181:   });
-182:   it("ArrowRight moves to next tab in horizontal orientation", async () => {
-183:     // Arrange, Act & Assert
-184:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
-185:   });
-186:   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
-187:     // Arrange, Act & Assert
-188:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
-189:   });
-190:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
-191:     // Arrange, Act & Assert
-192:     await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
-193:   });
-194:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
-195:     // Arrange, Act & Assert
-196:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
-197:   });
-198:   it("Home key moves focus to first tab from any position", async () => {
-199:     // Arrange, Act & Assert
-200:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
-201:   });
-202:   it("End key moves focus to last tab", async () => {
-203:     // Arrange, Act & Assert
-204:     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
-205:   });
-206:   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
-207:     // Arrange & Act
-208:     renderKeyboardTabs("vertical");
-209:     // Assert
-210:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
-211:   });
-212:   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
-213:     // Arrange & Act
-214:     renderKeyboardTabs("horizontal");
-215:     // Assert
-216:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
-217:   });
-218:   it("tab panel is focusable with tabIndex=0", () => {
-219:     // Arrange
-220:     renderKeyboardTabs();
-221:     // Act
-222:     const tabpanel = screen.getByRole("tabpanel");
-223:     // Assert
-224:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
-225:   });
-226: });
-````
-
 ## File: src/app/cv/error.tsx
 ````typescript
  1: "use client";
@@ -19274,227 +19406,6 @@ vercel.json
 32:     </html>
 33:   );
 34: }
-````
-
-## File: src/components/UI/Tabs.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState, useRef, useCallback } from "react";
-  3: import { AnimatePresence, LazyMotion, domMax } from "motion/react";
-  4: import * as m from "motion/react-m";
-  5: type TabOrientation = "horizontal" | "vertical";
-  6: interface Tab {
-  7:   id: string;
-  8:   label: string;
-  9:   content: React.ReactNode;
- 10: }
- 11: interface TabsProps {
- 12:   tabs: Tab[];
- 13:   orientation?: TabOrientation;
- 14: }
- 15: interface TabButtonProps {
- 16:   tab: Tab;
- 17:   isActive: boolean;
- 18:   isVertical: boolean;
- 19:   index: number;
- 20:   totalTabs: number;
- 21:   onClick: () => void;
- 22:   tabIndex: number;
- 23:   buttonRef: (el: HTMLButtonElement | null) => void;
- 24:   onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
- 25: }
- 26: const getTabButtonClassName = (
- 27:   isActive: boolean,
- 28:   isVertical: boolean,
- 29:   index: number,
- 30:   totalTabs: number,
- 31: ) => {
- 32:   const baseClasses =
- 33:     "px-4 py-3 text-sm font-medium relative cursor-pointer transition-colors duration-200";
- 34:   const activeClasses = isActive
- 35:     ? "text-white"
- 36:     : "text-gray-300 hover:text-white hover:bg-gray-600";
- 37:   const orientationClasses = isVertical
- 38:     ? "w-full text-left"
- 39:     : "grow text-center";
- 40:   const borderClasses = index !== 0 ? "border-t border-gray-600" : "";
- 41:   return `${baseClasses} ${activeClasses} ${orientationClasses} ${borderClasses}`;
- 42: };
- 43: const TabButton: React.FC<TabButtonProps> = ({
- 44:   tab,
- 45:   isActive,
- 46:   isVertical,
- 47:   index,
- 48:   totalTabs,
- 49:   onClick,
- 50:   tabIndex,
- 51:   buttonRef,
- 52:   onKeyDown,
- 53: }) => (
- 54:   <m.button
- 55:     key={tab.id}
- 56:     ref={buttonRef}
- 57:     onClick={onClick}
- 58:     onKeyDown={onKeyDown}
- 59:     className={getTabButtonClassName(isActive, isVertical, index, totalTabs)}
- 60:     role="tab"
- 61:     aria-selected={isActive}
- 62:     aria-controls={`tabpanel-${tab.id}`}
- 63:     id={`tab-${tab.id}`}
- 64:     tabIndex={tabIndex}
- 65:   >
- 66:     {isActive && (
- 67:       <m.div
- 68:         layoutId="active-tab"
- 69:         className={`absolute ${
- 70:           isVertical ? "inset-y-0 left-0 w-1" : "inset-x-0 bottom-0 h-1"
- 71:         } bg-[var(--matrix-dark)]`}
- 72:         initial={false}
- 73:         transition={{ type: "spring", stiffness: 500, damping: 30 }}
- 74:       />
- 75:     )}
- 76:     <span className="relative z-10">{tab.label}</span>
- 77:   </m.button>
- 78: );
- 79: const TabPanel: React.FC<{ tab: Tab; isActive: boolean }> = ({
- 80:   tab,
- 81:   isActive,
- 82: }) => {
- 83:   if (!isActive) return null;
- 84:   return (
- 85:     <m.div
- 86:       key={tab.id}
- 87:       role="tabpanel"
- 88:       id={`tabpanel-${tab.id}`}
- 89:       aria-labelledby={`tab-${tab.id}`}
- 90:       className="px-8"
- 91:       tabIndex={0}
- 92:       initial={{ opacity: 0, y: 20 }}
- 93:       animate={{ opacity: 1, y: 0 }}
- 94:       exit={{ opacity: 0, y: -20 }}
- 95:       transition={{ duration: 0.3 }}
- 96:     >
- 97:       {tab.content}
- 98:     </m.div>
- 99:   );
-100: };
-101: /**
-102:  * Renders a set of tabs with content.
-103:  * Implements WAI-ARIA APG Tabs Pattern keyboard navigation:
-104:  * - Arrow Left/Up: Move to previous tab
-105:  * - Arrow Right/Down: Move to next tab
-106:  * - Home: Move to first tab
-107:  * - End: Move to last tab
-108:  *
-109:  * @param {TabsProps} props - The props object containing the tabs and orientation.
-110:  * @param {Tab[]} props.tabs - An array of Tab objects representing the tabs.
-111:  * @param {string} [props.orientation="vertical"] - The orientation of the tabs. Defaults to "vertical".
-112:  * @return {JSX.Element} The rendered Tabs component.
-113:  */
-114: const Tabs: React.FC<TabsProps> = ({ tabs, orientation = "vertical" }) => {
-115:   const [activeTab, setActiveTab] = useState(() => tabs[0]?.id ?? "");
-116:   const isVertical = orientation === "vertical";
-117:   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-118:   const setTabRef = useCallback(
-119:     (index: number) => (el: HTMLButtonElement | null) => {
-120:       tabRefs.current[index] = el;
-121:     },
-122:     [],
-123:   );
-124:   const focusTab = useCallback(
-125:     (index: number) => {
-126:       const tab = tabs[index];
-127:       if (tab) {
-128:         setActiveTab(tab.id);
-129:         tabRefs.current[index]?.focus();
-130:       }
-131:     },
-132:     [tabs],
-133:   );
-134:   const handleKeyDown = useCallback(
-135:     (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-136:       const prevKey = isVertical ? "ArrowUp" : "ArrowLeft";
-137:       const nextKey = isVertical ? "ArrowDown" : "ArrowRight";
-138:       let newIndex: number | null = null;
-139:       switch (e.key) {
-140:         case nextKey:
-141:           e.preventDefault();
-142:           newIndex = (index + 1) % tabs.length;
-143:           break;
-144:         case prevKey:
-145:           e.preventDefault();
-146:           newIndex = (index - 1 + tabs.length) % tabs.length;
-147:           break;
-148:         case "Home":
-149:           e.preventDefault();
-150:           newIndex = 0;
-151:           break;
-152:         case "End":
-153:           e.preventDefault();
-154:           newIndex = tabs.length - 1;
-155:           break;
-156:       }
-157:       if (newIndex !== null) {
-158:         focusTab(newIndex);
-159:       }
-160:     },
-161:     [tabs.length, isVertical, focusTab],
-162:   );
-163:   return (
-164:     <LazyMotion features={domMax}>
-165:       <div className="bg-gray-800 p-6 rounded-lg md:min-w-[900px] md:max-w-[1000px]">
-166:         <div
-167:           className={`flex ${
-168:             isVertical ? "flex-col sm:flex-row" : "flex-col"
-169:           } bg-gray-800 rounded-lg h-[28rem] mt-4`}
-170:         >
-171:           <div
-172:             className={`${isVertical ? "sm:w-1/4 w-full" : "w-full"} bg-gray-700 ${
-173:               isVertical ? "sm:h-fit" : ""
-174:             }`}
-175:           >
-176:             <div
-177:               className={`flex ${isVertical ? "flex-row sm:flex-col" : "flex-row"}`}
-178:               role="tablist"
-179:               aria-orientation={isVertical ? "vertical" : "horizontal"}
-180:             >
-181:               {tabs.map((tab, index) => (
-182:                 <TabButton
-183:                   key={tab.id}
-184:                   tab={tab}
-185:                   isActive={activeTab === tab.id}
-186:                   isVertical={isVertical}
-187:                   index={index}
-188:                   totalTabs={tabs.length}
-189:                   onClick={() => setActiveTab(tab.id)}
-190:                   tabIndex={activeTab === tab.id ? 0 : -1}
-191:                   buttonRef={setTabRef(index)}
-192:                   onKeyDown={(e) => handleKeyDown(e, index)}
-193:                 />
-194:               ))}
-195:             </div>
-196:           </div>
-197:           <div
-198:             className={`${
-199:               isVertical ? "sm:w-3/4 w-full" : "w-full"
-200:             } bg-gray-800 overflow-y-auto scrollbar-gutter-stable`}
-201:           >
-202:             <AnimatePresence mode="wait">
-203:               {tabs.map((tab) => (
-204:                 <TabPanel
-205:                   key={tab.id}
-206:                   tab={tab}
-207:                   isActive={activeTab === tab.id}
-208:                 />
-209:               ))}
-210:             </AnimatePresence>
-211:           </div>
-212:         </div>
-213:       </div>
-214:     </LazyMotion>
-215:   );
-216: };
-217: export default Tabs;
 ````
 
 ## File: commit/commit_analyzer.py
@@ -20227,6 +20138,60 @@ vercel.json
 126: });
 ````
 
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: const keyboardNavigationCases = [
+ 3:   { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
+ 4:   { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
+ 5:   { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
+ 6:   { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
+ 7:   { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
+ 8: ] as const;
+ 9: test.describe("CV page", () => {
+10:   test.beforeEach(async ({ page }) => {
+11:     await page.goto("/cv");
+12:     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
+13:   });
+14:   test("loads and displays main content correctly", async ({ page }) => {
+15:     await expect(
+16:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+17:     ).toBeVisible();
+18:   });
+19:   test("navigates to and displays Experience section correctly", async ({
+20:     page,
+21:   }) => {
+22:     await page.getByRole("tab", { name: "Erfaring" }).click();
+23:     await expect(
+24:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+25:     ).toBeVisible();
+26:   });
+27:   test("displays Education section correctly", async ({ page }) => {
+28:     await page.getByRole("tab", { name: "Utdanning" }).click();
+29:     await expect(page.getByLabel("Utdanning")).toContainText(
+30:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+31:     );
+32:   });
+33:   for (const { name, start, key, expected } of keyboardNavigationCases) {
+34:     test(name, async ({ page }) => {
+35:       const startTab = page.getByRole("tab", { name: start });
+36:       await startTab.click();
+37:       await page.keyboard.press(key);
+38:       const expectedTab = page.getByRole("tab", { name: expected });
+39:       await expect(expectedTab).toBeFocused();
+40:       await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+41:     });
+42:   }
+43:   test("tablist has aria-orientation=vertical", async ({ page }) => {
+44:     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+45:   });
+46:   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
+47:     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
+48:     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
+49:   });
+50: });
+````
+
 ## File: commit/providers/factory.py
 ````python
  1: """Provider factory with auto-detection and explicit selection support.
@@ -20382,60 +20347,6 @@ vercel.json
 53:         return response.choices[0].message.content.strip()
 ````
 
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: const keyboardNavigationCases = [
- 3:   { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
- 4:   { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
- 5:   { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
- 6:   { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
- 7:   { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
- 8: ] as const;
- 9: test.describe("CV page", () => {
-10:   test.beforeEach(async ({ page }) => {
-11:     await page.goto("/cv");
-12:     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
-13:   });
-14:   test("loads and displays main content correctly", async ({ page }) => {
-15:     await expect(
-16:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
-17:     ).toBeVisible();
-18:   });
-19:   test("navigates to and displays Experience section correctly", async ({
-20:     page,
-21:   }) => {
-22:     await page.getByRole("tab", { name: "Erfaring" }).click();
-23:     await expect(
-24:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
-25:     ).toBeVisible();
-26:   });
-27:   test("displays Education section correctly", async ({ page }) => {
-28:     await page.getByRole("tab", { name: "Utdanning" }).click();
-29:     await expect(page.getByLabel("Utdanning")).toContainText(
-30:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
-31:     );
-32:   });
-33:   for (const { name, start, key, expected } of keyboardNavigationCases) {
-34:     test(name, async ({ page }) => {
-35:       const startTab = page.getByRole("tab", { name: start });
-36:       await startTab.click();
-37:       await page.keyboard.press(key);
-38:       const expectedTab = page.getByRole("tab", { name: expected });
-39:       await expect(expectedTab).toBeFocused();
-40:       await expect(expectedTab).toHaveAttribute("aria-selected", "true");
-41:     });
-42:   }
-43:   test("tablist has aria-orientation=vertical", async ({ page }) => {
-44:     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
-45:   });
-46:   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
-47:     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
-48:     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
-49:   });
-50: });
-````
-
 ## File: commit/providers/base.py
 ````python
  1: """Base provider abstract class defining the interface all LLM providers must implement."""
@@ -20473,6 +20384,96 @@ vercel.json
 33:         -------
 34:             The default model identifier string.
 35:         """
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Image from "next/image";
+ 4: import Button from "@/components/UI/Button.component";
+ 5: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 6: import { urlFor } from "@/lib/sanity/client";
+ 7: import type { Project } from "@/types/sanity.types";
+ 8: interface ProsjektCardProps extends Project {
+ 9:   /** Stagger delay in seconds for coordinated group animations */
+10:   staggerDelay?: number;
+11: }
+12: /**
+13:  * Renders a card displaying information about a single project.
+14:  * Uses the Project type definition from Sanity types.
+15:  *
+16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+17:  * @param {string} props.name - The name of the project.
+18:  * @param {string} [props.description] - A brief description of the project (optional).
+19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+24:  * @returns {JSX.Element} The rendered ProsjektCard component.
+25:  */
+26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+27:   name,
+28:   description,
+29:   subdescription,
+30:   projectimage,
+31:   urlwww,
+32:   urlgithub,
+33:   staggerDelay = 0,
+34: }) => {
+35:   return (
+36:     <div
+37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+38:       data-testid="project-card"
+39:     >
+40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+41:         <div className="relative w-full md:h-60">
+42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[330px]">
+43:             {projectimage && (
+44:               <Image
+45:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+46:                 width={600}
+47:                 height={300}
+48:                 src={urlFor(projectimage)
+49:                   .width(600)
+50:                   .fit("max")
+51:                   .quality(100)
+52:                   .auto("format")
+53:                   .url()}
+54:                 quality={100}
+55:                 alt={`Skjermbilde av prosjektet ${name}`}
+56:                 sizes="(max-width: 768px) 100vw, 600px"
+57:               />
+58:             )}
+59:           </div>
+60:         </div>
+61:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+62:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+63:             {name}
+64:           </h2>
+65:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
+66:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+67:             {subdescription}
+68:           </p>
+69:           <div className="flex justify-center mt-4">
+70:             {urlwww && urlwww.length > 0 && (
+71:               <Button href={urlwww?.[0]?.url} renderAs="a">
+72:                 Besøk
+73:               </Button>
+74:             )}
+75:             {urlgithub && urlgithub.length > 0 && (
+76:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+77:                 GitHub
+78:               </Button>
+79:             )}
+80:           </div>
+81:         </div>
+82:       </BounceInScroll>
+83:     </div>
+84:   );
+85: };
+86: export default ProsjektCard;
 ````
 
 ## File: .circleci/config.yml
