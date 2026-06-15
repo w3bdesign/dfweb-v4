@@ -4716,6 +4716,117 @@ vercel.json
 163: });
 ````
 
+## File: src/__tests__/Animations/Matrix.test.tsx
+````typescript
+  1: import { render, screen } from "@testing-library/react";
+  2: import "@testing-library/jest-dom";
+  3: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+  4: const mockFillRect = jest.fn();
+  5: const mockFillText = jest.fn();
+  6: const mock2DContext = {
+  7:   fillRect: mockFillRect,
+  8:   fillText: mockFillText,
+  9:   canvas: document.createElement("canvas"),
+ 10:   getContextAttributes: () => ({}),
+ 11:   globalAlpha: 1,
+ 12:   globalCompositeOperation: "source-over",
+ 13:   save: jest.fn(),
+ 14:   restore: jest.fn(),
+ 15:   font: "",
+ 16:   fillStyle: "",
+ 17:   shadowColor: "",
+ 18:   shadowBlur: 0,
+ 19: } as unknown as CanvasRenderingContext2D;
+ 20: const mockBitmapContext = {
+ 21:   canvas: document.createElement("canvas"),
+ 22:   transferFromImageBitmap: jest.fn(),
+ 23: } as unknown as ImageBitmapRenderingContext;
+ 24: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
+ 25:   switch (contextId) {
+ 26:     case "2d":
+ 27:       return mock2DContext;
+ 28:     case "bitmaprenderer":
+ 29:       return mockBitmapContext;
+ 30:     case "webgl":
+ 31:     case "webgl2":
+ 32:       return null;
+ 33:     default:
+ 34:       return null;
+ 35:   }
+ 36: } as typeof HTMLCanvasElement.prototype.getContext;
+ 37: jest
+ 38:   .spyOn(global, "requestAnimationFrame")
+ 39:   .mockImplementation((cb) => setTimeout(cb, 0));
+ 40: describe("ReactMatrixAnimation", () => {
+ 41:   beforeEach(() => {
+ 42:     jest.useFakeTimers();
+ 43:     jest
+ 44:       .spyOn(window, "requestAnimationFrame")
+ 45:       .mockImplementation((cb) => setTimeout(cb, 0));
+ 46:   });
+ 47:   afterEach(() => {
+ 48:     jest.useRealTimers();
+ 49:     jest.restoreAllMocks();
+ 50:   });
+ 51:   describe("rendering", () => {
+ 52:     it("renders canvas element with default props", () => {
+ 53:       // Arrange
+ 54:       const expectedTestId = "matrix-canvas";
+ 55:       // Act
+ 56:       render(<ReactMatrixAnimation />);
+ 57:       const canvas = screen.getByTestId(expectedTestId);
+ 58:       // Assert
+ 59:       expect(canvas).toBeInTheDocument();
+ 60:       expect(canvas).toHaveStyle({
+ 61:         width: "100%",
+ 62:         height: "100%",
+ 63:       });
+ 64:     });
+ 65:     it("renders canvas element with custom props", () => {
+ 66:       // Arrange
+ 67:       const customProps = {
+ 68:         tileSize: 30,
+ 69:         fadeFactor: 0.7,
+ 70:         backgroundColor: "#000000",
+ 71:         fontColor: "#ffffff",
+ 72:         tileSet: ["A", "B", "C"],
+ 73:       };
+ 74:       const expectedTestId = "matrix-canvas";
+ 75:       // Act
+ 76:       render(<ReactMatrixAnimation {...customProps} />);
+ 77:       const canvas = screen.getByTestId(expectedTestId);
+ 78:       // Assert
+ 79:       expect(canvas).toBeInTheDocument();
+ 80:     });
+ 81:   });
+ 82:   describe("validation", () => {
+ 83:     beforeEach(() => {
+ 84:       // Arrange - Suppress console.error for validation tests
+ 85:       jest.spyOn(console, "error").mockImplementation(() => {});
+ 86:     });
+ 87:     it("throws error for invalid background color", () => {
+ 88:       // Arrange
+ 89:       const invalidProps = { backgroundColor: "invalid" };
+ 90:       const expectedError =
+ 91:         "Invalid background color. Use a hex value e.g. #030303";
+ 92:       // Act & Assert
+ 93:       expect(() => {
+ 94:         render(<ReactMatrixAnimation {...invalidProps} />);
+ 95:       }).toThrow(expectedError);
+ 96:     });
+ 97:     it("throws error for invalid font color", () => {
+ 98:       // Arrange
+ 99:       const invalidProps = { fontColor: "invalid" };
+100:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
+101:       // Act & Assert
+102:       expect(() => {
+103:         render(<ReactMatrixAnimation {...invalidProps} />);
+104:       }).toThrow(expectedError);
+105:     });
+106:   });
+107: });
+````
+
 ## File: src/__tests__/Animations/Matrix.utils.test.ts
 ````typescript
   1: import {
@@ -7037,6 +7148,236 @@ vercel.json
 46: });
 ````
 
+## File: src/__tests__/UI/Tabs.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen, fireEvent } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import "@testing-library/jest-dom";
+  8: import Tabs from "@/components/UI/Tabs.component";
+  9: // Component that throws an error immediately
+ 10: const ImmediateCrash = () => {
+ 11:   throw new Error("Immediate crash!");
+ 12: };
+ 13: const mockMotion = {
+ 14:   motion: {
+ 15:     div: (props: React.ComponentProps<"div">) => (
+ 16:       <div {...props}>{props.children}</div>
+ 17:     ),
+ 18:     button: (props: React.ComponentProps<"button">) => (
+ 19:       <button type="button" {...props}>
+ 20:         {props.children}
+ 21:       </button>
+ 22:     ),
+ 23:   },
+ 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+ 25:     <>{children}</>
+ 26:   ),
+ 27: };
+ 28: jest.mock("motion", () => mockMotion);
+ 29: const mockTabs = [
+ 30:   {
+ 31:     id: "tab1",
+ 32:     label: "Normal Tab",
+ 33:     content: <div>Normal content</div>,
+ 34:   },
+ 35:   {
+ 36:     id: "tab2",
+ 37:     label: "Crashing Tab",
+ 38:     content: <ImmediateCrash />,
+ 39:   },
+ 40: ];
+ 41: const keyboardTestTabs = [
+ 42:   {
+ 43:     id: "tab1",
+ 44:     label: "First Tab",
+ 45:     content: <div>First content</div>,
+ 46:   },
+ 47:   {
+ 48:     id: "tab2",
+ 49:     label: "Second Tab",
+ 50:     content: <div>Second content</div>,
+ 51:   },
+ 52:   {
+ 53:     id: "tab3",
+ 54:     label: "Third Tab",
+ 55:     content: <div>Third content</div>,
+ 56:   },
+ 57: ];
+ 58: describe("Tabs", () => {
+ 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
+ 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
+ 61:   it("renders tabs with correct layout in vertical orientation", () => {
+ 62:     // Arrange
+ 63:     const orientation = undefined; // default vertical orientation
+ 64:     // Act
+ 65:     renderTabs(orientation);
+ 66:     const tabList = screen.getByRole("tablist");
+ 67:     // Assert
+ 68:     expect(tabList).toHaveClass("sm:flex-col");
+ 69:   });
+ 70:   it("renders tabs with correct layout in horizontal orientation", () => {
+ 71:     // Arrange
+ 72:     const orientation = "horizontal";
+ 73:     // Act
+ 74:     renderTabs(orientation);
+ 75:     const tabList = screen.getByRole("tablist");
+ 76:     // Assert
+ 77:     expect(tabList).toHaveClass("flex-row");
+ 78:     expect(tabList).not.toHaveClass("sm:flex-col");
+ 79:   });
+ 80:   it("applies correct ARIA attributes to tabs", () => {
+ 81:     // Arrange
+ 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
+ 83:       tab,
+ 84:       isSelected: index === 0,
+ 85:       controlsId: `tabpanel-${tab.id}`,
+ 86:     }));
+ 87:     // Act
+ 88:     renderTabs();
+ 89:     // Assert
+ 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
+ 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
+ 92:       expect(tabElement).toHaveAttribute(
+ 93:         "aria-selected",
+ 94:         isSelected.toString(),
+ 95:       );
+ 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
+ 97:     });
+ 98:   });
+ 99:   it("switches tab content when clicking tabs", () => {
+100:     // Arrange
+101:     renderTabs();
+102:     const initialContent = "Normal content";
+103:     // Act & Assert - Initial state
+104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
+105:     // Act & Assert - Click handling
+106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
+107:     expect(() => {
+108:       fireEvent.click(crashingTab);
+109:       render(<ImmediateCrash />);
+110:     }).toThrow("Immediate crash!");
+111:   });
+112:   it("applies correct border styles to tabs", () => {
+113:     // Arrange
+114:     renderTabs();
+115:     // Act
+116:     const tabs = screen.getAllByRole("tab");
+117:     // Assert
+118:     expect(tabs[0]).not.toHaveClass("border-t");
+119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
+120:   });
+121:   it("renders tab panels with correct attributes", () => {
+122:     // Arrange
+123:     const expectedAttributes = {
+124:       id: "tabpanel-tab1",
+125:       labelledBy: "tab-tab1",
+126:       className: "px-8",
+127:     };
+128:     // Act
+129:     renderTabs();
+130:     const activePanel = screen.getByRole("tabpanel");
+131:     // Assert
+132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
+133:     expect(activePanel).toHaveAttribute(
+134:       "aria-labelledby",
+135:       expectedAttributes.labelledBy,
+136:     );
+137:     expect(activePanel).toHaveClass(expectedAttributes.className);
+138:   });
+139: });
+140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
+141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
+142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
+143:   /** Helper: press keys from a starting tab and assert focus lands on expected index */
+144:   async function pressKeysAndExpectFocus(
+145:     orientation: "horizontal" | "vertical",
+146:     startIndex: number,
+147:     keys: string[],
+148:     expectedFocusIndex: number,
+149:   ) {
+150:     // Arrange
+151:     const user = userEvent.setup();
+152:     renderKeyboardTabs(orientation);
+153:     const tabs = screen.getAllByRole("tab");
+154:     // Act
+155:     if (startIndex > 0) fireEvent.click(tabs[startIndex]);
+156:     tabs[startIndex].focus();
+157:     for (const key of keys) {
+158:       await user.keyboard(key);
+159:     }
+160:     // Assert
+161:     expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
+162:     expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
+163:   }
+164:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
+165:     // Arrange
+166:     renderKeyboardTabs();
+167:     // Act
+168:     const tabs = screen.getAllByRole("tab");
+169:     // Assert
+170:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
+171:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
+172:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
+173:   });
+174:   it("ArrowDown moves to next tab in vertical orientation", async () => {
+175:     // Arrange, Act & Assert
+176:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
+177:   });
+178:   it("ArrowUp moves to previous tab in vertical orientation", async () => {
+179:     // Arrange, Act & Assert
+180:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
+181:   });
+182:   it("ArrowRight moves to next tab in horizontal orientation", async () => {
+183:     // Arrange, Act & Assert
+184:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
+185:   });
+186:   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
+187:     // Arrange, Act & Assert
+188:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
+189:   });
+190:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
+191:     // Arrange, Act & Assert
+192:     await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
+193:   });
+194:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
+195:     // Arrange, Act & Assert
+196:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
+197:   });
+198:   it("Home key moves focus to first tab from any position", async () => {
+199:     // Arrange, Act & Assert
+200:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
+201:   });
+202:   it("End key moves focus to last tab", async () => {
+203:     // Arrange, Act & Assert
+204:     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
+205:   });
+206:   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
+207:     // Arrange & Act
+208:     renderKeyboardTabs("vertical");
+209:     // Assert
+210:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+211:   });
+212:   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
+213:     // Arrange & Act
+214:     renderKeyboardTabs("horizontal");
+215:     // Assert
+216:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+217:   });
+218:   it("tab panel is focusable with tabIndex=0", () => {
+219:     // Arrange
+220:     renderKeyboardTabs();
+221:     // Act
+222:     const tabpanel = screen.getByRole("tabpanel");
+223:     // Assert
+224:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
+225:   });
+226: });
+````
+
 ## File: src/__tests__/utils/portableTextComponents.test.tsx
 ````typescript
   1: import React from "react";
@@ -8291,6 +8632,157 @@ vercel.json
 23:   );
 24: };
 25: export default Grow;
+````
+
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrix-canvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 39:   }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useCallback(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:     [
+ 95:       fadeFactor,
+ 96:       rgbBackground,
+ 97:       rgbFont,
+ 98:       tileSize,
+ 99:       glowColor,
+100:       tileSet,
+101:       frameInterval,
+102:     ],
+103:   );
+104:   useEffect(() => {
+105:     // Respect prefers-reduced-motion — skip animation entirely
+106:     const prefersReducedMotion = globalThis.matchMedia(
+107:       "(prefers-reduced-motion: reduce)",
+108:     ).matches;
+109:     if (prefersReducedMotion) return;
+110:     const canvas = canvasRef.current;
+111:     if (!canvas) return;
+112:     const ctx = canvas.getContext("2d");
+113:     if (!ctx) return;
+114:     let animationFrameId: number;
+115:     const handleResize = () => {
+116:       const boundingClientRect = canvas.getBoundingClientRect();
+117:       canvas.width = boundingClientRect.width;
+118:       canvas.height = boundingClientRect.height;
+119:       initMatrix(canvas);
+120:       isInitializedRef.current = true;
+121:     };
+122:     const debouncedResize = debounce(handleResize, 100);
+123:     window.addEventListener("resize", debouncedResize);
+124:     handleResize();
+125:     const animateTick = (timestamp: number) => {
+126:       animationFrameId = requestAnimationFrame(animateTick);
+127:       tick(timestamp, ctx, canvas);
+128:     };
+129:     animationFrameId = requestAnimationFrame(animateTick);
+130:     return () => {
+131:       window.removeEventListener("resize", debouncedResize);
+132:       cancelAnimationFrame(animationFrameId);
+133:     };
+134:   }, [initMatrix, tick]);
+135:   return (
+136:     <canvas
+137:       ref={canvasRef}
+138:       id={CANVAS_ID}
+139:       aria-hidden="true"
+140:       tabIndex={-1}
+141:       style={{ width: "100%", height: "100%" }}
+142:       data-testid="matrix-canvas"
+143:       className="absolute inset-0"
+144:     />
+145:   );
+146: };
+147: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/Animations/Matrix.renderer.ts
@@ -14441,70 +14933,6 @@ vercel.json
 1: ignore-scripts=true
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.6",
-18:     "react-dom": "^19.2.6",
-19:     "react-icons": "^5.6.0",
-20:     "sanity": "^5.25.0",
-21:     "styled-components": "^6.4.1"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.14",
-26:     "eslint": "^10.3.0",
-27:     "prettier": "^3.8.3",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "basic-ftp": ">=6.0.1",
-33:       "brace-expansion": ">=5.0.6",
-34:       "dompurify": ">=3.4.5",
-35:       "flatted": ">=3.4.2",
-36:       "js-yaml": ">=4.1.1",
-37:       "lodash": ">=4.18.1",
-38:       "lodash-es": ">=4.18.1",
-39:       "minimatch": "10.2.5",
-40:       "picomatch@<2.3.2": "4.0.4",
-41:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
-42:       "smol-toml": ">=1.6.1",
-43:       "undici": ">=8.3.0",
-44:       "vite": ">=8.0.13",
-45:       "yaml": ">=2.9.0",
-46:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
-47:     }
-48:   },
-49:   "overrides": {
-50:     "brace-expansion@^5.0.0": "5.0.6",
-51:     "uuid": ">=14.0.0",
-52:     "js-yaml": ">=4.1.1"
-53:   },
-54:   "prettier": {
-55:     "semi": false,
-56:     "printWidth": 100,
-57:     "bracketSpacing": false,
-58:     "singleQuote": true
-59:   }
-60: }
-````
-
 ## File: studio/README.md
 ````markdown
  1: # Sanity Clean Content Studio
@@ -17927,236 +18355,6 @@ vercel.json
 77: });
 ````
 
-## File: src/__tests__/UI/Tabs.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen, fireEvent } from "@testing-library/react";
-  6: import userEvent from "@testing-library/user-event";
-  7: import "@testing-library/jest-dom";
-  8: import Tabs from "@/components/UI/Tabs.component";
-  9: // Component that throws an error immediately
- 10: const ImmediateCrash = () => {
- 11:   throw new Error("Immediate crash!");
- 12: };
- 13: const mockMotion = {
- 14:   motion: {
- 15:     div: (props: React.ComponentProps<"div">) => (
- 16:       <div {...props}>{props.children}</div>
- 17:     ),
- 18:     button: (props: React.ComponentProps<"button">) => (
- 19:       <button type="button" {...props}>
- 20:         {props.children}
- 21:       </button>
- 22:     ),
- 23:   },
- 24:   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
- 25:     <>{children}</>
- 26:   ),
- 27: };
- 28: jest.mock("motion", () => mockMotion);
- 29: const mockTabs = [
- 30:   {
- 31:     id: "tab1",
- 32:     label: "Normal Tab",
- 33:     content: <div>Normal content</div>,
- 34:   },
- 35:   {
- 36:     id: "tab2",
- 37:     label: "Crashing Tab",
- 38:     content: <ImmediateCrash />,
- 39:   },
- 40: ];
- 41: const keyboardTestTabs = [
- 42:   {
- 43:     id: "tab1",
- 44:     label: "First Tab",
- 45:     content: <div>First content</div>,
- 46:   },
- 47:   {
- 48:     id: "tab2",
- 49:     label: "Second Tab",
- 50:     content: <div>Second content</div>,
- 51:   },
- 52:   {
- 53:     id: "tab3",
- 54:     label: "Third Tab",
- 55:     content: <div>Third content</div>,
- 56:   },
- 57: ];
- 58: describe("Tabs", () => {
- 59:   const renderTabs = (orientation?: "horizontal" | "vertical") =>
- 60:     render(<Tabs tabs={mockTabs} orientation={orientation} />);
- 61:   it("renders tabs with correct layout in vertical orientation", () => {
- 62:     // Arrange
- 63:     const orientation = undefined; // default vertical orientation
- 64:     // Act
- 65:     renderTabs(orientation);
- 66:     const tabList = screen.getByRole("tablist");
- 67:     // Assert
- 68:     expect(tabList).toHaveClass("sm:flex-col");
- 69:   });
- 70:   it("renders tabs with correct layout in horizontal orientation", () => {
- 71:     // Arrange
- 72:     const orientation = "horizontal";
- 73:     // Act
- 74:     renderTabs(orientation);
- 75:     const tabList = screen.getByRole("tablist");
- 76:     // Assert
- 77:     expect(tabList).toHaveClass("flex-row");
- 78:     expect(tabList).not.toHaveClass("sm:flex-col");
- 79:   });
- 80:   it("applies correct ARIA attributes to tabs", () => {
- 81:     // Arrange
- 82:     const expectedAttributes = mockTabs.map((tab, index) => ({
- 83:       tab,
- 84:       isSelected: index === 0,
- 85:       controlsId: `tabpanel-${tab.id}`,
- 86:     }));
- 87:     // Act
- 88:     renderTabs();
- 89:     // Assert
- 90:     expectedAttributes.forEach(({ tab, isSelected, controlsId }) => {
- 91:       const tabElement = screen.getByRole("tab", { name: tab.label });
- 92:       expect(tabElement).toHaveAttribute(
- 93:         "aria-selected",
- 94:         isSelected.toString(),
- 95:       );
- 96:       expect(tabElement).toHaveAttribute("aria-controls", controlsId);
- 97:     });
- 98:   });
- 99:   it("switches tab content when clicking tabs", () => {
-100:     // Arrange
-101:     renderTabs();
-102:     const initialContent = "Normal content";
-103:     // Act & Assert - Initial state
-104:     expect(screen.getByText(initialContent)).toBeInTheDocument();
-105:     // Act & Assert - Click handling
-106:     const crashingTab = screen.getByRole("tab", { name: "Crashing Tab" });
-107:     expect(() => {
-108:       fireEvent.click(crashingTab);
-109:       render(<ImmediateCrash />);
-110:     }).toThrow("Immediate crash!");
-111:   });
-112:   it("applies correct border styles to tabs", () => {
-113:     // Arrange
-114:     renderTabs();
-115:     // Act
-116:     const tabs = screen.getAllByRole("tab");
-117:     // Assert
-118:     expect(tabs[0]).not.toHaveClass("border-t");
-119:     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
-120:   });
-121:   it("renders tab panels with correct attributes", () => {
-122:     // Arrange
-123:     const expectedAttributes = {
-124:       id: "tabpanel-tab1",
-125:       labelledBy: "tab-tab1",
-126:       className: "px-8",
-127:     };
-128:     // Act
-129:     renderTabs();
-130:     const activePanel = screen.getByRole("tabpanel");
-131:     // Assert
-132:     expect(activePanel).toHaveAttribute("id", expectedAttributes.id);
-133:     expect(activePanel).toHaveAttribute(
-134:       "aria-labelledby",
-135:       expectedAttributes.labelledBy,
-136:     );
-137:     expect(activePanel).toHaveClass(expectedAttributes.className);
-138:   });
-139: });
-140: describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
-141:   const renderKeyboardTabs = (orientation?: "horizontal" | "vertical") =>
-142:     render(<Tabs tabs={keyboardTestTabs} orientation={orientation} />);
-143:   /** Helper: press keys from a starting tab and assert focus lands on expected index */
-144:   async function pressKeysAndExpectFocus(
-145:     orientation: "horizontal" | "vertical",
-146:     startIndex: number,
-147:     keys: string[],
-148:     expectedFocusIndex: number,
-149:   ) {
-150:     // Arrange
-151:     const user = userEvent.setup();
-152:     renderKeyboardTabs(orientation);
-153:     const tabs = screen.getAllByRole("tab");
-154:     // Act
-155:     if (startIndex > 0) fireEvent.click(tabs[startIndex]);
-156:     tabs[startIndex].focus();
-157:     for (const key of keys) {
-158:       await user.keyboard(key);
-159:     }
-160:     // Assert
-161:     expect(document.activeElement).toBe(tabs[expectedFocusIndex]);
-162:     expect(tabs[expectedFocusIndex]).toHaveAttribute("aria-selected", "true");
-163:   }
-164:   it("sets tabIndex=0 on active tab and tabIndex=-1 on inactive tabs", () => {
-165:     // Arrange
-166:     renderKeyboardTabs();
-167:     // Act
-168:     const tabs = screen.getAllByRole("tab");
-169:     // Assert
-170:     expect(tabs[0]).toHaveAttribute("tabIndex", "0");
-171:     expect(tabs[1]).toHaveAttribute("tabIndex", "-1");
-172:     expect(tabs[2]).toHaveAttribute("tabIndex", "-1");
-173:   });
-174:   it("ArrowDown moves to next tab in vertical orientation", async () => {
-175:     // Arrange, Act & Assert
-176:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}"], 1);
-177:   });
-178:   it("ArrowUp moves to previous tab in vertical orientation", async () => {
-179:     // Arrange, Act & Assert
-180:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
-181:   });
-182:   it("ArrowRight moves to next tab in horizontal orientation", async () => {
-183:     // Arrange, Act & Assert
-184:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}"], 1);
-185:   });
-186:   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
-187:     // Arrange, Act & Assert
-188:     await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
-189:   });
-190:   it("wraps focus from last tab to first tab on ArrowDown", async () => {
-191:     // Arrange, Act & Assert
-192:     await pressKeysAndExpectFocus("vertical", 2, ["{ArrowDown}"], 0);
-193:   });
-194:   it("wraps focus from first tab to last tab on ArrowUp", async () => {
-195:     // Arrange, Act & Assert
-196:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowUp}"], 2);
-197:   });
-198:   it("Home key moves focus to first tab from any position", async () => {
-199:     // Arrange, Act & Assert
-200:     await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
-201:   });
-202:   it("End key moves focus to last tab", async () => {
-203:     // Arrange, Act & Assert
-204:     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
-205:   });
-206:   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
-207:     // Arrange & Act
-208:     renderKeyboardTabs("vertical");
-209:     // Assert
-210:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
-211:   });
-212:   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
-213:     // Arrange & Act
-214:     renderKeyboardTabs("horizontal");
-215:     // Assert
-216:     expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
-217:   });
-218:   it("tab panel is focusable with tabIndex=0", () => {
-219:     // Arrange
-220:     renderKeyboardTabs();
-221:     // Act
-222:     const tabpanel = screen.getByRole("tabpanel");
-223:     // Assert
-224:     expect(tabpanel).toHaveAttribute("tabIndex", "0");
-225:   });
-226: });
-````
-
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -18939,106 +19137,58 @@ vercel.json
 217: export default Tabs;
 ````
 
-## File: package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.0.8",
- 4:   "private": true,
- 5:   "type": "module",
- 6:   "scripts": {
- 7:     "dev": "next dev --turbopack",
- 8:     "lhci": "lhci autorun",
- 9:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-10:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-11:     "build": "next build",
-12:     "start": "next start",
-13:     "lint": "next lint",
-14:     "lint:css": "stylelint \"src/**/*.css\"",
-15:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
-16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
-18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
-19:     "cypress:open": "cypress open",
-20:     "cypress:headless": "cypress run",
-21:     "e2e": "start-test dev 3000 cypress:headless",
-22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-23:     "ladle": "ladle serve",
-24:     "typegen": "npx sanity typegen generate",
-25:     "doctor": "react-doctor . --verbose"
-26:   },
-27:   "dependencies": {
-28:     "@emailjs/browser": "^4.4.1",
-29:     "@hookform/resolvers": "^5.2.2",
-30:     "@portabletext/react": "^6.0.3",
-31:     "@sanity/client": "^7.22.0",
-32:     "@sanity/image-url": "^2.1.1",
-33:     "@vercel/speed-insights": "2.0.0",
-34:     "babel-jest": "30.3.0",
-35:     "jest": "30.3.0",
-36:     "motion": "^12.38.0",
-37:     "next": "^16.2.6",
-38:     "react": "^19.2.5",
-39:     "react-dom": "^19.2.5",
-40:     "react-error-boundary": "^5.0.0",
-41:     "react-hook-form": "^7.73.1",
-42:     "react-icons": "^5.6.0",
-43:     "ts-node": "^10.9.2",
-44:     "zod": "^4.3.6"
-45:   },
-46:   "devDependencies": {
-47:     "@jest/expect": "^30.3.0",
-48:     "@jest/globals": "^30.3.0",
-49:     "@ladle/react": "^5.1.1",
-50:     "@lhci/cli": "^0.15.1",
-51:     "@playwright/test": "^1.59.1",
-52:     "@tailwindcss/postcss": "^4.3.0",
-53:     "@testing-library/cypress": "^10.1.0",
-54:     "@testing-library/jest-dom": "^6.9.1",
-55:     "@testing-library/react": "^16.3.2",
-56:     "@testing-library/user-event": "^14.6.1",
-57:     "@types/jest": "^30.0.0",
-58:     "@types/node": "^24.12.2",
-59:     "@types/react": "^19.2.14",
-60:     "@types/react-dom": "^19.2.3",
-61:     "@typescript-eslint/eslint-plugin": "^8.59.0",
-62:     "@typescript-eslint/parser": "^8.59.0",
-63:     "@typescript-eslint/utils": "^8.59.0",
-64:     "axe-core": "^4.11.3",
-65:     "cypress": "15.14.1",
-66:     "cypress-axe": "^1.7.0",
-67:     "eslint": "10.2.1",
-68:     "eslint-config-next": "16.2.4",
-69:     "eslint-config-prettier": "^10.1.8",
-70:     "eslint-plugin-jest": "^29.15.2",
-71:     "eslint-plugin-jsx-a11y": "^6.10.2",
-72:     "eslint-plugin-prettier": "^5.5.5",
-73:     "eslint-plugin-react": "^7.37.5",
-74:     "eslint-plugin-react-hooks": "^7.1.1",
-75:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-76:     "eslint-plugin-testing-library": "^7.16.2",
-77:     "jest-environment-jsdom": "^30.3.0",
-78:     "jest-extended": "^7.0.0",
-79:     "jsdom-testing-mocks": "^1.16.0",
-80:     "pa11y": "^9.1.1",
-81:     "postcss": "^8.5.10",
-82:     "postcss-load-config": "^6.0.1",
-83:     "prettier": "3.8.3",
-84:     "react-doctor": "^0.0.39",
-85:     "sanity": "5.22.0",
-86:     "stylelint": "^17.9.0",
-87:     "stylelint-config-standard": "^40.0.0",
-88:     "tailwindcss": "^4.3.0",
-89:     "ts-jest": "^29.4.9",
-90:     "typescript": "^6.0.3",
-91:     "wait-on": "^9.0.5"
-92:   },
-93:   "pnpm": {
-94:     "overrides": {
-95:       "brace-expansion@^5.0.0": "5.0.6"
-96:     }
-97:   }
-98: }
+## File: src/e2e/playwright/cv.spec.ts
+````typescript
+ 1: import { test, expect } from "@playwright/test";
+ 2: const keyboardNavigationCases = [
+ 3:   { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
+ 4:   { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
+ 5:   { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
+ 6:   { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
+ 7:   { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
+ 8: ] as const;
+ 9: test.describe("CV page", () => {
+10:   test.beforeEach(async ({ page }) => {
+11:     await page.goto("/cv");
+12:     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
+13:   });
+14:   test("loads and displays main content correctly", async ({ page }) => {
+15:     await expect(
+16:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+17:     ).toBeVisible();
+18:   });
+19:   test("navigates to and displays Experience section correctly", async ({
+20:     page,
+21:   }) => {
+22:     await page.getByRole("tab", { name: "Erfaring" }).click();
+23:     await expect(
+24:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
+25:     ).toBeVisible();
+26:   });
+27:   test("displays Education section correctly", async ({ page }) => {
+28:     await page.getByRole("tab", { name: "Utdanning" }).click();
+29:     await expect(page.getByLabel("Utdanning")).toContainText(
+30:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
+31:     );
+32:   });
+33:   for (const { name, start, key, expected } of keyboardNavigationCases) {
+34:     test(name, async ({ page }) => {
+35:       const startTab = page.getByRole("tab", { name: start });
+36:       await startTab.click();
+37:       await page.keyboard.press(key);
+38:       const expectedTab = page.getByRole("tab", { name: expected });
+39:       await expect(expectedTab).toBeFocused();
+40:       await expect(expectedTab).toHaveAttribute("aria-selected", "true");
+41:     });
+42:   }
+43:   test("tablist has aria-orientation=vertical", async ({ page }) => {
+44:     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+45:   });
+46:   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
+47:     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
+48:     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
+49:   });
+50: });
 ````
 
 ## File: commit/providers/__init__.py
@@ -19054,117 +19204,6 @@ vercel.json
  9: """
 10: from providers.factory import get_provider
 11: __all__ = ["get_provider"]
-````
-
-## File: src/__tests__/Animations/Matrix.test.tsx
-````typescript
-  1: import { render, screen } from "@testing-library/react";
-  2: import "@testing-library/jest-dom";
-  3: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
-  4: const mockFillRect = jest.fn();
-  5: const mockFillText = jest.fn();
-  6: const mock2DContext = {
-  7:   fillRect: mockFillRect,
-  8:   fillText: mockFillText,
-  9:   canvas: document.createElement("canvas"),
- 10:   getContextAttributes: () => ({}),
- 11:   globalAlpha: 1,
- 12:   globalCompositeOperation: "source-over",
- 13:   save: jest.fn(),
- 14:   restore: jest.fn(),
- 15:   font: "",
- 16:   fillStyle: "",
- 17:   shadowColor: "",
- 18:   shadowBlur: 0,
- 19: } as unknown as CanvasRenderingContext2D;
- 20: const mockBitmapContext = {
- 21:   canvas: document.createElement("canvas"),
- 22:   transferFromImageBitmap: jest.fn(),
- 23: } as unknown as ImageBitmapRenderingContext;
- 24: HTMLCanvasElement.prototype.getContext = function (contextId: string) {
- 25:   switch (contextId) {
- 26:     case "2d":
- 27:       return mock2DContext;
- 28:     case "bitmaprenderer":
- 29:       return mockBitmapContext;
- 30:     case "webgl":
- 31:     case "webgl2":
- 32:       return null;
- 33:     default:
- 34:       return null;
- 35:   }
- 36: } as typeof HTMLCanvasElement.prototype.getContext;
- 37: jest
- 38:   .spyOn(global, "requestAnimationFrame")
- 39:   .mockImplementation((cb) => setTimeout(cb, 0));
- 40: describe("ReactMatrixAnimation", () => {
- 41:   beforeEach(() => {
- 42:     jest.useFakeTimers();
- 43:     jest
- 44:       .spyOn(window, "requestAnimationFrame")
- 45:       .mockImplementation((cb) => setTimeout(cb, 0));
- 46:   });
- 47:   afterEach(() => {
- 48:     jest.useRealTimers();
- 49:     jest.restoreAllMocks();
- 50:   });
- 51:   describe("rendering", () => {
- 52:     it("renders canvas element with default props", () => {
- 53:       // Arrange
- 54:       const expectedTestId = "matrix-canvas";
- 55:       // Act
- 56:       render(<ReactMatrixAnimation />);
- 57:       const canvas = screen.getByTestId(expectedTestId);
- 58:       // Assert
- 59:       expect(canvas).toBeInTheDocument();
- 60:       expect(canvas).toHaveStyle({
- 61:         width: "100%",
- 62:         height: "100%",
- 63:       });
- 64:     });
- 65:     it("renders canvas element with custom props", () => {
- 66:       // Arrange
- 67:       const customProps = {
- 68:         tileSize: 30,
- 69:         fadeFactor: 0.7,
- 70:         backgroundColor: "#000000",
- 71:         fontColor: "#ffffff",
- 72:         tileSet: ["A", "B", "C"],
- 73:       };
- 74:       const expectedTestId = "matrix-canvas";
- 75:       // Act
- 76:       render(<ReactMatrixAnimation {...customProps} />);
- 77:       const canvas = screen.getByTestId(expectedTestId);
- 78:       // Assert
- 79:       expect(canvas).toBeInTheDocument();
- 80:     });
- 81:   });
- 82:   describe("validation", () => {
- 83:     beforeEach(() => {
- 84:       // Arrange - Suppress console.error for validation tests
- 85:       jest.spyOn(console, "error").mockImplementation(() => {});
- 86:     });
- 87:     it("throws error for invalid background color", () => {
- 88:       // Arrange
- 89:       const invalidProps = { backgroundColor: "invalid" };
- 90:       const expectedError =
- 91:         "Invalid background color. Use a hex value e.g. #030303";
- 92:       // Act & Assert
- 93:       expect(() => {
- 94:         render(<ReactMatrixAnimation {...invalidProps} />);
- 95:       }).toThrow(expectedError);
- 96:     });
- 97:     it("throws error for invalid font color", () => {
- 98:       // Arrange
- 99:       const invalidProps = { fontColor: "invalid" };
-100:       const expectedError = "Invalid font color. Use a hex value e.g. #030303";
-101:       // Act & Assert
-102:       expect(() => {
-103:         render(<ReactMatrixAnimation {...invalidProps} />);
-104:       }).toThrow(expectedError);
-105:     });
-106:   });
-107: });
 ````
 
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
@@ -19408,6 +19447,202 @@ vercel.json
 34: }
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.6",
+18:     "react-dom": "^19.2.6",
+19:     "react-icons": "^5.6.0",
+20:     "sanity": "^5.25.0",
+21:     "styled-components": "^6.4.1"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.14",
+26:     "eslint": "^10.3.0",
+27:     "prettier": "^3.8.3",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "basic-ftp": ">=6.0.1",
+33:       "brace-expansion": ">=5.0.6",
+34:       "dompurify": ">=3.4.5",
+35:       "esbuild": ">=0.28.1",
+36:       "flatted": ">=3.4.2",
+37:       "js-yaml": ">=4.1.1",
+38:       "lodash": ">=4.18.1",
+39:       "lodash-es": ">=4.18.1",
+40:       "minimatch": "10.2.5",
+41:       "picomatch@<2.3.2": "4.0.4",
+42:       "picomatch@>=4.0.0 <4.0.4": "4.0.4",
+43:       "smol-toml": ">=1.6.1",
+44:       "undici": ">=8.3.0",
+45:       "vite": ">=8.0.13",
+46:       "yaml": ">=2.9.0",
+47:       "@babel/plugin-transform-modules-systemjs": ">=7.29.4"
+48:     }
+49:   },
+50:   "overrides": {
+51:     "brace-expansion@^5.0.0": "5.0.6",
+52:     "esbuild": ">=0.28.1",
+53:     "uuid": ">=14.0.0",
+54:     "js-yaml": ">=4.1.1"
+55:   },
+56:   "prettier": {
+57:     "semi": false,
+58:     "printWidth": 100,
+59:     "bracketSpacing": false,
+60:     "singleQuote": true
+61:   }
+62: }
+````
+
+## File: jest.setup.ts
+````typescript
+  1: /// <reference types="jest" />
+  2: import "@testing-library/jest-dom";
+  3: import "jest-extended";
+  4: import { checkAAAPattern } from "./src/utils/test-utils";
+  5: import fs from "node:fs/promises";
+  6: import path from "node:path";
+  7: // Mock matchMedia for prefers-reduced-motion and other media queries
+  8: Object.defineProperty(globalThis, "matchMedia", {
+  9:   writable: true,
+ 10:   value: jest.fn().mockImplementation((query: string) => ({
+ 11:     matches: false,
+ 12:     media: query,
+ 13:     onchange: null,
+ 14:     addListener: jest.fn(),
+ 15:     removeListener: jest.fn(),
+ 16:     addEventListener: jest.fn(),
+ 17:     removeEventListener: jest.fn(),
+ 18:     dispatchEvent: jest.fn(),
+ 19:   })),
+ 20: });
+ 21: declare global {
+ 22:   namespace jest {
+ 23:     interface Matchers<R> {
+ 24:       // Testing Library matchers
+ 25:       toBeInTheDocument(): R;
+ 26:       toHaveTextContent(text: string): R;
+ 27:       toBeVisible(): R;
+ 28:       toBeDisabled(): R;
+ 29:       toBeEnabled(): R;
+ 30:       toHaveAttribute(attr: string, value?: string): R;
+ 31:       toHaveClass(...classNames: string[]): R;
+ 32:       toHaveStyle(css: Record<string, unknown>): R;
+ 33:       toContainElement(element: Element | null): R;
+ 34:       toContainHTML(html: string): R;
+ 35:       toHaveLength(length: number): R;
+ 36:       // Jest matchers
+ 37:       toBe(expected: unknown): R;
+ 38:       toEqual(expected: unknown): R;
+ 39:       toStrictEqual(expected: unknown): R;
+ 40:       toBeNull(): R;
+ 41:       toBeDefined(): R;
+ 42:       toBeUndefined(): R;
+ 43:       toBeTruthy(): R;
+ 44:       toBeFalsy(): R;
+ 45:       toBeGreaterThan(number: number): R;
+ 46:       toBeLessThan(number: number): R;
+ 47:       toBeLessThanOrEqual(number: number): R;
+ 48:       toBeGreaterThanOrEqual(number: number): R;
+ 49:       toContain(item: unknown): R;
+ 50:       toHaveBeenCalled(): R;
+ 51:       toHaveBeenCalledTimes(number: number): R;
+ 52:       toHaveBeenCalledWith(...args: unknown[]): R;
+ 53:       toHaveBeenCalledExactly(times: number): R;
+ 54:       toThrow(error?: string | Error | RegExp): R;
+ 55:       toMatch(regexpOrString: string | RegExp): R;
+ 56:       rejects: {
+ 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
+ 58:       };
+ 59:     }
+ 60:   }
+ 61: }
+ 62: function getTestPath(): string | undefined {
+ 63:   return (
+ 64:     expect as unknown as { getState: () => { testPath?: string } }
+ 65:   ).getState().testPath;
+ 66: }
+ 67: /**
+ 68:  * Validates that a test file path is safe to read.
+ 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
+ 70:  * and is actually a test file.
+ 71:  */
+ 72: function isValidTestPath(testPath: string): boolean {
+ 73:   // Resolve to absolute path to eliminate ../ sequences
+ 74:   const resolvedPath = path.resolve(testPath);
+ 75:   const projectRoot = path.resolve(__dirname);
+ 76:   // Must be within project directory
+ 77:   if (!resolvedPath.startsWith(projectRoot)) {
+ 78:     return false;
+ 79:   }
+ 80:   // Must be in test directories
+ 81:   const relativePath = path.relative(projectRoot, resolvedPath);
+ 82:   const isInTestDir =
+ 83:     relativePath.startsWith("src/__tests__/") ||
+ 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
+ 85:   // Must be a test file
+ 86:   const isTestFile =
+ 87:     resolvedPath.endsWith(".test.ts") ||
+ 88:     resolvedPath.endsWith(".test.tsx") ||
+ 89:     resolvedPath.endsWith(".spec.ts") ||
+ 90:     resolvedPath.endsWith(".spec.tsx");
+ 91:   return isInTestDir && isTestFile;
+ 92: }
+ 93: beforeEach(async () => {
+ 94:   const testPath = getTestPath();
+ 95:   if (
+ 96:     testPath &&
+ 97:     !testPath.includes("test-rule.test.tsx") &&
+ 98:     !testPath.includes("node_modules")
+ 99:   ) {
+100:     // Validate path before reading to prevent path traversal attacks
+101:     if (!isValidTestPath(testPath)) {
+102:       console.warn(
+103:         `Skipping AAA validation for invalid test path: ${testPath}`,
+104:       );
+105:       return;
+106:     }
+107:     try {
+108:       const content = await fs.readFile(testPath, "utf8");
+109:       const result = checkAAAPattern(content);
+110:       if (!result.isValid) {
+111:         throw new Error(
+112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+113:             "Each test should include:\n" +
+114:             "// Arrange - Set up test data and conditions\n" +
+115:             "// Act - Perform the action being tested\n" +
+116:             "// Assert - Verify the results",
+117:         );
+118:       }
+119:     } catch (error) {
+120:       if (error instanceof Error) {
+121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
+122:       }
+123:       throw error;
+124:     }
+125:   }
+126: });
+````
+
 ## File: commit/commit_analyzer.py
 ````python
   1: #!/usr/bin/env python3
@@ -19639,157 +19874,6 @@ vercel.json
 227:     main()
 ````
 
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrix-canvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     // Respect prefers-reduced-motion — skip animation entirely
-106:     const prefersReducedMotion = globalThis.matchMedia(
-107:       "(prefers-reduced-motion: reduce)",
-108:     ).matches;
-109:     if (prefersReducedMotion) return;
-110:     const canvas = canvasRef.current;
-111:     if (!canvas) return;
-112:     const ctx = canvas.getContext("2d");
-113:     if (!ctx) return;
-114:     let animationFrameId: number;
-115:     const handleResize = () => {
-116:       const boundingClientRect = canvas.getBoundingClientRect();
-117:       canvas.width = boundingClientRect.width;
-118:       canvas.height = boundingClientRect.height;
-119:       initMatrix(canvas);
-120:       isInitializedRef.current = true;
-121:     };
-122:     const debouncedResize = debounce(handleResize, 100);
-123:     window.addEventListener("resize", debouncedResize);
-124:     handleResize();
-125:     const animateTick = (timestamp: number) => {
-126:       animationFrameId = requestAnimationFrame(animateTick);
-127:       tick(timestamp, ctx, canvas);
-128:     };
-129:     animationFrameId = requestAnimationFrame(animateTick);
-130:     return () => {
-131:       window.removeEventListener("resize", debouncedResize);
-132:       cancelAnimationFrame(animationFrameId);
-133:     };
-134:   }, [initMatrix, tick]);
-135:   return (
-136:     <canvas
-137:       ref={canvasRef}
-138:       id={CANVAS_ID}
-139:       aria-hidden="true"
-140:       tabIndex={-1}
-141:       style={{ width: "100%", height: "100%" }}
-142:       data-testid="matrix-canvas"
-143:       className="absolute inset-0"
-144:     />
-145:   );
-146: };
-147: export default ReactMatrixAnimation;
-````
-
 ## File: .gitignore
 ````
  1: # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
@@ -20008,188 +20092,106 @@ vercel.json
 78:         return response.choices[0].message.content.strip()
 ````
 
-## File: jest.setup.ts
-````typescript
-  1: /// <reference types="jest" />
-  2: import "@testing-library/jest-dom";
-  3: import "jest-extended";
-  4: import { checkAAAPattern } from "./src/utils/test-utils";
-  5: import fs from "node:fs/promises";
-  6: import path from "node:path";
-  7: // Mock matchMedia for prefers-reduced-motion and other media queries
-  8: Object.defineProperty(globalThis, "matchMedia", {
-  9:   writable: true,
- 10:   value: jest.fn().mockImplementation((query: string) => ({
- 11:     matches: false,
- 12:     media: query,
- 13:     onchange: null,
- 14:     addListener: jest.fn(),
- 15:     removeListener: jest.fn(),
- 16:     addEventListener: jest.fn(),
- 17:     removeEventListener: jest.fn(),
- 18:     dispatchEvent: jest.fn(),
- 19:   })),
- 20: });
- 21: declare global {
- 22:   namespace jest {
- 23:     interface Matchers<R> {
- 24:       // Testing Library matchers
- 25:       toBeInTheDocument(): R;
- 26:       toHaveTextContent(text: string): R;
- 27:       toBeVisible(): R;
- 28:       toBeDisabled(): R;
- 29:       toBeEnabled(): R;
- 30:       toHaveAttribute(attr: string, value?: string): R;
- 31:       toHaveClass(...classNames: string[]): R;
- 32:       toHaveStyle(css: Record<string, unknown>): R;
- 33:       toContainElement(element: Element | null): R;
- 34:       toContainHTML(html: string): R;
- 35:       toHaveLength(length: number): R;
- 36:       // Jest matchers
- 37:       toBe(expected: unknown): R;
- 38:       toEqual(expected: unknown): R;
- 39:       toStrictEqual(expected: unknown): R;
- 40:       toBeNull(): R;
- 41:       toBeDefined(): R;
- 42:       toBeUndefined(): R;
- 43:       toBeTruthy(): R;
- 44:       toBeFalsy(): R;
- 45:       toBeGreaterThan(number: number): R;
- 46:       toBeLessThan(number: number): R;
- 47:       toBeLessThanOrEqual(number: number): R;
- 48:       toBeGreaterThanOrEqual(number: number): R;
- 49:       toContain(item: unknown): R;
- 50:       toHaveBeenCalled(): R;
- 51:       toHaveBeenCalledTimes(number: number): R;
- 52:       toHaveBeenCalledWith(...args: unknown[]): R;
- 53:       toHaveBeenCalledExactly(times: number): R;
- 54:       toThrow(error?: string | Error | RegExp): R;
- 55:       toMatch(regexpOrString: string | RegExp): R;
- 56:       rejects: {
- 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
- 58:       };
- 59:     }
- 60:   }
- 61: }
- 62: function getTestPath(): string | undefined {
- 63:   return (
- 64:     expect as unknown as { getState: () => { testPath?: string } }
- 65:   ).getState().testPath;
- 66: }
- 67: /**
- 68:  * Validates that a test file path is safe to read.
- 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
- 70:  * and is actually a test file.
- 71:  */
- 72: function isValidTestPath(testPath: string): boolean {
- 73:   // Resolve to absolute path to eliminate ../ sequences
- 74:   const resolvedPath = path.resolve(testPath);
- 75:   const projectRoot = path.resolve(__dirname);
- 76:   // Must be within project directory
- 77:   if (!resolvedPath.startsWith(projectRoot)) {
- 78:     return false;
- 79:   }
- 80:   // Must be in test directories
- 81:   const relativePath = path.relative(projectRoot, resolvedPath);
- 82:   const isInTestDir =
- 83:     relativePath.startsWith("src/__tests__/") ||
- 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
- 85:   // Must be a test file
- 86:   const isTestFile =
- 87:     resolvedPath.endsWith(".test.ts") ||
- 88:     resolvedPath.endsWith(".test.tsx") ||
- 89:     resolvedPath.endsWith(".spec.ts") ||
- 90:     resolvedPath.endsWith(".spec.tsx");
- 91:   return isInTestDir && isTestFile;
- 92: }
- 93: beforeEach(async () => {
- 94:   const testPath = getTestPath();
- 95:   if (
- 96:     testPath &&
- 97:     !testPath.includes("test-rule.test.tsx") &&
- 98:     !testPath.includes("node_modules")
- 99:   ) {
-100:     // Validate path before reading to prevent path traversal attacks
-101:     if (!isValidTestPath(testPath)) {
-102:       console.warn(
-103:         `Skipping AAA validation for invalid test path: ${testPath}`,
-104:       );
-105:       return;
-106:     }
-107:     try {
-108:       const content = await fs.readFile(testPath, "utf8");
-109:       const result = checkAAAPattern(content);
-110:       if (!result.isValid) {
-111:         throw new Error(
-112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-113:             "Each test should include:\n" +
-114:             "// Arrange - Set up test data and conditions\n" +
-115:             "// Act - Perform the action being tested\n" +
-116:             "// Assert - Verify the results",
-117:         );
-118:       }
-119:     } catch (error) {
-120:       if (error instanceof Error) {
-121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-122:       }
-123:       throw error;
-124:     }
-125:   }
-126: });
-````
-
-## File: src/e2e/playwright/cv.spec.ts
-````typescript
- 1: import { test, expect } from "@playwright/test";
- 2: const keyboardNavigationCases = [
- 3:   { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
- 4:   { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
- 5:   { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
- 6:   { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
- 7:   { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
- 8: ] as const;
- 9: test.describe("CV page", () => {
-10:   test.beforeEach(async ({ page }) => {
-11:     await page.goto("/cv");
-12:     await page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }).waitFor();
-13:   });
-14:   test("loads and displays main content correctly", async ({ page }) => {
-15:     await expect(
-16:       page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
-17:     ).toBeVisible();
-18:   });
-19:   test("navigates to and displays Experience section correctly", async ({
-20:     page,
-21:   }) => {
-22:     await page.getByRole("tab", { name: "Erfaring" }).click();
-23:     await expect(
-24:       page.getByRole("heading", { name: "– 2021 - NovaCare" }),
-25:     ).toBeVisible();
-26:   });
-27:   test("displays Education section correctly", async ({ page }) => {
-28:     await page.getByRole("tab", { name: "Utdanning" }).click();
-29:     await expect(page.getByLabel("Utdanning")).toContainText(
-30:       "2019 – 2026 - Kompetanseheving / egenlæring frontendutvikling",
-31:     );
-32:   });
-33:   for (const { name, start, key, expected } of keyboardNavigationCases) {
-34:     test(name, async ({ page }) => {
-35:       const startTab = page.getByRole("tab", { name: start });
-36:       await startTab.click();
-37:       await page.keyboard.press(key);
-38:       const expectedTab = page.getByRole("tab", { name: expected });
-39:       await expect(expectedTab).toBeFocused();
-40:       await expect(expectedTab).toHaveAttribute("aria-selected", "true");
-41:     });
-42:   }
-43:   test("tablist has aria-orientation=vertical", async ({ page }) => {
-44:     await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
-45:   });
-46:   test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
-47:     await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
-48:     await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
-49:   });
-50: });
+## File: package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "version": "1.1.0",
+ 4:   "private": true,
+ 5:   "type": "module",
+ 6:   "scripts": {
+ 7:     "dev": "next dev --turbopack",
+ 8:     "lhci": "lhci autorun",
+ 9:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+10:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+11:     "build": "next build",
+12:     "start": "next start",
+13:     "lint": "next lint",
+14:     "lint:css": "stylelint \"src/**/*.css\"",
+15:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+16:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+17:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+18:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+19:     "cypress:open": "cypress open",
+20:     "cypress:headless": "cypress run",
+21:     "e2e": "start-test dev 3000 cypress:headless",
+22:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+23:     "ladle": "ladle serve",
+24:     "typegen": "npx sanity typegen generate",
+25:     "doctor": "react-doctor . --verbose"
+26:   },
+27:   "dependencies": {
+28:     "@emailjs/browser": "^4.4.1",
+29:     "@hookform/resolvers": "^5.2.2",
+30:     "@portabletext/react": "^6.0.3",
+31:     "@sanity/client": "^7.22.0",
+32:     "@sanity/image-url": "^2.1.1",
+33:     "@vercel/speed-insights": "2.0.0",
+34:     "babel-jest": "30.3.0",
+35:     "jest": "30.3.0",
+36:     "motion": "^12.38.0",
+37:     "next": "^16.2.6",
+38:     "react": "^19.2.5",
+39:     "react-dom": "^19.2.5",
+40:     "react-error-boundary": "^5.0.0",
+41:     "react-hook-form": "^7.73.1",
+42:     "react-icons": "^5.6.0",
+43:     "ts-node": "^10.9.2",
+44:     "zod": "^4.3.6"
+45:   },
+46:   "devDependencies": {
+47:     "@jest/expect": "^30.3.0",
+48:     "@jest/globals": "^30.3.0",
+49:     "@ladle/react": "^5.1.1",
+50:     "@lhci/cli": "^0.15.1",
+51:     "@playwright/test": "^1.59.1",
+52:     "@tailwindcss/postcss": "^4.3.0",
+53:     "@testing-library/cypress": "^10.1.0",
+54:     "@testing-library/jest-dom": "^6.9.1",
+55:     "@testing-library/react": "^16.3.2",
+56:     "@testing-library/user-event": "^14.6.1",
+57:     "@types/jest": "^30.0.0",
+58:     "@types/node": "^24.12.2",
+59:     "@types/react": "^19.2.14",
+60:     "@types/react-dom": "^19.2.3",
+61:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+62:     "@typescript-eslint/parser": "^8.59.0",
+63:     "@typescript-eslint/utils": "^8.59.0",
+64:     "axe-core": "^4.11.3",
+65:     "cypress": "15.14.1",
+66:     "cypress-axe": "^1.7.0",
+67:     "eslint": "10.2.1",
+68:     "eslint-config-next": "16.2.4",
+69:     "eslint-config-prettier": "^10.1.8",
+70:     "eslint-plugin-jest": "^29.15.2",
+71:     "eslint-plugin-jsx-a11y": "^6.10.2",
+72:     "eslint-plugin-prettier": "^5.5.5",
+73:     "eslint-plugin-react": "^7.37.5",
+74:     "eslint-plugin-react-hooks": "^7.1.1",
+75:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+76:     "eslint-plugin-testing-library": "^7.16.2",
+77:     "jest-environment-jsdom": "^30.3.0",
+78:     "jest-extended": "^7.0.0",
+79:     "jsdom-testing-mocks": "^1.16.0",
+80:     "pa11y": "^9.1.1",
+81:     "postcss": "^8.5.10",
+82:     "postcss-load-config": "^6.0.1",
+83:     "prettier": "3.8.3",
+84:     "react-doctor": "^0.0.39",
+85:     "sanity": "5.22.0",
+86:     "stylelint": "^17.9.0",
+87:     "stylelint-config-standard": "^40.0.0",
+88:     "tailwindcss": "^4.3.0",
+89:     "ts-jest": "^29.4.9",
+90:     "typescript": "^6.0.3",
+91:     "wait-on": "^9.0.5"
+92:   },
+93:   "pnpm": {
+94:     "overrides": {
+95:       "brace-expansion@^5.0.0": "5.0.6"     
+96:     }
+97:   }
+98: }
 ````
 
 ## File: commit/providers/factory.py
@@ -20429,7 +20431,7 @@ vercel.json
 39:     >
 40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
 41:         <div className="relative w-full md:h-60">
-42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[330px]">
+42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
 43:             {projectimage && (
 44:               <Image
 45:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
