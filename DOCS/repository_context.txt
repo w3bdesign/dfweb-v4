@@ -18572,6 +18572,21 @@ vercel.json
 1: {}
 ````
 
+## File: commit/providers/__init__.py
+````python
+ 1: """
+ 2: Provider abstraction layer for LLM API integrations.
+ 3: This module provides a unified interface for interacting with different LLM providers
+ 4: (OpenAI, Anthropic, and OpenAI-compatible endpoints) through a common API.
+ 5: Usage:
+ 6:     from providers import get_provider
+ 7:     provider = get_provider()  # Auto-detects based on available API keys
+ 8:     response = provider.chat_completion("Your prompt here")
+ 9: """
+10: from providers.factory import get_provider
+11: __all__ = ["get_provider"]
+````
+
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -18786,89 +18801,6 @@ vercel.json
 45: export default GenericCVSectionContent;
 ````
 
-## File: src/components/Index/Hero.component.tsx
-````typescript
- 1: "use client";
- 2: import { useRef } from "react";
- 3: import dynamic from "next/dynamic";
- 4: import type { Herocontent } from "@/types/sanity.types";
- 5: import Icons from "./Icons.component";
- 6: import FadeIn from "../Animations/FadeIn.component";
- 7: import MobileBackground from "./MobileBackground.component";
- 8: import MatrixCursor from "../Animations/MatrixCursor.component";
- 9: const ReactMatrixAnimation = dynamic(
-10:   () => import("../Animations/Matrix.component"),
-11:   {
-12:     ssr: false,
-13:   },
-14: );
-15: /**
-16:  * Safely retrieves hero text at a given index with a fallback.
-17:  */
-18: function getHeroText(
-19:   content: Herocontent[],
-20:   index: number,
-21:   fallback = "",
-22: ): string {
-23:   return content[index]?.text ?? fallback;
-24: }
-25: /**
-26:  * Hero component for rendering the main hero section of the page
-27:  * @param {Object} props - The props for the Hero component
-28:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
-29:  * @returns {JSX.Element} The rendered Hero component
-30:  */
-31: const Hero = ({ content }: { content: Herocontent[] }) => {
-32:   const heroRef = useRef<HTMLElement>(null);
-33:   const heading = getHeroText(content, 0, "Hei!");
-34:   const subheading = getHeroText(content, 1);
-35:   const paragraph = getHeroText(content, 2);
-36:   return (
-37:     <article
-38:       aria-label="Kontainer for animasjoner av introtekst"
-39:       id="main-hero"
-40:       data-testid="main-hero"
-41:       ref={heroRef}
-42:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
-43:     >
-44:       <MatrixCursor heroRef={heroRef} />
-45:       <MobileBackground />
-46:       <div className="hidden md:block absolute inset-0 w-full h-full">
-47:         <ReactMatrixAnimation />
-48:       </div>
-49:       <div className="relative z-10">
-50:         <div className="px-4 md:px-0" data-testid="fade-in">
-51:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
-52:             <FadeIn delay={0.3}>
-53:               <h1
-54:                 data-cy="hei"
-55:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
-56:               >
-57:                 {heading}
-58:               </h1>
-59:             </FadeIn>
-60:             <FadeIn delay={0.9}>
-61:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
-62:                 {subheading}
-63:               </h2>
-64:             </FadeIn>
-65:             <FadeIn delay={1.5}>
-66:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
-67:                 {paragraph}
-68:               </p>
-69:             </FadeIn>
-70:           </div>
-71:           <div className="mt-4">
-72:             <Icons />
-73:           </div>
-74:         </div>
-75:       </div>
-76:     </article>
-77:   );
-78: };
-79: export default Hero;
-````
-
 ## File: src/lib/sanity/client.ts
 ````typescript
  1: import { createImageUrlBuilder } from "@sanity/image-url";
@@ -18910,21 +18842,6 @@ vercel.json
 37: export function urlFor(source: NonNullable<Project["projectimage"]>) {
 38:   return builder.image(source);
 39: }
-````
-
-## File: commit/providers/__init__.py
-````python
- 1: """
- 2: Provider abstraction layer for LLM API integrations.
- 3: This module provides a unified interface for interacting with different LLM providers
- 4: (OpenAI, Anthropic, and OpenAI-compatible endpoints) through a common API.
- 5: Usage:
- 6:     from providers import get_provider
- 7:     provider = get_provider()  # Auto-detects based on available API keys
- 8:     response = provider.chat_completion("Your prompt here")
- 9: """
-10: from providers.factory import get_provider
-11: __all__ = ["get_provider"]
 ````
 
 ## File: commit/commit_analyzer.py
@@ -19621,6 +19538,95 @@ vercel.json
 28:     </main>
 29:   );
 30: }
+````
+
+## File: src/components/Index/Hero.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useRef } from "react";
+ 3: import dynamic from "next/dynamic";
+ 4: import type { Herocontent } from "@/types/sanity.types";
+ 5: import Icons from "./Icons.component";
+ 6: import FadeIn from "../Animations/FadeIn.component";
+ 7: import RotatingLoader from "../Animations/RotatingLoader.component";
+ 8: import MobileBackground from "./MobileBackground.component";
+ 9: import MatrixCursor from "../Animations/MatrixCursor.component";
+10: const ReactMatrixAnimation = dynamic(
+11:   () => import("../Animations/Matrix.component"),
+12:   {
+13:     ssr: false,
+14:     loading: () => (
+15:       <div className="text-center">
+16:         <RotatingLoader />
+17:       </div>
+18:     ),
+19:   },
+20: );
+21: /**
+22:  * Safely retrieves hero text at a given index with a fallback.
+23:  */
+24: function getHeroText(
+25:   content: Herocontent[],
+26:   index: number,
+27:   fallback = "",
+28: ): string {
+29:   return content[index]?.text ?? fallback;
+30: }
+31: /**
+32:  * Hero component for rendering the main hero section of the page
+33:  * @param {Object} props - The props for the Hero component
+34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
+35:  * @returns {JSX.Element} The rendered Hero component
+36:  */
+37: const Hero = ({ content }: { content: Herocontent[] }) => {
+38:   const heroRef = useRef<HTMLElement>(null);
+39:   const heading = getHeroText(content, 0, "Hei!");
+40:   const subheading = getHeroText(content, 1);
+41:   const paragraph = getHeroText(content, 2);
+42:   return (
+43:     <article
+44:       aria-label="Kontainer for animasjoner av introtekst"
+45:       id="main-hero"
+46:       data-testid="main-hero"
+47:       ref={heroRef}
+48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
+49:     >
+50:       <MatrixCursor heroRef={heroRef} />
+51:       <MobileBackground />
+52:       <div className="hidden md:block absolute inset-0 w-full h-full">
+53:         <ReactMatrixAnimation />
+54:       </div>
+55:       <div className="relative z-10">
+56:         <div className="px-4 md:px-0" data-testid="fade-in">
+57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
+58:             <FadeIn delay={0.3}>
+59:               <h1
+60:                 data-cy="hei"
+61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
+62:               >
+63:                 {heading}
+64:               </h1>
+65:             </FadeIn>
+66:             <FadeIn delay={0.9}>
+67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
+68:                 {subheading}
+69:               </h2>
+70:             </FadeIn>
+71:             <FadeIn delay={1.5}>
+72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
+73:                 {paragraph}
+74:               </p>
+75:             </FadeIn>
+76:           </div>
+77:           <div className="mt-4">
+78:             <Icons />
+79:           </div>
+80:         </div>
+81:       </div>
+82:     </article>
+83:   );
+84: };
+85: export default Hero;
 ````
 
 ## File: next.config.ts
