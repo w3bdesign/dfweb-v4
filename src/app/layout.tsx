@@ -32,8 +32,8 @@ export default async function RootLayout({
   preconnect("https://cdn.sanity.io");
 
   const [navigation, settings] = await Promise.all([
-    sanityFetch<Navigation>({ query: navigationQuery, revalidate: 3600 }),
-    sanityFetch<Settings>({ query: settingsQuery, revalidate: 3600 }),
+    sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+    sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
   ]);
 
   const footerCopyrightText = settings?.footerCopyrightText;

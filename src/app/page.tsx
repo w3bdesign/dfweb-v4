@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
 };
 
+// ISR - regenerate every 24 hours
+export const revalidate = 86400;
+
 const DynamicHero = dynamic(() => import("@/components/Index/Hero.component"), {
   loading: () => <ContentLoader type="hero" />,
 });
@@ -25,7 +28,7 @@ const DynamicIndexContent = dynamic(
 export default async function HomePage() {
   const pageContent = await sanityFetch<Page | null>({
     query: pageContentQuery,
-    revalidate: 3600,
+    revalidate: 86400, // 24 hours
   });
 
   if (!pageContent) notFound();
