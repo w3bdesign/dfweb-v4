@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import "server-only";
 
 import { sanityFetch } from "@/lib/sanity/client";
@@ -10,7 +10,7 @@ import { isSanityApiError } from "@/types/sanity-errors";
 async function fetchProjectsFromSanity(): Promise<Project[]> {
   return sanityFetch<Project[]>({
     query: projectsQuery,
-    revalidate: 3600,
+    revalidate: 86400, // 24 hours
   });
 }
 
@@ -37,13 +37,20 @@ function handleError(error: unknown): never {
   throw new Error("Failed to fetch projects");
 }
 
-export const getProjects = cache(async (): Promise<Project[]> => {
-  try {
-    return await fetchProjectsFromSanity();
-  } catch (error) {
-    handleError(error);
+export const getProjects = unstable_cache(
+  async (): Promise<Project[]> => {
+    try {
+      return await fetchProjectsFromSanity();
+    } catch (error) {
+      handleError(error);
+    }
+  },
+  ['projects-list'], // Cache key
+  {
+    revalidate: 86400, // 24 hours
+    tags: ['projects'], // For on-demand revalidation
   }
-});
+);
 
 export function preloadProjects(): void {
   getProjects();

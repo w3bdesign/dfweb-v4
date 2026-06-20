@@ -40,6 +40,24 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: "/prosjekter",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=86400, stale-while-revalidate=604800",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "ALLOW-FROM https://presentasjon.dfweb.no",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          {
+            key: "Content-Security-Policy",
+            value: buildCspHeader(cspDirectives),
+          },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           {

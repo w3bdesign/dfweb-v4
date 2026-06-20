@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",
 };
 
+// Static generation with ISR - regenerate every 24 hours
+export const revalidate = 86400; // 24 hours for better performance
+export const dynamic = 'force-static'; // Force static generation
+
 async function ProjectList() {
   const projects = await getProjects();
 
