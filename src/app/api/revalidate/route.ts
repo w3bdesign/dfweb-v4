@@ -1,5 +1,6 @@
 import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 
 /**
  * API route for on-demand revalidation of cached data.
@@ -16,13 +17,31 @@ import { NextRequest, NextResponse } from 'next/server';
  * - tag: Required. Cache tag to invalidate (e.g., 'projects')
  * - immediate: Optional. If 'true', expires immediately. Otherwise uses stale-while-revalidate
  */
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function secureCompare(a: string | null, b: string | undefined): boolean {
+  if (!a || !b || a.length !== b.length) {
+    return false;
+  }
+  
+  try {
+    const bufferA = Buffer.from(a, 'utf-8');
+    const bufferB = Buffer.from(b, 'utf-8');
+    return timingSafeEqual(bufferA, bufferB);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret');
   const tag = request.nextUrl.searchParams.get('tag');
   const immediate = request.nextUrl.searchParams.get('immediate') === 'true';
   
-  // Validate secret token
-  if (secret !== process.env.REVALIDATE_SECRET) {
+  // Validate secret token using constant-time comparison to prevent timing attacks
+  if (!secureCompare(secret, process.env.REVALIDATE_SECRET)) {
     return NextResponse.json(
       { message: 'Invalid secret token' },
       { status: 401 }
