@@ -33,7 +33,7 @@ describe("getProjects", () => {
     expect(result).toStrictEqual(mockProjects);
     expect(sanityFetch).toHaveBeenCalledWith({
       query: expect.any(String),
-      revalidate: 3600,
+      revalidate: 86400, // 24 hours
     });
   });
 
