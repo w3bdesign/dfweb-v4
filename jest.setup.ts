@@ -1,14 +1,17 @@
 /// <reference types="jest" />
 import "@testing-library/jest-dom";
 import "jest-extended";
-import { TextEncoder, TextDecoder } from "util";
-
-// Polyfill TextEncoder/TextDecoder for Next.js server components in tests
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+import { TextEncoder, TextDecoder } from "node:util";
 import { checkAAAPattern } from "./src/utils/test-utils";
 import fs from "node:fs/promises";
 import path from "node:path";
+
+// Polyfill TextEncoder/TextDecoder for Next.js server components in tests
+// Node.js TextEncoder/TextDecoder types differ slightly from DOM types, but are functionally compatible
+globalThis.TextEncoder =
+  TextEncoder as unknown as typeof globalThis.TextEncoder;
+globalThis.TextDecoder =
+  TextDecoder as unknown as typeof globalThis.TextDecoder;
 
 // Mock matchMedia for prefers-reduced-motion and other media queries
 Object.defineProperty(globalThis, "matchMedia", {
