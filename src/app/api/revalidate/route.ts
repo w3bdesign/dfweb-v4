@@ -22,7 +22,8 @@ import { timingSafeEqual } from "node:crypto";
  * Constant-time string comparison to prevent timing attacks
  */
 function secureCompare(a: string | null, b: string | undefined): boolean {
-  if (!a || !b || a.length !== b.length) {
+  // Use optional chaining for type safety
+  if (!a || !b || a?.length !== b?.length) {
     return false;
   }
 
