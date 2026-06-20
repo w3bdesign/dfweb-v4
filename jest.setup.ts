@@ -1,6 +1,11 @@
 /// <reference types="jest" />
 import "@testing-library/jest-dom";
 import "jest-extended";
+import { TextEncoder, TextDecoder } from "util";
+
+// Polyfill TextEncoder/TextDecoder for Next.js server components in tests
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 import { checkAAAPattern } from "./src/utils/test-utils";
 import fs from "node:fs/promises";
 import path from "node:path";
