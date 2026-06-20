@@ -7,11 +7,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 // Polyfill TextEncoder/TextDecoder for Next.js server components in tests
-// Node.js TextEncoder/TextDecoder types differ slightly from DOM types, but are functionally compatible
-globalThis.TextEncoder =
-  TextEncoder as unknown as typeof globalThis.TextEncoder;
-globalThis.TextDecoder =
-  TextDecoder as unknown as typeof globalThis.TextDecoder;
+// Node.js and DOM TextEncoder/TextDecoder have slightly different type signatures but are functionally compatible
+globalThis.TextEncoder = TextEncoder as any;
+globalThis.TextDecoder = TextDecoder as any;
 
 // Mock matchMedia for prefers-reduced-motion and other media queries
 Object.defineProperty(globalThis, "matchMedia", {
