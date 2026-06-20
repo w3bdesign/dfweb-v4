@@ -1,6 +1,6 @@
-import { revalidateTag } from 'next/cache';
-import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual } from 'node:crypto';
+import { revalidateTag } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 /**
  * API route for on-demand revalidation of cached data.
@@ -25,10 +25,10 @@ function secureCompare(a: string | null, b: string | undefined): boolean {
   if (!a || !b || a.length !== b.length) {
     return false;
   }
-  
+
   try {
-    const bufferA = Buffer.from(a, 'utf-8');
-    const bufferB = Buffer.from(b, 'utf-8');
+    const bufferA = Buffer.from(a, "utf-8");
+    const bufferB = Buffer.from(b, "utf-8");
     return timingSafeEqual(bufferA, bufferB);
   } catch {
     return false;
@@ -36,23 +36,23 @@ function secureCompare(a: string | null, b: string | undefined): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret');
-  const tag = request.nextUrl.searchParams.get('tag');
-  const immediate = request.nextUrl.searchParams.get('immediate') === 'true';
-  
+  const secret = request.nextUrl.searchParams.get("secret");
+  const tag = request.nextUrl.searchParams.get("tag");
+  const immediate = request.nextUrl.searchParams.get("immediate") === "true";
+
   // Validate secret token using constant-time comparison to prevent timing attacks
   if (!secureCompare(secret, process.env.REVALIDATE_SECRET)) {
     return NextResponse.json(
-      { message: 'Invalid secret token' },
-      { status: 401 }
+      { message: "Invalid secret token" },
+      { status: 401 },
     );
   }
 
   // Validate tag parameter
   if (!tag) {
     return NextResponse.json(
-      { message: 'Missing tag parameter' },
-      { status: 400 }
+      { message: "Missing tag parameter" },
+      { status: 400 },
     );
   }
 
@@ -63,20 +63,20 @@ export async function POST(request: NextRequest) {
     if (immediate) {
       revalidateTag(tag, { expire: 0 });
     } else {
-      revalidateTag(tag, 'max');
+      revalidateTag(tag, "max");
     }
-    
+
     return NextResponse.json({
       revalidated: true,
       tag,
-      mode: immediate ? 'immediate' : 'stale-while-revalidate',
-      now: Date.now()
+      mode: immediate ? "immediate" : "stale-while-revalidate",
+      now: Date.now(),
     });
   } catch (err) {
-    console.error('Revalidation error:', err);
+    console.error("Revalidation error:", err);
     return NextResponse.json(
-      { message: 'Error revalidating cache', error: String(err) },
-      { status: 500 }
+      { message: "Error revalidating cache", error: String(err) },
+      { status: 500 },
     );
   }
 }
