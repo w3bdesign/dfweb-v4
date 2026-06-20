@@ -15,12 +15,12 @@ const client = createClient({
 
 /**
  * Typed fetch helper with consistent caching defaults.
- * Applies time-based revalidation (default 3600s) or tag-based invalidation.
+ * Applies time-based revalidation (default 86400s = 24 hours) or tag-based invalidation.
  */
 export async function sanityFetch<T>({
   query,
   params = {},
-  revalidate = 3600,
+  revalidate = 86400,
   tags = [],
 }: {
   query: string;
@@ -29,6 +29,7 @@ export async function sanityFetch<T>({
   tags?: string[];
 }): Promise<T> {
   return client.fetch<T>(query, params, {
+    cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
     next: {
       revalidate: tags.length ? false : revalidate,
       tags,
