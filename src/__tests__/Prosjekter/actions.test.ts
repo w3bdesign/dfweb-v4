@@ -1,6 +1,13 @@
 import { getProjects } from "@/app/prosjekter/actions";
 import { sanityFetch } from "@/lib/sanity/client";
 
+// Mock next/cache unstable_cache to bypass Next.js server APIs in tests
+jest.mock("next/cache", () => ({
+  unstable_cache: (fn: Function) => fn, // Return the function directly without caching
+  revalidateTag: jest.fn(),
+  revalidatePath: jest.fn(),
+}));
+
 // Mock the Sanity client
 jest.mock("@/lib/sanity/client", () => ({
   sanityFetch: jest.fn(),
