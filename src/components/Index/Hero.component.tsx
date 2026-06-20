@@ -6,7 +6,6 @@ import type { Herocontent } from "@/types/sanity.types";
 
 import Icons from "./Icons.component";
 import FadeIn from "../Animations/FadeIn.component";
-import RotatingLoader from "../Animations/RotatingLoader.component";
 import MobileBackground from "./MobileBackground.component";
 import MatrixCursor from "../Animations/MatrixCursor.component";
 
@@ -14,11 +13,6 @@ const ReactMatrixAnimation = dynamic(
   () => import("../Animations/Matrix.component"),
   {
     ssr: false,
-    loading: () => (
-      <div className="text-center">
-        <RotatingLoader />
-      </div>
-    ),
   },
 );
 
