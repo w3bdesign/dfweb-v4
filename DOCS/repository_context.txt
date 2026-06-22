@@ -19133,6 +19133,88 @@ vercel.json
 54:         return response.content[0].text.strip()
 ````
 
+## File: commit/providers/openai_compatible.py
+````python
+ 1: """Generic OpenAI-compatible provider implementation.
+ 2: This provider supports any API endpoint that implements the OpenAI API
+ 3: format, such as LM Studio, Ollama, vLLM, and other local or self-hosted
+ 4: LLM services.
+ 5: """
+ 6: import os
+ 7: from typing import Optional
+ 8: from openai import OpenAI
+ 9: from providers.base import BaseProvider
+10: class OpenAICompatibleProvider(BaseProvider):
+11:     """Provider implementation for OpenAI-compatible APIs.
+12:     Uses the OpenAI Python SDK with a custom base_url to interact with
+13:     any OpenAI-compatible endpoint.
+14:     Environment variables:
+15:         OPENAI_COMPATIBLE_API_KEY: Required. API key for the compatible endpoint.
+16:         OPENAI_COMPATIBLE_BASE_URL: Required. Base URL for the compatible endpoint.
+17:         MODEL_NAME: Required for this provider. The model to use.
+18:     """
+19:     def __init__(
+20:         self,
+21:         api_key: Optional[str] = None,
+22:         base_url: Optional[str] = None,
+23:     ):
+24:         """Initialize the OpenAI-compatible provider.
+25:         Args
+26:         ----
+27:             api_key: Optional API key. If not provided, reads from OPENAI_COMPATIBLE_API_KEY env var.
+28:             base_url: Optional base URL. If not provided, reads from OPENAI_COMPATIBLE_BASE_URL env var.
+29:         Raises
+30:         ------
+31:             ValueError: If API key or base URL is not found.
+32:         """
+33:         self._api_key = api_key or os.getenv("OPENAI_COMPATIBLE_API_KEY")
+34:         self._base_url = base_url or os.getenv("OPENAI_COMPATIBLE_BASE_URL")
+35:         if not self._api_key:
+36:             raise ValueError(
+37:                 "OpenAI-compatible API key not found. "
+38:                 "Please set OPENAI_COMPATIBLE_API_KEY environment variable."
+39:             )
+40:         if not self._base_url:
+41:             raise ValueError(
+42:                 "OpenAI-compatible base URL not found. "
+43:                 "Please set OPENAI_COMPATIBLE_BASE_URL environment variable."
+44:             )
+45:         self._client = OpenAI(api_key=self._api_key, base_url=self._base_url)
+46:     @property
+47:     def name(self) -> str:
+48:         """Return the provider name."""
+49:         return "openai-compatible"
+50:     def get_default_model(self) -> str:
+51:         """Return the default model for this provider.
+52:         Note: For OpenAI-compatible providers, the model must be specified
+53:         via MODEL_NAME environment variable as there's no universal default.
+54:         """
+55:         model = os.getenv("MODEL_NAME")
+56:         if not model:
+57:             raise ValueError(
+58:                 "MODEL_NAME environment variable is required for openai-compatible provider. "
+59:                 "Please set MODEL_NAME to your desired model."
+60:             )
+61:         return model
+62:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
+63:         """Send a chat completion request to the OpenAI-compatible endpoint.
+64:         Args
+65:         ----
+66:             prompt: The user prompt to send.
+67:             model: Optional model override.
+68:         Returns
+69:         -------
+70:             The text response from the model.
+71:         """
+72:         model_to_use = model or self.get_default_model()
+73:         response = self._client.chat.completions.create(
+74:             model=model_to_use,
+75:             messages=[{"role": "user", "content": prompt}],
+76:             stream=False,
+77:         )
+78:         return response.choices[0].message.content.strip()
+````
+
 ## File: src/__tests__/Prosjekter/actions.test.ts
 ````typescript
   1: import { getProjects } from "@/app/prosjekter/actions";
@@ -19783,86 +19865,61 @@ vercel.json
 92: export default nextConfig;
 ````
 
-## File: commit/providers/openai_compatible.py
+## File: commit/providers/openai_provider.py
 ````python
- 1: """Generic OpenAI-compatible provider implementation.
- 2: This provider supports any API endpoint that implements the OpenAI API
- 3: format, such as LM Studio, Ollama, vLLM, and other local or self-hosted
- 4: LLM services.
- 5: """
- 6: import os
- 7: from typing import Optional
- 8: from openai import OpenAI
- 9: from providers.base import BaseProvider
-10: class OpenAICompatibleProvider(BaseProvider):
-11:     """Provider implementation for OpenAI-compatible APIs.
-12:     Uses the OpenAI Python SDK with a custom base_url to interact with
-13:     any OpenAI-compatible endpoint.
-14:     Environment variables:
-15:         OPENAI_COMPATIBLE_API_KEY: Required. API key for the compatible endpoint.
-16:         OPENAI_COMPATIBLE_BASE_URL: Required. Base URL for the compatible endpoint.
-17:         MODEL_NAME: Required for this provider. The model to use.
-18:     """
-19:     def __init__(
-20:         self,
-21:         api_key: Optional[str] = None,
-22:         base_url: Optional[str] = None,
-23:     ):
-24:         """Initialize the OpenAI-compatible provider.
-25:         Args
-26:         ----
-27:             api_key: Optional API key. If not provided, reads from OPENAI_COMPATIBLE_API_KEY env var.
-28:             base_url: Optional base URL. If not provided, reads from OPENAI_COMPATIBLE_BASE_URL env var.
-29:         Raises
-30:         ------
-31:             ValueError: If API key or base URL is not found.
-32:         """
-33:         self._api_key = api_key or os.getenv("OPENAI_COMPATIBLE_API_KEY")
-34:         self._base_url = base_url or os.getenv("OPENAI_COMPATIBLE_BASE_URL")
-35:         if not self._api_key:
-36:             raise ValueError(
-37:                 "OpenAI-compatible API key not found. "
-38:                 "Please set OPENAI_COMPATIBLE_API_KEY environment variable."
-39:             )
-40:         if not self._base_url:
-41:             raise ValueError(
-42:                 "OpenAI-compatible base URL not found. "
-43:                 "Please set OPENAI_COMPATIBLE_BASE_URL environment variable."
-44:             )
-45:         self._client = OpenAI(api_key=self._api_key, base_url=self._base_url)
-46:     @property
-47:     def name(self) -> str:
-48:         """Return the provider name."""
-49:         return "openai-compatible"
-50:     def get_default_model(self) -> str:
-51:         """Return the default model for this provider.
-52:         Note: For OpenAI-compatible providers, the model must be specified
-53:         via MODEL_NAME environment variable as there's no universal default.
-54:         """
-55:         model = os.getenv("MODEL_NAME")
-56:         if not model:
-57:             raise ValueError(
-58:                 "MODEL_NAME environment variable is required for openai-compatible provider. "
-59:                 "Please set MODEL_NAME to your desired model."
-60:             )
-61:         return model
-62:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-63:         """Send a chat completion request to the OpenAI-compatible endpoint.
-64:         Args
-65:         ----
-66:             prompt: The user prompt to send.
-67:             model: Optional model override.
-68:         Returns
-69:         -------
-70:             The text response from the model.
-71:         """
-72:         model_to_use = model or self.get_default_model()
-73:         response = self._client.chat.completions.create(
-74:             model=model_to_use,
-75:             messages=[{"role": "user", "content": prompt}],
-76:             stream=False,
-77:         )
-78:         return response.choices[0].message.content.strip()
+ 1: """OpenAI provider implementation using the official OpenAI Python SDK."""
+ 2: import os
+ 3: from typing import Optional
+ 4: from openai import OpenAI
+ 5: from providers.base import BaseProvider
+ 6: class OpenAIProvider(BaseProvider):
+ 7:     """Provider implementation for OpenAI's API.
+ 8:     Uses the official OpenAI Python SDK to interact with GPT models.
+ 9:     Environment variables:
+10:         OPENAI_API_KEY: Required. Your OpenAI API key.
+11:         MODEL_NAME: Optional. Override the default model.
+12:     """
+13:     DEFAULT_MODEL = "gpt-5.5"
+14:     def __init__(self, api_key: Optional[str] = None):
+15:         """
+16:         Initialize the OpenAI provider.
+17:         Args
+18:         ----
+19:             api_key: Optional API key. If not provided, reads from OPENAI_API_KEY env var.
+20:         Raises
+21:         ------
+22:             ValueError: If no API key is found.
+23:         """
+24:         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
+25:         if not self._api_key:
+26:             raise ValueError(
+27:                 "OpenAI API key not found. Please set OPENAI_API_KEY environment variable."
+28:             )
+29:         self._client = OpenAI(api_key=self._api_key)
+30:     @property
+31:     def name(self) -> str:
+32:         """Return the provider name."""
+33:         return "openai"
+34:     def get_default_model(self) -> str:
+35:         """Return the default model for OpenAI."""
+36:         return os.getenv("MODEL_NAME", self.DEFAULT_MODEL)
+37:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
+38:         """Send a chat completion request to OpenAI.
+39:         Args
+40:         ----
+41:             prompt: The user prompt to send.
+42:             model: Optional model override.
+43:         Returns
+44:         -------
+45:             The text response from the model.
+46:         """
+47:         model_to_use = model or self.get_default_model()
+48:         response = self._client.chat.completions.create(
+49:             model=model_to_use,
+50:             messages=[{"role": "user", "content": prompt}],
+51:             stream=False,
+52:         )
+53:         return response.choices[0].message.content.strip()
 ````
 
 ## File: studio/package.json
@@ -20208,63 +20265,6 @@ vercel.json
 92:         "\n"
 93:         "Alternatively, set PROVIDER environment variable to explicitly choose a provider."
 94:     )
-````
-
-## File: commit/providers/openai_provider.py
-````python
- 1: """OpenAI provider implementation using the official OpenAI Python SDK."""
- 2: import os
- 3: from typing import Optional
- 4: from openai import OpenAI
- 5: from providers.base import BaseProvider
- 6: class OpenAIProvider(BaseProvider):
- 7:     """Provider implementation for OpenAI's API.
- 8:     Uses the official OpenAI Python SDK to interact with GPT models.
- 9:     Environment variables:
-10:         OPENAI_API_KEY: Required. Your OpenAI API key.
-11:         MODEL_NAME: Optional. Override the default model.
-12:     """
-13:     DEFAULT_MODEL = "gpt-5.5"
-14:     def __init__(self, api_key: Optional[str] = None):
-15:         """
-16:         Initialize the OpenAI provider.
-17:         Args
-18:         ----
-19:             api_key: Optional API key. If not provided, reads from OPENAI_API_KEY env var.
-20:         Raises
-21:         ------
-22:             ValueError: If no API key is found.
-23:         """
-24:         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
-25:         if not self._api_key:
-26:             raise ValueError(
-27:                 "OpenAI API key not found. Please set OPENAI_API_KEY environment variable."
-28:             )
-29:         self._client = OpenAI(api_key=self._api_key)
-30:     @property
-31:     def name(self) -> str:
-32:         """Return the provider name."""
-33:         return "openai"
-34:     def get_default_model(self) -> str:
-35:         """Return the default model for OpenAI."""
-36:         return os.getenv("MODEL_NAME", self.DEFAULT_MODEL)
-37:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-38:         """Send a chat completion request to OpenAI.
-39:         Args
-40:         ----
-41:             prompt: The user prompt to send.
-42:             model: Optional model override.
-43:         Returns
-44:         -------
-45:             The text response from the model.
-46:         """
-47:         model_to_use = model or self.get_default_model()
-48:         response = self._client.chat.completions.create(
-49:             model=model_to_use,
-50:             messages=[{"role": "user", "content": prompt}],
-51:             stream=False,
-52:         )
-53:         return response.choices[0].message.content.strip()
 ````
 
 ## File: commit/providers/base.py
