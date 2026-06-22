@@ -18587,6 +18587,237 @@ vercel.json
 11: __all__ = ["get_provider"]
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: #!/usr/bin/env python3
+  2: """AI-Powered Git Commit Message Generator.
+  3: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
+  4: Installation in another repo:
+  5: 1. Copy the entire commit/ folder to your repo
+  6: 2. Run: pip install openai anthropic python-dotenv
+  7: 3. Create .env with your API key (or run setup.sh/setup.ps1)
+  8: 4. Make a commit!
+  9: """
+ 10: import subprocess
+ 11: import os
+ 12: import sys
+ 13: import json
+ 14: import codecs
+ 15: from typing import List, Tuple, Optional
+ 16: from pathlib import Path
+ 17: from dotenv import load_dotenv
+ 18: # Add this directory to path to import the providers module
+ 19: sys.path.insert(0, str(Path(__file__).parent))
+ 20: from providers import get_provider
+ 21: # =============================================================================
+ 22: # GIT COMMAND SECURITY
+ 23: # =============================================================================
+ 24: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+ 25: _GIT_ARG_CACHED = "--cached"
+ 26: _GIT_ARG_NAME_ONLY = "--name-only"
+ 27: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+ 28: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+ 29: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
+ 30: def _normalize_repo_path(path: str) -> str:
+ 31:     """Normalize paths to forward-slashed, workspace-relative form."""
+ 32:     return path.replace("\\", "/").lstrip("./")
+ 33: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
+ 34:     """Remove full per-file diff blocks for excluded paths."""
+ 35:     if not diff or not excluded_paths:
+ 36:         return diff
+ 37:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
+ 38:     kept: List[str] = []
+ 39:     skipping = False
+ 40:     for line in diff.splitlines(True):
+ 41:         if line.startswith("diff --git "):
+ 42:             parts = line.strip().split()
+ 43:             a_path = ""
+ 44:             b_path = ""
+ 45:             if len(parts) >= 4:
+ 46:                 a_token = parts[2]
+ 47:                 b_token = parts[3]
+ 48:                 if a_token.startswith("a/"):
+ 49:                     a_path = a_token[2:]
+ 50:                 if b_token.startswith("b/"):
+ 51:                     b_path = b_token[2:]
+ 52:             file_path = b_path or a_path
+ 53:             skipping = _normalize_repo_path(file_path) in excluded
+ 54:             if skipping:
+ 55:                 continue
+ 56:         if skipping:
+ 57:             continue
+ 58:         kept.append(line)
+ 59:     return "".join(kept)
+ 60: def _run_git_command(args: List[str]) -> str:
+ 61:     """Safely execute a git command with strict whitelist validation."""
+ 62:     if not args:
+ 63:         raise ValueError("Git command arguments cannot be empty")
+ 64:     subcommand = args[0]
+ 65:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+ 66:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
+ 67:     for arg in args[1:]:
+ 68:         if arg not in _ALLOWED_GIT_ARGS:
+ 69:             raise ValueError(f"Git argument '{arg}' not allowed")
+ 70:     full_command = ["git"] + list(args)
+ 71:     result = subprocess.check_output(
+ 72:         full_command,
+ 73:         shell=False,
+ 74:         stderr=subprocess.DEVNULL,
+ 75:     )
+ 76:     return result.decode("utf-8")
+ 77: # =============================================================================
+ 78: # DIFF ANALYSIS
+ 79: # =============================================================================
+ 80: def _is_lock_file(filename: str) -> bool:
+ 81:     """Check if a filename is a dependency lock file."""
+ 82:     lock_file_patterns = (
+ 83:         ".lock",
+ 84:         "lock.json",
+ 85:         "package-lock.json",
+ 86:         "yarn.lock",
+ 87:         "pnpm-lock.yaml",
+ 88:     )
+ 89:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+ 90: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
+ 91:     """Get the diff of staged changes and list of changed files.
+ 92:     Returns
+ 93:     -------
+ 94:         Tuple of (diff_content, has_lock_files, changed_files)
+ 95:     """
+ 96:     try:
+ 97:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
+ 98:         staged_files = files_output.splitlines()
+ 99:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+100:         if any(_is_lock_file(f) for f in staged_files):
+101:             return None, True, staged_files
+102:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+103:             return "", False, staged_files
+104:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+105:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+106:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+107:         if not diff:
+108:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+109:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
+110:             staged_files = files_output.splitlines()
+111:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+112:             if any(_is_lock_file(f) for f in staged_files):
+113:                 return None, True, staged_files
+114:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+115:                 return "", False, staged_files
+116:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+117:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+118:         return diff, False, staged_files
+119:     except subprocess.CalledProcessError as e:
+120:         print(f"Error getting git diff: {e}")
+121:         return None, False, []
+122:     except ValueError as e:
+123:         print(f"Internal error - invalid git command: {e}")
+124:         return None, False, []
+125: # =============================================================================
+126: # COMMIT MESSAGE GENERATION
+127: # =============================================================================
+128: def generate_commit_message(diff: str) -> Optional[str]:
+129:     """Generate commit message using the configured LLM provider."""
+130:     try:
+131:         load_dotenv()
+132:         provider = get_provider()
+133:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
+134: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
+135: just the commit message exactly as it should appear in git.
+136:         The commit message MUST follow this format:
+137:         <emoji> <type>[optional scope]: <description>
+138:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+139:         [optional footer(s)]
+140:         Where:
+141:         1. Type MUST be one of (with corresponding emoji):
+142:            Core types:
+143:            - ✨ feat: A new feature
+144:            - 🐛 fix: A bug fix
+145:            - 📝 docs: Documentation only changes
+146:            - 🎨 style: Changes that don't affect the meaning of the code
+147:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+148:            - ⚡️ perf: A code change that improves performance
+149:            - ✅ test: Adding missing tests or correcting existing tests
+150:            - 🔧 chore: Changes to build process or auxiliary tools
+151:            - 👷 ci: Changes to CI configuration files and scripts
+152:            Additional specific types:
+153:            - 🔒 security: Security fixes
+154:            - 📦 deps: Dependencies
+155:            - 💥 breaking: Breaking changes
+156:            - 💄 ui: UI/style changes
+157:            - 🌐 i18n: Internationalization
+158:            - ✏️ typo: Fix typos
+159:            - 🎉 init: Initial commit
+160:            - 📄 license: License
+161:            - 🐳 docker: Docker
+162:            - ♿️ access: Accessibility
+163:            - 🔊 logs: Logging
+164:            - 🗃️ db: Database
+165:            - 🔥 cleanup: Remove code/files
+166:            - 🚧 wip: Work in progress
+167:            - 🚚 move: Move/rename files
+168:            - ⏪ revert: Revert changes
+169:            - 🔀 merge: Merge branches
+170:            - 📱 responsive: Responsive design
+171:            - 🚑 hotfix: Critical hotfix
+172:         2. Description MUST:
+173:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
+174:            - Start with lowercase
+175:            - Use imperative mood ("add" not "adds/added")
+176:            - No period at end
+177:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
+178:         3. Body (if included) MUST:
+179:            - Be separated from title by blank line
+180:            - Wrap at 72 characters
+181:            - Explain what and why vs. how
+182:            - Use proper punctuation
+183:         Git diff to analyze:
+184:         {diff}
+185:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+186:         message = provider.chat_completion(prompt)
+187:         if "Based on the diff" in message:
+188:             message = message.split("\n")[-1].strip()
+189:         return message
+190:     except Exception as e:
+191:         error_msg = str(e)
+192:         print(f"Error generating commit message: {error_msg}")
+193:         if "500" in error_msg:
+194:             print("\nServer error. Check MODEL_NAME if set.")
+195:         elif "401" in error_msg or "403" in error_msg:
+196:             print("\nAuth error. Check your API key.")
+197:         elif "404" in error_msg:
+198:             print("\nModel not found. Check MODEL_NAME.")
+199:         return None
+200: # =============================================================================
+201: # MAIN
+202: # =============================================================================
+203: def main():
+204:     diff, has_lock_files, changed_files = get_staged_diff()
+205:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
+206:     if has_lock_files:
+207:         commit_message = "📦 deps: update dependencies"
+208:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
+209:         commit_message = "📝 docs: update repository context"
+210:     elif not diff:
+211:         print("No changes to analyze")
+212:         sys.exit(1)
+213:     else:
+214:         commit_message = generate_commit_message(diff)
+215:     if not commit_message:
+216:         print("Failed to generate commit message")
+217:         sys.exit(1)
+218:     print("\nGenerated commit message:")
+219:     print("------------------------")
+220:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+221:     sys.stdout.buffer.flush()
+222:     print("\n------------------------")
+223:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+224:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+225:             f.write(commit_message)
+226: if __name__ == "__main__":
+227:     main()
+````
+
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -18844,235 +19075,62 @@ vercel.json
 39: }
 ````
 
-## File: commit/commit_analyzer.py
+## File: commit/providers/anthropic_provider.py
 ````python
-  1: #!/usr/bin/env python3
-  2: """AI-Powered Git Commit Message Generator.
-  3: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
-  4: Installation in another repo:
-  5: 1. Copy the entire commit/ folder to your repo
-  6: 2. Run: pip install openai anthropic python-dotenv
-  7: 3. Create .env with your API key (or run setup.sh/setup.ps1)
-  8: 4. Make a commit!
-  9: """
- 10: import subprocess
- 11: import os
- 12: import sys
- 13: import json
- 14: import codecs
- 15: from typing import List, Tuple, Optional
- 16: from pathlib import Path
- 17: from dotenv import load_dotenv
- 18: # Add this directory to path to import the providers module
- 19: sys.path.insert(0, str(Path(__file__).parent))
- 20: from providers import get_provider
- 21: # =============================================================================
- 22: # GIT COMMAND SECURITY
- 23: # =============================================================================
- 24: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
- 25: _GIT_ARG_CACHED = "--cached"
- 26: _GIT_ARG_NAME_ONLY = "--name-only"
- 27: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
- 28: _ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
- 29: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
- 30: def _normalize_repo_path(path: str) -> str:
- 31:     """Normalize paths to forward-slashed, workspace-relative form."""
- 32:     return path.replace("\\", "/").lstrip("./")
- 33: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
- 34:     """Remove full per-file diff blocks for excluded paths."""
- 35:     if not diff or not excluded_paths:
- 36:         return diff
- 37:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
- 38:     kept: List[str] = []
- 39:     skipping = False
- 40:     for line in diff.splitlines(True):
- 41:         if line.startswith("diff --git "):
- 42:             parts = line.strip().split()
- 43:             a_path = ""
- 44:             b_path = ""
- 45:             if len(parts) >= 4:
- 46:                 a_token = parts[2]
- 47:                 b_token = parts[3]
- 48:                 if a_token.startswith("a/"):
- 49:                     a_path = a_token[2:]
- 50:                 if b_token.startswith("b/"):
- 51:                     b_path = b_token[2:]
- 52:             file_path = b_path or a_path
- 53:             skipping = _normalize_repo_path(file_path) in excluded
- 54:             if skipping:
- 55:                 continue
- 56:         if skipping:
- 57:             continue
- 58:         kept.append(line)
- 59:     return "".join(kept)
- 60: def _run_git_command(args: List[str]) -> str:
- 61:     """Safely execute a git command with strict whitelist validation."""
- 62:     if not args:
- 63:         raise ValueError("Git command arguments cannot be empty")
- 64:     subcommand = args[0]
- 65:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
- 66:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
- 67:     for arg in args[1:]:
- 68:         if arg not in _ALLOWED_GIT_ARGS:
- 69:             raise ValueError(f"Git argument '{arg}' not allowed")
- 70:     full_command = ["git"] + list(args)
- 71:     result = subprocess.check_output(
- 72:         full_command,
- 73:         shell=False,
- 74:         stderr=subprocess.DEVNULL,
- 75:     )
- 76:     return result.decode("utf-8")
- 77: # =============================================================================
- 78: # DIFF ANALYSIS
- 79: # =============================================================================
- 80: def _is_lock_file(filename: str) -> bool:
- 81:     """Check if a filename is a dependency lock file."""
- 82:     lock_file_patterns = (
- 83:         ".lock",
- 84:         "lock.json",
- 85:         "package-lock.json",
- 86:         "yarn.lock",
- 87:         "pnpm-lock.yaml",
- 88:     )
- 89:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
- 90: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
- 91:     """Get the diff of staged changes and list of changed files.
- 92:     Returns
- 93:     -------
- 94:         Tuple of (diff_content, has_lock_files, changed_files)
- 95:     """
- 96:     try:
- 97:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
- 98:         staged_files = files_output.splitlines()
- 99:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-100:         if any(_is_lock_file(f) for f in staged_files):
-101:             return None, True, staged_files
-102:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-103:             return "", False, staged_files
-104:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
-105:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-106:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-107:         if not diff:
-108:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
-109:             files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
-110:             staged_files = files_output.splitlines()
-111:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-112:             if any(_is_lock_file(f) for f in staged_files):
-113:                 return None, True, staged_files
-114:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-115:                 return "", False, staged_files
-116:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-117:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-118:         return diff, False, staged_files
-119:     except subprocess.CalledProcessError as e:
-120:         print(f"Error getting git diff: {e}")
-121:         return None, False, []
-122:     except ValueError as e:
-123:         print(f"Internal error - invalid git command: {e}")
-124:         return None, False, []
-125: # =============================================================================
-126: # COMMIT MESSAGE GENERATION
-127: # =============================================================================
-128: def generate_commit_message(diff: str) -> Optional[str]:
-129:     """Generate commit message using the configured LLM provider."""
-130:     try:
-131:         load_dotenv()
-132:         provider = get_provider()
-133:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
-134: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
-135: just the commit message exactly as it should appear in git.
-136:         The commit message MUST follow this format:
-137:         <emoji> <type>[optional scope]: <description>
-138:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-139:         [optional footer(s)]
-140:         Where:
-141:         1. Type MUST be one of (with corresponding emoji):
-142:            Core types:
-143:            - ✨ feat: A new feature
-144:            - 🐛 fix: A bug fix
-145:            - 📝 docs: Documentation only changes
-146:            - 🎨 style: Changes that don't affect the meaning of the code
-147:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-148:            - ⚡️ perf: A code change that improves performance
-149:            - ✅ test: Adding missing tests or correcting existing tests
-150:            - 🔧 chore: Changes to build process or auxiliary tools
-151:            - 👷 ci: Changes to CI configuration files and scripts
-152:            Additional specific types:
-153:            - 🔒 security: Security fixes
-154:            - 📦 deps: Dependencies
-155:            - 💥 breaking: Breaking changes
-156:            - 💄 ui: UI/style changes
-157:            - 🌐 i18n: Internationalization
-158:            - ✏️ typo: Fix typos
-159:            - 🎉 init: Initial commit
-160:            - 📄 license: License
-161:            - 🐳 docker: Docker
-162:            - ♿️ access: Accessibility
-163:            - 🔊 logs: Logging
-164:            - 🗃️ db: Database
-165:            - 🔥 cleanup: Remove code/files
-166:            - 🚧 wip: Work in progress
-167:            - 🚚 move: Move/rename files
-168:            - ⏪ revert: Revert changes
-169:            - 🔀 merge: Merge branches
-170:            - 📱 responsive: Responsive design
-171:            - 🚑 hotfix: Critical hotfix
-172:         2. Description MUST:
-173:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
-174:            - Start with lowercase
-175:            - Use imperative mood ("add" not "adds/added")
-176:            - No period at end
-177:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
-178:         3. Body (if included) MUST:
-179:            - Be separated from title by blank line
-180:            - Wrap at 72 characters
-181:            - Explain what and why vs. how
-182:            - Use proper punctuation
-183:         Git diff to analyze:
-184:         {diff}
-185:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-186:         message = provider.chat_completion(prompt)
-187:         if "Based on the diff" in message:
-188:             message = message.split("\n")[-1].strip()
-189:         return message
-190:     except Exception as e:
-191:         error_msg = str(e)
-192:         print(f"Error generating commit message: {error_msg}")
-193:         if "500" in error_msg:
-194:             print("\nServer error. Check MODEL_NAME if set.")
-195:         elif "401" in error_msg or "403" in error_msg:
-196:             print("\nAuth error. Check your API key.")
-197:         elif "404" in error_msg:
-198:             print("\nModel not found. Check MODEL_NAME.")
-199:         return None
-200: # =============================================================================
-201: # MAIN
-202: # =============================================================================
-203: def main():
-204:     diff, has_lock_files, changed_files = get_staged_diff()
-205:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
-206:     if has_lock_files:
-207:         commit_message = "📦 deps: update dependencies"
-208:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
-209:         commit_message = "📝 docs: update repository context"
-210:     elif not diff:
-211:         print("No changes to analyze")
-212:         sys.exit(1)
-213:     else:
-214:         commit_message = generate_commit_message(diff)
-215:     if not commit_message:
-216:         print("Failed to generate commit message")
-217:         sys.exit(1)
-218:     print("\nGenerated commit message:")
-219:     print("------------------------")
-220:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-221:     sys.stdout.buffer.flush()
-222:     print("\n------------------------")
-223:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-224:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-225:             f.write(commit_message)
-226: if __name__ == "__main__":
-227:     main()
+ 1: """Anthropic provider implementation using the official Anthropic Python
+ 2: SDK."""
+ 3: import os
+ 4: from typing import Optional
+ 5: from anthropic import Anthropic
+ 6: from providers.base import BaseProvider
+ 7: class AnthropicProvider(BaseProvider):
+ 8:     """Provider implementation for Anthropic's API.
+ 9:     Uses the official Anthropic Python SDK to interact with Claude models.
+10:     Environment variables:
+11:         ANTHROPIC_API_KEY: Required. Your Anthropic API key.
+12:         MODEL_NAME: Optional. Override the default model.
+13:     """
+14:     DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
+15:     def __init__(self, api_key: Optional[str] = None):
+16:         """Initialize the Anthropic provider.
+17:         Args
+18:         ----
+19:             api_key: Optional API key. If not provided, reads from ANTHROPIC_API_KEY env var.
+20:         Raises
+21:         ------
+22:             ValueError: If no API key is found.
+23:         """
+24:         self._api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+25:         if not self._api_key:
+26:             raise ValueError(
+27:                 "Anthropic API key not found. Please set ANTHROPIC_API_KEY environment variable."
+28:             )
+29:         self._client = Anthropic(api_key=self._api_key)
+30:     @property
+31:     def name(self) -> str:
+32:         """Return the provider name."""
+33:         return "anthropic"
+34:     def get_default_model(self) -> str:
+35:         """Return the default model for Anthropic."""
+36:         return os.getenv("MODEL_NAME", self.DEFAULT_MODEL)
+37:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
+38:         """Send a chat completion request to Anthropic.
+39:         Args
+40:         ----
+41:             prompt: The user prompt to send.
+42:             model: Optional model override.
+43:         Returns
+44:         -------
+45:             The text response from the model.
+46:         """
+47:         model_to_use = model or self.get_default_model()
+48:         response = self._client.messages.create(
+49:             model=model_to_use,
+50:             max_tokens=4096,
+51:             messages=[{"role": "user", "content": prompt}],
+52:         )
+53:         # Anthropic returns a list of content blocks
+54:         return response.content[0].text.strip()
 ````
 
 ## File: src/__tests__/Prosjekter/actions.test.ts
@@ -19725,64 +19783,6 @@ vercel.json
 92: export default nextConfig;
 ````
 
-## File: commit/providers/anthropic_provider.py
-````python
- 1: """Anthropic provider implementation using the official Anthropic Python
- 2: SDK."""
- 3: import os
- 4: from typing import Optional
- 5: from anthropic import Anthropic
- 6: from providers.base import BaseProvider
- 7: class AnthropicProvider(BaseProvider):
- 8:     """Provider implementation for Anthropic's API.
- 9:     Uses the official Anthropic Python SDK to interact with Claude models.
-10:     Environment variables:
-11:         ANTHROPIC_API_KEY: Required. Your Anthropic API key.
-12:         MODEL_NAME: Optional. Override the default model.
-13:     """
-14:     DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
-15:     def __init__(self, api_key: Optional[str] = None):
-16:         """Initialize the Anthropic provider.
-17:         Args
-18:         ----
-19:             api_key: Optional API key. If not provided, reads from ANTHROPIC_API_KEY env var.
-20:         Raises
-21:         ------
-22:             ValueError: If no API key is found.
-23:         """
-24:         self._api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-25:         if not self._api_key:
-26:             raise ValueError(
-27:                 "Anthropic API key not found. Please set ANTHROPIC_API_KEY environment variable."
-28:             )
-29:         self._client = Anthropic(api_key=self._api_key)
-30:     @property
-31:     def name(self) -> str:
-32:         """Return the provider name."""
-33:         return "anthropic"
-34:     def get_default_model(self) -> str:
-35:         """Return the default model for Anthropic."""
-36:         return os.getenv("MODEL_NAME", self.DEFAULT_MODEL)
-37:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-38:         """Send a chat completion request to Anthropic.
-39:         Args
-40:         ----
-41:             prompt: The user prompt to send.
-42:             model: Optional model override.
-43:         Returns
-44:         -------
-45:             The text response from the model.
-46:         """
-47:         model_to_use = model or self.get_default_model()
-48:         response = self._client.messages.create(
-49:             model=model_to_use,
-50:             max_tokens=4096,
-51:             messages=[{"role": "user", "content": prompt}],
-52:         )
-53:         # Anthropic returns a list of content blocks
-54:         return response.content[0].text.strip()
-````
-
 ## File: commit/providers/openai_compatible.py
 ````python
  1: """Generic OpenAI-compatible provider implementation.
@@ -20267,6 +20267,45 @@ vercel.json
 53:         return response.choices[0].message.content.strip()
 ````
 
+## File: commit/providers/base.py
+````python
+ 1: """Base provider abstract class defining the interface all LLM providers must implement."""
+ 2: from abc import ABC, abstractmethod
+ 3: from typing import Optional
+ 4: class BaseProvider(ABC):
+ 5:     """Abstract base class for LLM providers.
+ 6:     All provider implementations must inherit from this class and
+ 7:     implement the required abstract methods to ensure a consistent
+ 8:     interface.
+ 9:     """
+10:     @property
+11:     @abstractmethod
+12:     def name(self) -> str:
+13:         """Get the provider name."""
+14:     @abstractmethod
+15:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
+16:         """
+17:         Send a chat completion request and return the response text.
+18:         Args
+19:         ----
+20:             prompt: The user prompt to send to the LLM.
+21:             model: Optional model override. If not provided, uses the default model.
+22:         Returns
+23:         -------
+24:             The text response from the LLM.
+25:         Raises
+26:         ------
+27:             Exception: If the API request fails.
+28:         """
+29:     @abstractmethod
+30:     def get_default_model(self) -> str:
+31:         """Return the default model for this provider.
+32:         Returns
+33:         -------
+34:             The default model identifier string.
+35:         """
+````
+
 ## File: src/app/api/revalidate/route.ts
 ````typescript
  1: import { revalidateTag } from "next/cache";
@@ -20344,45 +20383,6 @@ vercel.json
 73:     );
 74:   }
 75: }
-````
-
-## File: commit/providers/base.py
-````python
- 1: """Base provider abstract class defining the interface all LLM providers must implement."""
- 2: from abc import ABC, abstractmethod
- 3: from typing import Optional
- 4: class BaseProvider(ABC):
- 5:     """Abstract base class for LLM providers.
- 6:     All provider implementations must inherit from this class and
- 7:     implement the required abstract methods to ensure a consistent
- 8:     interface.
- 9:     """
-10:     @property
-11:     @abstractmethod
-12:     def name(self) -> str:
-13:         """Get the provider name."""
-14:     @abstractmethod
-15:     def chat_completion(self, prompt: str, model: Optional[str] = None) -> str:
-16:         """
-17:         Send a chat completion request and return the response text.
-18:         Args
-19:         ----
-20:             prompt: The user prompt to send to the LLM.
-21:             model: Optional model override. If not provided, uses the default model.
-22:         Returns
-23:         -------
-24:             The text response from the LLM.
-25:         Raises
-26:         ------
-27:             Exception: If the API request fails.
-28:         """
-29:     @abstractmethod
-30:     def get_default_model(self) -> str:
-31:         """Return the default model for this provider.
-32:         Returns
-33:         -------
-34:             The default model identifier string.
-35:         """
 ````
 
 ## File: jest.setup.ts
