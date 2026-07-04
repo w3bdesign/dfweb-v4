@@ -86,7 +86,9 @@ test.describe("Mobile Navigation", () => {
     // Assert
     await expect(githubLink).toHaveAttribute("target", "_blank");
     await expect(githubLink).toHaveAttribute("rel", "noreferrer");
-    await expect(githubLink).toHaveAttribute("href", /.+github\.com.+/);
+    await expect(
+      githubLink,
+    ).toHaveAttribute("href", /^https?:\/\/(?:www\.)?github\.com(?:\/.*)?$/);
   });
 
   test("menu closes after navigating to internal link", async ({ page }) => {
