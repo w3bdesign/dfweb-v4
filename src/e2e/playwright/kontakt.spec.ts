@@ -157,6 +157,15 @@ test.describe("Contact form submission", () => {
 
   test("successfully submits valid form", async ({ page }) => {
     // Arrange
+    // Mock EmailJS API response
+    await page.route("**/*api.emailjs.com/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
     await page.getByLabel("Fullt navn").fill("John Doe");
     await page.getByLabel("Telefonnummer").fill("12345678");
     await page
