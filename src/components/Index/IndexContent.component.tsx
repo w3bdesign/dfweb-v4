@@ -1,6 +1,7 @@
 "use client";
 
 import Section from "./Section.component";
+import ErrorBoundary from "../ErrorBoundary/ErrorBoundary";
 import type { Page } from "@/types/sanity.types";
 
 /**
@@ -18,12 +19,13 @@ const IndexContent = ({ pageContent }: { pageContent: Page["content"] }) => {
   return (
     <div className="w-full overflow-hidden -mb-8">
       {pageContent.map((page, index) => (
-        <Section
-          key={page._key}
-          {...page}
-          variant={index % 2 === 0 ? "default" : "alternate"}
-          viewAmount={index === 0 ? 0.1 : 0.2}
-        />
+        <ErrorBoundary key={page._key}>
+          <Section
+            {...page}
+            variant={index % 2 === 0 ? "default" : "alternate"}
+            viewAmount={index === 0 ? 0.1 : 0.2}
+          />
+        </ErrorBoundary>
       ))}
     </div>
   );
