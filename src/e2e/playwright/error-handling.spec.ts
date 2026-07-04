@@ -275,14 +275,14 @@ test.describe("Error Recovery", () => {
       .getByLabel("Om Meg")
       .getByRole("button", { name: "Utløs Testfeil" })
       .click();
-    await expect(page.getByText(/error|feil/i).first()).toBeVisible();
+    await expect(page.getByText(/funnet en feil i matrix/i).first()).toBeVisible();
 
     // Act
     await page.reload();
 
     // Assert
     await expect(page.getByRole("heading", { name: "Hei!" })).toBeVisible();
-    await expect(page.getByText(/error|feil/i).first()).not.toBeVisible();
+    await expect(page.getByText(/funnet en feil i matrix/i).first()).not.toBeVisible();
   });
 
   test("navigation away from error clears error state", async ({ page }) => {
