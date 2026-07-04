@@ -163,7 +163,9 @@ test.describe("Page Transitions", () => {
     // Arrange
     await page.goto("/");
     await page.getByRole("navigation").getByRole("link", { name: "CV" }).click();
+    await expect(page).toHaveURL("/cv");
     await page.goBack();
+    await expect(page).toHaveURL("/");
 
     // Act
     await page.goForward();
