@@ -113,7 +113,7 @@ test.describe("Mobile Menu Accessibility", () => {
     await page.getByTestId("hamburger").click();
 
     // Act
-    const nav = page.getByRole("navigation", { name: "Navigasjon" });
+    const nav = page.getByRole("navigation", { name: "Mobilnavigasjon" });
 
     // Assert
     await expect(nav).toBeVisible();
