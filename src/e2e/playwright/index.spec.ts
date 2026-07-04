@@ -57,4 +57,81 @@ test.describe("Home page", () => {
       { timeout: 10000 },
     );
   });
+
+  test("individual technology icons are visible", async ({ page }) => {
+    // Arrange
+    await page.goto("/");
+    const iconsContainer = page.getByTestId("icons");
+
+    // Act
+    const icons = iconsContainer.locator("svg, img");
+    const iconCount = await icons.count();
+
+    // Assert
+    expect(iconCount).toBeGreaterThan(0);
+    // Verify at least 5 technology icons (React, Vue, TypeScript, WordPress, PHP)
+    expect(iconCount).toBeGreaterThanOrEqual(5);
+  });
+
+  test("technology icons have proper accessibility", async ({ page }) => {
+    // Arrange
+    await page.goto("/");
+    const iconsContainer = page.getByTestId("icons");
+
+    // Act
+    const icons = iconsContainer.locator("svg, img");
+    const firstIcon = icons.first();
+
+    // Assert
+    await expect(firstIcon).toBeVisible();
+    // Icons should have either aria-label, title, or be marked decorative
+    const hasAria = await firstIcon.getAttribute("aria-label");
+    const hasTitle = await firstIcon.getAttribute("title");
+    const isDecorative = await firstIcon.getAttribute("aria-hidden");
+    expect(hasAria || hasTitle || isDecorative).toBeTruthy();
+  });
+
+  test("homepage error boundary buttons are visible", async ({ page }) => {
+    // Arrange
+    await page.goto("/");
+
+    // Act
+    const omMegButton = page
+      .getByLabel("Om Meg")
+      .getByRole("button", { name: "Utløs Testfeil" });
+    const prosjekterButton = page
+      .getByLabel("Prosjekter")
+      .getByRole("button", { name: "Utløs Testfeil" });
+
+    // Assert
+    await expect(omMegButton).toBeVisible();
+    await expect(prosjekterButton).toBeVisible();
+  });
+
+  test("in-content GitHub links are present", async ({ page }) => {
+    // Arrange
+    await page.goto("/");
+
+    // Act
+    const githubLinks = page.getByRole("link", { name: /github/i });
+    const count = await githubLinks.count();
+
+    // Assert
+    expect(count).toBeGreaterThan(0);
+    // Should have at least 2 GitHub links (navigation + content)
+    expect(count).toBeGreaterThanOrEqual(2);
+  });
+
+  test("footer is visible on homepage", async ({ page }) => {
+    // Arrange
+    await page.goto("/");
+
+    // Act
+    const footer = page.getByRole("contentinfo");
+
+    // Assert
+    await expect(footer).toBeVisible();
+    await expect(footer).toContainText("Copyright Daniel Fjeldstad");
+    await expect(footer).toContainText(new Date().getFullYear().toString());
+  });
 });

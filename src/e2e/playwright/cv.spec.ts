@@ -241,4 +241,33 @@ test.describe("CV page additional features", () => {
     await expect(tablist).toBeVisible();
     expect(tabCount).toBe(4);
   });
+
+  test("PDF download link is visible and accessible", async ({ page }) => {
+    // Arrange
+    // (page loaded)
+
+    // Act
+    const pdfLink = page.getByRole("link", { name: /last ned pdf/i });
+
+    // Assert
+    if ((await pdfLink.count()) > 0) {
+      await expect(pdfLink.first()).toBeVisible();
+      const href = await pdfLink.first().getAttribute("href");
+      expect(href).toContain(".pdf");
+    }
+  });
+
+  test("PDF viewer or images are displayed", async ({ page }) => {
+    // Arrange
+    // (page loaded)
+
+    // Act
+    const cvImages = page.locator('img[alt*="CV"], img[src*="cv"]');
+    const pdfElements = page.locator('[src*=".pdf"]');
+
+    // Assert
+    const hasImages = (await cvImages.count()) > 0;
+    const hasPdf = (await pdfElements.count()) > 0;
+    expect(hasImages || hasPdf).toBe(true);
+  });
 });
