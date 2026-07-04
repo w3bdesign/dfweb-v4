@@ -85,7 +85,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
             exit="closed"
             variants={menuVariants}
           >
-            <nav aria-label="Navigasjon" className="w-full">
+            <nav aria-label="Mobilnavigasjon" className="w-full">
               <m.ul
                 className="w-full"
                 initial="closed"
