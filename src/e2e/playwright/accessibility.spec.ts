@@ -208,7 +208,7 @@ test.describe("Keyboard Navigation", () => {
     const focusedElement = await page.evaluate(
       () => document.activeElement?.tagName,
     );
-    expect(focusedElement).not.toBe(null);
+    expect(focusedElement).not.toBeNull();
   });
 
   test("can navigate CV tabs using keyboard only", async ({ page }) => {

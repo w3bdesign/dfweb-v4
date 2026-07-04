@@ -234,16 +234,18 @@ test.describe("Network Error Handling", () => {
 
     // Act
     await context.setOffline(true);
-    const navigationPromise = page
+    const clickPromise = page
       .getByRole("navigation")
       .getByRole("link", { name: "Prosjekter" })
       .click();
 
     // Assert
-    // Should either show error or handle gracefully
-    await navigationPromise.catch(() => {
-      // Expected to fail offline
+    // Navigation should fail when offline
+    let navigationFailed = false;
+    await clickPromise.catch(() => {
+      navigationFailed = true;
     });
+    expect(navigationFailed).toBe(true);
     await context.setOffline(false);
   });
 
@@ -324,7 +326,7 @@ test.describe("Console Error Monitoring", () => {
         !err.includes("Utløs Testfeil") &&
         !err.includes("AnimatePresence"),
     );
-    expect(unexpectedErrors.length).toBe(0);
+    expect(unexpectedErrors).toHaveLength(0);
   });
 
   test("no console errors on CV page load", async ({ page }) => {
@@ -344,7 +346,7 @@ test.describe("Console Error Monitoring", () => {
     const unexpectedErrors = consoleErrors.filter(
       (err) => !err.includes("AnimatePresence"),
     );
-    expect(unexpectedErrors.length).toBe(0);
+    expect(unexpectedErrors).toHaveLength(0);
   });
 
   test("no console errors on Kontakt page load", async ({ page }) => {
@@ -361,7 +363,7 @@ test.describe("Console Error Monitoring", () => {
     await page.waitForLoadState("networkidle");
 
     // Assert
-    expect(consoleErrors.length).toBe(0);
+    expect(consoleErrors).toHaveLength(0);
   });
 
   test("no console errors on Prosjekter page load", async ({ page }) => {
