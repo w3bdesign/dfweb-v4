@@ -1,9 +1,8 @@
-import { test, expect, devices } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Navigation", () => {
-  test.use({ ...devices["iPhone 12"] });
-
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
   });
 
@@ -104,7 +103,9 @@ test.describe("Mobile Navigation", () => {
 });
 
 test.describe("Mobile Menu Accessibility", () => {
-  test.use({ ...devices["iPhone 12"] });
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+  });
 
   test("mobile menu has correct ARIA attributes", async ({ page }) => {
     // Arrange
@@ -185,8 +186,6 @@ test.describe("Responsive Behavior", () => {
 });
 
 test.describe("Mobile Menu on All Pages", () => {
-  test.use({ ...devices["iPhone 12"] });
-
   const pages = [
     { name: "Homepage", url: "/" },
     { name: "CV", url: "/cv" },
@@ -197,6 +196,7 @@ test.describe("Mobile Menu on All Pages", () => {
   for (const { name, url } of pages) {
     test(`mobile menu works on ${name}`, async ({ page }) => {
       // Arrange
+      await page.setViewportSize({ width: 375, height: 667 });
       await page.goto(url);
 
       // Act
