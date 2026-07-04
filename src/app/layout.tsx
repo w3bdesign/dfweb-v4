@@ -67,7 +67,7 @@ export default async function RootLayout({
         <LazyMotionProvider>
           <SkipLink />
           <ErrorBoundary>
-            <div id="main-content" className="grow flex flex-col">
+            <div id="main-content" tabIndex={-1} className="grow flex flex-col">
               <Header navigation={navigation} />
               <SpeedInsights />
               <div className="grow">{children}</div>
