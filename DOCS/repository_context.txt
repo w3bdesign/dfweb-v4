@@ -2094,6 +2094,21 @@ vercel.json
 14: # 10109	IGNORE	(Modern Web Application)
 ````
 
+## File: commit/providers/__init__.py
+````python
+ 1: """
+ 2: Provider abstraction layer for LLM API integrations.
+ 3: This module provides a unified interface for interacting with different LLM providers
+ 4: (OpenAI, Anthropic, and OpenAI-compatible endpoints) through a common API.
+ 5: Usage:
+ 6:     from providers import get_provider
+ 7:     provider = get_provider()  # Auto-detects based on available API keys
+ 8:     response = provider.chat_completion("Your prompt here")
+ 9: """
+10: from providers.factory import get_provider
+11: __all__ = ["get_provider"]
+````
+
 ## File: commit/.env.example
 ````
  1: # AI Commit Message Generator - Configuration
@@ -18572,21 +18587,6 @@ vercel.json
 1: {}
 ````
 
-## File: commit/providers/__init__.py
-````python
- 1: """
- 2: Provider abstraction layer for LLM API integrations.
- 3: This module provides a unified interface for interacting with different LLM providers
- 4: (OpenAI, Anthropic, and OpenAI-compatible endpoints) through a common API.
- 5: Usage:
- 6:     from providers import get_provider
- 7:     provider = get_provider()  # Auto-detects based on available API keys
- 8:     response = provider.chat_completion("Your prompt here")
- 9: """
-10: from providers.factory import get_provider
-11: __all__ = ["get_provider"]
-````
-
 ## File: commit/commit_analyzer.py
 ````python
   1: #!/usr/bin/env python3
@@ -19865,6 +19865,104 @@ vercel.json
 92: export default nextConfig;
 ````
 
+## File: commit/providers/factory.py
+````python
+ 1: """Provider factory with auto-detection and explicit selection support.
+ 2: This module provides a factory function to get the appropriate LLM
+ 3: provider based on environment configuration.
+ 4: """
+ 5: import os
+ 6: from typing import Optional
+ 7: from providers.base import BaseProvider
+ 8: from providers.openai_provider import OpenAIProvider
+ 9: from providers.anthropic_provider import AnthropicProvider
+10: from providers.openai_compatible import OpenAICompatibleProvider
+11: # Valid provider names for explicit selection
+12: VALID_PROVIDERS = frozenset(["anthropic", "openai", "openai-compatible"])
+13: class ProviderConfigurationError(Exception):
+14:     """Raised when provider configuration is invalid or missing."""
+15: class InvalidProviderError(Exception):
+16:     """Raised when an invalid provider name is specified."""
+17: def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
+18:     """
+19:     Get an LLM provider instance.
+20:     If provider_name is specified, returns that specific provider.
+21:     Otherwise, checks the PROVIDER environment variable.
+22:     If PROVIDER is not set, auto-detects based on available API keys.
+23:     Auto-detection priority order:
+24:     1. Anthropic (if ANTHROPIC_API_KEY is set)
+25:     2. OpenAI (if OPENAI_API_KEY is set)
+26:     3. OpenAI-compatible (if OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL are set)
+27:     Args
+28:     ----
+29:         provider_name: Optional explicit provider name ('anthropic', 'openai', 'openai-compatible').
+30:     Returns
+31:     -------
+32:         A configured provider instance.
+33:     Raises
+34:     ------
+35:         InvalidProviderError: If an invalid provider name is specified.
+36:         ProviderConfigurationError: If no provider can be configured.
+37:     """
+38:     # Determine provider name
+39:     name = provider_name or os.getenv("PROVIDER")
+40:     if name:
+41:         # Explicit provider selection
+42:         name = name.lower().strip()
+43:         if name not in VALID_PROVIDERS:
+44:             raise InvalidProviderError(
+45:                 f"Invalid provider '{name}'. Valid providers are: {', '.join(sorted(VALID_PROVIDERS))}"
+46:             )
+47:         return _create_provider(name)
+48:     # Auto-detection mode
+49:     return _auto_detect_provider()
+50: def _create_provider(name: str) -> BaseProvider:
+51:     """Create a provider instance by name.
+52:     Args
+53:     ----
+54:         name: The provider name.
+55:     Returns
+56:     -------
+57:         A configured provider instance.
+58:     """
+59:     if name == "anthropic":
+60:         return AnthropicProvider()
+61:     elif name == "openai":
+62:         return OpenAIProvider()
+63:     elif name == "openai-compatible":
+64:         return OpenAICompatibleProvider()
+65:     else:
+66:         raise InvalidProviderError(f"Unknown provider: {name}")
+67: def _auto_detect_provider() -> BaseProvider:
+68:     """
+69:     Auto-detect and return the appropriate provider based on available API keys.
+70:     Returns
+71:     -------
+72:         A configured provider instance.
+73:     Raises
+74:     ------
+75:         ProviderConfigurationError: If no API keys are found.
+76:     """
+77:     # Check for Anthropic (highest priority)
+78:     if os.getenv("ANTHROPIC_API_KEY"):
+79:         return AnthropicProvider()
+80:     # Check for OpenAI
+81:     if os.getenv("OPENAI_API_KEY"):
+82:         return OpenAIProvider()
+83:     # Check for OpenAI-compatible
+84:     if os.getenv("OPENAI_COMPATIBLE_API_KEY") and os.getenv("OPENAI_COMPATIBLE_BASE_URL"):
+85:         return OpenAICompatibleProvider()
+86:     # No provider found
+87:     raise ProviderConfigurationError(
+88:         "No API key found. Please configure one of the following:\n"
+89:         "  - ANTHROPIC_API_KEY for Anthropic Claude models\n"
+90:         "  - OPENAI_API_KEY for OpenAI GPT models\n"
+91:         "  - OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL for OpenAI-compatible endpoints\n"
+92:         "\n"
+93:         "Alternatively, set PROVIDER environment variable to explicitly choose a provider."
+94:     )
+````
+
 ## File: commit/providers/openai_provider.py
 ````python
  1: """OpenAI provider implementation using the official OpenAI Python SDK."""
@@ -20167,104 +20265,6 @@ vercel.json
 96:     }
 97:   }
 98: }
-````
-
-## File: commit/providers/factory.py
-````python
- 1: """Provider factory with auto-detection and explicit selection support.
- 2: This module provides a factory function to get the appropriate LLM
- 3: provider based on environment configuration.
- 4: """
- 5: import os
- 6: from typing import Optional
- 7: from providers.base import BaseProvider
- 8: from providers.openai_provider import OpenAIProvider
- 9: from providers.anthropic_provider import AnthropicProvider
-10: from providers.openai_compatible import OpenAICompatibleProvider
-11: # Valid provider names for explicit selection
-12: VALID_PROVIDERS = frozenset(["anthropic", "openai", "openai-compatible"])
-13: class ProviderConfigurationError(Exception):
-14:     """Raised when provider configuration is invalid or missing."""
-15: class InvalidProviderError(Exception):
-16:     """Raised when an invalid provider name is specified."""
-17: def get_provider(provider_name: Optional[str] = None) -> BaseProvider:
-18:     """
-19:     Get an LLM provider instance.
-20:     If provider_name is specified, returns that specific provider.
-21:     Otherwise, checks the PROVIDER environment variable.
-22:     If PROVIDER is not set, auto-detects based on available API keys.
-23:     Auto-detection priority order:
-24:     1. Anthropic (if ANTHROPIC_API_KEY is set)
-25:     2. OpenAI (if OPENAI_API_KEY is set)
-26:     3. OpenAI-compatible (if OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL are set)
-27:     Args
-28:     ----
-29:         provider_name: Optional explicit provider name ('anthropic', 'openai', 'openai-compatible').
-30:     Returns
-31:     -------
-32:         A configured provider instance.
-33:     Raises
-34:     ------
-35:         InvalidProviderError: If an invalid provider name is specified.
-36:         ProviderConfigurationError: If no provider can be configured.
-37:     """
-38:     # Determine provider name
-39:     name = provider_name or os.getenv("PROVIDER")
-40:     if name:
-41:         # Explicit provider selection
-42:         name = name.lower().strip()
-43:         if name not in VALID_PROVIDERS:
-44:             raise InvalidProviderError(
-45:                 f"Invalid provider '{name}'. Valid providers are: {', '.join(sorted(VALID_PROVIDERS))}"
-46:             )
-47:         return _create_provider(name)
-48:     # Auto-detection mode
-49:     return _auto_detect_provider()
-50: def _create_provider(name: str) -> BaseProvider:
-51:     """Create a provider instance by name.
-52:     Args
-53:     ----
-54:         name: The provider name.
-55:     Returns
-56:     -------
-57:         A configured provider instance.
-58:     """
-59:     if name == "anthropic":
-60:         return AnthropicProvider()
-61:     elif name == "openai":
-62:         return OpenAIProvider()
-63:     elif name == "openai-compatible":
-64:         return OpenAICompatibleProvider()
-65:     else:
-66:         raise InvalidProviderError(f"Unknown provider: {name}")
-67: def _auto_detect_provider() -> BaseProvider:
-68:     """
-69:     Auto-detect and return the appropriate provider based on available API keys.
-70:     Returns
-71:     -------
-72:         A configured provider instance.
-73:     Raises
-74:     ------
-75:         ProviderConfigurationError: If no API keys are found.
-76:     """
-77:     # Check for Anthropic (highest priority)
-78:     if os.getenv("ANTHROPIC_API_KEY"):
-79:         return AnthropicProvider()
-80:     # Check for OpenAI
-81:     if os.getenv("OPENAI_API_KEY"):
-82:         return OpenAIProvider()
-83:     # Check for OpenAI-compatible
-84:     if os.getenv("OPENAI_COMPATIBLE_API_KEY") and os.getenv("OPENAI_COMPATIBLE_BASE_URL"):
-85:         return OpenAICompatibleProvider()
-86:     # No provider found
-87:     raise ProviderConfigurationError(
-88:         "No API key found. Please configure one of the following:\n"
-89:         "  - ANTHROPIC_API_KEY for Anthropic Claude models\n"
-90:         "  - OPENAI_API_KEY for OpenAI GPT models\n"
-91:         "  - OPENAI_COMPATIBLE_API_KEY and OPENAI_COMPATIBLE_BASE_URL for OpenAI-compatible endpoints\n"
-92:         "\n"
-93:         "Alternatively, set PROVIDER environment variable to explicitly choose a provider."
-94:     )
 ````
 
 ## File: commit/providers/base.py
