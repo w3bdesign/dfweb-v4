@@ -1971,30 +1971,6 @@ vercel.json
 53:         return response.choices[0].message.content.strip()
 ````
 
-## File: commit/.env.example
-````
- 1: # AI Commit Message Generator - Configuration
- 2: # Copy this file to .env in your repository root and add your API key
- 3: 
- 4: # Provider Selection (optional - auto-detects based on available API keys)
- 5: # Valid values: anthropic, openai, openai-compatible
- 6: # PROVIDER=""
- 7: 
- 8: # API Keys - set at least one
- 9: ANTHROPIC_API_KEY=""  # For Anthropic Claude models (sk-ant-...)
-10: OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-11: 
-12: # OpenAI-Compatible provider (for local LLMs, custom endpoints)
-13: # OPENAI_COMPATIBLE_API_KEY=""
-14: # OPENAI_COMPATIBLE_BASE_URL=""  # e.g., http://localhost:1234/v1
-15: 
-16: # Optional: Override the default model
-17: # MODEL_NAME=""
-18: # Examples:
-19: #   Anthropic: claude-sonnet-4-5-20250929, claude-opus-4-5-20251101
-20: #   OpenAI: gpt-5.2, gpt-4o
-````
-
 ## File: commit/commit_analyzer.py
 ````python
   1: #!/usr/bin/env python3
@@ -19049,6 +19025,27 @@ vercel.json
 72:           args: "--file=src/utils/eslint/package.json"
 ````
 
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model for your chosen provider
+17: MODEL_NAME="anthropic/claude-sonnet-5"
+````
+
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -20139,6 +20136,136 @@ vercel.json
 92: export default nextConfig;
 ````
 
+## File: jest.setup.ts
+````typescript
+  1: /// <reference types="jest" />
+  2: import "@testing-library/jest-dom";
+  3: import "jest-extended";
+  4: import { checkAAAPattern } from "./src/utils/test-utils";
+  5: import fs from "node:fs/promises";
+  6: import path from "node:path";
+  7: // Mock matchMedia for prefers-reduced-motion and other media queries
+  8: Object.defineProperty(globalThis, "matchMedia", {
+  9:   writable: true,
+ 10:   value: jest.fn().mockImplementation((query: string) => ({
+ 11:     matches: false,
+ 12:     media: query,
+ 13:     onchange: null,
+ 14:     addListener: jest.fn(),
+ 15:     removeListener: jest.fn(),
+ 16:     addEventListener: jest.fn(),
+ 17:     removeEventListener: jest.fn(),
+ 18:     dispatchEvent: jest.fn(),
+ 19:   })),
+ 20: });
+ 21: declare global {
+ 22:   namespace jest {
+ 23:     interface Matchers<R> {
+ 24:       // Testing Library matchers
+ 25:       toBeInTheDocument(): R;
+ 26:       toHaveTextContent(text: string): R;
+ 27:       toBeVisible(): R;
+ 28:       toBeDisabled(): R;
+ 29:       toBeEnabled(): R;
+ 30:       toHaveAttribute(attr: string, value?: string): R;
+ 31:       toHaveClass(...classNames: string[]): R;
+ 32:       toHaveStyle(css: Record<string, unknown>): R;
+ 33:       toContainElement(element: Element | null): R;
+ 34:       toContainHTML(html: string): R;
+ 35:       toHaveLength(length: number): R;
+ 36:       // Jest matchers
+ 37:       toBe(expected: unknown): R;
+ 38:       toEqual(expected: unknown): R;
+ 39:       toStrictEqual(expected: unknown): R;
+ 40:       toBeNull(): R;
+ 41:       toBeDefined(): R;
+ 42:       toBeUndefined(): R;
+ 43:       toBeTruthy(): R;
+ 44:       toBeFalsy(): R;
+ 45:       toBeGreaterThan(number: number): R;
+ 46:       toBeLessThan(number: number): R;
+ 47:       toBeLessThanOrEqual(number: number): R;
+ 48:       toBeGreaterThanOrEqual(number: number): R;
+ 49:       toContain(item: unknown): R;
+ 50:       toHaveBeenCalled(): R;
+ 51:       toHaveBeenCalledTimes(number: number): R;
+ 52:       toHaveBeenCalledWith(...args: unknown[]): R;
+ 53:       toHaveBeenCalledExactly(times: number): R;
+ 54:       toThrow(error?: string | Error | RegExp): R;
+ 55:       toMatch(regexpOrString: string | RegExp): R;
+ 56:       rejects: {
+ 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
+ 58:       };
+ 59:     }
+ 60:   }
+ 61: }
+ 62: function getTestPath(): string | undefined {
+ 63:   return (
+ 64:     expect as unknown as { getState: () => { testPath?: string } }
+ 65:   ).getState().testPath;
+ 66: }
+ 67: /**
+ 68:  * Validates that a test file path is safe to read.
+ 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
+ 70:  * and is actually a test file.
+ 71:  */
+ 72: function isValidTestPath(testPath: string): boolean {
+ 73:   // Resolve to absolute path to eliminate ../ sequences
+ 74:   const resolvedPath = path.resolve(testPath);
+ 75:   const projectRoot = path.resolve(__dirname);
+ 76:   // Must be within project directory
+ 77:   if (!resolvedPath.startsWith(projectRoot)) {
+ 78:     return false;
+ 79:   }
+ 80:   // Must be in test directories
+ 81:   const relativePath = path.relative(projectRoot, resolvedPath);
+ 82:   const isInTestDir =
+ 83:     relativePath.startsWith("src/__tests__/") ||
+ 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
+ 85:   // Must be a test file
+ 86:   const isTestFile =
+ 87:     resolvedPath.endsWith(".test.ts") ||
+ 88:     resolvedPath.endsWith(".test.tsx") ||
+ 89:     resolvedPath.endsWith(".spec.ts") ||
+ 90:     resolvedPath.endsWith(".spec.tsx");
+ 91:   return isInTestDir && isTestFile;
+ 92: }
+ 93: beforeEach(async () => {
+ 94:   const testPath = getTestPath();
+ 95:   if (
+ 96:     testPath &&
+ 97:     !testPath.includes("test-rule.test.tsx") &&
+ 98:     !testPath.includes("node_modules")
+ 99:   ) {
+100:     // Validate path before reading to prevent path traversal attacks
+101:     if (!isValidTestPath(testPath)) {
+102:       console.warn(
+103:         `Skipping AAA validation for invalid test path: ${testPath}`,
+104:       );
+105:       return;
+106:     }
+107:     try {
+108:       const content = await fs.readFile(testPath, "utf8");
+109:       const result = checkAAAPattern(content);
+110:       if (!result.isValid) {
+111:         throw new Error(
+112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+113:             "Each test should include:\n" +
+114:             "// Arrange - Set up test data and conditions\n" +
+115:             "// Act - Perform the action being tested\n" +
+116:             "// Assert - Verify the results",
+117:         );
+118:       }
+119:     } catch (error) {
+120:       if (error instanceof Error) {
+121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
+122:       }
+123:       throw error;
+124:     }
+125:   }
+126: });
+````
+
 ## File: package.json
 ````json
  1: {
@@ -20314,136 +20441,6 @@ vercel.json
 73:     );
 74:   }
 75: }
-````
-
-## File: jest.setup.ts
-````typescript
-  1: /// <reference types="jest" />
-  2: import "@testing-library/jest-dom";
-  3: import "jest-extended";
-  4: import { checkAAAPattern } from "./src/utils/test-utils";
-  5: import fs from "node:fs/promises";
-  6: import path from "node:path";
-  7: // Mock matchMedia for prefers-reduced-motion and other media queries
-  8: Object.defineProperty(globalThis, "matchMedia", {
-  9:   writable: true,
- 10:   value: jest.fn().mockImplementation((query: string) => ({
- 11:     matches: false,
- 12:     media: query,
- 13:     onchange: null,
- 14:     addListener: jest.fn(),
- 15:     removeListener: jest.fn(),
- 16:     addEventListener: jest.fn(),
- 17:     removeEventListener: jest.fn(),
- 18:     dispatchEvent: jest.fn(),
- 19:   })),
- 20: });
- 21: declare global {
- 22:   namespace jest {
- 23:     interface Matchers<R> {
- 24:       // Testing Library matchers
- 25:       toBeInTheDocument(): R;
- 26:       toHaveTextContent(text: string): R;
- 27:       toBeVisible(): R;
- 28:       toBeDisabled(): R;
- 29:       toBeEnabled(): R;
- 30:       toHaveAttribute(attr: string, value?: string): R;
- 31:       toHaveClass(...classNames: string[]): R;
- 32:       toHaveStyle(css: Record<string, unknown>): R;
- 33:       toContainElement(element: Element | null): R;
- 34:       toContainHTML(html: string): R;
- 35:       toHaveLength(length: number): R;
- 36:       // Jest matchers
- 37:       toBe(expected: unknown): R;
- 38:       toEqual(expected: unknown): R;
- 39:       toStrictEqual(expected: unknown): R;
- 40:       toBeNull(): R;
- 41:       toBeDefined(): R;
- 42:       toBeUndefined(): R;
- 43:       toBeTruthy(): R;
- 44:       toBeFalsy(): R;
- 45:       toBeGreaterThan(number: number): R;
- 46:       toBeLessThan(number: number): R;
- 47:       toBeLessThanOrEqual(number: number): R;
- 48:       toBeGreaterThanOrEqual(number: number): R;
- 49:       toContain(item: unknown): R;
- 50:       toHaveBeenCalled(): R;
- 51:       toHaveBeenCalledTimes(number: number): R;
- 52:       toHaveBeenCalledWith(...args: unknown[]): R;
- 53:       toHaveBeenCalledExactly(times: number): R;
- 54:       toThrow(error?: string | Error | RegExp): R;
- 55:       toMatch(regexpOrString: string | RegExp): R;
- 56:       rejects: {
- 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
- 58:       };
- 59:     }
- 60:   }
- 61: }
- 62: function getTestPath(): string | undefined {
- 63:   return (
- 64:     expect as unknown as { getState: () => { testPath?: string } }
- 65:   ).getState().testPath;
- 66: }
- 67: /**
- 68:  * Validates that a test file path is safe to read.
- 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
- 70:  * and is actually a test file.
- 71:  */
- 72: function isValidTestPath(testPath: string): boolean {
- 73:   // Resolve to absolute path to eliminate ../ sequences
- 74:   const resolvedPath = path.resolve(testPath);
- 75:   const projectRoot = path.resolve(__dirname);
- 76:   // Must be within project directory
- 77:   if (!resolvedPath.startsWith(projectRoot)) {
- 78:     return false;
- 79:   }
- 80:   // Must be in test directories
- 81:   const relativePath = path.relative(projectRoot, resolvedPath);
- 82:   const isInTestDir =
- 83:     relativePath.startsWith("src/__tests__/") ||
- 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
- 85:   // Must be a test file
- 86:   const isTestFile =
- 87:     resolvedPath.endsWith(".test.ts") ||
- 88:     resolvedPath.endsWith(".test.tsx") ||
- 89:     resolvedPath.endsWith(".spec.ts") ||
- 90:     resolvedPath.endsWith(".spec.tsx");
- 91:   return isInTestDir && isTestFile;
- 92: }
- 93: beforeEach(async () => {
- 94:   const testPath = getTestPath();
- 95:   if (
- 96:     testPath &&
- 97:     !testPath.includes("test-rule.test.tsx") &&
- 98:     !testPath.includes("node_modules")
- 99:   ) {
-100:     // Validate path before reading to prevent path traversal attacks
-101:     if (!isValidTestPath(testPath)) {
-102:       console.warn(
-103:         `Skipping AAA validation for invalid test path: ${testPath}`,
-104:       );
-105:       return;
-106:     }
-107:     try {
-108:       const content = await fs.readFile(testPath, "utf8");
-109:       const result = checkAAAPattern(content);
-110:       if (!result.isValid) {
-111:         throw new Error(
-112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-113:             "Each test should include:\n" +
-114:             "// Arrange - Set up test data and conditions\n" +
-115:             "// Act - Perform the action being tested\n" +
-116:             "// Assert - Verify the results",
-117:         );
-118:       }
-119:     } catch (error) {
-120:       if (error instanceof Error) {
-121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-122:       }
-123:       throw error;
-124:     }
-125:   }
-126: });
 ````
 
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
