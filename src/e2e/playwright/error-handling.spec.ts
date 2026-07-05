@@ -380,6 +380,6 @@ test.describe("Console Error Monitoring", () => {
     const unexpectedErrors = consoleErrors.filter(
       (err) => !err.includes("Image") && !err.includes("quality"),
     );
-    expect(unexpectedErrors.length).toBe(0);
+    expect(unexpectedErrors).toHaveLength(0);
   });
 });
