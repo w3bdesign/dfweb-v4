@@ -1,5 +1,6 @@
 import * as m from "motion/react-m";
 import { ReactNode, useRef } from "react";
+import { createWillChangeHandlers } from "./animation-utils";
 
 export interface FadeInProps {
   children: ReactNode;
@@ -21,6 +22,8 @@ const FadeIn = ({
   "data-testid": dataTestId,
 }: FadeInProps) => {
   const ref = useRef<HTMLDivElement>(null);
+  const { onAnimationStart, onAnimationComplete } =
+    createWillChangeHandlers(ref);
 
   return (
     <m.div
@@ -34,12 +37,8 @@ const FadeIn = ({
         delay,
         ease: "easeOut",
       }}
-      onAnimationStart={() => {
-        if (ref.current) ref.current.style.willChange = "opacity";
-      }}
-      onAnimationComplete={() => {
-        if (ref.current) ref.current.style.willChange = "auto";
-      }}
+      onAnimationStart={onAnimationStart}
+      onAnimationComplete={onAnimationComplete}
     >
       {children}
     </m.div>

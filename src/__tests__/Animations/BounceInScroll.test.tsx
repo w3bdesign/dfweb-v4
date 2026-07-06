@@ -24,6 +24,28 @@ jest.mock("motion/react", () => ({
   Variants: {},
 }));
 
+/**
+ * Helper to render BounceInScroll and assert element + content are present.
+ */
+function renderAndAssertBounceInScroll(
+  props: Partial<React.ComponentProps<typeof BounceInScroll>> = {},
+  testContent = "Test content",
+) {
+  // Arrange & Act
+  const result = render(
+    <BounceInScroll {...props}>
+      <div>{testContent}</div>
+    </BounceInScroll>,
+  );
+
+  // Assert
+  const element = screen.getByTestId("bounceinscroll");
+  expect(element).toBeInTheDocument();
+  expect(screen.getByText(testContent)).toBeInTheDocument();
+
+  return { element, ...result };
+}
+
 describe("BounceInScroll", () => {
   it("renders children content", () => {
     // Arrange
@@ -56,74 +78,36 @@ describe("BounceInScroll", () => {
   });
 
   it("configures viewport with default amount when viewAmount not provided", () => {
-    // Arrange
-    const testContent = "Test content";
-
-    // Act
-    render(
-      <BounceInScroll>
-        <div>{testContent}</div>
-      </BounceInScroll>,
-    );
-
-    // Assert
-    const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeInTheDocument();
-    expect(screen.getByText(testContent)).toBeInTheDocument();
+    // Arrange & Act & Assert
+    renderAndAssertBounceInScroll();
   });
 
   it("configures viewport with custom amount when viewAmount provided", () => {
-    // Arrange
-    const testContent = "Test content";
-    const viewAmount = 0.5;
-
-    // Act
-    render(
-      <BounceInScroll viewAmount={viewAmount}>
-        <div>{testContent}</div>
-      </BounceInScroll>,
-    );
-
-    // Assert
-    const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeInTheDocument();
-    expect(screen.getByText(testContent)).toBeInTheDocument();
+    // Arrange & Act & Assert
+    renderAndAssertBounceInScroll({ viewAmount: 0.5 });
   });
 
   it("configures for instant animation when instant prop is true", () => {
-    // Arrange
-    const testContent = "Test content";
-
-    // Act
-    render(
-      <BounceInScroll instant={true}>
-        <div>{testContent}</div>
-      </BounceInScroll>,
-    );
-
-    // Assert
-    const element = screen.getByTestId("bounceinscroll");
-    expect(element).toBeInTheDocument();
-    expect(screen.getByText(testContent)).toBeInTheDocument();
+    // Arrange & Act & Assert
+    renderAndAssertBounceInScroll({ instant: true });
   });
 
   it("handles all viewport amount types", () => {
     // Arrange
     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
-    const testContent = "Test content";
 
     amounts.forEach((amount) => {
       // Act
       const { unmount } = render(
         <BounceInScroll viewAmount={amount}>
-          <div>{testContent}</div>
+          <div>Test content</div>
         </BounceInScroll>,
       );
 
       // Assert
       const element = screen.getByTestId("bounceinscroll");
       expect(element).toBeInTheDocument();
-      expect(screen.getByText(testContent)).toBeInTheDocument();
+      expect(screen.getByText("Test content")).toBeInTheDocument();
 
       // Cleanup
       unmount();

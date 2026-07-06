@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",
 };
 
+// ISR - regenerate every 24 hours
+export const revalidate = 86400;
+
 async function ProjectList() {
   const projects = await getProjects();
 

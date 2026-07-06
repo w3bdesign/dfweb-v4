@@ -2,6 +2,8 @@ export const client = {
   fetch: jest.fn().mockResolvedValue([]),
 };
 
+export const sanityFetch = jest.fn().mockResolvedValue(null);
+
 export function urlFor() {
   const imageUrlBuilder = {
     width: () => imageUrlBuilder,

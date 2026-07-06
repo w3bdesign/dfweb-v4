@@ -14,7 +14,8 @@ interface ExperienceTabContentProps {
 
 const renderExperienceHeader = (exp: Experience): React.ReactNode => (
   <>
-    {exp.period ?? ""} - {exp.company ?? ""}
+    <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
+    {exp.company ?? ""}
   </>
 );
 

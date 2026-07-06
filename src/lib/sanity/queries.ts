@@ -56,7 +56,7 @@ export const cvQuery = defineQuery(`
 `);
 
 export const pageContentQuery = defineQuery(`
-  *[_type == 'page' && title match 'Hjem'][0]{
+  *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
     "id": _id,
     title,
     hero,

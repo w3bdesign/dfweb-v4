@@ -88,7 +88,10 @@ Sanity.io and Typescript.
 
 - Fully responsive design tested on all devices
 - React Icons for project icons
-- Tailwind 14 for styling
+- Tailwind 4 for styling with a CSS custom-property design token system
+  ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+  colors, surface palette, glow shadows, and custom animations all driven by
+  CSS variables defined in [`globals.css`](src/app/globals.css:33)
 - Animated reusable input fields
 - Matrix-inspired animated cursor with dynamic trailing effect with fading
   Matrix characters
@@ -153,7 +156,7 @@ Sanity.io and Typescript.
   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-  - Custom audit script at `scripts/pin-actions.py` (uses `niquests` for secure HTTPS)
+  - Custom audit script at `scripts/pin-actions.py`
     - `python scripts/pin-actions.py audit` — scan and report mutable references
     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files

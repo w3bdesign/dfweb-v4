@@ -1,37 +1,29 @@
 import {RiArticleLine} from 'react-icons/ri'
+import {defineType, defineField, defineArrayMember} from 'sanity'
 
-const pagecontent = {
-  // This is the display name for the type
+const pagecontent = defineType({
   title: 'Page content',
-
-  // The identifier for this document type used in the api's
   name: 'pagecontent',
-
   icon: RiArticleLine,
-
-  // Documents have the type 'document'. Your schema may describe types beyond documents
-  // but let's get back to that later.
   type: 'object',
-
-  // Now we proceed to list the fields of our document
   fields: [
-    {
+    defineField({
       title: 'Id',
       name: 'id',
       type: 'number',
-    },
-    {
+    }),
+    defineField({
       title: 'Title',
       name: 'title',
       type: 'string',
-    },
-    {
+    }),
+    defineField({
       title: 'Text',
       name: 'text',
       type: 'array',
-      of: [{type: 'block'}],
-    },
+      of: [defineArrayMember({type: 'block'})],
+    }),
   ],
-}
+})
 
 export default pagecontent

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useCallback } from "react";
 import { createMatrixRenderer } from "./Matrix.renderer";
 import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
 
-export interface ReactMatrixAnimationProps {
+interface ReactMatrixAnimationProps {
   tileSize?: number;
   fadeFactor?: number;
   backgroundColor?: string;
@@ -117,11 +117,19 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
   );
 
   useEffect(() => {
+    // Respect prefers-reduced-motion — skip animation entirely
+    const prefersReducedMotion = globalThis.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    let animationFrameId: number;
 
     const handleResize = () => {
       const boundingClientRect = canvas.getBoundingClientRect();
@@ -137,10 +145,15 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     window.addEventListener("resize", debouncedResize);
     handleResize();
 
-    requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+    const animateTick = (timestamp: number) => {
+      animationFrameId = requestAnimationFrame(animateTick);
+      tick(timestamp, ctx, canvas);
+    };
+    animationFrameId = requestAnimationFrame(animateTick);
 
     return () => {
       window.removeEventListener("resize", debouncedResize);
+      cancelAnimationFrame(animationFrameId);
     };
   }, [initMatrix, tick]);
 
@@ -148,6 +161,8 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     <canvas
       ref={canvasRef}
       id={CANVAS_ID}
+      aria-hidden="true"
+      tabIndex={-1}
       style={{ width: "100%", height: "100%" }}
       data-testid="matrix-canvas"
       className="absolute inset-0"

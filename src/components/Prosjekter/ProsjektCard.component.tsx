@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import Button from "@/components/UI/Button.component";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 
@@ -44,18 +45,21 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
     >
       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
         <div className="relative w-full md:h-60">
-          <div className="w-full h-full p-5 md:pb-[20px] relative overflow-hidden flex justify-center md:h-[340px]">
+          <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
             {projectimage && (
-              <img
+              <Image
                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
                 width={600}
+                height={300}
                 src={urlFor(projectimage)
                   .width(600)
                   .fit("max")
                   .quality(100)
                   .auto("format")
                   .url()}
+                quality={100}
                 alt={`Skjermbilde av prosjektet ${name}`}
+                sizes="(max-width: 768px) 100vw, 600px"
               />
             )}
           </div>

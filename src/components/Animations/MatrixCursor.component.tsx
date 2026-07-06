@@ -149,7 +149,8 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
     width: "100%",
     height: "100%",
     pointerEvents: "none",
-    zIndex: 9999,
+    isolation: "isolate",
+    zIndex: 40,
     "--cursor-x": `${state.cursorPosition.x}px`,
     "--cursor-y": `${state.cursorPosition.y}px`,
   };
@@ -169,7 +170,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
             position: "fixed",
             left: `${trail.x}px`,
             top: `${trail.y}px`,
-            zIndex: 10000,
+            zIndex: 2,
             pointerEvents: "none",
           }}
           onAnimationEnd={() => handleAnimationEnd(trail.id)}
@@ -186,7 +187,7 @@ const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
             width: "100%",
             height: "100%",
             pointerEvents: "none",
-            zIndex: 9999,
+            zIndex: 1,
           }}
         />
       )}

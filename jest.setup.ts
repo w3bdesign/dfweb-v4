@@ -2,7 +2,23 @@
 import "@testing-library/jest-dom";
 import "jest-extended";
 import { checkAAAPattern } from "./src/utils/test-utils";
-import fs from "fs/promises";
+import fs from "node:fs/promises";
+import path from "node:path";
+
+// Mock matchMedia for prefers-reduced-motion and other media queries
+Object.defineProperty(globalThis, "matchMedia", {
+  writable: true,
+  value: jest.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});
 
 declare global {
   namespace jest {
@@ -53,6 +69,37 @@ function getTestPath(): string | undefined {
   ).getState().testPath;
 }
 
+/**
+ * Validates that a test file path is safe to read.
+ * Prevents path traversal attacks by ensuring the path is within the project directory
+ * and is actually a test file.
+ */
+function isValidTestPath(testPath: string): boolean {
+  // Resolve to absolute path to eliminate ../ sequences
+  const resolvedPath = path.resolve(testPath);
+  const projectRoot = path.resolve(__dirname);
+
+  // Must be within project directory
+  if (!resolvedPath.startsWith(projectRoot)) {
+    return false;
+  }
+
+  // Must be in test directories
+  const relativePath = path.relative(projectRoot, resolvedPath);
+  const isInTestDir =
+    relativePath.startsWith("src/__tests__/") ||
+    relativePath.startsWith("src\\__tests__\\"); // Windows path separators
+
+  // Must be a test file
+  const isTestFile =
+    resolvedPath.endsWith(".test.ts") ||
+    resolvedPath.endsWith(".test.tsx") ||
+    resolvedPath.endsWith(".spec.ts") ||
+    resolvedPath.endsWith(".spec.tsx");
+
+  return isInTestDir && isTestFile;
+}
+
 beforeEach(async () => {
   const testPath = getTestPath();
 
@@ -61,6 +108,14 @@ beforeEach(async () => {
     !testPath.includes("test-rule.test.tsx") &&
     !testPath.includes("node_modules")
   ) {
+    // Validate path before reading to prevent path traversal attacks
+    if (!isValidTestPath(testPath)) {
+      console.warn(
+        `Skipping AAA validation for invalid test path: ${testPath}`,
+      );
+      return;
+    }
+
     try {
       const content = await fs.readFile(testPath, "utf8");
       const result = checkAAAPattern(content);

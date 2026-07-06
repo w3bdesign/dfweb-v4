@@ -13,20 +13,6 @@ export interface IAnimateBounceProps {
   delay?: number;
 }
 
-export interface IAnimateWithDelayProps {
-  children: ReactNode;
-  cssClass?: string;
-  delay: number;
-}
-
-export interface IAnimateStaggerWithDelayProps {
-  children: ReactNode;
-  cssClass?: string;
-  delay: number;
-  staggerDelay?: number;
-  animateNotReverse: boolean;
-}
-
 export interface IGrowProps {
   duration?: number;
   delay?: number;

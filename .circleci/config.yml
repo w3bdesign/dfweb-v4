@@ -15,9 +15,7 @@ jobs:
             - pnpm-packages-cache-v1
       - run:
           name: Install pnpm package manager
-          command: |
-            sudo corepack enable
-            sudo corepack prepare pnpm@latest-8 --activate
+          command: sudo npm i -g pnpm@11.0.8
       - run:
           name: Install Dependencies
           command: pnpm install --frozen-lockfile
@@ -36,9 +34,7 @@ jobs:
           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
       - run:
           name: Install pnpm package manager
-          command: |
-            sudo corepack enable
-            sudo corepack prepare pnpm@latest-8 --activate
+          command: sudo npm i -g pnpm@11.0.8
       - run:
           name: Install Dependencies
           command: pnpm install --frozen-lockfile
@@ -63,7 +59,28 @@ jobs:
       - run:
           name: Make sure ~/.gnupg directory exists
           command: mkdir -p ~/.gnupg
-      - codecov/upload
+      - run:
+          name: Fix GPG directory permissions
+          command: |
+            chmod 700 ~/.gnupg
+            chmod 600 ~/.gnupg/* || true
+      - run:
+          name: Import Codecov GPG key
+          command: |
+            curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
+      - run:
+          name: Download and Verify Codecov CLI
+          command: |
+            curl -Os https://cli.codecov.io/latest/linux/codecov
+            curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+            curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
+            gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+            shasum -a 256 -c codecov.SHA256SUM
+            sudo chmod +x codecov
+      - run:
+          name: Upload Coverage to Codecov
+          command: |
+            ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
     parallelism: 6
 workflows:
   chromatic-deploy:

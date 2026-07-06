@@ -79,7 +79,7 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
             id="mobile-menu"
             data-testid="mobile-menu"
             data-cy="mobile-menu"
-            className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4"
+            className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
             initial="closed"
             animate="open"
             exit="closed"

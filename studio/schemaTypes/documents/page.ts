@@ -1,5 +1,5 @@
 import {RiPagesLine} from 'react-icons/ri'
-import {defineField, defineType, SchemaTypeDefinition} from 'sanity'
+import {defineField, defineType, defineArrayMember, SchemaTypeDefinition} from 'sanity'
 
 const page: SchemaTypeDefinition = defineType({
   title: 'Page',
@@ -13,6 +13,17 @@ const page: SchemaTypeDefinition = defineType({
       type: 'string',
     }),
     defineField({
+      title: 'Slug',
+      name: 'slug',
+      type: 'slug',
+      description: 'URL-friendly identifier for this page',
+      options: {
+        source: 'title',
+        maxLength: 96,
+      },
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       title: 'Header',
       name: 'header',
       type: 'string',
@@ -22,7 +33,7 @@ const page: SchemaTypeDefinition = defineType({
       description: 'Only supported in Hjem/Index page',
       name: 'hero',
       type: 'array',
-      of: [{type: 'herocontent'}],
+      of: [defineArrayMember({type: 'herocontent'})],
       hidden: ({document}) => document?.title !== 'Hjem',
       validation: (Rule) => Rule.max(3),
     }),
@@ -31,7 +42,7 @@ const page: SchemaTypeDefinition = defineType({
       description: 'Only supported in Hjem/Index page',
       name: 'content',
       type: 'array',
-      of: [{type: 'pagecontent'}],
+      of: [defineArrayMember({type: 'pagecontent'})],
       hidden: ({document}) => document?.title !== 'Hjem',
     }),
   ],

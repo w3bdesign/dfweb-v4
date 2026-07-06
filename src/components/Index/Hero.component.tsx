@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import { useRef } from "react";
 import dynamic from "next/dynamic";
 import type { Herocontent } from "@/types/sanity.types";
 
@@ -23,6 +23,17 @@ const ReactMatrixAnimation = dynamic(
 );
 
 /**
+ * Safely retrieves hero text at a given index with a fallback.
+ */
+function getHeroText(
+  content: Herocontent[],
+  index: number,
+  fallback = "",
+): string {
+  return content[index]?.text ?? fallback;
+}
+
+/**
  * Hero component for rendering the main hero section of the page
  * @param {Object} props - The props for the Hero component
  * @param {Herocontent[]} props.content - Array of hero content from Sanity
@@ -30,6 +41,9 @@ const ReactMatrixAnimation = dynamic(
  */
 const Hero = ({ content }: { content: Herocontent[] }) => {
   const heroRef = useRef<HTMLElement>(null);
+  const heading = getHeroText(content, 0, "Hei!");
+  const subheading = getHeroText(content, 1);
+  const paragraph = getHeroText(content, 2);
 
   return (
     <article
@@ -45,29 +59,26 @@ const Hero = ({ content }: { content: Herocontent[] }) => {
         <ReactMatrixAnimation />
       </div>
       <div className="relative z-10">
-        <div
-          className="px-4 md:px-0"
-          data-testid="fade-in"
-        >
+        <div className="px-4 md:px-0" data-testid="fade-in">
           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
             <FadeIn delay={0.3}>
               <h1
                 data-cy="hei"
                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
               >
-                {content?.length > 0 ? content[0]?.text : "Hei!"}
+                {heading}
               </h1>
             </FadeIn>
 
             <FadeIn delay={0.9}>
               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
-                {content?.length > 0 && content[1]?.text}
+                {subheading}
               </h2>
             </FadeIn>
 
             <FadeIn delay={1.5}>
               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
-                {content?.length > 0 && content[2]?.text}
+                {paragraph}
               </p>
             </FadeIn>
           </div>

@@ -1,5 +1,5 @@
 import {RiEraserLine} from 'react-icons/ri'
-import {defineField, defineType} from 'sanity'
+import {defineField, defineType, defineArrayMember} from 'sanity'
 
 const project = defineType({
   title: 'Project',
@@ -51,18 +51,30 @@ const project = defineType({
       title: 'Project URL',
       name: 'urlwww',
       type: 'array',
-      of: [{type: 'link'}],
+      of: [defineArrayMember({type: 'link'})],
     }),
     defineField({
       title: 'Github URL',
       name: 'urlgithub',
       type: 'array',
-      of: [{type: 'link'}],
+      of: [defineArrayMember({type: 'link'})],
     }),
     defineField({
       title: 'Project image',
       name: 'projectimage',
       type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative Text',
+          description: 'Describe the image for screen readers and SEO',
+          validation: (rule) => rule.warning('Alt text is important for accessibility and SEO'),
+        }),
+      ],
     }),
     defineField({
       title: 'Visible on Site',
