@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
+import "./glitch.css";
 
 import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
