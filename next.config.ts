@@ -29,6 +29,10 @@ const buildCspHeader = (directives: Record<string, string[]>) =>
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@portabletext/react"],
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   images: {
     remotePatterns: [
       {
