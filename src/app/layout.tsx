@@ -27,9 +27,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-  preconnect("https://cdn.sanity.io");
-
   const [navigation, settings] = await Promise.all([
     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
