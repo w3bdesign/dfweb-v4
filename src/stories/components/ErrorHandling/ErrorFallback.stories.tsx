@@ -58,7 +58,7 @@ export const NoMessageError = () => (
     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
   >
-    <ErrorFallback error={new Error()} />
+    <ErrorFallback error={new Error("An unexpected error occurred")} />
   </div>
 );
 
