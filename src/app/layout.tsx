@@ -3,7 +3,6 @@ import { JetBrains_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
-import "./glitch.css";
 
 import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
@@ -15,7 +14,11 @@ import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap", // Prevent invisible text during font load (improves FCP)
+  preload: true, // Preload font to reduce request chain
+});
 
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
