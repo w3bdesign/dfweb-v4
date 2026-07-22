@@ -14,7 +14,11 @@ import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap", // Prevent invisible text during font load (improves FCP)
+  preload: true, // Preload font to reduce request chain
+});
 
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
