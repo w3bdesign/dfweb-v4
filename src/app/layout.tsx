@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
+import "./glitch.css";
 
 import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
@@ -27,9 +27,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-  preconnect("https://cdn.sanity.io");
-
   const [navigation, settings] = await Promise.all([
     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
@@ -45,19 +42,13 @@ export default async function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
         />
 
-        {/* Preconnect to critical origins */}
+        {/* Preconnect to Sanity CDN for faster image/data loading */}
         <link
           rel="preconnect"
           href="https://cdn.sanity.io"
           crossOrigin="anonymous"
         />
         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-          crossOrigin="anonymous"
-        />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo.png" />
