@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useReducer, RefObject, useCallback } from "react";
-import "@/app/cursor.css";
 import { useMobile } from "../../hooks/useMobile";
 
 interface MatrixCursorProps {
