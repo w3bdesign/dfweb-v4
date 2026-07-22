@@ -2153,124 +2153,6 @@ vercel.json
 85: ```
 ````
 
-## File: commit/setup.ps1
-````powershell
- 1: # Setup script for AI Commit Message Generator
- 2: # Run this from your repository root after copying the commit/ folder
- 3: 
- 4: $ErrorActionPreference = "Stop"
- 5: 
- 6: # Find repo root
- 7: try {
- 8:     $RepoRoot = git rev-parse --show-toplevel 2>$null
- 9:     if (-not $RepoRoot) { throw }
-10: } catch {
-11:     Write-Error "Error: Not in a git repository"
-12:     exit 1
-13: }
-14: 
-15: $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-16: $CommitAnalyzer = Join-Path $ScriptDir "commit_analyzer.py"
-17: 
-18: # Check if commit_analyzer.py exists
-19: if (-not (Test-Path $CommitAnalyzer)) {
-20:     Write-Error "Error: commit_analyzer.py not found in $ScriptDir"
-21:     exit 1
-22: }
-23: 
-24: Write-Output "Setting up AI Commit Message Generator..."
-25: 
-26: # Install Python dependencies
-27: Write-Output "Installing Python dependencies..."
-28: pip install openai anthropic python-dotenv
-29: 
-30: # Create .env from template if it doesn't exist
-31: $EnvFile = Join-Path $RepoRoot ".env"
-32: $EnvExample = Join-Path $ScriptDir ".env.example"
-33: 
-34: if (-not (Test-Path $EnvFile)) {
-35:     if (Test-Path $EnvExample) {
-36:         Copy-Item $EnvExample $EnvFile
-37:         Write-Output "Created .env from template"
-38:     } else {
-39:         Write-Output "Warning: .env.example not found, creating minimal .env"
-40:         "# Add your API key`nANTHROPIC_API_KEY=`"`"" | Out-File -FilePath $EnvFile -Encoding UTF8
-41:     }
-42: }
-43: 
-44: # Create git hook
-45: $HooksDir = Join-Path $RepoRoot ".git\hooks"
-46: $HookFile = Join-Path $HooksDir "prepare-commit-msg"
-47: 
-48: if (-not (Test-Path $HooksDir)) {
-49:     New-Item -ItemType Directory -Path $HooksDir -Force | Out-Null
-50: }
-51: 
-52: # Use forward slashes for the path in the hook (git uses Unix-style paths)
-53: $CommitAnalyzerUnix = $CommitAnalyzer.Replace('\', '/')
-54: 
-55: @"
-56: #!/bin/sh
-57: python "$CommitAnalyzerUnix" --hook
-58: "@ | Out-File -FilePath $HookFile -Encoding UTF8 -NoNewline
-59: 
-60: Write-Output ""
-61: Write-Output "Setup complete!"
-62: Write-Output ""
-63: Write-Output "Next steps:"
-64: Write-Output "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-65: Write-Output "2. Make a commit to test the AI commit message generator"
-````
-
-## File: commit/setup.sh
-````bash
- 1: #!/bin/bash
- 2: # Setup script for AI Commit Message Generator
- 3: # Run this from your repository root after copying the commit/ folder
- 4: set -e
- 5: # Find repo root
- 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
- 7:     echo "Error: Not in a git repository" >&2
- 8:     exit 1
- 9: }
-10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
-12: # Check if commit_analyzer.py exists
-13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
-14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
-15:     exit 1
-16: fi
-17: echo "Setting up AI Commit Message Generator..."
-18: # Install Python dependencies
-19: echo "Installing Python dependencies..."
-20: pip install openai anthropic python-dotenv
-21: # Create .env from template if it doesn't exist
-22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
-23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
-25:         echo "Created .env from template"
-26:     else
-27:         echo "Warning: .env.example not found, creating minimal .env"
-28:         echo '# Add your API key' > "$REPO_ROOT/.env"
-29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
-30:     fi
-31: fi
-32: # Create git hook
-33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
-34: mkdir -p "$REPO_ROOT/.git/hooks"
-35: cat > "$HOOK_FILE" << EOF
-36: #!/bin/sh
-37: python "$COMMIT_ANALYZER" --hook
-38: EOF
-39: chmod +x "$HOOK_FILE"
-40: echo ""
-41: echo "✅ Setup complete!"
-42: echo ""
-43: echo "Next steps:"
-44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-45: echo "2. Make a commit to test the AI commit message generator"
-````
-
 ## File: DOCS/README.md
 ````markdown
   1: # DFWeb v4 - Technical Documentation
@@ -8836,6 +8718,40 @@ vercel.json
 13: }
 ````
 
+## File: src/app/page.tsx
+````typescript
+ 1: import { notFound } from "next/navigation";
+ 2: import type { Metadata } from "next/types";
+ 3: import { sanityFetch } from "@/lib/sanity/client";
+ 4: import { pageContentQuery } from "@/lib/sanity/queries";
+ 5: import type { Page } from "@/types/sanity.types";
+ 6: import Hero from "@/components/Index/Hero.component";
+ 7: import IndexContent from "@/components/Index/IndexContent.component";
+ 8: export const metadata: Metadata = {
+ 9:   title: "Forside - Dfweb",
+10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+11: };
+12: // ISR - regenerate every 24 hours
+13: export const revalidate = 86400;
+14: export default async function HomePage() {
+15:   const pageContent = await sanityFetch<Page | null>({
+16:     query: pageContentQuery,
+17:     revalidate: 86400, // 24 hours
+18:   });
+19:   if (!pageContent) notFound();
+20:   return (
+21:     <main>
+22:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+23:         {pageContent?.hero && <Hero content={pageContent.hero} />}
+24:       </div>
+25:       {pageContent?.content && (
+26:         <IndexContent pageContent={pageContent.content} />
+27:       )}
+28:     </main>
+29:   );
+30: }
+````
+
 ## File: src/app/sitemap.ts
 ````typescript
  1: import type { MetadataRoute } from "next";
@@ -9931,6 +9847,95 @@ vercel.json
 55:   );
 56: };
 57: export default ErrorFallback;
+````
+
+## File: src/components/Index/Hero.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useRef } from "react";
+ 3: import dynamic from "next/dynamic";
+ 4: import type { Herocontent } from "@/types/sanity.types";
+ 5: import Icons from "./Icons.component";
+ 6: import FadeIn from "../Animations/FadeIn.component";
+ 7: import RotatingLoader from "../Animations/RotatingLoader.component";
+ 8: import MobileBackground from "./MobileBackground.component";
+ 9: import MatrixCursor from "../Animations/MatrixCursor.component";
+10: const ReactMatrixAnimation = dynamic(
+11:   () => import("../Animations/Matrix.component"),
+12:   {
+13:     ssr: false,
+14:     loading: () => (
+15:       <div className="text-center">
+16:         <RotatingLoader />
+17:       </div>
+18:     ),
+19:   },
+20: );
+21: /**
+22:  * Safely retrieves hero text at a given index with a fallback.
+23:  */
+24: function getHeroText(
+25:   content: Herocontent[],
+26:   index: number,
+27:   fallback = "",
+28: ): string {
+29:   return content[index]?.text ?? fallback;
+30: }
+31: /**
+32:  * Hero component for rendering the main hero section of the page
+33:  * @param {Object} props - The props for the Hero component
+34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
+35:  * @returns {JSX.Element} The rendered Hero component
+36:  */
+37: const Hero = ({ content }: { content: Herocontent[] }) => {
+38:   const heroRef = useRef<HTMLElement>(null);
+39:   const heading = getHeroText(content, 0, "Hei!");
+40:   const subheading = getHeroText(content, 1);
+41:   const paragraph = getHeroText(content, 2);
+42:   return (
+43:     <article
+44:       aria-label="Kontainer for animasjoner av introtekst"
+45:       id="main-hero"
+46:       data-testid="main-hero"
+47:       ref={heroRef}
+48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
+49:     >
+50:       <MatrixCursor heroRef={heroRef} />
+51:       <MobileBackground />
+52:       <div className="hidden md:block absolute inset-0 w-full h-full">
+53:         <ReactMatrixAnimation />
+54:       </div>
+55:       <div className="relative z-10">
+56:         <div className="px-4 md:px-0" data-testid="fade-in">
+57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
+58:             <FadeIn delay={0.3}>
+59:               <h1
+60:                 data-cy="hei"
+61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
+62:               >
+63:                 {heading}
+64:               </h1>
+65:             </FadeIn>
+66:             <FadeIn delay={0.9}>
+67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
+68:                 {subheading}
+69:               </h2>
+70:             </FadeIn>
+71:             <FadeIn delay={1.5}>
+72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
+73:                 {paragraph}
+74:               </p>
+75:             </FadeIn>
+76:           </div>
+77:           <div className="mt-4">
+78:             <Icons />
+79:           </div>
+80:         </div>
+81:       </div>
+82:     </article>
+83:   );
+84: };
+85: export default Hero;
 ````
 
 ## File: src/components/Index/Icons.component.tsx
@@ -18016,6 +18021,136 @@ vercel.json
 26: export default createJestConfig(customJestConfig);
 ````
 
+## File: jest.setup.ts
+````typescript
+  1: /// <reference types="jest" />
+  2: import "@testing-library/jest-dom";
+  3: import "jest-extended";
+  4: import { checkAAAPattern } from "./src/utils/test-utils";
+  5: import fs from "node:fs/promises";
+  6: import path from "node:path";
+  7: // Mock matchMedia for prefers-reduced-motion and other media queries
+  8: Object.defineProperty(globalThis, "matchMedia", {
+  9:   writable: true,
+ 10:   value: jest.fn().mockImplementation((query: string) => ({
+ 11:     matches: false,
+ 12:     media: query,
+ 13:     onchange: null,
+ 14:     addListener: jest.fn(),
+ 15:     removeListener: jest.fn(),
+ 16:     addEventListener: jest.fn(),
+ 17:     removeEventListener: jest.fn(),
+ 18:     dispatchEvent: jest.fn(),
+ 19:   })),
+ 20: });
+ 21: declare global {
+ 22:   namespace jest {
+ 23:     interface Matchers<R> {
+ 24:       // Testing Library matchers
+ 25:       toBeInTheDocument(): R;
+ 26:       toHaveTextContent(text: string): R;
+ 27:       toBeVisible(): R;
+ 28:       toBeDisabled(): R;
+ 29:       toBeEnabled(): R;
+ 30:       toHaveAttribute(attr: string, value?: string): R;
+ 31:       toHaveClass(...classNames: string[]): R;
+ 32:       toHaveStyle(css: Record<string, unknown>): R;
+ 33:       toContainElement(element: Element | null): R;
+ 34:       toContainHTML(html: string): R;
+ 35:       toHaveLength(length: number): R;
+ 36:       // Jest matchers
+ 37:       toBe(expected: unknown): R;
+ 38:       toEqual(expected: unknown): R;
+ 39:       toStrictEqual(expected: unknown): R;
+ 40:       toBeNull(): R;
+ 41:       toBeDefined(): R;
+ 42:       toBeUndefined(): R;
+ 43:       toBeTruthy(): R;
+ 44:       toBeFalsy(): R;
+ 45:       toBeGreaterThan(number: number): R;
+ 46:       toBeLessThan(number: number): R;
+ 47:       toBeLessThanOrEqual(number: number): R;
+ 48:       toBeGreaterThanOrEqual(number: number): R;
+ 49:       toContain(item: unknown): R;
+ 50:       toHaveBeenCalled(): R;
+ 51:       toHaveBeenCalledTimes(number: number): R;
+ 52:       toHaveBeenCalledWith(...args: unknown[]): R;
+ 53:       toHaveBeenCalledExactly(times: number): R;
+ 54:       toThrow(error?: string | Error | RegExp): R;
+ 55:       toMatch(regexpOrString: string | RegExp): R;
+ 56:       rejects: {
+ 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
+ 58:       };
+ 59:     }
+ 60:   }
+ 61: }
+ 62: function getTestPath(): string | undefined {
+ 63:   return (
+ 64:     expect as unknown as { getState: () => { testPath?: string } }
+ 65:   ).getState().testPath;
+ 66: }
+ 67: /**
+ 68:  * Validates that a test file path is safe to read.
+ 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
+ 70:  * and is actually a test file.
+ 71:  */
+ 72: function isValidTestPath(testPath: string): boolean {
+ 73:   // Resolve to absolute path to eliminate ../ sequences
+ 74:   const resolvedPath = path.resolve(testPath);
+ 75:   const projectRoot = path.resolve(__dirname);
+ 76:   // Must be within project directory
+ 77:   if (!resolvedPath.startsWith(projectRoot)) {
+ 78:     return false;
+ 79:   }
+ 80:   // Must be in test directories
+ 81:   const relativePath = path.relative(projectRoot, resolvedPath);
+ 82:   const isInTestDir =
+ 83:     relativePath.startsWith("src/__tests__/") ||
+ 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
+ 85:   // Must be a test file
+ 86:   const isTestFile =
+ 87:     resolvedPath.endsWith(".test.ts") ||
+ 88:     resolvedPath.endsWith(".test.tsx") ||
+ 89:     resolvedPath.endsWith(".spec.ts") ||
+ 90:     resolvedPath.endsWith(".spec.tsx");
+ 91:   return isInTestDir && isTestFile;
+ 92: }
+ 93: beforeEach(async () => {
+ 94:   const testPath = getTestPath();
+ 95:   if (
+ 96:     testPath &&
+ 97:     !testPath.includes("test-rule.test.tsx") &&
+ 98:     !testPath.includes("node_modules")
+ 99:   ) {
+100:     // Validate path before reading to prevent path traversal attacks
+101:     if (!isValidTestPath(testPath)) {
+102:       console.warn(
+103:         `Skipping AAA validation for invalid test path: ${testPath}`,
+104:       );
+105:       return;
+106:     }
+107:     try {
+108:       const content = await fs.readFile(testPath, "utf8");
+109:       const result = checkAAAPattern(content);
+110:       if (!result.isValid) {
+111:         throw new Error(
+112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+113:             "Each test should include:\n" +
+114:             "// Arrange - Set up test data and conditions\n" +
+115:             "// Act - Perform the action being tested\n" +
+116:             "// Assert - Verify the results",
+117:         );
+118:       }
+119:     } catch (error) {
+120:       if (error instanceof Error) {
+121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
+122:       }
+123:       throw error;
+124:     }
+125:   }
+126: });
+````
+
 ## File: next.config.ts
 ````typescript
  1: import type { NextConfig } from "next";
@@ -18857,6 +18992,124 @@ vercel.json
 229:     main()
 ````
 
+## File: commit/setup.ps1
+````powershell
+ 1: # Setup script for AI Commit Message Generator
+ 2: # Run this from your repository root after copying the commit/ folder
+ 3: 
+ 4: $ErrorActionPreference = "Stop"
+ 5: 
+ 6: # Find repo root
+ 7: try {
+ 8:     $RepoRoot = git rev-parse --show-toplevel 2>$null
+ 9:     if (-not $RepoRoot) { throw }
+10: } catch {
+11:     Write-Error "Error: Not in a git repository"
+12:     exit 1
+13: }
+14: 
+15: $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+16: $CommitAnalyzer = Join-Path $ScriptDir "commit_analyzer.py"
+17: 
+18: # Check if commit_analyzer.py exists
+19: if (-not (Test-Path $CommitAnalyzer)) {
+20:     Write-Error "Error: commit_analyzer.py not found in $ScriptDir"
+21:     exit 1
+22: }
+23: 
+24: Write-Output "Setting up AI Commit Message Generator..."
+25: 
+26: # Install Python dependencies
+27: Write-Output "Installing Python dependencies..."
+28: pip install --only-binary :all: openai anthropic python-dotenv
+29: 
+30: # Create .env from template if it doesn't exist
+31: $EnvFile = Join-Path $RepoRoot ".env"
+32: $EnvExample = Join-Path $ScriptDir ".env.example"
+33: 
+34: if (-not (Test-Path $EnvFile)) {
+35:     if (Test-Path $EnvExample) {
+36:         Copy-Item $EnvExample $EnvFile
+37:         Write-Output "Created .env from template"
+38:     } else {
+39:         Write-Output "Warning: .env.example not found, creating minimal .env"
+40:         "# Add your API key`nANTHROPIC_API_KEY=`"`"" | Out-File -FilePath $EnvFile -Encoding UTF8
+41:     }
+42: }
+43: 
+44: # Create git hook
+45: $HooksDir = Join-Path $RepoRoot ".git\hooks"
+46: $HookFile = Join-Path $HooksDir "prepare-commit-msg"
+47: 
+48: if (-not (Test-Path $HooksDir)) {
+49:     New-Item -ItemType Directory -Path $HooksDir -Force | Out-Null
+50: }
+51: 
+52: # Use forward slashes for the path in the hook (git uses Unix-style paths)
+53: $CommitAnalyzerUnix = $CommitAnalyzer.Replace('\', '/')
+54: 
+55: @"
+56: #!/bin/sh
+57: python "$CommitAnalyzerUnix" --hook
+58: "@ | Out-File -FilePath $HookFile -Encoding UTF8 -NoNewline
+59: 
+60: Write-Output ""
+61: Write-Output "Setup complete!"
+62: Write-Output ""
+63: Write-Output "Next steps:"
+64: Write-Output "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+65: Write-Output "2. Make a commit to test the AI commit message generator"
+````
+
+## File: commit/setup.sh
+````bash
+ 1: #!/bin/bash
+ 2: # Setup script for AI Commit Message Generator
+ 3: # Run this from your repository root after copying the commit/ folder
+ 4: set -e
+ 5: # Find repo root
+ 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+ 7:     echo "Error: Not in a git repository" >&2
+ 8:     exit 1
+ 9: }
+10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
+12: # Check if commit_analyzer.py exists
+13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
+14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
+15:     exit 1
+16: fi
+17: echo "Setting up AI Commit Message Generator..."
+18: # Install Python dependencies
+19: echo "Installing Python dependencies..."
+20: pip install --only-binary :all: openai anthropic python-dotenv
+21: # Create .env from template if it doesn't exist
+22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
+23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
+24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
+25:         echo "Created .env from template"
+26:     else
+27:         echo "Warning: .env.example not found, creating minimal .env"
+28:         echo '# Add your API key' > "$REPO_ROOT/.env"
+29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
+30:     fi
+31: fi
+32: # Create git hook
+33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
+34: mkdir -p "$REPO_ROOT/.git/hooks"
+35: cat > "$HOOK_FILE" << EOF
+36: #!/bin/sh
+37: python "$COMMIT_ANALYZER" --hook
+38: EOF
+39: chmod +x "$HOOK_FILE"
+40: echo ""
+41: echo "✅ Setup complete!"
+42: echo ""
+43: echo "Next steps:"
+44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+45: echo "2. Make a commit to test the AI commit message generator"
+````
+
 ## File: src/__tests__/CV/CVContent.test.tsx
 ````typescript
   1: /**
@@ -19105,40 +19358,6 @@ vercel.json
 33:     </html>
 34:   );
 35: }
-````
-
-## File: src/app/page.tsx
-````typescript
- 1: import { notFound } from "next/navigation";
- 2: import type { Metadata } from "next/types";
- 3: import { sanityFetch } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: import type { Page } from "@/types/sanity.types";
- 6: import Hero from "@/components/Index/Hero.component";
- 7: import IndexContent from "@/components/Index/IndexContent.component";
- 8: export const metadata: Metadata = {
- 9:   title: "Forside - Dfweb",
-10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-11: };
-12: // ISR - regenerate every 24 hours
-13: export const revalidate = 86400;
-14: export default async function HomePage() {
-15:   const pageContent = await sanityFetch<Page | null>({
-16:     query: pageContentQuery,
-17:     revalidate: 86400, // 24 hours
-18:   });
-19:   if (!pageContent) notFound();
-20:   return (
-21:     <main>
-22:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-23:         {pageContent?.hero && <Hero content={pageContent.hero} />}
-24:       </div>
-25:       {pageContent?.content && (
-26:         <IndexContent pageContent={pageContent.content} />
-27:       )}
-28:     </main>
-29:   );
-30: }
 ````
 
 ## File: src/components/UI/Pill.component.tsx
@@ -20794,95 +21013,6 @@ vercel.json
 43: export default ErrorBoundary;
 ````
 
-## File: src/components/Index/Hero.component.tsx
-````typescript
- 1: "use client";
- 2: import { useRef } from "react";
- 3: import dynamic from "next/dynamic";
- 4: import type { Herocontent } from "@/types/sanity.types";
- 5: import Icons from "./Icons.component";
- 6: import FadeIn from "../Animations/FadeIn.component";
- 7: import RotatingLoader from "../Animations/RotatingLoader.component";
- 8: import MobileBackground from "./MobileBackground.component";
- 9: import MatrixCursor from "../Animations/MatrixCursor.component";
-10: const ReactMatrixAnimation = dynamic(
-11:   () => import("../Animations/Matrix.component"),
-12:   {
-13:     ssr: false,
-14:     loading: () => (
-15:       <div className="text-center">
-16:         <RotatingLoader />
-17:       </div>
-18:     ),
-19:   },
-20: );
-21: /**
-22:  * Safely retrieves hero text at a given index with a fallback.
-23:  */
-24: function getHeroText(
-25:   content: Herocontent[],
-26:   index: number,
-27:   fallback = "",
-28: ): string {
-29:   return content[index]?.text ?? fallback;
-30: }
-31: /**
-32:  * Hero component for rendering the main hero section of the page
-33:  * @param {Object} props - The props for the Hero component
-34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
-35:  * @returns {JSX.Element} The rendered Hero component
-36:  */
-37: const Hero = ({ content }: { content: Herocontent[] }) => {
-38:   const heroRef = useRef<HTMLElement>(null);
-39:   const heading = getHeroText(content, 0, "Hei!");
-40:   const subheading = getHeroText(content, 1);
-41:   const paragraph = getHeroText(content, 2);
-42:   return (
-43:     <article
-44:       aria-label="Kontainer for animasjoner av introtekst"
-45:       id="main-hero"
-46:       data-testid="main-hero"
-47:       ref={heroRef}
-48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
-49:     >
-50:       <MatrixCursor heroRef={heroRef} />
-51:       <MobileBackground />
-52:       <div className="hidden md:block absolute inset-0 w-full h-full">
-53:         <ReactMatrixAnimation />
-54:       </div>
-55:       <div className="relative z-10">
-56:         <div className="px-4 md:px-0" data-testid="fade-in">
-57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
-58:             <FadeIn delay={0.3}>
-59:               <h1
-60:                 data-cy="hei"
-61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
-62:               >
-63:                 {heading}
-64:               </h1>
-65:             </FadeIn>
-66:             <FadeIn delay={0.9}>
-67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
-68:                 {subheading}
-69:               </h2>
-70:             </FadeIn>
-71:             <FadeIn delay={1.5}>
-72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
-73:                 {paragraph}
-74:               </p>
-75:             </FadeIn>
-76:           </div>
-77:           <div className="mt-4">
-78:             <Icons />
-79:           </div>
-80:         </div>
-81:       </div>
-82:     </article>
-83:   );
-84: };
-85: export default Hero;
-````
-
 ## File: src/lib/csrf.ts
 ````typescript
  1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
@@ -20942,51 +21072,6 @@ vercel.json
 55: }
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile --ignore-scripts
-31:       - name: Verify and install Cypress binary
-32:         run: npx cypress@15.14.1 verify || npx cypress@15.14.1 install
-33:       - name: Cypress run
-34:         uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
-35:         with:
-36:           install: false
-37:           build: pnpm build
-38:           start: pnpm dev
-39:           wait-on: "http://localhost:3000"
-40:           wait-on-timeout: 120
-41:           browser: ${{ matrix.browser }}
-````
-
 ## File: .github/workflows/playwright.yml
 ````yaml
  1: name: Playwright Tests
@@ -21018,7 +21103,7 @@ vercel.json
 27:         run: pnpm start &
 28:       - name: Wait for the application to be ready
 29:         run: |
-30:           npx wait-on@8.0.1 http://localhost:3000
+30:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
 31:       - name: Run Playwright tests
 32:         run: pnpm exec playwright test
 33:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -21027,136 +21112,6 @@ vercel.json
 36:           name: playwright-report
 37:           path: playwright-report/
 38:           retention-days: 30
-````
-
-## File: jest.setup.ts
-````typescript
-  1: /// <reference types="jest" />
-  2: import "@testing-library/jest-dom";
-  3: import "jest-extended";
-  4: import { checkAAAPattern } from "./src/utils/test-utils";
-  5: import fs from "node:fs/promises";
-  6: import path from "node:path";
-  7: // Mock matchMedia for prefers-reduced-motion and other media queries
-  8: Object.defineProperty(globalThis, "matchMedia", {
-  9:   writable: true,
- 10:   value: jest.fn().mockImplementation((query: string) => ({
- 11:     matches: false,
- 12:     media: query,
- 13:     onchange: null,
- 14:     addListener: jest.fn(),
- 15:     removeListener: jest.fn(),
- 16:     addEventListener: jest.fn(),
- 17:     removeEventListener: jest.fn(),
- 18:     dispatchEvent: jest.fn(),
- 19:   })),
- 20: });
- 21: declare global {
- 22:   namespace jest {
- 23:     interface Matchers<R> {
- 24:       // Testing Library matchers
- 25:       toBeInTheDocument(): R;
- 26:       toHaveTextContent(text: string): R;
- 27:       toBeVisible(): R;
- 28:       toBeDisabled(): R;
- 29:       toBeEnabled(): R;
- 30:       toHaveAttribute(attr: string, value?: string): R;
- 31:       toHaveClass(...classNames: string[]): R;
- 32:       toHaveStyle(css: Record<string, unknown>): R;
- 33:       toContainElement(element: Element | null): R;
- 34:       toContainHTML(html: string): R;
- 35:       toHaveLength(length: number): R;
- 36:       // Jest matchers
- 37:       toBe(expected: unknown): R;
- 38:       toEqual(expected: unknown): R;
- 39:       toStrictEqual(expected: unknown): R;
- 40:       toBeNull(): R;
- 41:       toBeDefined(): R;
- 42:       toBeUndefined(): R;
- 43:       toBeTruthy(): R;
- 44:       toBeFalsy(): R;
- 45:       toBeGreaterThan(number: number): R;
- 46:       toBeLessThan(number: number): R;
- 47:       toBeLessThanOrEqual(number: number): R;
- 48:       toBeGreaterThanOrEqual(number: number): R;
- 49:       toContain(item: unknown): R;
- 50:       toHaveBeenCalled(): R;
- 51:       toHaveBeenCalledTimes(number: number): R;
- 52:       toHaveBeenCalledWith(...args: unknown[]): R;
- 53:       toHaveBeenCalledExactly(times: number): R;
- 54:       toThrow(error?: string | Error | RegExp): R;
- 55:       toMatch(regexpOrString: string | RegExp): R;
- 56:       rejects: {
- 57:         toThrow(error?: string | Error | RegExp): Promise<R>;
- 58:       };
- 59:     }
- 60:   }
- 61: }
- 62: function getTestPath(): string | undefined {
- 63:   return (
- 64:     expect as unknown as { getState: () => { testPath?: string } }
- 65:   ).getState().testPath;
- 66: }
- 67: /**
- 68:  * Validates that a test file path is safe to read.
- 69:  * Prevents path traversal attacks by ensuring the path is within the project directory
- 70:  * and is actually a test file.
- 71:  */
- 72: function isValidTestPath(testPath: string): boolean {
- 73:   // Resolve to absolute path to eliminate ../ sequences
- 74:   const resolvedPath = path.resolve(testPath);
- 75:   const projectRoot = path.resolve(__dirname);
- 76:   // Must be within project directory
- 77:   if (!resolvedPath.startsWith(projectRoot)) {
- 78:     return false;
- 79:   }
- 80:   // Must be in test directories
- 81:   const relativePath = path.relative(projectRoot, resolvedPath);
- 82:   const isInTestDir =
- 83:     relativePath.startsWith("src/__tests__/") ||
- 84:     relativePath.startsWith("src\\__tests__\\"); // Windows path separators
- 85:   // Must be a test file
- 86:   const isTestFile =
- 87:     resolvedPath.endsWith(".test.ts") ||
- 88:     resolvedPath.endsWith(".test.tsx") ||
- 89:     resolvedPath.endsWith(".spec.ts") ||
- 90:     resolvedPath.endsWith(".spec.tsx");
- 91:   return isInTestDir && isTestFile;
- 92: }
- 93: beforeEach(async () => {
- 94:   const testPath = getTestPath();
- 95:   if (
- 96:     testPath &&
- 97:     !testPath.includes("test-rule.test.tsx") &&
- 98:     !testPath.includes("node_modules")
- 99:   ) {
-100:     // Validate path before reading to prevent path traversal attacks
-101:     if (!isValidTestPath(testPath)) {
-102:       console.warn(
-103:         `Skipping AAA validation for invalid test path: ${testPath}`,
-104:       );
-105:       return;
-106:     }
-107:     try {
-108:       const content = await fs.readFile(testPath, "utf8");
-109:       const result = checkAAAPattern(content);
-110:       if (!result.isValid) {
-111:         throw new Error(
-112:           `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-113:             "Each test should include:\n" +
-114:             "// Arrange - Set up test data and conditions\n" +
-115:             "// Act - Perform the action being tested\n" +
-116:             "// Assert - Verify the results",
-117:         );
-118:       }
-119:     } catch (error) {
-120:       if (error instanceof Error) {
-121:         throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-122:       }
-123:       throw error;
-124:     }
-125:   }
-126: });
 ````
 
 ## File: package.json
@@ -21349,4 +21304,49 @@ vercel.json
 65:     "singleQuote": true
 66:   }
 67: }
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30   
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile --ignore-scripts
+31:       - name: Verify and install Cypress binary
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json)
+33:         run: pnpm exec cypress verify || pnpm exec cypress install --ignore-scripts
+34:       - name: Build the project
+35:         run: pnpm build
+36:       - name: Start the application
+37:         run: pnpm dev &
+38:       - name: Wait for the application to be ready
+39:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+40:       - name: Run Cypress tests
+41:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
