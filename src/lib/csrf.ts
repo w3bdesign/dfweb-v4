@@ -1,4 +1,4 @@
-import { randomBytes, createHmac, timingSafeEqual } from "crypto";
+import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 
 const CSRF_SECRET =
   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
