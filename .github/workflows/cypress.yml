@@ -39,15 +39,14 @@ jobs:
         # Uses cypress@15.14.1 from lockfile (specified in package.json)
         run: pnpm exec cypress verify || pnpm exec cypress install
 
-      - name: Cypress run
-        # NOSONAR - install: false prevents package installation, no scripts can run
-        uses: cypress-io/github-action@c495c3ddffba403ba11be95fffb67e25203b3799 # v7.1.10
-        env:
-          npm_config_ignore_scripts: true
-        with:
-          install: false
-          build: pnpm build
-          start: pnpm dev
-          wait-on: "http://localhost:3000"
-          wait-on-timeout: 120
-          browser: ${{ matrix.browser }}
+      - name: Build the project
+        run: pnpm build
+
+      - name: Start the application
+        run: pnpm dev &
+
+      - name: Wait for the application to be ready
+        run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+
+      - name: Run Cypress tests
+        run: pnpm exec cypress run --browser ${{ matrix.browser }}
