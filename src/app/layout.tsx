@@ -41,19 +41,13 @@ export default async function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
         />
 
-        {/* Preconnect to critical origins */}
+        {/* Preconnect to Sanity CDN for faster image/data loading */}
         <link
           rel="preconnect"
           href="https://cdn.sanity.io"
           crossOrigin="anonymous"
         />
         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-        <link
-          rel="preconnect"
-          href="https://fonts.googleapis.com"
-          crossOrigin="anonymous"
-        />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo.png" />
