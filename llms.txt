@@ -1,0 +1,379 @@
+# dfweb-v4
+
+> Portfolio website built with Next.js 16, React 19, TypeScript, and Sanity CMS
+
+## Overview
+
+Modern, accessible portfolio website showcasing projects and CV. Features server-side rendering, Matrix-inspired design, comprehensive testing infrastructure, and multi-layered security hardening.
+
+**Live URL**: https://www.dfweb.no
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Homepage (/)
+│   ├── cv/                # CV page
+│   ├── kontakt/           # Contact page
+│   └── prosjekter/        # Projects page
+├── components/            # React components (.component.tsx suffix)
+│   ├── Animations/        # Matrix animations, loaders
+│   ├── CV/               # CV-specific components
+│   ├── ErrorBoundary/    # Error handling
+│   ├── Index/            # Homepage components
+│   ├── Kontakt/          # Contact form
+│   ├── Layout/           # Header, Footer, Navigation
+│   ├── Prosjekter/       # Project cards
+│   └── UI/               # Reusable UI components
+├── __tests__/            # Jest tests (mirrors src/ structure)
+├── e2e/                  # End-to-end tests
+│   ├── cypress/          # Cypress tests (non-standard location)
+│   └── playwright/       # Playwright tests (non-standard location)
+├── hooks/                # Custom React hooks
+└── lib/                  # Utilities, Sanity client
+    ├── csrf.ts
+    ├── framer/           # Motion/Framer utilities
+    └── sanity/           # Sanity CMS client and queries
+studio/                    # Sanity Studio CMS
+public/                    # Static assets
+```
+
+## Tech Stack
+
+### Core
+- **Framework**: Next.js 16 with App Router, Server Components, Turbopack dev server
+- **Language**: TypeScript (strict mode, 100% typed)
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS 4, CSS Modules
+- **CMS**: Sanity.io (headless)
+- **Animations**: Motion (formerly Framer Motion)
+- **Forms**: React Hook Form + Zod validation
+- **Package Manager**: pnpm 11.15.1
+
+### Testing & Quality
+- **Unit Testing**: Jest 30, React Testing Library
+- **E2E Testing**: Cypress 15, Playwright
+- **Accessibility**: Pa11y, Cypress Axe
+- **Performance**: Lighthouse CI
+- **Code Quality**: ESLint, Prettier, Stylelint
+- **Security**: Snyk, Trivy, Semgrep, CodeQL, Gitleaks
+
+### DevOps
+- **CI/CD**: GitHub Actions (SHA-pinned), CircleCI
+- **Monitoring**: Vercel Speed Insights, Codecov
+- **Documentation**: Ladle, Repomix, AGENTS.md
+
+## Non-Obvious Patterns (CRITICAL)
+
+### Component Naming Convention
+- Components use `.component.tsx` suffix (NOT standard React)
+- Example: `Button.component.tsx`, `Header.component.tsx`, `Section.component.tsx`
+
+### AAA Pattern Enforcement (MANDATORY)
+All tests MUST include these comments or builds fail:
+```typescript
+// Arrange
+// Act  
+// Assert
+```
+- Enforced by custom ESLint plugin at `src/utils/eslint/`
+- Runtime validation in `jest.setup.ts` using `src/utils/test-utils.ts`
+- Tests outside `src/e2e/` directory must follow this pattern
+- Cypress and Playwright have different ESLint rule overrides
+
+### Turbopack Dev Server
+- Uses `--turbopack` flag (non-standard Next.js setup)
+- Command: `pnpm dev`
+
+### Custom CSP Headers
+- Allows `https://presentasjon.dfweb.no` for iframe embedding
+- Configured in `next.config.ts` with strict Content Security Policy
+
+### Sanity Configuration
+- Hardcoded fallback values in `src/lib/sanity/client.ts`:
+  - Project ID: `41s7iutf`
+  - Dataset: `production`
+  - API Version: `2026-05-01`
+
+### Test Coverage Exclusions
+- `Matrix.component.tsx` intentionally excluded from coverage via package.json script
+- Animations/Matrix types also excluded
+
+### E2E Test Structure
+- Cypress tests in `src/e2e/cypress/` (not standard root-level location)
+- Playwright tests in `src/e2e/playwright/` (not standard root-level location)
+
+### Custom Refresh Script
+- `pnpm refresh` does full cleanup including store prune and lock file removal
+- More aggressive than standard `pnpm install`
+
+## Critical Commands
+
+### Development
+```bash
+pnpm dev              # Start dev server (uses --turbopack)
+pnpm build            # Production build
+pnpm start            # Start production server
+pnpm lint             # Run ESLint
+pnpm lint:css         # Lint CSS files
+pnpm lint:css:fix     # Fix CSS lint issues
+pnpm format           # Format with Prettier
+pnpm refresh          # Full cleanup and reinstall
+```
+
+### Testing
+```bash
+# Unit Tests
+pnpm test                    # Run all tests with coverage
+pnpm test:watch              # Jest watch mode
+jest --testNamePattern="name" # Run single test (no built-in script)
+
+# E2E Tests
+pnpm cypress:open            # Open Cypress UI
+pnpm cypress:headless        # Run Cypress headless
+pnpm e2e                     # Run E2E tests (requires dev server)
+pnpm playwright              # Run Playwright tests
+
+# Coverage (with Matrix exclusion)
+jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'
+```
+
+### Performance & Monitoring
+```bash
+pnpm lhci             # Lighthouse CI (all checks)
+pnpm lhci:perf        # Performance-only
+pnpm lhci:desktop     # Desktop checks
+pnpm doctor           # React health check
+```
+
+### CMS & Documentation
+```bash
+pnpm typegen          # Generate Sanity types
+pnpm ladle            # Component documentation
+```
+
+## Environment Variables
+
+### Required
+```env
+# Email Configuration (client-side, EmailJS)
+NEXT_PUBLIC_EMAIL_API_KEY=user_xxx
+NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx
+NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx
+
+# Security (server-side)
+CSRF_SECRET=your-secure-csrf-secret-key
+
+# Sanity (optional, has fallbacks)
+NEXT_PUBLIC_SANITY_PROJECT_ID=41s7iutf
+NEXT_PUBLIC_SANITY_DATASET=production
+NEXT_PUBLIC_SANITY_API_VERSION=2026-05-01
+```
+
+## Key Features
+
+### Performance
+- 100/100 Lighthouse scores (all metrics)
+- Server Components for optimal SSR
+- Streaming with Suspense boundaries
+- Automatic static optimization with revalidation
+- LCP of 0.18s on `/prosjekter` via preloading, React.cache, and server-only patterns
+- Skeleton loaders with shimmer effects
+
+### Design & UX
+- Matrix-inspired design with canvas rain effect
+- Custom animated cursor with matrix trail effect
+- Fully responsive (mobile, laptop, ultra-wide tested)
+- Tailwind 4 with CSS custom-property design tokens in `globals.css`
+- Polymorphic components
+- Error boundaries with fallback UI
+
+### Accessibility
+- WCAG2AA compliance (Pa11y automated testing)
+- Full keyboard navigation (WAI-ARIA APG patterns)
+- Visible focus rings (`:focus-visible`)
+- Skip links, ARIA labels
+- Builds fail if accessibility errors found
+
+### Security (Multi-Layered)
+- Content Security Policy headers
+- CSRF protection
+- OWASP scanning (Semgrep with custom rules in `.semgrep/`)
+- Secret detection (Gitleaks)
+- Dependency scanning (Snyk, Trivy)
+- Supply chain hardening (see below)
+
+## Testing Gotchas
+
+1. **AAA Pattern**: Enforced by BOTH ESLint rule AND runtime validation
+2. **Matrix Exclusion**: Matrix.component.tsx excluded from coverage intentionally
+3. **Test Location**: Test files must mirror source structure
+4. **E2E Rules**: Different ESLint overrides for Cypress vs Playwright
+
+## Code Quality Principles
+
+Follows SOLID, DRY, KISS, YAGNI principles (see AGENTS.md for full details)
+
+### Key Rules
+- **Single Responsibility**: Separate UI from business logic
+- **Open/Closed**: Extend via composition, not modification
+- **TypeScript**: Comprehensive types for all props/functions
+- **Accessibility-First**: Native semantics before ARIA
+- **Performance-First**: Minimize re-renders, use Server Components
+- **Test-First**: 100% coverage target with AAA pattern
+
+## UI Development Rules (Condensed)
+
+### Interactions
+- ✅ Full keyboard support, visible focus rings
+- ✅ Hit targets ≥24px (mobile ≥44px)
+- ✅ No blocking paste, support password managers
+- ✅ URL reflects state (deep-linkable)
+- ✅ Enter submits text input; Cmd/Ctrl+Enter submits textarea
+
+### Animation
+- ✅ Honor `prefers-reduced-motion`
+- ✅ Animate compositor props (`transform`, `opacity`)
+- ✅ Interruptible, input-driven animations
+
+### Accessibility
+- ✅ Accessible color contrast (prefer APCA over WCAG 2)
+- ✅ Icon-only buttons need `aria-label`
+- ✅ Native semantics before ARIA
+- ✅ Redundant status cues (not color-only)
+
+### Performance
+- ✅ Track re-renders (React DevTools/React Scan)
+- ✅ Virtualize large lists
+- ✅ Preload above-fold images, lazy-load rest
+- ✅ Prevent CLS from images
+
+## Security — Supply Chain Defense
+
+**CRITICAL**: Multi-layered attack prevention. Preserve these measures when modifying configs or workflows.
+
+### Package Installation Defenses
+| Defense | Config | Notes |
+|---------|--------|-------|
+| `ignore-scripts=true` | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts |
+| `allowBuilds` whitelist | `pnpm-workspace.yaml` | Explicit opt-in for native packages |
+| `minimum-release-age=2880` | `.npmrc` | Blocks packages <48h old (manual) |
+| 7-day release age | `renovate.json` | Automated updates wait 7 days |
+| `block-exotic-subdependencies=true` | `.npmrc` | Prevents non-registry sources |
+| `--frozen-lockfile` | All CI workflows | Prevents lockfile modification |
+| `engine-strict=true` | `.npmrc` | Enforces Node.js version |
+
+### CI/CD Security
+| Defense | Config | Notes |
+|---------|--------|-------|
+| SHA-pinned GitHub Actions | All workflows | Never use floating tags |
+| No `pull_request_target` | All workflows | Cache poisoning prevention |
+| Least-privilege permissions | All workflows | Explicit `permissions` blocks |
+| No `restore-keys` fallbacks | Cache steps | Prevents poisoned cache |
+
+### Security Scanning
+- **Snyk**: Dependency vulnerabilities + monitoring
+- **Trivy**: Filesystem scanning (CRITICAL/HIGH)
+- **Semgrep**: SAST (OWASP, JS, TS, React + custom `.semgrep/` rules)
+- **CodeQL**: GitHub native security-and-quality
+- **Gitleaks**: Secret detection
+
+### Agent Rules (NON-NEGOTIABLE)
+- ❌ NEVER add `pull_request_target` to workflows
+- ❌ NEVER use floating tags for GitHub Actions (always SHA-pin)
+- ❌ NEVER use `npm install -g <package>` in CI without pinned version
+- ❌ NEVER add `restore-keys` fallbacks to cache steps
+- ❌ NEVER remove `ignore-scripts=true` from `.npmrc`
+- ✅ ALWAYS use `--frozen-lockfile` for pnpm in CI
+- ✅ ALWAYS add explicit `permissions` blocks to workflows
+- ✅ When adding packages needing build scripts, add to `allowBuilds` in `pnpm-workspace.yaml`
+
+Full hardening plan: `plans/supply-chain-hardening.md`
+
+## AI-Friendly Documentation
+
+### Primary Resources
+- **AGENTS.md**: Main agent guidance (patterns, principles, gotchas)
+- **DOCS/README.md**: Technical documentation and architecture
+- **DOCS/repository_context.txt**: Auto-generated full codebase context
+- **DOCS/TEST_STRATEGY.md**: ISTQB-aligned test strategy
+- **README.md**: Project overview and features
+
+### Mode-Specific Rules
+- `.roo/rules-code/AGENTS.md`: Code mode guidance
+- Custom ESLint plugin: `src/utils/eslint/`
+
+### Automated Updates
+- Repomix workflow generates `repository_context.txt` on every push to main
+- AI-powered commit messages via Python script in `commit/`
+
+## Important Notes
+
+### Data Fetching
+- Server Components for data fetching
+- `sanityFetch<T>()` helper with 24h default revalidation
+- React.cache for deduplication
+- Preloading pattern in `/prosjekter`
+
+### Contact Form
+- Email.js integration
+- CSRF protection via `lib/csrf.ts`
+- React Hook Form + Zod validation
+- Reusable GenericForm component pattern
+
+### Error Handling
+- react-error-boundary for component errors
+- Custom ErrorBoundary with fallback UI
+- Development mode error triggers
+- Comprehensive error logging
+
+### Sitemap
+- Automatic generation (`src/app/sitemap.ts`)
+- Google rich results for each page
+- SEO optimized
+
+## Performance Achievements
+
+- **Lighthouse**: 100/100/100/100 (Performance, Accessibility, Best Practices, SEO)
+- **LCP**: 0.18s on `/prosjekter` page
+- **Test Coverage**: 100% (Jest + React Testing Library)
+- **Accessibility**: WCAG2AA compliant
+- **React Doctor Score**: >80 threshold enforced
+
+## Quick Reference
+
+### File Patterns
+- Components: `*.component.tsx`
+- Tests: `*.test.tsx` or `*.test.ts`
+- Styles: CSS Modules or Tailwind classes
+- Types: TypeScript interfaces/types (generated from Sanity)
+
+### Key Directories
+- `/src/app/*`: Pages and routes
+- `/src/components/*`: UI components
+- `/src/lib/*`: Core utilities
+- `/src/hooks/*`: Custom React hooks
+- `/src/e2e/*`: E2E test suites
+- `/studio/*`: Sanity CMS studio
+- `/.github/workflows/*`: CI/CD pipelines
+
+### Configuration Files
+- `next.config.ts`: Next.js config (CSP, images, headers)
+- `jest.config.ts`: Jest test config
+- `jest.setup.ts`: Test setup + AAA validation
+- `cypress.config.ts`: Cypress E2E config
+- `playwright.config.ts`: Playwright config
+- `.npmrc`: pnpm + security config
+- `pnpm-workspace.yaml`: Workspace + allowBuilds
+- `renovate.json`: Automated dependency updates
+- `tailwind.config.ts`: Tailwind CSS config
+- `tsconfig.json`: TypeScript config
+
+## Learn More
+
+For comprehensive coding guidance, read these in order:
+1. **AGENTS.md** - Start here for non-obvious patterns
+2. **README.md** - Feature overview and badges
+3. **DOCS/README.md** - Technical deep dive
+4. **DOCS/TEST_STRATEGY.md** - Testing methodology
