@@ -389,6 +389,7 @@ studio/
   tsconfig.json
 UTKAST/
   senior-developer-portfolio.zip
+.browserslistrc
 .eslintrc-custom-rules.ts
 .eslintrc.json
 .fallowrc.json
@@ -10087,155 +10088,6 @@ vercel.json
 19: export type FormData = z.infer<typeof formSchema>;
 ````
 
-## File: src/components/Kontakt/ContactForm.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useState } from "react";
-  3: import { useForm } from "react-hook-form";
-  4: import { zodResolver } from "@hookform/resolvers/zod";
-  5: import PageHeader from "@/components/UI/PageHeader.component";
-  6: import Button from "@/components/UI/Button.component";
-  7: import InputField from "@/components/UI/InputField.component";
-  8: import { formSchema, FormData } from "./config/formConfig";
-  9: interface ContactFormProps {
- 10:   csrfToken?: string;
- 11:   onSubmit?: (data: FormData) => Promise<string>;
- 12:   initialResponse?: string;
- 13: }
- 14: /**
- 15:  * ContactForm component - A complete contact form with EmailJS integration
- 16:  * Handles both the form UI and submission logic in a single, clear component
- 17:  */
- 18: const ContactForm: React.FC<ContactFormProps> = ({
- 19:   csrfToken = "",
- 20:   onSubmit: onSubmitProp,
- 21:   initialResponse = "",
- 22: }) => {
- 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
- 24:     null,
- 25:   );
- 26:   const serverResponse = submittedResponse ?? initialResponse;
- 27:   const {
- 28:     register,
- 29:     handleSubmit,
- 30:     formState: { errors, isSubmitting },
- 31:   } = useForm<FormData>({
- 32:     resolver: zodResolver(formSchema),
- 33:   });
- 34:   /**
- 35:    * Default form submission handler using EmailJS.
- 36:    * Dynamically imports @emailjs/browser only when the user submits,
- 37:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
- 38:    */
- 39:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
- 40:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
- 41:     const TEMPLATE_KEY =
- 42:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
- 43:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
- 44:     try {
- 45:       const emailjs = (await import("@emailjs/browser")).default;
- 46:       emailjs.init(EMAIL_API_KEY);
- 47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
- 48:       return "Takk for din beskjed";
- 49:     } catch {
- 50:       return "Feil under sending av skjema";
- 51:     }
- 52:   };
- 53:   const handleFormSubmit = async (data: FormData): Promise<void> => {
- 54:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
- 55:     const message = await submitHandler(data);
- 56:     setSubmittedResponse(message);
- 57:   };
- 58:   return (
- 59:     <main data-testid="kontaktcontent" id="maincontent">
- 60:       <div className="mt-32 bg-graybg">
- 61:         <PageHeader>Kontakt</PageHeader>
- 62:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
- 63:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
- 64:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
- 65:               <div className="p-2 md:p-6 pt-8">
- 66:                 {serverResponse ? (
- 67:                   <div aria-live="polite" aria-atomic="true">
- 68:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
- 69:                       {serverResponse}
- 70:                     </h3>
- 71:                   </div>
- 72:                 ) : (
- 73:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
- 74:                     <form
- 75:                       id="contact-form"
- 76:                       className="text-center"
- 77:                       onSubmit={handleSubmit(handleFormSubmit)}
- 78:                       method="POST"
- 79:                       action="/api/form"
- 80:                       aria-label="Contact Form"
- 81:                     >
- 82:                       {csrfToken && (
- 83:                         <input type="hidden" name="_csrf" value={csrfToken} />
- 84:                       )}
- 85:                       <fieldset>
- 86:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
- 87:                           Kontaktskjema
- 88:                         </legend>
- 89:                         <InputField<FormData>
- 90:                           name="navn"
- 91:                           label="Fullt navn"
- 92:                           htmlFor="navn"
- 93:                           register={register}
- 94:                           error={errors.navn?.message}
- 95:                           isRequired
- 96:                           title="Vennligst bruk norske bokstaver"
- 97:                           autoComplete="name"
- 98:                           spellCheck={false}
- 99:                         />
-100:                         <br />
-101:                         <InputField<FormData>
-102:                           name="telefon"
-103:                           label="Telefonnummer"
-104:                           htmlFor="telefon"
-105:                           register={register}
-106:                           error={errors.telefon?.message}
-107:                           isRequired
-108:                           title="Vennligst oppgi et gyldig telefonnummer"
-109:                           autoComplete="tel"
-110:                           inputMode="tel"
-111:                           spellCheck={false}
-112:                         />
-113:                         <br />
-114:                         <InputField<FormData>
-115:                           name="tekst"
-116:                           label="Hva ønsker du å si?"
-117:                           htmlFor="tekst"
-118:                           register={register}
-119:                           error={errors.tekst?.message}
-120:                           isRequired
-121:                           type="textarea"
-122:                           spellCheck={true}
-123:                         />
-124:                         <br />
-125:                       </fieldset>
-126:                       <div className="-mt-4">
-127:                         <Button
-128:                           loading={isSubmitting}
-129:                           data-testid="submit-button"
-130:                         >
-131:                           Send skjema
-132:                         </Button>
-133:                       </div>
-134:                     </form>
-135:                   </div>
-136:                 )}
-137:               </div>
-138:             </div>
-139:           </div>
-140:         </div>
-141:       </div>
-142:     </main>
-143:   );
-144: };
-145: export default ContactForm;
-````
-
 ## File: src/components/Layout/DesktopNavigation.component.tsx
 ````typescript
  1: import React from "react";
@@ -14614,6 +14466,39 @@ vercel.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.4.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.7",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -18065,102 +17950,6 @@ vercel.json
 126: });
 ````
 
-## File: next.config.ts
-````typescript
- 1: import type { NextConfig } from "next";
- 2: const cspDirectives = {
- 3:   "default-src": ["'self'"],
- 4:   "script-src": [
- 5:     "'self'",
- 6:     "'unsafe-eval'",
- 7:     "'unsafe-inline'",
- 8:     "https://va.vercel-scripts.com",
- 9:   ],
-10:   "style-src": ["'self'", "'unsafe-inline'"],
-11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
-12:   "font-src": ["'self'"],
-13:   "object-src": ["'none'"],
-14:   "base-uri": ["'self'"],
-15:   "form-action": ["'self'"],
-16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
-17:   "connect-src": [
-18:     "'self'",
-19:     "https://api.emailjs.com",
-20:     "https://va.vercel-scripts.com",
-21:   ],
-22: };
-23: const buildCspHeader = (directives: Record<string, string[]>) =>
-24:   Object.entries(directives)
-25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
-26:     .join(" ") + " upgrade-insecure-requests;";
-27: const nextConfig: NextConfig = {
-28:   transpilePackages: ["@portabletext/react"],
-29:   images: {
-30:     remotePatterns: [
-31:       {
-32:         protocol: "https",
-33:         hostname: "cdn.sanity.io",
-34:       },
-35:     ],
-36:   },
-37:   async headers() {
-38:     return [
-39:       {
-40:         source: "/",
-41:         headers: [
-42:           {
-43:             key: "Cache-Control",
-44:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
-45:           },
-46:           {
-47:             key: "X-Frame-Options",
-48:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
-49:           },
-50:           { key: "X-Content-Type-Options", value: "nosniff" },
-51:           {
-52:             key: "Content-Security-Policy",
-53:             value: buildCspHeader(cspDirectives),
-54:           },
-55:         ],
-56:       },
-57:       {
-58:         source: "/prosjekter",
-59:         headers: [
-60:           {
-61:             key: "Cache-Control",
-62:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
-63:           },
-64:           {
-65:             key: "X-Frame-Options",
-66:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
-67:           },
-68:           { key: "X-Content-Type-Options", value: "nosniff" },
-69:           {
-70:             key: "Content-Security-Policy",
-71:             value: buildCspHeader(cspDirectives),
-72:           },
-73:         ],
-74:       },
-75:       {
-76:         source: "/:path*",
-77:         headers: [
-78:           {
-79:             key: "X-Frame-Options",
-80:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
-81:           },
-82:           { key: "X-Content-Type-Options", value: "nosniff" },
-83:           {
-84:             key: "Content-Security-Policy",
-85:             value: buildCspHeader(cspDirectives),
-86:           },
-87:         ],
-88:       },
-89:     ];
-90:   },
-91: };
-92: export default nextConfig;
-````
-
 ## File: playwright.config.ts
 ````typescript
  1: import { defineConfig, devices } from "@playwright/test";
@@ -18477,6 +18266,301 @@ vercel.json
 1: {}
 ````
 
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+13:         with:
+14:           node-version: "24"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:       - name: Install dependencies
+27:         run: pnpm install --frozen-lockfile --ignore-scripts
+28:       - name: Build project
+29:         run: pnpm build
+30:       - name: Start server
+31:         run: |
+32:           pnpm start &
+33:           echo "Waiting for server to be ready..."
+34:           while ! nc -z localhost 3000; do
+35:             sleep 5
+36:           done
+37:           # Additional wait to ensure full initialization
+38:           sleep 20
+39:       - name: Run Lighthouse CI (Mobile)
+40:         run: pnpm lhci:perf
+41:         env:
+42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+43:       - name: Run Lighthouse CI (Desktop)
+44:         run: pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: "24"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile --ignore-scripts
+32:       - name: Create pa11y config
+33:         run: |
+34:           # Create pa11y config file
+35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+36:       - name: Build Next.js app
+37:         run: pnpm build
+38:       - name: Start Next.js app
+39:         run: pnpm start &
+40:       - name: Wait for the application to be ready
+41:         run: pnpm exec wait-on http://localhost:3000
+42:       - name: Run pa11y
+43:         run: |
+44:           # Create a directory for the reports
+45:           mkdir -p pa11y-reports
+46:           # Run pa11y on main pages with config
+47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+51:       - name: Upload pa11y results
+52:         if: always()
+53:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+54:         with:
+55:           name: pa11y-reports
+56:           path: pa11y-reports/
+57:       - name: Check for accessibility issues
+58:         run: |
+59:           if grep -q "Error:" pa11y-reports/*.txt; then
+60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+61:             exit 1
+62:           fi
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 47:         with:
+ 48:           node-version: 24
+ 49:           cache: ${{ steps.pm.outputs.cache }}
+ 50:       - name: Install dependencies
+ 51:         run: ${{ steps.pm.outputs.install }}
+ 52:       - name: Run React Doctor
+ 53:         id: doctor
+ 54:         run: |
+ 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 57:           # Strip ANSI escape codes for clean output
+ 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 63:           else
+ 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 65:           fi
+ 66:           # Check for lint issues (the actionable part of the report)
+ 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 69:           else
+ 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 71:           fi
+ 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 75:           # Extract just the numeric score for threshold check
+ 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 79:       - name: Post PR comment with results
+ 80:         if: github.event_name == 'pull_request'
+ 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 82:         with:
+ 83:           script: |
+ 84:             const fs = require('fs');
+ 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 86:             const score = '${{ steps.doctor.outputs.score }}';
+ 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 89:             const scoreDisplay = offline
+ 90:               ? 'N/A (scoring server unreachable)'
+ 91:               : score;
+ 92:             const statusEmoji = offline
+ 93:               ? (issuesFound ? '⚠️' : '✅')
+ 94:               : '';
+ 95:             const body = [
+ 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 97:               '',
+ 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+ 99:               '',
+100:               '<details>',
+101:               '<summary>Full diagnostics</summary>',
+102:               '',
+103:               '```',
+104:               output.trim(),
+105:               '```',
+106:               '',
+107:               '</details>',
+108:               '',
+109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+110:             ].filter(Boolean).join('\n');
+111:             // Find existing comment to update instead of creating duplicates
+112:             const { data: comments } = await github.rest.issues.listComments({
+113:               owner: context.repo.owner,
+114:               repo: context.repo.repo,
+115:               issue_number: context.issue.number,
+116:             });
+117:             const botComment = comments.find(
+118:               (c) => c.body?.includes('🩺 React Doctor')
+119:             );
+120:             if (botComment) {
+121:               await github.rest.issues.updateComment({
+122:                 owner: context.repo.owner,
+123:                 repo: context.repo.repo,
+124:                 comment_id: botComment.id,
+125:                 body,
+126:               });
+127:             } else {
+128:               await github.rest.issues.createComment({
+129:                 owner: context.repo.owner,
+130:                 repo: context.repo.repo,
+131:                 issue_number: context.issue.number,
+132:                 body,
+133:               });
+134:             }
+135:       - name: Write job summary
+136:         if: always()
+137:         run: |
+138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+139:           if [ "$OFFLINE" = "true" ]; then
+140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+141:             echo "" >> "$GITHUB_STEP_SUMMARY"
+142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+143:           else
+144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+145:           fi
+146:           echo "" >> "$GITHUB_STEP_SUMMARY"
+147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:       - name: Check score threshold
+151:         run: |
+152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+154:           # When offline, skip numeric threshold — only fail if lint issues were found
+155:           if [ "$OFFLINE" = "true" ]; then
+156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+157:             if [ "$ISSUES" = "true" ]; then
+158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+159:               exit 1
+160:             fi
+161:             echo "✅ No lint issues found (score unavailable due to offline)"
+162:             exit 0
+163:           fi
+164:           SCORE="${{ steps.doctor.outputs.score_num }}"
+165:           SCORE="${SCORE:-0}"
+166:           THRESHOLD=80
+167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+170:             exit 1
+171:           fi
+````
+
 ## File: .github/workflows/repomix.yml
 ````yaml
  1: name: Repository Documentation
@@ -18562,6 +18646,82 @@ vercel.json
 81:           else
 82:             echo "No changes detected in repository_context.txt"
 83:           fi
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: commit/.env.example
@@ -19186,6 +19346,159 @@ vercel.json
 35: }
 ````
 
+## File: src/components/Kontakt/ContactForm.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useState } from "react";
+  3: import { useForm } from "react-hook-form";
+  4: import { zodResolver } from "@hookform/resolvers/zod";
+  5: import PageHeader from "@/components/UI/PageHeader.component";
+  6: import Button from "@/components/UI/Button.component";
+  7: import InputField from "@/components/UI/InputField.component";
+  8: import { formSchema, FormData } from "./config/formConfig";
+  9: interface ContactFormProps {
+ 10:   csrfToken?: string;
+ 11:   onSubmit?: (data: FormData) => Promise<string>;
+ 12:   initialResponse?: string;
+ 13: }
+ 14: /**
+ 15:  * ContactForm component - A complete contact form with EmailJS integration
+ 16:  * Handles both the form UI and submission logic in a single, clear component
+ 17:  */
+ 18: const ContactForm: React.FC<ContactFormProps> = ({
+ 19:   csrfToken = "",
+ 20:   onSubmit: onSubmitProp,
+ 21:   initialResponse = "",
+ 22: }) => {
+ 23:   const [submittedResponse, setSubmittedResponse] = useState<string | null>(
+ 24:     null,
+ 25:   );
+ 26:   const serverResponse = submittedResponse ?? initialResponse;
+ 27:   const {
+ 28:     register,
+ 29:     handleSubmit,
+ 30:     formState: { errors, isSubmitting },
+ 31:   } = useForm<FormData>({
+ 32:     resolver: zodResolver(formSchema),
+ 33:   });
+ 34:   /**
+ 35:    * Default form submission handler using EmailJS.
+ 36:    * Dynamically imports @emailjs/browser only when the user submits,
+ 37:    * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
+ 38:    */
+ 39:   const defaultOnSubmit = async (data: FormData): Promise<string> => {
+ 40:     const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
+ 41:     const TEMPLATE_KEY =
+ 42:       process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
+ 43:     const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
+ 44:     try {
+ 45:       const emailjs = (await import("@emailjs/browser")).default;
+ 46:       emailjs.init(EMAIL_API_KEY);
+ 47:       await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
+ 48:       return "Takk for din beskjed";
+ 49:     } catch {
+ 50:       return "Feil under sending av skjema";
+ 51:     }
+ 52:   };
+ 53:   const handleFormSubmit = async (data: FormData): Promise<void> => {
+ 54:     const submitHandler = onSubmitProp ?? defaultOnSubmit;
+ 55:     const message = await submitHandler(data);
+ 56:     setSubmittedResponse(message);
+ 57:   };
+ 58:   return (
+ 59:     <main data-testid="kontaktcontent" id="maincontent">
+ 60:       <div className="mt-32 bg-graybg">
+ 61:         <PageHeader>Kontakt</PageHeader>
+ 62:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+ 63:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+ 64:             <div className="p-4 mx-auto md:h-full mt-4 flex flex-col justify-center items-center min-h-[470px]">
+ 65:               <div className="p-2 md:p-6 pt-8">
+ 66:                 {serverResponse ? (
+ 67:                   <div aria-live="polite" aria-atomic="true">
+ 68:                     <h3 className="m-2 h-32 text-xl text-center text-gray-300">
+ 69:                       {serverResponse}
+ 70:                     </h3>
+ 71:                   </div>
+ 72:                 ) : (
+ 73:                   <div className="bg-gray-800 p-4 md:p-6 rounded-lg pt-8">
+ 74:                     <form
+ 75:                       id="contact-form"
+ 76:                       className="text-center"
+ 77:                       onSubmit={handleSubmit(handleFormSubmit)}
+ 78:                       method="POST"
+ 79:                       action="/api/form"
+ 80:                       aria-label="Contact Form"
+ 81:                       data-tool-name="submit_contact_form"
+ 82:                       data-tool-description="Submit a contact form to Dfweb with name, phone number, and message"
+ 83:                       data-tool-schema='{"type":"object","properties":{"navn":{"type":"string","description":"Full name","minLength":2,"maxLength":100,"pattern":"^[a-zA-ZæøåÆØÅ ]+$"},"telefon":{"type":"string","description":"Norwegian phone number (8 digits)","pattern":"^\\d{8}$"},"tekst":{"type":"string","description":"Message text","minLength":10,"maxLength":1000}},"required":["navn","telefon","tekst"],"additionalProperties":false}'
+ 84:                       data-tool-confirmation="required"
+ 85:                     >
+ 86:                       {csrfToken && (
+ 87:                         <input type="hidden" name="_csrf" value={csrfToken} />
+ 88:                       )}
+ 89:                       <fieldset>
+ 90:                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
+ 91:                           Kontaktskjema
+ 92:                         </legend>
+ 93:                         <InputField<FormData>
+ 94:                           name="navn"
+ 95:                           label="Fullt navn"
+ 96:                           htmlFor="navn"
+ 97:                           register={register}
+ 98:                           error={errors.navn?.message}
+ 99:                           isRequired
+100:                           title="Vennligst bruk norske bokstaver"
+101:                           autoComplete="name"
+102:                           spellCheck={false}
+103:                         />
+104:                         <br />
+105:                         <InputField<FormData>
+106:                           name="telefon"
+107:                           label="Telefonnummer"
+108:                           htmlFor="telefon"
+109:                           register={register}
+110:                           error={errors.telefon?.message}
+111:                           isRequired
+112:                           title="Vennligst oppgi et gyldig telefonnummer"
+113:                           autoComplete="tel"
+114:                           inputMode="tel"
+115:                           spellCheck={false}
+116:                         />
+117:                         <br />
+118:                         <InputField<FormData>
+119:                           name="tekst"
+120:                           label="Hva ønsker du å si?"
+121:                           htmlFor="tekst"
+122:                           register={register}
+123:                           error={errors.tekst?.message}
+124:                           isRequired
+125:                           type="textarea"
+126:                           spellCheck={true}
+127:                         />
+128:                         <br />
+129:                       </fieldset>
+130:                       <div className="-mt-4">
+131:                         <Button
+132:                           loading={isSubmitting}
+133:                           data-testid="submit-button"
+134:                         >
+135:                           Send skjema
+136:                         </Button>
+137:                       </div>
+138:                     </form>
+139:                   </div>
+140:                 )}
+141:               </div>
+142:             </div>
+143:           </div>
+144:         </div>
+145:       </div>
+146:     </main>
+147:   );
+148: };
+149: export default ContactForm;
+````
+
 ## File: src/components/UI/Pill.component.tsx
 ````typescript
  1: import React from "react";
@@ -19557,37 +19870,15 @@ vercel.json
 122: );
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.4.0"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.7",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
+## File: .browserslistrc
+````
+1: # Modern browsers that support all baseline features
+2: # This eliminates unnecessary polyfills for Array.prototype.at, flat, flatMap, etc.
+3: >0.2% and not dead and not op_mini all
+4: last 2 Chrome versions
+5: last 2 Firefox versions
+6: last 2 Safari versions
+7: last 2 Edge versions
 ````
 
 ## File: LICENSE
@@ -20910,377 +21201,6 @@ vercel.json
 212:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-13:         with:
-14:           node-version: "24"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:       - name: Install dependencies
-27:         run: pnpm install --frozen-lockfile --ignore-scripts
-28:       - name: Build project
-29:         run: pnpm build
-30:       - name: Start server
-31:         run: |
-32:           pnpm start &
-33:           echo "Waiting for server to be ready..."
-34:           while ! nc -z localhost 3000; do
-35:             sleep 5
-36:           done
-37:           # Additional wait to ensure full initialization
-38:           sleep 20
-39:       - name: Run Lighthouse CI (Mobile)
-40:         run: pnpm lhci:perf
-41:         env:
-42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-43:       - name: Run Lighthouse CI (Desktop)
-44:         run: pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: "24"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile --ignore-scripts
-32:       - name: Create pa11y config
-33:         run: |
-34:           # Create pa11y config file
-35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-36:       - name: Build Next.js app
-37:         run: pnpm build
-38:       - name: Start Next.js app
-39:         run: pnpm start &
-40:       - name: Wait for the application to be ready
-41:         run: pnpm exec wait-on http://localhost:3000
-42:       - name: Run pa11y
-43:         run: |
-44:           # Create a directory for the reports
-45:           mkdir -p pa11y-reports
-46:           # Run pa11y on main pages with config
-47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-51:       - name: Upload pa11y results
-52:         if: always()
-53:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-54:         with:
-55:           name: pa11y-reports
-56:           path: pa11y-reports/
-57:       - name: Check for accessibility issues
-58:         run: |
-59:           if grep -q "Error:" pa11y-reports/*.txt; then
-60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-61:             exit 1
-62:           fi
-````
-
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
- 47:         with:
- 48:           node-version: 24
- 49:           cache: ${{ steps.pm.outputs.cache }}
- 50:       - name: Install dependencies
- 51:         run: ${{ steps.pm.outputs.install }}
- 52:       - name: Run React Doctor
- 53:         id: doctor
- 54:         run: |
- 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 57:           # Strip ANSI escape codes for clean output
- 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 63:           else
- 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 65:           fi
- 66:           # Check for lint issues (the actionable part of the report)
- 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 69:           else
- 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 71:           fi
- 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 75:           # Extract just the numeric score for threshold check
- 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 79:       - name: Post PR comment with results
- 80:         if: github.event_name == 'pull_request'
- 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 82:         with:
- 83:           script: |
- 84:             const fs = require('fs');
- 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 86:             const score = '${{ steps.doctor.outputs.score }}';
- 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 89:             const scoreDisplay = offline
- 90:               ? 'N/A (scoring server unreachable)'
- 91:               : score;
- 92:             const statusEmoji = offline
- 93:               ? (issuesFound ? '⚠️' : '✅')
- 94:               : '';
- 95:             const body = [
- 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 97:               '',
- 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
- 99:               '',
-100:               '<details>',
-101:               '<summary>Full diagnostics</summary>',
-102:               '',
-103:               '```',
-104:               output.trim(),
-105:               '```',
-106:               '',
-107:               '</details>',
-108:               '',
-109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-110:             ].filter(Boolean).join('\n');
-111:             // Find existing comment to update instead of creating duplicates
-112:             const { data: comments } = await github.rest.issues.listComments({
-113:               owner: context.repo.owner,
-114:               repo: context.repo.repo,
-115:               issue_number: context.issue.number,
-116:             });
-117:             const botComment = comments.find(
-118:               (c) => c.body?.includes('🩺 React Doctor')
-119:             );
-120:             if (botComment) {
-121:               await github.rest.issues.updateComment({
-122:                 owner: context.repo.owner,
-123:                 repo: context.repo.repo,
-124:                 comment_id: botComment.id,
-125:                 body,
-126:               });
-127:             } else {
-128:               await github.rest.issues.createComment({
-129:                 owner: context.repo.owner,
-130:                 repo: context.repo.repo,
-131:                 issue_number: context.issue.number,
-132:                 body,
-133:               });
-134:             }
-135:       - name: Write job summary
-136:         if: always()
-137:         run: |
-138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-139:           if [ "$OFFLINE" = "true" ]; then
-140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-141:             echo "" >> "$GITHUB_STEP_SUMMARY"
-142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-143:           else
-144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-145:           fi
-146:           echo "" >> "$GITHUB_STEP_SUMMARY"
-147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:       - name: Check score threshold
-151:         run: |
-152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-154:           # When offline, skip numeric threshold — only fail if lint issues were found
-155:           if [ "$OFFLINE" = "true" ]; then
-156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-157:             if [ "$ISSUES" = "true" ]; then
-158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-159:               exit 1
-160:             fi
-161:             echo "✅ No lint issues found (score unavailable due to offline)"
-162:             exit 0
-163:           fi
-164:           SCORE="${{ steps.doctor.outputs.score_num }}"
-165:           SCORE="${SCORE:-0}"
-166:           THRESHOLD=80
-167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-170:             exit 1
-171:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: src/components/Animations/Matrix.utils.ts
 ````typescript
  1: export interface RGB {
@@ -21454,6 +21374,112 @@ vercel.json
 53:     return false;
 54:   }
 55: }
+````
+
+## File: next.config.ts
+````typescript
+  1: import type { NextConfig } from "next";
+  2: const cspDirectives = {
+  3:   "default-src": ["'self'"],
+  4:   "script-src": [
+  5:     "'self'",
+  6:     "'unsafe-eval'",
+  7:     "'unsafe-inline'",
+  8:     "https://va.vercel-scripts.com",
+  9:   ],
+ 10:   "style-src": ["'self'", "'unsafe-inline'"],
+ 11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
+ 12:   "font-src": ["'self'"],
+ 13:   "object-src": ["'none'"],
+ 14:   "base-uri": ["'self'"],
+ 15:   "form-action": ["'self'"],
+ 16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
+ 17:   "connect-src": [
+ 18:     "'self'",
+ 19:     "https://api.emailjs.com",
+ 20:     "https://va.vercel-scripts.com",
+ 21:   ],
+ 22: };
+ 23: const buildCspHeader = (directives: Record<string, string[]>) =>
+ 24:   Object.entries(directives)
+ 25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
+ 26:     .join(" ") + " upgrade-insecure-requests;";
+ 27: const nextConfig: NextConfig = {
+ 28:   transpilePackages: ["@portabletext/react"],
+ 29:   compiler: {
+ 30:     // Remove console.log in production
+ 31:     removeConsole: process.env.NODE_ENV === "production",
+ 32:   },
+ 33:   images: {
+ 34:     remotePatterns: [
+ 35:       {
+ 36:         protocol: "https",
+ 37:         hostname: "cdn.sanity.io",
+ 38:       },
+ 39:     ],
+ 40:   },
+ 41:   async headers() {
+ 42:     return [
+ 43:       {
+ 44:         source: "/",
+ 45:         headers: [
+ 46:           {
+ 47:             key: "Cache-Control",
+ 48:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 49:           },
+ 50:           {
+ 51:             key: "X-Frame-Options",
+ 52:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 53:           },
+ 54:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 55:           {
+ 56:             key: "Content-Security-Policy",
+ 57:             value: buildCspHeader(cspDirectives),
+ 58:           },
+ 59:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 60:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 61:         ],
+ 62:       },
+ 63:       {
+ 64:         source: "/prosjekter",
+ 65:         headers: [
+ 66:           {
+ 67:             key: "Cache-Control",
+ 68:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 69:           },
+ 70:           {
+ 71:             key: "X-Frame-Options",
+ 72:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 73:           },
+ 74:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 75:           {
+ 76:             key: "Content-Security-Policy",
+ 77:             value: buildCspHeader(cspDirectives),
+ 78:           },
+ 79:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 80:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 81:         ],
+ 82:       },
+ 83:       {
+ 84:         source: "/:path*",
+ 85:         headers: [
+ 86:           {
+ 87:             key: "X-Frame-Options",
+ 88:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 89:           },
+ 90:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 91:           {
+ 92:             key: "Content-Security-Policy",
+ 93:             value: buildCspHeader(cspDirectives),
+ 94:           },
+ 95:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 96:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 97:         ],
+ 98:       },
+ 99:     ];
+100:   },
+101: };
+102: export default nextConfig;
 ````
 
 ## File: package.json
