@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
     // Remove console.log in production
     removeConsole: process.env.NODE_ENV === "production",
   },
+  // Optimize CSS loading - reduces critical path latency
+  experimental: {
+    optimizeCss: true,
+  },
   images: {
     remotePatterns: [
       {
