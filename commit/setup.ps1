@@ -25,7 +25,7 @@ Write-Output "Setting up AI Commit Message Generator..."
 
 # Install Python dependencies
 Write-Output "Installing Python dependencies..."
-pip install openai anthropic python-dotenv
+pip install --only-binary :all: openai anthropic python-dotenv
 
 # Create .env from template if it doesn't exist
 $EnvFile = Join-Path $RepoRoot ".env"
