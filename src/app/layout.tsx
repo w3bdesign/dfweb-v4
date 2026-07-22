@@ -4,7 +4,6 @@ import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
-import "./glitch.css";
 
 import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
@@ -45,6 +44,21 @@ export default async function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
         />
+
+        {/* Preconnect to critical origins */}
+        <link
+          rel="preconnect"
+          href="https://cdn.sanity.io"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo.png" />
 
