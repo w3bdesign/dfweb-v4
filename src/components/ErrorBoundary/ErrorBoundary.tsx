@@ -34,7 +34,7 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
 }) => {
   const renderFallback = useCallback(
     (props: FallbackProps) => (
-      <ErrorFallback error={props.error} compact={compact} />
+      <ErrorFallback error={props.error as Error} compact={compact} />
     ),
     [compact],
   );
