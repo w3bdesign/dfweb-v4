@@ -616,93 +616,6 @@ vercel.json
 35:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix@1.14.0
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
-````
-
 ## File: .github/workflows/security.yml
 ````yaml
  1: name: OWASP Security Scan
@@ -18563,179 +18476,91 @@ vercel.json
 1: {}
 ````
 
-## File: .github/workflows/react-doctor.yml
+## File: .github/workflows/repomix.yml
 ````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
- 47:         with:
- 48:           node-version: 24
- 49:           cache: ${{ steps.pm.outputs.cache }}
- 50:       - name: Install dependencies
- 51:         run: ${{ steps.pm.outputs.install }}
- 52:       - name: Run React Doctor
- 53:         id: doctor
- 54:         run: |
- 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 57:           # Strip ANSI escape codes for clean output
- 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 63:           else
- 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 65:           fi
- 66:           # Check for lint issues (the actionable part of the report)
- 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 69:           else
- 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 71:           fi
- 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 75:           # Extract just the numeric score for threshold check
- 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 79:       - name: Post PR comment with results
- 80:         if: github.event_name == 'pull_request'
- 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 82:         with:
- 83:           script: |
- 84:             const fs = require('fs');
- 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 86:             const score = '${{ steps.doctor.outputs.score }}';
- 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 89:             const scoreDisplay = offline
- 90:               ? 'N/A (scoring server unreachable)'
- 91:               : score;
- 92:             const statusEmoji = offline
- 93:               ? (issuesFound ? '⚠️' : '✅')
- 94:               : '';
- 95:             const body = [
- 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 97:               '',
- 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
- 99:               '',
-100:               '<details>',
-101:               '<summary>Full diagnostics</summary>',
-102:               '',
-103:               '```',
-104:               output.trim(),
-105:               '```',
-106:               '',
-107:               '</details>',
-108:               '',
-109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-110:             ].filter(Boolean).join('\n');
-111:             // Find existing comment to update instead of creating duplicates
-112:             const { data: comments } = await github.rest.issues.listComments({
-113:               owner: context.repo.owner,
-114:               repo: context.repo.repo,
-115:               issue_number: context.issue.number,
-116:             });
-117:             const botComment = comments.find(
-118:               (c) => c.body?.includes('🩺 React Doctor')
-119:             );
-120:             if (botComment) {
-121:               await github.rest.issues.updateComment({
-122:                 owner: context.repo.owner,
-123:                 repo: context.repo.repo,
-124:                 comment_id: botComment.id,
-125:                 body,
-126:               });
-127:             } else {
-128:               await github.rest.issues.createComment({
-129:                 owner: context.repo.owner,
-130:                 repo: context.repo.repo,
-131:                 issue_number: context.issue.number,
-132:                 body,
-133:               });
-134:             }
-135:       - name: Write job summary
-136:         if: always()
-137:         run: |
-138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-139:           if [ "$OFFLINE" = "true" ]; then
-140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-141:             echo "" >> "$GITHUB_STEP_SUMMARY"
-142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-143:           else
-144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-145:           fi
-146:           echo "" >> "$GITHUB_STEP_SUMMARY"
-147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:       - name: Check score threshold
-151:         run: |
-152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-154:           # When offline, skip numeric threshold — only fail if lint issues were found
-155:           if [ "$OFFLINE" = "true" ]; then
-156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-157:             if [ "$ISSUES" = "true" ]; then
-158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-159:               exit 1
-160:             fi
-161:             echo "✅ No lint issues found (score unavailable due to offline)"
-162:             exit 0
-163:           fi
-164:           SCORE="${{ steps.doctor.outputs.score_num }}"
-165:           SCORE="${SCORE:-0}"
-166:           THRESHOLD=80
-167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-170:             exit 1
-171:           fi
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix@1.14.0 --ignore-scripts
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
 ````
 
 ## File: commit/.env.example
@@ -20821,6 +20646,181 @@ vercel.json
 62:           fi
 ````
 
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+ 47:         with:
+ 48:           node-version: 24
+ 49:           cache: ${{ steps.pm.outputs.cache }}
+ 50:       - name: Install dependencies
+ 51:         run: ${{ steps.pm.outputs.install }}
+ 52:       - name: Run React Doctor
+ 53:         id: doctor
+ 54:         run: |
+ 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 57:           # Strip ANSI escape codes for clean output
+ 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 63:           else
+ 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 65:           fi
+ 66:           # Check for lint issues (the actionable part of the report)
+ 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 69:           else
+ 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 71:           fi
+ 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 75:           # Extract just the numeric score for threshold check
+ 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 79:       - name: Post PR comment with results
+ 80:         if: github.event_name == 'pull_request'
+ 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 82:         with:
+ 83:           script: |
+ 84:             const fs = require('fs');
+ 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 86:             const score = '${{ steps.doctor.outputs.score }}';
+ 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 89:             const scoreDisplay = offline
+ 90:               ? 'N/A (scoring server unreachable)'
+ 91:               : score;
+ 92:             const statusEmoji = offline
+ 93:               ? (issuesFound ? '⚠️' : '✅')
+ 94:               : '';
+ 95:             const body = [
+ 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 97:               '',
+ 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+ 99:               '',
+100:               '<details>',
+101:               '<summary>Full diagnostics</summary>',
+102:               '',
+103:               '```',
+104:               output.trim(),
+105:               '```',
+106:               '',
+107:               '</details>',
+108:               '',
+109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+110:             ].filter(Boolean).join('\n');
+111:             // Find existing comment to update instead of creating duplicates
+112:             const { data: comments } = await github.rest.issues.listComments({
+113:               owner: context.repo.owner,
+114:               repo: context.repo.repo,
+115:               issue_number: context.issue.number,
+116:             });
+117:             const botComment = comments.find(
+118:               (c) => c.body?.includes('🩺 React Doctor')
+119:             );
+120:             if (botComment) {
+121:               await github.rest.issues.updateComment({
+122:                 owner: context.repo.owner,
+123:                 repo: context.repo.repo,
+124:                 comment_id: botComment.id,
+125:                 body,
+126:               });
+127:             } else {
+128:               await github.rest.issues.createComment({
+129:                 owner: context.repo.owner,
+130:                 repo: context.repo.repo,
+131:                 issue_number: context.issue.number,
+132:                 body,
+133:               });
+134:             }
+135:       - name: Write job summary
+136:         if: always()
+137:         run: |
+138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+139:           if [ "$OFFLINE" = "true" ]; then
+140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+141:             echo "" >> "$GITHUB_STEP_SUMMARY"
+142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+143:           else
+144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+145:           fi
+146:           echo "" >> "$GITHUB_STEP_SUMMARY"
+147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:       - name: Check score threshold
+151:         run: |
+152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+154:           # When offline, skip numeric threshold — only fail if lint issues were found
+155:           if [ "$OFFLINE" = "true" ]; then
+156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+157:             if [ "$ISSUES" = "true" ]; then
+158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+159:               exit 1
+160:             fi
+161:             echo "✅ No lint issues found (score unavailable due to offline)"
+162:             exit 0
+163:           fi
+164:           SCORE="${{ steps.doctor.outputs.score_num }}"
+165:           SCORE="${SCORE:-0}"
+166:           THRESHOLD=80
+167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+170:             exit 1
+171:           fi
+````
+
 ## File: .github/workflows/snyk-scan.yml
 ````yaml
  1: name: Snyk Security Scan
@@ -21072,48 +21072,6 @@ vercel.json
 55: }
 ````
 
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         run: pnpm exec playwright install --with-deps chromium firefox
-24:       - name: Build the project
-25:         run: pnpm build
-26:       - name: Start the application
-27:         run: pnpm start &
-28:       - name: Wait for the application to be ready
-29:         run: |
-30:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-31:       - name: Run Playwright tests
-32:         run: pnpm exec playwright test
-33:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-34:         if: always()
-35:         with:
-36:           name: playwright-report
-37:           path: playwright-report/
-38:           retention-days: 30
-````
-
 ## File: package.json
 ````json
  1: {
@@ -21233,6 +21191,50 @@ vercel.json
 17: minimumReleaseAgeExclude:
 18:   - postcss@8.5.21
 19:   - wait-on@9.1.0
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers # NOSONAR - playwright install downloads binaries, not npm packages
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
 ````
 
 ## File: studio/package.json
