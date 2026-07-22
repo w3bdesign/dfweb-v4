@@ -1,4 +1,4 @@
-import { randomBytes, createHmac, timingSafeEqual } from "crypto";
+import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 
 const CSRF_SECRET =
   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
@@ -55,7 +55,7 @@ export function validateCSRFToken(token: string): boolean {
     }
 
     // Check if token is expired
-    const tokenTime = parseInt(timestamp, 10);
+    const tokenTime = Number.parseInt(timestamp, 10);
     const currentTime = Date.now();
 
     if (currentTime - tokenTime > TOKEN_EXPIRY) {

@@ -74,7 +74,7 @@ export const WithContent = () => (
           This content is displayed over the mobile background. The background
           is only visible on mobile devices.
         </p>
-        <button className="mt-6 bg-white text-black px-4 py-2 rounded">
+        <button type="button" className="mt-6 bg-white text-black px-4 py-2 rounded">
           Get Started
         </button>
       </div>

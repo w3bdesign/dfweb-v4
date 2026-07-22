@@ -18,6 +18,7 @@ export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
         Noe gikk galt ved lasting av prosjekter
       </h2>
       <button
+        type="button"
         onClick={reset}
         className="px-4 py-2 bg-matrix-dark hover:bg-matrix-light text-white rounded-sm transition-colors"
       >

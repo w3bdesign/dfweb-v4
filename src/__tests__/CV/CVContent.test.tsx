@@ -61,7 +61,7 @@ describe("CVContent", () => {
     const pdfLinks = screen.getAllByRole("link", {
       name: expectedElements.pdfButton,
     });
-    expect(pdfLinks.length).toBe(2); // Desktop + mobile
+    expect(pdfLinks).toHaveLength(2); // Desktop + mobile
     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
   });
 
