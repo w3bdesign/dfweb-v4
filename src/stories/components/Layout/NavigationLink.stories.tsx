@@ -1,6 +1,5 @@
 import React from "react";
 import { Meta } from "@ladle/react";
-import "@/app/glitch.css";
 
 // Mock NavigationLink component for stories
 const NavigationLink = ({
