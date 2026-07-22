@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
