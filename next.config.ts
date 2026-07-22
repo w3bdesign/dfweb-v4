@@ -33,9 +33,9 @@ const nextConfig: NextConfig = {
     // Remove console.log in production
     removeConsole: process.env.NODE_ENV === "production",
   },
-  // Optimize CSS loading - reduces critical path latency
+  // Optimize CSS chunking - merge CSS files to reduce network requests
   experimental: {
-    optimizeCss: true,
+    cssChunking: true, // Merge CSS files when possible (default)
   },
   images: {
     remotePatterns: [
