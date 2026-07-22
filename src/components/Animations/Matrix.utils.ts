@@ -47,7 +47,7 @@ export const getRandomCharacter = (tileSet: string[] | null): string => {
     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? "";
   }
   // Generate ASCII printable characters (33-126)
-  return String.fromCharCode(33 + (getRandomInt(94) % 94));
+  return String.fromCodePoint(33 + (getRandomInt(94) % 94));
 };
 
 /**
