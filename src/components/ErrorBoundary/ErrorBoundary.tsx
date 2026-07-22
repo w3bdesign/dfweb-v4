@@ -12,7 +12,7 @@ interface ErrorBoundaryProps {
   compact?: boolean;
 }
 
-const handleError = (error: Error, info: ErrorInfo) => {
+const handleError = (error: unknown, info: ErrorInfo) => {
   console.error("Uventet feil i Matrix:", error, info);
 };
 
