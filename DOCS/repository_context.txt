@@ -210,9 +210,7 @@ src/
       error.tsx
       loading.tsx
       page.tsx
-    cursor.css
     error.tsx
-    glitch.css
     globals.css
     layout.tsx
     loading.tsx
@@ -389,7 +387,6 @@ studio/
   tsconfig.json
 UTKAST/
   senior-developer-portfolio.zip
-.browserslistrc
 .eslintrc-custom-rules.ts
 .eslintrc.json
 .fallowrc.json
@@ -399,6 +396,7 @@ UTKAST/
 .pa11yci.json
 .semgrepignore
 .stylelintrc.json
+.swcrc
 AGENTS.md
 codecov.yml
 cypress.config.ts
@@ -616,6 +614,60 @@ vercel.json
 33:         uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
 34:         with:
 35:           category: "/language:${{ matrix.language }}"
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+13:         with:
+14:           node-version: "24"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:       - name: Install dependencies
+27:         run: pnpm install --frozen-lockfile --ignore-scripts
+28:       - name: Build project
+29:         run: pnpm build
+30:       - name: Start server
+31:         run: |
+32:           pnpm start &
+33:           echo "Waiting for server to be ready..."
+34:           while ! nc -z localhost 3000; do
+35:             sleep 5
+36:           done
+37:           # Additional wait to ensure full initialization
+38:           sleep 20
+39:       - name: Run Lighthouse CI (Mobile)
+40:         run: pnpm lhci:perf
+41:         env:
+42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+43:       - name: Run Lighthouse CI (Desktop)
+44:         run: pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
 ````
 
 ## File: .github/workflows/security.yml
@@ -1977,6 +2029,27 @@ vercel.json
 51:             stream=False,
 52:         )
 53:         return response.choices[0].message.content.strip()
+````
+
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model for your chosen provider
+17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
 ## File: commit/README.md
@@ -8091,519 +8164,6 @@ vercel.json
 39: }
 ````
 
-## File: src/app/cursor.css
-````css
- 1: @media (prefers-reduced-motion: no-preference) {
- 2:   .matrix-cursor {
- 3:     cursor: none;
- 4:   }
- 5:   .matrix-cursor::before,
- 6:   .matrix-cursor::after {
- 7:     content: "";
- 8:     position: fixed;
- 9:     pointer-events: none;
-10:     z-index: 2;
-11:     left: var(--cursor-x, 0);
-12:     top: var(--cursor-y, 0);
-13:   }
-14:   .matrix-cursor::before {
-15:     width: 16px;
-16:     height: 16px;
-17:     border: 2px solid var(--matrix-light);
-18:     border-radius: 50%;
-19:     transform: translate(-50%, -50%);
-20:     box-shadow: 0 0 10px var(--matrix-light);
-21:     animation: pulse-and-rotate 2s ease-in-out infinite;
-22:   }
-23:   .matrix-cursor::after {
-24:     width: 4px;
-25:     height: 4px;
-26:     background: var(--matrix-light);
-27:     border-radius: 50%;
-28:     transform: translate(-50%, -50%);
-29:     box-shadow: 0 0 15px 2px var(--matrix-light);
-30:     animation: pulse 1s ease-in-out infinite;
-31:   }
-32:   .matrix-trail {
-33:     position: fixed;
-34:     pointer-events: none;
-35:     font-family: monospace;
-36:     color: var(--matrix-light);
-37:     font-size: 12px;
-38:     text-shadow: 0 0 3px var(--matrix-light);
-39:     z-index: 1;
-40:     opacity: 0;
-41:     animation: trail-fade 3s linear forwards;
-42:     letter-spacing: 5px;
-43:   }
-44:   @keyframes trail-fade {
-45:     0% {
-46:       opacity: 0.3;
-47:       transform: translateY(0);
-48:     }
-49:     50% {
-50:       opacity: 0.15;
-51:       transform: translateY(35px);
-52:     }
-53:     100% {
-54:       opacity: 0;
-55:       transform: translateY(50px);
-56:     }
-57:   }
-58:   @keyframes pulse-and-rotate {
-59:     0% {
-60:       transform: translate(-50%, -50%) rotate(0deg) scale(1);
-61:       border-radius: 50%;
-62:     }
-63:     25% {
-64:       border-radius: 2px;
-65:     }
-66:     50% {
-67:       transform: translate(-50%, -50%) rotate(180deg) scale(1.2);
-68:       border-radius: 50%;
-69:     }
-70:     75% {
-71:       border-radius: 2px;
-72:     }
-73:     100% {
-74:       transform: translate(-50%, -50%) rotate(360deg) scale(1);
-75:       border-radius: 50%;
-76:     }
-77:   }
-78:   @keyframes pulse {
-79:     0%,
-80:     100% {
-81:       transform: translate(-50%, -50%) scale(1);
-82:       opacity: 0.8;
-83:     }
-84:     50% {
-85:       transform: translate(-50%, -50%) scale(1.5);
-86:       opacity: 1;
-87:     }
-88:   }
-89: }
-````
-
-## File: src/app/glitch.css
-````css
-  1: .glitch {
-  2:   position: relative;
-  3: }
-  4: @keyframes noise-anim {
-  5:   0% {
-  6:     clip: rect(42px, 9999px, 44px, 0);
-  7:   }
-  8:   5% {
-  9:     clip: rect(12px, 9999px, 85px, 0);
- 10:   }
- 11:   10% {
- 12:     clip: rect(22px, 9999px, 65px, 0);
- 13:   }
- 14:   15% {
- 15:     clip: rect(32px, 9999px, 75px, 0);
- 16:   }
- 17:   20% {
- 18:     clip: rect(42px, 9999px, 55px, 0);
- 19:   }
- 20:   25% {
- 21:     clip: rect(52px, 9999px, 45px, 0);
- 22:   }
- 23:   30% {
- 24:     clip: rect(62px, 9999px, 35px, 0);
- 25:   }
- 26:   35% {
- 27:     clip: rect(72px, 9999px, 25px, 0);
- 28:   }
- 29:   40% {
- 30:     clip: rect(82px, 9999px, 15px, 0);
- 31:   }
- 32:   45% {
- 33:     clip: rect(92px, 9999px, 5px, 0);
- 34:   }
- 35:   50% {
- 36:     clip: rect(102px, 9999px, 95px, 0);
- 37:   }
- 38:   55% {
- 39:     clip: rect(112px, 9999px, 85px, 0);
- 40:   }
- 41:   60% {
- 42:     clip: rect(122px, 9999px, 75px, 0);
- 43:   }
- 44:   65% {
- 45:     clip: rect(132px, 9999px, 65px, 0);
- 46:   }
- 47:   70% {
- 48:     clip: rect(142px, 9999px, 55px, 0);
- 49:   }
- 50:   75% {
- 51:     clip: rect(152px, 9999px, 45px, 0);
- 52:   }
- 53:   80% {
- 54:     clip: rect(162px, 9999px, 35px, 0);
- 55:   }
- 56:   85% {
- 57:     clip: rect(172px, 9999px, 25px, 0);
- 58:   }
- 59:   90% {
- 60:     clip: rect(182px, 9999px, 15px, 0);
- 61:   }
- 62:   95% {
- 63:     clip: rect(192px, 9999px, 5px, 0);
- 64:   }
- 65:   100% {
- 66:     clip: rect(202px, 9999px, 95px, 0);
- 67:   }
- 68: }
- 69: @keyframes noise-anim-2 {
- 70:   0% {
- 71:     clip: rect(32px, 9999px, 34px, 0);
- 72:   }
- 73:   5% {
- 74:     clip: rect(22px, 9999px, 75px, 0);
- 75:   }
- 76:   10% {
- 77:     clip: rect(12px, 9999px, 55px, 0);
- 78:   }
- 79:   15% {
- 80:     clip: rect(42px, 9999px, 65px, 0);
- 81:   }
- 82:   20% {
- 83:     clip: rect(52px, 9999px, 45px, 0);
- 84:   }
- 85:   25% {
- 86:     clip: rect(62px, 9999px, 35px, 0);
- 87:   }
- 88:   30% {
- 89:     clip: rect(72px, 9999px, 25px, 0);
- 90:   }
- 91:   35% {
- 92:     clip: rect(82px, 9999px, 15px, 0);
- 93:   }
- 94:   40% {
- 95:     clip: rect(92px, 9999px, 5px, 0);
- 96:   }
- 97:   45% {
- 98:     clip: rect(102px, 9999px, 95px, 0);
- 99:   }
-100:   50% {
-101:     clip: rect(112px, 9999px, 85px, 0);
-102:   }
-103:   55% {
-104:     clip: rect(122px, 9999px, 75px, 0);
-105:   }
-106:   60% {
-107:     clip: rect(132px, 9999px, 65px, 0);
-108:   }
-109:   65% {
-110:     clip: rect(142px, 9999px, 55px, 0);
-111:   }
-112:   70% {
-113:     clip: rect(152px, 9999px, 45px, 0);
-114:   }
-115:   75% {
-116:     clip: rect(162px, 9999px, 35px, 0);
-117:   }
-118:   80% {
-119:     clip: rect(172px, 9999px, 25px, 0);
-120:   }
-121:   85% {
-122:     clip: rect(182px, 9999px, 15px, 0);
-123:   }
-124:   90% {
-125:     clip: rect(192px, 9999px, 5px, 0);
-126:   }
-127:   95% {
-128:     clip: rect(202px, 9999px, 95px, 0);
-129:   }
-130:   100% {
-131:     clip: rect(212px, 9999px, 85px, 0);
-132:   }
-133: }
-134: .glitch::after,
-135: .glitch::before {
-136:   content: attr(data-text);
-137:   position: absolute;
-138:   top: 0;
-139:   overflow: hidden;
-140:   clip: rect(0, 900px, 0, 0);
-141: }
-142: .glitch::after {
-143:   left: 2px;
-144:   text-shadow: -1px 0 red;
-145: }
-146: .glitch::before {
-147:   left: -2px;
-148:   text-shadow: 1px 0 blue;
-149: }
-150: .glitch:hover::after {
-151:   animation: noise-anim 0.3s infinite linear alternate-reverse;
-152: }
-153: .glitch:hover::before {
-154:   animation: noise-anim-2 0.3s infinite linear alternate-reverse;
-155: }
-````
-
-## File: src/app/globals.css
-````css
-  1: @import "tailwindcss";
-  2: @config '../../tailwind.config.ts';
-  3: /*
-  4:  * ═══════════════════════════════════════════
-  5:  * AESTHETIC DIRECTION: Technical / Hacker / Cinematic
-  6:  * ═══════════════════════════════════════════
-  7:  *
-  8:  * Type:    JetBrains Mono (mono everywhere — terminal/hacker vibe)
-  9:  * Color:   Cool-dark. Slate-900 bg, matrix green (#00ff62 / #00cc4e / #008529)
- 10:  * Tone:    Cool — slate, charcoal, deep navy
- 11:  * Density: Loose on hero, normal on content. 4px Tailwind scale.
- 12:  * Radius:  Sharp (rounded-sm). Utilitarian, terminal-like.
- 13:  * Shadow:  Minimal. Glow effects on interactive elements.
- 14:  * Buttons: Filled matrix-green (primary). Pill with glow (accent/nav).
- 15:  * Motion:  Expressive — glitch text, Matrix rain canvas, staggered fade-ins,
- 16:  *          bounce-on-scroll, page transitions. Respects prefers-reduced-motion.
- 17:  * Icons:   react-icons (FaReact, SiTypescript, etc.). No custom SVG illustrations.
- 18:  * Imagery: Real project screenshots via Sanity CDN. Mobile: static bg image.
- 19:  */
- 20: @layer base {
- 21:   *,
- 22:   ::after,
- 23:   ::before,
- 24:   ::backdrop,
- 25:   ::file-selector-button {
- 26:     border-color: var(--color-gray-200, currentcolor);
- 27:   }
- 28: }
- 29: :root {
- 30:   /* Brand — Matrix Theme */
- 31:   --matrix-light: #00ff62;
- 32:   --matrix: #00cc4e;
- 33:   --matrix-dark: #008529;
- 34:   --matrix-glow: rgb(0 255 98 / 60%);
- 35:   /* Surfaces */
- 36:   --text: #e1e1e1;
- 37:   --background: var(--color-slate-900, #0f172a);
- 38:   /* Semantic Colors */
- 39:   --success: #00cc4e;
- 40:   --error: #ff4e4e;
- 41:   --warning: #ffb74e;
- 42:   --info: #4e9fff;
- 43:   /* Z-Index Scale — deliberate layering tokens */
- 44:   --z-base: 0;
- 45:   --z-dropdown: 10;
- 46:   --z-sticky: 20;
- 47:   --z-overlay: 30;
- 48:   --z-modal: 40;
- 49:   --z-toast: 50;
- 50: }
- 51: body {
- 52:   background-color: var(--background);
- 53:   color: var(--text);
- 54:   font-family: "JetBrains Mono", monospace;
- 55: }
- 56: #matrix-canvas {
- 57:   opacity: 0.7;
- 58: }
- 59: /* Touch interaction improvements */
- 60: button,
- 61: a,
- 62: input,
- 63: textarea,
- 64: select {
- 65:   touch-action: manipulation; /* Prevents double-tap zoom */
- 66:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
- 67: }
- 68: /* Minimum touch targets for mobile */
- 69: @media (pointer: coarse) {
- 70:   button,
- 71:   a[role="button"],
- 72:   input[type="submit"],
- 73:   input[type="button"] {
- 74:     min-height: 44px;
- 75:     min-width: 44px;
- 76:   }
- 77: }
- 78: /* Scroll margin for anchor links */
- 79: [id] {
- 80:   scroll-margin-top: 100px;
- 81: }
- 82: h1[id],
- 83: h2[id],
- 84: h3[id],
- 85: h4[id],
- 86: h5[id],
- 87: h6[id] {
- 88:   scroll-margin-top: 120px;
- 89: }
- 90: /* Selection */
- 91: ::selection {
- 92:   background-color: var(--matrix-dark);
- 93:   color: #fff;
- 94: }
- 95: /* Scrollbar - Using Tailwind v4.3 utilities */
- 96: * {
- 97:   @apply scrollbar-thin scrollbar-thumb-matrix-dark scrollbar-track-[#1a1a1a];
- 98: }
- 99: *:hover {
-100:   @apply scrollbar-thumb-matrix-light;
-101: }
-102: /* Enhanced keyboard focus indicators for accessibility */
-103: /* Exclude form elements which handle their own focus styling */
-104: :focus-visible:not(input, textarea, select) {
-105:   outline: 2px solid var(--matrix-dark);
-106:   outline-offset: 2px;
-107:   border-radius: 2px;
-108: }
-109: /* Focus within container styling - only for specific interactive containers */
-110: .focus-within-container:focus-within {
-111:   outline: 2px solid var(--matrix-dark);
-112:   outline-offset: 2px;
-113:   border-radius: 2px;
-114: }
-115: /* Button-specific focus styling */
-116: button:focus-visible,
-117: a:focus-visible {
-118:   outline: 2px solid var(--matrix-dark);
-119:   outline-offset: 3px;
-120:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
-121: }
-122: /* Input and textarea focus styling handled by individual components */
-123: /* Tab and interactive element focus */
-124: [role="tab"]:focus-visible,
-125: [role="button"]:focus-visible,
-126: [tabindex="0"]:focus-visible {
-127:   outline: 2px solid var(--matrix-dark);
-128:   outline-offset: 2px;
-129: }
-130: /* Skip link special focus styling for better visibility */
-131: .sr-only:focus,
-132: .sr-only:focus-within {
-133:   position: absolute;
-134:   width: auto;
-135:   height: auto;
-136:   padding: 0.5rem 1rem;
-137:   margin: 0;
-138:   overflow: visible;
-139:   clip: auto;
-140:   white-space: normal;
-141:   outline: 3px solid var(--matrix-light);
-142:   outline-offset: 2px;
-143:   z-index: var(--z-toast);
-144: }
-145: /* Skeleton shimmer effect */
-146: @keyframes shimmer {
-147:   0% {
-148:     background-position: -200% 0;
-149:   }
-150:   100% {
-151:     background-position: 200% 0;
-152:   }
-153: }
-154: .skeleton-shimmer::before {
-155:   content: "";
-156:   position: absolute;
-157:   inset: 0;
-158:   background: linear-gradient(
-159:     90deg,
-160:     transparent 0%,
-161:     rgb(255 255 255 / 4%) 50%,
-162:     transparent 100%
-163:   );
-164:   background-size: 200% 100%;
-165:   animation: shimmer 1.5s infinite;
-166: }
-167: /* Performance optimizations for animations */
-168: .contain-layout {
-169:   contain: layout style paint;
-170: }
-171: /* Reduced motion for accessibility */
-172: @media (prefers-reduced-motion: reduce) {
-173:   *,
-174:   *::before,
-175:   *::after {
-176:     animation-duration: 0.01ms !important;
-177:     animation-iteration-count: 1 !important;
-178:     transition-duration: 0.01ms !important;
-179:   }
-180: }
-````
-
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { preconnect } from "react-dom";
- 4: import { SpeedInsights } from "@vercel/speed-insights/next";
- 5: import "./globals.css";
- 6: import "./glitch.css";
- 7: import { sanityFetch } from "@/lib/sanity/client";
- 8: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 9: import type { Navigation, Settings } from "@/types/sanity.types";
-10: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
-11: import SkipLink from "@/components/UI/SkipLink.component";
-12: import Header from "@/components/Layout/Header.component";
-13: import Footer from "@/components/Layout/Footer.component";
-14: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-15: const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
-16: export const metadata: Metadata = {
-17:   title: "Forside - Dfweb",
-18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-19: };
-20: export default async function RootLayout({
-21:   children,
-22: }: Readonly<{
-23:   children: React.ReactNode;
-24: }>) {
-25:   // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-26:   preconnect("https://cdn.sanity.io");
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="icon" href="/favicon.ico" />
-40:         <link rel="apple-touch-icon" href="/logo.png" />
-41:         <meta property="og:title" content="Daniel Fjeldstad" />
-42:         <meta name="author" content="Daniel Fjeldstad" />
-43:         <meta property="og:locale" content="nb_NO" />
-44:         <meta
-45:           property="og:description"
-46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-47:         />
-48:         <meta property="og:url" content="https://www.dfweb.no/" />
-49:         <meta property="og:site_name" content="dfweb.no" />
-50:         <meta name="theme-color" content="#004014" />
-51:       </head>
-52:       <body
-53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-54:       >
-55:         <LazyMotionProvider>
-56:           <SkipLink />
-57:           <ErrorBoundary>
-58:             <div id="main-content" className="grow flex flex-col">
-59:               <Header navigation={navigation} />
-60:               <SpeedInsights />
-61:               <div className="grow">{children}</div>
-62:               <Footer
-63:                 footerCopyrightText={
-64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-65:                 }
-66:               />
-67:             </div>
-68:           </ErrorBoundary>
-69:         </LazyMotionProvider>
-70:       </body>
-71:     </html>
-72:   );
-73: }
-````
-
 ## File: src/app/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -9198,184 +8758,6 @@ vercel.json
 109: };
 ````
 
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
-  3: import "@/app/cursor.css";
-  4: import { useMobile } from "../../hooks/useMobile";
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: interface CursorState {
- 19:   cursorPosition: { x: number; y: number };
- 20:   isHovered: boolean;
- 21:   trails: MatrixTrail[];
- 22: }
- 23: type CursorAction =
- 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
- 25:   | { type: "MOUSE_ENTER" }
- 26:   | { type: "MOUSE_LEAVE" }
- 27:   | { type: "REMOVE_TRAIL"; trailId: string };
- 28: const MAX_TRAILS = 20;
- 29: const cursorReducer = (
- 30:   state: CursorState,
- 31:   action: CursorAction,
- 32: ): CursorState => {
- 33:   switch (action.type) {
- 34:     case "MOUSE_MOVE": {
- 35:       const newPosition = { x: action.x, y: action.y };
- 36:       if (!action.trail) {
- 37:         return { ...state, cursorPosition: newPosition };
- 38:       }
- 39:       const updatedTrails = [...state.trails, action.trail];
- 40:       return {
- 41:         ...state,
- 42:         cursorPosition: newPosition,
- 43:         trails:
- 44:           updatedTrails.length > MAX_TRAILS
- 45:             ? updatedTrails.slice(1)
- 46:             : updatedTrails,
- 47:       };
- 48:     }
- 49:     case "MOUSE_ENTER":
- 50:       return { ...state, isHovered: true };
- 51:     case "MOUSE_LEAVE":
- 52:       return { ...state, isHovered: false, trails: [] };
- 53:     case "REMOVE_TRAIL":
- 54:       return {
- 55:         ...state,
- 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
- 57:       };
- 58:   }
- 59: };
- 60: const initialState: CursorState = {
- 61:   cursorPosition: { x: 0, y: 0 },
- 62:   isHovered: false,
- 63:   trails: [],
- 64: };
- 65: /**
- 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 70:  */
- 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 72:   const isMobile = useMobile(); // Pd528
- 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
- 74:   const getRandomChar = useCallback(() => {
- 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 76:     const array = new Uint32Array(1);
- 77:     crypto.getRandomValues(array);
- 78:     const index = array[0]! % matrixChars.length;
- 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 80:   }, []);
- 81:   useEffect(() => {
- 82:     const heroSection = heroRef.current;
- 83:     if (!heroSection) return;
- 84:     // Add cursor: none to the hero section when hovered
- 85:     if (state.isHovered) {
- 86:       heroSection.style.cursor = "none";
- 87:     } else {
- 88:       heroSection.style.cursor = "";
- 89:     }
- 90:     const handleMouseMove = (e: MouseEvent) => {
- 91:       const trail: MatrixTrail | undefined = state.isHovered
- 92:         ? {
- 93:             id: crypto.randomUUID(),
- 94:             x: e.clientX,
- 95:             y: e.clientY,
- 96:             char: getRandomChar(),
- 97:           }
- 98:         : undefined;
- 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
-100:     };
-101:     const handleMouseEnter = () => {
-102:       dispatch({ type: "MOUSE_ENTER" });
-103:       heroSection.style.cursor = "none";
-104:     };
-105:     const handleMouseLeave = () => {
-106:       dispatch({ type: "MOUSE_LEAVE" });
-107:       heroSection.style.cursor = "";
-108:     };
-109:     heroSection.addEventListener("mousemove", handleMouseMove);
-110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
-111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
-112:     return () => {
-113:       heroSection.removeEventListener("mousemove", handleMouseMove);
-114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
-115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-116:       heroSection.style.cursor = "";
-117:     };
-118:   }, [heroRef, state.isHovered, getRandomChar]);
-119:   const handleAnimationEnd = useCallback((trailId: string) => {
-120:     dispatch({ type: "REMOVE_TRAIL", trailId });
-121:   }, []);
-122:   if (!heroRef.current || isMobile) return null; // P6ecf
-123:   const cursorStyles: CursorStyles = {
-124:     position: "fixed",
-125:     top: 0,
-126:     left: 0,
-127:     width: "100%",
-128:     height: "100%",
-129:     pointerEvents: "none",
-130:     isolation: "isolate",
-131:     zIndex: 40,
-132:     "--cursor-x": `${state.cursorPosition.x}px`,
-133:     "--cursor-y": `${state.cursorPosition.y}px`,
-134:   };
-135:   return (
-136:     <div
-137:       data-testid="matrix-cursor"
-138:       className={state.isHovered ? "matrix-cursor" : ""}
-139:       style={cursorStyles}
-140:     >
-141:       {state.trails.map((trail) => (
-142:         <div
-143:           key={trail.id}
-144:           data-testid="matrix-trail"
-145:           className="matrix-trail"
-146:           style={{
-147:             position: "fixed",
-148:             left: `${trail.x}px`,
-149:             top: `${trail.y}px`,
-150:             zIndex: 2,
-151:             pointerEvents: "none",
-152:           }}
-153:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-154:         >
-155:           {trail.char}
-156:         </div>
-157:       ))}
-158:       {state.isHovered && (
-159:         <div
-160:           style={{
-161:             position: "fixed",
-162:             top: 0,
-163:             left: 0,
-164:             width: "100%",
-165:             height: "100%",
-166:             pointerEvents: "none",
-167:             zIndex: 1,
-168:           }}
-169:         />
-170:       )}
-171:     </div>
-172:   );
-173: };
-174: export default MatrixCursor;
-````
-
 ## File: src/components/Animations/PageTransition.component.tsx
 ````typescript
  1: import { Variants, AnimatePresence } from "motion/react";
@@ -9701,6 +9083,53 @@ vercel.json
 27:   />
 28: );
 29: export default VolunteerWorkTabContent;
+````
+
+## File: src/components/ErrorBoundary/ErrorBoundary.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
+ 3: import {
+ 4:   ErrorBoundary as ReactErrorBoundary,
+ 5:   FallbackProps,
+ 6: } from "react-error-boundary";
+ 7: import ErrorFallback from "./ErrorFallback.component";
+ 8: interface ErrorBoundaryProps {
+ 9:   children: ReactNode;
+10:   compact?: boolean;
+11: }
+12: const handleError = (error: unknown, info: ErrorInfo) => {
+13:   console.error("Uventet feil i Matrix:", error, info);
+14: };
+15: /**
+16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
+17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+18:  *
+19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
+21:  *
+22:  * @param {Object} props - The component props
+23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
+25:  * @returns {JSX.Element} A React component that catches errors in its child components
+26:  */
+27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
+28:   children,
+29:   compact = false,
+30: }) => {
+31:   const renderFallback = useCallback(
+32:     (props: FallbackProps) => (
+33:       <ErrorFallback error={props.error as Error} compact={compact} />
+34:     ),
+35:     [compact],
+36:   );
+37:   return (
+38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
+39:       {children}
+40:     </ReactErrorBoundary>
+41:   );
+42: };
+43: export default ErrorBoundary;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
@@ -13188,104 +12617,6 @@ vercel.json
 129: );
 ````
 
-## File: src/stories/components/Layout/NavigationLink.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import "@/app/glitch.css";
- 4: // Mock NavigationLink component for stories
- 5: const NavigationLink = ({
- 6:   name,
- 7:   href,
- 8:   isActive,
- 9: }: {
-10:   name: string;
-11:   href: string;
-12:   isActive: boolean;
-13: }) => (
-14:   <div className="relative">
-15:     <button
-16:       type="button"
-17:       data-href={href}
-18:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg bg-transparent border-none cursor-pointer ${
-19:         isActive ? "text-green-400" : ""
-20:       }`}
-21:     >
-22:       <div className="glitch relative" data-text={name}>
-23:         {name}
-24:         <span
-25:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-26:             isActive ? "bg-green-400" : "bg-white"
-27:           }`}
-28:           style={{
-29:             width: isActive ? "100%" : "0%",
-30:             transition: "width 0.3s",
-31:           }}
-32:         />
-33:       </div>
-34:     </button>
-35:   </div>
-36: );
-37: export default {
-38:   title: "Layout/NavigationLink",
-39:   component: NavigationLink,
-40: } as Meta;
-41: // Default state
-42: export const Default = () => (
-43:   <div className="bg-gray-800 p-4 w-48">
-44:     <NavigationLink name="Home" href="/" isActive={false} />
-45:   </div>
-46: );
-47: // Active state
-48: export const Active = () => (
-49:   <div className="bg-gray-800 p-4 w-48">
-50:     <NavigationLink name="Home" href="/" isActive={true} />
-51:   </div>
-52: );
-53: // Multiple links
-54: export const MultipleLinks = () => (
-55:   <div className="bg-gray-800 p-4 w-48 flex flex-col gap-2">
-56:     <NavigationLink name="Home" href="/" isActive={true} />
-57:     <NavigationLink name="Projects" href="/projects" isActive={false} />
-58:     <NavigationLink name="Contact" href="/contact" isActive={false} />
-59:   </div>
-60: );
-61: // Long text
-62: export const LongText = () => (
-63:   <div className="bg-gray-800 p-4 w-64">
-64:     <NavigationLink
-65:       name="Very Long Navigation Link Text"
-66:       href="/long"
-67:       isActive={false}
-68:     />
-69:   </div>
-70: );
-71: // Different backgrounds
-72: export const OnDifferentBackgrounds = () => (
-73:   <div className="space-y-4">
-74:     <div className="bg-gray-900 p-4 w-48">
-75:       <NavigationLink name="Dark Background" href="/" isActive={false} />
-76:     </div>
-77:     <div className="bg-gray-800 p-4 w-48">
-78:       <NavigationLink name="Medium Background" href="/" isActive={true} />
-79:     </div>
-80:     <div className="bg-gray-700 p-4 w-48">
-81:       <NavigationLink name="Light Background" href="/" isActive={false} />
-82:     </div>
-83:   </div>
-84: );
-85: // Horizontal layout
-86: export const HorizontalLayout = () => (
-87:   <div className="bg-gray-800 p-4">
-88:     <nav className="flex gap-4">
-89:       <NavigationLink name="Home" href="/" isActive={true} />
-90:       <NavigationLink name="Projects" href="/projects" isActive={false} />
-91:       <NavigationLink name="Contact" href="/contact" isActive={false} />
-92:     </nav>
-93:   </div>
-94: );
-````
-
 ## File: src/stories/components/Prosjekter/ProsjektCard.stories.tsx
 ````typescript
   1: import React from "react";
@@ -15244,6 +14575,77 @@ vercel.json
 ## File: studio/.npmrc
 ````
 1: ignore-scripts=true
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.7",
+18:     "react-dom": "^19.2.7",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.3.0",
+21:     "styled-components": "^6.4.3"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.17",
+26:     "eslint": "^10.6.0",
+27:     "prettier": "^3.9.4",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "adm-zip": ">=0.6.0",
+33:       "basic-ftp": ">=6.0.1",
+34:       "brace-expansion": ">=5.0.7",
+35:       "dompurify": ">=3.4.12",
+36:       "esbuild": ">=0.28.1",
+37:       "flatted": ">=3.4.2",
+38:       "js-yaml": ">=5.2.1",
+39:       "lodash": ">=4.18.1",
+40:       "lodash-es": ">=4.18.1",
+41:       "minimatch": "10.2.5",
+42:       "picomatch": "4.0.5",
+43:       "smol-toml": ">=1.7.0",
+44:       "undici": ">=8.8.0",
+45:       "vite": ">=8.1.5",
+46:       "ws": ">=8.21.1",
+47:       "yaml": ">=2.9.0",
+48:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+49:     }
+50:   },
+51:   "overrides": {
+52:     "adm-zip": ">=0.6.0",
+53:     "smol-toml": ">=1.7.0",
+54:     "brace-expansion": ">=5.0.7",
+55:     "esbuild": ">=0.28.1",
+56:     "uuid": ">=14.0.1",
+57:     "js-yaml": ">=5.2.1",
+58:     "undici": ">=8.8.0",
+59:     "ws": ">=8.21.1"
+60:   },
+61:   "prettier": {
+62:     "semi": false,
+63:     "printWidth": 100,
+64:     "bracketSpacing": false,
+65:     "singleQuote": true
+66:   }
+67: }
 ````
 
 ## File: studio/README.md
@@ -17950,6 +17352,727 @@ vercel.json
 126: });
 ````
 
+## File: LICENSE
+````
+  1: GNU AFFERO GENERAL PUBLIC LICENSE
+  2:    Version 3, 19 November 2007
+  3: 
+  4: Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+  5: Everyone is permitted to copy and distribute verbatim copies
+  6: of this license document, but changing it is not allowed.
+  7: 
+  8:         Preamble
+  9: 
+ 10: The GNU Affero General Public License is a free, copyleft license for
+ 11: software and other kinds of works, specifically designed to ensure
+ 12: cooperation with the community in the case of network server software.
+ 13: 
+ 14: The licenses for most software and other practical works are designed
+ 15: to take away your freedom to share and change the works.  By contrast,
+ 16: our General Public Licenses are intended to guarantee your freedom to
+ 17: share and change all versions of a program--to make sure it remains free
+ 18: software for all its users.
+ 19: 
+ 20: When we speak of free software, we are referring to freedom, not
+ 21: price.  Our General Public Licenses are designed to make sure that you
+ 22: have the freedom to distribute copies of free software (and charge for
+ 23: them if you wish), that you receive source code or can get it if you
+ 24: want it, that you can change the software or use pieces of it in new
+ 25: free programs, and that you know you can do these things.
+ 26: 
+ 27: Developers that use our General Public Licenses protect your rights
+ 28: with two steps: (1) assert copyright on the software, and (2) offer
+ 29: you this License which gives you legal permission to copy, distribute
+ 30: and/or modify the software.
+ 31: 
+ 32: A secondary benefit of defending all users' freedom is that
+ 33: improvements made in alternate versions of the program, if they
+ 34: receive widespread use, become available for other developers to
+ 35: incorporate.  Many developers of free software are heartened and
+ 36: encouraged by the resulting cooperation.  However, in the case of
+ 37: software used on network servers, this result may fail to come about.
+ 38: The GNU General Public License permits making a modified version and
+ 39: letting the public access it on a server without ever releasing its
+ 40: source code to the public.
+ 41: 
+ 42: The GNU Affero General Public License is designed specifically to
+ 43: ensure that, in such cases, the modified source code becomes available
+ 44: to the community.  It requires the operator of a network server to
+ 45: provide the source code of the modified version running there to the
+ 46: users of that server.  Therefore, public use of a modified version, on
+ 47: a publicly accessible server, gives the public access to the source
+ 48: code of the modified version.
+ 49: 
+ 50: An older license, called the Affero General Public License and
+ 51: published by Affero, was designed to accomplish similar goals.  This is
+ 52: a different license, not a version of the Affero GPL, but Affero has
+ 53: released a new version of the Affero GPL which permits relicensing under
+ 54: this license.
+ 55: 
+ 56: The precise terms and conditions for copying, distribution and
+ 57: modification follow.
+ 58: 
+ 59:    TERMS AND CONDITIONS
+ 60: 
+ 61: 0. Definitions.
+ 62: 
+ 63: "This License" refers to version 3 of the GNU Affero General Public License.
+ 64: 
+ 65: "Copyright" also means copyright-like laws that apply to other kinds of
+ 66: works, such as semiconductor masks.
+ 67: 
+ 68: "The Program" refers to any copyrightable work licensed under this
+ 69: License.  Each licensee is addressed as "you".  "Licensees" and
+ 70: "recipients" may be individuals or organizations.
+ 71: 
+ 72: To "modify" a work means to copy from or adapt all or part of the work
+ 73: in a fashion requiring copyright permission, other than the making of an
+ 74: exact copy.  The resulting work is called a "modified version" of the
+ 75: earlier work or a work "based on" the earlier work.
+ 76: 
+ 77: A "covered work" means either the unmodified Program or a work based
+ 78: on the Program.
+ 79: 
+ 80: To "propagate" a work means to do anything with it that, without
+ 81: permission, would make you directly or secondarily liable for
+ 82: infringement under applicable copyright law, except executing it on a
+ 83: computer or modifying a private copy.  Propagation includes copying,
+ 84: distribution (with or without modification), making available to the
+ 85: public, and in some countries other activities as well.
+ 86: 
+ 87: To "convey" a work means any kind of propagation that enables other
+ 88: parties to make or receive copies.  Mere interaction with a user through
+ 89: a computer network, with no transfer of a copy, is not conveying.
+ 90: 
+ 91: An interactive user interface displays "Appropriate Legal Notices"
+ 92: to the extent that it includes a convenient and prominently visible
+ 93: feature that (1) displays an appropriate copyright notice, and (2)
+ 94: tells the user that there is no warranty for the work (except to the
+ 95: extent that warranties are provided), that licensees may convey the
+ 96: work under this License, and how to view a copy of this License.  If
+ 97: the interface presents a list of user commands or options, such as a
+ 98: menu, a prominent item in the list meets this criterion.
+ 99: 
+100: 1. Source Code.
+101: 
+102: The "source code" for a work means the preferred form of the work
+103: for making modifications to it.  "Object code" means any non-source
+104: form of a work.
+105: 
+106: A "Standard Interface" means an interface that either is an official
+107: standard defined by a recognized standards body, or, in the case of
+108: interfaces specified for a particular programming language, one that
+109: is widely used among developers working in that language.
+110: 
+111: The "System Libraries" of an executable work include anything, other
+112: than the work as a whole, that (a) is included in the normal form of
+113: packaging a Major Component, but which is not part of that Major
+114: Component, and (b) serves only to enable use of the work with that
+115: Major Component, or to implement a Standard Interface for which an
+116: implementation is available to the public in source code form.  A
+117: "Major Component", in this context, means a major essential component
+118: (kernel, window system, and so on) of the specific operating system
+119: (if any) on which the executable work runs, or a compiler used to
+120: produce the work, or an object code interpreter used to run it.
+121: 
+122: The "Corresponding Source" for a work in object code form means all
+123: the source code needed to generate, install, and (for an executable
+124: work) run the object code and to modify the work, including scripts to
+125: control those activities.  However, it does not include the work's
+126: System Libraries, or general-purpose tools or generally available free
+127: programs which are used unmodified in performing those activities but
+128: which are not part of the work.  For example, Corresponding Source
+129: includes interface definition files associated with source files for
+130: the work, and the source code for shared libraries and dynamically
+131: linked subprograms that the work is specifically designed to require,
+132: such as by intimate data communication or control flow between those
+133: subprograms and other parts of the work.
+134: 
+135: The Corresponding Source need not include anything that users
+136: can regenerate automatically from other parts of the Corresponding
+137: Source.
+138: 
+139: The Corresponding Source for a work in source code form is that
+140: same work.
+141: 
+142: 2. Basic Permissions.
+143: 
+144: All rights granted under this License are granted for the term of
+145: copyright on the Program, and are irrevocable provided the stated
+146: conditions are met.  This License explicitly affirms your unlimited
+147: permission to run the unmodified Program.  The output from running a
+148: covered work is covered by this License only if the output, given its
+149: content, constitutes a covered work.  This License acknowledges your
+150: rights of fair use or other equivalent, as provided by copyright law.
+151: 
+152: You may make, run and propagate covered works that you do not
+153: convey, without conditions so long as your license otherwise remains
+154: in force.  You may convey covered works to others for the sole purpose
+155: of having them make modifications exclusively for you, or provide you
+156: with facilities for running those works, provided that you comply with
+157: the terms of this License in conveying all material for which you do
+158: not control copyright.  Those thus making or running the covered works
+159: for you must do so exclusively on your behalf, under your direction
+160: and control, on terms that prohibit them from making any copies of
+161: your copyrighted material outside their relationship with you.
+162: 
+163: Conveying under any other circumstances is permitted solely under
+164: the conditions stated below.  Sublicensing is not allowed; section 10
+165: makes it unnecessary.
+166: 
+167: 3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+168: 
+169: No covered work shall be deemed part of an effective technological
+170: measure under any applicable law fulfilling obligations under article
+171: 11 of the WIPO copyright treaty adopted on 20 December 1996, or
+172: similar laws prohibiting or restricting circumvention of such
+173: measures.
+174: 
+175: When you convey a covered work, you waive any legal power to forbid
+176: circumvention of technological measures to the extent such circumvention
+177: is effected by exercising rights under this License with respect to
+178: the covered work, and you disclaim any intention to limit operation or
+179: modification of the work as a means of enforcing, against the work's
+180: users, your or third parties' legal rights to forbid circumvention of
+181: technological measures.
+182: 
+183: 4. Conveying Verbatim Copies.
+184: 
+185: You may convey verbatim copies of the Program's source code as you
+186: receive it, in any medium, provided that you conspicuously and
+187: appropriately publish on each copy an appropriate copyright notice;
+188: keep intact all notices stating that this License and any
+189: non-permissive terms added in accord with section 7 apply to the code;
+190: keep intact all notices of the absence of any warranty; and give all
+191: recipients a copy of this License along with the Program.
+192: 
+193: You may charge any price or no price for each copy that you convey,
+194: and you may offer support or warranty protection for a fee.
+195: 
+196: 5. Conveying Modified Source Versions.
+197: 
+198: You may convey a work based on the Program, or the modifications to
+199: produce it from the Program, in the form of source code under the
+200: terms of section 4, provided that you also meet all of these conditions:
+201: 
+202: a) The work must carry prominent notices stating that you modified
+203: it, and giving a relevant date.
+204: 
+205: b) The work must carry prominent notices stating that it is
+206: released under this License and any conditions added under section
+207: 7.  This requirement modifies the requirement in section 4 to
+208: "keep intact all notices".
+209: 
+210: c) You must license the entire work, as a whole, under this
+211: License to anyone who comes into possession of a copy.  This
+212: License will therefore apply, along with any applicable section 7
+213: additional terms, to the whole of the work, and all its parts,
+214: regardless of how they are packaged.  This License gives no
+215: permission to license the work in any other way, but it does not
+216: invalidate such permission if you have separately received it.
+217: 
+218: d) If the work has interactive user interfaces, each must display
+219: Appropriate Legal Notices; however, if the Program has interactive
+220: interfaces that do not display Appropriate Legal Notices, your
+221: work need not make them do so.
+222: 
+223: A compilation of a covered work with other separate and independent
+224: works, which are not by their nature extensions of the covered work,
+225: and which are not combined with it such as to form a larger program,
+226: in or on a volume of a storage or distribution medium, is called an
+227: "aggregate" if the compilation and its resulting copyright are not
+228: used to limit the access or legal rights of the compilation's users
+229: beyond what the individual works permit.  Inclusion of a covered work
+230: in an aggregate does not cause this License to apply to the other
+231: parts of the aggregate.
+232: 
+233: 6. Conveying Non-Source Forms.
+234: 
+235: You may convey a covered work in object code form under the terms
+236: of sections 4 and 5, provided that you also convey the
+237: machine-readable Corresponding Source under the terms of this License,
+238: in one of these ways:
+239: 
+240: a) Convey the object code in, or embodied in, a physical product
+241: (including a physical distribution medium), accompanied by the
+242: Corresponding Source fixed on a durable physical medium
+243: customarily used for software interchange.
+244: 
+245: b) Convey the object code in, or embodied in, a physical product
+246: (including a physical distribution medium), accompanied by a
+247: written offer, valid for at least three years and valid for as
+248: long as you offer spare parts or customer support for that product
+249: model, to give anyone who possesses the object code either (1) a
+250: copy of the Corresponding Source for all the software in the
+251: product that is covered by this License, on a durable physical
+252: medium customarily used for software interchange, for a price no
+253: more than your reasonable cost of physically performing this
+254: conveying of source, or (2) access to copy the
+255: Corresponding Source from a network server at no charge.
+256: 
+257: c) Convey individual copies of the object code with a copy of the
+258: written offer to provide the Corresponding Source.  This
+259: alternative is allowed only occasionally and noncommercially, and
+260: only if you received the object code with such an offer, in accord
+261: with subsection 6b.
+262: 
+263: d) Convey the object code by offering access from a designated
+264: place (gratis or for a charge), and offer equivalent access to the
+265: Corresponding Source in the same way through the same place at no
+266: further charge.  You need not require recipients to copy the
+267: Corresponding Source along with the object code.  If the place to
+268: copy the object code is a network server, the Corresponding Source
+269: may be on a different server (operated by you or a third party)
+270: that supports equivalent copying facilities, provided you maintain
+271: clear directions next to the object code saying where to find the
+272: Corresponding Source.  Regardless of what server hosts the
+273: Corresponding Source, you remain obligated to ensure that it is
+274: available for as long as needed to satisfy these requirements.
+275: 
+276: e) Convey the object code using peer-to-peer transmission, provided
+277: you inform other peers where the object code and Corresponding
+278: Source of the work are being offered to the general public at no
+279: charge under subsection 6d.
+280: 
+281: A separable portion of the object code, whose source code is excluded
+282: from the Corresponding Source as a System Library, need not be
+283: included in conveying the object code work.
+284: 
+285: A "User Product" is either (1) a "consumer product", which means any
+286: tangible personal property which is normally used for personal, family,
+287: or household purposes, or (2) anything designed or sold for incorporation
+288: into a dwelling.  In determining whether a product is a consumer product,
+289: doubtful cases shall be resolved in favor of coverage.  For a particular
+290: product received by a particular user, "normally used" refers to a
+291: typical or common use of that class of product, regardless of the status
+292: of the particular user or of the way in which the particular user
+293: actually uses, or expects or is expected to use, the product.  A product
+294: is a consumer product regardless of whether the product has substantial
+295: commercial, industrial or non-consumer uses, unless such uses represent
+296: the only significant mode of use of the product.
+297: 
+298: "Installation Information" for a User Product means any methods,
+299: procedures, authorization keys, or other information required to install
+300: and execute modified versions of a covered work in that User Product from
+301: a modified version of its Corresponding Source.  The information must
+302: suffice to ensure that the continued functioning of the modified object
+303: code is in no case prevented or interfered with solely because
+304: modification has been made.
+305: 
+306: If you convey an object code work under this section in, or with, or
+307: specifically for use in, a User Product, and the conveying occurs as
+308: part of a transaction in which the right of possession and use of the
+309: User Product is transferred to the recipient in perpetuity or for a
+310: fixed term (regardless of how the transaction is characterized), the
+311: Corresponding Source conveyed under this section must be accompanied
+312: by the Installation Information.  But this requirement does not apply
+313: if neither you nor any third party retains the ability to install
+314: modified object code on the User Product (for example, the work has
+315: been installed in ROM).
+316: 
+317: The requirement to provide Installation Information does not include a
+318: requirement to continue to provide support service, warranty, or updates
+319: for a work that has been modified or installed by the recipient, or for
+320: the User Product in which it has been modified or installed.  Access to a
+321: network may be denied when the modification itself materially and
+322: adversely affects the operation of the network or violates the rules and
+323: protocols for communication across the network.
+324: 
+325: Corresponding Source conveyed, and Installation Information provided,
+326: in accord with this section must be in a format that is publicly
+327: documented (and with an implementation available to the public in
+328: source code form), and must require no special password or key for
+329: unpacking, reading or copying.
+330: 
+331: 7. Additional Terms.
+332: 
+333: "Additional permissions" are terms that supplement the terms of this
+334: License by making exceptions from one or more of its conditions.
+335: Additional permissions that are applicable to the entire Program shall
+336: be treated as though they were included in this License, to the extent
+337: that they are valid under applicable law.  If additional permissions
+338: apply only to part of the Program, that part may be used separately
+339: under those permissions, but the entire Program remains governed by
+340: this License without regard to the additional permissions.
+341: 
+342: When you convey a copy of a covered work, you may at your option
+343: remove any additional permissions from that copy, or from any part of
+344: it.  (Additional permissions may be written to require their own
+345: removal in certain cases when you modify the work.)  You may place
+346: additional permissions on material, added by you to a covered work,
+347: for which you have or can give appropriate copyright permission.
+348: 
+349: Notwithstanding any other provision of this License, for material you
+350: add to a covered work, you may (if authorized by the copyright holders of
+351: that material) supplement the terms of this License with terms:
+352: 
+353: a) Disclaiming warranty or limiting liability differently from the
+354: terms of sections 15 and 16 of this License; or
+355: 
+356: b) Requiring preservation of specified reasonable legal notices or
+357: author attributions in that material or in the Appropriate Legal
+358: Notices displayed by works containing it; or
+359: 
+360: c) Prohibiting misrepresentation of the origin of that material, or
+361: requiring that modified versions of such material be marked in
+362: reasonable ways as different from the original version; or
+363: 
+364: d) Limiting the use for publicity purposes of names of licensors or
+365: authors of the material; or
+366: 
+367: e) Declining to grant rights under trademark law for use of some
+368: trade names, trademarks, or service marks; or
+369: 
+370: f) Requiring indemnification of licensors and authors of that
+371: material by anyone who conveys the material (or modified versions of
+372: it) with contractual assumptions of liability to the recipient, for
+373: any liability that these contractual assumptions directly impose on
+374: those licensors and authors.
+375: 
+376: All other non-permissive additional terms are considered "further
+377: restrictions" within the meaning of section 10.  If the Program as you
+378: received it, or any part of it, contains a notice stating that it is
+379: governed by this License along with a term that is a further
+380: restriction, you may remove that term.  If a license document contains
+381: a further restriction but permits relicensing or conveying under this
+382: License, you may add to a covered work material governed by the terms
+383: of that license document, provided that the further restriction does
+384: not survive such relicensing or conveying.
+385: 
+386: If you add terms to a covered work in accord with this section, you
+387: must place, in the relevant source files, a statement of the
+388: additional terms that apply to those files, or a notice indicating
+389: where to find the applicable terms.
+390: 
+391: Additional terms, permissive or non-permissive, may be stated in the
+392: form of a separately written license, or stated as exceptions;
+393: the above requirements apply either way.
+394: 
+395: 8. Termination.
+396: 
+397: You may not propagate or modify a covered work except as expressly
+398: provided under this License.  Any attempt otherwise to propagate or
+399: modify it is void, and will automatically terminate your rights under
+400: this License (including any patent licenses granted under the third
+401: paragraph of section 11).
+402: 
+403: However, if you cease all violation of this License, then your
+404: license from a particular copyright holder is reinstated (a)
+405: provisionally, unless and until the copyright holder explicitly and
+406: finally terminates your license, and (b) permanently, if the copyright
+407: holder fails to notify you of the violation by some reasonable means
+408: prior to 60 days after the cessation.
+409: 
+410: Moreover, your license from a particular copyright holder is
+411: reinstated permanently if the copyright holder notifies you of the
+412: violation by some reasonable means, this is the first time you have
+413: received notice of violation of this License (for any work) from that
+414: copyright holder, and you cure the violation prior to 30 days after
+415: your receipt of the notice.
+416: 
+417: Termination of your rights under this section does not terminate the
+418: licenses of parties who have received copies or rights from you under
+419: this License.  If your rights have been terminated and not permanently
+420: reinstated, you do not qualify to receive new licenses for the same
+421: material under section 10.
+422: 
+423: 9. Acceptance Not Required for Having Copies.
+424: 
+425: You are not required to accept this License in order to receive or
+426: run a copy of the Program.  Ancillary propagation of a covered work
+427: occurring solely as a consequence of using peer-to-peer transmission
+428: to receive a copy likewise does not require acceptance.  However,
+429: nothing other than this License grants you permission to propagate or
+430: modify any covered work.  These actions infringe copyright if you do
+431: not accept this License.  Therefore, by modifying or propagating a
+432: covered work, you indicate your acceptance of this License to do so.
+433: 
+434: 10. Automatic Licensing of Downstream Recipients.
+435: 
+436: Each time you convey a covered work, the recipient automatically
+437: receives a license from the original licensors, to run, modify and
+438: propagate that work, subject to this License.  You are not responsible
+439: for enforcing compliance by third parties with this License.
+440: 
+441: An "entity transaction" is a transaction transferring control of an
+442: organization, or substantially all assets of one, or subdividing an
+443: organization, or merging organizations.  If propagation of a covered
+444: work results from an entity transaction, each party to that
+445: transaction who receives a copy of the work also receives whatever
+446: licenses to the work the party's predecessor in interest had or could
+447: give under the previous paragraph, plus a right to possession of the
+448: Corresponding Source of the work from the predecessor in interest, if
+449: the predecessor has it or can get it with reasonable efforts.
+450: 
+451: You may not impose any further restrictions on the exercise of the
+452: rights granted or affirmed under this License.  For example, you may
+453: not impose a license fee, royalty, or other charge for exercise of
+454: rights granted under this License, and you may not initiate litigation
+455: (including a cross-claim or counterclaim in a lawsuit) alleging that
+456: any patent claim is infringed by making, using, selling, offering for
+457: sale, or importing the Program or any portion of it.
+458: 
+459: 11. Patents.
+460: 
+461: A "contributor" is a copyright holder who authorizes use under this
+462: License of the Program or a work on which the Program is based.  The
+463: work thus licensed is called the contributor's "contributor version".
+464: 
+465: A contributor's "essential patent claims" are all patent claims
+466: owned or controlled by the contributor, whether already acquired or
+467: hereafter acquired, that would be infringed by some manner, permitted
+468: by this License, of making, using, or selling its contributor version,
+469: but do not include claims that would be infringed only as a
+470: consequence of further modification of the contributor version.  For
+471: purposes of this definition, "control" includes the right to grant
+472: patent sublicenses in a manner consistent with the requirements of
+473: this License.
+474: 
+475: Each contributor grants you a non-exclusive, worldwide, royalty-free
+476: patent license under the contributor's essential patent claims, to
+477: make, use, sell, offer for sale, import and otherwise run, modify and
+478: propagate the contents of its contributor version.
+479: 
+480: In the following three paragraphs, a "patent license" is any express
+481: agreement or commitment, however denominated, not to enforce a patent
+482: (such as an express permission to practice a patent or covenant not to
+483: sue for patent infringement).  To "grant" such a patent license to a
+484: party means to make such an agreement or commitment not to enforce a
+485: patent against the party.
+486: 
+487: If you convey a covered work, knowingly relying on a patent license,
+488: and the Corresponding Source of the work is not available for anyone
+489: to copy, free of charge and under the terms of this License, through a
+490: publicly available network server or other readily accessible means,
+491: then you must either (1) cause the Corresponding Source to be so
+492: available, or (2) arrange to deprive yourself of the benefit of the
+493: patent license for this particular work, or (3) arrange, in a manner
+494: consistent with the requirements of this License, to extend the patent
+495: license to downstream recipients.  "Knowingly relying" means you have
+496: actual knowledge that, but for the patent license, your conveying the
+497: covered work in a country, or your recipient's use of the covered work
+498: in a country, would infringe one or more identifiable patents in that
+499: country that you have reason to believe are valid.
+500: 
+501: If, pursuant to or in connection with a single transaction or
+502: arrangement, you convey, or propagate by procuring conveyance of, a
+503: covered work, and grant a patent license to some of the parties
+504: receiving the covered work authorizing them to use, propagate, modify
+505: or convey a specific copy of the covered work, then the patent license
+506: you grant is automatically extended to all recipients of the covered
+507: work and works based on it.
+508: 
+509: A patent license is "discriminatory" if it does not include within
+510: the scope of its coverage, prohibits the exercise of, or is
+511: conditioned on the non-exercise of one or more of the rights that are
+512: specifically granted under this License.  You may not convey a covered
+513: work if you are a party to an arrangement with a third party that is
+514: in the business of distributing software, under which you make payment
+515: to the third party based on the extent of your activity of conveying
+516: the work, and under which the third party grants, to any of the
+517: parties who would receive the covered work from you, a discriminatory
+518: patent license (a) in connection with copies of the covered work
+519: conveyed by you (or copies made from those copies), or (b) primarily
+520: for and in connection with specific products or compilations that
+521: contain the covered work, unless you entered into that arrangement,
+522: or that patent license was granted, prior to 28 March 2007.
+523: 
+524: Nothing in this License shall be construed as excluding or limiting
+525: any implied license or other defenses to infringement that may
+526: otherwise be available to you under applicable patent law.
+527: 
+528: 12. No Surrender of Others' Freedom.
+529: 
+530: If conditions are imposed on you (whether by court order, agreement or
+531: otherwise) that contradict the conditions of this License, they do not
+532: excuse you from the conditions of this License.  If you cannot convey a
+533: covered work so as to satisfy simultaneously your obligations under this
+534: License and any other pertinent obligations, then as a consequence you may
+535: not convey it at all.  For example, if you agree to terms that obligate you
+536: to collect a royalty for further conveying from those to whom you convey
+537: the Program, the only way you could satisfy both those terms and this
+538: License would be to refrain entirely from conveying the Program.
+539: 
+540: 13. Remote Network Interaction; Use with the GNU General Public License.
+541: 
+542: Notwithstanding any other provision of this License, if you modify the
+543: Program, your modified version must prominently offer all users
+544: interacting with it remotely through a computer network (if your version
+545: supports such interaction) an opportunity to receive the Corresponding
+546: Source of your version by providing access to the Corresponding Source
+547: from a network server at no charge, through some standard or customary
+548: means of facilitating copying of software.  This Corresponding Source
+549: shall include the Corresponding Source for any work covered by version 3
+550: of the GNU General Public License that is incorporated pursuant to the
+551: following paragraph.
+552: 
+553: Notwithstanding any other provision of this License, you have
+554: permission to link or combine any covered work with a work licensed
+555: under version 3 of the GNU General Public License into a single
+556: combined work, and to convey the resulting work.  The terms of this
+557: License will continue to apply to the part which is the covered work,
+558: but the work with which it is combined will remain governed by version
+559: 3 of the GNU General Public License.
+560: 
+561: 14. Revised Versions of this License.
+562: 
+563: The Free Software Foundation may publish revised and/or new versions of
+564: the GNU Affero General Public License from time to time.  Such new versions
+565: will be similar in spirit to the present version, but may differ in detail to
+566: address new problems or concerns.
+567: 
+568: Each version is given a distinguishing version number.  If the
+569: Program specifies that a certain numbered version of the GNU Affero General
+570: Public License "or any later version" applies to it, you have the
+571: option of following the terms and conditions either of that numbered
+572: version or of any later version published by the Free Software
+573: Foundation.  If the Program does not specify a version number of the
+574: GNU Affero General Public License, you may choose any version ever published
+575: by the Free Software Foundation.
+576: 
+577: If the Program specifies that a proxy can decide which future
+578: versions of the GNU Affero General Public License can be used, that proxy's
+579: public statement of acceptance of a version permanently authorizes you
+580: to choose that version for the Program.
+581: 
+582: Later license versions may give you additional or different
+583: permissions.  However, no additional obligations are imposed on any
+584: author or copyright holder as a result of your choosing to follow a
+585: later version.
+586: 
+587: 15. Disclaimer of Warranty.
+588: 
+589: THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+590: APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+591: HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+592: OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+593: THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+594: PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+595: IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+596: ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+597: 
+598: 16. Limitation of Liability.
+599: 
+600: IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+601: WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+602: THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+603: GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+604: USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+605: DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+606: PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+607: EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+608: SUCH DAMAGES.
+609: 
+610: 17. Interpretation of Sections 15 and 16.
+611: 
+612: If the disclaimer of warranty and limitation of liability provided
+613: above cannot be given local legal effect according to their terms,
+614: reviewing courts shall apply local law that most closely approximates
+615: an absolute waiver of all civil liability in connection with the
+616: Program, unless a warranty or assumption of liability accompanies a
+617: copy of the Program in return for a fee.
+618: 
+619:  END OF TERMS AND CONDITIONS
+620: 
+621: How to Apply These Terms to Your New Programs
+622: 
+623: If you develop a new program, and you want it to be of the greatest
+624: possible use to the public, the best way to achieve this is to make it
+625: free software which everyone can redistribute and change under these terms.
+626: 
+627: To do so, attach the following notices to the program.  It is safest
+628: to attach them to the start of each source file to most effectively
+629: state the exclusion of warranty; and each file should have at least
+630: the "copyright" line and a pointer to where the full notice is found.
+631: 
+632: <one line to give the program's name and a brief idea of what it does.>
+633: Copyright (C) <year>  <name of author>
+634: 
+635: This program is free software: you can redistribute it and/or modify
+636: it under the terms of the GNU Affero General Public License as published
+637: by the Free Software Foundation, either version 3 of the License, or
+638: (at your option) any later version.
+639: 
+640: This program is distributed in the hope that it will be useful,
+641: but WITHOUT ANY WARRANTY; without even the implied warranty of
+642: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+643: GNU Affero General Public License for more details.
+644: 
+645: You should have received a copy of the GNU Affero General Public License
+646: along with this program.  If not, see <http://www.gnu.org/licenses/>.
+647: 
+648: Also add information on how to contact you by electronic and paper mail.
+649: 
+650: If your software can interact with users remotely through a computer
+651: network, you should also make sure that it provides a way for users to
+652: get its source.  For example, if your program is a web application, its
+653: interface could display a "Source" link that leads users to an archive
+654: of the code.  There are many ways you could offer source, and different
+655: solutions will be better for different programs; see section 13 for the
+656: specific requirements.
+657: 
+658: You should also get your employer (if you work as a programmer) or school,
+659: if any, to sign a "copyright disclaimer" for the program, if necessary.
+660: For more information on this, and how to apply and follow the GNU AGPL, see
+661: <http://www.gnu.org/licenses/>.
+````
+
+## File: lighthouserc.json
+````json
+ 1: {
+ 2:   "ci": {
+ 3:     "collect": {
+ 4:       "numberOfRuns": 1,
+ 5:       "url": [
+ 6:         "http://localhost:3000/",
+ 7:         "http://localhost:3000/cv",
+ 8:         "http://localhost:3000/prosjekter",
+ 9:         "http://localhost:3000/kontakt"
+10:       ],
+11:       "port": 3000,
+12:       "settings": {
+13:         "onlyCategories": [
+14:           "performance",
+15:           "accessibility",
+16:           "best-practices",
+17:           "seo"
+18:         ],
+19:         "skipAudits": ["uses-http2"],
+20:         "formFactor": "mobile",
+21:         "screenEmulation": {
+22:           "mobile": true,
+23:           "width": 360,
+24:           "height": 640,
+25:           "deviceScaleFactor": 2,
+26:           "disabled": false
+27:         },
+28:         "throttling": {
+29:           "rttMs": 150,
+30:           "throughputKbps": 1638.4,
+31:           "requestLatencyMs": 0,
+32:           "downloadThroughputKbps": 1638.4,
+33:           "uploadThroughputKbps": 675,
+34:           "cpuSlowdownMultiplier": 4
+35:         }
+36:       }
+37:     },
+38:     "upload": {
+39:       "target": "temporary-public-storage"
+40:     },
+41:     "assert": {
+42:       "assertions": {
+43:         "categories:performance": ["error", { "minScore": 0.4 }],
+44:         "categories:accessibility": ["error", { "minScore": 0.9 }],
+45:         "categories:best-practices": ["error", { "minScore": 0.9 }],
+46:         "categories:seo": ["error", { "minScore": 0.9 }],
+47:         "uses-responsive-images": ["error", { "maxWastedBytes": 102300 }],
+48:         "uses-http2": "off"
+49:       }
+50:     }
+51:   }
+52: }
+````
+
 ## File: playwright.config.ts
 ````typescript
  1: import { defineConfig, devices } from "@playwright/test";
@@ -18016,6 +18139,29 @@ vercel.json
 62: });
 ````
 
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - '.'
+ 3: overrides:
+ 4:   "@babel/core": ">=8.0.1"
+ 5:   "brace-expansion": "5.0.7"
+ 6:   "js-yaml": ">=5.2.1"
+ 7:   "sharp": ">=0.35.3"
+ 8:   "adm-zip": ">=0.6.0"
+ 9: allowBuilds:
+10:   '@swc/core': true
+11:   cypress: true
+12:   esbuild: true
+13:   msw: true
+14:   puppeteer: true
+15:   sharp: true
+16:   unrs-resolver: true
+17: minimumReleaseAgeExclude:
+18:   - postcss@8.5.21
+19:   - wait-on@9.1.0
+````
+
 ## File: postcss.config.mjs
 ````javascript
 1: /** @type {import('postcss-load-config').Config} */
@@ -18026,6 +18172,222 @@ vercel.json
 6: };
 7: 
 8: export default config;
+````
+
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
+  4: 
+  5: Fourth version of my personal portfolio website with Next.js, Motion,
+  6: Sanity.io and Typescript.
+  7: 
+  8: ## Table of Contents
+  9: 
+ 10: - [Live URL](#live-url)
+ 11: - [Frontend (Next.js)](#frontend-nextjs)
+ 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 13: - [Google Lighthouse](#google-lighthouse)
+ 14: - [Features](#features)
+ 15:   - [General](#general)
+ 16:   - [Design](#design)
+ 17:   - [Accessibility](#accessibility)
+ 18:   - [Security](#security)
+ 19:   - [Devops and Code quality](#devops-and-code-quality)
+ 20:   - [Environment Variables](#environment-variables)
+ 21:   - [Testing Standards](#testing-standards)
+ 22: 
+ 23: ## Live URL
+ 24: 
+ 25: - <https://www.dfweb.no>
+ 26: 
+ 27: ## Frontend (Next.js)
+ 28: 
+ 29: ![Frontend Image](public/images/frontend.png)
+ 30: 
+ 31: ---
+ 32: 
+ 33: ## Backend (Sanity headless CMS)
+ 34: 
+ 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 36: 
+ 37: ---
+ 38: 
+ 39: ## Google Lighthouse
+ 40: 
+ 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 42: 
+ 43: ## Features
+ 44: 
+ 45: ### General
+ 46: 
+ 47: - Clean, modern, responsive and Matrix-inspired design
+ 48: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 49: - Matrix canvas rain effect on front page
+ 50: - Custom 404 page with Matrix rain effect
+ 51: - Next.js 16 with Typescript and App Router
+ 52:   - Server Components implementation for improved performance
+ 53:   - Streaming with Suspense boundaries
+ 54:   - Automatic static optimization with revalidation
+ 55:   - Server-side data fetching with proper error handling
+ 56: - React 19
+ 57: - Sanity headless CMS for all of the content, projects and navigation links
+ 58: - Ladle for component documentation
+ 59: - Animations with Motion
+ 60: - React testing library for unit testing
+ 61: - Cypress for E2E testing
+ 62: - Playwright for cross-browser E2E testing
+ 63: - Contact form with Email.js and CSRF protection
+ 64: - Polymorphic components
+ 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 66: - Google rich results for each individual page
+ 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 68: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 70: - Reusable GenericForm component for easy form creation and management
+ 71: - Error handling with react-error-boundary for improved user experience and
+ 72:   easier debugging
+ 73: - AI-friendly repository documentation with automated updates (Repomix with
+ 74:   Github action workflow)
+ 75: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 76:   - Main AGENTS.md with project-specific patterns and gotchas
+ 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: - Recommended:
+ 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
+ 84:   for enhanced GROQ query development, including syntax highlighting when using
+ 85:   `defineQuery`.
+ 86: 
+ 87: ### Design
+ 88: 
+ 89: - Fully responsive design tested on all devices
+ 90: - React Icons for project icons
+ 91: - Tailwind 4 for styling with a CSS custom-property design token system
+ 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+ 93:   colors, surface palette, glow shadows, and custom animations all driven by
+ 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
+ 95: - Animated reusable input fields
+ 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 97:   Matrix characters
+ 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 99: 
+100: ### Accessibility
+101: 
+102: - WCAG accessibility tested
+103: - Accessibility testing with Cypress Axe and Pa11y
+104: - Automated Pa11y accessibility testing on every PR and push to main
+105:   - Tests all main pages against WCAG2AA standards
+106:   - Captures screenshots for visual reference
+107:   - Detailed reports available as GitHub Actions artifacts
+108: - Builds will fail if any a11y errors are found
+109: 
+110: ### Devops and Code quality
+111: 
+112: - Continuous Integration with CircleCI
+113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+114: - Github action workflow for Cypress
+115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+116: - E2E testing with Cypress and Playwright integrated with Github actions
+117: - Unit testing with Jest and React Testing Library integrated with CircleCI
+118: - Test coverage setup with Codecov
+119: - 100% test coverage with Jest and React testing library
+120: - AI-powered commit message generation following Conventional Commits with
+121:   gitmojis
+122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+123:   - Scans for security, performance, correctness, and architecture issues
+124:   - Outputs a 0–100 score with actionable diagnostics on every PR
+125:   - Posts results as PR comments and GitHub Actions job summaries
+126:   - Configurable score threshold (default: 80) to gate merges
+127:   - Auto-detects package manager (pnpm, yarn, npm)
+128: - Automated performance monitoring with Lighthouse CI
+129:   - Performance, accessibility, best practices, and SEO checks on every PR
+130:   - Configurable thresholds for quality metrics
+131:   - Both desktop and performance-focused testing
+132: - Automated repository documentation with Repomix
+133:   - AI-friendly documentation generation on every push to main
+134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+135:   - Automated PR analysis with repository structure insights
+136:   - Security-focused documentation with sensitive information filtering
+137:   - Markdown formatting for improved readability
+138: 
+139: ### Security
+140: 
+141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
+142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+144:   - Secret detection with Gitleaks on every PR and push
+145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+146:   - Runs automatically on every PR and push to main
+147: - Automated security vulnerability scanning with Snyk
+148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+149:   - Integrates with GitHub Security tab for vulnerability tracking
+150: - Supply chain attack prevention with 7-day minimum release age
+151:   - Packages must be published for at least 7 days before installation
+152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
+154:   - Protects against compromised package releases (like Shai Hulud incidents)
+155: - GitHub Actions supply chain hardening with SHA pinning
+156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+159:   - Custom audit script at `scripts/pin-actions.py`
+160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
+164: 
+165: ### Environment Variables
+166: 
+167: - Type-safe environment variable validation with envalid
+168:   - Runtime validation of required environment variables
+169:   - Clear error messages with examples for missing variables
+170:   - Separate handling of client-side and server-side variables
+171:   - Default values where appropriate
+172:   - Required variables:
+173: 
+174:     ```env
+175:     # Email Configuration (client-side)
+176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+179: 
+180:     # Security Configuration (server-side)
+181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+182:     ```
+183: 
+184:   - Validation prevents application startup if required variables are missing
+185:   - TypeScript integration for type-safe access to environment variables
+186: 
+187: ### Testing Standards
+188: 
+189: - ISTQB-aligned comprehensive test strategy
+190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+191:   - Multi-level test approach (Unit, Component, E2E)
+192:   - Risk-based testing methodology
+193:   - Defined test metrics and reporting
+194:   - Clear roles and responsibilities
+195:   - Structured defect management process
+196: 
+197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+198:   - Each test must include the following comments:
+199: 
+200:     ```typescript
+201:     // Arrange - Set up test data and conditions
+202:     // Act - Perform the action being tested
+203:     // Assert - Verify the results
+204:     ```
+205: 
+206:   - This pattern ensures:
+207:     - Clear test structure and readability
+208:     - Consistent test organization across the codebase
+209:     - Easy identification of test setup, execution, and verification
+210:   - Simplified test maintenance and debugging
+211:   - Automated validation through custom ESLint rules
+212:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: renovate.json
@@ -18264,60 +18626,6 @@ vercel.json
 ## File: vercel.json
 ````json
 1: {}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-13:         with:
-14:           node-version: "24"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:       - name: Install dependencies
-27:         run: pnpm install --frozen-lockfile --ignore-scripts
-28:       - name: Build project
-29:         run: pnpm build
-30:       - name: Start server
-31:         run: |
-32:           pnpm start &
-33:           echo "Waiting for server to be ready..."
-34:           while ! nc -z localhost 3000; do
-35:             sleep 5
-36:           done
-37:           # Additional wait to ensure full initialization
-38:           sleep 20
-39:       - name: Run Lighthouse CI (Mobile)
-40:         run: pnpm lhci:perf
-41:         env:
-42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-43:       - name: Run Lighthouse CI (Desktop)
-44:         run: pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
 ````
 
 ## File: .github/workflows/pa11y.yml
@@ -18722,27 +19030,6 @@ vercel.json
 70:         with:
 71:           command: "monitor"
 72:           args: "--file=src/utils/eslint/package.json"
-````
-
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model for your chosen provider
-17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
 ## File: commit/commit_analyzer.py
@@ -19556,122 +19843,6 @@ vercel.json
 53: export default Pill;
 ````
 
-## File: src/stories/components/Animations/MatrixCursor.stories.tsx
-````typescript
-  1: import React, { useRef } from "react";
-  2: import { Meta } from "@ladle/react";
-  3: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-  4: import "@/app/cursor.css";
-  5: export default {
-  6:   title: "Animations/MatrixCursor",
-  7:   component: MatrixCursor,
-  8: } as Meta;
-  9: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
- 10:   const heroRef = useRef<HTMLDivElement>(null);
- 11:   return (
- 12:     <div
- 13:       ref={heroRef}
- 14:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
- 15:     >
- 16:       {children}
- 17:       <MatrixCursor heroRef={heroRef} />
- 18:     </div>
- 19:   );
- 20: };
- 21: export const Default = () => (
- 22:   <DemoContainer>
- 23:     <div className="text-gray-300 space-y-4">
- 24:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
- 25:       <p>
- 26:         Move your mouse around this container to see the matrix cursor effect.
- 27:       </p>
- 28:       <p>The cursor will change and leave a trail of matrix characters.</p>
- 29:       <div className="grid grid-cols-2 gap-4 mt-8">
- 30:         <div className="bg-gray-800 p-4 rounded-sm">
- 31:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
- 32:           <p className="text-sm">
- 33:             Move your cursor here to see the effect in action
- 34:           </p>
- 35:         </div>
- 36:         <div className="bg-gray-800 p-4 rounded-sm">
- 37:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
- 38:           <p className="text-sm">
- 39:             Try moving between different areas to see the trail
- 40:           </p>
- 41:         </div>
- 42:       </div>
- 43:     </div>
- 44:   </DemoContainer>
- 45: );
- 46: export const WithInteractiveElements = () => (
- 47:   <DemoContainer>
- 48:     <div className="text-gray-300 space-y-6">
- 49:       <h2 className="text-2xl font-bold text-white mb-4">
- 50:         Interactive Elements Demo
- 51:       </h2>
- 52:       <div className="grid grid-cols-2 gap-4">
- 53:         <button type="button" className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
- 54:           Hover Me
- 55:         </button>
- 56:         <button type="button" className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
- 57:           Button Example
- 58:         </button>
- 59:       </div>
- 60:       <div className="bg-gray-800 p-6 rounded-sm">
- 61:         <p>
- 62:           The matrix cursor effect works seamlessly with interactive elements.
- 63:           Try hovering over the buttons above.
- 64:         </p>
- 65:       </div>
- 66:     </div>
- 67:   </DemoContainer>
- 68: );
- 69: export const LargeArea = () => (
- 70:   <DemoContainer>
- 71:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
- 72:       <div className="text-center space-y-4">
- 73:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
- 74:         <p>
- 75:           This demo shows how the matrix cursor effect works in a larger area.
- 76:           <br />
- 77:           Move your cursor around to create longer trails.
- 78:         </p>
- 79:       </div>
- 80:     </div>
- 81:   </DemoContainer>
- 82: );
- 83: export const WithContent = () => (
- 84:   <DemoContainer>
- 85:     <div className="text-gray-300 space-y-6">
- 86:       <h2 className="text-2xl font-bold text-white mb-4">
- 87:         Content Interaction
- 88:       </h2>
- 89:       <div className="grid grid-cols-3 gap-4">
- 90:         {[1, 2, 3].map((cardNumber) => (
- 91:           <div
- 92:             key={`card-${cardNumber}`}
- 93:             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
- 94:           >
- 95:             <h3 className="text-lg font-semibold mb-2">Card {cardNumber}</h3>
- 96:             <p className="text-sm">
- 97:               Hover over this card to see how the matrix cursor interacts with
- 98:               content.
- 99:             </p>
-100:           </div>
-101:         ))}
-102:       </div>
-103:       <div className="bg-gray-800 p-6 rounded-sm mt-8">
-104:         <p className="text-lg">
-105:           The matrix cursor effect adds a unique interactive element to your
-106:           content. Try moving between different cards to see how the trail
-107:           follows your movement.
-108:         </p>
-109:       </div>
-110:     </div>
-111:   </DemoContainer>
-112: );
-````
-
 ## File: src/stories/components/ErrorHandling/ErrorFallback.stories.tsx
 ````typescript
  1: import React from "react";
@@ -19870,736 +20041,129 @@ vercel.json
 122: );
 ````
 
-## File: .browserslistrc
-````
-1: # Modern browsers that support all baseline features
-2: # This eliminates unnecessary polyfills for Array.prototype.at, flat, flatMap, etc.
-3: >0.2% and not dead and not op_mini all
-4: last 2 Chrome versions
-5: last 2 Firefox versions
-6: last 2 Safari versions
-7: last 2 Edge versions
-````
-
-## File: LICENSE
-````
-  1: GNU AFFERO GENERAL PUBLIC LICENSE
-  2:    Version 3, 19 November 2007
-  3: 
-  4: Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
-  5: Everyone is permitted to copy and distribute verbatim copies
-  6: of this license document, but changing it is not allowed.
-  7: 
-  8:         Preamble
-  9: 
- 10: The GNU Affero General Public License is a free, copyleft license for
- 11: software and other kinds of works, specifically designed to ensure
- 12: cooperation with the community in the case of network server software.
- 13: 
- 14: The licenses for most software and other practical works are designed
- 15: to take away your freedom to share and change the works.  By contrast,
- 16: our General Public Licenses are intended to guarantee your freedom to
- 17: share and change all versions of a program--to make sure it remains free
- 18: software for all its users.
- 19: 
- 20: When we speak of free software, we are referring to freedom, not
- 21: price.  Our General Public Licenses are designed to make sure that you
- 22: have the freedom to distribute copies of free software (and charge for
- 23: them if you wish), that you receive source code or can get it if you
- 24: want it, that you can change the software or use pieces of it in new
- 25: free programs, and that you know you can do these things.
- 26: 
- 27: Developers that use our General Public Licenses protect your rights
- 28: with two steps: (1) assert copyright on the software, and (2) offer
- 29: you this License which gives you legal permission to copy, distribute
- 30: and/or modify the software.
- 31: 
- 32: A secondary benefit of defending all users' freedom is that
- 33: improvements made in alternate versions of the program, if they
- 34: receive widespread use, become available for other developers to
- 35: incorporate.  Many developers of free software are heartened and
- 36: encouraged by the resulting cooperation.  However, in the case of
- 37: software used on network servers, this result may fail to come about.
- 38: The GNU General Public License permits making a modified version and
- 39: letting the public access it on a server without ever releasing its
- 40: source code to the public.
- 41: 
- 42: The GNU Affero General Public License is designed specifically to
- 43: ensure that, in such cases, the modified source code becomes available
- 44: to the community.  It requires the operator of a network server to
- 45: provide the source code of the modified version running there to the
- 46: users of that server.  Therefore, public use of a modified version, on
- 47: a publicly accessible server, gives the public access to the source
- 48: code of the modified version.
- 49: 
- 50: An older license, called the Affero General Public License and
- 51: published by Affero, was designed to accomplish similar goals.  This is
- 52: a different license, not a version of the Affero GPL, but Affero has
- 53: released a new version of the Affero GPL which permits relicensing under
- 54: this license.
- 55: 
- 56: The precise terms and conditions for copying, distribution and
- 57: modification follow.
- 58: 
- 59:    TERMS AND CONDITIONS
- 60: 
- 61: 0. Definitions.
- 62: 
- 63: "This License" refers to version 3 of the GNU Affero General Public License.
- 64: 
- 65: "Copyright" also means copyright-like laws that apply to other kinds of
- 66: works, such as semiconductor masks.
- 67: 
- 68: "The Program" refers to any copyrightable work licensed under this
- 69: License.  Each licensee is addressed as "you".  "Licensees" and
- 70: "recipients" may be individuals or organizations.
- 71: 
- 72: To "modify" a work means to copy from or adapt all or part of the work
- 73: in a fashion requiring copyright permission, other than the making of an
- 74: exact copy.  The resulting work is called a "modified version" of the
- 75: earlier work or a work "based on" the earlier work.
- 76: 
- 77: A "covered work" means either the unmodified Program or a work based
- 78: on the Program.
- 79: 
- 80: To "propagate" a work means to do anything with it that, without
- 81: permission, would make you directly or secondarily liable for
- 82: infringement under applicable copyright law, except executing it on a
- 83: computer or modifying a private copy.  Propagation includes copying,
- 84: distribution (with or without modification), making available to the
- 85: public, and in some countries other activities as well.
- 86: 
- 87: To "convey" a work means any kind of propagation that enables other
- 88: parties to make or receive copies.  Mere interaction with a user through
- 89: a computer network, with no transfer of a copy, is not conveying.
- 90: 
- 91: An interactive user interface displays "Appropriate Legal Notices"
- 92: to the extent that it includes a convenient and prominently visible
- 93: feature that (1) displays an appropriate copyright notice, and (2)
- 94: tells the user that there is no warranty for the work (except to the
- 95: extent that warranties are provided), that licensees may convey the
- 96: work under this License, and how to view a copy of this License.  If
- 97: the interface presents a list of user commands or options, such as a
- 98: menu, a prominent item in the list meets this criterion.
- 99: 
-100: 1. Source Code.
-101: 
-102: The "source code" for a work means the preferred form of the work
-103: for making modifications to it.  "Object code" means any non-source
-104: form of a work.
-105: 
-106: A "Standard Interface" means an interface that either is an official
-107: standard defined by a recognized standards body, or, in the case of
-108: interfaces specified for a particular programming language, one that
-109: is widely used among developers working in that language.
-110: 
-111: The "System Libraries" of an executable work include anything, other
-112: than the work as a whole, that (a) is included in the normal form of
-113: packaging a Major Component, but which is not part of that Major
-114: Component, and (b) serves only to enable use of the work with that
-115: Major Component, or to implement a Standard Interface for which an
-116: implementation is available to the public in source code form.  A
-117: "Major Component", in this context, means a major essential component
-118: (kernel, window system, and so on) of the specific operating system
-119: (if any) on which the executable work runs, or a compiler used to
-120: produce the work, or an object code interpreter used to run it.
-121: 
-122: The "Corresponding Source" for a work in object code form means all
-123: the source code needed to generate, install, and (for an executable
-124: work) run the object code and to modify the work, including scripts to
-125: control those activities.  However, it does not include the work's
-126: System Libraries, or general-purpose tools or generally available free
-127: programs which are used unmodified in performing those activities but
-128: which are not part of the work.  For example, Corresponding Source
-129: includes interface definition files associated with source files for
-130: the work, and the source code for shared libraries and dynamically
-131: linked subprograms that the work is specifically designed to require,
-132: such as by intimate data communication or control flow between those
-133: subprograms and other parts of the work.
-134: 
-135: The Corresponding Source need not include anything that users
-136: can regenerate automatically from other parts of the Corresponding
-137: Source.
-138: 
-139: The Corresponding Source for a work in source code form is that
-140: same work.
-141: 
-142: 2. Basic Permissions.
-143: 
-144: All rights granted under this License are granted for the term of
-145: copyright on the Program, and are irrevocable provided the stated
-146: conditions are met.  This License explicitly affirms your unlimited
-147: permission to run the unmodified Program.  The output from running a
-148: covered work is covered by this License only if the output, given its
-149: content, constitutes a covered work.  This License acknowledges your
-150: rights of fair use or other equivalent, as provided by copyright law.
-151: 
-152: You may make, run and propagate covered works that you do not
-153: convey, without conditions so long as your license otherwise remains
-154: in force.  You may convey covered works to others for the sole purpose
-155: of having them make modifications exclusively for you, or provide you
-156: with facilities for running those works, provided that you comply with
-157: the terms of this License in conveying all material for which you do
-158: not control copyright.  Those thus making or running the covered works
-159: for you must do so exclusively on your behalf, under your direction
-160: and control, on terms that prohibit them from making any copies of
-161: your copyrighted material outside their relationship with you.
-162: 
-163: Conveying under any other circumstances is permitted solely under
-164: the conditions stated below.  Sublicensing is not allowed; section 10
-165: makes it unnecessary.
-166: 
-167: 3. Protecting Users' Legal Rights From Anti-Circumvention Law.
-168: 
-169: No covered work shall be deemed part of an effective technological
-170: measure under any applicable law fulfilling obligations under article
-171: 11 of the WIPO copyright treaty adopted on 20 December 1996, or
-172: similar laws prohibiting or restricting circumvention of such
-173: measures.
-174: 
-175: When you convey a covered work, you waive any legal power to forbid
-176: circumvention of technological measures to the extent such circumvention
-177: is effected by exercising rights under this License with respect to
-178: the covered work, and you disclaim any intention to limit operation or
-179: modification of the work as a means of enforcing, against the work's
-180: users, your or third parties' legal rights to forbid circumvention of
-181: technological measures.
-182: 
-183: 4. Conveying Verbatim Copies.
-184: 
-185: You may convey verbatim copies of the Program's source code as you
-186: receive it, in any medium, provided that you conspicuously and
-187: appropriately publish on each copy an appropriate copyright notice;
-188: keep intact all notices stating that this License and any
-189: non-permissive terms added in accord with section 7 apply to the code;
-190: keep intact all notices of the absence of any warranty; and give all
-191: recipients a copy of this License along with the Program.
-192: 
-193: You may charge any price or no price for each copy that you convey,
-194: and you may offer support or warranty protection for a fee.
-195: 
-196: 5. Conveying Modified Source Versions.
-197: 
-198: You may convey a work based on the Program, or the modifications to
-199: produce it from the Program, in the form of source code under the
-200: terms of section 4, provided that you also meet all of these conditions:
-201: 
-202: a) The work must carry prominent notices stating that you modified
-203: it, and giving a relevant date.
-204: 
-205: b) The work must carry prominent notices stating that it is
-206: released under this License and any conditions added under section
-207: 7.  This requirement modifies the requirement in section 4 to
-208: "keep intact all notices".
-209: 
-210: c) You must license the entire work, as a whole, under this
-211: License to anyone who comes into possession of a copy.  This
-212: License will therefore apply, along with any applicable section 7
-213: additional terms, to the whole of the work, and all its parts,
-214: regardless of how they are packaged.  This License gives no
-215: permission to license the work in any other way, but it does not
-216: invalidate such permission if you have separately received it.
-217: 
-218: d) If the work has interactive user interfaces, each must display
-219: Appropriate Legal Notices; however, if the Program has interactive
-220: interfaces that do not display Appropriate Legal Notices, your
-221: work need not make them do so.
-222: 
-223: A compilation of a covered work with other separate and independent
-224: works, which are not by their nature extensions of the covered work,
-225: and which are not combined with it such as to form a larger program,
-226: in or on a volume of a storage or distribution medium, is called an
-227: "aggregate" if the compilation and its resulting copyright are not
-228: used to limit the access or legal rights of the compilation's users
-229: beyond what the individual works permit.  Inclusion of a covered work
-230: in an aggregate does not cause this License to apply to the other
-231: parts of the aggregate.
-232: 
-233: 6. Conveying Non-Source Forms.
-234: 
-235: You may convey a covered work in object code form under the terms
-236: of sections 4 and 5, provided that you also convey the
-237: machine-readable Corresponding Source under the terms of this License,
-238: in one of these ways:
-239: 
-240: a) Convey the object code in, or embodied in, a physical product
-241: (including a physical distribution medium), accompanied by the
-242: Corresponding Source fixed on a durable physical medium
-243: customarily used for software interchange.
-244: 
-245: b) Convey the object code in, or embodied in, a physical product
-246: (including a physical distribution medium), accompanied by a
-247: written offer, valid for at least three years and valid for as
-248: long as you offer spare parts or customer support for that product
-249: model, to give anyone who possesses the object code either (1) a
-250: copy of the Corresponding Source for all the software in the
-251: product that is covered by this License, on a durable physical
-252: medium customarily used for software interchange, for a price no
-253: more than your reasonable cost of physically performing this
-254: conveying of source, or (2) access to copy the
-255: Corresponding Source from a network server at no charge.
-256: 
-257: c) Convey individual copies of the object code with a copy of the
-258: written offer to provide the Corresponding Source.  This
-259: alternative is allowed only occasionally and noncommercially, and
-260: only if you received the object code with such an offer, in accord
-261: with subsection 6b.
-262: 
-263: d) Convey the object code by offering access from a designated
-264: place (gratis or for a charge), and offer equivalent access to the
-265: Corresponding Source in the same way through the same place at no
-266: further charge.  You need not require recipients to copy the
-267: Corresponding Source along with the object code.  If the place to
-268: copy the object code is a network server, the Corresponding Source
-269: may be on a different server (operated by you or a third party)
-270: that supports equivalent copying facilities, provided you maintain
-271: clear directions next to the object code saying where to find the
-272: Corresponding Source.  Regardless of what server hosts the
-273: Corresponding Source, you remain obligated to ensure that it is
-274: available for as long as needed to satisfy these requirements.
-275: 
-276: e) Convey the object code using peer-to-peer transmission, provided
-277: you inform other peers where the object code and Corresponding
-278: Source of the work are being offered to the general public at no
-279: charge under subsection 6d.
-280: 
-281: A separable portion of the object code, whose source code is excluded
-282: from the Corresponding Source as a System Library, need not be
-283: included in conveying the object code work.
-284: 
-285: A "User Product" is either (1) a "consumer product", which means any
-286: tangible personal property which is normally used for personal, family,
-287: or household purposes, or (2) anything designed or sold for incorporation
-288: into a dwelling.  In determining whether a product is a consumer product,
-289: doubtful cases shall be resolved in favor of coverage.  For a particular
-290: product received by a particular user, "normally used" refers to a
-291: typical or common use of that class of product, regardless of the status
-292: of the particular user or of the way in which the particular user
-293: actually uses, or expects or is expected to use, the product.  A product
-294: is a consumer product regardless of whether the product has substantial
-295: commercial, industrial or non-consumer uses, unless such uses represent
-296: the only significant mode of use of the product.
-297: 
-298: "Installation Information" for a User Product means any methods,
-299: procedures, authorization keys, or other information required to install
-300: and execute modified versions of a covered work in that User Product from
-301: a modified version of its Corresponding Source.  The information must
-302: suffice to ensure that the continued functioning of the modified object
-303: code is in no case prevented or interfered with solely because
-304: modification has been made.
-305: 
-306: If you convey an object code work under this section in, or with, or
-307: specifically for use in, a User Product, and the conveying occurs as
-308: part of a transaction in which the right of possession and use of the
-309: User Product is transferred to the recipient in perpetuity or for a
-310: fixed term (regardless of how the transaction is characterized), the
-311: Corresponding Source conveyed under this section must be accompanied
-312: by the Installation Information.  But this requirement does not apply
-313: if neither you nor any third party retains the ability to install
-314: modified object code on the User Product (for example, the work has
-315: been installed in ROM).
-316: 
-317: The requirement to provide Installation Information does not include a
-318: requirement to continue to provide support service, warranty, or updates
-319: for a work that has been modified or installed by the recipient, or for
-320: the User Product in which it has been modified or installed.  Access to a
-321: network may be denied when the modification itself materially and
-322: adversely affects the operation of the network or violates the rules and
-323: protocols for communication across the network.
-324: 
-325: Corresponding Source conveyed, and Installation Information provided,
-326: in accord with this section must be in a format that is publicly
-327: documented (and with an implementation available to the public in
-328: source code form), and must require no special password or key for
-329: unpacking, reading or copying.
-330: 
-331: 7. Additional Terms.
-332: 
-333: "Additional permissions" are terms that supplement the terms of this
-334: License by making exceptions from one or more of its conditions.
-335: Additional permissions that are applicable to the entire Program shall
-336: be treated as though they were included in this License, to the extent
-337: that they are valid under applicable law.  If additional permissions
-338: apply only to part of the Program, that part may be used separately
-339: under those permissions, but the entire Program remains governed by
-340: this License without regard to the additional permissions.
-341: 
-342: When you convey a copy of a covered work, you may at your option
-343: remove any additional permissions from that copy, or from any part of
-344: it.  (Additional permissions may be written to require their own
-345: removal in certain cases when you modify the work.)  You may place
-346: additional permissions on material, added by you to a covered work,
-347: for which you have or can give appropriate copyright permission.
-348: 
-349: Notwithstanding any other provision of this License, for material you
-350: add to a covered work, you may (if authorized by the copyright holders of
-351: that material) supplement the terms of this License with terms:
-352: 
-353: a) Disclaiming warranty or limiting liability differently from the
-354: terms of sections 15 and 16 of this License; or
-355: 
-356: b) Requiring preservation of specified reasonable legal notices or
-357: author attributions in that material or in the Appropriate Legal
-358: Notices displayed by works containing it; or
-359: 
-360: c) Prohibiting misrepresentation of the origin of that material, or
-361: requiring that modified versions of such material be marked in
-362: reasonable ways as different from the original version; or
-363: 
-364: d) Limiting the use for publicity purposes of names of licensors or
-365: authors of the material; or
-366: 
-367: e) Declining to grant rights under trademark law for use of some
-368: trade names, trademarks, or service marks; or
-369: 
-370: f) Requiring indemnification of licensors and authors of that
-371: material by anyone who conveys the material (or modified versions of
-372: it) with contractual assumptions of liability to the recipient, for
-373: any liability that these contractual assumptions directly impose on
-374: those licensors and authors.
-375: 
-376: All other non-permissive additional terms are considered "further
-377: restrictions" within the meaning of section 10.  If the Program as you
-378: received it, or any part of it, contains a notice stating that it is
-379: governed by this License along with a term that is a further
-380: restriction, you may remove that term.  If a license document contains
-381: a further restriction but permits relicensing or conveying under this
-382: License, you may add to a covered work material governed by the terms
-383: of that license document, provided that the further restriction does
-384: not survive such relicensing or conveying.
-385: 
-386: If you add terms to a covered work in accord with this section, you
-387: must place, in the relevant source files, a statement of the
-388: additional terms that apply to those files, or a notice indicating
-389: where to find the applicable terms.
-390: 
-391: Additional terms, permissive or non-permissive, may be stated in the
-392: form of a separately written license, or stated as exceptions;
-393: the above requirements apply either way.
-394: 
-395: 8. Termination.
-396: 
-397: You may not propagate or modify a covered work except as expressly
-398: provided under this License.  Any attempt otherwise to propagate or
-399: modify it is void, and will automatically terminate your rights under
-400: this License (including any patent licenses granted under the third
-401: paragraph of section 11).
-402: 
-403: However, if you cease all violation of this License, then your
-404: license from a particular copyright holder is reinstated (a)
-405: provisionally, unless and until the copyright holder explicitly and
-406: finally terminates your license, and (b) permanently, if the copyright
-407: holder fails to notify you of the violation by some reasonable means
-408: prior to 60 days after the cessation.
-409: 
-410: Moreover, your license from a particular copyright holder is
-411: reinstated permanently if the copyright holder notifies you of the
-412: violation by some reasonable means, this is the first time you have
-413: received notice of violation of this License (for any work) from that
-414: copyright holder, and you cure the violation prior to 30 days after
-415: your receipt of the notice.
-416: 
-417: Termination of your rights under this section does not terminate the
-418: licenses of parties who have received copies or rights from you under
-419: this License.  If your rights have been terminated and not permanently
-420: reinstated, you do not qualify to receive new licenses for the same
-421: material under section 10.
-422: 
-423: 9. Acceptance Not Required for Having Copies.
-424: 
-425: You are not required to accept this License in order to receive or
-426: run a copy of the Program.  Ancillary propagation of a covered work
-427: occurring solely as a consequence of using peer-to-peer transmission
-428: to receive a copy likewise does not require acceptance.  However,
-429: nothing other than this License grants you permission to propagate or
-430: modify any covered work.  These actions infringe copyright if you do
-431: not accept this License.  Therefore, by modifying or propagating a
-432: covered work, you indicate your acceptance of this License to do so.
-433: 
-434: 10. Automatic Licensing of Downstream Recipients.
-435: 
-436: Each time you convey a covered work, the recipient automatically
-437: receives a license from the original licensors, to run, modify and
-438: propagate that work, subject to this License.  You are not responsible
-439: for enforcing compliance by third parties with this License.
-440: 
-441: An "entity transaction" is a transaction transferring control of an
-442: organization, or substantially all assets of one, or subdividing an
-443: organization, or merging organizations.  If propagation of a covered
-444: work results from an entity transaction, each party to that
-445: transaction who receives a copy of the work also receives whatever
-446: licenses to the work the party's predecessor in interest had or could
-447: give under the previous paragraph, plus a right to possession of the
-448: Corresponding Source of the work from the predecessor in interest, if
-449: the predecessor has it or can get it with reasonable efforts.
-450: 
-451: You may not impose any further restrictions on the exercise of the
-452: rights granted or affirmed under this License.  For example, you may
-453: not impose a license fee, royalty, or other charge for exercise of
-454: rights granted under this License, and you may not initiate litigation
-455: (including a cross-claim or counterclaim in a lawsuit) alleging that
-456: any patent claim is infringed by making, using, selling, offering for
-457: sale, or importing the Program or any portion of it.
-458: 
-459: 11. Patents.
-460: 
-461: A "contributor" is a copyright holder who authorizes use under this
-462: License of the Program or a work on which the Program is based.  The
-463: work thus licensed is called the contributor's "contributor version".
-464: 
-465: A contributor's "essential patent claims" are all patent claims
-466: owned or controlled by the contributor, whether already acquired or
-467: hereafter acquired, that would be infringed by some manner, permitted
-468: by this License, of making, using, or selling its contributor version,
-469: but do not include claims that would be infringed only as a
-470: consequence of further modification of the contributor version.  For
-471: purposes of this definition, "control" includes the right to grant
-472: patent sublicenses in a manner consistent with the requirements of
-473: this License.
-474: 
-475: Each contributor grants you a non-exclusive, worldwide, royalty-free
-476: patent license under the contributor's essential patent claims, to
-477: make, use, sell, offer for sale, import and otherwise run, modify and
-478: propagate the contents of its contributor version.
-479: 
-480: In the following three paragraphs, a "patent license" is any express
-481: agreement or commitment, however denominated, not to enforce a patent
-482: (such as an express permission to practice a patent or covenant not to
-483: sue for patent infringement).  To "grant" such a patent license to a
-484: party means to make such an agreement or commitment not to enforce a
-485: patent against the party.
-486: 
-487: If you convey a covered work, knowingly relying on a patent license,
-488: and the Corresponding Source of the work is not available for anyone
-489: to copy, free of charge and under the terms of this License, through a
-490: publicly available network server or other readily accessible means,
-491: then you must either (1) cause the Corresponding Source to be so
-492: available, or (2) arrange to deprive yourself of the benefit of the
-493: patent license for this particular work, or (3) arrange, in a manner
-494: consistent with the requirements of this License, to extend the patent
-495: license to downstream recipients.  "Knowingly relying" means you have
-496: actual knowledge that, but for the patent license, your conveying the
-497: covered work in a country, or your recipient's use of the covered work
-498: in a country, would infringe one or more identifiable patents in that
-499: country that you have reason to believe are valid.
-500: 
-501: If, pursuant to or in connection with a single transaction or
-502: arrangement, you convey, or propagate by procuring conveyance of, a
-503: covered work, and grant a patent license to some of the parties
-504: receiving the covered work authorizing them to use, propagate, modify
-505: or convey a specific copy of the covered work, then the patent license
-506: you grant is automatically extended to all recipients of the covered
-507: work and works based on it.
-508: 
-509: A patent license is "discriminatory" if it does not include within
-510: the scope of its coverage, prohibits the exercise of, or is
-511: conditioned on the non-exercise of one or more of the rights that are
-512: specifically granted under this License.  You may not convey a covered
-513: work if you are a party to an arrangement with a third party that is
-514: in the business of distributing software, under which you make payment
-515: to the third party based on the extent of your activity of conveying
-516: the work, and under which the third party grants, to any of the
-517: parties who would receive the covered work from you, a discriminatory
-518: patent license (a) in connection with copies of the covered work
-519: conveyed by you (or copies made from those copies), or (b) primarily
-520: for and in connection with specific products or compilations that
-521: contain the covered work, unless you entered into that arrangement,
-522: or that patent license was granted, prior to 28 March 2007.
-523: 
-524: Nothing in this License shall be construed as excluding or limiting
-525: any implied license or other defenses to infringement that may
-526: otherwise be available to you under applicable patent law.
-527: 
-528: 12. No Surrender of Others' Freedom.
-529: 
-530: If conditions are imposed on you (whether by court order, agreement or
-531: otherwise) that contradict the conditions of this License, they do not
-532: excuse you from the conditions of this License.  If you cannot convey a
-533: covered work so as to satisfy simultaneously your obligations under this
-534: License and any other pertinent obligations, then as a consequence you may
-535: not convey it at all.  For example, if you agree to terms that obligate you
-536: to collect a royalty for further conveying from those to whom you convey
-537: the Program, the only way you could satisfy both those terms and this
-538: License would be to refrain entirely from conveying the Program.
-539: 
-540: 13. Remote Network Interaction; Use with the GNU General Public License.
-541: 
-542: Notwithstanding any other provision of this License, if you modify the
-543: Program, your modified version must prominently offer all users
-544: interacting with it remotely through a computer network (if your version
-545: supports such interaction) an opportunity to receive the Corresponding
-546: Source of your version by providing access to the Corresponding Source
-547: from a network server at no charge, through some standard or customary
-548: means of facilitating copying of software.  This Corresponding Source
-549: shall include the Corresponding Source for any work covered by version 3
-550: of the GNU General Public License that is incorporated pursuant to the
-551: following paragraph.
-552: 
-553: Notwithstanding any other provision of this License, you have
-554: permission to link or combine any covered work with a work licensed
-555: under version 3 of the GNU General Public License into a single
-556: combined work, and to convey the resulting work.  The terms of this
-557: License will continue to apply to the part which is the covered work,
-558: but the work with which it is combined will remain governed by version
-559: 3 of the GNU General Public License.
-560: 
-561: 14. Revised Versions of this License.
-562: 
-563: The Free Software Foundation may publish revised and/or new versions of
-564: the GNU Affero General Public License from time to time.  Such new versions
-565: will be similar in spirit to the present version, but may differ in detail to
-566: address new problems or concerns.
-567: 
-568: Each version is given a distinguishing version number.  If the
-569: Program specifies that a certain numbered version of the GNU Affero General
-570: Public License "or any later version" applies to it, you have the
-571: option of following the terms and conditions either of that numbered
-572: version or of any later version published by the Free Software
-573: Foundation.  If the Program does not specify a version number of the
-574: GNU Affero General Public License, you may choose any version ever published
-575: by the Free Software Foundation.
-576: 
-577: If the Program specifies that a proxy can decide which future
-578: versions of the GNU Affero General Public License can be used, that proxy's
-579: public statement of acceptance of a version permanently authorizes you
-580: to choose that version for the Program.
-581: 
-582: Later license versions may give you additional or different
-583: permissions.  However, no additional obligations are imposed on any
-584: author or copyright holder as a result of your choosing to follow a
-585: later version.
-586: 
-587: 15. Disclaimer of Warranty.
-588: 
-589: THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
-590: APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
-591: HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
-592: OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
-593: THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-594: PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
-595: IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-596: ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
-597: 
-598: 16. Limitation of Liability.
-599: 
-600: IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-601: WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
-602: THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
-603: GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
-604: USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
-605: DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-606: PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
-607: EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-608: SUCH DAMAGES.
-609: 
-610: 17. Interpretation of Sections 15 and 16.
-611: 
-612: If the disclaimer of warranty and limitation of liability provided
-613: above cannot be given local legal effect according to their terms,
-614: reviewing courts shall apply local law that most closely approximates
-615: an absolute waiver of all civil liability in connection with the
-616: Program, unless a warranty or assumption of liability accompanies a
-617: copy of the Program in return for a fee.
-618: 
-619:  END OF TERMS AND CONDITIONS
-620: 
-621: How to Apply These Terms to Your New Programs
-622: 
-623: If you develop a new program, and you want it to be of the greatest
-624: possible use to the public, the best way to achieve this is to make it
-625: free software which everyone can redistribute and change under these terms.
-626: 
-627: To do so, attach the following notices to the program.  It is safest
-628: to attach them to the start of each source file to most effectively
-629: state the exclusion of warranty; and each file should have at least
-630: the "copyright" line and a pointer to where the full notice is found.
-631: 
-632: <one line to give the program's name and a brief idea of what it does.>
-633: Copyright (C) <year>  <name of author>
-634: 
-635: This program is free software: you can redistribute it and/or modify
-636: it under the terms of the GNU Affero General Public License as published
-637: by the Free Software Foundation, either version 3 of the License, or
-638: (at your option) any later version.
-639: 
-640: This program is distributed in the hope that it will be useful,
-641: but WITHOUT ANY WARRANTY; without even the implied warranty of
-642: MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-643: GNU Affero General Public License for more details.
-644: 
-645: You should have received a copy of the GNU Affero General Public License
-646: along with this program.  If not, see <http://www.gnu.org/licenses/>.
-647: 
-648: Also add information on how to contact you by electronic and paper mail.
-649: 
-650: If your software can interact with users remotely through a computer
-651: network, you should also make sure that it provides a way for users to
-652: get its source.  For example, if your program is a web application, its
-653: interface could display a "Source" link that leads users to an archive
-654: of the code.  There are many ways you could offer source, and different
-655: solutions will be better for different programs; see section 13 for the
-656: specific requirements.
-657: 
-658: You should also get your employer (if you work as a programmer) or school,
-659: if any, to sign a "copyright disclaimer" for the program, if necessary.
-660: For more information on this, and how to apply and follow the GNU AGPL, see
-661: <http://www.gnu.org/licenses/>.
+## File: src/stories/components/Layout/NavigationLink.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: // Mock NavigationLink component for stories
+ 4: const NavigationLink = ({
+ 5:   name,
+ 6:   href,
+ 7:   isActive,
+ 8: }: {
+ 9:   name: string;
+10:   href: string;
+11:   isActive: boolean;
+12: }) => (
+13:   <div className="relative">
+14:     <button
+15:       type="button"
+16:       data-href={href}
+17:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg bg-transparent border-none cursor-pointer ${
+18:         isActive ? "text-green-400" : ""
+19:       }`}
+20:     >
+21:       <div className="glitch relative" data-text={name}>
+22:         {name}
+23:         <span
+24:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+25:             isActive ? "bg-green-400" : "bg-white"
+26:           }`}
+27:           style={{
+28:             width: isActive ? "100%" : "0%",
+29:             transition: "width 0.3s",
+30:           }}
+31:         />
+32:       </div>
+33:     </button>
+34:   </div>
+35: );
+36: export default {
+37:   title: "Layout/NavigationLink",
+38:   component: NavigationLink,
+39: } as Meta;
+40: // Default state
+41: export const Default = () => (
+42:   <div className="bg-gray-800 p-4 w-48">
+43:     <NavigationLink name="Home" href="/" isActive={false} />
+44:   </div>
+45: );
+46: // Active state
+47: export const Active = () => (
+48:   <div className="bg-gray-800 p-4 w-48">
+49:     <NavigationLink name="Home" href="/" isActive={true} />
+50:   </div>
+51: );
+52: // Multiple links
+53: export const MultipleLinks = () => (
+54:   <div className="bg-gray-800 p-4 w-48 flex flex-col gap-2">
+55:     <NavigationLink name="Home" href="/" isActive={true} />
+56:     <NavigationLink name="Projects" href="/projects" isActive={false} />
+57:     <NavigationLink name="Contact" href="/contact" isActive={false} />
+58:   </div>
+59: );
+60: // Long text
+61: export const LongText = () => (
+62:   <div className="bg-gray-800 p-4 w-64">
+63:     <NavigationLink
+64:       name="Very Long Navigation Link Text"
+65:       href="/long"
+66:       isActive={false}
+67:     />
+68:   </div>
+69: );
+70: // Different backgrounds
+71: export const OnDifferentBackgrounds = () => (
+72:   <div className="space-y-4">
+73:     <div className="bg-gray-900 p-4 w-48">
+74:       <NavigationLink name="Dark Background" href="/" isActive={false} />
+75:     </div>
+76:     <div className="bg-gray-800 p-4 w-48">
+77:       <NavigationLink name="Medium Background" href="/" isActive={true} />
+78:     </div>
+79:     <div className="bg-gray-700 p-4 w-48">
+80:       <NavigationLink name="Light Background" href="/" isActive={false} />
+81:     </div>
+82:   </div>
+83: );
+84: // Horizontal layout
+85: export const HorizontalLayout = () => (
+86:   <div className="bg-gray-800 p-4">
+87:     <nav className="flex gap-4">
+88:       <NavigationLink name="Home" href="/" isActive={true} />
+89:       <NavigationLink name="Projects" href="/projects" isActive={false} />
+90:       <NavigationLink name="Contact" href="/contact" isActive={false} />
+91:     </nav>
+92:   </div>
+93: );
 ````
 
-## File: lighthouserc.json
-````json
+## File: .swcrc
+````
  1: {
- 2:   "ci": {
- 3:     "collect": {
- 4:       "numberOfRuns": 1,
- 5:       "url": [
- 6:         "http://localhost:3000/",
- 7:         "http://localhost:3000/cv",
- 8:         "http://localhost:3000/prosjekter",
- 9:         "http://localhost:3000/kontakt"
-10:       ],
-11:       "port": 3000,
-12:       "settings": {
-13:         "onlyCategories": [
-14:           "performance",
-15:           "accessibility",
-16:           "best-practices",
-17:           "seo"
-18:         ],
-19:         "skipAudits": ["uses-http2"],
-20:         "formFactor": "mobile",
-21:         "screenEmulation": {
-22:           "mobile": true,
-23:           "width": 360,
-24:           "height": 640,
-25:           "deviceScaleFactor": 2,
-26:           "disabled": false
-27:         },
-28:         "throttling": {
-29:           "rttMs": 150,
-30:           "throughputKbps": 1638.4,
-31:           "requestLatencyMs": 0,
-32:           "downloadThroughputKbps": 1638.4,
-33:           "uploadThroughputKbps": 675,
-34:           "cpuSlowdownMultiplier": 4
-35:         }
-36:       }
-37:     },
-38:     "upload": {
-39:       "target": "temporary-public-storage"
-40:     },
-41:     "assert": {
-42:       "assertions": {
-43:         "categories:performance": ["error", { "minScore": 0.4 }],
-44:         "categories:accessibility": ["error", { "minScore": 0.9 }],
-45:         "categories:best-practices": ["error", { "minScore": 0.9 }],
-46:         "categories:seo": ["error", { "minScore": 0.9 }],
-47:         "uses-responsive-images": ["error", { "maxWastedBytes": 102300 }],
-48:         "uses-http2": "off"
-49:       }
-50:     }
-51:   }
-52: }
+ 2:   "jsc": {
+ 3:     "parser": {
+ 4:       "syntax": "typescript",
+ 5:       "tsx": true,
+ 6:       "dynamicImport": true
+ 7:     },
+ 8:     "transform": {
+ 9:       "react": {
+10:         "runtime": "automatic"
+11:       }
+12:     },
+13:     "target": "es2022"
+14:   },
+15:   "env": {
+16:     "targets": {
+17:       "chrome": "92",
+18:       "firefox": "90",
+19:       "safari": "15.4",
+20:       "edge": "92"
+21:     },
+22:     "mode": "usage"
+23:   }
+24: }
 ````
 
 ## File: llms.txt
@@ -20985,220 +20549,108 @@ vercel.json
 379: 4. **DOCS/TEST_STRATEGY.md** - Testing methodology
 ````
 
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
-  4: 
-  5: Fourth version of my personal portfolio website with Next.js, Motion,
-  6: Sanity.io and Typescript.
-  7: 
-  8: ## Table of Contents
-  9: 
- 10: - [Live URL](#live-url)
- 11: - [Frontend (Next.js)](#frontend-nextjs)
- 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 13: - [Google Lighthouse](#google-lighthouse)
- 14: - [Features](#features)
- 15:   - [General](#general)
- 16:   - [Design](#design)
- 17:   - [Accessibility](#accessibility)
- 18:   - [Security](#security)
- 19:   - [Devops and Code quality](#devops-and-code-quality)
- 20:   - [Environment Variables](#environment-variables)
- 21:   - [Testing Standards](#testing-standards)
- 22: 
- 23: ## Live URL
- 24: 
- 25: - <https://www.dfweb.no>
- 26: 
- 27: ## Frontend (Next.js)
- 28: 
- 29: ![Frontend Image](public/images/frontend.png)
- 30: 
- 31: ---
- 32: 
- 33: ## Backend (Sanity headless CMS)
- 34: 
- 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 36: 
- 37: ---
- 38: 
- 39: ## Google Lighthouse
- 40: 
- 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 42: 
- 43: ## Features
- 44: 
- 45: ### General
- 46: 
- 47: - Clean, modern, responsive and Matrix-inspired design
- 48: - The application is 100% typescript (the types are generated from Sanity typegen)
- 49: - Matrix canvas rain effect on front page
- 50: - Custom 404 page with Matrix rain effect
- 51: - Next.js 16 with Typescript and App Router
- 52:   - Server Components implementation for improved performance
- 53:   - Streaming with Suspense boundaries
- 54:   - Automatic static optimization with revalidation
- 55:   - Server-side data fetching with proper error handling
- 56: - React 19
- 57: - Sanity headless CMS for all of the content, projects and navigation links
- 58: - Ladle for component documentation
- 59: - Animations with Motion
- 60: - React testing library for unit testing
- 61: - Cypress for E2E testing
- 62: - Playwright for cross-browser E2E testing
- 63: - Contact form with Email.js and CSRF protection
- 64: - Polymorphic components
- 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 66: - Google rich results for each individual page
- 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 68: - Automated Lighthouse CI testing integrated with GitHub Actions
- 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 70: - Reusable GenericForm component for easy form creation and management
- 71: - Error handling with react-error-boundary for improved user experience and
- 72:   easier debugging
- 73: - AI-friendly repository documentation with automated updates (Repomix with
- 74:   Github action workflow)
- 75: - AI assistant guidance with AGENTS.md files for immediate productivity
- 76:   - Main AGENTS.md with project-specific patterns and gotchas
- 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 4 for styling with a CSS custom-property design token system
- 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
- 93:   colors, surface palette, glow shadows, and custom animations all driven by
- 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
- 95: - Animated reusable input fields
- 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 97:   Matrix characters
- 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 99: 
-100: ### Accessibility
-101: 
-102: - WCAG accessibility tested
-103: - Accessibility testing with Cypress Axe and Pa11y
-104: - Automated Pa11y accessibility testing on every PR and push to main
-105:   - Tests all main pages against WCAG2AA standards
-106:   - Captures screenshots for visual reference
-107:   - Detailed reports available as GitHub Actions artifacts
-108: - Builds will fail if any a11y errors are found
-109: 
-110: ### Devops and Code quality
-111: 
-112: - Continuous Integration with CircleCI
-113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-114: - Github action workflow for Cypress
-115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-116: - E2E testing with Cypress and Playwright integrated with Github actions
-117: - Unit testing with Jest and React Testing Library integrated with CircleCI
-118: - Test coverage setup with Codecov
-119: - 100% test coverage with Jest and React testing library
-120: - AI-powered commit message generation following Conventional Commits with
-121:   gitmojis
-122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
-123:   - Scans for security, performance, correctness, and architecture issues
-124:   - Outputs a 0–100 score with actionable diagnostics on every PR
-125:   - Posts results as PR comments and GitHub Actions job summaries
-126:   - Configurable score threshold (default: 80) to gate merges
-127:   - Auto-detects package manager (pnpm, yarn, npm)
-128: - Automated performance monitoring with Lighthouse CI
-129:   - Performance, accessibility, best practices, and SEO checks on every PR
-130:   - Configurable thresholds for quality metrics
-131:   - Both desktop and performance-focused testing
-132: - Automated repository documentation with Repomix
-133:   - AI-friendly documentation generation on every push to main
-134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-135:   - Automated PR analysis with repository structure insights
-136:   - Security-focused documentation with sensitive information filtering
-137:   - Markdown formatting for improved readability
-138: 
-139: ### Security
-140: 
-141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
-142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-144:   - Secret detection with Gitleaks on every PR and push
-145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-146:   - Runs automatically on every PR and push to main
-147: - Automated security vulnerability scanning with Snyk
-148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-149:   - Integrates with GitHub Security tab for vulnerability tracking
-150: - Supply chain attack prevention with 7-day minimum release age
-151:   - Packages must be published for at least 7 days before installation
-152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
-154:   - Protects against compromised package releases (like Shai Hulud incidents)
-155: - GitHub Actions supply chain hardening with SHA pinning
-156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
-157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
-158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-159:   - Custom audit script at `scripts/pin-actions.py`
-160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
-161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
-162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
-163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
-164: 
-165: ### Environment Variables
-166: 
-167: - Type-safe environment variable validation with envalid
-168:   - Runtime validation of required environment variables
-169:   - Clear error messages with examples for missing variables
-170:   - Separate handling of client-side and server-side variables
-171:   - Default values where appropriate
-172:   - Required variables:
-173: 
-174:     ```env
-175:     # Email Configuration (client-side)
-176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-179: 
-180:     # Security Configuration (server-side)
-181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-182:     ```
-183: 
-184:   - Validation prevents application startup if required variables are missing
-185:   - TypeScript integration for type-safe access to environment variables
-186: 
-187: ### Testing Standards
-188: 
-189: - ISTQB-aligned comprehensive test strategy
-190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-191:   - Multi-level test approach (Unit, Component, E2E)
-192:   - Risk-based testing methodology
-193:   - Defined test metrics and reporting
-194:   - Clear roles and responsibilities
-195:   - Structured defect management process
-196: 
-197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-198:   - Each test must include the following comments:
-199: 
-200:     ```typescript
-201:     // Arrange - Set up test data and conditions
-202:     // Act - Perform the action being tested
-203:     // Assert - Verify the results
-204:     ```
-205: 
-206:   - This pattern ensures:
-207:     - Clear test structure and readability
-208:     - Consistent test organization across the codebase
-209:     - Easy identification of test setup, execution, and verification
-210:   - Simplified test maintenance and debugging
-211:   - Automated validation through custom ESLint rules
-212:   - Tests will fail if AAA pattern is not followed
+## File: package.json
+````json
+  1: {
+  2:   "name": "dfweb-v4",
+  3:   "version": "1.1.0",
+  4:   "private": true,
+  5:   "type": "module",
+  6:   "packageManager": "pnpm@11.15.1",
+  7:   "scripts": {
+  8:     "dev": "next dev --turbopack",
+  9:     "lhci": "lhci autorun",
+ 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 12:     "build": "next build",
+ 13:     "start": "next start",
+ 14:     "lint": "next lint",
+ 15:     "lint:css": "stylelint \"src/**/*.css\"",
+ 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+ 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+ 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 20:     "cypress:open": "cypress open",
+ 21:     "cypress:headless": "cypress run",
+ 22:     "e2e": "start-test dev 3000 cypress:headless",
+ 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 24:     "ladle": "ladle serve",
+ 25:     "typegen": "npx sanity typegen generate",
+ 26:     "doctor": "react-doctor . --verbose"
+ 27:   },
+ 28:   "dependencies": {
+ 29:     "@emailjs/browser": "^4.4.1",
+ 30:     "@hookform/resolvers": "^5.2.2",
+ 31:     "@portabletext/react": "^6.0.3",
+ 32:     "@sanity/client": "^7.22.0",
+ 33:     "@sanity/image-url": "^2.1.1",
+ 34:     "@vercel/speed-insights": "2.0.0",
+ 35:     "babel-jest": "30.3.0",
+ 36:     "jest": "30.3.0",
+ 37:     "motion": "^12.38.0",
+ 38:     "next": "^16.2.6",
+ 39:     "react": "^19.2.5",
+ 40:     "react-dom": "^19.2.5",
+ 41:     "react-error-boundary": "^6.1.2",
+ 42:     "react-hook-form": "^7.73.1",
+ 43:     "react-icons": "^5.6.0",
+ 44:     "ts-node": "^10.9.2",
+ 45:     "zod": "^4.3.6"
+ 46:   },
+ 47:   "devDependencies": {
+ 48:     "@jest/expect": "^30.3.0",
+ 49:     "@jest/globals": "^30.3.0",
+ 50:     "@ladle/react": "^5.1.1",
+ 51:     "@lhci/cli": "^0.15.1",
+ 52:     "@playwright/test": "^1.59.1",
+ 53:     "@tailwindcss/postcss": "^4.3.0",
+ 54:     "@testing-library/cypress": "^10.1.0",
+ 55:     "@testing-library/jest-dom": "^6.9.1",
+ 56:     "@testing-library/react": "^16.3.2",
+ 57:     "@testing-library/user-event": "^14.6.1",
+ 58:     "@types/jest": "^30.0.0",
+ 59:     "@types/node": "^24.12.2",
+ 60:     "@types/react": "^19.2.14",
+ 61:     "@types/react-dom": "^19.2.3",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+ 63:     "@typescript-eslint/parser": "^8.59.0",
+ 64:     "@typescript-eslint/utils": "^8.59.0",
+ 65:     "axe-core": "^4.11.3",
+ 66:     "cypress": "15.14.1",
+ 67:     "cypress-axe": "^1.7.0",
+ 68:     "eslint": "10.2.1",
+ 69:     "eslint-config-next": "16.2.4",
+ 70:     "eslint-config-prettier": "^10.1.8",
+ 71:     "eslint-plugin-jest": "^29.15.2",
+ 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 73:     "eslint-plugin-prettier": "^5.5.5",
+ 74:     "eslint-plugin-react": "^7.37.5",
+ 75:     "eslint-plugin-react-hooks": "^7.1.1",
+ 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 77:     "eslint-plugin-testing-library": "^7.16.2",
+ 78:     "jest-environment-jsdom": "^30.3.0",
+ 79:     "jest-extended": "^7.0.0",
+ 80:     "jsdom-testing-mocks": "^1.16.0",
+ 81:     "pa11y": "^9.1.1",
+ 82:     "postcss": "^8.5.21",
+ 83:     "postcss-load-config": "^6.0.1",
+ 84:     "prettier": "3.8.3",
+ 85:     "react-doctor": "^0.0.39",
+ 86:     "sanity": "6.5.0",
+ 87:     "stylelint": "^17.14.1",
+ 88:     "stylelint-config-standard": "^40.0.0",
+ 89:     "tailwindcss": "^4.3.3",
+ 90:     "ts-jest": "^29.4.9",
+ 91:     "typescript": "^6.0.3",
+ 92:     "wait-on": "^9.1.0"
+ 93:   },
+ 94:   "browserslist": [
+ 95:     "chrome >= 92",
+ 96:     "firefox >= 90",
+ 97:     "safari >= 15.4",
+ 98:     "edge >= 92"
+ 99:   ]
+100: }
 ````
 
 ## File: src/components/Animations/Matrix.utils.ts
@@ -21270,53 +20722,6 @@ vercel.json
 65: };
 ````
 
-## File: src/components/ErrorBoundary/ErrorBoundary.tsx
-````typescript
- 1: "use client";
- 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
- 3: import {
- 4:   ErrorBoundary as ReactErrorBoundary,
- 5:   FallbackProps,
- 6: } from "react-error-boundary";
- 7: import ErrorFallback from "./ErrorFallback.component";
- 8: interface ErrorBoundaryProps {
- 9:   children: ReactNode;
-10:   compact?: boolean;
-11: }
-12: const handleError = (error: unknown, info: ErrorInfo) => {
-13:   console.error("Uventet feil i Matrix:", error, info);
-14: };
-15: /**
-16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
-17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
-18:  *
-19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
-20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
-21:  *
-22:  * @param {Object} props - The component props
-23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
-24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
-25:  * @returns {JSX.Element} A React component that catches errors in its child components
-26:  */
-27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
-28:   children,
-29:   compact = false,
-30: }) => {
-31:   const renderFallback = useCallback(
-32:     (props: FallbackProps) => (
-33:       <ErrorFallback error={props.error as Error} compact={compact} />
-34:     ),
-35:     [compact],
-36:   );
-37:   return (
-38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
-39:       {children}
-40:     </ReactErrorBoundary>
-41:   );
-42: };
-43: export default ErrorBoundary;
-````
-
 ## File: src/lib/csrf.ts
 ````typescript
  1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
@@ -21376,6 +20781,298 @@ vercel.json
 55: }
 ````
 
+## File: src/components/Animations/MatrixCursor.component.tsx
+````typescript
+  1: "use client";
+  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
+  3: import { useMobile } from "../../hooks/useMobile";
+  4: interface MatrixCursorProps {
+  5:   heroRef: RefObject<HTMLElement | null>;
+  6: }
+  7: interface CursorStyles extends React.CSSProperties {
+  8:   "--cursor-x": string;
+  9:   "--cursor-y": string;
+ 10: }
+ 11: interface MatrixTrail {
+ 12:   id: string;
+ 13:   x: number;
+ 14:   y: number;
+ 15:   char: string;
+ 16: }
+ 17: interface CursorState {
+ 18:   cursorPosition: { x: number; y: number };
+ 19:   isHovered: boolean;
+ 20:   trails: MatrixTrail[];
+ 21: }
+ 22: type CursorAction =
+ 23:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+ 24:   | { type: "MOUSE_ENTER" }
+ 25:   | { type: "MOUSE_LEAVE" }
+ 26:   | { type: "REMOVE_TRAIL"; trailId: string };
+ 27: const MAX_TRAILS = 20;
+ 28: const cursorReducer = (
+ 29:   state: CursorState,
+ 30:   action: CursorAction,
+ 31: ): CursorState => {
+ 32:   switch (action.type) {
+ 33:     case "MOUSE_MOVE": {
+ 34:       const newPosition = { x: action.x, y: action.y };
+ 35:       if (!action.trail) {
+ 36:         return { ...state, cursorPosition: newPosition };
+ 37:       }
+ 38:       const updatedTrails = [...state.trails, action.trail];
+ 39:       return {
+ 40:         ...state,
+ 41:         cursorPosition: newPosition,
+ 42:         trails:
+ 43:           updatedTrails.length > MAX_TRAILS
+ 44:             ? updatedTrails.slice(1)
+ 45:             : updatedTrails,
+ 46:       };
+ 47:     }
+ 48:     case "MOUSE_ENTER":
+ 49:       return { ...state, isHovered: true };
+ 50:     case "MOUSE_LEAVE":
+ 51:       return { ...state, isHovered: false, trails: [] };
+ 52:     case "REMOVE_TRAIL":
+ 53:       return {
+ 54:         ...state,
+ 55:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
+ 56:       };
+ 57:   }
+ 58: };
+ 59: const initialState: CursorState = {
+ 60:   cursorPosition: { x: 0, y: 0 },
+ 61:   isHovered: false,
+ 62:   trails: [],
+ 63: };
+ 64: /**
+ 65:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 66:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 67:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 68:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 69:  */
+ 70: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 71:   const isMobile = useMobile(); // Pd528
+ 72:   const [state, dispatch] = useReducer(cursorReducer, initialState);
+ 73:   const getRandomChar = useCallback(() => {
+ 74:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 75:     const array = new Uint32Array(1);
+ 76:     crypto.getRandomValues(array);
+ 77:     const index = array[0]! % matrixChars.length;
+ 78:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 79:   }, []);
+ 80:   useEffect(() => {
+ 81:     const heroSection = heroRef.current;
+ 82:     if (!heroSection) return;
+ 83:     // Add cursor: none to the hero section when hovered
+ 84:     if (state.isHovered) {
+ 85:       heroSection.style.cursor = "none";
+ 86:     } else {
+ 87:       heroSection.style.cursor = "";
+ 88:     }
+ 89:     const handleMouseMove = (e: MouseEvent) => {
+ 90:       const trail: MatrixTrail | undefined = state.isHovered
+ 91:         ? {
+ 92:             id: crypto.randomUUID(),
+ 93:             x: e.clientX,
+ 94:             y: e.clientY,
+ 95:             char: getRandomChar(),
+ 96:           }
+ 97:         : undefined;
+ 98:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
+ 99:     };
+100:     const handleMouseEnter = () => {
+101:       dispatch({ type: "MOUSE_ENTER" });
+102:       heroSection.style.cursor = "none";
+103:     };
+104:     const handleMouseLeave = () => {
+105:       dispatch({ type: "MOUSE_LEAVE" });
+106:       heroSection.style.cursor = "";
+107:     };
+108:     heroSection.addEventListener("mousemove", handleMouseMove);
+109:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+110:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+111:     return () => {
+112:       heroSection.removeEventListener("mousemove", handleMouseMove);
+113:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+114:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+115:       heroSection.style.cursor = "";
+116:     };
+117:   }, [heroRef, state.isHovered, getRandomChar]);
+118:   const handleAnimationEnd = useCallback((trailId: string) => {
+119:     dispatch({ type: "REMOVE_TRAIL", trailId });
+120:   }, []);
+121:   if (!heroRef.current || isMobile) return null; // P6ecf
+122:   const cursorStyles: CursorStyles = {
+123:     position: "fixed",
+124:     top: 0,
+125:     left: 0,
+126:     width: "100%",
+127:     height: "100%",
+128:     pointerEvents: "none",
+129:     isolation: "isolate",
+130:     zIndex: 40,
+131:     "--cursor-x": `${state.cursorPosition.x}px`,
+132:     "--cursor-y": `${state.cursorPosition.y}px`,
+133:   };
+134:   return (
+135:     <div
+136:       data-testid="matrix-cursor"
+137:       className={state.isHovered ? "matrix-cursor" : ""}
+138:       style={cursorStyles}
+139:     >
+140:       {state.trails.map((trail) => (
+141:         <div
+142:           key={trail.id}
+143:           data-testid="matrix-trail"
+144:           className="matrix-trail"
+145:           style={{
+146:             position: "fixed",
+147:             left: `${trail.x}px`,
+148:             top: `${trail.y}px`,
+149:             zIndex: 2,
+150:             pointerEvents: "none",
+151:           }}
+152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+153:         >
+154:           {trail.char}
+155:         </div>
+156:       ))}
+157:       {state.isHovered && (
+158:         <div
+159:           style={{
+160:             position: "fixed",
+161:             top: 0,
+162:             left: 0,
+163:             width: "100%",
+164:             height: "100%",
+165:             pointerEvents: "none",
+166:             zIndex: 1,
+167:           }}
+168:         />
+169:       )}
+170:     </div>
+171:   );
+172: };
+173: export default MatrixCursor;
+````
+
+## File: src/stories/components/Animations/MatrixCursor.stories.tsx
+````typescript
+  1: import React, { useRef } from "react";
+  2: import { Meta } from "@ladle/react";
+  3: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+  4: export default {
+  5:   title: "Animations/MatrixCursor",
+  6:   component: MatrixCursor,
+  7: } as Meta;
+  8: const DemoContainer = ({ children }: { children: React.ReactNode }) => {
+  9:   const heroRef = useRef<HTMLDivElement>(null);
+ 10:   return (
+ 11:     <div
+ 12:       ref={heroRef}
+ 13:       className="min-h-[400px] bg-gray-900 p-8 rounded-lg relative overflow-hidden"
+ 14:     >
+ 15:       {children}
+ 16:       <MatrixCursor heroRef={heroRef} />
+ 17:     </div>
+ 18:   );
+ 19: };
+ 20: export const Default = () => (
+ 21:   <DemoContainer>
+ 22:     <div className="text-gray-300 space-y-4">
+ 23:       <h2 className="text-2xl font-bold text-white mb-4">Matrix Cursor Demo</h2>
+ 24:       <p>
+ 25:         Move your mouse around this container to see the matrix cursor effect.
+ 26:       </p>
+ 27:       <p>The cursor will change and leave a trail of matrix characters.</p>
+ 28:       <div className="grid grid-cols-2 gap-4 mt-8">
+ 29:         <div className="bg-gray-800 p-4 rounded-sm">
+ 30:           <h3 className="text-lg font-semibold mb-2">Hover Area 1</h3>
+ 31:           <p className="text-sm">
+ 32:             Move your cursor here to see the effect in action
+ 33:           </p>
+ 34:         </div>
+ 35:         <div className="bg-gray-800 p-4 rounded-sm">
+ 36:           <h3 className="text-lg font-semibold mb-2">Hover Area 2</h3>
+ 37:           <p className="text-sm">
+ 38:             Try moving between different areas to see the trail
+ 39:           </p>
+ 40:         </div>
+ 41:       </div>
+ 42:     </div>
+ 43:   </DemoContainer>
+ 44: );
+ 45: export const WithInteractiveElements = () => (
+ 46:   <DemoContainer>
+ 47:     <div className="text-gray-300 space-y-6">
+ 48:       <h2 className="text-2xl font-bold text-white mb-4">
+ 49:         Interactive Elements Demo
+ 50:       </h2>
+ 51:       <div className="grid grid-cols-2 gap-4">
+ 52:         <button type="button" className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
+ 53:           Hover Me
+ 54:         </button>
+ 55:         <button type="button" className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
+ 56:           Button Example
+ 57:         </button>
+ 58:       </div>
+ 59:       <div className="bg-gray-800 p-6 rounded-sm">
+ 60:         <p>
+ 61:           The matrix cursor effect works seamlessly with interactive elements.
+ 62:           Try hovering over the buttons above.
+ 63:         </p>
+ 64:       </div>
+ 65:     </div>
+ 66:   </DemoContainer>
+ 67: );
+ 68: export const LargeArea = () => (
+ 69:   <DemoContainer>
+ 70:     <div className="text-gray-300 min-h-[600px] flex items-center justify-center">
+ 71:       <div className="text-center space-y-4">
+ 72:         <h2 className="text-3xl font-bold text-white">Large Area Demo</h2>
+ 73:         <p>
+ 74:           This demo shows how the matrix cursor effect works in a larger area.
+ 75:           <br />
+ 76:           Move your cursor around to create longer trails.
+ 77:         </p>
+ 78:       </div>
+ 79:     </div>
+ 80:   </DemoContainer>
+ 81: );
+ 82: export const WithContent = () => (
+ 83:   <DemoContainer>
+ 84:     <div className="text-gray-300 space-y-6">
+ 85:       <h2 className="text-2xl font-bold text-white mb-4">
+ 86:         Content Interaction
+ 87:       </h2>
+ 88:       <div className="grid grid-cols-3 gap-4">
+ 89:         {[1, 2, 3].map((cardNumber) => (
+ 90:           <div
+ 91:             key={`card-${cardNumber}`}
+ 92:             className="bg-gray-800 p-4 rounded-sm hover:bg-gray-700 transition-colors"
+ 93:           >
+ 94:             <h3 className="text-lg font-semibold mb-2">Card {cardNumber}</h3>
+ 95:             <p className="text-sm">
+ 96:               Hover over this card to see how the matrix cursor interacts with
+ 97:               content.
+ 98:             </p>
+ 99:           </div>
+100:         ))}
+101:       </div>
+102:       <div className="bg-gray-800 p-6 rounded-sm mt-8">
+103:         <p className="text-lg">
+104:           The matrix cursor effect adds a unique interactive element to your
+105:           content. Try moving between different cards to see how the trail
+106:           follows your movement.
+107:         </p>
+108:       </div>
+109:     </div>
+110:   </DemoContainer>
+111: );
+````
+
 ## File: next.config.ts
 ````typescript
   1: import type { NextConfig } from "next";
@@ -21410,268 +21107,80 @@ vercel.json
  30:     // Remove console.log in production
  31:     removeConsole: process.env.NODE_ENV === "production",
  32:   },
- 33:   images: {
- 34:     remotePatterns: [
- 35:       {
- 36:         protocol: "https",
- 37:         hostname: "cdn.sanity.io",
- 38:       },
- 39:     ],
- 40:   },
- 41:   async headers() {
- 42:     return [
- 43:       {
- 44:         source: "/",
- 45:         headers: [
- 46:           {
- 47:             key: "Cache-Control",
- 48:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 49:           },
+ 33:   // Optimize CSS chunking - merge CSS files to reduce network requests
+ 34:   experimental: {
+ 35:     cssChunking: true, // Merge CSS files when possible (default)
+ 36:   },
+ 37:   images: {
+ 38:     remotePatterns: [
+ 39:       {
+ 40:         protocol: "https",
+ 41:         hostname: "cdn.sanity.io",
+ 42:       },
+ 43:     ],
+ 44:   },
+ 45:   async headers() {
+ 46:     return [
+ 47:       {
+ 48:         source: "/",
+ 49:         headers: [
  50:           {
- 51:             key: "X-Frame-Options",
- 52:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 51:             key: "Cache-Control",
+ 52:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
  53:           },
- 54:           { key: "X-Content-Type-Options", value: "nosniff" },
- 55:           {
- 56:             key: "Content-Security-Policy",
- 57:             value: buildCspHeader(cspDirectives),
- 58:           },
- 59:           { key: "Permissions-Policy", value: "tools=(self)" },
- 60:           { key: "Origin-Agent-Cluster", value: "?1" },
- 61:         ],
- 62:       },
- 63:       {
- 64:         source: "/prosjekter",
- 65:         headers: [
- 66:           {
- 67:             key: "Cache-Control",
- 68:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 69:           },
+ 54:           {
+ 55:             key: "X-Frame-Options",
+ 56:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 57:           },
+ 58:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 59:           {
+ 60:             key: "Content-Security-Policy",
+ 61:             value: buildCspHeader(cspDirectives),
+ 62:           },
+ 63:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 64:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 65:         ],
+ 66:       },
+ 67:       {
+ 68:         source: "/prosjekter",
+ 69:         headers: [
  70:           {
- 71:             key: "X-Frame-Options",
- 72:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 71:             key: "Cache-Control",
+ 72:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
  73:           },
- 74:           { key: "X-Content-Type-Options", value: "nosniff" },
- 75:           {
- 76:             key: "Content-Security-Policy",
- 77:             value: buildCspHeader(cspDirectives),
- 78:           },
- 79:           { key: "Permissions-Policy", value: "tools=(self)" },
- 80:           { key: "Origin-Agent-Cluster", value: "?1" },
- 81:         ],
- 82:       },
- 83:       {
- 84:         source: "/:path*",
- 85:         headers: [
- 86:           {
- 87:             key: "X-Frame-Options",
- 88:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 89:           },
- 90:           { key: "X-Content-Type-Options", value: "nosniff" },
- 91:           {
- 92:             key: "Content-Security-Policy",
- 93:             value: buildCspHeader(cspDirectives),
- 94:           },
- 95:           { key: "Permissions-Policy", value: "tools=(self)" },
- 96:           { key: "Origin-Agent-Cluster", value: "?1" },
- 97:         ],
- 98:       },
- 99:     ];
-100:   },
-101: };
-102: export default nextConfig;
-````
-
-## File: package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "version": "1.1.0",
- 4:   "private": true,
- 5:   "type": "module",
- 6:   "packageManager": "pnpm@11.15.1",
- 7:   "scripts": {
- 8:     "dev": "next dev --turbopack",
- 9:     "lhci": "lhci autorun",
-10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
-11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
-12:     "build": "next build",
-13:     "start": "next start",
-14:     "lint": "next lint",
-15:     "lint:css": "stylelint \"src/**/*.css\"",
-16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
-17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
-18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
-19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
-20:     "cypress:open": "cypress open",
-21:     "cypress:headless": "cypress run",
-22:     "e2e": "start-test dev 3000 cypress:headless",
-23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
-24:     "ladle": "ladle serve",
-25:     "typegen": "npx sanity typegen generate",
-26:     "doctor": "react-doctor . --verbose"
-27:   },
-28:   "dependencies": {
-29:     "@emailjs/browser": "^4.4.1",
-30:     "@hookform/resolvers": "^5.2.2",
-31:     "@portabletext/react": "^6.0.3",
-32:     "@sanity/client": "^7.22.0",
-33:     "@sanity/image-url": "^2.1.1",
-34:     "@vercel/speed-insights": "2.0.0",
-35:     "babel-jest": "30.3.0",
-36:     "jest": "30.3.0",
-37:     "motion": "^12.38.0",
-38:     "next": "^16.2.6",
-39:     "react": "^19.2.5",
-40:     "react-dom": "^19.2.5",
-41:     "react-error-boundary": "^6.1.2",
-42:     "react-hook-form": "^7.73.1",
-43:     "react-icons": "^5.6.0",
-44:     "ts-node": "^10.9.2",
-45:     "zod": "^4.3.6"
-46:   },
-47:   "devDependencies": {
-48:     "@jest/expect": "^30.3.0",
-49:     "@jest/globals": "^30.3.0",
-50:     "@ladle/react": "^5.1.1",
-51:     "@lhci/cli": "^0.15.1",
-52:     "@playwright/test": "^1.59.1",
-53:     "@tailwindcss/postcss": "^4.3.0",
-54:     "@testing-library/cypress": "^10.1.0",
-55:     "@testing-library/jest-dom": "^6.9.1",
-56:     "@testing-library/react": "^16.3.2",
-57:     "@testing-library/user-event": "^14.6.1",
-58:     "@types/jest": "^30.0.0",
-59:     "@types/node": "^24.12.2",
-60:     "@types/react": "^19.2.14",
-61:     "@types/react-dom": "^19.2.3",
-62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
-63:     "@typescript-eslint/parser": "^8.59.0",
-64:     "@typescript-eslint/utils": "^8.59.0",
-65:     "axe-core": "^4.11.3",
-66:     "cypress": "15.14.1",
-67:     "cypress-axe": "^1.7.0",
-68:     "eslint": "10.2.1",
-69:     "eslint-config-next": "16.2.4",
-70:     "eslint-config-prettier": "^10.1.8",
-71:     "eslint-plugin-jest": "^29.15.2",
-72:     "eslint-plugin-jsx-a11y": "^6.10.2",
-73:     "eslint-plugin-prettier": "^5.5.5",
-74:     "eslint-plugin-react": "^7.37.5",
-75:     "eslint-plugin-react-hooks": "^7.1.1",
-76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
-77:     "eslint-plugin-testing-library": "^7.16.2",
-78:     "jest-environment-jsdom": "^30.3.0",
-79:     "jest-extended": "^7.0.0",
-80:     "jsdom-testing-mocks": "^1.16.0",
-81:     "pa11y": "^9.1.1",
-82:     "postcss": "^8.5.21",
-83:     "postcss-load-config": "^6.0.1",
-84:     "prettier": "3.8.3",
-85:     "react-doctor": "^0.0.39",
-86:     "sanity": "6.5.0",
-87:     "stylelint": "^17.14.1",
-88:     "stylelint-config-standard": "^40.0.0",
-89:     "tailwindcss": "^4.3.3",
-90:     "ts-jest": "^29.4.9",
-91:     "typescript": "^6.0.3",
-92:     "wait-on": "^9.1.0"
-93:   }
-94: }
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - '.'
- 3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.7"
- 6:   "js-yaml": ">=5.2.1"
- 7:   "sharp": ">=0.35.3"
- 8:   "adm-zip": ">=0.6.0"
- 9: allowBuilds:
-10:   '@swc/core': true
-11:   cypress: true
-12:   esbuild: true
-13:   msw: true
-14:   puppeteer: true
-15:   sharp: true
-16:   unrs-resolver: true
-17: minimumReleaseAgeExclude:
-18:   - postcss@8.5.21
-19:   - wait-on@9.1.0
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.7",
-18:     "react-dom": "^19.2.7",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.3.0",
-21:     "styled-components": "^6.4.3"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.17",
-26:     "eslint": "^10.6.0",
-27:     "prettier": "^3.9.4",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "adm-zip": ">=0.6.0",
-33:       "basic-ftp": ">=6.0.1",
-34:       "brace-expansion": ">=5.0.7",
-35:       "dompurify": ">=3.4.12",
-36:       "esbuild": ">=0.28.1",
-37:       "flatted": ">=3.4.2",
-38:       "js-yaml": ">=5.2.1",
-39:       "lodash": ">=4.18.1",
-40:       "lodash-es": ">=4.18.1",
-41:       "minimatch": "10.2.5",
-42:       "picomatch": "4.0.5",
-43:       "smol-toml": ">=1.7.0",
-44:       "undici": ">=8.8.0",
-45:       "vite": ">=8.1.5",
-46:       "ws": ">=8.21.1",
-47:       "yaml": ">=2.9.0",
-48:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-49:     }
-50:   },
-51:   "overrides": {
-52:     "adm-zip": ">=0.6.0",
-53:     "smol-toml": ">=1.7.0",
-54:     "brace-expansion": ">=5.0.7",
-55:     "esbuild": ">=0.28.1",
-56:     "uuid": ">=14.0.1",
-57:     "js-yaml": ">=5.2.1",
-58:     "undici": ">=8.8.0",
-59:     "ws": ">=8.21.1"
-60:   },
-61:   "prettier": {
-62:     "semi": false,
-63:     "printWidth": 100,
-64:     "bracketSpacing": false,
-65:     "singleQuote": true
-66:   }
-67: }
+ 74:           {
+ 75:             key: "X-Frame-Options",
+ 76:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 77:           },
+ 78:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 79:           {
+ 80:             key: "Content-Security-Policy",
+ 81:             value: buildCspHeader(cspDirectives),
+ 82:           },
+ 83:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 84:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 85:         ],
+ 86:       },
+ 87:       {
+ 88:         source: "/:path*",
+ 89:         headers: [
+ 90:           {
+ 91:             key: "X-Frame-Options",
+ 92:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 93:           },
+ 94:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 95:           {
+ 96:             key: "Content-Security-Policy",
+ 97:             value: buildCspHeader(cspDirectives),
+ 98:           },
+ 99:           { key: "Permissions-Policy", value: "tools=(self)" },
+100:           { key: "Origin-Agent-Cluster", value: "?1" },
+101:         ],
+102:       },
+103:     ];
+104:   },
+105: };
+106: export default nextConfig;
 ````
 
 ## File: .github/workflows/playwright.yml
@@ -21716,6 +21225,524 @@ vercel.json
 38:           name: playwright-report
 39:           path: playwright-report/
 40:           retention-days: 30
+````
+
+## File: src/app/globals.css
+````css
+  1: @import "tailwindcss";
+  2: @config '../../tailwind.config.ts';
+  3: /*
+  4:  * ═══════════════════════════════════════════
+  5:  * AESTHETIC DIRECTION: Technical / Hacker / Cinematic
+  6:  * ═══════════════════════════════════════════
+  7:  *
+  8:  * Type:    JetBrains Mono (mono everywhere — terminal/hacker vibe)
+  9:  * Color:   Cool-dark. Slate-900 bg, matrix green (#00ff62 / #00cc4e / #008529)
+ 10:  * Tone:    Cool — slate, charcoal, deep navy
+ 11:  * Density: Loose on hero, normal on content. 4px Tailwind scale.
+ 12:  * Radius:  Sharp (rounded-sm). Utilitarian, terminal-like.
+ 13:  * Shadow:  Minimal. Glow effects on interactive elements.
+ 14:  * Buttons: Filled matrix-green (primary). Pill with glow (accent/nav).
+ 15:  * Motion:  Expressive — glitch text, Matrix rain canvas, staggered fade-ins,
+ 16:  *          bounce-on-scroll, page transitions. Respects prefers-reduced-motion.
+ 17:  * Icons:   react-icons (FaReact, SiTypescript, etc.). No custom SVG illustrations.
+ 18:  * Imagery: Real project screenshots via Sanity CDN. Mobile: static bg image.
+ 19:  */
+ 20: @layer base {
+ 21:   *,
+ 22:   ::after,
+ 23:   ::before,
+ 24:   ::backdrop,
+ 25:   ::file-selector-button {
+ 26:     border-color: var(--color-gray-200, currentcolor);
+ 27:   }
+ 28: }
+ 29: :root {
+ 30:   /* Brand — Matrix Theme */
+ 31:   --matrix-light: #00ff62;
+ 32:   --matrix: #00cc4e;
+ 33:   --matrix-dark: #008529;
+ 34:   --matrix-glow: rgb(0 255 98 / 60%);
+ 35:   /* Surfaces */
+ 36:   --text: #e1e1e1;
+ 37:   --background: var(--color-slate-900, #0f172a);
+ 38:   /* Semantic Colors */
+ 39:   --success: #00cc4e;
+ 40:   --error: #ff4e4e;
+ 41:   --warning: #ffb74e;
+ 42:   --info: #4e9fff;
+ 43:   /* Z-Index Scale — deliberate layering tokens */
+ 44:   --z-base: 0;
+ 45:   --z-dropdown: 10;
+ 46:   --z-sticky: 20;
+ 47:   --z-overlay: 30;
+ 48:   --z-modal: 40;
+ 49:   --z-toast: 50;
+ 50: }
+ 51: body {
+ 52:   background-color: var(--background);
+ 53:   color: var(--text);
+ 54:   font-family: "JetBrains Mono", monospace;
+ 55: }
+ 56: #matrix-canvas {
+ 57:   opacity: 0.7;
+ 58: }
+ 59: /* Touch interaction improvements */
+ 60: button,
+ 61: a,
+ 62: input,
+ 63: textarea,
+ 64: select {
+ 65:   touch-action: manipulation; /* Prevents double-tap zoom */
+ 66:   -webkit-tap-highlight-color: rgb(0 255 98 / 10%);
+ 67: }
+ 68: /* Minimum touch targets for mobile */
+ 69: @media (pointer: coarse) {
+ 70:   button,
+ 71:   a[role="button"],
+ 72:   input[type="submit"],
+ 73:   input[type="button"] {
+ 74:     min-height: 44px;
+ 75:     min-width: 44px;
+ 76:   }
+ 77: }
+ 78: /* Scroll margin for anchor links */
+ 79: [id] {
+ 80:   scroll-margin-top: 100px;
+ 81: }
+ 82: h1[id],
+ 83: h2[id],
+ 84: h3[id],
+ 85: h4[id],
+ 86: h5[id],
+ 87: h6[id] {
+ 88:   scroll-margin-top: 120px;
+ 89: }
+ 90: /* Selection */
+ 91: ::selection {
+ 92:   background-color: var(--matrix-dark);
+ 93:   color: #fff;
+ 94: }
+ 95: /* Scrollbar - Using Tailwind v4.3 utilities */
+ 96: * {
+ 97:   @apply scrollbar-thin scrollbar-thumb-matrix-dark scrollbar-track-[#1a1a1a];
+ 98: }
+ 99: *:hover {
+100:   @apply scrollbar-thumb-matrix-light;
+101: }
+102: /* Enhanced keyboard focus indicators for accessibility */
+103: /* Exclude form elements which handle their own focus styling */
+104: :focus-visible:not(input, textarea, select) {
+105:   outline: 2px solid var(--matrix-dark);
+106:   outline-offset: 2px;
+107:   border-radius: 2px;
+108: }
+109: /* Focus within container styling - only for specific interactive containers */
+110: .focus-within-container:focus-within {
+111:   outline: 2px solid var(--matrix-dark);
+112:   outline-offset: 2px;
+113:   border-radius: 2px;
+114: }
+115: /* Button-specific focus styling */
+116: button:focus-visible,
+117: a:focus-visible {
+118:   outline: 2px solid var(--matrix-dark);
+119:   outline-offset: 3px;
+120:   box-shadow: 0 0 0 4px rgb(0 204 78 / 8%);
+121: }
+122: /* Input and textarea focus styling handled by individual components */
+123: /* Tab and interactive element focus */
+124: [role="tab"]:focus-visible,
+125: [role="button"]:focus-visible,
+126: [tabindex="0"]:focus-visible {
+127:   outline: 2px solid var(--matrix-dark);
+128:   outline-offset: 2px;
+129: }
+130: /* Skip link special focus styling for better visibility */
+131: .sr-only:focus,
+132: .sr-only:focus-within {
+133:   position: absolute;
+134:   width: auto;
+135:   height: auto;
+136:   padding: 0.5rem 1rem;
+137:   margin: 0;
+138:   overflow: visible;
+139:   clip: auto;
+140:   white-space: normal;
+141:   outline: 3px solid var(--matrix-light);
+142:   outline-offset: 2px;
+143:   z-index: var(--z-toast);
+144: }
+145: /* Skeleton shimmer effect */
+146: @keyframes shimmer {
+147:   0% {
+148:     background-position: -200% 0;
+149:   }
+150:   100% {
+151:     background-position: 200% 0;
+152:   }
+153: }
+154: .skeleton-shimmer::before {
+155:   content: "";
+156:   position: absolute;
+157:   inset: 0;
+158:   background: linear-gradient(
+159:     90deg,
+160:     transparent 0%,
+161:     rgb(255 255 255 / 4%) 50%,
+162:     transparent 100%
+163:   );
+164:   background-size: 200% 100%;
+165:   animation: shimmer 1.5s infinite;
+166: }
+167: /* Performance optimizations for animations */
+168: .contain-layout {
+169:   contain: layout style paint;
+170: }
+171: /* Reduced motion for accessibility */
+172: @media (prefers-reduced-motion: reduce) {
+173:   *,
+174:   *::before,
+175:   *::after {
+176:     animation-duration: 0.01ms !important;
+177:     animation-iteration-count: 1 !important;
+178:     transition-duration: 0.01ms !important;
+179:   }
+180: }
+181: /* ====================================
+182:    Glitch Effect Styles (inlined to prevent CSS chunking)
+183:    ==================================== */
+184: .glitch {
+185:   position: relative;
+186: }
+187: @keyframes noise-anim {
+188:   0% {
+189:     clip: rect(42px, 9999px, 44px, 0);
+190:   }
+191:   5% {
+192:     clip: rect(12px, 9999px, 85px, 0);
+193:   }
+194:   10% {
+195:     clip: rect(22px, 9999px, 65px, 0);
+196:   }
+197:   15% {
+198:     clip: rect(32px, 9999px, 75px, 0);
+199:   }
+200:   20% {
+201:     clip: rect(42px, 9999px, 55px, 0);
+202:   }
+203:   25% {
+204:     clip: rect(52px, 9999px, 45px, 0);
+205:   }
+206:   30% {
+207:     clip: rect(62px, 9999px, 35px, 0);
+208:   }
+209:   35% {
+210:     clip: rect(72px, 9999px, 25px, 0);
+211:   }
+212:   40% {
+213:     clip: rect(82px, 9999px, 15px, 0);
+214:   }
+215:   45% {
+216:     clip: rect(92px, 9999px, 5px, 0);
+217:   }
+218:   50% {
+219:     clip: rect(102px, 9999px, 95px, 0);
+220:   }
+221:   55% {
+222:     clip: rect(112px, 9999px, 85px, 0);
+223:   }
+224:   60% {
+225:     clip: rect(122px, 9999px, 75px, 0);
+226:   }
+227:   65% {
+228:     clip: rect(132px, 9999px, 65px, 0);
+229:   }
+230:   70% {
+231:     clip: rect(142px, 9999px, 55px, 0);
+232:   }
+233:   75% {
+234:     clip: rect(152px, 9999px, 45px, 0);
+235:   }
+236:   80% {
+237:     clip: rect(162px, 9999px, 35px, 0);
+238:   }
+239:   85% {
+240:     clip: rect(172px, 9999px, 25px, 0);
+241:   }
+242:   90% {
+243:     clip: rect(182px, 9999px, 15px, 0);
+244:   }
+245:   95% {
+246:     clip: rect(192px, 9999px, 5px, 0);
+247:   }
+248:   100% {
+249:     clip: rect(202px, 9999px, 95px, 0);
+250:   }
+251: }
+252: @keyframes noise-anim-2 {
+253:   0% {
+254:     clip: rect(32px, 9999px, 34px, 0);
+255:   }
+256:   5% {
+257:     clip: rect(22px, 9999px, 75px, 0);
+258:   }
+259:   10% {
+260:     clip: rect(12px, 9999px, 55px, 0);
+261:   }
+262:   15% {
+263:     clip: rect(42px, 9999px, 65px, 0);
+264:   }
+265:   20% {
+266:     clip: rect(52px, 9999px, 45px, 0);
+267:   }
+268:   25% {
+269:     clip: rect(62px, 9999px, 35px, 0);
+270:   }
+271:   30% {
+272:     clip: rect(72px, 9999px, 25px, 0);
+273:   }
+274:   35% {
+275:     clip: rect(82px, 9999px, 15px, 0);
+276:   }
+277:   40% {
+278:     clip: rect(92px, 9999px, 5px, 0);
+279:   }
+280:   45% {
+281:     clip: rect(102px, 9999px, 95px, 0);
+282:   }
+283:   50% {
+284:     clip: rect(112px, 9999px, 85px, 0);
+285:   }
+286:   55% {
+287:     clip: rect(122px, 9999px, 75px, 0);
+288:   }
+289:   60% {
+290:     clip: rect(132px, 9999px, 65px, 0);
+291:   }
+292:   65% {
+293:     clip: rect(142px, 9999px, 55px, 0);
+294:   }
+295:   70% {
+296:     clip: rect(152px, 9999px, 45px, 0);
+297:   }
+298:   75% {
+299:     clip: rect(162px, 9999px, 35px, 0);
+300:   }
+301:   80% {
+302:     clip: rect(172px, 9999px, 25px, 0);
+303:   }
+304:   85% {
+305:     clip: rect(182px, 9999px, 15px, 0);
+306:   }
+307:   90% {
+308:     clip: rect(192px, 9999px, 5px, 0);
+309:   }
+310:   95% {
+311:     clip: rect(202px, 9999px, 95px, 0);
+312:   }
+313:   100% {
+314:     clip: rect(212px, 9999px, 85px, 0);
+315:   }
+316: }
+317: .glitch::after,
+318: .glitch::before {
+319:   content: attr(data-text);
+320:   position: absolute;
+321:   top: 0;
+322:   overflow: hidden;
+323:   clip: rect(0, 900px, 0, 0);
+324: }
+325: .glitch::after {
+326:   left: 2px;
+327:   text-shadow: -1px 0 red;
+328: }
+329: .glitch::before {
+330:   left: -2px;
+331:   text-shadow: 1px 0 blue;
+332: }
+333: .glitch:hover::after {
+334:   animation: noise-anim 0.3s infinite linear alternate-reverse;
+335: }
+336: .glitch:hover::before {
+337:   animation: noise-anim-2 0.3s infinite linear alternate-reverse;
+338: }
+339: /* ====================================
+340:    Matrix Cursor Styles (inlined to prevent CSS chunking)
+341:    ==================================== */
+342: @media (prefers-reduced-motion: no-preference) {
+343:   .matrix-cursor {
+344:     cursor: none;
+345:   }
+346:   .matrix-cursor::before,
+347:   .matrix-cursor::after {
+348:     content: "";
+349:     position: fixed;
+350:     pointer-events: none;
+351:     z-index: 2;
+352:     left: var(--cursor-x, 0);
+353:     top: var(--cursor-y, 0);
+354:   }
+355:   .matrix-cursor::before {
+356:     width: 16px;
+357:     height: 16px;
+358:     border: 2px solid var(--matrix-light);
+359:     border-radius: 50%;
+360:     transform: translate(-50%, -50%);
+361:     box-shadow: 0 0 10px var(--matrix-light);
+362:     animation: pulse-and-rotate 2s ease-in-out infinite;
+363:   }
+364:   .matrix-cursor::after {
+365:     width: 4px;
+366:     height: 4px;
+367:     background: var(--matrix-light);
+368:     border-radius: 50%;
+369:     transform: translate(-50%, -50%);
+370:     box-shadow: 0 0 15px 2px var(--matrix-light);
+371:     animation: pulse 1s ease-in-out infinite;
+372:   }
+373:   .matrix-trail {
+374:     position: fixed;
+375:     pointer-events: none;
+376:     font-family: monospace;
+377:     color: var(--matrix-light);
+378:     font-size: 12px;
+379:     text-shadow: 0 0 3px var(--matrix-light);
+380:     z-index: 1;
+381:     opacity: 0;
+382:     animation: trail-fade 3s linear forwards;
+383:     letter-spacing: 5px;
+384:   }
+385:   @keyframes trail-fade {
+386:     0% {
+387:       opacity: 0.3;
+388:       transform: translateY(0);
+389:     }
+390:     50% {
+391:       opacity: 0.15;
+392:       transform: translateY(35px);
+393:     }
+394:     100% {
+395:       opacity: 0;
+396:       transform: translateY(50px);
+397:     }
+398:   }
+399:   @keyframes pulse-and-rotate {
+400:     0% {
+401:       transform: translate(-50%, -50%) rotate(0deg) scale(1);
+402:       border-radius: 50%;
+403:     }
+404:     25% {
+405:       border-radius: 2px;
+406:     }
+407:     50% {
+408:       transform: translate(-50%, -50%) rotate(180deg) scale(1.2);
+409:       border-radius: 50%;
+410:     }
+411:     75% {
+412:       border-radius: 2px;
+413:     }
+414:     100% {
+415:       transform: translate(-50%, -50%) rotate(360deg) scale(1);
+416:       border-radius: 50%;
+417:     }
+418:   }
+419:   @keyframes pulse {
+420:     0%,
+421:     100% {
+422:       transform: translate(-50%, -50%) scale(1);
+423:       opacity: 0.8;
+424:     }
+425:     50% {
+426:       transform: translate(-50%, -50%) scale(1.5);
+427:       opacity: 1;
+428:     }
+429:   }
+430: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { sanityFetch } from "@/lib/sanity/client";
+ 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 7: import type { Navigation, Settings } from "@/types/sanity.types";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const jetbrainsMono = JetBrains_Mono({
+14:   subsets: ["latin"],
+15:   display: "swap", // Prevent invisible text during font load (improves FCP)
+16:   preload: true, // Preload font to reduce request chain
+17: });
+18: export const metadata: Metadata = {
+19:   title: "Forside - Dfweb",
+20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+21: };
+22: export default async function RootLayout({
+23:   children,
+24: }: Readonly<{
+25:   children: React.ReactNode;
+26: }>) {
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         {/* Preconnect to Sanity CDN for faster image/data loading */}
+40:         <link
+41:           rel="preconnect"
+42:           href="https://cdn.sanity.io"
+43:           crossOrigin="anonymous"
+44:         />
+45:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+46:         <link rel="icon" href="/favicon.ico" />
+47:         <link rel="apple-touch-icon" href="/logo.png" />
+48:         <meta property="og:title" content="Daniel Fjeldstad" />
+49:         <meta name="author" content="Daniel Fjeldstad" />
+50:         <meta property="og:locale" content="nb_NO" />
+51:         <meta
+52:           property="og:description"
+53:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+54:         />
+55:         <meta property="og:url" content="https://www.dfweb.no/" />
+56:         <meta property="og:site_name" content="dfweb.no" />
+57:         <meta name="theme-color" content="#004014" />
+58:       </head>
+59:       <body
+60:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+61:       >
+62:         <LazyMotionProvider>
+63:           <SkipLink />
+64:           <ErrorBoundary>
+65:             <div id="main-content" className="grow flex flex-col">
+66:               <Header navigation={navigation} />
+67:               <SpeedInsights />
+68:               <div className="grow">{children}</div>
+69:               <Footer
+70:                 footerCopyrightText={
+71:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+72:                 }
+73:               />
+74:             </div>
+75:           </ErrorBoundary>
+76:         </LazyMotionProvider>
+77:       </body>
+78:     </html>
+79:   );
+80: }
 ````
 
 ## File: .github/workflows/cypress.yml
