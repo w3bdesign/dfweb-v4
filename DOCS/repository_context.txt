@@ -2196,6 +2196,239 @@ vercel.json
 17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
+## File: commit/commit_analyzer.py
+````python
+  1: #!/usr/bin/env python3
+  2: """AI-Powered Git Commit Message Generator.
+  3: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
+  4: Installation in another repo:
+  5: 1. Copy the entire commit/ folder to your repo
+  6: 2. Run: pip install openai anthropic python-dotenv
+  7: 3. Create .env with your API key (or run setup.sh/setup.ps1)
+  8: 4. Make a commit!
+  9: """
+ 10: import subprocess
+ 11: import sys
+ 12: import codecs
+ 13: from typing import List, Tuple, Optional
+ 14: from pathlib import Path
+ 15: from dotenv import load_dotenv
+ 16: # Add this directory to path to import the providers module
+ 17: sys.path.insert(0, str(Path(__file__).parent))
+ 18: from providers import get_provider
+ 19: # =============================================================================
+ 20: # GIT COMMAND SECURITY
+ 21: # =============================================================================
+ 22: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
+ 23: _GIT_ARG_CACHED = "--cached"
+ 24: _GIT_ARG_NAME_ONLY = "--name-only"
+ 25: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
+ 26: _ALLOWED_GIT_ARGS = frozenset(
+ 27:     [_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS]
+ 28: )
+ 29: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
+ 30: def _normalize_repo_path(path: str) -> str:
+ 31:     """Normalize paths to forward-slashed, workspace-relative form."""
+ 32:     return path.replace("\\", "/").lstrip("./")
+ 33: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
+ 34:     """Remove full per-file diff blocks for excluded paths."""
+ 35:     if not diff or not excluded_paths:
+ 36:         return diff
+ 37:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
+ 38:     kept: List[str] = []
+ 39:     skipping = False
+ 40:     for line in diff.splitlines(True):
+ 41:         if line.startswith("diff --git "):
+ 42:             parts = line.strip().split()
+ 43:             a_path = ""
+ 44:             b_path = ""
+ 45:             if len(parts) >= 4:
+ 46:                 a_token = parts[2]
+ 47:                 b_token = parts[3]
+ 48:                 if a_token.startswith("a/"):
+ 49:                     a_path = a_token[2:]
+ 50:                 if b_token.startswith("b/"):
+ 51:                     b_path = b_token[2:]
+ 52:             file_path = b_path or a_path
+ 53:             skipping = _normalize_repo_path(file_path) in excluded
+ 54:             if skipping:
+ 55:                 continue
+ 56:         if skipping:
+ 57:             continue
+ 58:         kept.append(line)
+ 59:     return "".join(kept)
+ 60: def _run_git_command(args: List[str]) -> str:
+ 61:     """Safely execute a git command with strict whitelist validation."""
+ 62:     if not args:
+ 63:         raise ValueError("Git command arguments cannot be empty")
+ 64:     subcommand = args[0]
+ 65:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
+ 66:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
+ 67:     for arg in args[1:]:
+ 68:         if arg not in _ALLOWED_GIT_ARGS:
+ 69:             raise ValueError(f"Git argument '{arg}' not allowed")
+ 70:     full_command = ["git"] + list(args)
+ 71:     result = subprocess.check_output(
+ 72:         full_command,
+ 73:         shell=False,
+ 74:         stderr=subprocess.DEVNULL,
+ 75:     )
+ 76:     return result.decode("utf-8")
+ 77: # =============================================================================
+ 78: # DIFF ANALYSIS
+ 79: # =============================================================================
+ 80: def _is_lock_file(filename: str) -> bool:
+ 81:     """Check if a filename is a dependency lock file."""
+ 82:     lock_file_patterns = (
+ 83:         ".lock",
+ 84:         "lock.json",
+ 85:         "package-lock.json",
+ 86:         "yarn.lock",
+ 87:         "pnpm-lock.yaml",
+ 88:     )
+ 89:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
+ 90: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
+ 91:     """Get the diff of staged changes and list of changed files.
+ 92:     Returns
+ 93:     -------
+ 94:         Tuple of (diff_content, has_lock_files, changed_files)
+ 95:     """
+ 96:     try:
+ 97:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
+ 98:         staged_files = files_output.splitlines()
+ 99:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+100:         if any(_is_lock_file(f) for f in staged_files):
+101:             return None, True, staged_files
+102:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+103:             return "", False, staged_files
+104:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
+105:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+106:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+107:         if not diff:
+108:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
+109:             files_output = _run_git_command(
+110:                 ["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY]
+111:             )
+112:             staged_files = files_output.splitlines()
+113:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
+114:             if any(_is_lock_file(f) for f in staged_files):
+115:                 return None, True, staged_files
+116:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
+117:                 return "", False, staged_files
+118:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
+119:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
+120:         return diff, False, staged_files
+121:     except subprocess.CalledProcessError as e:
+122:         print(f"Error getting git diff: {e}")
+123:         return None, False, []
+124:     except ValueError as e:
+125:         print(f"Internal error - invalid git command: {e}")
+126:         return None, False, []
+127: # =============================================================================
+128: # COMMIT MESSAGE GENERATION
+129: # =============================================================================
+130: def generate_commit_message(diff: str) -> Optional[str]:
+131:     """Generate commit message using the configured LLM provider."""
+132:     try:
+133:         load_dotenv()
+134:         provider = get_provider()
+135:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
+136: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
+137: just the commit message exactly as it should appear in git.
+138:         The commit message MUST follow this format:
+139:         <emoji> <type>[optional scope]: <description>
+140:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
+141:         [optional footer(s)]
+142:         Where:
+143:         1. Type MUST be one of (with corresponding emoji):
+144:            Core types:
+145:            - ✨ feat: A new feature
+146:            - 🐛 fix: A bug fix
+147:            - 📝 docs: Documentation only changes
+148:            - 🎨 style: Changes that don't affect the meaning of the code
+149:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
+150:            - ⚡️ perf: A code change that improves performance
+151:            - ✅ test: Adding missing tests or correcting existing tests
+152:            - 🔧 chore: Changes to build process or auxiliary tools
+153:            - 👷 ci: Changes to CI configuration files and scripts
+154:            Additional specific types:
+155:            - 🔒 security: Security fixes
+156:            - 📦 deps: Dependencies
+157:            - 💥 breaking: Breaking changes
+158:            - 💄 ui: UI/style changes
+159:            - 🌐 i18n: Internationalization
+160:            - ✏️ typo: Fix typos
+161:            - 🎉 init: Initial commit
+162:            - 📄 license: License
+163:            - 🐳 docker: Docker
+164:            - ♿️ access: Accessibility
+165:            - 🔊 logs: Logging
+166:            - 🗃️ db: Database
+167:            - 🔥 cleanup: Remove code/files
+168:            - 🚧 wip: Work in progress
+169:            - 🚚 move: Move/rename files
+170:            - ⏪ revert: Revert changes
+171:            - 🔀 merge: Merge branches
+172:            - 📱 responsive: Responsive design
+173:            - 🚑 hotfix: Critical hotfix
+174:         2. Description MUST:
+175:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
+176:            - Start with lowercase
+177:            - Use imperative mood ("add" not "adds/added")
+178:            - No period at end
+179:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
+180:         3. Body (if included) MUST:
+181:            - Be separated from title by blank line
+182:            - Wrap at 72 characters
+183:            - Explain what and why vs. how
+184:            - Use proper punctuation
+185:         Git diff to analyze:
+186:         {diff}
+187:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
+188:         message = provider.chat_completion(prompt)
+189:         if "Based on the diff" in message:
+190:             message = message.split("\n")[-1].strip()
+191:         return message
+192:     except Exception as e:
+193:         error_msg = str(e)
+194:         print(f"Error generating commit message: {error_msg}")
+195:         if "500" in error_msg:
+196:             print("\nServer error. Check MODEL_NAME if set.")
+197:         elif "401" in error_msg or "403" in error_msg:
+198:             print("\nAuth error. Check your API key.")
+199:         elif "404" in error_msg:
+200:             print("\nModel not found. Check MODEL_NAME.")
+201:         return None
+202: # =============================================================================
+203: # MAIN
+204: # =============================================================================
+205: def main():
+206:     diff, has_lock_files, changed_files = get_staged_diff()
+207:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
+208:     if has_lock_files:
+209:         commit_message = "📦 deps: update dependencies"
+210:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
+211:         commit_message = "📝 docs: update repository context"
+212:     elif not diff:
+213:         print("No changes to analyze")
+214:         sys.exit(1)
+215:     else:
+216:         commit_message = generate_commit_message(diff)
+217:     if not commit_message:
+218:         print("Failed to generate commit message")
+219:         sys.exit(1)
+220:     print("\nGenerated commit message:")
+221:     print("------------------------")
+222:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
+223:     sys.stdout.buffer.flush()
+224:     print("\n------------------------")
+225:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
+226:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
+227:             f.write(commit_message)
+228: if __name__ == "__main__":
+229:     main()
+````
+
 ## File: commit/README.md
 ````markdown
  1: # AI Commit Message Generator
@@ -5193,6 +5426,114 @@ vercel.json
 45: }
 46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
 47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
+````
+
+## File: src/__tests__/CV/CVContent.test.tsx
+````typescript
+  1: /**
+  2:  * @jest-environment jsdom
+  3:  */
+  4: import React from "react";
+  5: import { render, screen } from "@testing-library/react";
+  6: import userEvent from "@testing-library/user-event";
+  7: import CVContent from "@/components/CV/CVContent.component";
+  8: const mockCVData = {
+  9:   _id: "cv-test-id",
+ 10:   _type: "cv" as const,
+ 11:   _createdAt: "2024-01-01T00:00:00Z",
+ 12:   _updatedAt: "2024-01-01T00:00:00Z",
+ 13:   _rev: "test-rev",
+ 14:   keyQualifications: ["Qualification 1", "Qualification 2"],
+ 15:   experience: [
+ 16:     {
+ 17:       _key: "exp-1",
+ 18:       period: "2020-2022",
+ 19:       company: "Example Company",
+ 20:       role: "Software Developer",
+ 21:       description: "Worked on various projects",
+ 22:     },
+ 23:   ],
+ 24:   education: [
+ 25:     {
+ 26:       _key: "edu-1",
+ 27:       period: "2016-2020",
+ 28:       institution: "University of Example",
+ 29:       degree: "Bachelor in Computer Science",
+ 30:       description: "Studied various aspects of computer science",
+ 31:     },
+ 32:   ],
+ 33:   volunteerWork: [
+ 34:     {
+ 35:       _key: "vol-1",
+ 36:       period: "2023-2024",
+ 37:       organization: "AI Community",
+ 38:       role: "Technical Lead",
+ 39:       description: "Managing AI Discord community and developing bots",
+ 40:     },
+ 41:   ],
+ 42: };
+ 43: describe("CVContent", () => {
+ 44:   it("renders CV header and PDF download button", () => {
+ 45:     // Arrange
+ 46:     const expectedElements = {
+ 47:       header: /cv/i,
+ 48:       pdfButton: /last ned pdf/i,
+ 49:     };
+ 50:     // Act
+ 51:     render(<CVContent cvData={mockCVData} />);
+ 52:     // Assert
+ 53:     expect(
+ 54:       screen.getByRole("heading", { name: expectedElements.header }),
+ 55:     ).toBeInTheDocument();
+ 56:     const pdfLinks = screen.getAllByRole("link", {
+ 57:       name: expectedElements.pdfButton,
+ 58:     });
+ 59:     expect(pdfLinks).toHaveLength(2); // Desktop + mobile
+ 60:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
+ 61:   });
+ 62:   it("renders all navigation tabs", () => {
+ 63:     // Arrange
+ 64:     const expectedTabs = [
+ 65:       /nøkkelkvalifikasjoner/i,
+ 66:       /erfaring/i,
+ 67:       /utdanning/i,
+ 68:       /frivillig arbeid/i,
+ 69:     ];
+ 70:     // Act
+ 71:     render(<CVContent cvData={mockCVData} />);
+ 72:     // Assert
+ 73:     expectedTabs.forEach((tabName) => {
+ 74:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
+ 75:     });
+ 76:   });
+ 77:   it("displays qualifications in initial tab", () => {
+ 78:     // Arrange
+ 79:     const expectedQualification = /qualification 1/i;
+ 80:     // Act
+ 81:     render(<CVContent cvData={mockCVData} />);
+ 82:     // Assert
+ 83:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
+ 84:   });
+ 85:   it("displays volunteer work content when switching tabs", async () => {
+ 86:     // Arrange
+ 87:     const user = userEvent.setup();
+ 88:     render(<CVContent cvData={mockCVData} />);
+ 89:     const volunteerWorkTab = screen.getByRole("tab", {
+ 90:       name: /frivillig arbeid/i,
+ 91:     });
+ 92:     const expectedContent = {
+ 93:       role: /technical lead/i,
+ 94:       organization: /ai community/i,
+ 95:     };
+ 96:     // Act
+ 97:     await user.click(volunteerWorkTab);
+ 98:     // Assert
+ 99:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
+100:     expect(
+101:       await screen.findByText(expectedContent.organization),
+102:     ).toBeInTheDocument();
+103:   });
+104: });
 ````
 
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
@@ -9044,6 +9385,75 @@ vercel.json
 109: };
 ````
 
+## File: src/components/Animations/Matrix.utils.ts
+````typescript
+ 1: export interface RGB {
+ 2:   r: number;
+ 3:   g: number;
+ 4:   b: number;
+ 5: }
+ 6: export interface Column {
+ 7:   x: number;
+ 8:   stackHeight: number;
+ 9:   stackCounter: number;
+10: }
+11: /**
+12:  * Converts a hex color value to RGB
+13:  * @param {string} hexValue - The hex color value to convert
+14:  * @returns {RGB | null} The RGB color object or null if invalid hex value
+15:  */
+16: export const hexToRgb = (hexValue: string): RGB | null => {
+17:   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
+18:   return result
+19:     ? {
+20:         r: Number.parseInt(result?.[1] ?? "0", 16),
+21:         g: Number.parseInt(result?.[2] ?? "0", 16),
+22:         b: Number.parseInt(result?.[3] ?? "0", 16),
+23:       }
+24:     : null;
+25: };
+26: /**
+27:  * Generates a random integer
+28:  * @param {number} max - The maximum value (exclusive)
+29:  * @returns {number} A random integer between 0 and max-1
+30:  */
+31: export const getRandomInt = (max: number): number => {
+32:   const array = new Uint32Array(1);
+33:   window.crypto.getRandomValues(array);
+34:   return (array?.[0] ?? 0) % max;
+35: };
+36: /**
+37:  * Gets a random character from the tileSet or generates a random ASCII character
+38:  * @param {string[] | null} tileSet - Optional set of characters to choose from
+39:  * @returns {string} A random character
+40:  */
+41: export const getRandomCharacter = (tileSet: string[] | null): string => {
+42:   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
+43:     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? "";
+44:   }
+45:   // Generate ASCII printable characters (33-126)
+46:   return String.fromCodePoint(33 + (getRandomInt(94) % 94));
+47: };
+48: /**
+49:  * Debounce function
+50:  * @param {T} func - The function to debounce
+51:  * @param {number} wait - The debounce wait time in milliseconds
+52:  * @returns {(...args: Parameters<T>) => void} The debounced function
+53:  */
+54: export const debounce = <T extends (...args: unknown[]) => void>(
+55:   func: T,
+56:   wait: number,
+57: ): ((...args: Parameters<T>) => void) => {
+58:   let timeout: ReturnType<typeof setTimeout> | null = null;
+59:   return (...args: Parameters<T>) => {
+60:     if (timeout !== null) {
+61:       clearTimeout(timeout);
+62:     }
+63:     timeout = setTimeout(() => func(...args), wait);
+64:   };
+65: };
+````
+
 ## File: src/components/Animations/PageTransition.component.tsx
 ````typescript
  1: import { Variants, AnimatePresence } from "motion/react";
@@ -11677,6 +12087,65 @@ vercel.json
 79: `);
 ````
 
+## File: src/lib/csrf.ts
+````typescript
+ 1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
+ 2: const CSRF_SECRET =
+ 3:   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
+ 4: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
+ 5: /**
+ 6:  * Generates a CSRF token with timestamp
+ 7:  * @returns {string} Base64 encoded CSRF token
+ 8:  */
+ 9: export function generateCSRFToken(): string {
+10:   const timestamp = Date.now().toString();
+11:   const randomValue = randomBytes(32).toString("hex");
+12:   const payload = `${timestamp}:${randomValue}`;
+13:   const signature = createHmac("sha256", CSRF_SECRET)
+14:     .update(payload)
+15:     .digest("hex");
+16:   const token = `${payload}:${signature}`;
+17:   return Buffer.from(token).toString("base64");
+18: }
+19: /**
+20:  * Validates a CSRF token
+21:  * @param {string} token - Base64 encoded CSRF token
+22:  * @returns {boolean} True if token is valid and not expired
+23:  */
+24: export function validateCSRFToken(token: string): boolean {
+25:   try {
+26:     const decoded = Buffer.from(token, "base64").toString("utf-8");
+27:     const parts = decoded.split(":");
+28:     if (parts.length !== 3) {
+29:       return false;
+30:     }
+31:     const [timestamp, randomValue, signature] = parts;
+32:     const payload = `${timestamp}:${randomValue}`;
+33:     // Verify signature
+34:     const expectedSignature = createHmac("sha256", CSRF_SECRET)
+35:       .update(payload)
+36:       .digest("hex");
+37:     const signatureBuffer = Buffer.from(signature, "hex");
+38:     const expectedBuffer = Buffer.from(expectedSignature, "hex");
+39:     if (signatureBuffer.length !== expectedBuffer.length) {
+40:       return false;
+41:     }
+42:     if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
+43:       return false;
+44:     }
+45:     // Check if token is expired
+46:     const tokenTime = Number.parseInt(timestamp, 10);
+47:     const currentTime = Date.now();
+48:     if (currentTime - tokenTime > TOKEN_EXPIRY) {
+49:       return false;
+50:     }
+51:     return true;
+52:   } catch {
+53:     return false;
+54:   }
+55: }
+````
+
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -12204,6 +12673,78 @@ vercel.json
 120: export const ExtensiveCV = () => {
 121:   return <CVContent cvData={extensiveCvData} />;
 122: };
+````
+
+## File: src/stories/components/ErrorHandling/ErrorFallback.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta } from "@ladle/react";
+ 3: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
+ 4: import "@/app/globals.css";
+ 5: export default {
+ 6:   title: "ErrorHandling/ErrorFallback",
+ 7:   component: ErrorFallback,
+ 8: } as Meta;
+ 9: // Create a mock error to pass to the component
+10: const mockError = new Error("This is a test error message");
+11: // Default full-screen error fallback
+12: export const Default = () => (
+13:   <div
+14:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
+15:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
+16:   >
+17:     <ErrorFallback error={mockError} />
+18:   </div>
+19: );
+20: // Compact error fallback for inline use
+21: export const Compact = () => <ErrorFallback error={mockError} compact={true} />;
+22: // Error with a long message
+23: export const LongErrorMessage = () => (
+24:   <div
+25:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
+26:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
+27:   >
+28:     <ErrorFallback
+29:       error={
+30:         new Error(
+31:           "This is a much longer error message that demonstrates how the component handles extensive text content. It might wrap to multiple lines and test the layout capabilities of the error display.",
+32:         )
+33:       }
+34:     />
+35:   </div>
+36: );
+37: // Compact error with a long message
+38: export const CompactLongErrorMessage = () => (
+39:   <ErrorFallback
+40:     error={
+41:       new Error(
+42:         "This is a much longer error message that demonstrates how the component handles extensive text content. It might wrap to multiple lines and test the layout capabilities of the error display.",
+43:       )
+44:     }
+45:     compact={true}
+46:   />
+47: );
+48: // Error without a specific message
+49: export const NoMessageError = () => (
+50:   <div
+51:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
+52:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
+53:   >
+54:     <ErrorFallback error={new Error("An unexpected error occurred")} />
+55:   </div>
+56: );
+57: // Multiple compact errors side by side
+58: export const MultipleCompactErrors = () => (
+59:   <div className="grid grid-cols-2 gap-4">
+60:     <ErrorFallback
+61:       error={new Error("Database connection failed")}
+62:       compact={true}
+63:     />
+64:     <ErrorFallback error={new Error("API request timeout")} compact={true} />
+65:     <ErrorFallback error={new Error("Authentication error")} compact={true} />
+66:     <ErrorFallback error={new Error("Permission denied")} compact={true} />
+67:   </div>
+68: );
 ````
 
 ## File: src/stories/components/Index/Hero.stories.tsx
@@ -15044,77 +15585,6 @@ vercel.json
 ## File: studio/.npmrc
 ````
 1: ignore-scripts=true
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.7",
-18:     "react-dom": "^19.2.7",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.3.0",
-21:     "styled-components": "^6.4.3"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.17",
-26:     "eslint": "^10.6.0",
-27:     "prettier": "^3.9.4",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "adm-zip": ">=0.6.0",
-33:       "basic-ftp": ">=6.0.1",
-34:       "brace-expansion": ">=5.0.7",
-35:       "dompurify": ">=3.4.12",
-36:       "esbuild": ">=0.28.1",
-37:       "flatted": ">=3.4.2",
-38:       "js-yaml": ">=5.2.1",
-39:       "lodash": ">=4.18.1",
-40:       "lodash-es": ">=4.18.1",
-41:       "minimatch": "10.2.5",
-42:       "picomatch": "4.0.5",
-43:       "smol-toml": ">=1.7.0",
-44:       "undici": ">=8.8.0",
-45:       "vite": ">=8.1.5",
-46:       "ws": ">=8.21.1",
-47:       "yaml": ">=2.9.0",
-48:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-49:     }
-50:   },
-51:   "overrides": {
-52:     "adm-zip": ">=0.6.0",
-53:     "smol-toml": ">=1.7.0",
-54:     "brace-expansion": ">=5.0.7",
-55:     "esbuild": ">=0.28.1",
-56:     "uuid": ">=14.0.1",
-57:     "js-yaml": ">=5.2.1",
-58:     "undici": ">=8.8.0",
-59:     "ws": ">=8.21.1"
-60:   },
-61:   "prettier": {
-62:     "semi": false,
-63:     "printWidth": 100,
-64:     "bracketSpacing": false,
-65:     "singleQuote": true
-66:   }
-67: }
 ````
 
 ## File: studio/README.md
@@ -18608,29 +19078,6 @@ vercel.json
 62: });
 ````
 
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - '.'
- 3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.7"
- 6:   "js-yaml": ">=5.2.1"
- 7:   "sharp": ">=0.35.3"
- 8:   "adm-zip": ">=0.6.0"
- 9: allowBuilds:
-10:   '@swc/core': true
-11:   cypress: true
-12:   esbuild: true
-13:   msw: true
-14:   puppeteer: true
-15:   sharp: true
-16:   unrs-resolver: true
-17: minimumReleaseAgeExclude:
-18:   - postcss@8.5.21
-19:   - wait-on@9.1.0
-````
-
 ## File: postcss.config.mjs
 ````javascript
 1: /** @type {import('postcss-load-config').Config} */
@@ -19359,239 +19806,6 @@ vercel.json
 83:           fi
 ````
 
-## File: commit/commit_analyzer.py
-````python
-  1: #!/usr/bin/env python3
-  2: """AI-Powered Git Commit Message Generator.
-  3: Generates conventional commit messages using OpenAI, Anthropic, or any OpenAI-compatible LLM API.
-  4: Installation in another repo:
-  5: 1. Copy the entire commit/ folder to your repo
-  6: 2. Run: pip install openai anthropic python-dotenv
-  7: 3. Create .env with your API key (or run setup.sh/setup.ps1)
-  8: 4. Make a commit!
-  9: """
- 10: import subprocess
- 11: import sys
- 12: import codecs
- 13: from typing import List, Tuple, Optional
- 14: from pathlib import Path
- 15: from dotenv import load_dotenv
- 16: # Add this directory to path to import the providers module
- 17: sys.path.insert(0, str(Path(__file__).parent))
- 18: from providers import get_provider
- 19: # =============================================================================
- 20: # GIT COMMAND SECURITY
- 21: # =============================================================================
- 22: _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
- 23: _GIT_ARG_CACHED = "--cached"
- 24: _GIT_ARG_NAME_ONLY = "--name-only"
- 25: _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
- 26: _ALLOWED_GIT_ARGS = frozenset(
- 27:     [_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS]
- 28: )
- 29: _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
- 30: def _normalize_repo_path(path: str) -> str:
- 31:     """Normalize paths to forward-slashed, workspace-relative form."""
- 32:     return path.replace("\\", "/").lstrip("./")
- 33: def _filter_diff_excluding_paths(diff: str, excluded_paths: List[str]) -> str:
- 34:     """Remove full per-file diff blocks for excluded paths."""
- 35:     if not diff or not excluded_paths:
- 36:         return diff
- 37:     excluded = {_normalize_repo_path(p) for p in excluded_paths}
- 38:     kept: List[str] = []
- 39:     skipping = False
- 40:     for line in diff.splitlines(True):
- 41:         if line.startswith("diff --git "):
- 42:             parts = line.strip().split()
- 43:             a_path = ""
- 44:             b_path = ""
- 45:             if len(parts) >= 4:
- 46:                 a_token = parts[2]
- 47:                 b_token = parts[3]
- 48:                 if a_token.startswith("a/"):
- 49:                     a_path = a_token[2:]
- 50:                 if b_token.startswith("b/"):
- 51:                     b_path = b_token[2:]
- 52:             file_path = b_path or a_path
- 53:             skipping = _normalize_repo_path(file_path) in excluded
- 54:             if skipping:
- 55:                 continue
- 56:         if skipping:
- 57:             continue
- 58:         kept.append(line)
- 59:     return "".join(kept)
- 60: def _run_git_command(args: List[str]) -> str:
- 61:     """Safely execute a git command with strict whitelist validation."""
- 62:     if not args:
- 63:         raise ValueError("Git command arguments cannot be empty")
- 64:     subcommand = args[0]
- 65:     if subcommand not in _ALLOWED_GIT_SUBCOMMANDS:
- 66:         raise ValueError(f"Git subcommand '{subcommand}' not allowed")
- 67:     for arg in args[1:]:
- 68:         if arg not in _ALLOWED_GIT_ARGS:
- 69:             raise ValueError(f"Git argument '{arg}' not allowed")
- 70:     full_command = ["git"] + list(args)
- 71:     result = subprocess.check_output(
- 72:         full_command,
- 73:         shell=False,
- 74:         stderr=subprocess.DEVNULL,
- 75:     )
- 76:     return result.decode("utf-8")
- 77: # =============================================================================
- 78: # DIFF ANALYSIS
- 79: # =============================================================================
- 80: def _is_lock_file(filename: str) -> bool:
- 81:     """Check if a filename is a dependency lock file."""
- 82:     lock_file_patterns = (
- 83:         ".lock",
- 84:         "lock.json",
- 85:         "package-lock.json",
- 86:         "yarn.lock",
- 87:         "pnpm-lock.yaml",
- 88:     )
- 89:     return any(filename.endswith(pattern) for pattern in lock_file_patterns)
- 90: def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
- 91:     """Get the diff of staged changes and list of changed files.
- 92:     Returns
- 93:     -------
- 94:         Tuple of (diff_content, has_lock_files, changed_files)
- 95:     """
- 96:     try:
- 97:         files_output = _run_git_command(["diff", _GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY])
- 98:         staged_files = files_output.splitlines()
- 99:         staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-100:         if any(_is_lock_file(f) for f in staged_files):
-101:             return None, True, staged_files
-102:         if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-103:             return "", False, staged_files
-104:         diff = _run_git_command(["diff", _GIT_ARG_CACHED])
-105:         if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-106:             diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-107:         if not diff:
-108:             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
-109:             files_output = _run_git_command(
-110:                 ["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY]
-111:             )
-112:             staged_files = files_output.splitlines()
-113:             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
-114:             if any(_is_lock_file(f) for f in staged_files):
-115:                 return None, True, staged_files
-116:             if staged_files_normalized == [_REPOSITORY_CONTEXT_PATH]:
-117:                 return "", False, staged_files
-118:             if _REPOSITORY_CONTEXT_PATH in staged_files_normalized:
-119:                 diff = _filter_diff_excluding_paths(diff, [_REPOSITORY_CONTEXT_PATH])
-120:         return diff, False, staged_files
-121:     except subprocess.CalledProcessError as e:
-122:         print(f"Error getting git diff: {e}")
-123:         return None, False, []
-124:     except ValueError as e:
-125:         print(f"Internal error - invalid git command: {e}")
-126:         return None, False, []
-127: # =============================================================================
-128: # COMMIT MESSAGE GENERATION
-129: # =============================================================================
-130: def generate_commit_message(diff: str) -> Optional[str]:
-131:     """Generate commit message using the configured LLM provider."""
-132:     try:
-133:         load_dotenv()
-134:         provider = get_provider()
-135:         prompt = f"""You are a git commit message generator. Analyze the git diff and output ONLY \
-136: the commit message itself - no explanations, no prefixes like "Based on the diff...", \
-137: just the commit message exactly as it should appear in git.
-138:         The commit message MUST follow this format:
-139:         <emoji> <type>[optional scope]: <description>
-140:         [required body] (minimum length of 50 characters and a maximum of around 80 characters)
-141:         [optional footer(s)]
-142:         Where:
-143:         1. Type MUST be one of (with corresponding emoji):
-144:            Core types:
-145:            - ✨ feat: A new feature
-146:            - 🐛 fix: A bug fix
-147:            - 📝 docs: Documentation only changes
-148:            - 🎨 style: Changes that don't affect the meaning of the code
-149:            - ♻️ refactor: A code change that neither fixes a bug nor adds a feature
-150:            - ⚡️ perf: A code change that improves performance
-151:            - ✅ test: Adding missing tests or correcting existing tests
-152:            - 🔧 chore: Changes to build process or auxiliary tools
-153:            - 👷 ci: Changes to CI configuration files and scripts
-154:            Additional specific types:
-155:            - 🔒 security: Security fixes
-156:            - 📦 deps: Dependencies
-157:            - 💥 breaking: Breaking changes
-158:            - 💄 ui: UI/style changes
-159:            - 🌐 i18n: Internationalization
-160:            - ✏️ typo: Fix typos
-161:            - 🎉 init: Initial commit
-162:            - 📄 license: License
-163:            - 🐳 docker: Docker
-164:            - ♿️ access: Accessibility
-165:            - 🔊 logs: Logging
-166:            - 🗃️ db: Database
-167:            - 🔥 cleanup: Remove code/files
-168:            - 🚧 wip: Work in progress
-169:            - 🚚 move: Move/rename files
-170:            - ⏪ revert: Revert changes
-171:            - 🔀 merge: Merge branches
-172:            - 📱 responsive: Responsive design
-173:            - 🚑 hotfix: Critical hotfix
-174:         2. Description MUST:
-175:            - Be 50 characters or less (THIS IS CRITICAL - count characters carefully!)
-176:            - Start with lowercase
-177:            - Use imperative mood ("add" not "adds/added")
-178:            - No period at end
-179:            - Be concise - prefer shorter descriptions like "add multi-provider support" over verbose ones
-180:         3. Body (if included) MUST:
-181:            - Be separated from title by blank line
-182:            - Wrap at 72 characters
-183:            - Explain what and why vs. how
-184:            - Use proper punctuation
-185:         Git diff to analyze:
-186:         {diff}
-187:         Output ONLY the commit message exactly as it should appear in git, with no additional text."""
-188:         message = provider.chat_completion(prompt)
-189:         if "Based on the diff" in message:
-190:             message = message.split("\n")[-1].strip()
-191:         return message
-192:     except Exception as e:
-193:         error_msg = str(e)
-194:         print(f"Error generating commit message: {error_msg}")
-195:         if "500" in error_msg:
-196:             print("\nServer error. Check MODEL_NAME if set.")
-197:         elif "401" in error_msg or "403" in error_msg:
-198:             print("\nAuth error. Check your API key.")
-199:         elif "404" in error_msg:
-200:             print("\nModel not found. Check MODEL_NAME.")
-201:         return None
-202: # =============================================================================
-203: # MAIN
-204: # =============================================================================
-205: def main():
-206:     diff, has_lock_files, changed_files = get_staged_diff()
-207:     normalized_changed = [_normalize_repo_path(f) for f in changed_files]
-208:     if has_lock_files:
-209:         commit_message = "📦 deps: update dependencies"
-210:     elif normalized_changed == [_REPOSITORY_CONTEXT_PATH]:
-211:         commit_message = "📝 docs: update repository context"
-212:     elif not diff:
-213:         print("No changes to analyze")
-214:         sys.exit(1)
-215:     else:
-216:         commit_message = generate_commit_message(diff)
-217:     if not commit_message:
-218:         print("Failed to generate commit message")
-219:         sys.exit(1)
-220:     print("\nGenerated commit message:")
-221:     print("------------------------")
-222:     sys.stdout.buffer.write(commit_message.encode("utf-8"))
-223:     sys.stdout.buffer.flush()
-224:     print("\n------------------------")
-225:     if len(sys.argv) > 1 and sys.argv[1] == "--hook":
-226:         with codecs.open(".git/COMMIT_EDITMSG", "w", encoding="utf-8") as f:
-227:             f.write(commit_message)
-228: if __name__ == "__main__":
-229:     main()
-````
-
 ## File: commit/setup.ps1
 ````powershell
  1: # Setup script for AI Commit Message Generator
@@ -19708,114 +19922,6 @@ vercel.json
 43: echo "Next steps:"
 44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
 45: echo "2. Make a commit to test the AI commit message generator"
-````
-
-## File: src/__tests__/CV/CVContent.test.tsx
-````typescript
-  1: /**
-  2:  * @jest-environment jsdom
-  3:  */
-  4: import React from "react";
-  5: import { render, screen } from "@testing-library/react";
-  6: import userEvent from "@testing-library/user-event";
-  7: import CVContent from "@/components/CV/CVContent.component";
-  8: const mockCVData = {
-  9:   _id: "cv-test-id",
- 10:   _type: "cv" as const,
- 11:   _createdAt: "2024-01-01T00:00:00Z",
- 12:   _updatedAt: "2024-01-01T00:00:00Z",
- 13:   _rev: "test-rev",
- 14:   keyQualifications: ["Qualification 1", "Qualification 2"],
- 15:   experience: [
- 16:     {
- 17:       _key: "exp-1",
- 18:       period: "2020-2022",
- 19:       company: "Example Company",
- 20:       role: "Software Developer",
- 21:       description: "Worked on various projects",
- 22:     },
- 23:   ],
- 24:   education: [
- 25:     {
- 26:       _key: "edu-1",
- 27:       period: "2016-2020",
- 28:       institution: "University of Example",
- 29:       degree: "Bachelor in Computer Science",
- 30:       description: "Studied various aspects of computer science",
- 31:     },
- 32:   ],
- 33:   volunteerWork: [
- 34:     {
- 35:       _key: "vol-1",
- 36:       period: "2023-2024",
- 37:       organization: "AI Community",
- 38:       role: "Technical Lead",
- 39:       description: "Managing AI Discord community and developing bots",
- 40:     },
- 41:   ],
- 42: };
- 43: describe("CVContent", () => {
- 44:   it("renders CV header and PDF download button", () => {
- 45:     // Arrange
- 46:     const expectedElements = {
- 47:       header: /cv/i,
- 48:       pdfButton: /last ned pdf/i,
- 49:     };
- 50:     // Act
- 51:     render(<CVContent cvData={mockCVData} />);
- 52:     // Assert
- 53:     expect(
- 54:       screen.getByRole("heading", { name: expectedElements.header }),
- 55:     ).toBeInTheDocument();
- 56:     const pdfLinks = screen.getAllByRole("link", {
- 57:       name: expectedElements.pdfButton,
- 58:     });
- 59:     expect(pdfLinks).toHaveLength(2); // Desktop + mobile
- 60:     pdfLinks.forEach((link) => expect(link).toBeInTheDocument());
- 61:   });
- 62:   it("renders all navigation tabs", () => {
- 63:     // Arrange
- 64:     const expectedTabs = [
- 65:       /nøkkelkvalifikasjoner/i,
- 66:       /erfaring/i,
- 67:       /utdanning/i,
- 68:       /frivillig arbeid/i,
- 69:     ];
- 70:     // Act
- 71:     render(<CVContent cvData={mockCVData} />);
- 72:     // Assert
- 73:     expectedTabs.forEach((tabName) => {
- 74:       expect(screen.getByRole("tab", { name: tabName })).toBeInTheDocument();
- 75:     });
- 76:   });
- 77:   it("displays qualifications in initial tab", () => {
- 78:     // Arrange
- 79:     const expectedQualification = /qualification 1/i;
- 80:     // Act
- 81:     render(<CVContent cvData={mockCVData} />);
- 82:     // Assert
- 83:     expect(screen.getByText(expectedQualification)).toBeInTheDocument();
- 84:   });
- 85:   it("displays volunteer work content when switching tabs", async () => {
- 86:     // Arrange
- 87:     const user = userEvent.setup();
- 88:     render(<CVContent cvData={mockCVData} />);
- 89:     const volunteerWorkTab = screen.getByRole("tab", {
- 90:       name: /frivillig arbeid/i,
- 91:     });
- 92:     const expectedContent = {
- 93:       role: /technical lead/i,
- 94:       organization: /ai community/i,
- 95:     };
- 96:     // Act
- 97:     await user.click(volunteerWorkTab);
- 98:     // Assert
- 99:     expect(await screen.findByText(expectedContent.role)).toBeInTheDocument();
-100:     expect(
-101:       await screen.findByText(expectedContent.organization),
-102:     ).toBeInTheDocument();
-103:   });
-104: });
 ````
 
 ## File: src/components/Kontakt/ContactForm.component.tsx
@@ -19971,76 +20077,79 @@ vercel.json
 149: export default ContactForm;
 ````
 
-## File: src/stories/components/ErrorHandling/ErrorFallback.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta } from "@ladle/react";
- 3: import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
- 4: import "@/app/globals.css";
- 5: export default {
- 6:   title: "ErrorHandling/ErrorFallback",
- 7:   component: ErrorFallback,
- 8: } as Meta;
- 9: // Create a mock error to pass to the component
-10: const mockError = new Error("This is a test error message");
-11: // Default full-screen error fallback
-12: export const Default = () => (
-13:   <div
-14:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
-15:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
-16:   >
-17:     <ErrorFallback error={mockError} />
-18:   </div>
-19: );
-20: // Compact error fallback for inline use
-21: export const Compact = () => <ErrorFallback error={mockError} compact={true} />;
-22: // Error with a long message
-23: export const LongErrorMessage = () => (
-24:   <div
-25:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
-26:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
-27:   >
-28:     <ErrorFallback
-29:       error={
-30:         new Error(
-31:           "This is a much longer error message that demonstrates how the component handles extensive text content. It might wrap to multiple lines and test the layout capabilities of the error display.",
-32:         )
-33:       }
-34:     />
-35:   </div>
-36: );
-37: // Compact error with a long message
-38: export const CompactLongErrorMessage = () => (
-39:   <ErrorFallback
-40:     error={
-41:       new Error(
-42:         "This is a much longer error message that demonstrates how the component handles extensive text content. It might wrap to multiple lines and test the layout capabilities of the error display.",
-43:       )
-44:     }
-45:     compact={true}
-46:   />
-47: );
-48: // Error without a specific message
-49: export const NoMessageError = () => (
-50:   <div
-51:     className="relative mx-auto my-8 p-4 bg-gray-800 rounded-lg shadow-xl"
-52:     style={{ maxWidth: "800px", height: "600px", overflow: "hidden" }}
-53:   >
-54:     <ErrorFallback error={new Error("An unexpected error occurred")} />
-55:   </div>
-56: );
-57: // Multiple compact errors side by side
-58: export const MultipleCompactErrors = () => (
-59:   <div className="grid grid-cols-2 gap-4">
-60:     <ErrorFallback
-61:       error={new Error("Database connection failed")}
-62:       compact={true}
-63:     />
-64:     <ErrorFallback error={new Error("API request timeout")} compact={true} />
-65:     <ErrorFallback error={new Error("Authentication error")} compact={true} />
-66:     <ErrorFallback error={new Error("Permission denied")} compact={true} />
-67:   </div>
-68: );
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.7",
+18:     "react-dom": "^19.2.7",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.3.0",
+21:     "styled-components": "^6.4.3"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.17",
+26:     "eslint": "^10.6.0",
+27:     "prettier": "^3.9.4",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "adm-zip": ">=0.6.0",
+33:       "basic-ftp": ">=6.2.0",
+34:       "brace-expansion": ">=5.0.9",
+35:       "dompurify": ">=3.4.13",
+36:       "esbuild": ">=0.28.2",
+37:       "flatted": ">=3.4.4",
+38:       "js-yaml": ">=5.2.3",
+39:       "lodash": ">=4.18.1",
+40:       "lodash-es": ">=4.18.1",
+41:       "minimatch": "10.2.5",
+42:       "nanoid": ">=5.1.16",
+43:       "picomatch": "4.0.5",
+44:       "postcss": ">=8.5.26",
+45:       "smol-toml": ">=1.7.0",
+46:       "undici": ">=8.9.0",
+47:       "vite": ">=8.1.5",
+48:       "ws": ">=8.21.1",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.0",
+55:     "smol-toml": ">=1.7.1",
+56:     "brace-expansion": ">=5.0.9",
+57:     "esbuild": ">=0.28.2",
+58:     "uuid": ">=14.0.1",
+59:     "js-yaml": ">=5.2.3",
+60:     "nanoid": ">=5.1.16",
+61:     "postcss": ">=8.5.26",
+62:     "undici": ">=8.10.0",
+63:     "ws": ">=8.21.3"
+64:   },
+65:   "prettier": {
+66:     "semi": false,
+67:     "printWidth": 100,
+68:     "bracketSpacing": false,
+69:     "singleQuote": true
+70:   }
+71: }
 ````
 
 ## File: .swcrc
@@ -20454,236 +20563,29 @@ vercel.json
 379: 4. **DOCS/TEST_STRATEGY.md** - Testing methodology
 ````
 
-## File: package.json
-````json
-  1: {
-  2:   "name": "dfweb-v4",
-  3:   "version": "1.1.0",
-  4:   "private": true,
-  5:   "type": "module",
-  6:   "packageManager": "pnpm@11.15.1",
-  7:   "scripts": {
-  8:     "dev": "next dev --turbopack",
-  9:     "lhci": "lhci autorun",
- 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 12:     "build": "next build",
- 13:     "start": "next start",
- 14:     "lint": "next lint",
- 15:     "lint:css": "stylelint \"src/**/*.css\"",
- 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
- 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 20:     "cypress:open": "cypress open",
- 21:     "cypress:headless": "cypress run",
- 22:     "e2e": "start-test dev 3000 cypress:headless",
- 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 24:     "ladle": "ladle serve",
- 25:     "typegen": "npx sanity typegen generate",
- 26:     "doctor": "react-doctor . --verbose"
- 27:   },
- 28:   "dependencies": {
- 29:     "@emailjs/browser": "^4.4.1",
- 30:     "@hookform/resolvers": "^5.2.2",
- 31:     "@portabletext/react": "^6.0.3",
- 32:     "@sanity/client": "^7.22.0",
- 33:     "@sanity/image-url": "^2.1.1",
- 34:     "@vercel/speed-insights": "2.0.0",
- 35:     "babel-jest": "30.3.0",
- 36:     "jest": "30.3.0",
- 37:     "motion": "^12.38.0",
- 38:     "next": "^16.2.6",
- 39:     "react": "^19.2.5",
- 40:     "react-dom": "^19.2.5",
- 41:     "react-error-boundary": "^6.1.2",
- 42:     "react-hook-form": "^7.73.1",
- 43:     "react-icons": "^5.6.0",
- 44:     "ts-node": "^10.9.2",
- 45:     "zod": "^4.3.6"
- 46:   },
- 47:   "devDependencies": {
- 48:     "@jest/expect": "^30.3.0",
- 49:     "@jest/globals": "^30.3.0",
- 50:     "@ladle/react": "^5.1.1",
- 51:     "@lhci/cli": "^0.15.1",
- 52:     "@playwright/test": "^1.59.1",
- 53:     "@tailwindcss/postcss": "^4.3.0",
- 54:     "@testing-library/cypress": "^10.1.0",
- 55:     "@testing-library/jest-dom": "^6.9.1",
- 56:     "@testing-library/react": "^16.3.2",
- 57:     "@testing-library/user-event": "^14.6.1",
- 58:     "@types/jest": "^30.0.0",
- 59:     "@types/node": "^24.12.2",
- 60:     "@types/react": "^19.2.14",
- 61:     "@types/react-dom": "^19.2.3",
- 62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
- 63:     "@typescript-eslint/parser": "^8.59.0",
- 64:     "@typescript-eslint/utils": "^8.59.0",
- 65:     "axe-core": "^4.11.3",
- 66:     "cypress": "15.14.1",
- 67:     "cypress-axe": "^1.7.0",
- 68:     "eslint": "10.2.1",
- 69:     "eslint-config-next": "16.2.4",
- 70:     "eslint-config-prettier": "^10.1.8",
- 71:     "eslint-plugin-jest": "^29.15.2",
- 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 73:     "eslint-plugin-prettier": "^5.5.5",
- 74:     "eslint-plugin-react": "^7.37.5",
- 75:     "eslint-plugin-react-hooks": "^7.1.1",
- 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 77:     "eslint-plugin-testing-library": "^7.16.2",
- 78:     "jest-environment-jsdom": "^30.3.0",
- 79:     "jest-extended": "^7.0.0",
- 80:     "jsdom-testing-mocks": "^1.16.0",
- 81:     "pa11y": "^9.1.1",
- 82:     "postcss": "^8.5.21",
- 83:     "postcss-load-config": "^6.0.1",
- 84:     "prettier": "3.8.3",
- 85:     "react-doctor": "^0.0.39",
- 86:     "sanity": "6.5.0",
- 87:     "stylelint": "^17.14.1",
- 88:     "stylelint-config-standard": "^40.0.0",
- 89:     "tailwindcss": "^4.3.3",
- 90:     "ts-jest": "^29.4.9",
- 91:     "typescript": "^6.0.3",
- 92:     "wait-on": "^9.1.0"
- 93:   },
- 94:   "browserslist": [
- 95:     "chrome >= 92",
- 96:     "firefox >= 90",
- 97:     "safari >= 15.4",
- 98:     "edge >= 92"
- 99:   ]
-100: }
-````
-
-## File: src/components/Animations/Matrix.utils.ts
-````typescript
- 1: export interface RGB {
- 2:   r: number;
- 3:   g: number;
- 4:   b: number;
- 5: }
- 6: export interface Column {
- 7:   x: number;
- 8:   stackHeight: number;
- 9:   stackCounter: number;
-10: }
-11: /**
-12:  * Converts a hex color value to RGB
-13:  * @param {string} hexValue - The hex color value to convert
-14:  * @returns {RGB | null} The RGB color object or null if invalid hex value
-15:  */
-16: export const hexToRgb = (hexValue: string): RGB | null => {
-17:   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexValue);
-18:   return result
-19:     ? {
-20:         r: Number.parseInt(result?.[1] ?? "0", 16),
-21:         g: Number.parseInt(result?.[2] ?? "0", 16),
-22:         b: Number.parseInt(result?.[3] ?? "0", 16),
-23:       }
-24:     : null;
-25: };
-26: /**
-27:  * Generates a random integer
-28:  * @param {number} max - The maximum value (exclusive)
-29:  * @returns {number} A random integer between 0 and max-1
-30:  */
-31: export const getRandomInt = (max: number): number => {
-32:   const array = new Uint32Array(1);
-33:   window.crypto.getRandomValues(array);
-34:   return (array?.[0] ?? 0) % max;
-35: };
-36: /**
-37:  * Gets a random character from the tileSet or generates a random ASCII character
-38:  * @param {string[] | null} tileSet - Optional set of characters to choose from
-39:  * @returns {string} A random character
-40:  */
-41: export const getRandomCharacter = (tileSet: string[] | null): string => {
-42:   if (tileSet && Array.isArray(tileSet) && tileSet.length > 0) {
-43:     return tileSet[getRandomInt(tileSet.length)] ?? tileSet[0] ?? "";
-44:   }
-45:   // Generate ASCII printable characters (33-126)
-46:   return String.fromCodePoint(33 + (getRandomInt(94) % 94));
-47: };
-48: /**
-49:  * Debounce function
-50:  * @param {T} func - The function to debounce
-51:  * @param {number} wait - The debounce wait time in milliseconds
-52:  * @returns {(...args: Parameters<T>) => void} The debounced function
-53:  */
-54: export const debounce = <T extends (...args: unknown[]) => void>(
-55:   func: T,
-56:   wait: number,
-57: ): ((...args: Parameters<T>) => void) => {
-58:   let timeout: ReturnType<typeof setTimeout> | null = null;
-59:   return (...args: Parameters<T>) => {
-60:     if (timeout !== null) {
-61:       clearTimeout(timeout);
-62:     }
-63:     timeout = setTimeout(() => func(...args), wait);
-64:   };
-65: };
-````
-
-## File: src/lib/csrf.ts
-````typescript
- 1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
- 2: const CSRF_SECRET =
- 3:   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
- 4: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
- 5: /**
- 6:  * Generates a CSRF token with timestamp
- 7:  * @returns {string} Base64 encoded CSRF token
- 8:  */
- 9: export function generateCSRFToken(): string {
-10:   const timestamp = Date.now().toString();
-11:   const randomValue = randomBytes(32).toString("hex");
-12:   const payload = `${timestamp}:${randomValue}`;
-13:   const signature = createHmac("sha256", CSRF_SECRET)
-14:     .update(payload)
-15:     .digest("hex");
-16:   const token = `${payload}:${signature}`;
-17:   return Buffer.from(token).toString("base64");
-18: }
-19: /**
-20:  * Validates a CSRF token
-21:  * @param {string} token - Base64 encoded CSRF token
-22:  * @returns {boolean} True if token is valid and not expired
-23:  */
-24: export function validateCSRFToken(token: string): boolean {
-25:   try {
-26:     const decoded = Buffer.from(token, "base64").toString("utf-8");
-27:     const parts = decoded.split(":");
-28:     if (parts.length !== 3) {
-29:       return false;
-30:     }
-31:     const [timestamp, randomValue, signature] = parts;
-32:     const payload = `${timestamp}:${randomValue}`;
-33:     // Verify signature
-34:     const expectedSignature = createHmac("sha256", CSRF_SECRET)
-35:       .update(payload)
-36:       .digest("hex");
-37:     const signatureBuffer = Buffer.from(signature, "hex");
-38:     const expectedBuffer = Buffer.from(expectedSignature, "hex");
-39:     if (signatureBuffer.length !== expectedBuffer.length) {
-40:       return false;
-41:     }
-42:     if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
-43:       return false;
-44:     }
-45:     // Check if token is expired
-46:     const tokenTime = Number.parseInt(timestamp, 10);
-47:     const currentTime = Date.now();
-48:     if (currentTime - tokenTime > TOKEN_EXPIRY) {
-49:       return false;
-50:     }
-51:     return true;
-52:   } catch {
-53:     return false;
-54:   }
-55: }
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - '.'
+ 3: overrides:
+ 4:   "@babel/core": ">=8.0.1"
+ 5:   "brace-expansion": "5.0.9"
+ 6:   "js-yaml": ">=5.2.2"
+ 7:   "sharp": ">=0.35.3"
+ 8:   "adm-zip": ">=0.6.0"
+ 9:   "nanoid": ">=5.1.16"
+10:   "postcss": ">=8.5.18"
+11: allowBuilds:
+12:   '@swc/core': true
+13:   cypress: true
+14:   esbuild: true
+15:   msw: true
+16:   puppeteer: true
+17:   sharp: true
+18:   unrs-resolver: true
+19: minimumReleaseAgeExclude:
+20:   - postcss@8.5.21
+21:   - wait-on@9.1.0
 ````
 
 ## File: src/stories/components/Layout/NavigationLink.stories.tsx
@@ -20782,6 +20684,110 @@ vercel.json
 92:     </nav>
 93:   </div>
 94: );
+````
+
+## File: package.json
+````json
+  1: {
+  2:   "name": "dfweb-v4",
+  3:   "version": "1.1.0",
+  4:   "private": true,
+  5:   "type": "module",
+  6:   "packageManager": "pnpm@11.20.0",
+  7:   "scripts": {
+  8:     "dev": "next dev --turbopack",
+  9:     "lhci": "lhci autorun",
+ 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 12:     "build": "next build",
+ 13:     "start": "next start",
+ 14:     "lint": "next lint",
+ 15:     "lint:css": "stylelint \"src/**/*.css\"",
+ 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+ 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+ 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 20:     "cypress:open": "cypress open",
+ 21:     "cypress:headless": "cypress run",
+ 22:     "e2e": "start-test dev 3000 cypress:headless",
+ 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 24:     "ladle": "ladle serve",
+ 25:     "typegen": "npx sanity typegen generate",
+ 26:     "doctor": "react-doctor . --verbose"
+ 27:   },
+ 28:   "dependencies": {
+ 29:     "@emailjs/browser": "^4.4.1",
+ 30:     "@hookform/resolvers": "^5.2.2",
+ 31:     "@portabletext/react": "^6.0.3",
+ 32:     "@sanity/client": "^7.22.0",
+ 33:     "@sanity/image-url": "^2.1.1",
+ 34:     "@vercel/speed-insights": "2.0.0",
+ 35:     "babel-jest": "30.3.0",
+ 36:     "jest": "30.3.0",
+ 37:     "motion": "^12.38.0",
+ 38:     "next": "^16.2.11",
+ 39:     "react": "^19.2.5",
+ 40:     "react-dom": "^19.2.5",
+ 41:     "react-error-boundary": "^6.1.2",
+ 42:     "react-hook-form": "^7.73.1",
+ 43:     "react-icons": "^5.6.0",
+ 44:     "ts-node": "^10.9.2",
+ 45:     "zod": "^4.3.6"
+ 46:   },
+ 47:   "devDependencies": {
+ 48:     "@jest/expect": "^30.3.0",
+ 49:     "@jest/globals": "^30.3.0",
+ 50:     "@ladle/react": "^5.1.1",
+ 51:     "@lhci/cli": "^0.15.1",
+ 52:     "@playwright/test": "^1.59.1",
+ 53:     "@tailwindcss/postcss": "^4.3.0",
+ 54:     "@testing-library/cypress": "^10.1.0",
+ 55:     "@testing-library/jest-dom": "^6.9.1",
+ 56:     "@testing-library/react": "^16.3.2",
+ 57:     "@testing-library/user-event": "^14.6.1",
+ 58:     "@types/jest": "^30.0.0",
+ 59:     "@types/node": "^24.12.2",
+ 60:     "@types/react": "^19.2.14",
+ 61:     "@types/react-dom": "^19.2.3",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+ 63:     "@typescript-eslint/parser": "^8.59.0",
+ 64:     "@typescript-eslint/utils": "^8.59.0",
+ 65:     "axe-core": "^4.11.3",
+ 66:     "cypress": "15.14.1",
+ 67:     "cypress-axe": "^1.7.0",
+ 68:     "eslint": "10.2.1",
+ 69:     "eslint-config-next": "16.2.4",
+ 70:     "eslint-config-prettier": "^10.1.8",
+ 71:     "eslint-plugin-jest": "^29.15.2",
+ 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 73:     "eslint-plugin-prettier": "^5.5.5",
+ 74:     "eslint-plugin-react": "^7.37.5",
+ 75:     "eslint-plugin-react-hooks": "^7.1.1",
+ 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 77:     "eslint-plugin-testing-library": "^7.16.2",
+ 78:     "jest-environment-jsdom": "^30.3.0",
+ 79:     "jest-extended": "^7.0.0",
+ 80:     "jsdom-testing-mocks": "^1.16.0",
+ 81:     "pa11y": "^9.1.1",
+ 82:     "postcss": "^8.5.21",
+ 83:     "postcss-load-config": "^6.0.1",
+ 84:     "prettier": "3.8.3",
+ 85:     "react-doctor": "^0.0.39",
+ 86:     "sanity": "6.5.0",
+ 87:     "stylelint": "^17.14.1",
+ 88:     "stylelint-config-standard": "^40.0.0",
+ 89:     "tailwindcss": "^4.3.3",
+ 90:     "ts-jest": "^29.4.9",
+ 91:     "typescript": "^6.0.3",
+ 92:     "wait-on": "^9.1.0"
+ 93:   },
+ 94:   "browserslist": [
+ 95:     "chrome >= 92",
+ 96:     "firefox >= 90",
+ 97:     "safari >= 15.4",
+ 98:     "edge >= 92"
+ 99:   ]
+100: }
 ````
 
 ## File: src/app/cursor.css
@@ -21782,14 +21788,18 @@ vercel.json
 29:       - name: Install dependencies
 30:         run: pnpm install --frozen-lockfile --ignore-scripts
 31:       - name: Verify and install Cypress binary
-32:         # Uses cypress@15.14.1 from lockfile (specified in package.json)
-33:         run: pnpm exec cypress verify || pnpm exec cypress install --ignore-scripts
-34:       - name: Build the project
-35:         run: pnpm build
-36:       - name: Start the application
-37:         run: pnpm dev &
-38:       - name: Wait for the application to be ready
-39:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
-40:       - name: Run Cypress tests
-41:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
+33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
+34:         # NOT a package-manager install running third-party lifecycle scripts.
+35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
+36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
+37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
+38:       - name: Build the project
+39:         run: pnpm build
+40:       - name: Start the application
+41:         run: pnpm dev &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+44:       - name: Run Cypress tests
+45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
