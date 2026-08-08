@@ -2518,6 +2518,124 @@ vercel.json
 85: ```
 ````
 
+## File: commit/setup.ps1
+````powershell
+ 1: # Setup script for AI Commit Message Generator
+ 2: # Run this from your repository root after copying the commit/ folder
+ 3: 
+ 4: $ErrorActionPreference = "Stop"
+ 5: 
+ 6: # Find repo root
+ 7: try {
+ 8:     $RepoRoot = git rev-parse --show-toplevel 2>$null
+ 9:     if (-not $RepoRoot) { throw }
+10: } catch {
+11:     Write-Error "Error: Not in a git repository"
+12:     exit 1
+13: }
+14: 
+15: $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+16: $CommitAnalyzer = Join-Path $ScriptDir "commit_analyzer.py"
+17: 
+18: # Check if commit_analyzer.py exists
+19: if (-not (Test-Path $CommitAnalyzer)) {
+20:     Write-Error "Error: commit_analyzer.py not found in $ScriptDir"
+21:     exit 1
+22: }
+23: 
+24: Write-Output "Setting up AI Commit Message Generator..."
+25: 
+26: # Install Python dependencies
+27: Write-Output "Installing Python dependencies..."
+28: pip install --only-binary :all: openai anthropic python-dotenv
+29: 
+30: # Create .env from template if it doesn't exist
+31: $EnvFile = Join-Path $RepoRoot ".env"
+32: $EnvExample = Join-Path $ScriptDir ".env.example"
+33: 
+34: if (-not (Test-Path $EnvFile)) {
+35:     if (Test-Path $EnvExample) {
+36:         Copy-Item $EnvExample $EnvFile
+37:         Write-Output "Created .env from template"
+38:     } else {
+39:         Write-Output "Warning: .env.example not found, creating minimal .env"
+40:         "# Add your API key`nANTHROPIC_API_KEY=`"`"" | Out-File -FilePath $EnvFile -Encoding UTF8
+41:     }
+42: }
+43: 
+44: # Create git hook
+45: $HooksDir = Join-Path $RepoRoot ".git\hooks"
+46: $HookFile = Join-Path $HooksDir "prepare-commit-msg"
+47: 
+48: if (-not (Test-Path $HooksDir)) {
+49:     New-Item -ItemType Directory -Path $HooksDir -Force | Out-Null
+50: }
+51: 
+52: # Use forward slashes for the path in the hook (git uses Unix-style paths)
+53: $CommitAnalyzerUnix = $CommitAnalyzer.Replace('\', '/')
+54: 
+55: @"
+56: #!/bin/sh
+57: python "$CommitAnalyzerUnix" --hook
+58: "@ | Out-File -FilePath $HookFile -Encoding UTF8 -NoNewline
+59: 
+60: Write-Output ""
+61: Write-Output "Setup complete!"
+62: Write-Output ""
+63: Write-Output "Next steps:"
+64: Write-Output "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+65: Write-Output "2. Make a commit to test the AI commit message generator"
+````
+
+## File: commit/setup.sh
+````bash
+ 1: #!/bin/bash
+ 2: # Setup script for AI Commit Message Generator
+ 3: # Run this from your repository root after copying the commit/ folder
+ 4: set -e
+ 5: # Find repo root
+ 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+ 7:     echo "Error: Not in a git repository" >&2
+ 8:     exit 1
+ 9: }
+10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
+12: # Check if commit_analyzer.py exists
+13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
+14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
+15:     exit 1
+16: fi
+17: echo "Setting up AI Commit Message Generator..."
+18: # Install Python dependencies
+19: echo "Installing Python dependencies..."
+20: pip install --only-binary :all: openai anthropic python-dotenv
+21: # Create .env from template if it doesn't exist
+22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
+23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
+24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
+25:         echo "Created .env from template"
+26:     else
+27:         echo "Warning: .env.example not found, creating minimal .env"
+28:         echo '# Add your API key' > "$REPO_ROOT/.env"
+29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
+30:     fi
+31: fi
+32: # Create git hook
+33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
+34: mkdir -p "$REPO_ROOT/.git/hooks"
+35: cat > "$HOOK_FILE" << EOF
+36: #!/bin/sh
+37: python "$COMMIT_ANALYZER" --hook
+38: EOF
+39: chmod +x "$HOOK_FILE"
+40: echo ""
+41: echo "✅ Setup complete!"
+42: echo ""
+43: echo "Next steps:"
+44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+45: echo "2. Make a commit to test the AI commit message generator"
+````
+
 ## File: DOCS/README.md
 ````markdown
   1: # DFWeb v4 - Technical Documentation
@@ -19806,124 +19924,6 @@ vercel.json
 83:           fi
 ````
 
-## File: commit/setup.ps1
-````powershell
- 1: # Setup script for AI Commit Message Generator
- 2: # Run this from your repository root after copying the commit/ folder
- 3: 
- 4: $ErrorActionPreference = "Stop"
- 5: 
- 6: # Find repo root
- 7: try {
- 8:     $RepoRoot = git rev-parse --show-toplevel 2>$null
- 9:     if (-not $RepoRoot) { throw }
-10: } catch {
-11:     Write-Error "Error: Not in a git repository"
-12:     exit 1
-13: }
-14: 
-15: $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-16: $CommitAnalyzer = Join-Path $ScriptDir "commit_analyzer.py"
-17: 
-18: # Check if commit_analyzer.py exists
-19: if (-not (Test-Path $CommitAnalyzer)) {
-20:     Write-Error "Error: commit_analyzer.py not found in $ScriptDir"
-21:     exit 1
-22: }
-23: 
-24: Write-Output "Setting up AI Commit Message Generator..."
-25: 
-26: # Install Python dependencies
-27: Write-Output "Installing Python dependencies..."
-28: pip install --only-binary :all: openai anthropic python-dotenv
-29: 
-30: # Create .env from template if it doesn't exist
-31: $EnvFile = Join-Path $RepoRoot ".env"
-32: $EnvExample = Join-Path $ScriptDir ".env.example"
-33: 
-34: if (-not (Test-Path $EnvFile)) {
-35:     if (Test-Path $EnvExample) {
-36:         Copy-Item $EnvExample $EnvFile
-37:         Write-Output "Created .env from template"
-38:     } else {
-39:         Write-Output "Warning: .env.example not found, creating minimal .env"
-40:         "# Add your API key`nANTHROPIC_API_KEY=`"`"" | Out-File -FilePath $EnvFile -Encoding UTF8
-41:     }
-42: }
-43: 
-44: # Create git hook
-45: $HooksDir = Join-Path $RepoRoot ".git\hooks"
-46: $HookFile = Join-Path $HooksDir "prepare-commit-msg"
-47: 
-48: if (-not (Test-Path $HooksDir)) {
-49:     New-Item -ItemType Directory -Path $HooksDir -Force | Out-Null
-50: }
-51: 
-52: # Use forward slashes for the path in the hook (git uses Unix-style paths)
-53: $CommitAnalyzerUnix = $CommitAnalyzer.Replace('\', '/')
-54: 
-55: @"
-56: #!/bin/sh
-57: python "$CommitAnalyzerUnix" --hook
-58: "@ | Out-File -FilePath $HookFile -Encoding UTF8 -NoNewline
-59: 
-60: Write-Output ""
-61: Write-Output "Setup complete!"
-62: Write-Output ""
-63: Write-Output "Next steps:"
-64: Write-Output "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-65: Write-Output "2. Make a commit to test the AI commit message generator"
-````
-
-## File: commit/setup.sh
-````bash
- 1: #!/bin/bash
- 2: # Setup script for AI Commit Message Generator
- 3: # Run this from your repository root after copying the commit/ folder
- 4: set -e
- 5: # Find repo root
- 6: REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
- 7:     echo "Error: Not in a git repository" >&2
- 8:     exit 1
- 9: }
-10: SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-11: COMMIT_ANALYZER="$SCRIPT_DIR/commit_analyzer.py"
-12: # Check if commit_analyzer.py exists
-13: if [[ ! -f "$COMMIT_ANALYZER" ]]; then
-14:     echo "Error: commit_analyzer.py not found in $SCRIPT_DIR" >&2
-15:     exit 1
-16: fi
-17: echo "Setting up AI Commit Message Generator..."
-18: # Install Python dependencies
-19: echo "Installing Python dependencies..."
-20: pip install --only-binary :all: openai anthropic python-dotenv
-21: # Create .env from template if it doesn't exist
-22: if [[ ! -f "$REPO_ROOT/.env" ]]; then
-23:     if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-24:         cp "$SCRIPT_DIR/.env.example" "$REPO_ROOT/.env"
-25:         echo "Created .env from template"
-26:     else
-27:         echo "Warning: .env.example not found, creating minimal .env"
-28:         echo '# Add your API key' > "$REPO_ROOT/.env"
-29:         echo 'ANTHROPIC_API_KEY=""' >> "$REPO_ROOT/.env"
-30:     fi
-31: fi
-32: # Create git hook
-33: HOOK_FILE="$REPO_ROOT/.git/hooks/prepare-commit-msg"
-34: mkdir -p "$REPO_ROOT/.git/hooks"
-35: cat > "$HOOK_FILE" << EOF
-36: #!/bin/sh
-37: python "$COMMIT_ANALYZER" --hook
-38: EOF
-39: chmod +x "$HOOK_FILE"
-40: echo ""
-41: echo "✅ Setup complete!"
-42: echo ""
-43: echo "Next steps:"
-44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
-45: echo "2. Make a commit to test the AI commit message generator"
-````
-
 ## File: src/components/Kontakt/ContactForm.component.tsx
 ````typescript
   1: "use client";
@@ -20075,81 +20075,6 @@ vercel.json
 147:   );
 148: };
 149: export default ContactForm;
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.7",
-18:     "react-dom": "^19.2.7",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.3.0",
-21:     "styled-components": "^6.4.3"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.17",
-26:     "eslint": "^10.6.0",
-27:     "prettier": "^3.9.4",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "adm-zip": ">=0.6.0",
-33:       "basic-ftp": ">=6.2.0",
-34:       "brace-expansion": ">=5.0.9",
-35:       "dompurify": ">=3.4.13",
-36:       "esbuild": ">=0.28.2",
-37:       "flatted": ">=3.4.4",
-38:       "js-yaml": ">=5.2.3",
-39:       "lodash": ">=4.18.1",
-40:       "lodash-es": ">=4.18.1",
-41:       "minimatch": "10.2.5",
-42:       "nanoid": ">=5.1.16",
-43:       "picomatch": "4.0.5",
-44:       "postcss": ">=8.5.26",
-45:       "smol-toml": ">=1.7.0",
-46:       "undici": ">=8.9.0",
-47:       "vite": ">=8.1.5",
-48:       "ws": ">=8.21.1",
-49:       "yaml": ">=2.9.0",
-50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-51:     }
-52:   },
-53:   "overrides": {
-54:     "adm-zip": ">=0.6.0",
-55:     "smol-toml": ">=1.7.1",
-56:     "brace-expansion": ">=5.0.9",
-57:     "esbuild": ">=0.28.2",
-58:     "uuid": ">=14.0.1",
-59:     "js-yaml": ">=5.2.3",
-60:     "nanoid": ">=5.1.16",
-61:     "postcss": ">=8.5.26",
-62:     "undici": ">=8.10.0",
-63:     "ws": ">=8.21.3"
-64:   },
-65:   "prettier": {
-66:     "semi": false,
-67:     "printWidth": 100,
-68:     "bracketSpacing": false,
-69:     "singleQuote": true
-70:   }
-71: }
 ````
 
 ## File: .swcrc
@@ -20563,29 +20488,53 @@ vercel.json
 379: 4. **DOCS/TEST_STRATEGY.md** - Testing methodology
 ````
 
-## File: pnpm-workspace.yaml
+## File: .github/workflows/cypress.yml
 ````yaml
- 1: packages:
- 2:   - '.'
- 3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.9"
- 6:   "js-yaml": ">=5.2.2"
- 7:   "sharp": ">=0.35.3"
- 8:   "adm-zip": ">=0.6.0"
- 9:   "nanoid": ">=5.1.16"
-10:   "postcss": ">=8.5.18"
-11: allowBuilds:
-12:   '@swc/core': true
-13:   cypress: true
-14:   esbuild: true
-15:   msw: true
-16:   puppeteer: true
-17:   sharp: true
-18:   unrs-resolver: true
-19: minimumReleaseAgeExclude:
-20:   - postcss@8.5.21
-21:   - wait-on@9.1.0
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30   
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile --ignore-scripts
+31:       - name: Verify and install Cypress binary
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
+33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
+34:         # NOT a package-manager install running third-party lifecycle scripts.
+35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
+36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
+37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
+38:       - name: Build the project
+39:         run: pnpm build
+40:       - name: Start the application
+41:         run: pnpm dev &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+44:       - name: Run Cypress tests
+45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
 
 ## File: src/stories/components/Layout/NavigationLink.stories.tsx
@@ -20686,108 +20635,123 @@ vercel.json
 94: );
 ````
 
-## File: package.json
+## File: studio/package.json
 ````json
-  1: {
-  2:   "name": "dfweb-v4",
-  3:   "version": "1.1.0",
-  4:   "private": true,
-  5:   "type": "module",
-  6:   "packageManager": "pnpm@11.20.0",
-  7:   "scripts": {
-  8:     "dev": "next dev --turbopack",
-  9:     "lhci": "lhci autorun",
- 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 12:     "build": "next build",
- 13:     "start": "next start",
- 14:     "lint": "next lint",
- 15:     "lint:css": "stylelint \"src/**/*.css\"",
- 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
- 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 20:     "cypress:open": "cypress open",
- 21:     "cypress:headless": "cypress run",
- 22:     "e2e": "start-test dev 3000 cypress:headless",
- 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 24:     "ladle": "ladle serve",
- 25:     "typegen": "npx sanity typegen generate",
- 26:     "doctor": "react-doctor . --verbose"
- 27:   },
- 28:   "dependencies": {
- 29:     "@emailjs/browser": "^4.4.1",
- 30:     "@hookform/resolvers": "^5.2.2",
- 31:     "@portabletext/react": "^6.0.3",
- 32:     "@sanity/client": "^7.22.0",
- 33:     "@sanity/image-url": "^2.1.1",
- 34:     "@vercel/speed-insights": "2.0.0",
- 35:     "babel-jest": "30.3.0",
- 36:     "jest": "30.3.0",
- 37:     "motion": "^12.38.0",
- 38:     "next": "^16.2.11",
- 39:     "react": "^19.2.5",
- 40:     "react-dom": "^19.2.5",
- 41:     "react-error-boundary": "^6.1.2",
- 42:     "react-hook-form": "^7.73.1",
- 43:     "react-icons": "^5.6.0",
- 44:     "ts-node": "^10.9.2",
- 45:     "zod": "^4.3.6"
- 46:   },
- 47:   "devDependencies": {
- 48:     "@jest/expect": "^30.3.0",
- 49:     "@jest/globals": "^30.3.0",
- 50:     "@ladle/react": "^5.1.1",
- 51:     "@lhci/cli": "^0.15.1",
- 52:     "@playwright/test": "^1.59.1",
- 53:     "@tailwindcss/postcss": "^4.3.0",
- 54:     "@testing-library/cypress": "^10.1.0",
- 55:     "@testing-library/jest-dom": "^6.9.1",
- 56:     "@testing-library/react": "^16.3.2",
- 57:     "@testing-library/user-event": "^14.6.1",
- 58:     "@types/jest": "^30.0.0",
- 59:     "@types/node": "^24.12.2",
- 60:     "@types/react": "^19.2.14",
- 61:     "@types/react-dom": "^19.2.3",
- 62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
- 63:     "@typescript-eslint/parser": "^8.59.0",
- 64:     "@typescript-eslint/utils": "^8.59.0",
- 65:     "axe-core": "^4.11.3",
- 66:     "cypress": "15.14.1",
- 67:     "cypress-axe": "^1.7.0",
- 68:     "eslint": "10.2.1",
- 69:     "eslint-config-next": "16.2.4",
- 70:     "eslint-config-prettier": "^10.1.8",
- 71:     "eslint-plugin-jest": "^29.15.2",
- 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 73:     "eslint-plugin-prettier": "^5.5.5",
- 74:     "eslint-plugin-react": "^7.37.5",
- 75:     "eslint-plugin-react-hooks": "^7.1.1",
- 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 77:     "eslint-plugin-testing-library": "^7.16.2",
- 78:     "jest-environment-jsdom": "^30.3.0",
- 79:     "jest-extended": "^7.0.0",
- 80:     "jsdom-testing-mocks": "^1.16.0",
- 81:     "pa11y": "^9.1.1",
- 82:     "postcss": "^8.5.21",
- 83:     "postcss-load-config": "^6.0.1",
- 84:     "prettier": "3.8.3",
- 85:     "react-doctor": "^0.0.39",
- 86:     "sanity": "6.5.0",
- 87:     "stylelint": "^17.14.1",
- 88:     "stylelint-config-standard": "^40.0.0",
- 89:     "tailwindcss": "^4.3.3",
- 90:     "ts-jest": "^29.4.9",
- 91:     "typescript": "^6.0.3",
- 92:     "wait-on": "^9.1.0"
- 93:   },
- 94:   "browserslist": [
- 95:     "chrome >= 92",
- 96:     "firefox >= 90",
- 97:     "safari >= 15.4",
- 98:     "edge >= 92"
- 99:   ]
-100: }
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.7",
+18:     "react-dom": "^19.2.7",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.3.0",
+21:     "styled-components": "^6.4.3"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.17",
+26:     "eslint": "^10.6.0",
+27:     "prettier": "^3.9.4",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "adm-zip": ">=0.6.0",
+33:       "basic-ftp": ">=6.2.0",
+34:       "brace-expansion": ">=5.0.9",
+35:       "dompurify": ">=3.4.13",
+36:       "esbuild": ">=0.28.2",
+37:       "flatted": ">=3.4.4",
+38:       "js-yaml": ">=5.2.3",
+39:       "lodash": ">=4.18.1",
+40:       "lodash-es": ">=4.18.1",
+41:       "minimatch": "10.2.6",
+42:       "nanoid": ">=5.1.16",
+43:       "picomatch": "4.0.5",
+44:       "postcss": ">=8.5.26",
+45:       "smol-toml": ">=1.7.0",
+46:       "undici": ">=8.9.0",
+47:       "vite": ">=8.1.5",
+48:       "ws": ">=8.21.1",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.0",
+55:     "smol-toml": ">=1.7.1",
+56:     "brace-expansion": ">=5.0.9",
+57:     "esbuild": ">=0.28.2",
+58:     "uuid": ">=14.0.1",
+59:     "js-yaml": ">=5.2.3",
+60:     "nanoid": ">=5.1.16",
+61:     "postcss": ">=8.5.26",
+62:     "undici": ">=8.10.0",
+63:     "ws": ">=8.21.3"
+64:   },
+65:   "prettier": {
+66:     "semi": false,
+67:     "printWidth": 100,
+68:     "bracketSpacing": false,
+69:     "singleQuote": true
+70:   }
+71: }
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
 ````
 
 ## File: src/app/cursor.css
@@ -21287,48 +21251,41 @@ vercel.json
 106: export default nextConfig;
 ````
 
-## File: .github/workflows/playwright.yml
+## File: pnpm-workspace.yaml
 ````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         env:
-24:           npm_config_ignore_scripts: true
-25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
+ 1: packages:
+ 2:   - '.'
+ 3: overrides:
+ 4:   "@babel/core": ">=8.0.1"
+ 5:   "brace-expansion": "5.0.9"
+ 6:   "js-yaml": ">=5.2.3"
+ 7:   "sharp": ">=0.35.3"
+ 8:   "adm-zip": ">=0.6.0"
+ 9:   "nanoid": ">=6.0.1"
+10:   "postcss": ">=8.5.26"
+11:   # Align jest 30.3.x sub-packages to 30.4.x so jest-environment-jsdom
+12:   # supplies a jest-mock with clearMocksOnScope (required by jest-runtime@30.4.2)
+13:   "jest-mock": "30.4.1"
+14:   "@jest/environment": "30.4.1"
+15:   "@jest/fake-timers": "30.4.1"
+16:   "jest-util": "30.4.1"
+17:   "@jest/types": "30.4.1"
+18:   # React requires react and react-dom to be the exact same version;
+19:   # pin both to keep them in lockstep and avoid version-mismatch errors in tests
+20:   "react": "19.2.8"
+21:   "react-dom": "19.2.8"
+22: allowBuilds:
+23:   '@swc/core': true
+24:   cypress: true
+25:   esbuild: true
+26:   msw: true
+27:   puppeteer: true
+28:   sharp: true
+29:   unrs-resolver: true
+30: minimumReleaseAgeExclude:
+31:   - postcss@8.5.21
+32:   - wait-on@9.1.0
+33:   - eslint@10.8.1
 ````
 
 ## File: src/app/glitch.css
@@ -21488,6 +21445,110 @@ vercel.json
 153: .glitch:hover::before {
 154:   animation: noise-anim-2 0.3s infinite linear alternate-reverse;
 155: }
+````
+
+## File: package.json
+````json
+  1: {
+  2:   "name": "dfweb-v4",
+  3:   "version": "1.1.0",
+  4:   "private": true,
+  5:   "type": "module",
+  6:   "packageManager": "pnpm@11.20.0",
+  7:   "scripts": {
+  8:     "dev": "next dev --turbopack",
+  9:     "lhci": "lhci autorun",
+ 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 12:     "build": "next build",
+ 13:     "start": "next start",
+ 14:     "lint": "next lint",
+ 15:     "lint:css": "stylelint \"src/**/*.css\"",
+ 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+ 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+ 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 20:     "cypress:open": "cypress open",
+ 21:     "cypress:headless": "cypress run",
+ 22:     "e2e": "start-test dev 3000 cypress:headless",
+ 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 24:     "ladle": "ladle serve",
+ 25:     "typegen": "npx sanity typegen generate",
+ 26:     "doctor": "react-doctor . --verbose"
+ 27:   },
+ 28:   "dependencies": {
+ 29:     "@emailjs/browser": "^4.4.1",
+ 30:     "@hookform/resolvers": "^5.2.2",
+ 31:     "@portabletext/react": "^6.2.0",
+ 32:     "@sanity/client": "^7.22.0",
+ 33:     "@sanity/image-url": "^2.1.1",
+ 34:     "@vercel/speed-insights": "2.0.0",
+ 35:     "babel-jest": "30.4.1",
+ 36:     "jest": "30.4.2",
+ 37:     "motion": "^12.43.0",
+ 38:     "next": "^16.3.0",
+ 39:     "react": "^19.2.5",
+ 40:     "react-dom": "^19.2.8",
+ 41:     "react-error-boundary": "^6.1.2",
+ 42:     "react-hook-form": "^7.73.1",
+ 43:     "react-icons": "^5.6.0",
+ 44:     "ts-node": "^10.9.2",
+ 45:     "zod": "^4.4.3"
+ 46:   },
+ 47:   "devDependencies": {
+ 48:     "@jest/expect": "^30.4.1",
+ 49:     "@jest/globals": "^30.4.1",
+ 50:     "@ladle/react": "^5.1.1",
+ 51:     "@lhci/cli": "^0.15.1",
+ 52:     "@playwright/test": "^1.62.1",
+ 53:     "@tailwindcss/postcss": "^4.3.0",
+ 54:     "@testing-library/cypress": "^10.1.0",
+ 55:     "@testing-library/jest-dom": "^6.10.0",
+ 56:     "@testing-library/react": "^16.3.2",
+ 57:     "@testing-library/user-event": "^14.6.1",
+ 58:     "@types/jest": "^30.0.0",
+ 59:     "@types/node": "^26.2.0",
+ 60:     "@types/react": "^19.2.18",
+ 61:     "@types/react-dom": "^19.2.3",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.59.0",
+ 63:     "@typescript-eslint/parser": "^8.59.0",
+ 64:     "@typescript-eslint/utils": "^8.59.0",
+ 65:     "axe-core": "^4.11.3",
+ 66:     "cypress": "15.20.0",
+ 67:     "cypress-axe": "^1.7.0",
+ 68:     "eslint": "10.8.1",
+ 69:     "eslint-config-next": "16.2.12",
+ 70:     "eslint-config-prettier": "^10.1.8",
+ 71:     "eslint-plugin-jest": "^29.16.0",
+ 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 73:     "eslint-plugin-prettier": "^5.5.5",
+ 74:     "eslint-plugin-react": "^7.37.5",
+ 75:     "eslint-plugin-react-hooks": "^7.1.1",
+ 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 77:     "eslint-plugin-testing-library": "^7.16.2",
+ 78:     "jest-environment-jsdom": "^30.3.0",
+ 79:     "jest-extended": "^7.0.0",
+ 80:     "jsdom-testing-mocks": "^1.16.0",
+ 81:     "pa11y": "^9.1.1",
+ 82:     "postcss": "^8.5.26",
+ 83:     "postcss-load-config": "^6.0.1",
+ 84:     "prettier": "3.9.6",
+ 85:     "react-doctor": "^0.0.47",
+ 86:     "sanity": "6.9.1",
+ 87:     "stylelint": "^17.14.1",
+ 88:     "stylelint-config-standard": "^40.0.0",
+ 89:     "tailwindcss": "^4.3.3",
+ 90:     "ts-jest": "^29.4.9",
+ 91:     "typescript": "^6.0.3",
+ 92:     "wait-on": "^9.1.0"
+ 93:   },
+ 94:   "browserslist": [
+ 95:     "chrome >= 92",
+ 96:     "firefox >= 90",
+ 97:     "safari >= 15.4",
+ 98:     "edge >= 92"
+ 99:   ]
+100: }
 ````
 
 ## File: src/app/globals.css
@@ -21753,53 +21814,4 @@ vercel.json
 73:     </html>
 74:   );
 75: }
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30   
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile --ignore-scripts
-31:       - name: Verify and install Cypress binary
-32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
-33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
-34:         # NOT a package-manager install running third-party lifecycle scripts.
-35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
-36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
-37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
-38:       - name: Build the project
-39:         run: pnpm build
-40:       - name: Start the application
-41:         run: pnpm dev &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
-44:       - name: Run Cypress tests
-45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
