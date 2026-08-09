@@ -19924,6 +19924,50 @@ vercel.json
 1: {}
 ````
 
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
+````
+
 ## File: src/components/Kontakt/ContactForm.component.tsx
 ````typescript
   1: "use client";
@@ -20535,50 +20579,6 @@ vercel.json
 43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
 44:       - name: Run Cypress tests
 45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         env:
-24:           npm_config_ignore_scripts: true
-25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
 ````
 
 ## File: src/stories/components/Layout/NavigationLink.stories.tsx
@@ -21633,110 +21633,6 @@ vercel.json
 182: }
 ````
 
-## File: package.json
-````json
-  1: {
-  2:   "name": "dfweb-v4",
-  3:   "version": "1.1.0",
-  4:   "private": true,
-  5:   "type": "module",
-  6:   "packageManager": "pnpm@11.20.0",
-  7:   "scripts": {
-  8:     "dev": "next dev --turbopack",
-  9:     "lhci": "lhci autorun",
- 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 12:     "build": "next build",
- 13:     "start": "next start",
- 14:     "lint": "next lint",
- 15:     "lint:css": "stylelint \"src/**/*.css\"",
- 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
- 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 20:     "cypress:open": "cypress open",
- 21:     "cypress:headless": "cypress run",
- 22:     "e2e": "start-test dev 3000 cypress:headless",
- 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 24:     "ladle": "ladle serve",
- 25:     "typegen": "npx sanity typegen generate",
- 26:     "doctor": "react-doctor . --verbose"
- 27:   },
- 28:   "dependencies": {
- 29:     "@emailjs/browser": "^4.4.1",
- 30:     "@hookform/resolvers": "^5.2.2",
- 31:     "@portabletext/react": "^6.2.0",
- 32:     "@sanity/client": "^7.22.0",
- 33:     "@sanity/image-url": "^2.1.1",
- 34:     "@vercel/speed-insights": "2.0.0",
- 35:     "babel-jest": "30.4.1",
- 36:     "jest": "30.4.2",
- 37:     "motion": "^12.43.0",
- 38:     "next": "^16.3.0",
- 39:     "react": "^19.2.5",
- 40:     "react-dom": "^19.2.8",
- 41:     "react-error-boundary": "^6.1.2",
- 42:     "react-hook-form": "^7.73.1",
- 43:     "react-icons": "^5.6.0",
- 44:     "ts-node": "^10.9.2",
- 45:     "zod": "^4.4.3"
- 46:   },
- 47:   "devDependencies": {
- 48:     "@jest/expect": "^30.4.1",
- 49:     "@jest/globals": "^30.4.1",
- 50:     "@ladle/react": "^5.1.1",
- 51:     "@lhci/cli": "^0.15.1",
- 52:     "@playwright/test": "^1.62.1",
- 53:     "@tailwindcss/postcss": "^4.3.0",
- 54:     "@testing-library/cypress": "^10.1.3",
- 55:     "@testing-library/jest-dom": "^6.10.0",
- 56:     "@testing-library/react": "^16.3.2",
- 57:     "@testing-library/user-event": "^14.6.1",
- 58:     "@types/jest": "^30.0.0",
- 59:     "@types/node": "^26.2.0",
- 60:     "@types/react": "^19.2.18",
- 61:     "@types/react-dom": "^19.2.3",
- 62:     "@typescript-eslint/eslint-plugin": "^8.65.0",
- 63:     "@typescript-eslint/parser": "^8.65.0",
- 64:     "@typescript-eslint/utils": "^8.65.0",
- 65:     "axe-core": "^4.11.3",
- 66:     "cypress": "15.20.0",
- 67:     "cypress-axe": "^1.7.0",
- 68:     "eslint": "10.8.1",
- 69:     "eslint-config-next": "16.2.12",
- 70:     "eslint-config-prettier": "^10.1.8",
- 71:     "eslint-plugin-jest": "^29.16.0",
- 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 73:     "eslint-plugin-prettier": "^5.5.5",
- 74:     "eslint-plugin-react": "^7.37.5",
- 75:     "eslint-plugin-react-hooks": "^7.1.1",
- 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 77:     "eslint-plugin-testing-library": "^7.16.2",
- 78:     "jest-environment-jsdom": "^30.3.0",
- 79:     "jest-extended": "^7.0.0",
- 80:     "jsdom-testing-mocks": "^1.16.0",
- 81:     "pa11y": "^9.1.1",
- 82:     "postcss": "^8.5.26",
- 83:     "postcss-load-config": "^6.0.1",
- 84:     "prettier": "3.9.6",
- 85:     "react-doctor": "^0.0.47",
- 86:     "sanity": "6.9.1",
- 87:     "stylelint": "^17.14.1",
- 88:     "stylelint-config-standard": "^40.0.0",
- 89:     "tailwindcss": "^4.3.3",
- 90:     "ts-jest": "^29.4.9",
- 91:     "typescript": "^6.0.3",
- 92:     "wait-on": "^9.1.0"
- 93:   },
- 94:   "browserslist": [
- 95:     "chrome >= 92",
- 96:     "firefox >= 90",
- 97:     "safari >= 15.4",
- 98:     "edge >= 92"
- 99:   ]
-100: }
-````
-
 ## File: src/app/layout.tsx
 ````typescript
  1: import type { Metadata } from "next";
@@ -21814,4 +21710,108 @@ vercel.json
 73:     </html>
 74:   );
 75: }
+````
+
+## File: package.json
+````json
+  1: {
+  2:   "name": "dfweb-v4",
+  3:   "version": "1.1.0",
+  4:   "private": true,
+  5:   "type": "module",
+  6:   "packageManager": "pnpm@11.20.0",
+  7:   "scripts": {
+  8:     "dev": "next dev --turbopack",
+  9:     "lhci": "lhci autorun",
+ 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 12:     "build": "next build",
+ 13:     "start": "next start",
+ 14:     "lint": "next lint",
+ 15:     "lint:css": "stylelint \"src/**/*.css\"",
+ 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+ 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 18:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+ 19:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 20:     "cypress:open": "cypress open",
+ 21:     "cypress:headless": "cypress run",
+ 22:     "e2e": "start-test dev 3000 cypress:headless",
+ 23:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 24:     "ladle": "ladle serve",
+ 25:     "typegen": "npx sanity typegen generate",
+ 26:     "doctor": "react-doctor . --verbose"
+ 27:   },
+ 28:   "dependencies": {
+ 29:     "@emailjs/browser": "^4.4.1",
+ 30:     "@hookform/resolvers": "^5.2.2",
+ 31:     "@portabletext/react": "^6.2.0",
+ 32:     "@sanity/client": "^7.22.0",
+ 33:     "@sanity/image-url": "^2.1.1",
+ 34:     "@vercel/speed-insights": "2.0.0",
+ 35:     "babel-jest": "30.4.1",
+ 36:     "jest": "30.4.2",
+ 37:     "motion": "^12.43.0",
+ 38:     "next": "^16.3.0",
+ 39:     "react": "^19.2.5",
+ 40:     "react-dom": "^19.2.8",
+ 41:     "react-error-boundary": "^6.1.2",
+ 42:     "react-hook-form": "^7.73.1",
+ 43:     "react-icons": "^5.6.0",
+ 44:     "ts-node": "^10.9.2",
+ 45:     "zod": "^4.4.3"
+ 46:   },
+ 47:   "devDependencies": {
+ 48:     "@jest/expect": "^30.4.1",
+ 49:     "@jest/globals": "^30.4.1",
+ 50:     "@ladle/react": "^5.1.1",
+ 51:     "@lhci/cli": "^0.15.1",
+ 52:     "@playwright/test": "^1.62.1",
+ 53:     "@tailwindcss/postcss": "^4.3.0",
+ 54:     "@testing-library/cypress": "^10.1.3",
+ 55:     "@testing-library/jest-dom": "^6.10.0",
+ 56:     "@testing-library/react": "^16.3.2",
+ 57:     "@testing-library/user-event": "^14.6.1",
+ 58:     "@types/jest": "^30.0.0",
+ 59:     "@types/node": "^26.2.0",
+ 60:     "@types/react": "^19.2.18",
+ 61:     "@types/react-dom": "^19.2.3",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.65.0",
+ 63:     "@typescript-eslint/parser": "^8.65.0",
+ 64:     "@typescript-eslint/utils": "^8.65.0",
+ 65:     "axe-core": "^4.12.1",
+ 66:     "cypress": "15.20.0",
+ 67:     "cypress-axe": "^1.7.0",
+ 68:     "eslint": "10.8.1",
+ 69:     "eslint-config-next": "16.2.12",
+ 70:     "eslint-config-prettier": "^10.1.8",
+ 71:     "eslint-plugin-jest": "^29.16.0",
+ 72:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 73:     "eslint-plugin-prettier": "^5.5.5",
+ 74:     "eslint-plugin-react": "^7.37.5",
+ 75:     "eslint-plugin-react-hooks": "^7.1.1",
+ 76:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 77:     "eslint-plugin-testing-library": "^7.16.2",
+ 78:     "jest-environment-jsdom": "^30.3.0",
+ 79:     "jest-extended": "^7.0.0",
+ 80:     "jsdom-testing-mocks": "^1.16.0",
+ 81:     "pa11y": "^9.1.1",
+ 82:     "postcss": "^8.5.26",
+ 83:     "postcss-load-config": "^6.0.1",
+ 84:     "prettier": "3.9.6",
+ 85:     "react-doctor": "^0.0.47",
+ 86:     "sanity": "6.9.1",
+ 87:     "stylelint": "^17.14.1",
+ 88:     "stylelint-config-standard": "^40.0.0",
+ 89:     "tailwindcss": "^4.3.3",
+ 90:     "ts-jest": "^29.4.9",
+ 91:     "typescript": "^6.0.3",
+ 92:     "wait-on": "^9.1.0"
+ 93:   },
+ 94:   "browserslist": [
+ 95:     "chrome >= 92",
+ 96:     "firefox >= 90",
+ 97:     "safari >= 15.4",
+ 98:     "edge >= 92"
+ 99:   ]
+100: }
 ````
