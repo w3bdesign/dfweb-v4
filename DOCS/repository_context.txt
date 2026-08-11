@@ -21176,114 +21176,6 @@ vercel.json
 112: );
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.4",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.8",
-18:     "react-dom": "^19.2.8",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.9.1",
-21:     "styled-components": "^6.5.1"
-22:   },
-23:   "devDependencies": {
-24:     "@sanity/eslint-config-studio": "^6.0.0",
-25:     "@types/react": "^19.2.17",
-26:     "eslint": "^9.39.5",
-27:     "prettier": "^3.9.6",
-28:     "typescript": "^6.0.3"
-29:   },
-30:   "pnpm": {
-31:     "overrides": {
-32:       "adm-zip": ">=0.6.0",
-33:       "basic-ftp": ">=6.2.0",
-34:       "brace-expansion": ">=5.0.9",
-35:       "dompurify": ">=3.4.13",
-36:       "esbuild": ">=0.28.2",
-37:       "flatted": ">=3.4.4",
-38:       "js-yaml": ">=5.2.3",
-39:       "lodash": ">=4.18.1",
-40:       "lodash-es": ">=4.18.1",
-41:       "minimatch": "10.2.6",
-42:       "nanoid": ">=5.1.16",
-43:       "picomatch": "4.0.5",
-44:       "postcss": ">=8.5.26",
-45:       "smol-toml": ">=1.7.0",
-46:       "undici": ">=8.9.0",
-47:       "vite": ">=8.1.5",
-48:       "ws": ">=8.21.1",
-49:       "yaml": ">=2.9.0",
-50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-51:     }
-52:   },
-53:   "overrides": {
-54:     "adm-zip": ">=0.6.0",
-55:     "smol-toml": ">=1.7.1",
-56:     "brace-expansion": ">=5.0.9",
-57:     "esbuild": ">=0.28.2",
-58:     "uuid": ">=14.0.1",
-59:     "js-yaml": ">=5.2.3",
-60:     "nanoid": ">=5.1.16",
-61:     "postcss": ">=8.5.26",
-62:     "undici": ">=8.10.0",
-63:     "ws": ">=8.21.3"
-64:   },
-65:   "prettier": {
-66:     "semi": false,
-67:     "printWidth": 100,
-68:     "bracketSpacing": false,
-69:     "singleQuote": true
-70:   }
-71: }
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - "."
- 3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.9"
- 6:   "js-yaml": ">=5.2.3"
- 7:   "sharp": ">=0.35.3"
- 8:   "adm-zip": ">=0.6.0"
- 9:   "nanoid": ">=6.0.1"
-10:   "postcss": ">=8.5.26"
-11:   "jest-mock": "30.4.1"
-12:   "@jest/environment": "30.4.1"
-13:   "@jest/fake-timers": "30.4.1"
-14:   "jest-util": "30.4.1"
-15:   "@jest/types": "30.4.1"
-16:   "react": "19.2.8"
-17:   "react-dom": "19.2.8"
-18: allowBuilds:
-19:   "@swc/core": true
-20:   cypress: true
-21:   esbuild: true
-22:   msw: true
-23:   puppeteer: true
-24:   sharp: true
-25:   unrs-resolver: true
-26: minimumReleaseAgeExclude:
-27:   - postcss@8.5.21
-28:   - wait-on@9.1.0
-29:   - eslint@10.8.1
-````
-
 ## File: src/app/glitch.css
 ````css
   1: .glitch {
@@ -21441,6 +21333,193 @@ vercel.json
 153: .glitch:hover::before {
 154:   animation: noise-anim-2 0.3s infinite linear alternate-reverse;
 155: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { sanityFetch } from "@/lib/sanity/client";
+ 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 7: import type { Navigation, Settings } from "@/types/sanity.types";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const jetbrainsMono = JetBrains_Mono({
+14:   subsets: ["latin"],
+15:   display: "swap", // Prevent invisible text during font load (improves FCP)
+16:   preload: true, // Preload font to reduce request chain
+17: });
+18: export const metadata: Metadata = {
+19:   title: "Forside - Dfweb",
+20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+21: };
+22: export default async function RootLayout({
+23:   children,
+24: }: Readonly<{
+25:   children: React.ReactNode;
+26: }>) {
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+41:         <link rel="icon" href="/favicon.ico" />
+42:         <link rel="apple-touch-icon" href="/logo.png" />
+43:         <meta property="og:title" content="Daniel Fjeldstad" />
+44:         <meta name="author" content="Daniel Fjeldstad" />
+45:         <meta property="og:locale" content="nb_NO" />
+46:         <meta
+47:           property="og:description"
+48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+49:         />
+50:         <meta property="og:url" content="https://www.dfweb.no/" />
+51:         <meta property="og:site_name" content="dfweb.no" />
+52:         <meta name="theme-color" content="#004014" />
+53:       </head>
+54:       <body
+55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+56:       >
+57:         <LazyMotionProvider>
+58:           <SkipLink />
+59:           <ErrorBoundary>
+60:             <div id="main-content" className="grow flex flex-col">
+61:               <Header navigation={navigation} />
+62:               <SpeedInsights />
+63:               <div className="grow">{children}</div>
+64:               <Footer
+65:                 footerCopyrightText={
+66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+67:                 }
+68:               />
+69:             </div>
+70:           </ErrorBoundary>
+71:         </LazyMotionProvider>
+72:       </body>
+73:     </html>
+74:   );
+75: }
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.4",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.8",
+18:     "react-dom": "^19.2.8",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.9.1",
+21:     "styled-components": "^6.5.1"
+22:   },
+23:   "devDependencies": {
+24:     "@sanity/eslint-config-studio": "^6.0.0",
+25:     "@types/react": "^19.2.18",
+26:     "eslint": "^9.39.5",
+27:     "prettier": "^3.9.6",
+28:     "typescript": "^6.0.3"
+29:   },
+30:   "pnpm": {
+31:     "overrides": {
+32:       "adm-zip": ">=0.6.0",
+33:       "basic-ftp": ">=6.2.0",
+34:       "brace-expansion": ">=5.0.9",
+35:       "dompurify": ">=3.4.13",
+36:       "esbuild": ">=0.28.2",
+37:       "flatted": ">=3.4.4",
+38:       "js-yaml": ">=5.2.3",
+39:       "lodash": ">=4.18.1",
+40:       "lodash-es": ">=4.18.1",
+41:       "minimatch": "10.2.6",
+42:       "nanoid": ">=5.1.16",
+43:       "picomatch": "4.0.5",
+44:       "postcss": ">=8.5.26",
+45:       "smol-toml": ">=1.7.0",
+46:       "undici": ">=8.9.0",
+47:       "vite": ">=8.1.5",
+48:       "ws": ">=8.21.1",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.0",
+55:     "smol-toml": ">=1.7.1",
+56:     "brace-expansion": ">=5.0.9",
+57:     "esbuild": ">=0.28.2",
+58:     "uuid": ">=14.0.1",
+59:     "js-yaml": ">=5.2.3",
+60:     "nanoid": ">=5.1.16",
+61:     "postcss": ">=8.5.26",
+62:     "undici": ">=8.10.0",
+63:     "ws": ">=8.21.3"
+64:   },
+65:   "prettier": {
+66:     "semi": false,
+67:     "printWidth": 100,
+68:     "bracketSpacing": false,
+69:     "singleQuote": true
+70:   }
+71: }
+````
+
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - "."
+ 3: overrides:
+ 4:   "@babel/core": ">=8.0.1"
+ 5:   "brace-expansion": "5.0.9"
+ 6:   "js-yaml": ">=5.2.3"
+ 7:   "sharp": ">=0.35.3"
+ 8:   "adm-zip": ">=0.6.0"
+ 9:   "nanoid": ">=6.0.1"
+10:   "postcss": ">=8.5.26"
+11:   "jest-mock": "30.4.1"
+12:   "@jest/environment": "30.4.1"
+13:   "@jest/fake-timers": "30.4.1"
+14:   "jest-util": "30.4.1"
+15:   "@jest/types": "30.4.1"
+16:   "react": "19.2.8"
+17:   "react-dom": "19.2.8"
+18: allowBuilds:
+19:   "@swc/core": true
+20:   cypress: true
+21:   esbuild: true
+22:   msw: true
+23:   puppeteer: true
+24:   sharp: true
+25:   unrs-resolver: true
+26: minimumReleaseAgeExclude:
+27:   - postcss@8.5.21
+28:   - wait-on@9.1.0
+29:   - eslint@10.8.1
 ````
 
 ## File: src/app/globals.css
@@ -21629,85 +21708,6 @@ vercel.json
 182: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { sanityFetch } from "@/lib/sanity/client";
- 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 7: import type { Navigation, Settings } from "@/types/sanity.types";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const jetbrainsMono = JetBrains_Mono({
-14:   subsets: ["latin"],
-15:   display: "swap", // Prevent invisible text during font load (improves FCP)
-16:   preload: true, // Preload font to reduce request chain
-17: });
-18: export const metadata: Metadata = {
-19:   title: "Forside - Dfweb",
-20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-21: };
-22: export default async function RootLayout({
-23:   children,
-24: }: Readonly<{
-25:   children: React.ReactNode;
-26: }>) {
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-41:         <link rel="icon" href="/favicon.ico" />
-42:         <link rel="apple-touch-icon" href="/logo.png" />
-43:         <meta property="og:title" content="Daniel Fjeldstad" />
-44:         <meta name="author" content="Daniel Fjeldstad" />
-45:         <meta property="og:locale" content="nb_NO" />
-46:         <meta
-47:           property="og:description"
-48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-49:         />
-50:         <meta property="og:url" content="https://www.dfweb.no/" />
-51:         <meta property="og:site_name" content="dfweb.no" />
-52:         <meta name="theme-color" content="#004014" />
-53:       </head>
-54:       <body
-55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-56:       >
-57:         <LazyMotionProvider>
-58:           <SkipLink />
-59:           <ErrorBoundary>
-60:             <div id="main-content" className="grow flex flex-col">
-61:               <Header navigation={navigation} />
-62:               <SpeedInsights />
-63:               <div className="grow">{children}</div>
-64:               <Footer
-65:                 footerCopyrightText={
-66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-67:                 }
-68:               />
-69:             </div>
-70:           </ErrorBoundary>
-71:         </LazyMotionProvider>
-72:       </body>
-73:     </html>
-74:   );
-75: }
-````
-
 ## File: package.json
 ````json
   1: {
@@ -21748,7 +21748,7 @@ vercel.json
  36:     "jest": "30.4.2",
  37:     "motion": "^12.43.0",
  38:     "next": "^16.3.0",
- 39:     "react": "^19.2.5",
+ 39:     "react": "^19.2.8",
  40:     "react-dom": "^19.2.8",
  41:     "react-error-boundary": "^6.1.2",
  42:     "react-hook-form": "^7.84.0",
@@ -21770,7 +21770,7 @@ vercel.json
  58:     "@types/jest": "^30.0.0",
  59:     "@types/node": "^26.2.0",
  60:     "@types/react": "^19.2.18",
- 61:     "@types/react-dom": "^19.2.3",
+ 61:     "@types/react-dom": "^19.2.4",
  62:     "@typescript-eslint/eslint-plugin": "^8.65.0",
  63:     "@typescript-eslint/parser": "^8.65.0",
  64:     "@typescript-eslint/utils": "^8.65.0",
