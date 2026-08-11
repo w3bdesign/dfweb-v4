@@ -20667,6 +20667,85 @@ vercel.json
 89: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { sanityFetch } from "@/lib/sanity/client";
+ 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 7: import type { Navigation, Settings } from "@/types/sanity.types";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const jetbrainsMono = JetBrains_Mono({
+14:   subsets: ["latin"],
+15:   display: "swap", // Prevent invisible text during font load (improves FCP)
+16:   preload: true, // Preload font to reduce request chain
+17: });
+18: export const metadata: Metadata = {
+19:   title: "Forside - Dfweb",
+20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+21: };
+22: export default async function RootLayout({
+23:   children,
+24: }: Readonly<{
+25:   children: React.ReactNode;
+26: }>) {
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+41:         <link rel="icon" href="/favicon.ico" />
+42:         <link rel="apple-touch-icon" href="/logo.png" />
+43:         <meta property="og:title" content="Daniel Fjeldstad" />
+44:         <meta name="author" content="Daniel Fjeldstad" />
+45:         <meta property="og:locale" content="nb_NO" />
+46:         <meta
+47:           property="og:description"
+48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+49:         />
+50:         <meta property="og:url" content="https://www.dfweb.no/" />
+51:         <meta property="og:site_name" content="dfweb.no" />
+52:         <meta name="theme-color" content="#004014" />
+53:       </head>
+54:       <body
+55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+56:       >
+57:         <LazyMotionProvider>
+58:           <SkipLink />
+59:           <ErrorBoundary>
+60:             <div id="main-content" className="grow flex flex-col">
+61:               <Header navigation={navigation} />
+62:               <SpeedInsights />
+63:               <div className="grow">{children}</div>
+64:               <Footer
+65:                 footerCopyrightText={
+66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+67:                 }
+68:               />
+69:             </div>
+70:           </ErrorBoundary>
+71:         </LazyMotionProvider>
+72:       </body>
+73:     </html>
+74:   );
+75: }
+````
+
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -21286,55 +21365,6 @@ vercel.json
 155: }
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30   
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile --ignore-scripts
-31:       - name: Verify and install Cypress binary
-32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
-33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
-34:         # NOT a package-manager install running third-party lifecycle scripts.
-35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
-36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
-37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
-38:       - name: Build the project
-39:         run: pnpm build
-40:       - name: Start the application
-41:         run: pnpm dev &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
-44:       - name: Run Cypress tests
-45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
-````
-
 ## File: src/app/globals.css
 ````css
   1: @import "tailwindcss";
@@ -21521,83 +21551,53 @@ vercel.json
 182: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { sanityFetch } from "@/lib/sanity/client";
- 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 7: import type { Navigation, Settings } from "@/types/sanity.types";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const jetbrainsMono = JetBrains_Mono({
-14:   subsets: ["latin"],
-15:   display: "swap", // Prevent invisible text during font load (improves FCP)
-16:   preload: true, // Preload font to reduce request chain
-17: });
-18: export const metadata: Metadata = {
-19:   title: "Forside - Dfweb",
-20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-21: };
-22: export default async function RootLayout({
-23:   children,
-24: }: Readonly<{
-25:   children: React.ReactNode;
-26: }>) {
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-41:         <link rel="icon" href="/favicon.ico" />
-42:         <link rel="apple-touch-icon" href="/logo.png" />
-43:         <meta property="og:title" content="Daniel Fjeldstad" />
-44:         <meta name="author" content="Daniel Fjeldstad" />
-45:         <meta property="og:locale" content="nb_NO" />
-46:         <meta
-47:           property="og:description"
-48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-49:         />
-50:         <meta property="og:url" content="https://www.dfweb.no/" />
-51:         <meta property="og:site_name" content="dfweb.no" />
-52:         <meta name="theme-color" content="#004014" />
-53:       </head>
-54:       <body
-55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-56:       >
-57:         <LazyMotionProvider>
-58:           <SkipLink />
-59:           <ErrorBoundary>
-60:             <div id="main-content" className="grow flex flex-col">
-61:               <Header navigation={navigation} />
-62:               <SpeedInsights />
-63:               <div className="grow">{children}</div>
-64:               <Footer
-65:                 footerCopyrightText={
-66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-67:                 }
-68:               />
-69:             </div>
-70:           </ErrorBoundary>
-71:         </LazyMotionProvider>
-72:       </body>
-73:     </html>
-74:   );
-75: }
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30   
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile --ignore-scripts
+31:       - name: Verify and install Cypress binary
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
+33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
+34:         # NOT a package-manager install running third-party lifecycle scripts.
+35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
+36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
+37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
+38:       - name: Build the project
+39:         run: pnpm build
+40:       - name: Start the application
+41:         run: pnpm dev &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+44:       - name: Run Cypress tests
+45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
 
 ## File: studio/package.json
