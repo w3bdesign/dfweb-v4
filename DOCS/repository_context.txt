@@ -20225,6 +20225,85 @@ vercel.json
 182: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { sanityFetch } from "@/lib/sanity/client";
+ 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 7: import type { Navigation, Settings } from "@/types/sanity.types";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const jetbrainsMono = JetBrains_Mono({
+14:   subsets: ["latin"],
+15:   display: "swap", // Prevent invisible text during font load (improves FCP)
+16:   preload: true, // Preload font to reduce request chain
+17: });
+18: export const metadata: Metadata = {
+19:   title: "Forside - Dfweb",
+20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+21: };
+22: export default async function RootLayout({
+23:   children,
+24: }: Readonly<{
+25:   children: React.ReactNode;
+26: }>) {
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+41:         <link rel="icon" href="/favicon.ico" />
+42:         <link rel="apple-touch-icon" href="/logo.png" />
+43:         <meta property="og:title" content="Daniel Fjeldstad" />
+44:         <meta name="author" content="Daniel Fjeldstad" />
+45:         <meta property="og:locale" content="nb_NO" />
+46:         <meta
+47:           property="og:description"
+48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+49:         />
+50:         <meta property="og:url" content="https://www.dfweb.no/" />
+51:         <meta property="og:site_name" content="dfweb.no" />
+52:         <meta name="theme-color" content="#004014" />
+53:       </head>
+54:       <body
+55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+56:       >
+57:         <LazyMotionProvider>
+58:           <SkipLink />
+59:           <ErrorBoundary>
+60:             <div id="main-content" className="grow flex flex-col">
+61:               <Header navigation={navigation} />
+62:               <SpeedInsights />
+63:               <div className="grow">{children}</div>
+64:               <Footer
+65:                 footerCopyrightText={
+66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+67:                 }
+68:               />
+69:             </div>
+70:           </ErrorBoundary>
+71:         </LazyMotionProvider>
+72:       </body>
+73:     </html>
+74:   );
+75: }
+````
+
 ## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
   1: "use client";
@@ -21191,85 +21270,6 @@ vercel.json
 155: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { sanityFetch } from "@/lib/sanity/client";
- 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 7: import type { Navigation, Settings } from "@/types/sanity.types";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const jetbrainsMono = JetBrains_Mono({
-14:   subsets: ["latin"],
-15:   display: "swap", // Prevent invisible text during font load (improves FCP)
-16:   preload: true, // Preload font to reduce request chain
-17: });
-18: export const metadata: Metadata = {
-19:   title: "Forside - Dfweb",
-20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-21: };
-22: export default async function RootLayout({
-23:   children,
-24: }: Readonly<{
-25:   children: React.ReactNode;
-26: }>) {
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-41:         <link rel="icon" href="/favicon.ico" />
-42:         <link rel="apple-touch-icon" href="/logo.png" />
-43:         <meta property="og:title" content="Daniel Fjeldstad" />
-44:         <meta name="author" content="Daniel Fjeldstad" />
-45:         <meta property="og:locale" content="nb_NO" />
-46:         <meta
-47:           property="og:description"
-48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-49:         />
-50:         <meta property="og:url" content="https://www.dfweb.no/" />
-51:         <meta property="og:site_name" content="dfweb.no" />
-52:         <meta name="theme-color" content="#004014" />
-53:       </head>
-54:       <body
-55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-56:       >
-57:         <LazyMotionProvider>
-58:           <SkipLink />
-59:           <ErrorBoundary>
-60:             <div id="main-content" className="grow flex flex-col">
-61:               <Header navigation={navigation} />
-62:               <SpeedInsights />
-63:               <div className="grow">{children}</div>
-64:               <Footer
-65:                 footerCopyrightText={
-66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-67:                 }
-68:               />
-69:             </div>
-70:           </ErrorBoundary>
-71:         </LazyMotionProvider>
-72:       </body>
-73:     </html>
-74:   );
-75: }
-````
-
 ## File: .circleci/config.yml
 ````yaml
  1: version: 2.1
@@ -21771,9 +21771,9 @@ vercel.json
  59:     "@types/node": "^26.2.0",
  60:     "@types/react": "^19.2.18",
  61:     "@types/react-dom": "^19.2.4",
- 62:     "@typescript-eslint/eslint-plugin": "^8.65.0",
- 63:     "@typescript-eslint/parser": "^8.65.0",
- 64:     "@typescript-eslint/utils": "^8.65.0",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.66.0",
+ 63:     "@typescript-eslint/parser": "^8.66.0",
+ 64:     "@typescript-eslint/utils": "^8.66.0",
  65:     "axe-core": "^4.12.1",
  66:     "cypress": "15.20.0",
  67:     "cypress-axe": "^1.7.0",
