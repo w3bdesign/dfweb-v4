@@ -7,6 +7,7 @@ describe("ExperienceTabContent", () => {
     // Arrange
     const mockExperience = [
       {
+        _key: "experience-with-role",
         period: "2022-2024",
         company: "Tech Company Inc",
         role: "Senior Developer",
@@ -30,6 +31,7 @@ describe("ExperienceTabContent", () => {
     // Arrange
     const mockExperience = [
       {
+        _key: "experience-without-role",
         period: "2022-2024",
         company: "Tech Company Inc",
         description: "Developed web applications",
@@ -53,6 +55,7 @@ describe("ExperienceTabContent", () => {
     // Arrange
     const mockExperience = [
       {
+        _key: "experience-with-empty-role",
         period: "2022-2024",
         company: "Tech Company Inc",
         role: "", // Empty string to test the conditional

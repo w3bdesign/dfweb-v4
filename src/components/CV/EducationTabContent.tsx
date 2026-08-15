@@ -2,6 +2,7 @@ import React from "react";
 import GenericCVSectionContent from "./GenericCVSectionContent";
 
 interface Education {
+  _key: string;
   period?: string;
   institution?: string;
   degree?: string;

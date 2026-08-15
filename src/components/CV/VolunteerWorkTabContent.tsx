@@ -2,6 +2,7 @@ import React from "react";
 import GenericCVSectionContent from "./GenericCVSectionContent";
 
 interface VolunteerWork {
+  _key: string;
   period?: string;
   organization?: string;
   role?: string;
