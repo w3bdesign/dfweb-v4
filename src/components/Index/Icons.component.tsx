@@ -52,16 +52,16 @@ const Icons = () => (
       <div className="relative" key={id}>
         <Grow delay={2.5 + id * 0.2}>
           <div className="relative group">
-            <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
+            <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-[background-color,border-color] duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
               <Icon
                 data-testid={iconName}
                 aria-label={`${iconName} ikon`}
                 title={`${iconName} ikon`}
                 size="1em"
-                className="transition-all duration-300 group-hover:text-matrix-light"
+                className="transition-[color] duration-300 group-hover:text-matrix-light"
               />
             </div>
-            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-matrix-light">
+            <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-matrix-light">
               {iconName}
             </span>
           </div>

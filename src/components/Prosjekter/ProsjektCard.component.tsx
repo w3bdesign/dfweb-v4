@@ -40,7 +40,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+      className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
       data-testid="project-card"
     >
       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
@@ -48,7 +48,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
             {projectimage && (
               <Image
-                className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+                className="transition-[transform,box-shadow,filter] duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
                 width={600}
                 height={300}
                 src={urlFor(projectimage)

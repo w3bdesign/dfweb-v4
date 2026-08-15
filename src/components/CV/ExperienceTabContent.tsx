@@ -2,6 +2,7 @@ import React from "react";
 import GenericCVSectionContent from "./GenericCVSectionContent";
 
 interface Experience {
+  _key: string;
   period?: string;
   company?: string;
   role?: string;

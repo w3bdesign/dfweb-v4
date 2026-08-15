@@ -1,6 +1,7 @@
 import React from "react";
 
 interface BaseItem {
+  _key: string;
   description?: string;
 }
 
@@ -37,9 +38,9 @@ const GenericCVSectionContent = <T extends BaseItem>({
   renderSubHeaderContent,
 }: GenericCVSectionContentProps<T>) => (
   <div className="text-slate-300/[0.9]">
-    {items?.map((item, index) => (
+    {items?.map((item) => (
       <CVListItem
-        key={item.description ?? `item-${index}`}
+        key={item._key}
         item={item}
         renderHeaderContent={renderHeaderContent}
         renderSubHeaderContent={renderSubHeaderContent}

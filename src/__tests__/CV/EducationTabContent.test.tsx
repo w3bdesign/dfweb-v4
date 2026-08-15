@@ -7,6 +7,7 @@ describe("EducationTabContent", () => {
     // Arrange
     const mockEducation = [
       {
+        _key: "education-with-degree",
         period: "2020-2024",
         institution: "University of Technology",
         degree: "Bachelor of Computer Science",
@@ -32,6 +33,7 @@ describe("EducationTabContent", () => {
     // Arrange
     const mockEducation = [
       {
+        _key: "education-without-degree",
         period: "2020-2024",
         institution: "University of Technology",
         description: "Studied computer science fundamentals",
@@ -57,6 +59,7 @@ describe("EducationTabContent", () => {
     // Arrange
     const mockEducation = [
       {
+        _key: "education-with-empty-degree",
         period: "2020-2024",
         institution: "University of Technology",
         degree: "", // Empty string to test the conditional
