@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useEffectEvent, useRef, useCallback } from "react";
 import { createMatrixRenderer } from "./Matrix.renderer";
 import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
 
@@ -73,7 +73,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
     [tileSize],
   );
 
-  const tick = useCallback(
+  const tick = useEffectEvent(
     (
       timestamp: number,
       ctx: CanvasRenderingContext2D,
@@ -105,15 +105,6 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
 
       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
     },
-    [
-      fadeFactor,
-      rgbBackground,
-      rgbFont,
-      tileSize,
-      glowColor,
-      tileSet,
-      frameInterval,
-    ],
   );
 
   useEffect(() => {
@@ -155,7 +146,7 @@ const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
       window.removeEventListener("resize", debouncedResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [initMatrix, tick]);
+  }, [initMatrix]);
 
   return (
     <canvas
