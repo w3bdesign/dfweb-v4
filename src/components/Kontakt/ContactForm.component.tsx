@@ -87,6 +87,10 @@ const ContactForm: React.FC<ContactFormProps> = ({
                       method="POST"
                       action="/api/form"
                       aria-label="Contact Form"
+                      data-tool-name="submit_contact_form"
+                      data-tool-description="Submit a contact form to Dfweb with name, phone number, and message"
+                      data-tool-schema='{"type":"object","properties":{"navn":{"type":"string","description":"Full name","minLength":2,"maxLength":100,"pattern":"^[a-zA-ZæøåÆØÅ ]+$"},"telefon":{"type":"string","description":"Norwegian phone number (8 digits)","pattern":"^\\d{8}$"},"tekst":{"type":"string","description":"Message text","minLength":10,"maxLength":1000}},"required":["navn","telefon","tekst"],"additionalProperties":false}'
+                      data-tool-confirmation="required"
                     >
                       {csrfToken && (
                         <input type="hidden" name="_csrf" value={csrfToken} />

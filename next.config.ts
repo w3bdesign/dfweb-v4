@@ -29,6 +29,14 @@ const buildCspHeader = (directives: Record<string, string[]>) =>
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@portabletext/react"],
+  compiler: {
+    // Remove console.log in production
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  // Optimize CSS chunking - merge CSS files to reduce network requests
+  experimental: {
+    cssChunking: true, // Merge CSS files when possible (default)
+  },
   images: {
     remotePatterns: [
       {
@@ -55,6 +63,8 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: buildCspHeader(cspDirectives),
           },
+          { key: "Permissions-Policy", value: "tools=(self)" },
+          { key: "Origin-Agent-Cluster", value: "?1" },
         ],
       },
       {
@@ -73,6 +83,8 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: buildCspHeader(cspDirectives),
           },
+          { key: "Permissions-Policy", value: "tools=(self)" },
+          { key: "Origin-Agent-Cluster", value: "?1" },
         ],
       },
       {
@@ -83,11 +95,12 @@ const nextConfig: NextConfig = {
             value: "ALLOW-FROM https://presentasjon.dfweb.no",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
-
           {
             key: "Content-Security-Policy",
             value: buildCspHeader(cspDirectives),
           },
+          { key: "Permissions-Policy", value: "tools=(self)" },
+          { key: "Origin-Agent-Cluster", value: "?1" },
         ],
       },
     ];

@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import { Meta } from "@ladle/react";
 import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+
 import "@/app/cursor.css";
 
 export default {
@@ -55,10 +56,10 @@ export const WithInteractiveElements = () => (
         Interactive Elements Demo
       </h2>
       <div className="grid grid-cols-2 gap-4">
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
+        <button type="button" className="bg-blue-600 text-white px-6 py-3 rounded-sm hover:bg-blue-700 transition-colors">
           Hover Me
         </button>
-        <button className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
+        <button type="button" className="bg-green-600 text-white px-6 py-3 rounded-sm hover:bg-green-700 transition-colors text-center">
           Button Example
         </button>
       </div>

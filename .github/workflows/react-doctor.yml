@@ -20,26 +20,26 @@ jobs:
       pull-requests: write
       issues: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Detect package manager
         id: pm
         run: |
           if [ -f "pnpm-lock.yaml" ]; then
             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
-            echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+            echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
             echo "Detected pnpm (pnpm-lock.yaml found)"
           elif [ -f "yarn.lock" ]; then
             echo "manager=yarn" >> "$GITHUB_OUTPUT"
-            echo "install=yarn install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+            echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
             echo "run=yarn" >> "$GITHUB_OUTPUT"
             echo "cache=yarn" >> "$GITHUB_OUTPUT"
             echo "Detected yarn (yarn.lock found)"
           else
             echo "manager=npm" >> "$GITHUB_OUTPUT"
-            echo "install=npm ci" >> "$GITHUB_OUTPUT"
+            echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
             echo "run=npm run" >> "$GITHUB_OUTPUT"
             echo "cache=npm" >> "$GITHUB_OUTPUT"
             echo "Detected npm (default)"
@@ -48,10 +48,8 @@ jobs:
       - name: Install pnpm
         if: steps.pm.outputs.manager == 'pnpm'
         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-        with:
-          version: 11
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: ${{ steps.pm.outputs.cache }}

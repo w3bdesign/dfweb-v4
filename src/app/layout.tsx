@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import { preconnect } from "react-dom";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
-import "./glitch.css";
 
 import { sanityFetch } from "@/lib/sanity/client";
 import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
@@ -16,7 +14,11 @@ import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
 
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap", // Prevent invisible text during font load (improves FCP)
+  preload: true, // Preload font to reduce request chain
+});
 
 export const metadata: Metadata = {
   title: "Forside - Dfweb",
@@ -28,9 +30,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Preconnect to Sanity CDN for faster image/data loading (Rule 6.10)
-  preconnect("https://cdn.sanity.io");
-
   const [navigation, settings] = await Promise.all([
     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
@@ -45,6 +44,10 @@ export default async function RootLayout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
         />
+
+        <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo.png" />
 

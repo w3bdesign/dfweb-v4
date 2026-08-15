@@ -44,6 +44,7 @@ const Pill: React.FC<PillProps> = ({
 
   return (
     <button
+      type="button"
       className={baseClasses}
       onClick={onClick}
       data-text={text}

@@ -25,6 +25,7 @@ export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
           </p>
         )}
         <button
+          type="button"
           onClick={reset}
           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
         >

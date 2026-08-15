@@ -12,7 +12,7 @@ interface ErrorBoundaryProps {
   compact?: boolean;
 }
 
-const handleError = (error: Error, info: ErrorInfo) => {
+const handleError = (error: unknown, info: ErrorInfo) => {
   console.error("Uventet feil i Matrix:", error, info);
 };
 
@@ -34,7 +34,7 @@ const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
 }) => {
   const renderFallback = useCallback(
     (props: FallbackProps) => (
-      <ErrorFallback error={props.error} compact={compact} />
+      <ErrorFallback error={props.error as Error} compact={compact} />
     ),
     [compact],
   );

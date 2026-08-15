@@ -11,10 +11,9 @@ Installation in another repo:
 """
 
 import subprocess
-import os
 import sys
-import json
 import codecs
+
 from typing import List, Tuple, Optional
 from pathlib import Path
 from dotenv import load_dotenv
@@ -32,7 +31,9 @@ _ALLOWED_GIT_SUBCOMMANDS = frozenset(["diff"])
 _GIT_ARG_CACHED = "--cached"
 _GIT_ARG_NAME_ONLY = "--name-only"
 _GIT_ARG_HEAD_PREVIOUS = "HEAD~1"
-_ALLOWED_GIT_ARGS = frozenset([_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS])
+_ALLOWED_GIT_ARGS = frozenset(
+    [_GIT_ARG_CACHED, _GIT_ARG_NAME_ONLY, _GIT_ARG_HEAD_PREVIOUS]
+)
 
 _REPOSITORY_CONTEXT_PATH = "DOCS/repository_context.txt"
 
@@ -104,6 +105,7 @@ def _run_git_command(args: List[str]) -> str:
 # DIFF ANALYSIS
 # =============================================================================
 
+
 def _is_lock_file(filename: str) -> bool:
     """Check if a filename is a dependency lock file."""
     lock_file_patterns = (
@@ -141,7 +143,9 @@ def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
 
         if not diff:
             diff = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS])
-            files_output = _run_git_command(["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY])
+            files_output = _run_git_command(
+                ["diff", _GIT_ARG_HEAD_PREVIOUS, _GIT_ARG_NAME_ONLY]
+            )
             staged_files = files_output.splitlines()
             staged_files_normalized = [_normalize_repo_path(f) for f in staged_files]
 
@@ -167,6 +171,7 @@ def get_staged_diff() -> Tuple[Optional[str], bool, List[str]]:
 # =============================================================================
 # COMMIT MESSAGE GENERATION
 # =============================================================================
+
 
 def generate_commit_message(diff: str) -> Optional[str]:
     """Generate commit message using the configured LLM provider."""
@@ -260,6 +265,7 @@ just the commit message exactly as it should appear in git.
 # =============================================================================
 # MAIN
 # =============================================================================
+
 
 def main():
     diff, has_lock_files, changed_files = get_staged_diff()
