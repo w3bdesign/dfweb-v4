@@ -11,6 +11,26 @@ import type { Navigation } from "@/types/sanity.types";
 
 type NavigationLinksArray = NonNullable<Navigation["links"]>;
 
+const menuVariants: Variants = {
+  closed: {
+    x: "125%",
+    transition: {
+      type: "spring",
+      stiffness: 60,
+      damping: 10,
+      delay: 0.3,
+    },
+  },
+  open: {
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 60,
+      damping: 10,
+    },
+  },
+};
+
 /**
  * MobileMenu component that renders a responsive navigation menu for mobile devices
  * @param {Object} props
@@ -23,26 +43,6 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
   const closeMenu = () => toggleExpanded(0);
 
   const pathname = usePathname();
-
-  const menuVariants: Variants = {
-    closed: {
-      x: "125%",
-      transition: {
-        type: "spring",
-        stiffness: 60,
-        damping: 10,
-        delay: 0.3,
-      },
-    },
-    open: {
-      x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 60,
-        damping: 10,
-      },
-    },
-  };
 
   const itemVariants: Variants = {
     closed: (i: number) => ({
