@@ -1818,27 +1818,6 @@ vercel.json
 53:         return response.choices[0].message.content.strip()
 ````
 
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model for your chosen provider
-17: MODEL_NAME="anthropic/claude-sonnet-5"
-````
-
 ## File: commit/commit_analyzer.py
 ````python
   1: #!/usr/bin/env python3
@@ -5297,259 +5276,6 @@ vercel.json
 104: });
 ````
 
-## File: src/__tests__/CV/EducationTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import EducationTabContent from "@/components/CV/EducationTabContent";
- 4: describe("EducationTabContent", () => {
- 5:   it("renders education items with degree (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockEducation = [
- 8:       {
- 9:         period: "2020-2024",
-10:         institution: "University of Technology",
-11:         degree: "Bachelor of Computer Science",
-12:         description: "Studied computer science fundamentals",
-13:       },
-14:     ];
-15:     // Act
-16:     render(<EducationTabContent education={mockEducation} />);
-17:     // Assert
-18:     expect(
-19:       screen.getByText((content, element) => {
-20:         return element?.textContent === "2020-2024 - University of Technology";
-21:       }),
-22:     ).toBeInTheDocument();
-23:     expect(
-24:       screen.getByText("Bachelor of Computer Science"),
-25:     ).toBeInTheDocument();
-26:   });
-27:   it("renders education items without degree (conditional branch)", () => {
-28:     // Arrange
-29:     const mockEducation = [
-30:       {
-31:         period: "2020-2024",
-32:         institution: "University of Technology",
-33:         description: "Studied computer science fundamentals",
-34:         // No degree property to test the conditional
-35:       },
-36:     ];
-37:     // Act
-38:     render(<EducationTabContent education={mockEducation} />);
-39:     // Assert
-40:     expect(
-41:       screen.getByText((content, element) => {
-42:         return element?.textContent === "2020-2024 - University of Technology";
-43:       }),
-44:     ).toBeInTheDocument();
-45:     expect(
-46:       screen.queryByText("Bachelor of Computer Science"),
-47:     ).not.toBeInTheDocument();
-48:   });
-49:   it("renders education items with empty degree (conditional branch)", () => {
-50:     // Arrange
-51:     const mockEducation = [
-52:       {
-53:         period: "2020-2024",
-54:         institution: "University of Technology",
-55:         degree: "", // Empty string to test the conditional
-56:         description: "Studied computer science fundamentals",
-57:       },
-58:     ];
-59:     // Act
-60:     render(<EducationTabContent education={mockEducation} />);
-61:     // Assert
-62:     expect(
-63:       screen.getByText((content, element) => {
-64:         return element?.textContent === "2020-2024 - University of Technology";
-65:       }),
-66:     ).toBeInTheDocument();
-67:     expect(
-68:       screen.queryByText("Bachelor of Computer Science"),
-69:     ).not.toBeInTheDocument();
-70:   });
-71:   it("renders with undefined education", () => {
-72:     // Act
-73:     render(<EducationTabContent />);
-74:     // Assert - Should not crash and render empty content
-75:     expect(
-76:       screen.queryByText("University of Technology"),
-77:     ).not.toBeInTheDocument();
-78:   });
-79:   it("renders with empty education array", () => {
-80:     // Act
-81:     render(<EducationTabContent education={[]} />);
-82:     // Assert - Should not crash and render empty content
-83:     expect(
-84:       screen.queryByText("University of Technology"),
-85:     ).not.toBeInTheDocument();
-86:   });
-87: });
-````
-
-## File: src/__tests__/CV/ExperienceTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent";
- 4: describe("ExperienceTabContent", () => {
- 5:   it("renders experience items with role (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockExperience = [
- 8:       {
- 9:         period: "2022-2024",
-10:         company: "Tech Company Inc",
-11:         role: "Senior Developer",
-12:         description: "Developed web applications",
-13:       },
-14:     ];
-15:     // Act
-16:     render(<ExperienceTabContent experience={mockExperience} />);
-17:     // Assert
-18:     expect(
-19:       screen.getByText((content, element) => {
-20:         return element?.textContent === "2022-2024 - Tech Company Inc";
-21:       }),
-22:     ).toBeInTheDocument();
-23:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
-24:   });
-25:   it("renders experience items without role (conditional branch)", () => {
-26:     // Arrange
-27:     const mockExperience = [
-28:       {
-29:         period: "2022-2024",
-30:         company: "Tech Company Inc",
-31:         description: "Developed web applications",
-32:         // No role property to test the conditional
-33:       },
-34:     ];
-35:     // Act
-36:     render(<ExperienceTabContent experience={mockExperience} />);
-37:     // Assert
-38:     expect(
-39:       screen.getByText((content, element) => {
-40:         return element?.textContent === "2022-2024 - Tech Company Inc";
-41:       }),
-42:     ).toBeInTheDocument();
-43:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-44:   });
-45:   it("renders experience items with empty role (conditional branch)", () => {
-46:     // Arrange
-47:     const mockExperience = [
-48:       {
-49:         period: "2022-2024",
-50:         company: "Tech Company Inc",
-51:         role: "", // Empty string to test the conditional
-52:         description: "Developed web applications",
-53:       },
-54:     ];
-55:     // Act
-56:     render(<ExperienceTabContent experience={mockExperience} />);
-57:     // Assert
-58:     expect(
-59:       screen.getByText((content, element) => {
-60:         return element?.textContent === "2022-2024 - Tech Company Inc";
-61:       }),
-62:     ).toBeInTheDocument();
-63:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-64:   });
-65:   it("renders with undefined experience", () => {
-66:     // Act
-67:     render(<ExperienceTabContent />);
-68:     // Assert - Should not crash and render empty content
-69:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-70:   });
-71:   it("renders with empty experience array", () => {
-72:     // Act
-73:     render(<ExperienceTabContent experience={[]} />);
-74:     // Assert - Should not crash and render empty content
-75:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-76:   });
-77: });
-````
-
-## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
- 4: describe("VolunteerWorkTabContent", () => {
- 5:   it("renders volunteer work items with all fields", () => {
- 6:     // Arrange
- 7:     const mockVolunteerWork = [
- 8:       {
- 9:         period: "2020-2022",
-10:         organization: "Open Source Foundation",
-11:         role: "Maintainer",
-12:         description: "Maintained open source projects",
-13:       },
-14:     ];
-15:     // Act
-16:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-17:     // Assert
-18:     expect(
-19:       screen.getByText((content, element) => {
-20:         return element?.textContent === "2020-2022 - Open Source Foundation";
-21:       }),
-22:     ).toBeInTheDocument();
-23:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
-24:     expect(
-25:       screen.getByText("Maintained open source projects"),
-26:     ).toBeInTheDocument();
-27:   });
-28:   it("renders with missing period and organization (nullish coalescing branches)", () => {
-29:     // Arrange
-30:     const mockVolunteerWork = [
-31:       {
-32:         role: "Volunteer",
-33:         description: "Helped with events",
-34:       },
-35:     ];
-36:     // Act
-37:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-38:     // Assert
-39:     expect(screen.getByText(/-/)).toBeInTheDocument();
-40:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
-41:   });
-42:   it("renders without role (conditional branch)", () => {
-43:     // Arrange
-44:     const mockVolunteerWork = [
-45:       {
-46:         period: "2021-2023",
-47:         organization: "Community Group",
-48:         description: "Community outreach",
-49:       },
-50:     ];
-51:     // Act
-52:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-53:     // Assert
-54:     expect(
-55:       screen.getByText((content, element) => {
-56:         return element?.textContent === "2021-2023 - Community Group";
-57:       }),
-58:     ).toBeInTheDocument();
-59:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
-60:   });
-61:   it("renders with undefined volunteerWork", () => {
-62:     // Act
-63:     render(<VolunteerWorkTabContent />);
-64:     // Assert
-65:     expect(
-66:       screen.queryByText("Open Source Foundation"),
-67:     ).not.toBeInTheDocument();
-68:   });
-69:   it("renders with empty volunteerWork array", () => {
-70:     // Act
-71:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
-72:     // Assert
-73:     expect(
-74:       screen.queryByText("Open Source Foundation"),
-75:     ).not.toBeInTheDocument();
-76:   });
-77: });
-````
-
 ## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
 ````typescript
  1: import React from "react";
@@ -8990,6 +8716,85 @@ vercel.json
 182: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { sanityFetch } from "@/lib/sanity/client";
+ 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
+ 7: import type { Navigation, Settings } from "@/types/sanity.types";
+ 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 9: import SkipLink from "@/components/UI/SkipLink.component";
+10: import Header from "@/components/Layout/Header.component";
+11: import Footer from "@/components/Layout/Footer.component";
+12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+13: const jetbrainsMono = JetBrains_Mono({
+14:   subsets: ["latin"],
+15:   display: "swap", // Prevent invisible text during font load (improves FCP)
+16:   preload: true, // Preload font to reduce request chain
+17: });
+18: export const metadata: Metadata = {
+19:   title: "Forside - Dfweb",
+20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+21: };
+22: export default async function RootLayout({
+23:   children,
+24: }: Readonly<{
+25:   children: React.ReactNode;
+26: }>) {
+27:   const [navigation, settings] = await Promise.all([
+28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
+29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+30:   ]);
+31:   const footerCopyrightText = settings?.footerCopyrightText;
+32:   return (
+33:     <html lang="nb">
+34:       <head>
+35:         <meta
+36:           name="viewport"
+37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+38:         />
+39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+41:         <link rel="icon" href="/favicon.ico" />
+42:         <link rel="apple-touch-icon" href="/logo.png" />
+43:         <meta property="og:title" content="Daniel Fjeldstad" />
+44:         <meta name="author" content="Daniel Fjeldstad" />
+45:         <meta property="og:locale" content="nb_NO" />
+46:         <meta
+47:           property="og:description"
+48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+49:         />
+50:         <meta property="og:url" content="https://www.dfweb.no/" />
+51:         <meta property="og:site_name" content="dfweb.no" />
+52:         <meta name="theme-color" content="#004014" />
+53:       </head>
+54:       <body
+55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+56:       >
+57:         <LazyMotionProvider>
+58:           <SkipLink />
+59:           <ErrorBoundary>
+60:             <div id="main-content" className="grow flex flex-col">
+61:               <Header navigation={navigation} />
+62:               <SpeedInsights />
+63:               <div className="grow">{children}</div>
+64:               <Footer
+65:                 footerCopyrightText={
+66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+67:                 }
+68:               />
+69:             </div>
+70:           </ErrorBoundary>
+71:         </LazyMotionProvider>
+72:       </body>
+73:     </html>
+74:   );
+75: }
+````
+
 ## File: src/app/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -9653,6 +9458,184 @@ vercel.json
 65: };
 ````
 
+## File: src/components/Animations/MatrixCursor.component.tsx
+````typescript
+  1: "use client";
+  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
+  3: import { useMobile } from "../../hooks/useMobile";
+  4: import "@/app/cursor.css";
+  5: interface MatrixCursorProps {
+  6:   heroRef: RefObject<HTMLElement | null>;
+  7: }
+  8: interface CursorStyles extends React.CSSProperties {
+  9:   "--cursor-x": string;
+ 10:   "--cursor-y": string;
+ 11: }
+ 12: interface MatrixTrail {
+ 13:   id: string;
+ 14:   x: number;
+ 15:   y: number;
+ 16:   char: string;
+ 17: }
+ 18: interface CursorState {
+ 19:   cursorPosition: { x: number; y: number };
+ 20:   isHovered: boolean;
+ 21:   trails: MatrixTrail[];
+ 22: }
+ 23: type CursorAction =
+ 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+ 25:   | { type: "MOUSE_ENTER" }
+ 26:   | { type: "MOUSE_LEAVE" }
+ 27:   | { type: "REMOVE_TRAIL"; trailId: string };
+ 28: const MAX_TRAILS = 20;
+ 29: const cursorReducer = (
+ 30:   state: CursorState,
+ 31:   action: CursorAction,
+ 32: ): CursorState => {
+ 33:   switch (action.type) {
+ 34:     case "MOUSE_MOVE": {
+ 35:       const newPosition = { x: action.x, y: action.y };
+ 36:       if (!action.trail) {
+ 37:         return { ...state, cursorPosition: newPosition };
+ 38:       }
+ 39:       const updatedTrails = [...state.trails, action.trail];
+ 40:       return {
+ 41:         ...state,
+ 42:         cursorPosition: newPosition,
+ 43:         trails:
+ 44:           updatedTrails.length > MAX_TRAILS
+ 45:             ? updatedTrails.slice(1)
+ 46:             : updatedTrails,
+ 47:       };
+ 48:     }
+ 49:     case "MOUSE_ENTER":
+ 50:       return { ...state, isHovered: true };
+ 51:     case "MOUSE_LEAVE":
+ 52:       return { ...state, isHovered: false, trails: [] };
+ 53:     case "REMOVE_TRAIL":
+ 54:       return {
+ 55:         ...state,
+ 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
+ 57:       };
+ 58:   }
+ 59: };
+ 60: const initialState: CursorState = {
+ 61:   cursorPosition: { x: 0, y: 0 },
+ 62:   isHovered: false,
+ 63:   trails: [],
+ 64: };
+ 65: /**
+ 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 70:  */
+ 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 72:   const isMobile = useMobile(); // Pd528
+ 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
+ 74:   const getRandomChar = useCallback(() => {
+ 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 76:     const array = new Uint32Array(1);
+ 77:     crypto.getRandomValues(array);
+ 78:     const index = array[0]! % matrixChars.length;
+ 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 80:   }, []);
+ 81:   useEffect(() => {
+ 82:     const heroSection = heroRef.current;
+ 83:     if (!heroSection) return;
+ 84:     // Add cursor: none to the hero section when hovered
+ 85:     if (state.isHovered) {
+ 86:       heroSection.style.cursor = "none";
+ 87:     } else {
+ 88:       heroSection.style.cursor = "";
+ 89:     }
+ 90:     const handleMouseMove = (e: MouseEvent) => {
+ 91:       const trail: MatrixTrail | undefined = state.isHovered
+ 92:         ? {
+ 93:             id: crypto.randomUUID(),
+ 94:             x: e.clientX,
+ 95:             y: e.clientY,
+ 96:             char: getRandomChar(),
+ 97:           }
+ 98:         : undefined;
+ 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
+100:     };
+101:     const handleMouseEnter = () => {
+102:       dispatch({ type: "MOUSE_ENTER" });
+103:       heroSection.style.cursor = "none";
+104:     };
+105:     const handleMouseLeave = () => {
+106:       dispatch({ type: "MOUSE_LEAVE" });
+107:       heroSection.style.cursor = "";
+108:     };
+109:     heroSection.addEventListener("mousemove", handleMouseMove);
+110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+112:     return () => {
+113:       heroSection.removeEventListener("mousemove", handleMouseMove);
+114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+116:       heroSection.style.cursor = "";
+117:     };
+118:   }, [heroRef, state.isHovered, getRandomChar]);
+119:   const handleAnimationEnd = useCallback((trailId: string) => {
+120:     dispatch({ type: "REMOVE_TRAIL", trailId });
+121:   }, []);
+122:   if (!heroRef.current || isMobile) return null; // P6ecf
+123:   const cursorStyles: CursorStyles = {
+124:     position: "fixed",
+125:     top: 0,
+126:     left: 0,
+127:     width: "100%",
+128:     height: "100%",
+129:     pointerEvents: "none",
+130:     isolation: "isolate",
+131:     zIndex: 40,
+132:     "--cursor-x": `${state.cursorPosition.x}px`,
+133:     "--cursor-y": `${state.cursorPosition.y}px`,
+134:   };
+135:   return (
+136:     <div
+137:       data-testid="matrix-cursor"
+138:       className={state.isHovered ? "matrix-cursor" : ""}
+139:       style={cursorStyles}
+140:     >
+141:       {state.trails.map((trail) => (
+142:         <div
+143:           key={trail.id}
+144:           data-testid="matrix-trail"
+145:           className="matrix-trail"
+146:           style={{
+147:             position: "fixed",
+148:             left: `${trail.x}px`,
+149:             top: `${trail.y}px`,
+150:             zIndex: 2,
+151:             pointerEvents: "none",
+152:           }}
+153:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+154:         >
+155:           {trail.char}
+156:         </div>
+157:       ))}
+158:       {state.isHovered && (
+159:         <div
+160:           style={{
+161:             position: "fixed",
+162:             top: 0,
+163:             left: 0,
+164:             width: "100%",
+165:             height: "100%",
+166:             pointerEvents: "none",
+167:             zIndex: 1,
+168:           }}
+169:         />
+170:       )}
+171:     </div>
+172:   );
+173: };
+174: export default MatrixCursor;
+````
+
 ## File: src/components/Animations/PageTransition.component.tsx
 ````typescript
  1: import { Variants, AnimatePresence } from "motion/react";
@@ -9812,121 +9795,6 @@ vercel.json
 73: export default CVContent;
 ````
 
-## File: src/components/CV/EducationTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface Education {
- 4:   period?: string;
- 5:   institution?: string;
- 6:   degree?: string;
- 7:   description?: string;
- 8: }
- 9: interface EducationTabContentProps {
-10:   education?: Education[];
-11: }
-12: const renderEducationHeader = (edu: Education): React.ReactNode => (
-13:   <>
-14:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
-15:     {edu.institution ?? ""}
-16:   </>
-17: );
-18: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
-19:   edu.degree && <p className="italic">{edu.degree}</p>;
-20: const EducationTabContent: React.FC<EducationTabContentProps> = ({
-21:   education,
-22: }) => (
-23:   <GenericCVSectionContent<Education>
-24:     items={education}
-25:     renderHeaderContent={renderEducationHeader}
-26:     renderSubHeaderContent={renderEducationSubHeader}
-27:   />
-28: );
-29: export default EducationTabContent;
-````
-
-## File: src/components/CV/ExperienceTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface Experience {
- 4:   period?: string;
- 5:   company?: string;
- 6:   role?: string;
- 7:   description?: string;
- 8: }
- 9: interface ExperienceTabContentProps {
-10:   experience?: Experience[];
-11: }
-12: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
-13:   <>
-14:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
-15:     {exp.company ?? ""}
-16:   </>
-17: );
-18: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
-19:   exp.role && <p className="italic">{exp.role}</p>;
-20: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
-21:   experience,
-22: }) => (
-23:   <GenericCVSectionContent<Experience>
-24:     items={experience}
-25:     renderHeaderContent={renderExperienceHeader}
-26:     renderSubHeaderContent={renderExperienceSubHeader}
-27:   />
-28: );
-29: export default ExperienceTabContent;
-````
-
-## File: src/components/CV/GenericCVSectionContent.tsx
-````typescript
- 1: import React from "react";
- 2: interface BaseItem {
- 3:   description?: string;
- 4: }
- 5: interface GenericCVSectionContentProps<T extends BaseItem> {
- 6:   items?: T[];
- 7:   renderHeaderContent: (item: T) => React.ReactNode;
- 8:   renderSubHeaderContent?: (item: T) => React.ReactNode;
- 9: }
-10: interface CVListItemProps<T extends BaseItem> {
-11:   item: T;
-12:   renderHeaderContent: (item: T) => React.ReactNode;
-13:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-14: }
-15: const CVListItem = <T extends BaseItem>({
-16:   item,
-17:   renderHeaderContent,
-18:   renderSubHeaderContent,
-19: }: CVListItemProps<T>) => (
-20:   <div className="mb-6">
-21:     <h3 className="font-semibold text-slate-100">
-22:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
-23:       {renderHeaderContent(item)}
-24:     </h3>
-25:     {renderSubHeaderContent?.(item)}
-26:     <p>{item.description ?? ""}</p>
-27:   </div>
-28: );
-29: const GenericCVSectionContent = <T extends BaseItem>({
-30:   items,
-31:   renderHeaderContent,
-32:   renderSubHeaderContent,
-33: }: GenericCVSectionContentProps<T>) => (
-34:   <div className="text-slate-300/[0.9]">
-35:     {items?.map((item, index) => (
-36:       <CVListItem
-37:         key={item.description ?? `item-${index}`}
-38:         item={item}
-39:         renderHeaderContent={renderHeaderContent}
-40:         renderSubHeaderContent={renderSubHeaderContent}
-41:       />
-42:     ))}
-43:   </div>
-44: );
-45: export default GenericCVSectionContent;
-````
-
 ## File: src/components/CV/QualificationsTabContent.tsx
 ````typescript
  1: import React from "react";
@@ -9945,39 +9813,6 @@ vercel.json
 14:   </ul>
 15: );
 16: export default QualificationsTabContent;
-````
-
-## File: src/components/CV/VolunteerWorkTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface VolunteerWork {
- 4:   period?: string;
- 5:   organization?: string;
- 6:   role?: string;
- 7:   description?: string;
- 8: }
- 9: interface VolunteerWorkTabContentProps {
-10:   volunteerWork?: VolunteerWork[];
-11: }
-12: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
-13:   <>
-14:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
-15:     {vol.organization ?? ""}
-16:   </>
-17: );
-18: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
-19:   vol.role && <p className="italic">{vol.role}</p>;
-20: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
-21:   volunteerWork,
-22: }) => (
-23:   <GenericCVSectionContent<VolunteerWork>
-24:     items={volunteerWork}
-25:     renderHeaderContent={renderVolunteerHeader}
-26:     renderSubHeaderContent={renderVolunteerSubHeader}
-27:   />
-28: );
-29: export default VolunteerWorkTabContent;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
@@ -10175,79 +10010,6 @@ vercel.json
 83:   );
 84: };
 85: export default Hero;
-````
-
-## File: src/components/Index/Icons.component.tsx
-````typescript
- 1: import { IconType } from "react-icons";
- 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
- 3: import { SiTypescript, SiWordpress } from "react-icons/si";
- 4: import Grow from "../Animations/Grow.component";
- 5: interface IAnimateIcons {
- 6:   id: number;
- 7:   Icon: IconType;
- 8:   iconName: string;
- 9: }
-10: const AnimateIcons: IAnimateIcons[] = [
-11:   {
-12:     id: 0,
-13:     Icon: FaReact,
-14:     iconName: "React",
-15:   },
-16:   {
-17:     id: 1,
-18:     Icon: FaVuejs,
-19:     iconName: "VueJS",
-20:   },
-21:   {
-22:     id: 2,
-23:     Icon: SiTypescript,
-24:     iconName: "TypeScript",
-25:   },
-26:   {
-27:     id: 3,
-28:     Icon: SiWordpress,
-29:     iconName: "WordPress",
-30:   },
-31:   {
-32:     id: 4,
-33:     Icon: FaPhp,
-34:     iconName: "PHP",
-35:   },
-36: ];
-37: /**
-38:  * Icons component that renders SVG icons used on the front page
-39:  * Uses Framer Motion for animations to show the SVGs
-40:  * @returns {JSX.Element} The rendered Icons component
-41:  */
-42: const Icons = () => (
-43:   <div
-44:     data-testid="icons"
-45:     className="flex flex-wrap justify-center gap-2 md:gap-8 p-2 text-slate-300/[0.8]"
-46:   >
-47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
-48:       <div className="relative" key={id}>
-49:         <Grow delay={2.5 + id * 0.2}>
-50:           <div className="relative group">
-51:             <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-all duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
-52:               <Icon
-53:                 data-testid={iconName}
-54:                 aria-label={`${iconName} ikon`}
-55:                 title={`${iconName} ikon`}
-56:                 size="1em"
-57:                 className="transition-all duration-300 group-hover:text-matrix-light"
-58:               />
-59:             </div>
-60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap text-matrix-light">
-61:               {iconName}
-62:             </span>
-63:           </div>
-64:         </Grow>
-65:       </div>
-66:     ))}
-67:   </div>
-68: );
-69: export default Icons;
 ````
 
 ## File: src/components/Index/IndexContent.component.tsx
@@ -10965,96 +10727,6 @@ vercel.json
 48:   </MotionDiv>
 49: );
 50: export default NavigationLink;
-````
-
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
-````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Image from "next/image";
- 4: import Button from "@/components/UI/Button.component";
- 5: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 6: import { urlFor } from "@/lib/sanity/client";
- 7: import type { Project } from "@/types/sanity.types";
- 8: interface ProsjektCardProps extends Project {
- 9:   /** Stagger delay in seconds for coordinated group animations */
-10:   staggerDelay?: number;
-11: }
-12: /**
-13:  * Renders a card displaying information about a single project.
-14:  * Uses the Project type definition from Sanity types.
-15:  *
-16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-17:  * @param {string} props.name - The name of the project.
-18:  * @param {string} [props.description] - A brief description of the project (optional).
-19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-24:  * @returns {JSX.Element} The rendered ProsjektCard component.
-25:  */
-26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-27:   name,
-28:   description,
-29:   subdescription,
-30:   projectimage,
-31:   urlwww,
-32:   urlgithub,
-33:   staggerDelay = 0,
-34: }) => {
-35:   return (
-36:     <div
-37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-all duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
-38:       data-testid="project-card"
-39:     >
-40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-41:         <div className="relative w-full md:h-60">
-42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
-43:             {projectimage && (
-44:               <Image
-45:                 className="transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
-46:                 width={600}
-47:                 height={300}
-48:                 src={urlFor(projectimage)
-49:                   .width(600)
-50:                   .fit("max")
-51:                   .quality(100)
-52:                   .auto("format")
-53:                   .url()}
-54:                 quality={100}
-55:                 alt={`Skjermbilde av prosjektet ${name}`}
-56:                 sizes="(max-width: 768px) 100vw, 600px"
-57:               />
-58:             )}
-59:           </div>
-60:         </div>
-61:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-62:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-63:             {name}
-64:           </h2>
-65:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
-66:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-67:             {subdescription}
-68:           </p>
-69:           <div className="flex justify-center mt-4">
-70:             {urlwww && urlwww.length > 0 && (
-71:               <Button href={urlwww?.[0]?.url} renderAs="a">
-72:                 Besøk
-73:               </Button>
-74:             )}
-75:             {urlgithub && urlgithub.length > 0 && (
-76:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-77:                 GitHub
-78:               </Button>
-79:             )}
-80:           </div>
-81:         </div>
-82:       </BounceInScroll>
-83:     </div>
-84:   );
-85: };
-86: export default ProsjektCard;
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -20598,261 +20270,602 @@ vercel.json
 1: {}
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { sanityFetch } from "@/lib/sanity/client";
- 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 7: import type { Navigation, Settings } from "@/types/sanity.types";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const jetbrainsMono = JetBrains_Mono({
-14:   subsets: ["latin"],
-15:   display: "swap", // Prevent invisible text during font load (improves FCP)
-16:   preload: true, // Preload font to reduce request chain
-17: });
-18: export const metadata: Metadata = {
-19:   title: "Forside - Dfweb",
-20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-21: };
-22: export default async function RootLayout({
-23:   children,
-24: }: Readonly<{
-25:   children: React.ReactNode;
-26: }>) {
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-41:         <link rel="icon" href="/favicon.ico" />
-42:         <link rel="apple-touch-icon" href="/logo.png" />
-43:         <meta property="og:title" content="Daniel Fjeldstad" />
-44:         <meta name="author" content="Daniel Fjeldstad" />
-45:         <meta property="og:locale" content="nb_NO" />
-46:         <meta
-47:           property="og:description"
-48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-49:         />
-50:         <meta property="og:url" content="https://www.dfweb.no/" />
-51:         <meta property="og:site_name" content="dfweb.no" />
-52:         <meta name="theme-color" content="#004014" />
-53:       </head>
-54:       <body
-55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-56:       >
-57:         <LazyMotionProvider>
-58:           <SkipLink />
-59:           <ErrorBoundary>
-60:             <div id="main-content" className="grow flex flex-col">
-61:               <Header navigation={navigation} />
-62:               <SpeedInsights />
-63:               <div className="grow">{children}</div>
-64:               <Footer
-65:                 footerCopyrightText={
-66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-67:                 }
-68:               />
-69:             </div>
-70:           </ErrorBoundary>
-71:         </LazyMotionProvider>
-72:       </body>
-73:     </html>
-74:   );
-75: }
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model for your chosen provider
+17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
-## File: src/components/Animations/MatrixCursor.component.tsx
+## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
-  1: "use client";
-  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
-  3: import { useMobile } from "../../hooks/useMobile";
-  4: import "@/app/cursor.css";
-  5: interface MatrixCursorProps {
-  6:   heroRef: RefObject<HTMLElement | null>;
-  7: }
-  8: interface CursorStyles extends React.CSSProperties {
-  9:   "--cursor-x": string;
- 10:   "--cursor-y": string;
- 11: }
- 12: interface MatrixTrail {
- 13:   id: string;
- 14:   x: number;
- 15:   y: number;
- 16:   char: string;
- 17: }
- 18: interface CursorState {
- 19:   cursorPosition: { x: number; y: number };
- 20:   isHovered: boolean;
- 21:   trails: MatrixTrail[];
- 22: }
- 23: type CursorAction =
- 24:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
- 25:   | { type: "MOUSE_ENTER" }
- 26:   | { type: "MOUSE_LEAVE" }
- 27:   | { type: "REMOVE_TRAIL"; trailId: string };
- 28: const MAX_TRAILS = 20;
- 29: const cursorReducer = (
- 30:   state: CursorState,
- 31:   action: CursorAction,
- 32: ): CursorState => {
- 33:   switch (action.type) {
- 34:     case "MOUSE_MOVE": {
- 35:       const newPosition = { x: action.x, y: action.y };
- 36:       if (!action.trail) {
- 37:         return { ...state, cursorPosition: newPosition };
- 38:       }
- 39:       const updatedTrails = [...state.trails, action.trail];
- 40:       return {
- 41:         ...state,
- 42:         cursorPosition: newPosition,
- 43:         trails:
- 44:           updatedTrails.length > MAX_TRAILS
- 45:             ? updatedTrails.slice(1)
- 46:             : updatedTrails,
- 47:       };
- 48:     }
- 49:     case "MOUSE_ENTER":
- 50:       return { ...state, isHovered: true };
- 51:     case "MOUSE_LEAVE":
- 52:       return { ...state, isHovered: false, trails: [] };
- 53:     case "REMOVE_TRAIL":
- 54:       return {
- 55:         ...state,
- 56:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
- 57:       };
- 58:   }
- 59: };
- 60: const initialState: CursorState = {
- 61:   cursorPosition: { x: 0, y: 0 },
- 62:   isHovered: false,
- 63:   trails: [],
- 64: };
- 65: /**
- 66:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 67:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 68:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 69:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 70:  */
- 71: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 72:   const isMobile = useMobile(); // Pd528
- 73:   const [state, dispatch] = useReducer(cursorReducer, initialState);
- 74:   const getRandomChar = useCallback(() => {
- 75:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 76:     const array = new Uint32Array(1);
- 77:     crypto.getRandomValues(array);
- 78:     const index = array[0]! % matrixChars.length;
- 79:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 80:   }, []);
- 81:   useEffect(() => {
- 82:     const heroSection = heroRef.current;
- 83:     if (!heroSection) return;
- 84:     // Add cursor: none to the hero section when hovered
- 85:     if (state.isHovered) {
- 86:       heroSection.style.cursor = "none";
- 87:     } else {
- 88:       heroSection.style.cursor = "";
- 89:     }
- 90:     const handleMouseMove = (e: MouseEvent) => {
- 91:       const trail: MatrixTrail | undefined = state.isHovered
- 92:         ? {
- 93:             id: crypto.randomUUID(),
- 94:             x: e.clientX,
- 95:             y: e.clientY,
- 96:             char: getRandomChar(),
- 97:           }
- 98:         : undefined;
- 99:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
-100:     };
-101:     const handleMouseEnter = () => {
-102:       dispatch({ type: "MOUSE_ENTER" });
-103:       heroSection.style.cursor = "none";
-104:     };
-105:     const handleMouseLeave = () => {
-106:       dispatch({ type: "MOUSE_LEAVE" });
-107:       heroSection.style.cursor = "";
-108:     };
-109:     heroSection.addEventListener("mousemove", handleMouseMove);
-110:     heroSection.addEventListener("mouseenter", handleMouseEnter);
-111:     heroSection.addEventListener("mouseleave", handleMouseLeave);
-112:     return () => {
-113:       heroSection.removeEventListener("mousemove", handleMouseMove);
-114:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
-115:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-116:       heroSection.style.cursor = "";
-117:     };
-118:   }, [heroRef, state.isHovered, getRandomChar]);
-119:   const handleAnimationEnd = useCallback((trailId: string) => {
-120:     dispatch({ type: "REMOVE_TRAIL", trailId });
-121:   }, []);
-122:   if (!heroRef.current || isMobile) return null; // P6ecf
-123:   const cursorStyles: CursorStyles = {
-124:     position: "fixed",
-125:     top: 0,
-126:     left: 0,
-127:     width: "100%",
-128:     height: "100%",
-129:     pointerEvents: "none",
-130:     isolation: "isolate",
-131:     zIndex: 40,
-132:     "--cursor-x": `${state.cursorPosition.x}px`,
-133:     "--cursor-y": `${state.cursorPosition.y}px`,
-134:   };
-135:   return (
-136:     <div
-137:       data-testid="matrix-cursor"
-138:       className={state.isHovered ? "matrix-cursor" : ""}
-139:       style={cursorStyles}
-140:     >
-141:       {state.trails.map((trail) => (
-142:         <div
-143:           key={trail.id}
-144:           data-testid="matrix-trail"
-145:           className="matrix-trail"
-146:           style={{
-147:             position: "fixed",
-148:             left: `${trail.x}px`,
-149:             top: `${trail.y}px`,
-150:             zIndex: 2,
-151:             pointerEvents: "none",
-152:           }}
-153:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-154:         >
-155:           {trail.char}
-156:         </div>
-157:       ))}
-158:       {state.isHovered && (
-159:         <div
-160:           style={{
-161:             position: "fixed",
-162:             top: 0,
-163:             left: 0,
-164:             width: "100%",
-165:             height: "100%",
-166:             pointerEvents: "none",
-167:             zIndex: 1,
-168:           }}
-169:         />
-170:       )}
-171:     </div>
-172:   );
-173: };
-174: export default MatrixCursor;
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import EducationTabContent from "@/components/CV/EducationTabContent";
+ 4: describe("EducationTabContent", () => {
+ 5:   it("renders education items with degree (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockEducation = [
+ 8:       {
+ 9:         _key: "education-with-degree",
+10:         period: "2020-2024",
+11:         institution: "University of Technology",
+12:         degree: "Bachelor of Computer Science",
+13:         description: "Studied computer science fundamentals",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<EducationTabContent education={mockEducation} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2024 - University of Technology";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(
+25:       screen.getByText("Bachelor of Computer Science"),
+26:     ).toBeInTheDocument();
+27:   });
+28:   it("renders education items without degree (conditional branch)", () => {
+29:     // Arrange
+30:     const mockEducation = [
+31:       {
+32:         _key: "education-without-degree",
+33:         period: "2020-2024",
+34:         institution: "University of Technology",
+35:         description: "Studied computer science fundamentals",
+36:         // No degree property to test the conditional
+37:       },
+38:     ];
+39:     // Act
+40:     render(<EducationTabContent education={mockEducation} />);
+41:     // Assert
+42:     expect(
+43:       screen.getByText((content, element) => {
+44:         return element?.textContent === "2020-2024 - University of Technology";
+45:       }),
+46:     ).toBeInTheDocument();
+47:     expect(
+48:       screen.queryByText("Bachelor of Computer Science"),
+49:     ).not.toBeInTheDocument();
+50:   });
+51:   it("renders education items with empty degree (conditional branch)", () => {
+52:     // Arrange
+53:     const mockEducation = [
+54:       {
+55:         _key: "education-with-empty-degree",
+56:         period: "2020-2024",
+57:         institution: "University of Technology",
+58:         degree: "", // Empty string to test the conditional
+59:         description: "Studied computer science fundamentals",
+60:       },
+61:     ];
+62:     // Act
+63:     render(<EducationTabContent education={mockEducation} />);
+64:     // Assert
+65:     expect(
+66:       screen.getByText((content, element) => {
+67:         return element?.textContent === "2020-2024 - University of Technology";
+68:       }),
+69:     ).toBeInTheDocument();
+70:     expect(
+71:       screen.queryByText("Bachelor of Computer Science"),
+72:     ).not.toBeInTheDocument();
+73:   });
+74:   it("renders with undefined education", () => {
+75:     // Act
+76:     render(<EducationTabContent />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(
+79:       screen.queryByText("University of Technology"),
+80:     ).not.toBeInTheDocument();
+81:   });
+82:   it("renders with empty education array", () => {
+83:     // Act
+84:     render(<EducationTabContent education={[]} />);
+85:     // Assert - Should not crash and render empty content
+86:     expect(
+87:       screen.queryByText("University of Technology"),
+88:     ).not.toBeInTheDocument();
+89:   });
+90: });
+````
+
+## File: src/__tests__/CV/ExperienceTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent";
+ 4: describe("ExperienceTabContent", () => {
+ 5:   it("renders experience items with role (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockExperience = [
+ 8:       {
+ 9:         _key: "experience-with-role",
+10:         period: "2022-2024",
+11:         company: "Tech Company Inc",
+12:         role: "Senior Developer",
+13:         description: "Developed web applications",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<ExperienceTabContent experience={mockExperience} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2022-2024 - Tech Company Inc";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
+25:   });
+26:   it("renders experience items without role (conditional branch)", () => {
+27:     // Arrange
+28:     const mockExperience = [
+29:       {
+30:         _key: "experience-without-role",
+31:         period: "2022-2024",
+32:         company: "Tech Company Inc",
+33:         description: "Developed web applications",
+34:         // No role property to test the conditional
+35:       },
+36:     ];
+37:     // Act
+38:     render(<ExperienceTabContent experience={mockExperience} />);
+39:     // Assert
+40:     expect(
+41:       screen.getByText((content, element) => {
+42:         return element?.textContent === "2022-2024 - Tech Company Inc";
+43:       }),
+44:     ).toBeInTheDocument();
+45:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+46:   });
+47:   it("renders experience items with empty role (conditional branch)", () => {
+48:     // Arrange
+49:     const mockExperience = [
+50:       {
+51:         _key: "experience-with-empty-role",
+52:         period: "2022-2024",
+53:         company: "Tech Company Inc",
+54:         role: "", // Empty string to test the conditional
+55:         description: "Developed web applications",
+56:       },
+57:     ];
+58:     // Act
+59:     render(<ExperienceTabContent experience={mockExperience} />);
+60:     // Assert
+61:     expect(
+62:       screen.getByText((content, element) => {
+63:         return element?.textContent === "2022-2024 - Tech Company Inc";
+64:       }),
+65:     ).toBeInTheDocument();
+66:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+67:   });
+68:   it("renders with undefined experience", () => {
+69:     // Act
+70:     render(<ExperienceTabContent />);
+71:     // Assert - Should not crash and render empty content
+72:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+73:   });
+74:   it("renders with empty experience array", () => {
+75:     // Act
+76:     render(<ExperienceTabContent experience={[]} />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
+## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
+ 4: describe("VolunteerWorkTabContent", () => {
+ 5:   it("renders volunteer work items with all fields", () => {
+ 6:     // Arrange
+ 7:     const mockVolunteerWork = [
+ 8:       {
+ 9:         _key: "volunteer-work-all-fields",
+10:         period: "2020-2022",
+11:         organization: "Open Source Foundation",
+12:         role: "Maintainer",
+13:         description: "Maintained open source projects",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2022 - Open Source Foundation";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
+25:     expect(
+26:       screen.getByText("Maintained open source projects"),
+27:     ).toBeInTheDocument();
+28:   });
+29:   it("renders with missing period and organization (nullish coalescing branches)", () => {
+30:     // Arrange
+31:     const mockVolunteerWork = [
+32:       {
+33:         _key: "volunteer-work-missing-header-fields",
+34:         role: "Volunteer",
+35:         description: "Helped with events",
+36:       },
+37:     ];
+38:     // Act
+39:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+40:     // Assert
+41:     expect(screen.getByText(/-/)).toBeInTheDocument();
+42:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
+43:   });
+44:   it("renders without role (conditional branch)", () => {
+45:     // Arrange
+46:     const mockVolunteerWork = [
+47:       {
+48:         _key: "volunteer-work-without-role",
+49:         period: "2021-2023",
+50:         organization: "Community Group",
+51:         description: "Community outreach",
+52:       },
+53:     ];
+54:     // Act
+55:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+56:     // Assert
+57:     expect(
+58:       screen.getByText((content, element) => {
+59:         return element?.textContent === "2021-2023 - Community Group";
+60:       }),
+61:     ).toBeInTheDocument();
+62:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
+63:   });
+64:   it("renders with undefined volunteerWork", () => {
+65:     // Act
+66:     render(<VolunteerWorkTabContent />);
+67:     // Assert
+68:     expect(
+69:       screen.queryByText("Open Source Foundation"),
+70:     ).not.toBeInTheDocument();
+71:   });
+72:   it("renders with empty volunteerWork array", () => {
+73:     // Act
+74:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
+75:     // Assert
+76:     expect(
+77:       screen.queryByText("Open Source Foundation"),
+78:     ).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
+## File: src/components/CV/EducationTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface Education {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   institution?: string;
+ 7:   degree?: string;
+ 8:   description?: string;
+ 9: }
+10: interface EducationTabContentProps {
+11:   education?: Education[];
+12: }
+13: const renderEducationHeader = (edu: Education): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
+16:     {edu.institution ?? ""}
+17:   </>
+18: );
+19: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
+20:   edu.degree && <p className="italic">{edu.degree}</p>;
+21: const EducationTabContent: React.FC<EducationTabContentProps> = ({
+22:   education,
+23: }) => (
+24:   <GenericCVSectionContent<Education>
+25:     items={education}
+26:     renderHeaderContent={renderEducationHeader}
+27:     renderSubHeaderContent={renderEducationSubHeader}
+28:   />
+29: );
+30: export default EducationTabContent;
+````
+
+## File: src/components/CV/ExperienceTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface Experience {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   company?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface ExperienceTabContentProps {
+11:   experience?: Experience[];
+12: }
+13: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
+16:     {exp.company ?? ""}
+17:   </>
+18: );
+19: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
+20:   exp.role && <p className="italic">{exp.role}</p>;
+21: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
+22:   experience,
+23: }) => (
+24:   <GenericCVSectionContent<Experience>
+25:     items={experience}
+26:     renderHeaderContent={renderExperienceHeader}
+27:     renderSubHeaderContent={renderExperienceSubHeader}
+28:   />
+29: );
+30: export default ExperienceTabContent;
+````
+
+## File: src/components/CV/GenericCVSectionContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface BaseItem {
+ 3:   _key: string;
+ 4:   description?: string;
+ 5: }
+ 6: interface GenericCVSectionContentProps<T extends BaseItem> {
+ 7:   items?: T[];
+ 8:   renderHeaderContent: (item: T) => React.ReactNode;
+ 9:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+10: }
+11: interface CVListItemProps<T extends BaseItem> {
+12:   item: T;
+13:   renderHeaderContent: (item: T) => React.ReactNode;
+14:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+15: }
+16: const CVListItem = <T extends BaseItem>({
+17:   item,
+18:   renderHeaderContent,
+19:   renderSubHeaderContent,
+20: }: CVListItemProps<T>) => (
+21:   <div className="mb-6">
+22:     <h3 className="font-semibold text-slate-100">
+23:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
+24:       {renderHeaderContent(item)}
+25:     </h3>
+26:     {renderSubHeaderContent?.(item)}
+27:     <p>{item.description ?? ""}</p>
+28:   </div>
+29: );
+30: const GenericCVSectionContent = <T extends BaseItem>({
+31:   items,
+32:   renderHeaderContent,
+33:   renderSubHeaderContent,
+34: }: GenericCVSectionContentProps<T>) => (
+35:   <div className="text-slate-300/[0.9]">
+36:     {items?.map((item) => (
+37:       <CVListItem
+38:         key={item._key}
+39:         item={item}
+40:         renderHeaderContent={renderHeaderContent}
+41:         renderSubHeaderContent={renderSubHeaderContent}
+42:       />
+43:     ))}
+44:   </div>
+45: );
+46: export default GenericCVSectionContent;
+````
+
+## File: src/components/CV/VolunteerWorkTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface VolunteerWork {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   organization?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface VolunteerWorkTabContentProps {
+11:   volunteerWork?: VolunteerWork[];
+12: }
+13: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
+16:     {vol.organization ?? ""}
+17:   </>
+18: );
+19: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
+20:   vol.role && <p className="italic">{vol.role}</p>;
+21: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
+22:   volunteerWork,
+23: }) => (
+24:   <GenericCVSectionContent<VolunteerWork>
+25:     items={volunteerWork}
+26:     renderHeaderContent={renderVolunteerHeader}
+27:     renderSubHeaderContent={renderVolunteerSubHeader}
+28:   />
+29: );
+30: export default VolunteerWorkTabContent;
+````
+
+## File: src/components/Index/Icons.component.tsx
+````typescript
+ 1: import { IconType } from "react-icons";
+ 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
+ 3: import { SiTypescript, SiWordpress } from "react-icons/si";
+ 4: import Grow from "../Animations/Grow.component";
+ 5: interface IAnimateIcons {
+ 6:   id: number;
+ 7:   Icon: IconType;
+ 8:   iconName: string;
+ 9: }
+10: const AnimateIcons: IAnimateIcons[] = [
+11:   {
+12:     id: 0,
+13:     Icon: FaReact,
+14:     iconName: "React",
+15:   },
+16:   {
+17:     id: 1,
+18:     Icon: FaVuejs,
+19:     iconName: "VueJS",
+20:   },
+21:   {
+22:     id: 2,
+23:     Icon: SiTypescript,
+24:     iconName: "TypeScript",
+25:   },
+26:   {
+27:     id: 3,
+28:     Icon: SiWordpress,
+29:     iconName: "WordPress",
+30:   },
+31:   {
+32:     id: 4,
+33:     Icon: FaPhp,
+34:     iconName: "PHP",
+35:   },
+36: ];
+37: /**
+38:  * Icons component that renders SVG icons used on the front page
+39:  * Uses Framer Motion for animations to show the SVGs
+40:  * @returns {JSX.Element} The rendered Icons component
+41:  */
+42: const Icons = () => (
+43:   <div
+44:     data-testid="icons"
+45:     className="flex flex-wrap justify-center gap-2 md:gap-8 p-2 text-slate-300/[0.8]"
+46:   >
+47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
+48:       <div className="relative" key={id}>
+49:         <Grow delay={2.5 + id * 0.2}>
+50:           <div className="relative group">
+51:             <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-[background-color,border-color] duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
+52:               <Icon
+53:                 data-testid={iconName}
+54:                 aria-label={`${iconName} ikon`}
+55:                 title={`${iconName} ikon`}
+56:                 size="1em"
+57:                 className="transition-[color] duration-300 group-hover:text-matrix-light"
+58:               />
+59:             </div>
+60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-matrix-light">
+61:               {iconName}
+62:             </span>
+63:           </div>
+64:         </Grow>
+65:       </div>
+66:     ))}
+67:   </div>
+68: );
+69: export default Icons;
+````
+
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Image from "next/image";
+ 4: import Button from "@/components/UI/Button.component";
+ 5: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+ 6: import { urlFor } from "@/lib/sanity/client";
+ 7: import type { Project } from "@/types/sanity.types";
+ 8: interface ProsjektCardProps extends Project {
+ 9:   /** Stagger delay in seconds for coordinated group animations */
+10:   staggerDelay?: number;
+11: }
+12: /**
+13:  * Renders a card displaying information about a single project.
+14:  * Uses the Project type definition from Sanity types.
+15:  *
+16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+17:  * @param {string} props.name - The name of the project.
+18:  * @param {string} [props.description] - A brief description of the project (optional).
+19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+24:  * @returns {JSX.Element} The rendered ProsjektCard component.
+25:  */
+26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+27:   name,
+28:   description,
+29:   subdescription,
+30:   projectimage,
+31:   urlwww,
+32:   urlgithub,
+33:   staggerDelay = 0,
+34: }) => {
+35:   return (
+36:     <div
+37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+38:       data-testid="project-card"
+39:     >
+40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+41:         <div className="relative w-full md:h-60">
+42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
+43:             {projectimage && (
+44:               <Image
+45:                 className="transition-[transform,box-shadow,filter] duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-105"
+46:                 width={600}
+47:                 height={300}
+48:                 src={urlFor(projectimage)
+49:                   .width(600)
+50:                   .fit("max")
+51:                   .quality(100)
+52:                   .auto("format")
+53:                   .url()}
+54:                 quality={100}
+55:                 alt={`Skjermbilde av prosjektet ${name}`}
+56:                 sizes="(max-width: 768px) 100vw, 600px"
+57:               />
+58:             )}
+59:           </div>
+60:         </div>
+61:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+62:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+63:             {name}
+64:           </h2>
+65:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
+66:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+67:             {subdescription}
+68:           </p>
+69:           <div className="flex justify-center mt-4">
+70:             {urlwww && urlwww.length > 0 && (
+71:               <Button href={urlwww?.[0]?.url} renderAs="a">
+72:                 Besøk
+73:               </Button>
+74:             )}
+75:             {urlgithub && urlgithub.length > 0 && (
+76:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+77:                 GitHub
+78:               </Button>
+79:             )}
+80:           </div>
+81:         </div>
+82:       </BounceInScroll>
+83:     </div>
+84:   );
+85: };
+86: export default ProsjektCard;
 ````
 
 ## File: src/utils/eslint/package.json
