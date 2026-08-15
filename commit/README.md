@@ -44,8 +44,8 @@ chmod +x .git/hooks/prepare-commit-msg
 
 | Provider          | API Key                                                    | Default Model                |
 | ----------------- | ---------------------------------------------------------- | ---------------------------- |
-| Anthropic         | `ANTHROPIC_API_KEY`                                        | `claude-sonnet-4-5-20250929` |
-| OpenAI            | `OPENAI_API_KEY`                                           | `gpt-5.2`                    |
+| Anthropic         | `ANTHROPIC_API_KEY`                                        | `claude-sonnet-5` |
+| OpenAI            | `OPENAI_API_KEY`                                           | `gpt-5.6-sol`                    |
 | OpenAI-compatible | `OPENAI_COMPATIBLE_API_KEY` + `OPENAI_COMPATIBLE_BASE_URL` | (set `MODEL_NAME`)           |
 
 The system auto-detects which provider to use based on which API key is set.
