@@ -9125,157 +9125,6 @@ vercel.json
 25: export default Grow;
 ````
 
-## File: src/components/Animations/Matrix.component.tsx
-````typescript
-  1: "use client";
-  2: import React, { useEffect, useRef, useCallback } from "react";
-  3: import { createMatrixRenderer } from "./Matrix.renderer";
-  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
-  5: interface ReactMatrixAnimationProps {
-  6:   tileSize?: number;
-  7:   fadeFactor?: number;
-  8:   backgroundColor?: string;
-  9:   fontColor?: string;
- 10:   glowColor?: string;
- 11:   tileSet?: string[] | null;
- 12: }
- 13: const CANVAS_ID = "matrix-canvas";
- 14: /**
- 15:  * ReactMatrixAnimation component
- 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
- 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
- 18:  */
- 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
- 20:   tileSize = 20,
- 21:   fadeFactor = 0.5,
- 22:   backgroundColor = "#0a0a0a",
- 23:   fontColor = "#008529",
- 24:   glowColor = "#00FF00",
- 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
- 26:     "",
- 27:   ),
- 28: }) => {
- 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
- 30:   const columnsRef = useRef<Column[]>([]);
- 31:   const maxStackHeightRef = useRef<number>(0);
- 32:   const lastFrameTimeRef = useRef<number>(0);
- 33:   const isInitializedRef = useRef<boolean>(false);
- 34:   const fps = 10;
- 35:   const frameInterval = 1000 / fps;
- 36:   const rgbBackground = hexToRgb(backgroundColor);
- 37:   if (!rgbBackground) {
- 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
- 39:   }
- 40:   const rgbFont = hexToRgb(fontColor);
- 41:   if (!rgbFont) {
- 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
- 43:   }
- 44:   /**
- 45:    * Initializes the matrix columns
- 46:    * @param {HTMLCanvasElement} canvas - The canvas element
- 47:    */
- 48:   const initMatrix = useCallback(
- 49:     (canvas: HTMLCanvasElement) => {
- 50:       const columns: Column[] = [];
- 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
- 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
- 53:         const column: Column = {
- 54:           x: i * tileSize,
- 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
- 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
- 57:         };
- 58:         columns.push(column);
- 59:       }
- 60:       columnsRef.current = columns;
- 61:       maxStackHeightRef.current = maxStackHeight;
- 62:     },
- 63:     [tileSize],
- 64:   );
- 65:   const tick = useCallback(
- 66:     (
- 67:       timestamp: number,
- 68:       ctx: CanvasRenderingContext2D,
- 69:       canvas: HTMLCanvasElement,
- 70:     ) => {
- 71:       if (!lastFrameTimeRef.current) {
- 72:         lastFrameTimeRef.current = timestamp;
- 73:       }
- 74:       const delta = timestamp - lastFrameTimeRef.current;
- 75:       if (delta > frameInterval) {
- 76:         const view = createMatrixRenderer({
- 77:           ctx,
- 78:           canvas,
- 79:           columns: columnsRef.current,
- 80:           maxStackHeight: maxStackHeightRef.current,
- 81:           tileSize,
- 82:           fadeFactor,
- 83:           rgbBackground,
- 84:           rgbFont,
- 85:           glowColor,
- 86:           tileSet,
- 87:           getRandomInt,
- 88:         });
- 89:         view.draw();
- 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
- 91:       }
- 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
- 93:     },
- 94:     [
- 95:       fadeFactor,
- 96:       rgbBackground,
- 97:       rgbFont,
- 98:       tileSize,
- 99:       glowColor,
-100:       tileSet,
-101:       frameInterval,
-102:     ],
-103:   );
-104:   useEffect(() => {
-105:     // Respect prefers-reduced-motion — skip animation entirely
-106:     const prefersReducedMotion = globalThis.matchMedia(
-107:       "(prefers-reduced-motion: reduce)",
-108:     ).matches;
-109:     if (prefersReducedMotion) return;
-110:     const canvas = canvasRef.current;
-111:     if (!canvas) return;
-112:     const ctx = canvas.getContext("2d");
-113:     if (!ctx) return;
-114:     let animationFrameId: number;
-115:     const handleResize = () => {
-116:       const boundingClientRect = canvas.getBoundingClientRect();
-117:       canvas.width = boundingClientRect.width;
-118:       canvas.height = boundingClientRect.height;
-119:       initMatrix(canvas);
-120:       isInitializedRef.current = true;
-121:     };
-122:     const debouncedResize = debounce(handleResize, 100);
-123:     window.addEventListener("resize", debouncedResize);
-124:     handleResize();
-125:     const animateTick = (timestamp: number) => {
-126:       animationFrameId = requestAnimationFrame(animateTick);
-127:       tick(timestamp, ctx, canvas);
-128:     };
-129:     animationFrameId = requestAnimationFrame(animateTick);
-130:     return () => {
-131:       window.removeEventListener("resize", debouncedResize);
-132:       cancelAnimationFrame(animationFrameId);
-133:     };
-134:   }, [initMatrix, tick]);
-135:   return (
-136:     <canvas
-137:       ref={canvasRef}
-138:       id={CANVAS_ID}
-139:       aria-hidden="true"
-140:       tabIndex={-1}
-141:       style={{ width: "100%", height: "100%" }}
-142:       data-testid="matrix-canvas"
-143:       className="absolute inset-0"
-144:     />
-145:   );
-146: };
-147: export default ReactMatrixAnimation;
-````
-
 ## File: src/components/Animations/Matrix.renderer.ts
 ````typescript
   1: import { RGB, Column, getRandomCharacter } from "./Matrix.utils";
@@ -20270,27 +20119,6 @@ vercel.json
 1: {}
 ````
 
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model for your chosen provider
-17: MODEL_NAME="anthropic/claude-sonnet-5"
-````
-
 ## File: src/__tests__/CV/EducationTabContent.test.tsx
 ````typescript
  1: import React from "react";
@@ -20551,6 +20379,148 @@ vercel.json
 78:     ).not.toBeInTheDocument();
 79:   });
 80: });
+````
+
+## File: src/components/Animations/Matrix.component.tsx
+````typescript
+  1: "use client";
+  2: import React, { useEffect, useEffectEvent, useRef, useCallback } from "react";
+  3: import { createMatrixRenderer } from "./Matrix.renderer";
+  4: import { hexToRgb, getRandomInt, debounce, Column } from "./Matrix.utils";
+  5: interface ReactMatrixAnimationProps {
+  6:   tileSize?: number;
+  7:   fadeFactor?: number;
+  8:   backgroundColor?: string;
+  9:   fontColor?: string;
+ 10:   glowColor?: string;
+ 11:   tileSet?: string[] | null;
+ 12: }
+ 13: const CANVAS_ID = "matrix-canvas";
+ 14: /**
+ 15:  * ReactMatrixAnimation component
+ 16:  * @param {ReactMatrixAnimationProps} props - The props for the ReactMatrixAnimation component
+ 17:  * @returns {JSX.Element} The rendered ReactMatrixAnimation component
+ 18:  */
+ 19: const ReactMatrixAnimation: React.FC<ReactMatrixAnimationProps> = ({
+ 20:   tileSize = 20,
+ 21:   fadeFactor = 0.5,
+ 22:   backgroundColor = "#0a0a0a",
+ 23:   fontColor = "#008529",
+ 24:   glowColor = "#00FF00",
+ 25:   tileSet = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789АВСDЕFGHIJKLMNOPQRSTUVWXYZ".split(
+ 26:     "",
+ 27:   ),
+ 28: }) => {
+ 29:   const canvasRef = useRef<HTMLCanvasElement>(null);
+ 30:   const columnsRef = useRef<Column[]>([]);
+ 31:   const maxStackHeightRef = useRef<number>(0);
+ 32:   const lastFrameTimeRef = useRef<number>(0);
+ 33:   const isInitializedRef = useRef<boolean>(false);
+ 34:   const fps = 10;
+ 35:   const frameInterval = 1000 / fps;
+ 36:   const rgbBackground = hexToRgb(backgroundColor);
+ 37:   if (!rgbBackground) {
+ 38:     throw new Error("Invalid background color. Use a hex value e.g. #030303");
+ 39:   }
+ 40:   const rgbFont = hexToRgb(fontColor);
+ 41:   if (!rgbFont) {
+ 42:     throw new Error("Invalid font color. Use a hex value e.g. #030303");
+ 43:   }
+ 44:   /**
+ 45:    * Initializes the matrix columns
+ 46:    * @param {HTMLCanvasElement} canvas - The canvas element
+ 47:    */
+ 48:   const initMatrix = useCallback(
+ 49:     (canvas: HTMLCanvasElement) => {
+ 50:       const columns: Column[] = [];
+ 51:       const maxStackHeight = Math.ceil(canvas.height / tileSize);
+ 52:       for (let i = 0; i < canvas.width / tileSize; ++i) {
+ 53:         const column: Column = {
+ 54:           x: i * tileSize,
+ 55:           stackHeight: 10 + getRandomInt(maxStackHeight),
+ 56:           stackCounter: -getRandomInt(maxStackHeight * 2),
+ 57:         };
+ 58:         columns.push(column);
+ 59:       }
+ 60:       columnsRef.current = columns;
+ 61:       maxStackHeightRef.current = maxStackHeight;
+ 62:     },
+ 63:     [tileSize],
+ 64:   );
+ 65:   const tick = useEffectEvent(
+ 66:     (
+ 67:       timestamp: number,
+ 68:       ctx: CanvasRenderingContext2D,
+ 69:       canvas: HTMLCanvasElement,
+ 70:     ) => {
+ 71:       if (!lastFrameTimeRef.current) {
+ 72:         lastFrameTimeRef.current = timestamp;
+ 73:       }
+ 74:       const delta = timestamp - lastFrameTimeRef.current;
+ 75:       if (delta > frameInterval) {
+ 76:         const view = createMatrixRenderer({
+ 77:           ctx,
+ 78:           canvas,
+ 79:           columns: columnsRef.current,
+ 80:           maxStackHeight: maxStackHeightRef.current,
+ 81:           tileSize,
+ 82:           fadeFactor,
+ 83:           rgbBackground,
+ 84:           rgbFont,
+ 85:           glowColor,
+ 86:           tileSet,
+ 87:           getRandomInt,
+ 88:         });
+ 89:         view.draw();
+ 90:         lastFrameTimeRef.current = timestamp - (delta % frameInterval);
+ 91:       }
+ 92:       requestAnimationFrame((timestamp) => tick(timestamp, ctx, canvas));
+ 93:     },
+ 94:   );
+ 95:   useEffect(() => {
+ 96:     // Respect prefers-reduced-motion — skip animation entirely
+ 97:     const prefersReducedMotion = globalThis.matchMedia(
+ 98:       "(prefers-reduced-motion: reduce)",
+ 99:     ).matches;
+100:     if (prefersReducedMotion) return;
+101:     const canvas = canvasRef.current;
+102:     if (!canvas) return;
+103:     const ctx = canvas.getContext("2d");
+104:     if (!ctx) return;
+105:     let animationFrameId: number;
+106:     const handleResize = () => {
+107:       const boundingClientRect = canvas.getBoundingClientRect();
+108:       canvas.width = boundingClientRect.width;
+109:       canvas.height = boundingClientRect.height;
+110:       initMatrix(canvas);
+111:       isInitializedRef.current = true;
+112:     };
+113:     const debouncedResize = debounce(handleResize, 100);
+114:     window.addEventListener("resize", debouncedResize);
+115:     handleResize();
+116:     const animateTick = (timestamp: number) => {
+117:       animationFrameId = requestAnimationFrame(animateTick);
+118:       tick(timestamp, ctx, canvas);
+119:     };
+120:     animationFrameId = requestAnimationFrame(animateTick);
+121:     return () => {
+122:       window.removeEventListener("resize", debouncedResize);
+123:       cancelAnimationFrame(animationFrameId);
+124:     };
+125:   }, [initMatrix]);
+126:   return (
+127:     <canvas
+128:       ref={canvasRef}
+129:       id={CANVAS_ID}
+130:       aria-hidden="true"
+131:       tabIndex={-1}
+132:       style={{ width: "100%", height: "100%" }}
+133:       data-testid="matrix-canvas"
+134:       className="absolute inset-0"
+135:     />
+136:   );
+137: };
+138: export default ReactMatrixAnimation;
 ````
 
 ## File: src/components/CV/EducationTabContent.tsx
@@ -21281,6 +21251,27 @@ vercel.json
 70:         with:
 71:           command: "monitor"
 72:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model
+17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
 ## File: .circleci/config.yml
