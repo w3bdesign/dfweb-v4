@@ -7,6 +7,7 @@ describe("VolunteerWorkTabContent", () => {
     // Arrange
     const mockVolunteerWork = [
       {
+        _key: "volunteer-work-all-fields",
         period: "2020-2022",
         organization: "Open Source Foundation",
         role: "Maintainer",
@@ -33,6 +34,7 @@ describe("VolunteerWorkTabContent", () => {
     // Arrange
     const mockVolunteerWork = [
       {
+        _key: "volunteer-work-missing-header-fields",
         role: "Volunteer",
         description: "Helped with events",
       },
@@ -50,6 +52,7 @@ describe("VolunteerWorkTabContent", () => {
     // Arrange
     const mockVolunteerWork = [
       {
+        _key: "volunteer-work-without-role",
         period: "2021-2023",
         organization: "Community Group",
         description: "Community outreach",
