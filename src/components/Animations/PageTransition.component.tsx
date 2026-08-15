@@ -3,6 +3,12 @@ import * as m from "motion/react-m";
 
 import { IAnimateProps } from "./types/Animations.types";
 
+const pageTransitionVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 1.0 } },
+  exit: { opacity: 0 },
+};
+
 /**
  * Fade in animation used for page transitions
  * @function PageTransition
@@ -12,11 +18,6 @@ import { IAnimateProps } from "./types/Animations.types";
  */
 
 const PageTransition = ({ children, cssClass }: IAnimateProps) => {
-  const pageTransitionVariants: Variants = {
-    initial: { opacity: 0 },
-    animate: { opacity: 1, transition: { duration: 1.0 } },
-    exit: { opacity: 0 },
-  };
   return (
     <AnimatePresence mode="wait">
       <m.div

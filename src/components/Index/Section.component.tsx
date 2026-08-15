@@ -13,6 +13,11 @@ interface SectionProps extends Pagecontent {
   viewAmount?: number;
 }
 
+const sectionStyles = {
+  default: "bg-slate-900",
+  alternate: "bg-slate-800/30",
+};
+
 /**
  * Section component that renders a single content section
  * @param {SectionProps} props - The props for the Section component
@@ -42,11 +47,6 @@ const Section = ({
   if (shouldError) {
     throw new Error("En uventet feil har oppstått");
   }
-
-  const sectionStyles = {
-    default: "bg-slate-900",
-    alternate: "bg-slate-800/30",
-  };
 
   return (
     <section
