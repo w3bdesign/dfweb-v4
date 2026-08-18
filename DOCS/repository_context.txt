@@ -21144,82 +21144,6 @@ vercel.json
 83:           fi
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@9cf6ca713d71123d2d229cc3d7f145b96ea3c518 # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -21712,6 +21636,83 @@ vercel.json
 69:     "singleQuote": true
 70:   }
 71: }
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         working-directory: studio
+31:         run: env -u npm_config_store -u NPM_CONFIG_STORE npm ci --ignore-scripts
+32:       - name: Run Snyk to check main project vulnerabilities
+33:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+34:         env:
+35:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+36:         with:
+37:           command: "test"
+38:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+39:       - name: Run Snyk to check eslint plugin vulnerabilities
+40:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+41:         env:
+42:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+43:         with:
+44:           command: "test"
+45:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+46:       - name: Upload main project SARIF report to GitHub Security tab
+47:         if: always() && hashFiles('snyk-main.sarif') != ''
+48:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+49:         with:
+50:           sarif_file: snyk-main.sarif
+51:           category: snyk-main
+52:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+53:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+54:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+55:         with:
+56:           sarif_file: snyk-eslint.sarif
+57:           category: snyk-eslint
+58:       - name: Snyk Monitor main project (only for pushes to main branch)
+59:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+60:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+61:         env:
+62:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+63:         with:
+64:           command: "monitor"
+65:           args: "--all-projects"
+66:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+67:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+68:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+69:         env:
+70:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+71:         with:
+72:           command: "monitor"
+73:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: package.json
