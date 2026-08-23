@@ -377,7 +377,6 @@ studio/
     schema.ts
   static/
     .gitkeep
-  .eslintrc
   .gitignore
   .npmrc
   package.json
@@ -15226,13 +15225,6 @@ vercel.json
 1: Files placed here will be served by the Sanity server under the `/static`-prefix
 ````
 
-## File: studio/.eslintrc
-````
-1: {
-2:   "extends": "@sanity/eslint-config-studio"
-3: }
-````
-
 ## File: studio/.gitignore
 ````
  1: # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
@@ -17479,311 +17471,6 @@ vercel.json
 24: }
 ````
 
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
- 18: 
- 19: ## Critical Commands
- 20: 
- 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 25: 
- 26: ## Testing Gotchas
- 27: 
- 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 30: - Matrix component intentionally excluded from test coverage
- 31: - Cypress and Playwright have different ESLint rule overrides
- 32: 
- 33: ## Code Quality Principles
- 34: 
- 35: ### SOLID Principles
- 36: 
- 37: #### Single Responsibility Principle (SRP)
- 38: 
- 39: Each component/function should have one reason to change.
- 40: 
- 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 42: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
- 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 44: 
- 45: #### Open/Closed Principle (OCP)
- 46: 
- 47: Software should be open for extension, closed for modification.
- 48: 
- 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 50: - Create generic components that can be customized without modifying source
- 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 52: 
- 53: #### Liskov Substitution Principle (LSP)
- 54: 
- 55: Components accepting a type should work with any subtype.
- 56: 
- 57: - Ensure prop interfaces are respected by all implementations
- 58: - Don't throw unexpected errors or require undocumented props
- 59: - **Benefits**: Predictable behavior, safer component hierarchies
- 60: 
- 61: #### Interface Segregation Principle (ISP)
- 62: 
- 63: Don't force components to depend on props they don't use.
- 64: 
- 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 66: - Split large prop types into smaller, composable ones
- 67: - **Benefits**: More flexible components, easier to implement and test
- 68: 
- 69: #### Dependency Inversion Principle (DIP)
- 70: 
- 71: Depend on abstractions, not concrete implementations.
- 72: 
- 73: - Use dependency injection for services (e.g., pass clients as props or use context)
- 74: - Define abstract types/interfaces, inject implementations
- 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 76: 
- 77: ### DRY Principle (Don't Repeat Yourself)
- 78: 
- 79: - Extract repeated UI patterns into reusable components
- 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 81: - Use custom hooks for shared stateful logic
- 82: - Avoid duplicating business logic across components
- 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 84: 
- 85: ### KISS Principle (Keep It Simple, Stupid)
- 86: 
- 87: - Use React/Next.js built-in features before custom solutions
- 88: - Write self-explanatory code with clear naming
- 89: - Avoid over-engineering simple problems
- 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 91: - Minimize dependencies
- 92: - Start simple, add complexity only when necessary
- 93: - **Benefits**: Easier to understand, faster development, fewer bugs
- 94: 
- 95: ### YAGNI Principle (You Aren't Gonna Need It)
- 96: 
- 97: Don't implement functionality until it's actually needed.
- 98: 
- 99: - Focus on current requirements, not hypothetical future needs
-100: - Don't create abstraction layers for single implementations
-101: - Avoid premature optimization before measuring performance
-102: - Don't build configuration systems until configurability is required
-103: - Wait for actual use cases before adding flexibility
-104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
-105: 
-106: ### Code Quality Summary
-107: 
-108: Following these principles results in:
-109: 
-110: - Maintainable, extendable code
-111: - Fewer bugs and faster debugging
-112: - Better team collaboration
-113: - Professional quality standards
-114: - Easier testing and refactoring
-115: 
-116: ## UI Development Rules
-117: 
-118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-119: 
-120: ### Interactions
-121: 
-122: #### Keyboard
-123: 
-124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-126: - MUST: Manage focus (trap, move, and return) per APG patterns
-127: 
-128: #### Targets & Input
-129: 
-130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-131: - MUST: Mobile `<input>` font-size ≥16px or set:
-132:   ```html
-133:   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-134:   ```
-135: - NEVER: Disable browser zoom
-136: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-137: 
-138: #### Inputs & Forms (Behavior)
-139: 
-140: - MUST: Hydration-safe inputs (no lost focus/value)
-141: - NEVER: Block paste in `<input>/<textarea>`
-142: - MUST: Loading buttons show spinner and keep original label
-143: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-144: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-145: - MUST: Don't block typing; accept free text and validate after
-146: - MUST: Allow submitting incomplete forms to surface validation
-147: - MUST: Errors inline next to fields; on submit, focus first error
-148: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-149: - SHOULD: Disable spellcheck for emails/codes/usernames
-150: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-151: - MUST: Warn on unsaved changes before navigation
-152: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-153: - MUST: Trim values to handle text expansion trailing spaces
-154: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-155: 
-156: #### State & Navigation
-157: 
-158: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-159: - MUST: Back/Forward restores scroll
-160: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-161: 
-162: #### Feedback
-163: 
-164: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-165: - MUST: Confirm destructive actions or provide Undo window
-166: - MUST: Use polite `aria-live` for toasts/inline validation
-167: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-168: 
-169: #### Touch/Drag/Scroll
-170: 
-171: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-172: - MUST: Delay first tooltip in a group; subsequent peers no delay
-173: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-174: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-175: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-176: 
-177: #### Autofocus
-178: 
-179: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-180: 
-181: ### Animation
-182: 
-183: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-184: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-185: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-186: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-187: - SHOULD: Choose easing to match the change (size/distance/trigger)
-188: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-189: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-190: 
-191: ### Layout
-192: 
-193: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-194: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-195: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-196: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-197: - MUST: Respect safe areas (use env(safe-area-inset-*))
-198: - MUST: Avoid unwanted scrollbars; fix overflows
-199: 
-200: ### Content & Accessibility
-201: 
-202: - SHOULD: Inline help first; tooltips last resort
-203: - MUST: Skeletons mirror final content to avoid layout shift
-204: - MUST: `<title>` matches current context
-205: - MUST: No dead ends; always offer next step/recovery
-206: - MUST: Design empty/sparse/dense/error states
-207: - SHOULD: Curly quotes (" "); avoid widows/orphans
-208: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-209: - MUST: Redundant status cues (not color-only); icons have text labels
-210: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-211: - MUST: Use the ellipsis character `…` (not `...`)
-212: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-213: - MUST: Resilient to user-generated content (short/avg/very long)
-214: - MUST: Locale-aware dates/times/numbers/currency
-215: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-216: - MUST: Icon-only buttons have descriptive `aria-label`
-217: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-218: - SHOULD: Right-clicking the nav logo surfaces brand assets
-219: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-220: 
-221: ### Performance
-222: 
-223: - SHOULD: Test iOS Low Power Mode and macOS Safari
-224: - MUST: Measure reliably (disable extensions that skew runtime)
-225: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-226: - MUST: Profile with CPU/network throttling
-227: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-228: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-229: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-230: - MUST: Virtualize large lists (eg, `virtua`)
-231: - MUST: Preload only above-the-fold images; lazy-load the rest
-232: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-233: 
-234: ### Design
-235: 
-236: - SHOULD: Layered shadows (ambient + direct)
-237: - SHOULD: Crisp edges via semi-transparent borders + shadows
-238: - SHOULD: Nested radii: child ≤ parent; concentric
-239: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-240: - MUST: Accessible charts (color-blind-friendly palettes)
-241: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-242: - MUST: Increase contrast on `:hover/:active/:focus`
-243: - SHOULD: Match browser UI to bg
-244: - SHOULD: Avoid gradient banding (use masks when needed)
-245: 
-246: ## Security — Supply Chain Defense
-247: 
-248: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
-249: 
-250: ### Package Installation Defenses
-251: 
-252: | Defense | Config File | Notes |
-253: |---------|-------------|-------|
-254: | `ignore-scripts=true` | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
-255: | `allowBuilds` whitelist | `pnpm-workspace.yaml` | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
-256: | `minimum-release-age=2880` | `.npmrc` | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions |
-257: | `block-exotic-subdependencies=true` | `.npmrc` | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources |
-258: | `--frozen-lockfile` | All CI workflows | Prevents lockfile modification during CI installs |
-259: | `engine-strict=true` | `.npmrc` | Fails if Node.js version doesn't match engines field |
-260: | Vulnerability overrides | `studio/package.json` | Known CVEs patched via pnpm overrides |
-261: 
-262: ### Automated Dependency Updates
-263: 
-264: | Defense | Config File | Notes |
-265: |---------|-------------|-------|
-266: | 7-day minimum release age | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h) |
-267: | OpenSSF Scorecard | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
-268: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review |
-269: 
-270: ### CI/CD Security
-271: 
-272: | Defense | Config File | Notes |
-273: |---------|-------------|-------|
-274: | SHA-pinned GitHub Actions | All workflows | All `uses:` references pinned to commit SHAs, never floating tags |
-275: | No `pull_request_target` | All workflows | NEVER use this trigger — it enables cache poisoning attacks |
-276: | Least-privilege permissions | All workflows | Every workflow specifies minimal `permissions` block |
-277: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches |
-278: | Pinned global installs | `repomix.yml` | Global npm packages pinned to exact versions |
-279: | Lockfile-backed studio installs | `snyk-scan.yml` | Uses `npm ci` with committed `package-lock.json` |
-280: 
-281: ### Security Scanning
-282: 
-283: | Tool | Workflow | Purpose |
-284: |------|----------|---------|
-285: | Snyk | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring |
-286: | Trivy | `security.yml` | Filesystem vulnerability scanning (CRITICAL/HIGH) |
-287: | Semgrep | `security.yml` | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
-288: | CodeQL | `codeql.yml` | GitHub native code analysis with security-and-quality queries |
-289: | Gitleaks | `security.yml` | Secret detection in commits |
-290: 
-291: ### Rules for Agents
-292: 
-293: - **NEVER** add `pull_request_target` to any workflow
-294: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
-295: - **NEVER** use `npm install -g <package>` without a pinned version in CI
-296: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
-297: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
-298: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
-299: - **ALWAYS** add explicit `permissions` blocks to new workflows
-300: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
-301: - Full hardening plan available at `plans/supply-chain-hardening.md`
-````
-
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -19749,6 +19436,642 @@ vercel.json
 1: {}
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@6.0.0
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:24.19.0
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: sudo npm i -g pnpm@11.0.8
+19:       - run:
+20:           name: Install Dependencies
+21:           command: pnpm install --frozen-lockfile
+22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+23:       - save_cache:
+24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+25:           paths:
+26:             - ~/.pnpm-store
+27:   build:
+28:     working_directory: /home/circleci/dfweb
+29:     docker:
+30:       - image: cimg/node:24.19.0-browsers
+31:     steps:
+32:       - checkout
+33:       - restore_cache:
+34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+35:       - run:
+36:           name: Install pnpm package manager
+37:           command: sudo npm i -g pnpm@11.0.8
+38:       - run:
+39:           name: Install Dependencies
+40:           command: pnpm install --frozen-lockfile
+41:       - run:
+42:           name: Chrome key start setup
+43:           command: sudo apt update -y
+44:       - run:
+45:           name: Chrome key finish setup
+46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+47:       - run:
+48:           name: Chrome package download
+49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+50:       - save_cache:
+51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+52:           paths:
+53:             - ~/.pnpm-store
+54:       - store_artifacts:
+55:           path: /root/.npm/_logs
+56:       - run:
+57:           name: Run Jest Tests
+58:           command: pnpm test
+59:       - run:
+60:           name: Make sure ~/.gnupg directory exists
+61:           command: mkdir -p ~/.gnupg
+62:       - run:
+63:           name: Fix GPG directory permissions
+64:           command: |
+65:             chmod 700 ~/.gnupg
+66:             chmod 600 ~/.gnupg/* || true
+67:       - run:
+68:           name: Import Codecov GPG key
+69:           command: |
+70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
+71:       - run:
+72:           name: Download and Verify Codecov CLI
+73:           command: |
+74:             curl -Os https://cli.codecov.io/latest/linux/codecov
+75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
+77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+78:             shasum -a 256 -c codecov.SHA256SUM
+79:             sudo chmod +x codecov
+80:       - run:
+81:           name: Upload Coverage to Codecov
+82:           command: |
+83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
+84:     parallelism: 6
+85: workflows:
+86:   chromatic-deploy:
+87:     jobs:
+88:       - build:
+89:           name: Build Next.js project
+````
+
+## File: .github/workflows/cypress.yml
+````yaml
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30   
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
+13:     steps:
+14:       - name: Checkout
+15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+20:         with:
+21:           node-version: 24
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile --ignore-scripts
+31:       - name: Verify and install Cypress binary
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
+33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
+34:         # NOT a package-manager install running third-party lifecycle scripts.
+35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
+36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
+37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
+38:       - name: Build the project
+39:         run: pnpm build
+40:       - name: Start the application
+41:         run: pnpm dev &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+44:       - name: Run Cypress tests
+45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+13:         with:
+14:           node-version: "24"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:       - name: Install dependencies
+27:         run: pnpm install --frozen-lockfile --ignore-scripts
+28:       - name: Build project
+29:         run: pnpm build
+30:       - name: Start server
+31:         run: |
+32:           pnpm start &
+33:           echo "Waiting for server to be ready..."
+34:           while ! nc -z localhost 3000; do
+35:             sleep 5
+36:           done
+37:           # Additional wait to ensure full initialization
+38:           sleep 20
+39:       - name: Run Lighthouse CI (Mobile)
+40:         run: pnpm lhci:perf
+41:         env:
+42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+43:       - name: Run Lighthouse CI (Desktop)
+44:         run: pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+17:         with:
+18:           node-version: "24"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile --ignore-scripts
+32:       - name: Create pa11y config
+33:         run: |
+34:           # Create pa11y config file
+35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+36:       - name: Build Next.js app
+37:         run: pnpm build
+38:       - name: Start Next.js app
+39:         run: pnpm start &
+40:       - name: Wait for the application to be ready
+41:         run: pnpm exec wait-on http://localhost:3000
+42:       - name: Run pa11y
+43:         run: |
+44:           # Create a directory for the reports
+45:           mkdir -p pa11y-reports
+46:           # Run pa11y on main pages with config
+47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+51:       - name: Upload pa11y results
+52:         if: always()
+53:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+54:         with:
+55:           name: pa11y-reports
+56:           path: pa11y-reports/
+57:       - name: Check for accessibility issues
+58:         run: |
+59:           if grep -q "Error:" pa11y-reports/*.txt; then
+60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+61:             exit 1
+62:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+17:         with:
+18:           node-version: 24
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+ 47:         with:
+ 48:           node-version: 24
+ 49:           cache: ${{ steps.pm.outputs.cache }}
+ 50:       - name: Install dependencies
+ 51:         run: ${{ steps.pm.outputs.install }}
+ 52:       - name: Run React Doctor
+ 53:         id: doctor
+ 54:         run: |
+ 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 57:           # Strip ANSI escape codes for clean output
+ 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 63:           else
+ 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 65:           fi
+ 66:           # Check for lint issues (the actionable part of the report)
+ 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 69:           else
+ 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 71:           fi
+ 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 75:           # Extract just the numeric score for threshold check
+ 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 79:       - name: Post PR comment with results
+ 80:         if: github.event_name == 'pull_request'
+ 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 82:         with:
+ 83:           script: |
+ 84:             const fs = require('fs');
+ 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 86:             const score = '${{ steps.doctor.outputs.score }}';
+ 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 89:             const scoreDisplay = offline
+ 90:               ? 'N/A (scoring server unreachable)'
+ 91:               : score;
+ 92:             const statusEmoji = offline
+ 93:               ? (issuesFound ? '⚠️' : '✅')
+ 94:               : '';
+ 95:             const body = [
+ 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 97:               '',
+ 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+ 99:               '',
+100:               '<details>',
+101:               '<summary>Full diagnostics</summary>',
+102:               '',
+103:               '```',
+104:               output.trim(),
+105:               '```',
+106:               '',
+107:               '</details>',
+108:               '',
+109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+110:             ].filter(Boolean).join('\n');
+111:             // Find existing comment to update instead of creating duplicates
+112:             const { data: comments } = await github.rest.issues.listComments({
+113:               owner: context.repo.owner,
+114:               repo: context.repo.repo,
+115:               issue_number: context.issue.number,
+116:             });
+117:             const botComment = comments.find(
+118:               (c) => c.body?.includes('🩺 React Doctor')
+119:             );
+120:             if (botComment) {
+121:               await github.rest.issues.updateComment({
+122:                 owner: context.repo.owner,
+123:                 repo: context.repo.repo,
+124:                 comment_id: botComment.id,
+125:                 body,
+126:               });
+127:             } else {
+128:               await github.rest.issues.createComment({
+129:                 owner: context.repo.owner,
+130:                 repo: context.repo.repo,
+131:                 issue_number: context.issue.number,
+132:                 body,
+133:               });
+134:             }
+135:       - name: Write job summary
+136:         if: always()
+137:         run: |
+138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+139:           if [ "$OFFLINE" = "true" ]; then
+140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+141:             echo "" >> "$GITHUB_STEP_SUMMARY"
+142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+143:           else
+144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+145:           fi
+146:           echo "" >> "$GITHUB_STEP_SUMMARY"
+147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:       - name: Check score threshold
+151:         run: |
+152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+154:           # When offline, skip numeric threshold — only fail if lint issues were found
+155:           if [ "$OFFLINE" = "true" ]; then
+156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+157:             if [ "$ISSUES" = "true" ]; then
+158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+159:               exit 1
+160:             fi
+161:             echo "✅ No lint issues found (score unavailable due to offline)"
+162:             exit 0
+163:           fi
+164:           SCORE="${{ steps.doctor.outputs.score_num }}"
+165:           SCORE="${SCORE:-0}"
+166:           THRESHOLD=80
+167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+170:             exit 1
+171:           fi
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
+ 7: permissions:
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+17:         with:
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+25:         with:
+26:           node-version: "24"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix@1.14.0 --ignore-scripts
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
+````
+
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.173.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: commit/README.md
 ````markdown
  1: # AI Commit Message Generator
@@ -20871,310 +21194,312 @@ vercel.json
 29: }
 ````
 
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-17:         with:
-18:           node-version: 24
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         env:
-24:           npm_config_ignore_scripts: true
-25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
-````
-
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
- 47:         with:
- 48:           node-version: 24
- 49:           cache: ${{ steps.pm.outputs.cache }}
- 50:       - name: Install dependencies
- 51:         run: ${{ steps.pm.outputs.install }}
- 52:       - name: Run React Doctor
- 53:         id: doctor
- 54:         run: |
- 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 57:           # Strip ANSI escape codes for clean output
- 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 63:           else
- 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 65:           fi
- 66:           # Check for lint issues (the actionable part of the report)
- 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 69:           else
- 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 71:           fi
- 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 75:           # Extract just the numeric score for threshold check
- 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 79:       - name: Post PR comment with results
- 80:         if: github.event_name == 'pull_request'
- 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 82:         with:
- 83:           script: |
- 84:             const fs = require('fs');
- 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 86:             const score = '${{ steps.doctor.outputs.score }}';
- 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 89:             const scoreDisplay = offline
- 90:               ? 'N/A (scoring server unreachable)'
- 91:               : score;
- 92:             const statusEmoji = offline
- 93:               ? (issuesFound ? '⚠️' : '✅')
- 94:               : '';
- 95:             const body = [
- 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 97:               '',
- 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
- 99:               '',
-100:               '<details>',
-101:               '<summary>Full diagnostics</summary>',
-102:               '',
-103:               '```',
-104:               output.trim(),
-105:               '```',
-106:               '',
-107:               '</details>',
-108:               '',
-109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-110:             ].filter(Boolean).join('\n');
-111:             // Find existing comment to update instead of creating duplicates
-112:             const { data: comments } = await github.rest.issues.listComments({
-113:               owner: context.repo.owner,
-114:               repo: context.repo.repo,
-115:               issue_number: context.issue.number,
-116:             });
-117:             const botComment = comments.find(
-118:               (c) => c.body?.includes('🩺 React Doctor')
-119:             );
-120:             if (botComment) {
-121:               await github.rest.issues.updateComment({
-122:                 owner: context.repo.owner,
-123:                 repo: context.repo.repo,
-124:                 comment_id: botComment.id,
-125:                 body,
-126:               });
-127:             } else {
-128:               await github.rest.issues.createComment({
-129:                 owner: context.repo.owner,
-130:                 repo: context.repo.repo,
-131:                 issue_number: context.issue.number,
-132:                 body,
-133:               });
-134:             }
-135:       - name: Write job summary
-136:         if: always()
-137:         run: |
-138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-139:           if [ "$OFFLINE" = "true" ]; then
-140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-141:             echo "" >> "$GITHUB_STEP_SUMMARY"
-142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-143:           else
-144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-145:           fi
-146:           echo "" >> "$GITHUB_STEP_SUMMARY"
-147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:       - name: Check score threshold
-151:         run: |
-152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-154:           # When offline, skip numeric threshold — only fail if lint issues were found
-155:           if [ "$OFFLINE" = "true" ]; then
-156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-157:             if [ "$ISSUES" = "true" ]; then
-158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-159:               exit 1
-160:             fi
-161:             echo "✅ No lint issues found (score unavailable due to offline)"
-162:             exit 0
-163:           fi
-164:           SCORE="${{ steps.doctor.outputs.score_num }}"
-165:           SCORE="${SCORE:-0}"
-166:           THRESHOLD=80
-167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-170:             exit 1
-171:           fi
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-25:         with:
-26:           node-version: "24"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix@1.14.0 --ignore-scripts
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
+ 18: 
+ 19: ## Critical Commands
+ 20: 
+ 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 25: 
+ 26: ## Testing Gotchas
+ 27: 
+ 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 30: - Matrix component intentionally excluded from test coverage
+ 31: - Cypress and Playwright have different ESLint rule overrides
+ 32: 
+ 33: ## Code Quality Principles
+ 34: 
+ 35: ### SOLID Principles
+ 36: 
+ 37: #### Single Responsibility Principle (SRP)
+ 38: 
+ 39: Each component/function should have one reason to change.
+ 40: 
+ 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 42: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 44: 
+ 45: #### Open/Closed Principle (OCP)
+ 46: 
+ 47: Software should be open for extension, closed for modification.
+ 48: 
+ 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 50: - Create generic components that can be customized without modifying source
+ 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 52: 
+ 53: #### Liskov Substitution Principle (LSP)
+ 54: 
+ 55: Components accepting a type should work with any subtype.
+ 56: 
+ 57: - Ensure prop interfaces are respected by all implementations
+ 58: - Don't throw unexpected errors or require undocumented props
+ 59: - **Benefits**: Predictable behavior, safer component hierarchies
+ 60: 
+ 61: #### Interface Segregation Principle (ISP)
+ 62: 
+ 63: Don't force components to depend on props they don't use.
+ 64: 
+ 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 66: - Split large prop types into smaller, composable ones
+ 67: - **Benefits**: More flexible components, easier to implement and test
+ 68: 
+ 69: #### Dependency Inversion Principle (DIP)
+ 70: 
+ 71: Depend on abstractions, not concrete implementations.
+ 72: 
+ 73: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 74: - Define abstract types/interfaces, inject implementations
+ 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 76: 
+ 77: ### DRY Principle (Don't Repeat Yourself)
+ 78: 
+ 79: - Extract repeated UI patterns into reusable components
+ 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 81: - Use custom hooks for shared stateful logic
+ 82: - Avoid duplicating business logic across components
+ 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 84: 
+ 85: ### KISS Principle (Keep It Simple, Stupid)
+ 86: 
+ 87: - Use React/Next.js built-in features before custom solutions
+ 88: - Write self-explanatory code with clear naming
+ 89: - Avoid over-engineering simple problems
+ 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 91: - Minimize dependencies
+ 92: - Start simple, add complexity only when necessary
+ 93: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 94: 
+ 95: ### YAGNI Principle (You Aren't Gonna Need It)
+ 96: 
+ 97: Don't implement functionality until it's actually needed.
+ 98: 
+ 99: - Focus on current requirements, not hypothetical future needs
+100: - Don't create abstraction layers for single implementations
+101: - Avoid premature optimization before measuring performance
+102: - Don't build configuration systems until configurability is required
+103: - Wait for actual use cases before adding flexibility
+104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+105: 
+106: ### Code Quality Summary
+107: 
+108: Following these principles results in:
+109: 
+110: - Maintainable, extendable code
+111: - Fewer bugs and faster debugging
+112: - Better team collaboration
+113: - Professional quality standards
+114: - Easier testing and refactoring
+115: 
+116: ## UI Development Rules
+117: 
+118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+119: 
+120: ### Interactions
+121: 
+122: #### Keyboard
+123: 
+124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+126: - MUST: Manage focus (trap, move, and return) per APG patterns
+127: 
+128: #### Targets & Input
+129: 
+130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+131: - MUST: Mobile `<input>` font-size ≥16px or set:
+132:   ```html
+133:   <meta
+134:     name="viewport"
+135:     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+136:   />
+137:   ```
+138: - NEVER: Disable browser zoom
+139: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+140: 
+141: #### Inputs & Forms (Behavior)
+142: 
+143: - MUST: Hydration-safe inputs (no lost focus/value)
+144: - NEVER: Block paste in `<input>/<textarea>`
+145: - MUST: Loading buttons show spinner and keep original label
+146: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+147: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+148: - MUST: Don't block typing; accept free text and validate after
+149: - MUST: Allow submitting incomplete forms to surface validation
+150: - MUST: Errors inline next to fields; on submit, focus first error
+151: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+152: - SHOULD: Disable spellcheck for emails/codes/usernames
+153: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+154: - MUST: Warn on unsaved changes before navigation
+155: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+156: - MUST: Trim values to handle text expansion trailing spaces
+157: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+158: 
+159: #### State & Navigation
+160: 
+161: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+162: - MUST: Back/Forward restores scroll
+163: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+164: 
+165: #### Feedback
+166: 
+167: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+168: - MUST: Confirm destructive actions or provide Undo window
+169: - MUST: Use polite `aria-live` for toasts/inline validation
+170: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+171: 
+172: #### Touch/Drag/Scroll
+173: 
+174: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+175: - MUST: Delay first tooltip in a group; subsequent peers no delay
+176: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+177: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+178: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+179: 
+180: #### Autofocus
+181: 
+182: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+183: 
+184: ### Animation
+185: 
+186: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+187: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+188: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+189: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+190: - SHOULD: Choose easing to match the change (size/distance/trigger)
+191: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+192: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+193: 
+194: ### Layout
+195: 
+196: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+197: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+198: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+199: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+200: - MUST: Respect safe areas (use env(safe-area-inset-\*))
+201: - MUST: Avoid unwanted scrollbars; fix overflows
+202: 
+203: ### Content & Accessibility
+204: 
+205: - SHOULD: Inline help first; tooltips last resort
+206: - MUST: Skeletons mirror final content to avoid layout shift
+207: - MUST: `<title>` matches current context
+208: - MUST: No dead ends; always offer next step/recovery
+209: - MUST: Design empty/sparse/dense/error states
+210: - SHOULD: Curly quotes (" "); avoid widows/orphans
+211: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+212: - MUST: Redundant status cues (not color-only); icons have text labels
+213: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+214: - MUST: Use the ellipsis character `…` (not `...`)
+215: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+216: - MUST: Resilient to user-generated content (short/avg/very long)
+217: - MUST: Locale-aware dates/times/numbers/currency
+218: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+219: - MUST: Icon-only buttons have descriptive `aria-label`
+220: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+221: - SHOULD: Right-clicking the nav logo surfaces brand assets
+222: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+223: 
+224: ### Performance
+225: 
+226: - SHOULD: Test iOS Low Power Mode and macOS Safari
+227: - MUST: Measure reliably (disable extensions that skew runtime)
+228: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+229: - MUST: Profile with CPU/network throttling
+230: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+231: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+232: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+233: - MUST: Virtualize large lists (eg, `virtua`)
+234: - MUST: Preload only above-the-fold images; lazy-load the rest
+235: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+236: 
+237: ### Design
+238: 
+239: - SHOULD: Layered shadows (ambient + direct)
+240: - SHOULD: Crisp edges via semi-transparent borders + shadows
+241: - SHOULD: Nested radii: child ≤ parent; concentric
+242: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+243: - MUST: Accessible charts (color-blind-friendly palettes)
+244: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+245: - MUST: Increase contrast on `:hover/:active/:focus`
+246: - SHOULD: Match browser UI to bg
+247: - SHOULD: Avoid gradient banding (use masks when needed)
+248: 
+249: ## Security — Supply Chain Defense
+250: 
+251: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
+252: 
+253: ### Package Installation Defenses
+254: 
+255: | Defense                             | Config File               | Notes                                                                                       |
+256: | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+257: | `ignore-scripts=true`               | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
+258: | `allowBuilds` whitelist             | `pnpm-workspace.yaml`     | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
+259: | `minimum-release-age=2880`          | `.npmrc`                  | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions           |
+260: | `block-exotic-subdependencies=true` | `.npmrc`                  | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources  |
+261: | `--frozen-lockfile`                 | All CI workflows          | Prevents lockfile modification during CI installs                                           |
+262: | `engine-strict=true`                | `.npmrc`                  | Fails if Node.js version doesn't match engines field                                        |
+263: | Vulnerability overrides             | `studio/package.json`     | Known CVEs patched via pnpm overrides                                                       |
+264: 
+265: ### Automated Dependency Updates
+266: 
+267: | Defense                        | Config File     | Notes                                                        |
+268: | ------------------------------ | --------------- | ------------------------------------------------------------ |
+269: | 7-day minimum release age      | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h)     |
+270: | OpenSSF Scorecard              | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
+271: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review                          |
+272: 
+273: ### CI/CD Security
+274: 
+275: | Defense                           | Config File            | Notes                                                             |
+276: | --------------------------------- | ---------------------- | ----------------------------------------------------------------- |
+277: | SHA-pinned GitHub Actions         | All workflows          | All `uses:` references pinned to commit SHAs, never floating tags |
+278: | No `pull_request_target`          | All workflows          | NEVER use this trigger — it enables cache poisoning attacks       |
+279: | Least-privilege permissions       | All workflows          | Every workflow specifies minimal `permissions` block              |
+280: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches     |
+281: | Pinned global installs            | `repomix.yml`          | Global npm packages pinned to exact versions                      |
+282: | Lockfile-backed studio installs   | `snyk-scan.yml`        | Uses `npm ci` with committed `package-lock.json`                  |
+283: 
+284: ### Security Scanning
+285: 
+286: | Tool     | Workflow        | Purpose                                                               |
+287: | -------- | --------------- | --------------------------------------------------------------------- |
+288: | Snyk     | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring                        |
+289: | Trivy    | `security.yml`  | Filesystem vulnerability scanning (CRITICAL/HIGH)                     |
+290: | Semgrep  | `security.yml`  | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
+291: | CodeQL   | `codeql.yml`    | GitHub native code analysis with security-and-quality queries         |
+292: | Gitleaks | `security.yml`  | Secret detection in commits                                           |
+293: 
+294: ### Rules for Agents
+295: 
+296: - **NEVER** add `pull_request_target` to any workflow
+297: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
+298: - **NEVER** use `npm install -g <package>` without a pinned version in CI
+299: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
+300: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
+301: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
+302: - **ALWAYS** add explicit `permissions` blocks to new workflows
+303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
+304: - Full hardening plan available at `plans/supply-chain-hardening.md`
 ````
 
 ## File: pnpm-workspace.yaml
@@ -21212,336 +21537,6 @@ vercel.json
 31:   - eslint@10.8.1
 ````
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@6.0.0
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.19.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: sudo npm i -g pnpm@11.0.8
-19:       - run:
-20:           name: Install Dependencies
-21:           command: pnpm install --frozen-lockfile
-22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-23:       - save_cache:
-24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-25:           paths:
-26:             - ~/.pnpm-store
-27:   build:
-28:     working_directory: /home/circleci/dfweb
-29:     docker:
-30:       - image: cimg/node:24.19.0-browsers
-31:     steps:
-32:       - checkout
-33:       - restore_cache:
-34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-35:       - run:
-36:           name: Install pnpm package manager
-37:           command: sudo npm i -g pnpm@11.0.8
-38:       - run:
-39:           name: Install Dependencies
-40:           command: pnpm install --frozen-lockfile
-41:       - run:
-42:           name: Chrome key start setup
-43:           command: sudo apt update -y
-44:       - run:
-45:           name: Chrome key finish setup
-46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-47:       - run:
-48:           name: Chrome package download
-49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-50:       - save_cache:
-51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-52:           paths:
-53:             - ~/.pnpm-store
-54:       - store_artifacts:
-55:           path: /root/.npm/_logs
-56:       - run:
-57:           name: Run Jest Tests
-58:           command: pnpm test
-59:       - run:
-60:           name: Make sure ~/.gnupg directory exists
-61:           command: mkdir -p ~/.gnupg
-62:       - run:
-63:           name: Fix GPG directory permissions
-64:           command: |
-65:             chmod 700 ~/.gnupg
-66:             chmod 600 ~/.gnupg/* || true
-67:       - run:
-68:           name: Import Codecov GPG key
-69:           command: |
-70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
-71:       - run:
-72:           name: Download and Verify Codecov CLI
-73:           command: |
-74:             curl -Os https://cli.codecov.io/latest/linux/codecov
-75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
-77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
-78:             shasum -a 256 -c codecov.SHA256SUM
-79:             sudo chmod +x codecov
-80:       - run:
-81:           name: Upload Coverage to Codecov
-82:           command: |
-83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
-84:     parallelism: 6
-85: workflows:
-86:   chromatic-deploy:
-87:     jobs:
-88:       - build:
-89:           name: Build Next.js project
-````
-
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30   
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-20:         with:
-21:           node-version: 24
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile --ignore-scripts
-31:       - name: Verify and install Cypress binary
-32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
-33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
-34:         # NOT a package-manager install running third-party lifecycle scripts.
-35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
-36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
-37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
-38:       - name: Build the project
-39:         run: pnpm build
-40:       - name: Start the application
-41:         run: pnpm dev &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
-44:       - name: Run Cypress tests
-45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-13:         with:
-14:           node-version: "24"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:       - name: Install dependencies
-27:         run: pnpm install --frozen-lockfile --ignore-scripts
-28:       - name: Build project
-29:         run: pnpm build
-30:       - name: Start server
-31:         run: |
-32:           pnpm start &
-33:           echo "Waiting for server to be ready..."
-34:           while ! nc -z localhost 3000; do
-35:             sleep 5
-36:           done
-37:           # Additional wait to ensure full initialization
-38:           sleep 20
-39:       - name: Run Lighthouse CI (Mobile)
-40:         run: pnpm lhci:perf
-41:         env:
-42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-43:       - name: Run Lighthouse CI (Desktop)
-44:         run: pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
-13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-17:         with:
-18:           node-version: "24"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile --ignore-scripts
-32:       - name: Create pa11y config
-33:         run: |
-34:           # Create pa11y config file
-35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-36:       - name: Build Next.js app
-37:         run: pnpm build
-38:       - name: Start Next.js app
-39:         run: pnpm start &
-40:       - name: Wait for the application to be ready
-41:         run: pnpm exec wait-on http://localhost:3000
-42:       - name: Run pa11y
-43:         run: |
-44:           # Create a directory for the reports
-45:           mkdir -p pa11y-reports
-46:           # Run pa11y on main pages with config
-47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-51:       - name: Upload pa11y results
-52:         if: always()
-53:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-54:         with:
-55:           name: pa11y-reports
-56:           path: pa11y-reports/
-57:       - name: Check for accessibility issues
-58:         run: |
-59:           if grep -q "Error:" pa11y-reports/*.txt; then
-60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-61:             exit 1
-62:           fi
-````
-
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.172.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: commit/.env.example
 ````
  1: # Provider Selection (optional - auto-detects based on available API keys if not set)
@@ -21568,7 +21563,7 @@ vercel.json
  1: {
  2:   "name": "dfweb-v4",
  3:   "private": true,
- 4:   "version": "1.0.4",
+ 4:   "version": "1.0.5",
  5:   "main": "package.json",
  6:   "scripts": {
  7:     "dev": "sanity dev",
@@ -21744,15 +21739,15 @@ vercel.json
  27:   },
  28:   "dependencies": {
  29:     "@emailjs/browser": "^4.4.1",
- 30:     "@hookform/resolvers": "^5.7.1",
- 31:     "@portabletext/react": "^7.0.1",
+ 30:     "@hookform/resolvers": "^5.8.0",
+ 31:     "@portabletext/react": "^8.0.0",
  32:     "@sanity/client": "^7.26.2",
  33:     "@sanity/image-url": "^2.1.1",
  34:     "@vercel/speed-insights": "2.0.0",
  35:     "babel-jest": "30.4.1",
  36:     "jest": "30.4.2",
- 37:     "motion": "^13.0.0",
- 38:     "next": "^16.3.0",
+ 37:     "motion": "^13.1.0",
+ 38:     "next": "^16.3.1",
  39:     "react": "^19.2.8",
  40:     "react-dom": "^19.2.8",
  41:     "react-error-boundary": "^6.1.2",
@@ -21769,23 +21764,23 @@ vercel.json
  52:     "@playwright/test": "^1.62.1",
  53:     "@tailwindcss/postcss": "^4.3.3",
  54:     "@testing-library/cypress": "^10.1.3",
- 55:     "@testing-library/jest-dom": "^7.0.0",
+ 55:     "@testing-library/jest-dom": "^7.0.1",
  56:     "@testing-library/react": "^16.3.2",
- 57:     "@testing-library/user-event": "^14.6.3",
+ 57:     "@testing-library/user-event": "^14.6.4",
  58:     "@types/jest": "^30.0.0",
  59:     "@types/node": "^26.2.0",
  60:     "@types/react": "^19.2.18",
  61:     "@types/react-dom": "^19.2.4",
- 62:     "@typescript-eslint/eslint-plugin": "^8.66.0",
- 63:     "@typescript-eslint/parser": "^8.66.0",
- 64:     "@typescript-eslint/utils": "^8.66.0",
+ 62:     "@typescript-eslint/eslint-plugin": "^8.67.0",
+ 63:     "@typescript-eslint/parser": "^8.67.0",
+ 64:     "@typescript-eslint/utils": "^8.67.0",
  65:     "axe-core": "^4.13.0",
- 66:     "cypress": "15.20.0",
+ 66:     "cypress": "15.20.1",
  67:     "cypress-axe": "^1.7.0",
  68:     "eslint": "10.8.1",
- 69:     "eslint-config-next": "16.2.12",
+ 69:     "eslint-config-next": "16.3.1",
  70:     "eslint-config-prettier": "^10.1.8",
- 71:     "eslint-plugin-jest": "^29.16.0",
+ 71:     "eslint-plugin-jest": "^29.16.1",
  72:     "eslint-plugin-jsx-a11y": "^6.10.2",
  73:     "eslint-plugin-prettier": "^5.5.6",
  74:     "eslint-plugin-react": "^7.37.5",
@@ -21800,7 +21795,7 @@ vercel.json
  83:     "postcss-load-config": "^6.0.1",
  84:     "prettier": "3.9.6",
  85:     "react-doctor": "^0.0.47",
- 86:     "sanity": "6.9.1",
+ 86:     "sanity": "6.9.2",
  87:     "stylelint": "^17.14.1",
  88:     "stylelint-config-standard": "^40.0.0",
  89:     "tailwindcss": "^4.3.3",
