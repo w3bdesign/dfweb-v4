@@ -116,7 +116,7 @@ const settingsQuery = `
  * codebase that knows what a Sanity error looks like.
  */
 function mapError(error: unknown, entity: string): never {
-  console.error(`Error fetching ${entity}:`, error);
+  console.error("Error fetching content:", entity, error);
 
   if (isSanityApiError(error)) {
     switch (error.statusCode) {
