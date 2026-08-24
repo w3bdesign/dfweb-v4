@@ -5,7 +5,7 @@ import PageHeader from "@/components/UI/PageHeader.component";
 import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
 import RotatingLoader from "@/components/Animations/RotatingLoader.component";
 
-import { getProjects, preloadProjects } from "./actions";
+import { getProjects, preloadProjects } from "@/lib/sanity/content";
 
 export const metadata: Metadata = {
   title: "Prosjekter - Dfweb",

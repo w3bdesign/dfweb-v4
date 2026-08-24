@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import CVContent from "@/components/CV/CVContent.component";
 
-import { sanityFetch } from "@/lib/sanity/client";
-import { cvQuery } from "@/lib/sanity/queries";
-import type { Cv } from "@/types/sanity.types";
+import { getCv } from "@/lib/sanity/content";
 
 import { Metadata } from "next/types";
 
@@ -12,10 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CVPage() {
-  const cvData = await sanityFetch<Cv | null>({
-    query: cvQuery,
-    revalidate: 3600,
-  });
+  const cvData = await getCv();
 
   if (!cvData) notFound();
 

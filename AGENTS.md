@@ -39,7 +39,7 @@ This file provides guidance to agents when working with code in this repository.
 Each component/function should have one reason to change.
 
 - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
-- **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+- **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
 - **Benefits**: Easier testing, clearer purpose, simpler maintenance
 
 #### Open/Closed Principle (OCP)

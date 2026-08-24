@@ -20,7 +20,7 @@ interface ProjectType {
 const mockGetProjects = jest.fn();
 const mockPreloadProjects = jest.fn();
 
-jest.mock("@/app/prosjekter/actions", () => ({
+jest.mock("@/lib/sanity/content", () => ({
   getProjects: mockGetProjects,
   preloadProjects: mockPreloadProjects,
 }));
