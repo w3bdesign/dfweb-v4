@@ -17,14 +17,14 @@ export default async function HomePage() {
 
   if (!pageContent) notFound();
 
+  const { hero, content } = pageContent;
+
   return (
     <main>
       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-        {pageContent?.hero && <Hero content={pageContent.hero} />}
+        {hero && <Hero content={hero} />}
       </div>
-      {pageContent?.content && (
-        <IndexContent pageContent={pageContent.content} />
-      )}
+      {content && <IndexContent pageContent={content} />}
     </main>
   );
 }
