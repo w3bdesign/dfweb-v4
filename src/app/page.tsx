@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next/types";
-import { sanityFetch } from "@/lib/sanity/client";
-import { pageContentQuery } from "@/lib/sanity/queries";
-import type { Page } from "@/types/sanity.types";
+import { getPageContent } from "@/lib/sanity/content";
 import Hero from "@/components/Index/Hero.component";
 import IndexContent from "@/components/Index/IndexContent.component";
 
@@ -15,10 +13,7 @@ export const metadata: Metadata = {
 export const revalidate = 86400;
 
 export default async function HomePage() {
-  const pageContent = await sanityFetch<Page | null>({
-    query: pageContentQuery,
-    revalidate: 86400, // 24 hours
-  });
+  const pageContent = await getPageContent();
 
   if (!pageContent) notFound();
 
