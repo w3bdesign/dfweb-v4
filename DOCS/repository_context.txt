@@ -174,8 +174,9 @@ src/
       Footer.test.tsx
       Header.test.tsx
       MobileMenu.test.tsx
+    lib/
+      content.test.ts
     Prosjekter/
-      actions.test.ts
       error.test.tsx
       loading.test.tsx
       page.test.tsx
@@ -207,7 +208,6 @@ src/
       loading.tsx
       page.tsx
     prosjekter/
-      actions.ts
       error.tsx
       loading.tsx
       page.tsx
@@ -306,7 +306,7 @@ src/
       LazyMotionProvider.tsx
     sanity/
       client.ts
-      queries.ts
+      content.ts
     csrf.ts
   stories/
     components/
@@ -5755,6 +5755,268 @@ vercel.json
 104: });
 ````
 
+## File: src/__tests__/CV/EducationTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import EducationTabContent from "@/components/CV/EducationTabContent";
+ 4: describe("EducationTabContent", () => {
+ 5:   it("renders education items with degree (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockEducation = [
+ 8:       {
+ 9:         _key: "education-with-degree",
+10:         period: "2020-2024",
+11:         institution: "University of Technology",
+12:         degree: "Bachelor of Computer Science",
+13:         description: "Studied computer science fundamentals",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<EducationTabContent education={mockEducation} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2024 - University of Technology";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(
+25:       screen.getByText("Bachelor of Computer Science"),
+26:     ).toBeInTheDocument();
+27:   });
+28:   it("renders education items without degree (conditional branch)", () => {
+29:     // Arrange
+30:     const mockEducation = [
+31:       {
+32:         _key: "education-without-degree",
+33:         period: "2020-2024",
+34:         institution: "University of Technology",
+35:         description: "Studied computer science fundamentals",
+36:         // No degree property to test the conditional
+37:       },
+38:     ];
+39:     // Act
+40:     render(<EducationTabContent education={mockEducation} />);
+41:     // Assert
+42:     expect(
+43:       screen.getByText((content, element) => {
+44:         return element?.textContent === "2020-2024 - University of Technology";
+45:       }),
+46:     ).toBeInTheDocument();
+47:     expect(
+48:       screen.queryByText("Bachelor of Computer Science"),
+49:     ).not.toBeInTheDocument();
+50:   });
+51:   it("renders education items with empty degree (conditional branch)", () => {
+52:     // Arrange
+53:     const mockEducation = [
+54:       {
+55:         _key: "education-with-empty-degree",
+56:         period: "2020-2024",
+57:         institution: "University of Technology",
+58:         degree: "", // Empty string to test the conditional
+59:         description: "Studied computer science fundamentals",
+60:       },
+61:     ];
+62:     // Act
+63:     render(<EducationTabContent education={mockEducation} />);
+64:     // Assert
+65:     expect(
+66:       screen.getByText((content, element) => {
+67:         return element?.textContent === "2020-2024 - University of Technology";
+68:       }),
+69:     ).toBeInTheDocument();
+70:     expect(
+71:       screen.queryByText("Bachelor of Computer Science"),
+72:     ).not.toBeInTheDocument();
+73:   });
+74:   it("renders with undefined education", () => {
+75:     // Act
+76:     render(<EducationTabContent />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(
+79:       screen.queryByText("University of Technology"),
+80:     ).not.toBeInTheDocument();
+81:   });
+82:   it("renders with empty education array", () => {
+83:     // Act
+84:     render(<EducationTabContent education={[]} />);
+85:     // Assert - Should not crash and render empty content
+86:     expect(
+87:       screen.queryByText("University of Technology"),
+88:     ).not.toBeInTheDocument();
+89:   });
+90: });
+````
+
+## File: src/__tests__/CV/ExperienceTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent";
+ 4: describe("ExperienceTabContent", () => {
+ 5:   it("renders experience items with role (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockExperience = [
+ 8:       {
+ 9:         _key: "experience-with-role",
+10:         period: "2022-2024",
+11:         company: "Tech Company Inc",
+12:         role: "Senior Developer",
+13:         description: "Developed web applications",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<ExperienceTabContent experience={mockExperience} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2022-2024 - Tech Company Inc";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
+25:   });
+26:   it("renders experience items without role (conditional branch)", () => {
+27:     // Arrange
+28:     const mockExperience = [
+29:       {
+30:         _key: "experience-without-role",
+31:         period: "2022-2024",
+32:         company: "Tech Company Inc",
+33:         description: "Developed web applications",
+34:         // No role property to test the conditional
+35:       },
+36:     ];
+37:     // Act
+38:     render(<ExperienceTabContent experience={mockExperience} />);
+39:     // Assert
+40:     expect(
+41:       screen.getByText((content, element) => {
+42:         return element?.textContent === "2022-2024 - Tech Company Inc";
+43:       }),
+44:     ).toBeInTheDocument();
+45:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+46:   });
+47:   it("renders experience items with empty role (conditional branch)", () => {
+48:     // Arrange
+49:     const mockExperience = [
+50:       {
+51:         _key: "experience-with-empty-role",
+52:         period: "2022-2024",
+53:         company: "Tech Company Inc",
+54:         role: "", // Empty string to test the conditional
+55:         description: "Developed web applications",
+56:       },
+57:     ];
+58:     // Act
+59:     render(<ExperienceTabContent experience={mockExperience} />);
+60:     // Assert
+61:     expect(
+62:       screen.getByText((content, element) => {
+63:         return element?.textContent === "2022-2024 - Tech Company Inc";
+64:       }),
+65:     ).toBeInTheDocument();
+66:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+67:   });
+68:   it("renders with undefined experience", () => {
+69:     // Act
+70:     render(<ExperienceTabContent />);
+71:     // Assert - Should not crash and render empty content
+72:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+73:   });
+74:   it("renders with empty experience array", () => {
+75:     // Act
+76:     render(<ExperienceTabContent experience={[]} />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
+## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
+ 4: describe("VolunteerWorkTabContent", () => {
+ 5:   it("renders volunteer work items with all fields", () => {
+ 6:     // Arrange
+ 7:     const mockVolunteerWork = [
+ 8:       {
+ 9:         _key: "volunteer-work-all-fields",
+10:         period: "2020-2022",
+11:         organization: "Open Source Foundation",
+12:         role: "Maintainer",
+13:         description: "Maintained open source projects",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2022 - Open Source Foundation";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
+25:     expect(
+26:       screen.getByText("Maintained open source projects"),
+27:     ).toBeInTheDocument();
+28:   });
+29:   it("renders with missing period and organization (nullish coalescing branches)", () => {
+30:     // Arrange
+31:     const mockVolunteerWork = [
+32:       {
+33:         _key: "volunteer-work-missing-header-fields",
+34:         role: "Volunteer",
+35:         description: "Helped with events",
+36:       },
+37:     ];
+38:     // Act
+39:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+40:     // Assert
+41:     expect(screen.getByText(/-/)).toBeInTheDocument();
+42:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
+43:   });
+44:   it("renders without role (conditional branch)", () => {
+45:     // Arrange
+46:     const mockVolunteerWork = [
+47:       {
+48:         _key: "volunteer-work-without-role",
+49:         period: "2021-2023",
+50:         organization: "Community Group",
+51:         description: "Community outreach",
+52:       },
+53:     ];
+54:     // Act
+55:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+56:     // Assert
+57:     expect(
+58:       screen.getByText((content, element) => {
+59:         return element?.textContent === "2021-2023 - Community Group";
+60:       }),
+61:     ).toBeInTheDocument();
+62:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
+63:   });
+64:   it("renders with undefined volunteerWork", () => {
+65:     // Act
+66:     render(<VolunteerWorkTabContent />);
+67:     // Assert
+68:     expect(
+69:       screen.queryByText("Open Source Foundation"),
+70:     ).not.toBeInTheDocument();
+71:   });
+72:   it("renders with empty volunteerWork array", () => {
+73:     // Act
+74:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
+75:     // Assert
+76:     expect(
+77:       screen.queryByText("Open Source Foundation"),
+78:     ).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
 ## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
 ````typescript
  1: import React from "react";
@@ -6739,153 +7001,6 @@ vercel.json
 158: });
 ````
 
-## File: src/__tests__/Prosjekter/actions.test.ts
-````typescript
-  1: import { getProjects } from "@/app/prosjekter/actions";
-  2: import { sanityFetch } from "@/lib/sanity/client";
-  3: // Mock next/cache unstable_cache to bypass Next.js server APIs in tests
-  4: jest.mock("next/cache", () => ({
-  5:   unstable_cache: (fn: Function) => fn, // Return the function directly without caching
-  6:   revalidateTag: jest.fn(),
-  7:   revalidatePath: jest.fn(),
-  8: }));
-  9: // Mock the Sanity client
- 10: jest.mock("@/lib/sanity/client", () => ({
- 11:   sanityFetch: jest.fn(),
- 12: }));
- 13: describe("getProjects", () => {
- 14:   beforeEach(() => {
- 15:     jest.clearAllMocks();
- 16:   });
- 17:   it("fetches projects successfully", async () => {
- 18:     // Arrange
- 19:     const mockProjects = [
- 20:       {
- 21:         id: "1",
- 22:         name: "Test Project",
- 23:         description: "Test Description",
- 24:         subdescription: "Test Subdescription",
- 25:         projectimage: { asset: { _ref: "test" } },
- 26:         urlwww: [],
- 27:         urlgithub: [],
- 28:       },
- 29:     ];
- 30:     (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 31:     // Act
- 32:     const result = await getProjects();
- 33:     // Assert
- 34:     expect(result).toStrictEqual(mockProjects);
- 35:     expect(sanityFetch).toHaveBeenCalledWith({
- 36:       query: expect.any(String),
- 37:       revalidate: 86400, // 24 hours
- 38:     });
- 39:   });
- 40:   describe("error handling", () => {
- 41:     it("handles authentication errors (401)", async () => {
- 42:       // Arrange
- 43:       const error = {
- 44:         statusCode: 401,
- 45:         message: "Invalid token",
- 46:         details: {
- 47:           type: "credentials",
- 48:           description: "Invalid token provided",
- 49:         },
- 50:       };
- 51:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 52:       // Act & Assert
- 53:       await expect(getProjects()).rejects.toThrow("Authentication failed");
- 54:     });
- 55:     it("handles permission errors (403)", async () => {
- 56:       // Arrange
- 57:       const error = {
- 58:         statusCode: 403,
- 59:         message: "Insufficient permissions",
- 60:         details: {
- 61:           type: "authorization",
- 62:           description: "Missing read access",
- 63:         },
- 64:       };
- 65:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 66:       // Act & Assert
- 67:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
- 68:     });
- 69:     it("handles rate limiting (429)", async () => {
- 70:       // Arrange
- 71:       const error = {
- 72:         statusCode: 429,
- 73:         message: "Too Many Requests",
- 74:         details: { type: "rate_limit", description: "Rate limit exceeded" },
- 75:       };
- 76:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 77:       // Act & Assert
- 78:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
- 79:     });
- 80:     it("handles malformed GROQ queries (400)", async () => {
- 81:       // Arrange
- 82:       const error = {
- 83:         statusCode: 400,
- 84:         message: "Invalid GROQ query",
- 85:         details: {
- 86:           type: "query_error",
- 87:           description: "Syntax error in GROQ query",
- 88:         },
- 89:       };
- 90:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 91:       // Act & Assert
- 92:       await expect(getProjects()).rejects.toThrow(
- 93:         "Sanity API error: Invalid GROQ query",
- 94:       );
- 95:     });
- 96:     it("handles network timeouts", async () => {
- 97:       // Arrange
- 98:       const error = Object.assign(new Error("Network timeout"), {
- 99:         name: "TimeoutError",
-100:       });
-101:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-102:       // Act & Assert
-103:       await expect(getProjects()).rejects.toThrow("Request timed out");
-104:     });
-105:     it("handles generic fetch errors", async () => {
-106:       // Arrange
-107:       const error = {
-108:         message: "Fetch failed",
-109:       };
-110:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-111:       // Act & Assert
-112:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-113:     });
-114:     it("recovers after temporary errors", async () => {
-115:       // Arrange
-116:       const rateError = {
-117:         statusCode: 429,
-118:         message: "Too Many Requests",
-119:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-120:       };
-121:       const mockProjects = [
-122:         {
-123:           id: "1",
-124:           name: "Test Project",
-125:           description: "Test Description",
-126:           subdescription: "Test Subdescription",
-127:           projectimage: { asset: { _ref: "test" } },
-128:           urlwww: [],
-129:           urlgithub: [],
-130:         },
-131:       ];
-132:       // First call fails with rate limit
-133:       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
-134:       // Second call succeeds
-135:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-136:       // First call should fail
-137:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-138:       // Second call should succeed
-139:       const result = await getProjects();
-140:       expect(result).toStrictEqual(mockProjects);
-141:     });
-142:   });
-143: });
-````
-
 ## File: src/__tests__/Prosjekter/error.test.tsx
 ````typescript
  1: import React from "react";
@@ -6985,155 +7100,6 @@ vercel.json
 41:     });
 42:   });
 43: });
-````
-
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  6: // Define the project type
-  7: interface ProjectType {
-  8:   id: string;
-  9:   name: string;
- 10:   description: string;
- 11:   subdescription: string;
- 12:   projectimage: { asset: { _ref: string } };
- 13:   urlwww: unknown[];
- 14:   urlgithub: unknown[];
- 15: }
- 16: // Mock the actions before importing the page component
- 17: const mockGetProjects = jest.fn();
- 18: const mockPreloadProjects = jest.fn();
- 19: jest.mock("@/app/prosjekter/actions", () => ({
- 20:   getProjects: mockGetProjects,
- 21:   preloadProjects: mockPreloadProjects,
- 22: }));
- 23: // Mock the sanity client
- 24: const mockUrlBuilder = {
- 25:   width: jest.fn().mockReturnThis(),
- 26:   fit: jest.fn().mockReturnThis(),
- 27:   quality: jest.fn().mockReturnThis(),
- 28:   auto: jest.fn().mockReturnThis(),
- 29:   url: jest.fn().mockReturnValue("mock-url"),
- 30: };
- 31: jest.mock("@/lib/sanity/client", () => ({
- 32:   client: {
- 33:     fetch: jest.fn(),
- 34:   },
- 35:   urlFor: jest.fn(() => mockUrlBuilder),
- 36: }));
- 37: // Mock components
- 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 39:   <h1>{children}</h1>
- 40: );
- 41: const MockProsjektCard = (props: { name: string }) => (
- 42:   <div data-testid="project-card">{props.name}</div>
- 43: );
- 44: const MockRotatingLoader = () => (
- 45:   <div data-testid="rotating-loader">Loading...</div>
- 46: );
- 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
- 48: jest.mock(
- 49:   "@/components/Prosjekter/ProsjektCard.component",
- 50:   () => MockProsjektCard,
- 51: );
- 52: jest.mock(
- 53:   "@/components/Animations/RotatingLoader.component",
- 54:   () => MockRotatingLoader,
- 55: );
- 56: // Create a test component that simulates the page behavior without async server components
- 57: function TestProsjekterPage() {
- 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 59:   const [loading, setLoading] = React.useState(true);
- 60:   React.useEffect(() => {
- 61:     mockGetProjects().then((data: ProjectType[]) => {
- 62:       setProjects(data);
- 63:       setLoading(false);
- 64:     });
- 65:   }, []);
- 66:   return (
- 67:     <main
- 68:       role="main"
- 69:       aria-label="Innhold portefølje"
- 70:       className="mt-32 bg-graybg"
- 71:     >
- 72:       <MockPageHeader>Prosjekter</MockPageHeader>
- 73:       {loading ? (
- 74:         <MockRotatingLoader />
- 75:       ) : (
- 76:         <div className="container mx-auto">
- 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 78:             {projects.map((project) => (
- 79:               <MockProsjektCard key={project.id} {...project} />
- 80:             ))}
- 81:           </div>
- 82:         </div>
- 83:       )}
- 84:     </main>
- 85:   );
- 86: }
- 87: describe("ProsjekterPage", () => {
- 88:   beforeEach(() => {
- 89:     jest.clearAllMocks();
- 90:   });
- 91:   it("renders projects from server component", async () => {
- 92:     // Arrange - Set up test data and conditions
- 93:     const mockProjects = [
- 94:       {
- 95:         id: "1",
- 96:         name: "Test Project 1",
- 97:         description: "Test Description 1",
- 98:         subdescription: "Test Subdescription 1",
- 99:         projectimage: { asset: { _ref: "test1" } },
-100:         urlwww: [],
-101:         urlgithub: [],
-102:       },
-103:       {
-104:         id: "2",
-105:         name: "Test Project 2",
-106:         description: "Test Description 2",
-107:         subdescription: "Test Subdescription 2",
-108:         projectimage: { asset: { _ref: "test2" } },
-109:         urlwww: [],
-110:         urlgithub: [],
-111:       },
-112:     ];
-113:     mockGetProjects.mockResolvedValue(mockProjects);
-114:     // Act - Perform the action being tested
-115:     render(<TestProsjekterPage />);
-116:     // Assert - Verify the results
-117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-118:     // Wait for projects to load and render
-119:     const projectCards = await screen.findAllByTestId("project-card");
-120:     expect(projectCards).toHaveLength(2);
-121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-123:     // Test that projects are rendered within the main content area
-124:     const main = screen.getByRole("main");
-125:     expect(main).toContainElement(projectCards[0]);
-126:     expect(main).toContainElement(projectCards[1]);
-127:   });
-128:   it("uses Suspense boundary for loading state", async () => {
-129:     // Arrange - Set up test data and conditions
-130:     const delayedPromise = createDelayedPromise([], 100);
-131:     mockGetProjects.mockImplementation(() => delayedPromise);
-132:     // Act - Perform the action being tested
-133:     render(<TestProsjekterPage />);
-134:     // Assert - Verify the results
-135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-137:     const main = screen.getByRole("main");
-138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-140:     // Wait for loading to complete
-141:     await waitFor(() => {
-142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-143:     });
-144:   });
-145: });
 ````
 
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
@@ -8489,27 +8455,6 @@ vercel.json
 8: }
 ````
 
-## File: src/app/cv/page.tsx
-````typescript
- 1: import { notFound } from "next/navigation";
- 2: import CVContent from "@/components/CV/CVContent.component";
- 3: import { sanityFetch } from "@/lib/sanity/client";
- 4: import { cvQuery } from "@/lib/sanity/queries";
- 5: import type { Cv } from "@/types/sanity.types";
- 6: import { Metadata } from "next/types";
- 7: export const metadata: Metadata = {
- 8:   title: "CV - Dfweb",
- 9: };
-10: export default async function CVPage() {
-11:   const cvData = await sanityFetch<Cv | null>({
-12:     query: cvQuery,
-13:     revalidate: 3600,
-14:   });
-15:   if (!cvData) notFound();
-16:   return <CVContent cvData={cvData} />;
-17: }
-````
-
 ## File: src/app/kontakt/error.tsx
 ````typescript
  1: "use client";
@@ -8574,58 +8519,6 @@ vercel.json
 11: }
 ````
 
-## File: src/app/prosjekter/actions.ts
-````typescript
- 1: import { unstable_cache } from "next/cache";
- 2: import "server-only";
- 3: import { sanityFetch } from "@/lib/sanity/client";
- 4: import { projectsQuery } from "@/lib/sanity/queries";
- 5: import type { Project } from "@/types/sanity.types";
- 6: import { isSanityApiError } from "@/types/sanity-errors";
- 7: async function fetchProjectsFromSanity(): Promise<Project[]> {
- 8:   return sanityFetch<Project[]>({
- 9:     query: projectsQuery,
-10:     revalidate: 86400, // 24 hours
-11:   });
-12: }
-13: function handleError(error: unknown): never {
-14:   console.error("Error fetching projects:", error);
-15:   if (isSanityApiError(error)) {
-16:     switch (error.statusCode) {
-17:       case 401:
-18:         throw new Error("Authentication failed");
-19:       case 403:
-20:         throw new Error("Insufficient permissions");
-21:       case 429:
-22:         throw new Error("Rate limit exceeded");
-23:       default:
-24:         throw new Error(`Sanity API error: ${error.message}`);
-25:     }
-26:   }
-27:   if (error instanceof Error && error.name === "TimeoutError") {
-28:     throw new Error("Request timed out");
-29:   }
-30:   throw new Error("Failed to fetch projects");
-31: }
-32: export const getProjects = unstable_cache(
-33:   async (): Promise<Project[]> => {
-34:     try {
-35:       return await fetchProjectsFromSanity();
-36:     } catch (error) {
-37:       handleError(error);
-38:     }
-39:   },
-40:   ['projects-list'], // Cache key
-41:   {
-42:     revalidate: 86400, // 24 hours
-43:     tags: ['projects'], // For on-demand revalidation
-44:   }
-45: );
-46: export function preloadProjects(): void {
-47:   getProjects();
-48: }
-````
-
 ## File: src/app/prosjekter/error.tsx
 ````typescript
  1: "use client";
@@ -8673,49 +8566,6 @@ vercel.json
 14:     </main>
 15:   );
 16: }
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
- 2: import type { Metadata } from "next/types";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 6: import { getProjects, preloadProjects } from "./actions";
- 7: export const metadata: Metadata = {
- 8:   title: "Prosjekter - Dfweb",
- 9: };
-10: // ISR - regenerate every 24 hours
-11: export const revalidate = 86400;
-12: async function ProjectList() {
-13:   const projects = await getProjects();
-14:   return (
-15:     <div className="container mx-auto">
-16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-17:         {projects.map((project, index) => (
-18:           <ProsjektCard
-19:             key={project.id}
-20:             {...project}
-21:             staggerDelay={(index % 2) * 0.15}
-22:           />
-23:         ))}
-24:       </div>
-25:     </div>
-26:   );
-27: }
-28: export default function Prosjekter() {
-29:   // Start fetching projects data as early as possible
-30:   preloadProjects();
-31:   return (
-32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-33:       <PageHeader>Prosjekter</PageHeader>
-34:       <Suspense fallback={<RotatingLoader />}>
-35:         <ProjectList />
-36:       </Suspense>
-37:     </main>
-38:   );
-39: }
 ````
 
 ## File: src/app/cursor.css
@@ -9195,85 +9045,6 @@ vercel.json
 182: }
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { sanityFetch } from "@/lib/sanity/client";
- 6: import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
- 7: import type { Navigation, Settings } from "@/types/sanity.types";
- 8: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 9: import SkipLink from "@/components/UI/SkipLink.component";
-10: import Header from "@/components/Layout/Header.component";
-11: import Footer from "@/components/Layout/Footer.component";
-12: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-13: const jetbrainsMono = JetBrains_Mono({
-14:   subsets: ["latin"],
-15:   display: "swap", // Prevent invisible text during font load (improves FCP)
-16:   preload: true, // Preload font to reduce request chain
-17: });
-18: export const metadata: Metadata = {
-19:   title: "Forside - Dfweb",
-20:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-21: };
-22: export default async function RootLayout({
-23:   children,
-24: }: Readonly<{
-25:   children: React.ReactNode;
-26: }>) {
-27:   const [navigation, settings] = await Promise.all([
-28:     sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-29:     sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
-30:   ]);
-31:   const footerCopyrightText = settings?.footerCopyrightText;
-32:   return (
-33:     <html lang="nb">
-34:       <head>
-35:         <meta
-36:           name="viewport"
-37:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-38:         />
-39:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-40:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-41:         <link rel="icon" href="/favicon.ico" />
-42:         <link rel="apple-touch-icon" href="/logo.png" />
-43:         <meta property="og:title" content="Daniel Fjeldstad" />
-44:         <meta name="author" content="Daniel Fjeldstad" />
-45:         <meta property="og:locale" content="nb_NO" />
-46:         <meta
-47:           property="og:description"
-48:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-49:         />
-50:         <meta property="og:url" content="https://www.dfweb.no/" />
-51:         <meta property="og:site_name" content="dfweb.no" />
-52:         <meta name="theme-color" content="#004014" />
-53:       </head>
-54:       <body
-55:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-56:       >
-57:         <LazyMotionProvider>
-58:           <SkipLink />
-59:           <ErrorBoundary>
-60:             <div id="main-content" className="grow flex flex-col">
-61:               <Header navigation={navigation} />
-62:               <SpeedInsights />
-63:               <div className="grow">{children}</div>
-64:               <Footer
-65:                 footerCopyrightText={
-66:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-67:                 }
-68:               />
-69:             </div>
-70:           </ErrorBoundary>
-71:         </LazyMotionProvider>
-72:       </body>
-73:     </html>
-74:   );
-75: }
-````
-
 ## File: src/app/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -9301,40 +9072,6 @@ vercel.json
 11:     </main>
 12:   );
 13: }
-````
-
-## File: src/app/page.tsx
-````typescript
- 1: import { notFound } from "next/navigation";
- 2: import type { Metadata } from "next/types";
- 3: import { sanityFetch } from "@/lib/sanity/client";
- 4: import { pageContentQuery } from "@/lib/sanity/queries";
- 5: import type { Page } from "@/types/sanity.types";
- 6: import Hero from "@/components/Index/Hero.component";
- 7: import IndexContent from "@/components/Index/IndexContent.component";
- 8: export const metadata: Metadata = {
- 9:   title: "Forside - Dfweb",
-10:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-11: };
-12: // ISR - regenerate every 24 hours
-13: export const revalidate = 86400;
-14: export default async function HomePage() {
-15:   const pageContent = await sanityFetch<Page | null>({
-16:     query: pageContentQuery,
-17:     revalidate: 86400, // 24 hours
-18:   });
-19:   if (!pageContent) notFound();
-20:   return (
-21:     <main>
-22:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-23:         {pageContent?.hero && <Hero content={pageContent.hero} />}
-24:       </div>
-25:       {pageContent?.content && (
-26:         <IndexContent pageContent={pageContent.content} />
-27:       )}
-28:     </main>
-29:   );
-30: }
 ````
 
 ## File: src/app/sitemap.ts
@@ -10087,6 +9824,124 @@ vercel.json
 73: export default CVContent;
 ````
 
+## File: src/components/CV/EducationTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface Education {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   institution?: string;
+ 7:   degree?: string;
+ 8:   description?: string;
+ 9: }
+10: interface EducationTabContentProps {
+11:   education?: Education[];
+12: }
+13: const renderEducationHeader = (edu: Education): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
+16:     {edu.institution ?? ""}
+17:   </>
+18: );
+19: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
+20:   edu.degree && <p className="italic">{edu.degree}</p>;
+21: const EducationTabContent: React.FC<EducationTabContentProps> = ({
+22:   education,
+23: }) => (
+24:   <GenericCVSectionContent<Education>
+25:     items={education}
+26:     renderHeaderContent={renderEducationHeader}
+27:     renderSubHeaderContent={renderEducationSubHeader}
+28:   />
+29: );
+30: export default EducationTabContent;
+````
+
+## File: src/components/CV/ExperienceTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface Experience {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   company?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface ExperienceTabContentProps {
+11:   experience?: Experience[];
+12: }
+13: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
+16:     {exp.company ?? ""}
+17:   </>
+18: );
+19: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
+20:   exp.role && <p className="italic">{exp.role}</p>;
+21: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
+22:   experience,
+23: }) => (
+24:   <GenericCVSectionContent<Experience>
+25:     items={experience}
+26:     renderHeaderContent={renderExperienceHeader}
+27:     renderSubHeaderContent={renderExperienceSubHeader}
+28:   />
+29: );
+30: export default ExperienceTabContent;
+````
+
+## File: src/components/CV/GenericCVSectionContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface BaseItem {
+ 3:   _key: string;
+ 4:   description?: string;
+ 5: }
+ 6: interface GenericCVSectionContentProps<T extends BaseItem> {
+ 7:   items?: T[];
+ 8:   renderHeaderContent: (item: T) => React.ReactNode;
+ 9:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+10: }
+11: interface CVListItemProps<T extends BaseItem> {
+12:   item: T;
+13:   renderHeaderContent: (item: T) => React.ReactNode;
+14:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+15: }
+16: const CVListItem = <T extends BaseItem>({
+17:   item,
+18:   renderHeaderContent,
+19:   renderSubHeaderContent,
+20: }: CVListItemProps<T>) => (
+21:   <div className="mb-6">
+22:     <h3 className="font-semibold text-slate-100">
+23:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
+24:       {renderHeaderContent(item)}
+25:     </h3>
+26:     {renderSubHeaderContent?.(item)}
+27:     <p>{item.description ?? ""}</p>
+28:   </div>
+29: );
+30: const GenericCVSectionContent = <T extends BaseItem>({
+31:   items,
+32:   renderHeaderContent,
+33:   renderSubHeaderContent,
+34: }: GenericCVSectionContentProps<T>) => (
+35:   <div className="text-slate-300/[0.9]">
+36:     {items?.map((item) => (
+37:       <CVListItem
+38:         key={item._key}
+39:         item={item}
+40:         renderHeaderContent={renderHeaderContent}
+41:         renderSubHeaderContent={renderSubHeaderContent}
+42:       />
+43:     ))}
+44:   </div>
+45: );
+46: export default GenericCVSectionContent;
+````
+
 ## File: src/components/CV/QualificationsTabContent.tsx
 ````typescript
  1: import React from "react";
@@ -10105,6 +9960,40 @@ vercel.json
 14:   </ul>
 15: );
 16: export default QualificationsTabContent;
+````
+
+## File: src/components/CV/VolunteerWorkTabContent.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent";
+ 3: interface VolunteerWork {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   organization?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface VolunteerWorkTabContentProps {
+11:   volunteerWork?: VolunteerWork[];
+12: }
+13: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
+16:     {vol.organization ?? ""}
+17:   </>
+18: );
+19: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
+20:   vol.role && <p className="italic">{vol.role}</p>;
+21: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
+22:   volunteerWork,
+23: }) => (
+24:   <GenericCVSectionContent<VolunteerWork>
+25:     items={volunteerWork}
+26:     renderHeaderContent={renderVolunteerHeader}
+27:     renderSubHeaderContent={renderVolunteerSubHeader}
+28:   />
+29: );
+30: export default VolunteerWorkTabContent;
 ````
 
 ## File: src/components/ErrorBoundary/ErrorBoundary.tsx
@@ -12030,132 +11919,6 @@ vercel.json
  8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
  9: };
 10: export default LazyMotionProvider;
-````
-
-## File: src/lib/sanity/client.ts
-````typescript
- 1: import { createImageUrlBuilder } from "@sanity/image-url";
- 2: import { createClient, type QueryParams } from "@sanity/client";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
- 7: const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: /**
-14:  * Typed fetch helper with consistent caching defaults.
-15:  * Applies time-based revalidation (default 86400s = 24 hours) or tag-based invalidation.
-16:  */
-17: export async function sanityFetch<T>({
-18:   query,
-19:   params = {},
-20:   revalidate = 86400,
-21:   tags = [],
-22: }: {
-23:   query: string;
-24:   params?: QueryParams;
-25:   revalidate?: number | false;
-26:   tags?: string[];
-27: }): Promise<T> {
-28:   return client.fetch<T>(query, params, {
-29:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
-30:     next: {
-31:       revalidate: tags.length ? false : revalidate,
-32:       tags,
-33:     },
-34:   });
-35: }
-36: const builder = createImageUrlBuilder(client);
-37: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-38:   return builder.image(source);
-39: }
-````
-
-## File: src/lib/sanity/queries.ts
-````typescript
- 1: /**
- 2:  * Type-safe query helper. Replaces next-sanity's defineQuery to avoid
- 3:  * pulling in the next-sanity dependency tree (which transitively includes
- 4:  * lodash via @sanity/visual-editing).
- 5:  */
- 6: function defineQuery<T extends string>(query: T): T {
- 7:   return query;
- 8: }
- 9: export const projectsQuery = defineQuery(`
-10:   *[_type == "project" && published == true] | order(featureOrder asc) {
-11:     id,
-12:     name,
-13:     description,
-14:     subdescription,
-15:     projectcategory->{
-16:       _id,
-17:       title
-18:     },
-19:     urlwww[]{
-20:       ...,
-21:       _key,
-22:     },
-23:     urlgithub[]{
-24:       ...,
-25:       _key,
-26:     },
-27:     projectimage,
-28:     featured,
-29:     featureOrder
-30:   }
-31: `);
-32: export const cvQuery = defineQuery(`
-33:   *[_type == "cv"][0] {
-34:     keyQualifications,
-35:     experience[] {
-36:       period,
-37:       company,
-38:       role,
-39:       description
-40:     },
-41:     education[] {
-42:       period,
-43:       institution,
-44:       degree,
-45:       description
-46:     },
-47:     volunteerWork[] {
-48:       period,
-49:       organization,
-50:       role,
-51:       description
-52:     }
-53:   }
-54: `);
-55: export const pageContentQuery = defineQuery(`
-56:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
-57:     "id": _id,
-58:     title,
-59:     hero,
-60:     content
-61:   }
-62: `);
-63: export const navigationQuery = defineQuery(`
-64:   *[_type == "navigation"][0] {
-65:     title,
-66:     links[] {
-67:       title,
-68:       name,
-69:       hash,
-70:       href,
-71:       externalLink
-72:     }
-73:   }
-74: `);
-75: export const settingsQuery = defineQuery(`
-76:   *[_type == "settings"][0] {
-77:     footerCopyrightText
-78:   }
-79: `);
 ````
 
 ## File: src/lib/csrf.ts
@@ -20453,266 +20216,491 @@ vercel.json
 287: </html>
 ````
 
-## File: src/__tests__/CV/EducationTabContent.test.tsx
+## File: src/__tests__/lib/content.test.ts
 ````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import EducationTabContent from "@/components/CV/EducationTabContent";
- 4: describe("EducationTabContent", () => {
- 5:   it("renders education items with degree (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockEducation = [
- 8:       {
- 9:         _key: "education-with-degree",
-10:         period: "2020-2024",
-11:         institution: "University of Technology",
-12:         degree: "Bachelor of Computer Science",
-13:         description: "Studied computer science fundamentals",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<EducationTabContent education={mockEducation} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2020-2024 - University of Technology";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(
-25:       screen.getByText("Bachelor of Computer Science"),
-26:     ).toBeInTheDocument();
-27:   });
-28:   it("renders education items without degree (conditional branch)", () => {
-29:     // Arrange
-30:     const mockEducation = [
-31:       {
-32:         _key: "education-without-degree",
-33:         period: "2020-2024",
-34:         institution: "University of Technology",
-35:         description: "Studied computer science fundamentals",
-36:         // No degree property to test the conditional
-37:       },
-38:     ];
-39:     // Act
-40:     render(<EducationTabContent education={mockEducation} />);
-41:     // Assert
-42:     expect(
-43:       screen.getByText((content, element) => {
-44:         return element?.textContent === "2020-2024 - University of Technology";
-45:       }),
-46:     ).toBeInTheDocument();
-47:     expect(
-48:       screen.queryByText("Bachelor of Computer Science"),
-49:     ).not.toBeInTheDocument();
-50:   });
-51:   it("renders education items with empty degree (conditional branch)", () => {
-52:     // Arrange
-53:     const mockEducation = [
-54:       {
-55:         _key: "education-with-empty-degree",
-56:         period: "2020-2024",
-57:         institution: "University of Technology",
-58:         degree: "", // Empty string to test the conditional
-59:         description: "Studied computer science fundamentals",
-60:       },
-61:     ];
-62:     // Act
-63:     render(<EducationTabContent education={mockEducation} />);
-64:     // Assert
-65:     expect(
-66:       screen.getByText((content, element) => {
-67:         return element?.textContent === "2020-2024 - University of Technology";
-68:       }),
-69:     ).toBeInTheDocument();
-70:     expect(
-71:       screen.queryByText("Bachelor of Computer Science"),
-72:     ).not.toBeInTheDocument();
-73:   });
-74:   it("renders with undefined education", () => {
-75:     // Act
-76:     render(<EducationTabContent />);
-77:     // Assert - Should not crash and render empty content
-78:     expect(
-79:       screen.queryByText("University of Technology"),
-80:     ).not.toBeInTheDocument();
-81:   });
-82:   it("renders with empty education array", () => {
-83:     // Act
-84:     render(<EducationTabContent education={[]} />);
-85:     // Assert - Should not crash and render empty content
-86:     expect(
-87:       screen.queryByText("University of Technology"),
-88:     ).not.toBeInTheDocument();
-89:   });
-90: });
+  1: import {
+  2:   getProjects,
+  3:   getCv,
+  4:   getNavigation,
+  5:   CONTENT_TAGS,
+  6: } from "@/lib/sanity/content";
+  7: import { sanityFetch } from "@/lib/sanity/client";
+  8: // Mock the Sanity client — the content module's only dependency
+  9: jest.mock("@/lib/sanity/client", () => ({
+ 10:   sanityFetch: jest.fn(),
+ 11: }));
+ 12: describe("content module", () => {
+ 13:   beforeEach(() => {
+ 14:     jest.clearAllMocks();
+ 15:   });
+ 16:   describe("getProjects", () => {
+ 17:     it("fetches projects successfully with the projects tag", async () => {
+ 18:       // Arrange
+ 19:       const mockProjects = [
+ 20:         {
+ 21:           id: "1",
+ 22:           name: "Test Project",
+ 23:           description: "Test Description",
+ 24:           subdescription: "Test Subdescription",
+ 25:           projectimage: { asset: { _ref: "test" } },
+ 26:           urlwww: [],
+ 27:           urlgithub: [],
+ 28:         },
+ 29:       ];
+ 30:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 31:       // Act
+ 32:       const result = await getProjects();
+ 33:       // Assert
+ 34:       expect(result).toStrictEqual(mockProjects);
+ 35:       expect(sanityFetch).toHaveBeenCalledWith({
+ 36:         query: expect.any(String),
+ 37:         revalidate: 86400, // 24 hours
+ 38:         tags: [CONTENT_TAGS.projects],
+ 39:       });
+ 40:     });
+ 41:   });
+ 42:   describe("getCv", () => {
+ 43:     it("fetches the CV with the cv tag", async () => {
+ 44:       // Arrange
+ 45:       const mockCv = { keyQualifications: ["TypeScript"] };
+ 46:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockCv);
+ 47:       // Act
+ 48:       const result = await getCv();
+ 49:       // Assert
+ 50:       expect(result).toStrictEqual(mockCv);
+ 51:       expect(sanityFetch).toHaveBeenCalledWith({
+ 52:         query: expect.any(String),
+ 53:         revalidate: 86400,
+ 54:         tags: [CONTENT_TAGS.cv],
+ 55:       });
+ 56:     });
+ 57:   });
+ 58:   describe("error mapping (applies to every content type)", () => {
+ 59:     it("handles authentication errors (401)", async () => {
+ 60:       // Arrange
+ 61:       const error = {
+ 62:         statusCode: 401,
+ 63:         message: "Invalid token",
+ 64:         details: {
+ 65:           type: "credentials",
+ 66:           description: "Invalid token provided",
+ 67:         },
+ 68:       };
+ 69:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 70:       // Act & Assert
+ 71:       await expect(getProjects()).rejects.toThrow("Authentication failed");
+ 72:     });
+ 73:     it("handles permission errors (403)", async () => {
+ 74:       // Arrange
+ 75:       const error = {
+ 76:         statusCode: 403,
+ 77:         message: "Insufficient permissions",
+ 78:         details: {
+ 79:           type: "authorization",
+ 80:           description: "Missing read access",
+ 81:         },
+ 82:       };
+ 83:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 84:       // Act & Assert
+ 85:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
+ 86:     });
+ 87:     it("handles rate limiting (429)", async () => {
+ 88:       // Arrange
+ 89:       const error = {
+ 90:         statusCode: 429,
+ 91:         message: "Too Many Requests",
+ 92:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 93:       };
+ 94:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 95:       // Act & Assert
+ 96:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+ 97:     });
+ 98:     it("handles malformed GROQ queries (400)", async () => {
+ 99:       // Arrange
+100:       const error = {
+101:         statusCode: 400,
+102:         message: "Invalid GROQ query",
+103:         details: {
+104:           type: "query_error",
+105:           description: "Syntax error in GROQ query",
+106:         },
+107:       };
+108:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+109:       // Act & Assert
+110:       await expect(getProjects()).rejects.toThrow(
+111:         "Sanity API error: Invalid GROQ query",
+112:       );
+113:     });
+114:     it("handles network timeouts", async () => {
+115:       // Arrange
+116:       const error = Object.assign(new Error("Network timeout"), {
+117:         name: "TimeoutError",
+118:       });
+119:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+120:       // Act & Assert
+121:       await expect(getProjects()).rejects.toThrow("Request timed out");
+122:     });
+123:     it("handles generic fetch errors with the entity name", async () => {
+124:       // Arrange
+125:       const error = {
+126:         message: "Fetch failed",
+127:       };
+128:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+129:       // Act & Assert
+130:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+131:     });
+132:     it("maps errors on non-project content too", async () => {
+133:       // Arrange
+134:       const error = {
+135:         statusCode: 429,
+136:         message: "Too Many Requests",
+137:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+138:       };
+139:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+140:       // Act & Assert
+141:       await expect(getNavigation()).rejects.toThrow("Rate limit exceeded");
+142:     });
+143:     it("recovers after temporary errors", async () => {
+144:       // Arrange
+145:       const rateError = {
+146:         statusCode: 429,
+147:         message: "Too Many Requests",
+148:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+149:       };
+150:       const mockProjects = [
+151:         {
+152:           id: "1",
+153:           name: "Test Project",
+154:           description: "Test Description",
+155:           subdescription: "Test Subdescription",
+156:           projectimage: { asset: { _ref: "test" } },
+157:           urlwww: [],
+158:           urlgithub: [],
+159:         },
+160:       ];
+161:       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
+162:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+163:       // Act & Assert
+164:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+165:       const result = await getProjects();
+166:       expect(result).toStrictEqual(mockProjects);
+167:     });
+168:   });
+169: });
 ````
 
-## File: src/__tests__/CV/ExperienceTabContent.test.tsx
+## File: src/__tests__/Prosjekter/page.test.tsx
 ````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent";
- 4: describe("ExperienceTabContent", () => {
- 5:   it("renders experience items with role (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockExperience = [
- 8:       {
- 9:         _key: "experience-with-role",
-10:         period: "2022-2024",
-11:         company: "Tech Company Inc",
-12:         role: "Senior Developer",
-13:         description: "Developed web applications",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<ExperienceTabContent experience={mockExperience} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2022-2024 - Tech Company Inc";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
-25:   });
-26:   it("renders experience items without role (conditional branch)", () => {
-27:     // Arrange
-28:     const mockExperience = [
-29:       {
-30:         _key: "experience-without-role",
-31:         period: "2022-2024",
-32:         company: "Tech Company Inc",
-33:         description: "Developed web applications",
-34:         // No role property to test the conditional
-35:       },
-36:     ];
-37:     // Act
-38:     render(<ExperienceTabContent experience={mockExperience} />);
-39:     // Assert
-40:     expect(
-41:       screen.getByText((content, element) => {
-42:         return element?.textContent === "2022-2024 - Tech Company Inc";
-43:       }),
-44:     ).toBeInTheDocument();
-45:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-46:   });
-47:   it("renders experience items with empty role (conditional branch)", () => {
-48:     // Arrange
-49:     const mockExperience = [
-50:       {
-51:         _key: "experience-with-empty-role",
-52:         period: "2022-2024",
-53:         company: "Tech Company Inc",
-54:         role: "", // Empty string to test the conditional
-55:         description: "Developed web applications",
-56:       },
-57:     ];
-58:     // Act
-59:     render(<ExperienceTabContent experience={mockExperience} />);
-60:     // Assert
-61:     expect(
-62:       screen.getByText((content, element) => {
-63:         return element?.textContent === "2022-2024 - Tech Company Inc";
-64:       }),
-65:     ).toBeInTheDocument();
-66:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-67:   });
-68:   it("renders with undefined experience", () => {
-69:     // Act
-70:     render(<ExperienceTabContent />);
-71:     // Assert - Should not crash and render empty content
-72:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-73:   });
-74:   it("renders with empty experience array", () => {
-75:     // Act
-76:     render(<ExperienceTabContent experience={[]} />);
-77:     // Assert - Should not crash and render empty content
-78:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-79:   });
-80: });
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  6: // Define the project type
+  7: interface ProjectType {
+  8:   id: string;
+  9:   name: string;
+ 10:   description: string;
+ 11:   subdescription: string;
+ 12:   projectimage: { asset: { _ref: string } };
+ 13:   urlwww: unknown[];
+ 14:   urlgithub: unknown[];
+ 15: }
+ 16: // Mock the actions before importing the page component
+ 17: const mockGetProjects = jest.fn();
+ 18: const mockPreloadProjects = jest.fn();
+ 19: jest.mock("@/lib/sanity/content", () => ({
+ 20:   getProjects: mockGetProjects,
+ 21:   preloadProjects: mockPreloadProjects,
+ 22: }));
+ 23: // Mock the sanity client
+ 24: const mockUrlBuilder = {
+ 25:   width: jest.fn().mockReturnThis(),
+ 26:   fit: jest.fn().mockReturnThis(),
+ 27:   quality: jest.fn().mockReturnThis(),
+ 28:   auto: jest.fn().mockReturnThis(),
+ 29:   url: jest.fn().mockReturnValue("mock-url"),
+ 30: };
+ 31: jest.mock("@/lib/sanity/client", () => ({
+ 32:   client: {
+ 33:     fetch: jest.fn(),
+ 34:   },
+ 35:   urlFor: jest.fn(() => mockUrlBuilder),
+ 36: }));
+ 37: // Mock components
+ 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 39:   <h1>{children}</h1>
+ 40: );
+ 41: const MockProsjektCard = (props: { name: string }) => (
+ 42:   <div data-testid="project-card">{props.name}</div>
+ 43: );
+ 44: const MockRotatingLoader = () => (
+ 45:   <div data-testid="rotating-loader">Loading...</div>
+ 46: );
+ 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+ 48: jest.mock(
+ 49:   "@/components/Prosjekter/ProsjektCard.component",
+ 50:   () => MockProsjektCard,
+ 51: );
+ 52: jest.mock(
+ 53:   "@/components/Animations/RotatingLoader.component",
+ 54:   () => MockRotatingLoader,
+ 55: );
+ 56: // Create a test component that simulates the page behavior without async server components
+ 57: function TestProsjekterPage() {
+ 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 59:   const [loading, setLoading] = React.useState(true);
+ 60:   React.useEffect(() => {
+ 61:     mockGetProjects().then((data: ProjectType[]) => {
+ 62:       setProjects(data);
+ 63:       setLoading(false);
+ 64:     });
+ 65:   }, []);
+ 66:   return (
+ 67:     <main
+ 68:       role="main"
+ 69:       aria-label="Innhold portefølje"
+ 70:       className="mt-32 bg-graybg"
+ 71:     >
+ 72:       <MockPageHeader>Prosjekter</MockPageHeader>
+ 73:       {loading ? (
+ 74:         <MockRotatingLoader />
+ 75:       ) : (
+ 76:         <div className="container mx-auto">
+ 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 78:             {projects.map((project) => (
+ 79:               <MockProsjektCard key={project.id} {...project} />
+ 80:             ))}
+ 81:           </div>
+ 82:         </div>
+ 83:       )}
+ 84:     </main>
+ 85:   );
+ 86: }
+ 87: describe("ProsjekterPage", () => {
+ 88:   beforeEach(() => {
+ 89:     jest.clearAllMocks();
+ 90:   });
+ 91:   it("renders projects from server component", async () => {
+ 92:     // Arrange - Set up test data and conditions
+ 93:     const mockProjects = [
+ 94:       {
+ 95:         id: "1",
+ 96:         name: "Test Project 1",
+ 97:         description: "Test Description 1",
+ 98:         subdescription: "Test Subdescription 1",
+ 99:         projectimage: { asset: { _ref: "test1" } },
+100:         urlwww: [],
+101:         urlgithub: [],
+102:       },
+103:       {
+104:         id: "2",
+105:         name: "Test Project 2",
+106:         description: "Test Description 2",
+107:         subdescription: "Test Subdescription 2",
+108:         projectimage: { asset: { _ref: "test2" } },
+109:         urlwww: [],
+110:         urlgithub: [],
+111:       },
+112:     ];
+113:     mockGetProjects.mockResolvedValue(mockProjects);
+114:     // Act - Perform the action being tested
+115:     render(<TestProsjekterPage />);
+116:     // Assert - Verify the results
+117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+118:     // Wait for projects to load and render
+119:     const projectCards = await screen.findAllByTestId("project-card");
+120:     expect(projectCards).toHaveLength(2);
+121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+123:     // Test that projects are rendered within the main content area
+124:     const main = screen.getByRole("main");
+125:     expect(main).toContainElement(projectCards[0]);
+126:     expect(main).toContainElement(projectCards[1]);
+127:   });
+128:   it("uses Suspense boundary for loading state", async () => {
+129:     // Arrange - Set up test data and conditions
+130:     const delayedPromise = createDelayedPromise([], 100);
+131:     mockGetProjects.mockImplementation(() => delayedPromise);
+132:     // Act - Perform the action being tested
+133:     render(<TestProsjekterPage />);
+134:     // Assert - Verify the results
+135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+137:     const main = screen.getByRole("main");
+138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+140:     // Wait for loading to complete
+141:     await waitFor(() => {
+142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+143:     });
+144:   });
+145: });
 ````
 
-## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
+## File: src/app/cv/page.tsx
 ````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
- 4: describe("VolunteerWorkTabContent", () => {
- 5:   it("renders volunteer work items with all fields", () => {
- 6:     // Arrange
- 7:     const mockVolunteerWork = [
- 8:       {
- 9:         _key: "volunteer-work-all-fields",
-10:         period: "2020-2022",
-11:         organization: "Open Source Foundation",
-12:         role: "Maintainer",
-13:         description: "Maintained open source projects",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2020-2022 - Open Source Foundation";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
-25:     expect(
-26:       screen.getByText("Maintained open source projects"),
-27:     ).toBeInTheDocument();
-28:   });
-29:   it("renders with missing period and organization (nullish coalescing branches)", () => {
-30:     // Arrange
-31:     const mockVolunteerWork = [
-32:       {
-33:         _key: "volunteer-work-missing-header-fields",
-34:         role: "Volunteer",
-35:         description: "Helped with events",
-36:       },
-37:     ];
-38:     // Act
-39:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-40:     // Assert
-41:     expect(screen.getByText(/-/)).toBeInTheDocument();
-42:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
-43:   });
-44:   it("renders without role (conditional branch)", () => {
-45:     // Arrange
-46:     const mockVolunteerWork = [
-47:       {
-48:         _key: "volunteer-work-without-role",
-49:         period: "2021-2023",
-50:         organization: "Community Group",
-51:         description: "Community outreach",
-52:       },
-53:     ];
-54:     // Act
-55:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-56:     // Assert
-57:     expect(
-58:       screen.getByText((content, element) => {
-59:         return element?.textContent === "2021-2023 - Community Group";
-60:       }),
-61:     ).toBeInTheDocument();
-62:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
-63:   });
-64:   it("renders with undefined volunteerWork", () => {
-65:     // Act
-66:     render(<VolunteerWorkTabContent />);
-67:     // Assert
-68:     expect(
-69:       screen.queryByText("Open Source Foundation"),
-70:     ).not.toBeInTheDocument();
-71:   });
-72:   it("renders with empty volunteerWork array", () => {
-73:     // Act
-74:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
-75:     // Assert
-76:     expect(
-77:       screen.queryByText("Open Source Foundation"),
-78:     ).not.toBeInTheDocument();
-79:   });
-80: });
+ 1: import { notFound } from "next/navigation";
+ 2: import CVContent from "@/components/CV/CVContent.component";
+ 3: import { getCv } from "@/lib/sanity/content";
+ 4: import { Metadata } from "next/types";
+ 5: export const metadata: Metadata = {
+ 6:   title: "CV - Dfweb",
+ 7: };
+ 8: export default async function CVPage() {
+ 9:   const cvData = await getCv();
+10:   if (!cvData) notFound();
+11:   return <CVContent cvData={cvData} />;
+12: }
+````
+
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 6: import { getProjects, preloadProjects } from "@/lib/sanity/content";
+ 7: export const metadata: Metadata = {
+ 8:   title: "Prosjekter - Dfweb",
+ 9: };
+10: // ISR - regenerate every 24 hours
+11: export const revalidate = 86400;
+12: async function ProjectList() {
+13:   const projects = await getProjects();
+14:   return (
+15:     <div className="container mx-auto">
+16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+17:         {projects.map((project, index) => (
+18:           <ProsjektCard
+19:             key={project.id}
+20:             {...project}
+21:             staggerDelay={(index % 2) * 0.15}
+22:           />
+23:         ))}
+24:       </div>
+25:     </div>
+26:   );
+27: }
+28: export default function Prosjekter() {
+29:   // Start fetching projects data as early as possible
+30:   preloadProjects();
+31:   return (
+32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+33:       <PageHeader>Prosjekter</PageHeader>
+34:       <Suspense fallback={<RotatingLoader />}>
+35:         <ProjectList />
+36:       </Suspense>
+37:     </main>
+38:   );
+39: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
+ 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 7: import SkipLink from "@/components/UI/SkipLink.component";
+ 8: import Header from "@/components/Layout/Header.component";
+ 9: import Footer from "@/components/Layout/Footer.component";
+10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+11: const jetbrainsMono = JetBrains_Mono({
+12:   subsets: ["latin"],
+13:   display: "swap", // Prevent invisible text during font load (improves FCP)
+14:   preload: true, // Preload font to reduce request chain
+15: });
+16: export const metadata: Metadata = {
+17:   title: "Forside - Dfweb",
+18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+19: };
+20: export default async function RootLayout({
+21:   children,
+22: }: Readonly<{
+23:   children: React.ReactNode;
+24: }>) {
+25:   const [navigation, settings] = await Promise.all([
+26:     getNavigation(),
+27:     getSettings(),
+28:   ]);
+29:   const footerCopyrightText = settings?.footerCopyrightText;
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+38:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+39:         <link rel="icon" href="/favicon.ico" />
+40:         <link rel="apple-touch-icon" href="/logo.png" />
+41:         <meta property="og:title" content="Daniel Fjeldstad" />
+42:         <meta name="author" content="Daniel Fjeldstad" />
+43:         <meta property="og:locale" content="nb_NO" />
+44:         <meta
+45:           property="og:description"
+46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+47:         />
+48:         <meta property="og:url" content="https://www.dfweb.no/" />
+49:         <meta property="og:site_name" content="dfweb.no" />
+50:         <meta name="theme-color" content="#004014" />
+51:       </head>
+52:       <body
+53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+54:       >
+55:         <LazyMotionProvider>
+56:           <SkipLink />
+57:           <ErrorBoundary>
+58:             <div id="main-content" className="grow flex flex-col">
+59:               <Header navigation={navigation} />
+60:               <SpeedInsights />
+61:               <div className="grow">{children}</div>
+62:               <Footer
+63:                 footerCopyrightText={
+64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+65:                 }
+66:               />
+67:             </div>
+68:           </ErrorBoundary>
+69:         </LazyMotionProvider>
+70:       </body>
+71:     </html>
+72:   );
+73: }
+````
+
+## File: src/app/page.tsx
+````typescript
+ 1: import { notFound } from "next/navigation";
+ 2: import type { Metadata } from "next/types";
+ 3: import { getPageContent } from "@/lib/sanity/content";
+ 4: import Hero from "@/components/Index/Hero.component";
+ 5: import IndexContent from "@/components/Index/IndexContent.component";
+ 6: export const metadata: Metadata = {
+ 7:   title: "Forside - Dfweb",
+ 8:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+ 9: };
+10: // ISR - regenerate every 24 hours
+11: export const revalidate = 86400;
+12: export default async function HomePage() {
+13:   const pageContent = await getPageContent();
+14:   if (!pageContent) notFound();
+15:   return (
+16:     <main>
+17:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+18:         {pageContent?.hero && <Hero content={pageContent.hero} />}
+19:       </div>
+20:       {pageContent?.content && (
+21:         <IndexContent pageContent={pageContent.content} />
+22:       )}
+23:     </main>
+24:   );
+25: }
 ````
 
 ## File: src/components/Animations/Matrix.component.tsx
@@ -20891,158 +20879,6 @@ vercel.json
 30:   );
 31: };
 32: export default PageTransition;
-````
-
-## File: src/components/CV/EducationTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface Education {
- 4:   _key: string;
- 5:   period?: string;
- 6:   institution?: string;
- 7:   degree?: string;
- 8:   description?: string;
- 9: }
-10: interface EducationTabContentProps {
-11:   education?: Education[];
-12: }
-13: const renderEducationHeader = (edu: Education): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
-16:     {edu.institution ?? ""}
-17:   </>
-18: );
-19: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
-20:   edu.degree && <p className="italic">{edu.degree}</p>;
-21: const EducationTabContent: React.FC<EducationTabContentProps> = ({
-22:   education,
-23: }) => (
-24:   <GenericCVSectionContent<Education>
-25:     items={education}
-26:     renderHeaderContent={renderEducationHeader}
-27:     renderSubHeaderContent={renderEducationSubHeader}
-28:   />
-29: );
-30: export default EducationTabContent;
-````
-
-## File: src/components/CV/ExperienceTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface Experience {
- 4:   _key: string;
- 5:   period?: string;
- 6:   company?: string;
- 7:   role?: string;
- 8:   description?: string;
- 9: }
-10: interface ExperienceTabContentProps {
-11:   experience?: Experience[];
-12: }
-13: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
-16:     {exp.company ?? ""}
-17:   </>
-18: );
-19: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
-20:   exp.role && <p className="italic">{exp.role}</p>;
-21: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
-22:   experience,
-23: }) => (
-24:   <GenericCVSectionContent<Experience>
-25:     items={experience}
-26:     renderHeaderContent={renderExperienceHeader}
-27:     renderSubHeaderContent={renderExperienceSubHeader}
-28:   />
-29: );
-30: export default ExperienceTabContent;
-````
-
-## File: src/components/CV/GenericCVSectionContent.tsx
-````typescript
- 1: import React from "react";
- 2: interface BaseItem {
- 3:   _key: string;
- 4:   description?: string;
- 5: }
- 6: interface GenericCVSectionContentProps<T extends BaseItem> {
- 7:   items?: T[];
- 8:   renderHeaderContent: (item: T) => React.ReactNode;
- 9:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-10: }
-11: interface CVListItemProps<T extends BaseItem> {
-12:   item: T;
-13:   renderHeaderContent: (item: T) => React.ReactNode;
-14:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-15: }
-16: const CVListItem = <T extends BaseItem>({
-17:   item,
-18:   renderHeaderContent,
-19:   renderSubHeaderContent,
-20: }: CVListItemProps<T>) => (
-21:   <div className="mb-6">
-22:     <h3 className="font-semibold text-slate-100">
-23:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
-24:       {renderHeaderContent(item)}
-25:     </h3>
-26:     {renderSubHeaderContent?.(item)}
-27:     <p>{item.description ?? ""}</p>
-28:   </div>
-29: );
-30: const GenericCVSectionContent = <T extends BaseItem>({
-31:   items,
-32:   renderHeaderContent,
-33:   renderSubHeaderContent,
-34: }: GenericCVSectionContentProps<T>) => (
-35:   <div className="text-slate-300/[0.9]">
-36:     {items?.map((item) => (
-37:       <CVListItem
-38:         key={item._key}
-39:         item={item}
-40:         renderHeaderContent={renderHeaderContent}
-41:         renderSubHeaderContent={renderSubHeaderContent}
-42:       />
-43:     ))}
-44:   </div>
-45: );
-46: export default GenericCVSectionContent;
-````
-
-## File: src/components/CV/VolunteerWorkTabContent.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent";
- 3: interface VolunteerWork {
- 4:   _key: string;
- 5:   period?: string;
- 6:   organization?: string;
- 7:   role?: string;
- 8:   description?: string;
- 9: }
-10: interface VolunteerWorkTabContentProps {
-11:   volunteerWork?: VolunteerWork[];
-12: }
-13: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
-16:     {vol.organization ?? ""}
-17:   </>
-18: );
-19: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
-20:   vol.role && <p className="italic">{vol.role}</p>;
-21: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
-22:   volunteerWork,
-23: }) => (
-24:   <GenericCVSectionContent<VolunteerWork>
-25:     items={volunteerWork}
-26:     renderHeaderContent={renderVolunteerHeader}
-27:     renderSubHeaderContent={renderVolunteerSubHeader}
-28:   />
-29: );
-30: export default VolunteerWorkTabContent;
 ````
 
 ## File: src/components/Index/Icons.component.tsx
@@ -21453,6 +21289,52 @@ vercel.json
 86: export default ProsjektCard;
 ````
 
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import { createImageUrlBuilder } from "@sanity/image-url";
+ 2: import { createClient, type QueryParams } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
+ 7: const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: /**
+14:  * Typed fetch helper with consistent caching defaults.
+15:  * Combines time-based revalidation (default 86400s = 24 hours) with
+16:  * tag-based invalidation: tags enable instant webhook-driven refresh via
+17:  * /api/revalidate, while the revalidate window acts as a fallback when
+18:  * no webhook fires.
+19:  */
+20: export async function sanityFetch<T>({
+21:   query,
+22:   params = {},
+23:   revalidate = 86400,
+24:   tags = [],
+25: }: {
+26:   query: string;
+27:   params?: QueryParams;
+28:   revalidate?: number | false;
+29:   tags?: string[];
+30: }): Promise<T> {
+31:   return client.fetch<T>(query, params, {
+32:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
+33:     next: {
+34:       revalidate,
+35:       tags,
+36:     },
+37:   });
+38: }
+39: const builder = createImageUrlBuilder(client);
+40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+41:   return builder.image(source);
+42: }
+````
+
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -21484,6 +21366,294 @@ vercel.json
 27:     }
 28:   }
 29: }
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model
+17: MODEL_NAME="anthropic/claude-sonnet-5"
+````
+
+## File: src/lib/sanity/content.ts
+````typescript
+  1: import "server-only";
+  2: import { sanityFetch } from "@/lib/sanity/client";
+  3: import { isSanityApiError } from "@/types/sanity-errors";
+  4: import type {
+  5:   Cv,
+  6:   Navigation,
+  7:   Page,
+  8:   Project,
+  9:   Settings,
+ 10: } from "@/types/sanity.types";
+ 11: /**
+ 12:  * The content module: the single interface between the app and Sanity.
+ 13:  *
+ 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
+ 15:  * implementation details of this module. Routes call the named functions
+ 16:  * below and receive typed data or a well-mapped error — nothing else
+ 17:  * crosses the seam.
+ 18:  *
+ 19:  * Every content type is tagged, so the /api/revalidate webhook can
+ 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
+ 21:  * window acts as a fallback when no webhook fires.
+ 22:  */
+ 23: const REVALIDATE_SECONDS = 86400; // 24 hours
+ 24: /** Cache tags — the /api/revalidate route accepts any of these. */
+ 25: export const CONTENT_TAGS = {
+ 26:   projects: "projects",
+ 27:   cv: "cv",
+ 28:   pageContent: "page-content",
+ 29:   navigation: "navigation",
+ 30:   settings: "settings",
+ 31: } as const;
+ 32: const projectsQuery = `
+ 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 34:     id,
+ 35:     name,
+ 36:     description,
+ 37:     subdescription,
+ 38:     projectcategory->{
+ 39:       _id,
+ 40:       title
+ 41:     },
+ 42:     urlwww[]{
+ 43:       ...,
+ 44:       _key,
+ 45:     },
+ 46:     urlgithub[]{
+ 47:       ...,
+ 48:       _key,
+ 49:     },
+ 50:     projectimage,
+ 51:     featured,
+ 52:     featureOrder
+ 53:   }
+ 54: `;
+ 55: const cvQuery = `
+ 56:   *[_type == "cv"][0] {
+ 57:     keyQualifications,
+ 58:     experience[] {
+ 59:       period,
+ 60:       company,
+ 61:       role,
+ 62:       description
+ 63:     },
+ 64:     education[] {
+ 65:       period,
+ 66:       institution,
+ 67:       degree,
+ 68:       description
+ 69:     },
+ 70:     volunteerWork[] {
+ 71:       period,
+ 72:       organization,
+ 73:       role,
+ 74:       description
+ 75:     }
+ 76:   }
+ 77: `;
+ 78: const pageContentQuery = `
+ 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+ 80:     "id": _id,
+ 81:     title,
+ 82:     hero,
+ 83:     content
+ 84:   }
+ 85: `;
+ 86: const navigationQuery = `
+ 87:   *[_type == "navigation"][0] {
+ 88:     title,
+ 89:     links[] {
+ 90:       title,
+ 91:       name,
+ 92:       hash,
+ 93:       href,
+ 94:       externalLink
+ 95:     }
+ 96:   }
+ 97: `;
+ 98: const settingsQuery = `
+ 99:   *[_type == "settings"][0] {
+100:     footerCopyrightText
+101:   }
+102: `;
+103: /**
+104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
+105:  * Applied uniformly to every content fetch — this is the only place in the
+106:  * codebase that knows what a Sanity error looks like.
+107:  */
+108: function mapError(error: unknown, entity: string): never {
+109:   console.error("Error fetching content:", entity, error);
+110:   if (isSanityApiError(error)) {
+111:     switch (error.statusCode) {
+112:       case 401:
+113:         throw new Error("Authentication failed");
+114:       case 403:
+115:         throw new Error("Insufficient permissions");
+116:       case 429:
+117:         throw new Error("Rate limit exceeded");
+118:       default:
+119:         throw new Error(`Sanity API error: ${error.message}`);
+120:     }
+121:   }
+122:   if (error instanceof Error && error.name === "TimeoutError") {
+123:     throw new Error("Request timed out");
+124:   }
+125:   throw new Error(`Failed to fetch ${entity}`);
+126: }
+127: async function fetchContent<T>(
+128:   entity: string,
+129:   query: string,
+130:   tag: string,
+131: ): Promise<T> {
+132:   try {
+133:     return await sanityFetch<T>({
+134:       query,
+135:       revalidate: REVALIDATE_SECONDS,
+136:       tags: [tag],
+137:     });
+138:   } catch (error) {
+139:     mapError(error, entity);
+140:   }
+141: }
+142: /** All published projects, ordered by featureOrder. */
+143: export function getProjects(): Promise<Project[]> {
+144:   return fetchContent<Project[]>(
+145:     "projects",
+146:     projectsQuery,
+147:     CONTENT_TAGS.projects,
+148:   );
+149: }
+150: /** The CV document, or null when none is published. */
+151: export function getCv(): Promise<Cv | null> {
+152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
+153: }
+154: /** Home page content (hero + sections), or null when missing. */
+155: export function getPageContent(): Promise<Page | null> {
+156:   return fetchContent<Page | null>(
+157:     "page content",
+158:     pageContentQuery,
+159:     CONTENT_TAGS.pageContent,
+160:   );
+161: }
+162: /** Site navigation links. */
+163: export function getNavigation(): Promise<Navigation> {
+164:   return fetchContent<Navigation>(
+165:     "navigation",
+166:     navigationQuery,
+167:     CONTENT_TAGS.navigation,
+168:   );
+169: }
+170: /** Site-wide settings (footer text etc.). */
+171: export function getSettings(): Promise<Settings> {
+172:   return fetchContent<Settings>(
+173:     "settings",
+174:     settingsQuery,
+175:     CONTENT_TAGS.settings,
+176:   );
+177: }
+178: /**
+179:  * Kicks off the projects fetch without awaiting it, so the request is
+180:  * already in flight when the Suspense boundary renders. Next.js dedupes
+181:  * the underlying fetch, so the awaited call in the page reuses it.
+182:  */
+183: export function preloadProjects(): void {
+184:   void getProjects().catch(() => {
+185:     // Swallow here; the awaited call in the page surfaces the error.
+186:   });
+187: }
 ````
 
 ## File: AGENTS.md
@@ -21529,7 +21699,7 @@ vercel.json
  39: Each component/function should have one reason to change.
  40: 
  41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 42: - **Functions**: [`actions.ts`](src/app/prosjekter/actions.ts:10) separates data fetching, error handling, and caching into distinct functions
+ 42: - **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
  43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
  44: 
  45: #### Open/Closed Principle (OCP)
@@ -21792,103 +21962,6 @@ vercel.json
 302: - **ALWAYS** add explicit `permissions` blocks to new workflows
 303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
 304: - Full hardening plan available at `plans/supply-chain-hardening.md`
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
-````
-
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model
-17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
 ## File: studio/package.json
