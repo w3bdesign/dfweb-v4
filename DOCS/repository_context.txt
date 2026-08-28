@@ -10305,6 +10305,94 @@ vercel.json
 15: export default MobileBackground;
 ````
 
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import FadeInScroll from "../Animations/FadeInScroll.component";
+ 5: import Button from "../UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11:   viewAmount?: number;
+12: }
+13: const sectionStyles = {
+14:   default: "bg-slate-900",
+15:   alternate: "bg-slate-800/30",
+16: };
+17: /**
+18:  * Section component that renders a single content section
+19:  * @param {SectionProps} props - The props for the Section component
+20:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+21:  * @param {string} props.title - The title of the section
+22:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+23:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+24:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
+25:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+26:  */
+27: const Section = ({
+28:   text,
+29:   title,
+30:   variant = "default",
+31:   showDebugButton = true,
+32:   viewAmount = 0.2,
+33: }: SectionProps) => {
+34:   const [shouldError, setShouldError] = useState(false);
+35:   if (!title || !text) {
+36:     console.error(
+37:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+38:     );
+39:     return null;
+40:   }
+41:   if (shouldError) {
+42:     throw new Error("En uventet feil har oppstått");
+43:   }
+44:   return (
+45:     <section
+46:       aria-label={title}
+47:       data-testid="sanity-section"
+48:       className={`
+49:         md:py-6
+50:         relative
+51:         transition-colors
+52:         duration-300
+53:         contain-layout
+54:         ${sectionStyles[variant]}
+55:       `}
+56:     >
+57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
+59:           <h2
+60:             data-testid="sanity-title"
+61:             data-cy={title}
+62:             className="text-2xl md:text-3xl text-center text-slate-100"
+63:           >
+64:             {title}
+65:           </h2>
+66:           <div className="flex justify-center">
+67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+68:               <PortableText
+69:                 value={text}
+70:                 components={myPortableTextComponents}
+71:               />
+72:             </div>
+73:           </div>
+74:           {process.env.NODE_ENV === "development" && showDebugButton && (
+75:             <Button onClick={() => setShouldError(true)} type="button">
+76:               Utløs Testfeil
+77:             </Button>
+78:           )}
+79:         </FadeInScroll>
+80:       </div>
+81:     </section>
+82:   );
+83: };
+84: export default Section;
+````
+
 ## File: src/components/Kontakt/config/formConfig.ts
 ````typescript
  1: import { z } from "zod";
@@ -10670,6 +10758,163 @@ vercel.json
 42:   );
 43: };
 44: export default Header;
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: const menuVariants: Variants = {
+ 10:   closed: {
+ 11:     x: "125%",
+ 12:     transition: {
+ 13:       type: "spring",
+ 14:       stiffness: 60,
+ 15:       damping: 10,
+ 16:       delay: 0.3,
+ 17:     },
+ 18:   },
+ 19:   open: {
+ 20:     x: 0,
+ 21:     transition: {
+ 22:       type: "spring",
+ 23:       stiffness: 60,
+ 24:       damping: 10,
+ 25:     },
+ 26:   },
+ 27: };
+ 28: /**
+ 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 30:  * @param {Object} props
+ 31:  * @param {ILink[]} props.links - Array of navigation link objects
+ 32:  * @returns {JSX.Element} The rendered MobileMenu component
+ 33:  */
+ 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 36:   const closeMenu = () => toggleExpanded(0);
+ 37:   const pathname = usePathname();
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <m.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
+ 94:                   const linkClassName =
+ 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
+ 96:                   return (
+ 97:                   <m.li
+ 98:                     key={title}
+ 99:                     className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+100:                     data-cy="mobile-menu-item"
+101:                     custom={index}
+102:                     variants={itemVariants}
+103:                   >
+104:                     {externalLink ? (
+105:                       <a
+106:                         aria-label={name}
+107:                         href={href}
+108:                         target="_blank"
+109:                         rel="noreferrer"
+110:                         data-testid={`mobil-${name}`}
+111:                         className={linkClassName}
+112:                       >
+113:                         {name}
+114:                       </a>
+115:                     ) : (
+116:                       <Link
+117:                         href={href ?? ""}
+118:                         data-testid={`mobil-${name}`}
+119:                         prefetch={true}
+120:                         onClick={closeMenu}
+121:                         className={`${linkClassName} ${
+122:                           pathname === href ? "text-[var(--matrix-light)]" : ""
+123:                         }`}
+124:                       >
+125:                         <div className="glitch relative" data-text={name}>
+126:                           {name}
+127:                           <m.span
+128:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+129:                               pathname === href ? "bg-[var(--matrix-light)]" : "bg-white"
+130:                             }`}
+131:                             initial={{
+132:                               width: pathname === href ? "100%" : "0%",
+133:                             }}
+134:                             animate={{
+135:                               width: pathname === href ? "100%" : "0%",
+136:                             }}
+137:                             transition={{ duration: 0.3 }}
+138:                           />
+139:                         </div>
+140:                       </Link>
+141:                     )}
+142:                   </m.li>
+143:                   );
+144:                 })}
+145:               </m.ul>
+146:             </nav>
+147:           </m.div>
+148:         )}
+149:       </AnimatePresence>
+150:     </div>
+151:   );
+152: };
+153: export default MobileMenu;
 ````
 
 ## File: src/components/Layout/NavigationLink.component.tsx
@@ -20819,251 +21064,6 @@ vercel.json
 73: }
 ````
 
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import FadeInScroll from "../Animations/FadeInScroll.component";
- 5: import Button from "../UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11:   viewAmount?: number;
-12: }
-13: const sectionStyles = {
-14:   default: "bg-slate-900",
-15:   alternate: "bg-slate-800/30",
-16: };
-17: /**
-18:  * Section component that renders a single content section
-19:  * @param {SectionProps} props - The props for the Section component
-20:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-21:  * @param {string} props.title - The title of the section
-22:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-23:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-24:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
-25:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-26:  */
-27: const Section = ({
-28:   text,
-29:   title,
-30:   variant = "default",
-31:   showDebugButton = true,
-32:   viewAmount = 0.2,
-33: }: SectionProps) => {
-34:   const [shouldError, setShouldError] = useState(false);
-35:   if (!title || !text) {
-36:     console.error(
-37:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-38:     );
-39:     return null;
-40:   }
-41:   if (shouldError) {
-42:     throw new Error("En uventet feil har oppstått");
-43:   }
-44:   return (
-45:     <section
-46:       aria-label={title}
-47:       data-testid="sanity-section"
-48:       className={`
-49:         md:py-6
-50:         relative
-51:         transition-colors
-52:         duration-300
-53:         contain-layout
-54:         ${sectionStyles[variant]}
-55:       `}
-56:     >
-57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
-59:           <h2
-60:             data-testid="sanity-title"
-61:             data-cy={title}
-62:             className="text-2xl md:text-3xl text-center text-slate-100"
-63:           >
-64:             {title}
-65:           </h2>
-66:           <div className="flex justify-center">
-67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-68:               <PortableText
-69:                 value={text}
-70:                 components={myPortableTextComponents}
-71:               />
-72:             </div>
-73:           </div>
-74:           {process.env.NODE_ENV === "development" && showDebugButton && (
-75:             <Button onClick={() => setShouldError(true)} type="button">
-76:               Utløs Testfeil
-77:             </Button>
-78:           )}
-79:         </FadeInScroll>
-80:       </div>
-81:     </section>
-82:   );
-83: };
-84: export default Section;
-````
-
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: const menuVariants: Variants = {
- 10:   closed: {
- 11:     x: "125%",
- 12:     transition: {
- 13:       type: "spring",
- 14:       stiffness: 60,
- 15:       damping: 10,
- 16:       delay: 0.3,
- 17:     },
- 18:   },
- 19:   open: {
- 20:     x: 0,
- 21:     transition: {
- 22:       type: "spring",
- 23:       stiffness: 60,
- 24:       damping: 10,
- 25:     },
- 26:   },
- 27: };
- 28: /**
- 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 30:  * @param {Object} props
- 31:  * @param {ILink[]} props.links - Array of navigation link objects
- 32:  * @returns {JSX.Element} The rendered MobileMenu component
- 33:  */
- 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 36:   const closeMenu = () => toggleExpanded(0);
- 37:   const pathname = usePathname();
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             className="fixed top-0 -right-1 w-[calc(100vw+25px)] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
- 73:             initial="closed"
- 74:             animate="open"
- 75:             exit="closed"
- 76:             variants={menuVariants}
- 77:           >
- 78:             <nav aria-label="Navigasjon" className="w-full">
- 79:               <m.ul
- 80:                 className="w-full"
- 81:                 initial="closed"
- 82:                 animate="open"
- 83:                 exit="closed"
- 84:                 variants={{
- 85:                   open: {
- 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 87:                   },
- 88:                   closed: {
- 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 90:                   },
- 91:                 }}
- 92:               >
- 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
- 94:                   const linkClassName =
- 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
- 96:                   return (
- 97:                   <m.li
- 98:                     key={title}
- 99:                     className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-100:                     data-cy="mobile-menu-item"
-101:                     custom={index}
-102:                     variants={itemVariants}
-103:                   >
-104:                     {externalLink ? (
-105:                       <a
-106:                         aria-label={name}
-107:                         href={href}
-108:                         target="_blank"
-109:                         rel="noreferrer"
-110:                         data-testid={`mobil-${name}`}
-111:                         className={linkClassName}
-112:                       >
-113:                         {name}
-114:                       </a>
-115:                     ) : (
-116:                       <Link
-117:                         href={href ?? ""}
-118:                         data-testid={`mobil-${name}`}
-119:                         prefetch={true}
-120:                         onClick={closeMenu}
-121:                         className={`${linkClassName} ${
-122:                           pathname === href ? "text-[var(--matrix-light)]" : ""
-123:                         }`}
-124:                       >
-125:                         <div className="glitch relative" data-text={name}>
-126:                           {name}
-127:                           <m.span
-128:                             className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-129:                               pathname === href ? "bg-[var(--matrix-light)]" : "bg-white"
-130:                             }`}
-131:                             initial={{
-132:                               width: pathname === href ? "100%" : "0%",
-133:                             }}
-134:                             animate={{
-135:                               width: pathname === href ? "100%" : "0%",
-136:                             }}
-137:                             transition={{ duration: 0.3 }}
-138:                           />
-139:                         </div>
-140:                       </Link>
-141:                     )}
-142:                   </m.li>
-143:                   );
-144:                 })}
-145:               </m.ul>
-146:             </nav>
-147:           </m.div>
-148:         )}
-149:       </AnimatePresence>
-150:     </div>
-151:   );
-152: };
-153: export default MobileMenu;
-````
-
 ## File: src/lib/sanity/client.ts
 ````typescript
  1: import { createImageUrlBuilder } from "@sanity/image-url";
@@ -22146,7 +22146,7 @@ vercel.json
  28:   "dependencies": {
  29:     "@emailjs/browser": "^4.4.1",
  30:     "@hookform/resolvers": "^5.8.0",
- 31:     "@portabletext/react": "^8.0.0",
+ 31:     "@portabletext/react": "^8.0.1",
  32:     "@sanity/client": "^8.1.0",
  33:     "@sanity/image-url": "^2.1.1",
  34:     "@vercel/speed-insights": "2.0.0",
