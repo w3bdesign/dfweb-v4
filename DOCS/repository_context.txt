@@ -380,6 +380,7 @@ studio/
     .gitkeep
   .gitignore
   .npmrc
+  .snyk
   package.json
   README.md
   sanity.cli.ts
@@ -15302,6 +15303,39 @@ vercel.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.8.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.7",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -20112,6 +20146,82 @@ vercel.json
 64:           format: table
 ````
 
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: DOCS/architecture-review-2026-08-24.html
 ````html
   1: <!doctype html>
@@ -21190,39 +21300,6 @@ vercel.json
 76: }
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.8.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.7",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
-````
-
 ## File: src/utils/test-utils.ts
 ````typescript
  1: const REQUIRED_AAA_COMMENTS = ["Arrange", "Act", "Assert"] as const;
@@ -21260,6 +21337,23 @@ vercel.json
 33:  *   });
 34:  * });
 35:  */
+````
+
+## File: studio/.snyk
+````
+ 1: version: v1.25.0
+ 2: 
+ 3: # adm-zip 0.6.0 is currently the latest release. It is pulled in only by
+ 4: # Sanity's development/build CLI dependency graph, not by application code.
+ 5: # Keep this exception short-lived so CI re-evaluates the upstream dependency.
+ 6: ignore:
+ 7:   SNYK-JS-ADMZIP-19276676:
+ 8:     - '*':
+ 9:         reason: No patched adm-zip release exists; transitive Sanity CLI dependency only
+10:         expires: 2026-11-27T00:00:00.000Z
+11:         created: 2026-08-29T00:00:00.000Z
+12: 
+13: patch: {}
 ````
 
 ## File: jest.setup.ts
@@ -21399,82 +21493,6 @@ vercel.json
 133:     throw toValidationError(error);
 134:   }
 135: });
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/app/page.tsx
@@ -22004,6 +22022,54 @@ vercel.json
 304: - Full hardening plan available at `plans/supply-chain-hardening.md`
 ````
 
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - "."
+ 3: overrides:
+ 4:   "@babel/core": ">=8.0.1"
+ 5:   "brace-expansion": "5.0.9"
+ 6:   "js-yaml": ">=5.4.1"
+ 7:   "sharp": ">=0.35.4"
+ 8:   "adm-zip": ">=0.6.0"
+ 9:   "nanoid": ">=6.0.1"
+10:   "postcss": ">=8.5.26"
+11:   "jest-mock": "30.5.0"
+12:   "@jest/environment": "30.5.0"
+13:   "@jest/fake-timers": "30.5.0"
+14:   "jest-util": "30.5.0"
+15:   "@jest/types": "30.5.0"
+16:   "react": "19.2.8"
+17:   "react-dom": "19.2.8"
+18:   "fast-uri": "4.1.3"
+19:   "browserslist": ">=4.28.8"
+20:   "undici": ">=8.10.0"
+21: allowBuilds:
+22:   "@swc/core": true
+23:   cypress: true
+24:   esbuild: true
+25:   msw: true
+26:   puppeteer: true
+27:   sharp: true
+28:   unrs-resolver: true
+29: minimumReleaseAgeExclude:
+30:   - postcss@8.5.21
+31:   - wait-on@9.1.0
+32:   - eslint@10.8.1
+33:   - '@jest/environment@30.5.0'
+34:   - '@jest/expect-utils@30.5.0'
+35:   - '@jest/fake-timers@30.5.0'
+36:   - '@jest/get-type@30.5.0'
+37:   - '@jest/pattern@30.5.0'
+38:   - '@jest/schemas@30.5.0'
+39:   - '@jest/types@30.5.0'
+40:   - jest-message-util@30.5.0
+41:   - jest-mock@30.5.0
+42:   - jest-regex-util@30.5.0
+43:   - jest-util@30.5.0
+44:   - pretty-format@30.5.0
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -22025,93 +22091,55 @@ vercel.json
 17:     "react": "^19.2.8",
 18:     "react-dom": "^19.2.8",
 19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.9.2",
+20:     "sanity": "^6.11.0",
 21:     "styled-components": "^6.5.3"
 22:   },
-23:   "devDependencies": {    
+23:   "devDependencies": {
 24:     "@types/react": "^19.2.18",
-25:     "eslint": "^10.8.1",
+25:     "eslint": "^10.9.1",
 26:     "prettier": "^3.9.6",
 27:     "typescript": "^6.0.3"
 28:   },
 29:   "pnpm": {
 30:     "overrides": {
-31:       "adm-zip": ">=0.6.0",
-32:       "basic-ftp": ">=6.2.0",
-33:       "brace-expansion": ">=5.0.9",
-34:       "dompurify": ">=3.4.13",
-35:       "esbuild": ">=0.28.2",
-36:       "flatted": ">=3.4.4",
-37:       "js-yaml": ">=5.2.3",
-38:       "lodash": ">=4.18.1",
-39:       "lodash-es": ">=4.18.1",
-40:       "minimatch": "10.2.6",
-41:       "nanoid": ">=5.1.16",
-42:       "picomatch": "4.0.5",
-43:       "postcss": ">=8.5.26",
-44:       "smol-toml": ">=1.7.0",
-45:       "undici": ">=8.9.0",
-46:       "vite": ">=8.1.5",
-47:       "ws": ">=8.21.1",
-48:       "yaml": ">=2.9.0",
-49:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-50:     }
-51:   },
-52:   "overrides": {
-53:     "adm-zip": ">=0.6.0",
-54:     "smol-toml": ">=1.7.1",
-55:     "brace-expansion": ">=5.0.9",
-56:     "esbuild": ">=0.28.2",
-57:     "uuid": ">=14.0.1",
-58:     "js-yaml": ">=5.2.3",
-59:     "nanoid": ">=5.1.16",
-60:     "postcss": ">=8.5.26",
-61:     "undici": ">=8.10.0",
-62:     "ws": ">=8.21.3"
-63:   },
-64:   "prettier": {
-65:     "semi": false,
-66:     "printWidth": 100,
-67:     "bracketSpacing": false,
-68:     "singleQuote": true
-69:   }
-70: }
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - "."
- 3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.9"
- 6:   "js-yaml": ">=5.3.0"
- 7:   "sharp": ">=0.35.3"
- 8:   "adm-zip": ">=0.6.0"
- 9:   "nanoid": ">=6.0.1"
-10:   "postcss": ">=8.5.26"
-11:   "jest-mock": "30.4.1"
-12:   "@jest/environment": "30.4.1"
-13:   "@jest/fake-timers": "30.4.1"
-14:   "jest-util": "30.4.1"
-15:   "@jest/types": "30.4.1"
-16:   "react": "19.2.8"
-17:   "react-dom": "19.2.8"
-18:   "fast-uri": "4.1.2"
-19:   "browserslist": ">=4.28.8"
-20:   "undici@7": ">=8.9.0"
-21: allowBuilds:
-22:   "@swc/core": true
-23:   cypress: true
-24:   esbuild: true
-25:   msw: true
-26:   puppeteer: true
-27:   sharp: true
-28:   unrs-resolver: true
-29: minimumReleaseAgeExclude:
-30:   - postcss@8.5.21
-31:   - wait-on@9.1.0
-32:   - eslint@10.8.1
+31:       "basic-ftp": ">=6.2.0",
+32:       "brace-expansion": ">=5.0.9",
+33:       "dompurify": ">=3.4.13",
+34:       "esbuild": ">=0.28.2",
+35:       "flatted": ">=3.4.4",
+36:       "js-yaml": ">=5.2.3",
+37:       "lodash": ">=4.18.1",
+38:       "lodash-es": ">=4.18.1",
+39:       "minimatch": "10.2.6",
+40:       "nanoid": "5.1.16",
+41:       "picomatch": "4.0.7",
+42:       "postcss": ">=8.5.26",
+43:       "smol-toml": ">=1.8.0",
+44:       "undici": "7.29.0",
+45:       "vite": ">=8.2.2",
+46:       "ws": ">=8.21.3",
+47:       "yaml": ">=2.9.0",
+48:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+49:     }
+50:   },
+51:   "overrides": {
+52:     "smol-toml": ">=1.8.0",
+53:     "brace-expansion": ">=5.0.9",
+54:     "esbuild": ">=0.28.2",
+55:     "uuid": ">=14.0.2",
+56:     "js-yaml": ">=5.4.1",
+57:     "nanoid": ">=6.0.1",
+58:     "postcss": ">=8.5.26",
+59:     "undici": "7.29.0",
+60:     "ws": ">=8.21.3"
+61:   },
+62:   "prettier": {
+63:     "semi": false,
+64:     "printWidth": 100,
+65:     "bracketSpacing": false,
+66:     "singleQuote": true
+67:   }
+68: }
 ````
 
 ## File: package.json
@@ -22153,7 +22181,7 @@ vercel.json
  35:     "babel-jest": "30.4.1",
  36:     "jest": "30.4.2",
  37:     "motion": "^13.1.0",
- 38:     "next": "^16.3.1",
+ 38:     "next": "^16.3.3",
  39:     "react": "^19.2.8",
  40:     "react-dom": "^19.2.8",
  41:     "react-error-boundary": "^6.1.2",
@@ -22184,7 +22212,7 @@ vercel.json
  66:     "cypress": "15.20.1",
  67:     "cypress-axe": "^1.7.0",
  68:     "eslint": "10.8.1",
- 69:     "eslint-config-next": "16.3.1",
+ 69:     "eslint-config-next": "16.3.3",
  70:     "eslint-config-prettier": "^10.1.8",
  71:     "eslint-plugin-jest": "^29.16.1",
  72:     "eslint-plugin-jsx-a11y": "^6.10.2",
