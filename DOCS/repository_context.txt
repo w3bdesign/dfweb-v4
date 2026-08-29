@@ -1094,6 +1094,82 @@ vercel.json
 83:           fi
 ````
 
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -15303,39 +15379,6 @@ vercel.json
 82: };
 ````
 
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.8.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^6.0.3"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.7",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
-````
-
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -20146,82 +20189,6 @@ vercel.json
 64:           format: table
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
-````
-
 ## File: DOCS/architecture-review-2026-08-24.html
 ````html
   1: <!doctype html>
@@ -21300,6 +21267,39 @@ vercel.json
 76: }
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.9.0"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^6.0.3"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.7",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: src/utils/test-utils.ts
 ````typescript
  1: const REQUIRED_AAA_COMMENTS = ["Arrange", "Act", "Assert"] as const;
@@ -22209,9 +22209,9 @@ vercel.json
  63:     "@typescript-eslint/parser": "^8.67.0",
  64:     "@typescript-eslint/utils": "^8.67.0",
  65:     "axe-core": "^4.13.0",
- 66:     "cypress": "15.20.1",
+ 66:     "cypress": "15.21.0",
  67:     "cypress-axe": "^1.7.0",
- 68:     "eslint": "10.8.1",
+ 68:     "eslint": "10.9.0",
  69:     "eslint-config-next": "16.3.3",
  70:     "eslint-config-prettier": "^10.1.8",
  71:     "eslint-plugin-jest": "^29.16.1",
