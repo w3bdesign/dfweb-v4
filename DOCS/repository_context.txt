@@ -20121,6 +20121,74 @@ vercel.json
 1: {}
 ````
 
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.174.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: DOCS/architecture-review-2026-08-24.html
 ````html
   1: <!doctype html>
@@ -21702,74 +21770,6 @@ vercel.json
 135: });
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.174.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: src/app/page.tsx
 ````typescript
  1: import { notFound } from "next/navigation";
@@ -22177,7 +22177,7 @@ vercel.json
  29:     "@emailjs/browser": "^4.4.1",
  30:     "@hookform/resolvers": "^5.9.1",
  31:     "@portabletext/react": "^8.0.1",
- 32:     "@sanity/client": "^8.2.0",
+ 32:     "@sanity/client": "^8.4.0",
  33:     "@sanity/image-url": "^2.1.1",
  34:     "@vercel/speed-insights": "2.0.0",
  35:     "babel-jest": "30.4.1",
@@ -22231,7 +22231,7 @@ vercel.json
  83:     "postcss-load-config": "^6.0.1",
  84:     "prettier": "3.9.6",
  85:     "react-doctor": "^0.0.47",
- 86:     "sanity": "6.9.2",
+ 86:     "sanity": "6.11.0",
  87:     "stylelint": "^17.14.1",
  88:     "stylelint-config-standard": "^40.0.0",
  89:     "tailwindcss": "^4.3.3",
