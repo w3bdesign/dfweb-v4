@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 
 import Prosjekter from "@/app/prosjekter/page";
 import { getProjects, preloadProjects } from "@/app/prosjekter/actions";
+import type { Project } from "@/types/sanity.types";
 
 jest.mock("@/app/prosjekter/actions", () => ({
   getProjects: jest.fn(),
@@ -12,6 +13,16 @@ jest.mock("@/app/prosjekter/actions", () => ({
 
 const mockGetProjects = jest.mocked(getProjects);
 const mockPreloadProjects = jest.mocked(preloadProjects);
+
+const createProject = (id: number, name: string): Project => ({
+  _id: `project-${id}`,
+  _type: "project",
+  _createdAt: "2026-01-01T00:00:00Z",
+  _updatedAt: "2026-01-01T00:00:00Z",
+  _rev: `revision-${id}`,
+  id,
+  name,
+});
 
 jest.mock("@/components/UI/PageHeader.component", () => ({
   __esModule: true,
@@ -40,9 +51,9 @@ describe("Prosjekter page", () => {
   it("preloads and renders projects through the production page", async () => {
     // Arrange
     mockGetProjects.mockResolvedValue([
-      { id: "1", name: "Test Project 1" },
-      { id: "2", name: "Test Project 2" },
-      { id: "3", name: "Test Project 3" },
+      createProject(1, "Test Project 1"),
+      createProject(2, "Test Project 2"),
+      createProject(3, "Test Project 3"),
     ]);
 
     // Act
