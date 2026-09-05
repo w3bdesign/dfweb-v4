@@ -4,9 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import "./globals.css";
 
-import { sanityFetch } from "@/lib/sanity/client";
-import { navigationQuery, settingsQuery } from "@/lib/sanity/queries";
-import type { Navigation, Settings } from "@/types/sanity.types";
+import { getNavigation, getSettings } from "@/lib/sanity/content";
 import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 
 import SkipLink from "@/components/UI/SkipLink.component";
@@ -31,8 +29,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const [navigation, settings] = await Promise.all([
-    sanityFetch<Navigation>({ query: navigationQuery, revalidate: 86400 }), // 24 hours
-    sanityFetch<Settings>({ query: settingsQuery, revalidate: 86400 }), // 24 hours
+    getNavigation(),
+    getSettings(),
   ]);
 
   const footerCopyrightText = settings?.footerCopyrightText;

@@ -22,18 +22,32 @@ import { timingSafeEqual } from "node:crypto";
  * Constant-time string comparison to prevent timing attacks
  */
 function secureCompare(a: string | null, b: string | undefined): boolean {
-  // Use optional chaining for type safety
-  if (!a || !b || a?.length !== b?.length) {
+  if (!a || !b) {
     return false;
   }
 
-  try {
-    const bufferA = Buffer.from(a, "utf-8");
-    const bufferB = Buffer.from(b, "utf-8");
-    return timingSafeEqual(bufferA, bufferB);
-  } catch {
-    return false;
+  const bufferA = Buffer.from(a, "utf-8");
+  const bufferB = Buffer.from(b, "utf-8");
+
+  // timingSafeEqual requires equal-length buffers; the length check itself
+  // does not leak secret contents, only that lengths differ.
+  return bufferA.length === bufferB.length && timingSafeEqual(bufferA, bufferB);
+}
+
+/**
+ * Applies the requested revalidation strategy and returns the mode used.
+ * Next.js 16 revalidateTag requires 2 arguments:
+ * - 'max' for stale-while-revalidate (recommended for most cases)
+ * - { expire: 0 } for immediate expiration (for webhooks requiring instant updates)
+ */
+function applyRevalidation(tag: string, immediate: boolean): string {
+  if (immediate) {
+    revalidateTag(tag, { expire: 0 });
+    return "immediate";
   }
+
+  revalidateTag(tag, "max");
+  return "stale-while-revalidate";
 }
 
 export async function POST(request: NextRequest) {
@@ -58,19 +72,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Next.js 16 revalidateTag requires 2 arguments:
-    // - 'max' for stale-while-revalidate (recommended for most cases)
-    // - { expire: 0 } for immediate expiration (for webhooks requiring instant updates)
-    if (immediate) {
-      revalidateTag(tag, { expire: 0 });
-    } else {
-      revalidateTag(tag, "max");
-    }
+    const mode = applyRevalidation(tag, immediate);
 
     return NextResponse.json({
       revalidated: true,
       tag,
-      mode: immediate ? "immediate" : "stale-while-revalidate",
+      mode,
       now: Date.now(),
     });
   } catch (err) {

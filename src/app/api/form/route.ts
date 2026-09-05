@@ -75,6 +75,33 @@ function validateFormData(
 }
 
 /**
+ * Parse, CSRF-check, and validate a form submission request.
+ * Returns the appropriate JSON response for each outcome.
+ */
+async function processFormSubmission(
+  request: NextRequest,
+): Promise<NextResponse> {
+  const parsed = await parseRequestBody(request);
+  if (parsed instanceof NextResponse) return parsed;
+
+  const formData = parsed;
+  const csrfError = validateCsrf(formData);
+  if (csrfError) return csrfError;
+
+  // Remove CSRF tokens before validation
+  delete formData._csrf;
+  delete formData.csrfToken;
+
+  const validationError = validateFormData(formData);
+  if (validationError) return validationError;
+
+  return NextResponse.json(
+    { message: "Form submitted successfully", success: true },
+    { status: 200 },
+  );
+}
+
+/**
  * POST handler for form submissions with CSRF protection.
  * Uses the shared Zod schema from formConfig.ts as the single source
  * of truth for validation — same rules on client and server.
@@ -83,24 +110,7 @@ function validateFormData(
  */
 export async function POST(request: NextRequest) {
   try {
-    const parsed = await parseRequestBody(request);
-    if (parsed instanceof NextResponse) return parsed;
-
-    const formData = parsed;
-    const csrfError = validateCsrf(formData);
-    if (csrfError) return csrfError;
-
-    // Remove CSRF tokens before validation
-    delete formData._csrf;
-    delete formData.csrfToken;
-
-    const validationError = validateFormData(formData);
-    if (validationError) return validationError;
-
-    return NextResponse.json(
-      { message: "Form submitted successfully", success: true },
-      { status: 200 },
-    );
+    return await processFormSubmission(request);
   } catch (error) {
     console.error("Error processing form submission:", error);
     return NextResponse.json(

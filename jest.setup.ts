@@ -69,6 +69,14 @@ function getTestPath(): string | undefined {
   ).getState().testPath;
 }
 
+// Test files that should never be checked for the AAA pattern
+const AAA_EXEMPT_PATTERNS = ["test-rule.test.tsx", "node_modules"];
+
+// Windows and POSIX path separator variants for the test directory
+const TEST_DIR_PREFIXES = ["src/__tests__/", "src\\__tests__\\"];
+
+const TEST_FILE_SUFFIXES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"];
+
 /**
  * Validates that a test file path is safe to read.
  * Prevents path traversal attacks by ensuring the path is within the project directory
@@ -84,56 +92,64 @@ function isValidTestPath(testPath: string): boolean {
     return false;
   }
 
-  // Must be in test directories
   const relativePath = path.relative(projectRoot, resolvedPath);
-  const isInTestDir =
-    relativePath.startsWith("src/__tests__/") ||
-    relativePath.startsWith("src\\__tests__\\"); // Windows path separators
-
-  // Must be a test file
-  const isTestFile =
-    resolvedPath.endsWith(".test.ts") ||
-    resolvedPath.endsWith(".test.tsx") ||
-    resolvedPath.endsWith(".spec.ts") ||
-    resolvedPath.endsWith(".spec.tsx");
+  const isInTestDir = TEST_DIR_PREFIXES.some((prefix) =>
+    relativePath.startsWith(prefix),
+  );
+  const isTestFile = TEST_FILE_SUFFIXES.some((suffix) =>
+    resolvedPath.endsWith(suffix),
+  );
 
   return isInTestDir && isTestFile;
+}
+
+function shouldValidateAAA(testPath: string | undefined): testPath is string {
+  if (!testPath) {
+    return false;
+  }
+  return !AAA_EXEMPT_PATTERNS.some((pattern) => testPath.includes(pattern));
+}
+
+async function assertAAAPattern(testPath: string): Promise<void> {
+  const content = await fs.readFile(testPath, "utf8");
+  const result = checkAAAPattern(content);
+
+  if (result.isValid) {
+    return;
+  }
+
+  throw new Error(
+    `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
+      "Each test should include:\n" +
+      "// Arrange - Set up test data and conditions\n" +
+      "// Act - Perform the action being tested\n" +
+      "// Assert - Verify the results",
+  );
+}
+
+function toValidationError(error: unknown): unknown {
+  if (error instanceof Error) {
+    return new Error(`Failed to validate AAA pattern: ${error.message}`);
+  }
+  return error;
 }
 
 beforeEach(async () => {
   const testPath = getTestPath();
 
-  if (
-    testPath &&
-    !testPath.includes("test-rule.test.tsx") &&
-    !testPath.includes("node_modules")
-  ) {
-    // Validate path before reading to prevent path traversal attacks
-    if (!isValidTestPath(testPath)) {
-      console.warn(
-        `Skipping AAA validation for invalid test path: ${testPath}`,
-      );
-      return;
-    }
+  if (!shouldValidateAAA(testPath)) {
+    return;
+  }
 
-    try {
-      const content = await fs.readFile(testPath, "utf8");
-      const result = checkAAAPattern(content);
+  // Validate path before reading to prevent path traversal attacks
+  if (!isValidTestPath(testPath)) {
+    console.warn(`Skipping AAA validation for invalid test path: ${testPath}`);
+    return;
+  }
 
-      if (!result.isValid) {
-        throw new Error(
-          `Test file is missing required AAA comments: ${result.missingComments.join(", ")}\n` +
-            "Each test should include:\n" +
-            "// Arrange - Set up test data and conditions\n" +
-            "// Act - Perform the action being tested\n" +
-            "// Assert - Verify the results",
-        );
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to validate AAA pattern: ${error.message}`);
-      }
-      throw error;
-    }
+  try {
+    await assertAAAPattern(testPath);
+  } catch (error) {
+    throw toValidationError(error);
   }
 });

@@ -1,23 +1,22 @@
+const REQUIRED_AAA_COMMENTS = ["Arrange", "Act", "Assert"] as const;
+
 /**
  * Helper function to check if a test follows the AAA pattern
  * @param testContent The content of the test to check
  * @returns Object containing check results
  */
 export const checkAAAPattern = (testContent: string) => {
-  const hasArrange = testContent.includes("// Arrange");
-  const hasAct = testContent.includes("// Act");
-  const hasAssert = testContent.includes("// Assert");
+  const hasComment = (label: string) => testContent.includes(`// ${label}`);
+  const missingComments = REQUIRED_AAA_COMMENTS.filter(
+    (label) => !hasComment(label),
+  );
 
   return {
-    hasArrange,
-    hasAct,
-    hasAssert,
-    isValid: hasArrange && hasAct && hasAssert,
-    missingComments: [
-      !hasArrange && "Arrange",
-      !hasAct && "Act",
-      !hasAssert && "Assert",
-    ].filter(Boolean),
+    hasArrange: hasComment("Arrange"),
+    hasAct: hasComment("Act"),
+    hasAssert: hasComment("Assert"),
+    isValid: missingComments.length === 0,
+    missingComments: [...missingComments] as string[],
   };
 };
 

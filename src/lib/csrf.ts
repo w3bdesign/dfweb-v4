@@ -21,6 +21,53 @@ export function generateCSRFToken(): string {
   return Buffer.from(token).toString("base64");
 }
 
+interface DecodedCSRFToken {
+  timestamp: string;
+  payload: string;
+  signature: string;
+}
+
+/**
+ * Decodes a base64 CSRF token into its parts.
+ * Returns null if the token does not have the expected structure.
+ */
+function decodeCSRFToken(token: string): DecodedCSRFToken | null {
+  const decoded = Buffer.from(token, "base64").toString("utf-8");
+  const parts = decoded.split(":");
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const [timestamp, randomValue, signature] = parts;
+  return { timestamp, payload: `${timestamp}:${randomValue}`, signature };
+}
+
+/**
+ * Verifies the HMAC signature of a token payload using constant-time comparison.
+ */
+function hasValidSignature(payload: string, signature: string): boolean {
+  const expectedSignature = createHmac("sha256", CSRF_SECRET)
+    .update(payload)
+    .digest("hex");
+
+  const signatureBuffer = Buffer.from(signature, "hex");
+  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+
+  return (
+    signatureBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(signatureBuffer, expectedBuffer)
+  );
+}
+
+/**
+ * Checks whether the token timestamp is older than the allowed expiry window.
+ */
+function isExpired(timestamp: string): boolean {
+  const tokenTime = Number.parseInt(timestamp, 10);
+  return Date.now() - tokenTime > TOKEN_EXPIRY;
+}
+
 /**
  * Validates a CSRF token
  * @param {string} token - Base64 encoded CSRF token
@@ -28,41 +75,16 @@ export function generateCSRFToken(): string {
  */
 export function validateCSRFToken(token: string): boolean {
   try {
-    const decoded = Buffer.from(token, "base64").toString("utf-8");
-    const parts = decoded.split(":");
+    const decoded = decodeCSRFToken(token);
 
-    if (parts.length !== 3) {
+    if (!decoded) {
       return false;
     }
 
-    const [timestamp, randomValue, signature] = parts;
-    const payload = `${timestamp}:${randomValue}`;
-
-    // Verify signature
-    const expectedSignature = createHmac("sha256", CSRF_SECRET)
-      .update(payload)
-      .digest("hex");
-
-    const signatureBuffer = Buffer.from(signature, "hex");
-    const expectedBuffer = Buffer.from(expectedSignature, "hex");
-
-    if (signatureBuffer.length !== expectedBuffer.length) {
-      return false;
-    }
-
-    if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
-      return false;
-    }
-
-    // Check if token is expired
-    const tokenTime = Number.parseInt(timestamp, 10);
-    const currentTime = Date.now();
-
-    if (currentTime - tokenTime > TOKEN_EXPIRY) {
-      return false;
-    }
-
-    return true;
+    return (
+      hasValidSignature(decoded.payload, decoded.signature) &&
+      !isExpired(decoded.timestamp)
+    );
   } catch {
     return false;
   }

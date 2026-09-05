@@ -1,50 +1,70 @@
-import { getProjects } from "@/app/prosjekter/actions";
+import {
+  getProjects,
+  getCv,
+  getNavigation,
+  CONTENT_TAGS,
+} from "@/lib/sanity/content";
 import { sanityFetch } from "@/lib/sanity/client";
 
-// Mock next/cache unstable_cache to bypass Next.js server APIs in tests
-jest.mock("next/cache", () => ({
-  unstable_cache: (fn: Function) => fn, // Return the function directly without caching
-  revalidateTag: jest.fn(),
-  revalidatePath: jest.fn(),
-}));
-
-// Mock the Sanity client
+// Mock the Sanity client — the content module's only dependency
 jest.mock("@/lib/sanity/client", () => ({
   sanityFetch: jest.fn(),
 }));
 
-describe("getProjects", () => {
+describe("content module", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("fetches projects successfully", async () => {
-    // Arrange
-    const mockProjects = [
-      {
-        id: "1",
-        name: "Test Project",
-        description: "Test Description",
-        subdescription: "Test Subdescription",
-        projectimage: { asset: { _ref: "test" } },
-        urlwww: [],
-        urlgithub: [],
-      },
-    ];
-    (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+  describe("getProjects", () => {
+    it("fetches projects successfully with the projects tag", async () => {
+      // Arrange
+      const mockProjects = [
+        {
+          id: "1",
+          name: "Test Project",
+          description: "Test Description",
+          subdescription: "Test Subdescription",
+          projectimage: { asset: { _ref: "test" } },
+          urlwww: [],
+          urlgithub: [],
+        },
+      ];
+      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
 
-    // Act
-    const result = await getProjects();
+      // Act
+      const result = await getProjects();
 
-    // Assert
-    expect(result).toStrictEqual(mockProjects);
-    expect(sanityFetch).toHaveBeenCalledWith({
-      query: expect.any(String),
-      revalidate: 86400, // 24 hours
+      // Assert
+      expect(result).toStrictEqual(mockProjects);
+      expect(sanityFetch).toHaveBeenCalledWith({
+        query: expect.any(String),
+        revalidate: 86400, // 24 hours
+        tags: [CONTENT_TAGS.projects],
+      });
     });
   });
 
-  describe("error handling", () => {
+  describe("getCv", () => {
+    it("fetches the CV with the cv tag", async () => {
+      // Arrange
+      const mockCv = { keyQualifications: ["TypeScript"] };
+      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockCv);
+
+      // Act
+      const result = await getCv();
+
+      // Assert
+      expect(result).toStrictEqual(mockCv);
+      expect(sanityFetch).toHaveBeenCalledWith({
+        query: expect.any(String),
+        revalidate: 86400,
+        tags: [CONTENT_TAGS.cv],
+      });
+    });
+  });
+
+  describe("error mapping (applies to every content type)", () => {
     it("handles authentication errors (401)", async () => {
       // Arrange
       const error = {
@@ -119,7 +139,7 @@ describe("getProjects", () => {
       await expect(getProjects()).rejects.toThrow("Request timed out");
     });
 
-    it("handles generic fetch errors", async () => {
+    it("handles generic fetch errors with the entity name", async () => {
       // Arrange
       const error = {
         message: "Fetch failed",
@@ -128,6 +148,19 @@ describe("getProjects", () => {
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+    });
+
+    it("maps errors on non-project content too", async () => {
+      // Arrange
+      const error = {
+        statusCode: 429,
+        message: "Too Many Requests",
+        details: { type: "rate_limit", description: "Rate limit exceeded" },
+      };
+      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+
+      // Act & Assert
+      await expect(getNavigation()).rejects.toThrow("Rate limit exceeded");
     });
 
     it("recovers after temporary errors", async () => {
@@ -148,16 +181,11 @@ describe("getProjects", () => {
           urlgithub: [],
         },
       ];
-
-      // First call fails with rate limit
       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
-      // Second call succeeds
       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
 
-      // First call should fail
+      // Act & Assert
       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-
-      // Second call should succeed
       const result = await getProjects();
       expect(result).toStrictEqual(mockProjects);
     });
