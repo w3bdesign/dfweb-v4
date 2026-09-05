@@ -3,14 +3,15 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import Prosjekter from "@/app/prosjekter/page";
-
-const mockGetProjects = jest.fn();
-const mockPreloadProjects = jest.fn();
+import { getProjects, preloadProjects } from "@/app/prosjekter/actions";
 
 jest.mock("@/app/prosjekter/actions", () => ({
-  getProjects: mockGetProjects,
-  preloadProjects: mockPreloadProjects,
+  getProjects: jest.fn(),
+  preloadProjects: jest.fn(),
 }));
+
+const mockGetProjects = jest.mocked(getProjects);
+const mockPreloadProjects = jest.mocked(preloadProjects);
 
 jest.mock("@/components/UI/PageHeader.component", () => ({
   __esModule: true,
