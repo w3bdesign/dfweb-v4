@@ -580,45 +580,6 @@ vercel.json
 15: ]
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["main"]
- 5:   pull_request:
- 6:     branches: ["main"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -1092,82 +1053,6 @@ vercel.json
 81:           else
 82:             echo "No changes detected in repository_context.txt"
 83:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: .github/copilot-instructions.md
@@ -13083,6 +12968,197 @@ vercel.json
 42: }
 ````
 
+## File: src/lib/sanity/content.ts
+````typescript
+  1: import "server-only";
+  2: import { sanityFetch } from "@/lib/sanity/client";
+  3: import { isSanityApiError } from "@/types/sanity-errors";
+  4: import type {
+  5:   Cv,
+  6:   Navigation,
+  7:   Page,
+  8:   Project,
+  9:   Settings,
+ 10: } from "@/types/sanity.types";
+ 11: /**
+ 12:  * The content module: the single interface between the app and Sanity.
+ 13:  *
+ 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
+ 15:  * implementation details of this module. Routes call the named functions
+ 16:  * below and receive typed data or a well-mapped error — nothing else
+ 17:  * crosses the seam.
+ 18:  *
+ 19:  * Every content type is tagged, so the /api/revalidate webhook can
+ 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
+ 21:  * window acts as a fallback when no webhook fires.
+ 22:  */
+ 23: const REVALIDATE_SECONDS = 86400; // 24 hours
+ 24: /** Cache tags — the /api/revalidate route accepts any of these. */
+ 25: export const CONTENT_TAGS = {
+ 26:   projects: "projects",
+ 27:   cv: "cv",
+ 28:   pageContent: "page-content",
+ 29:   navigation: "navigation",
+ 30:   settings: "settings",
+ 31: } as const;
+ 32: const projectsQuery = `
+ 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 34:     id,
+ 35:     name,
+ 36:     description,
+ 37:     subdescription,
+ 38:     projectcategory->{
+ 39:       _id,
+ 40:       title
+ 41:     },
+ 42:     urlwww[]{
+ 43:       ...,
+ 44:       _key,
+ 45:     },
+ 46:     urlgithub[]{
+ 47:       ...,
+ 48:       _key,
+ 49:     },
+ 50:     projectimage,
+ 51:     featured,
+ 52:     featureOrder
+ 53:   }
+ 54: `;
+ 55: const cvQuery = `
+ 56:   *[_type == "cv"][0] {
+ 57:     keyQualifications,
+ 58:     experience[] {
+ 59:       period,
+ 60:       company,
+ 61:       role,
+ 62:       description
+ 63:     },
+ 64:     education[] {
+ 65:       period,
+ 66:       institution,
+ 67:       degree,
+ 68:       description
+ 69:     },
+ 70:     volunteerWork[] {
+ 71:       period,
+ 72:       organization,
+ 73:       role,
+ 74:       description
+ 75:     }
+ 76:   }
+ 77: `;
+ 78: const pageContentQuery = `
+ 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+ 80:     "id": _id,
+ 81:     title,
+ 82:     hero,
+ 83:     content
+ 84:   }
+ 85: `;
+ 86: const navigationQuery = `
+ 87:   *[_type == "navigation"][0] {
+ 88:     title,
+ 89:     links[] {
+ 90:       title,
+ 91:       name,
+ 92:       hash,
+ 93:       href,
+ 94:       externalLink
+ 95:     }
+ 96:   }
+ 97: `;
+ 98: const settingsQuery = `
+ 99:   *[_type == "settings"][0] {
+100:     footerCopyrightText
+101:   }
+102: `;
+103: /**
+104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
+105:  * Applied uniformly to every content fetch — this is the only place in the
+106:  * codebase that knows what a Sanity error looks like.
+107:  */
+108: function mapError(error: unknown, entity: string): never {
+109:   console.error("Error fetching content:", entity, error);
+110:   if (isSanityApiError(error)) {
+111:     switch (error.statusCode) {
+112:       case 401:
+113:         throw new Error("Authentication failed");
+114:       case 403:
+115:         throw new Error("Insufficient permissions");
+116:       case 429:
+117:         throw new Error("Rate limit exceeded");
+118:       default:
+119:         throw new Error(`Sanity API error: ${error.message}`);
+120:     }
+121:   }
+122:   if (error instanceof Error && error.name === "TimeoutError") {
+123:     throw new Error("Request timed out");
+124:   }
+125:   throw new Error(`Failed to fetch ${entity}`);
+126: }
+127: async function fetchContent<T>(
+128:   entity: string,
+129:   query: string,
+130:   tag: string,
+131: ): Promise<T> {
+132:   try {
+133:     return await sanityFetch<T>({
+134:       query,
+135:       revalidate: REVALIDATE_SECONDS,
+136:       tags: [tag],
+137:     });
+138:   } catch (error) {
+139:     mapError(error, entity);
+140:   }
+141: }
+142: /** All published projects, ordered by featureOrder. */
+143: export function getProjects(): Promise<Project[]> {
+144:   return fetchContent<Project[]>(
+145:     "projects",
+146:     projectsQuery,
+147:     CONTENT_TAGS.projects,
+148:   );
+149: }
+150: /** The CV document, or null when none is published. */
+151: export function getCv(): Promise<Cv | null> {
+152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
+153: }
+154: /** Home page content (hero + sections), or null when missing. */
+155: export function getPageContent(): Promise<Page | null> {
+156:   return fetchContent<Page | null>(
+157:     "page content",
+158:     pageContentQuery,
+159:     CONTENT_TAGS.pageContent,
+160:   );
+161: }
+162: /** Site navigation links. */
+163: export function getNavigation(): Promise<Navigation> {
+164:   return fetchContent<Navigation>(
+165:     "navigation",
+166:     navigationQuery,
+167:     CONTENT_TAGS.navigation,
+168:   );
+169: }
+170: /** Site-wide settings (footer text etc.). */
+171: export function getSettings(): Promise<Settings> {
+172:   return fetchContent<Settings>(
+173:     "settings",
+174:     settingsQuery,
+175:     CONTENT_TAGS.settings,
+176:   );
+177: }
+178: /**
+179:  * Kicks off the projects fetch without awaiting it, so the request is
+180:  * already in flight when the Suspense boundary renders. Next.js dedupes
+181:  * the underlying fetch, so the awaited call in the page reuses it.
+182:  */
+183: export function preloadProjects(): void {
+184:   void getProjects().catch(() => {
+185:     // Swallow here; the awaited call in the page surfaces the error.
+186:   });
+187: }
+````
+
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
 ````typescript
  1: import React from "react";
@@ -18865,6 +18941,314 @@ vercel.json
 24: }
 ````
 
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
+ 18: 
+ 19: ## Critical Commands
+ 20: 
+ 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 25: 
+ 26: ## Testing Gotchas
+ 27: 
+ 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 30: - Matrix component intentionally excluded from test coverage
+ 31: - Cypress and Playwright have different ESLint rule overrides
+ 32: 
+ 33: ## Code Quality Principles
+ 34: 
+ 35: ### SOLID Principles
+ 36: 
+ 37: #### Single Responsibility Principle (SRP)
+ 38: 
+ 39: Each component/function should have one reason to change.
+ 40: 
+ 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 42: - **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
+ 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 44: 
+ 45: #### Open/Closed Principle (OCP)
+ 46: 
+ 47: Software should be open for extension, closed for modification.
+ 48: 
+ 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 50: - Create generic components that can be customized without modifying source
+ 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 52: 
+ 53: #### Liskov Substitution Principle (LSP)
+ 54: 
+ 55: Components accepting a type should work with any subtype.
+ 56: 
+ 57: - Ensure prop interfaces are respected by all implementations
+ 58: - Don't throw unexpected errors or require undocumented props
+ 59: - **Benefits**: Predictable behavior, safer component hierarchies
+ 60: 
+ 61: #### Interface Segregation Principle (ISP)
+ 62: 
+ 63: Don't force components to depend on props they don't use.
+ 64: 
+ 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 66: - Split large prop types into smaller, composable ones
+ 67: - **Benefits**: More flexible components, easier to implement and test
+ 68: 
+ 69: #### Dependency Inversion Principle (DIP)
+ 70: 
+ 71: Depend on abstractions, not concrete implementations.
+ 72: 
+ 73: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 74: - Define abstract types/interfaces, inject implementations
+ 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 76: 
+ 77: ### DRY Principle (Don't Repeat Yourself)
+ 78: 
+ 79: - Extract repeated UI patterns into reusable components
+ 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 81: - Use custom hooks for shared stateful logic
+ 82: - Avoid duplicating business logic across components
+ 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 84: 
+ 85: ### KISS Principle (Keep It Simple, Stupid)
+ 86: 
+ 87: - Use React/Next.js built-in features before custom solutions
+ 88: - Write self-explanatory code with clear naming
+ 89: - Avoid over-engineering simple problems
+ 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 91: - Minimize dependencies
+ 92: - Start simple, add complexity only when necessary
+ 93: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 94: 
+ 95: ### YAGNI Principle (You Aren't Gonna Need It)
+ 96: 
+ 97: Don't implement functionality until it's actually needed.
+ 98: 
+ 99: - Focus on current requirements, not hypothetical future needs
+100: - Don't create abstraction layers for single implementations
+101: - Avoid premature optimization before measuring performance
+102: - Don't build configuration systems until configurability is required
+103: - Wait for actual use cases before adding flexibility
+104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+105: 
+106: ### Code Quality Summary
+107: 
+108: Following these principles results in:
+109: 
+110: - Maintainable, extendable code
+111: - Fewer bugs and faster debugging
+112: - Better team collaboration
+113: - Professional quality standards
+114: - Easier testing and refactoring
+115: 
+116: ## UI Development Rules
+117: 
+118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+119: 
+120: ### Interactions
+121: 
+122: #### Keyboard
+123: 
+124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+126: - MUST: Manage focus (trap, move, and return) per APG patterns
+127: 
+128: #### Targets & Input
+129: 
+130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+131: - MUST: Mobile `<input>` font-size ≥16px or set:
+132:   ```html
+133:   <meta
+134:     name="viewport"
+135:     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+136:   />
+137:   ```
+138: - NEVER: Disable browser zoom
+139: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+140: 
+141: #### Inputs & Forms (Behavior)
+142: 
+143: - MUST: Hydration-safe inputs (no lost focus/value)
+144: - NEVER: Block paste in `<input>/<textarea>`
+145: - MUST: Loading buttons show spinner and keep original label
+146: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+147: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+148: - MUST: Don't block typing; accept free text and validate after
+149: - MUST: Allow submitting incomplete forms to surface validation
+150: - MUST: Errors inline next to fields; on submit, focus first error
+151: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+152: - SHOULD: Disable spellcheck for emails/codes/usernames
+153: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+154: - MUST: Warn on unsaved changes before navigation
+155: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+156: - MUST: Trim values to handle text expansion trailing spaces
+157: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+158: 
+159: #### State & Navigation
+160: 
+161: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+162: - MUST: Back/Forward restores scroll
+163: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+164: 
+165: #### Feedback
+166: 
+167: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+168: - MUST: Confirm destructive actions or provide Undo window
+169: - MUST: Use polite `aria-live` for toasts/inline validation
+170: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+171: 
+172: #### Touch/Drag/Scroll
+173: 
+174: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+175: - MUST: Delay first tooltip in a group; subsequent peers no delay
+176: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+177: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+178: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+179: 
+180: #### Autofocus
+181: 
+182: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+183: 
+184: ### Animation
+185: 
+186: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+187: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+188: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+189: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+190: - SHOULD: Choose easing to match the change (size/distance/trigger)
+191: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+192: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+193: 
+194: ### Layout
+195: 
+196: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+197: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+198: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+199: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+200: - MUST: Respect safe areas (use env(safe-area-inset-\*))
+201: - MUST: Avoid unwanted scrollbars; fix overflows
+202: 
+203: ### Content & Accessibility
+204: 
+205: - SHOULD: Inline help first; tooltips last resort
+206: - MUST: Skeletons mirror final content to avoid layout shift
+207: - MUST: `<title>` matches current context
+208: - MUST: No dead ends; always offer next step/recovery
+209: - MUST: Design empty/sparse/dense/error states
+210: - SHOULD: Curly quotes (" "); avoid widows/orphans
+211: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+212: - MUST: Redundant status cues (not color-only); icons have text labels
+213: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+214: - MUST: Use the ellipsis character `…` (not `...`)
+215: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+216: - MUST: Resilient to user-generated content (short/avg/very long)
+217: - MUST: Locale-aware dates/times/numbers/currency
+218: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+219: - MUST: Icon-only buttons have descriptive `aria-label`
+220: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+221: - SHOULD: Right-clicking the nav logo surfaces brand assets
+222: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+223: 
+224: ### Performance
+225: 
+226: - SHOULD: Test iOS Low Power Mode and macOS Safari
+227: - MUST: Measure reliably (disable extensions that skew runtime)
+228: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+229: - MUST: Profile with CPU/network throttling
+230: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+231: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+232: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+233: - MUST: Virtualize large lists (eg, `virtua`)
+234: - MUST: Preload only above-the-fold images; lazy-load the rest
+235: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+236: 
+237: ### Design
+238: 
+239: - SHOULD: Layered shadows (ambient + direct)
+240: - SHOULD: Crisp edges via semi-transparent borders + shadows
+241: - SHOULD: Nested radii: child ≤ parent; concentric
+242: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+243: - MUST: Accessible charts (color-blind-friendly palettes)
+244: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+245: - MUST: Increase contrast on `:hover/:active/:focus`
+246: - SHOULD: Match browser UI to bg
+247: - SHOULD: Avoid gradient banding (use masks when needed)
+248: 
+249: ## Security — Supply Chain Defense
+250: 
+251: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
+252: 
+253: ### Package Installation Defenses
+254: 
+255: | Defense                             | Config File               | Notes                                                                                       |
+256: | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+257: | `ignore-scripts=true`               | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
+258: | `allowBuilds` whitelist             | `pnpm-workspace.yaml`     | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
+259: | `minimum-release-age=2880`          | `.npmrc`                  | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions           |
+260: | `block-exotic-subdependencies=true` | `.npmrc`                  | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources  |
+261: | `--frozen-lockfile`                 | All CI workflows          | Prevents lockfile modification during CI installs                                           |
+262: | `engine-strict=true`                | `.npmrc`                  | Fails if Node.js version doesn't match engines field                                        |
+263: | Vulnerability overrides             | `studio/package.json`     | Known CVEs patched via pnpm overrides                                                       |
+264: 
+265: ### Automated Dependency Updates
+266: 
+267: | Defense                        | Config File     | Notes                                                        |
+268: | ------------------------------ | --------------- | ------------------------------------------------------------ |
+269: | 7-day minimum release age      | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h)     |
+270: | OpenSSF Scorecard              | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
+271: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review                          |
+272: 
+273: ### CI/CD Security
+274: 
+275: | Defense                           | Config File            | Notes                                                             |
+276: | --------------------------------- | ---------------------- | ----------------------------------------------------------------- |
+277: | SHA-pinned GitHub Actions         | All workflows          | All `uses:` references pinned to commit SHAs, never floating tags |
+278: | No `pull_request_target`          | All workflows          | NEVER use this trigger — it enables cache poisoning attacks       |
+279: | Least-privilege permissions       | All workflows          | Every workflow specifies minimal `permissions` block              |
+280: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches     |
+281: | Pinned global installs            | `repomix.yml`          | Global npm packages pinned to exact versions                      |
+282: | Lockfile-backed studio installs   | `snyk-scan.yml`        | Uses `npm ci` with committed `package-lock.json`                  |
+283: 
+284: ### Security Scanning
+285: 
+286: | Tool     | Workflow        | Purpose                                                               |
+287: | -------- | --------------- | --------------------------------------------------------------------- |
+288: | Snyk     | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring                        |
+289: | Trivy    | `security.yml`  | Filesystem vulnerability scanning (CRITICAL/HIGH)                     |
+290: | Semgrep  | `security.yml`  | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
+291: | CodeQL   | `codeql.yml`    | GitHub native code analysis with security-and-quality queries         |
+292: | Gitleaks | `security.yml`  | Secret detection in commits                                           |
+293: 
+294: ### Rules for Agents
+295: 
+296: - **NEVER** add `pull_request_target` to any workflow
+297: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
+298: - **NEVER** use `npm install -g <package>` without a pinned version in CI
+299: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
+300: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
+301: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
+302: - **ALWAYS** add explicit `permissions` blocks to new workflows
+303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
+304: - Full hardening plan available at `plans/supply-chain-hardening.md`
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -20374,6 +20758,45 @@ vercel.json
 1: {}
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["main"]
+ 5:   pull_request:
+ 6:     branches: ["main"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
 ## File: .github/workflows/security.yml
 ````yaml
  1: name: OWASP Security Scan
@@ -20440,6 +20863,82 @@ vercel.json
 62:           severity: CRITICAL,HIGH
 63:           exit-code: 1
 64:           format: table
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/app/api/form/route.ts
@@ -20673,197 +21172,6 @@ vercel.json
 24: }
 ````
 
-## File: src/lib/sanity/content.ts
-````typescript
-  1: import "server-only";
-  2: import { sanityFetch } from "@/lib/sanity/client";
-  3: import { isSanityApiError } from "@/types/sanity-errors";
-  4: import type {
-  5:   Cv,
-  6:   Navigation,
-  7:   Page,
-  8:   Project,
-  9:   Settings,
- 10: } from "@/types/sanity.types";
- 11: /**
- 12:  * The content module: the single interface between the app and Sanity.
- 13:  *
- 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
- 15:  * implementation details of this module. Routes call the named functions
- 16:  * below and receive typed data or a well-mapped error — nothing else
- 17:  * crosses the seam.
- 18:  *
- 19:  * Every content type is tagged, so the /api/revalidate webhook can
- 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
- 21:  * window acts as a fallback when no webhook fires.
- 22:  */
- 23: const REVALIDATE_SECONDS = 86400; // 24 hours
- 24: /** Cache tags — the /api/revalidate route accepts any of these. */
- 25: export const CONTENT_TAGS = {
- 26:   projects: "projects",
- 27:   cv: "cv",
- 28:   pageContent: "page-content",
- 29:   navigation: "navigation",
- 30:   settings: "settings",
- 31: } as const;
- 32: const projectsQuery = `
- 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
- 34:     id,
- 35:     name,
- 36:     description,
- 37:     subdescription,
- 38:     projectcategory->{
- 39:       _id,
- 40:       title
- 41:     },
- 42:     urlwww[]{
- 43:       ...,
- 44:       _key,
- 45:     },
- 46:     urlgithub[]{
- 47:       ...,
- 48:       _key,
- 49:     },
- 50:     projectimage,
- 51:     featured,
- 52:     featureOrder
- 53:   }
- 54: `;
- 55: const cvQuery = `
- 56:   *[_type == "cv"][0] {
- 57:     keyQualifications,
- 58:     experience[] {
- 59:       period,
- 60:       company,
- 61:       role,
- 62:       description
- 63:     },
- 64:     education[] {
- 65:       period,
- 66:       institution,
- 67:       degree,
- 68:       description
- 69:     },
- 70:     volunteerWork[] {
- 71:       period,
- 72:       organization,
- 73:       role,
- 74:       description
- 75:     }
- 76:   }
- 77: `;
- 78: const pageContentQuery = `
- 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
- 80:     "id": _id,
- 81:     title,
- 82:     hero,
- 83:     content
- 84:   }
- 85: `;
- 86: const navigationQuery = `
- 87:   *[_type == "navigation"][0] {
- 88:     title,
- 89:     links[] {
- 90:       title,
- 91:       name,
- 92:       hash,
- 93:       href,
- 94:       externalLink
- 95:     }
- 96:   }
- 97: `;
- 98: const settingsQuery = `
- 99:   *[_type == "settings"][0] {
-100:     footerCopyrightText
-101:   }
-102: `;
-103: /**
-104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
-105:  * Applied uniformly to every content fetch — this is the only place in the
-106:  * codebase that knows what a Sanity error looks like.
-107:  */
-108: function mapError(error: unknown, entity: string): never {
-109:   console.error("Error fetching content:", entity, error);
-110:   if (isSanityApiError(error)) {
-111:     switch (error.statusCode) {
-112:       case 401:
-113:         throw new Error("Authentication failed");
-114:       case 403:
-115:         throw new Error("Insufficient permissions");
-116:       case 429:
-117:         throw new Error("Rate limit exceeded");
-118:       default:
-119:         throw new Error(`Sanity API error: ${error.message}`);
-120:     }
-121:   }
-122:   if (error instanceof Error && error.name === "TimeoutError") {
-123:     throw new Error("Request timed out");
-124:   }
-125:   throw new Error(`Failed to fetch ${entity}`);
-126: }
-127: async function fetchContent<T>(
-128:   entity: string,
-129:   query: string,
-130:   tag: string,
-131: ): Promise<T> {
-132:   try {
-133:     return await sanityFetch<T>({
-134:       query,
-135:       revalidate: REVALIDATE_SECONDS,
-136:       tags: [tag],
-137:     });
-138:   } catch (error) {
-139:     mapError(error, entity);
-140:   }
-141: }
-142: /** All published projects, ordered by featureOrder. */
-143: export function getProjects(): Promise<Project[]> {
-144:   return fetchContent<Project[]>(
-145:     "projects",
-146:     projectsQuery,
-147:     CONTENT_TAGS.projects,
-148:   );
-149: }
-150: /** The CV document, or null when none is published. */
-151: export function getCv(): Promise<Cv | null> {
-152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
-153: }
-154: /** Home page content (hero + sections), or null when missing. */
-155: export function getPageContent(): Promise<Page | null> {
-156:   return fetchContent<Page | null>(
-157:     "page content",
-158:     pageContentQuery,
-159:     CONTENT_TAGS.pageContent,
-160:   );
-161: }
-162: /** Site navigation links. */
-163: export function getNavigation(): Promise<Navigation> {
-164:   return fetchContent<Navigation>(
-165:     "navigation",
-166:     navigationQuery,
-167:     CONTENT_TAGS.navigation,
-168:   );
-169: }
-170: /** Site-wide settings (footer text etc.). */
-171: export function getSettings(): Promise<Settings> {
-172:   return fetchContent<Settings>(
-173:     "settings",
-174:     settingsQuery,
-175:     CONTENT_TAGS.settings,
-176:   );
-177: }
-178: /**
-179:  * Kicks off the projects fetch without awaiting it, so the request is
-180:  * already in flight when the Suspense boundary renders. Next.js dedupes
-181:  * the underlying fetch, so the awaited call in the page reuses it.
-182:  */
-183: export function preloadProjects(): void {
-184:   void getProjects().catch(() => {
-185:     // Swallow here; the awaited call in the page surfaces the error.
-186:   });
-187: }
-````
-
 ## File: src/lib/csrf.ts
 ````typescript
  1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
@@ -20998,314 +21306,6 @@ vercel.json
 11:         created: 2026-08-29T00:00:00.000Z
 12: 
 13: patch: {}
-````
-
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
- 18: 
- 19: ## Critical Commands
- 20: 
- 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 25: 
- 26: ## Testing Gotchas
- 27: 
- 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 30: - Matrix component intentionally excluded from test coverage
- 31: - Cypress and Playwright have different ESLint rule overrides
- 32: 
- 33: ## Code Quality Principles
- 34: 
- 35: ### SOLID Principles
- 36: 
- 37: #### Single Responsibility Principle (SRP)
- 38: 
- 39: Each component/function should have one reason to change.
- 40: 
- 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 42: - **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
- 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 44: 
- 45: #### Open/Closed Principle (OCP)
- 46: 
- 47: Software should be open for extension, closed for modification.
- 48: 
- 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 50: - Create generic components that can be customized without modifying source
- 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 52: 
- 53: #### Liskov Substitution Principle (LSP)
- 54: 
- 55: Components accepting a type should work with any subtype.
- 56: 
- 57: - Ensure prop interfaces are respected by all implementations
- 58: - Don't throw unexpected errors or require undocumented props
- 59: - **Benefits**: Predictable behavior, safer component hierarchies
- 60: 
- 61: #### Interface Segregation Principle (ISP)
- 62: 
- 63: Don't force components to depend on props they don't use.
- 64: 
- 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 66: - Split large prop types into smaller, composable ones
- 67: - **Benefits**: More flexible components, easier to implement and test
- 68: 
- 69: #### Dependency Inversion Principle (DIP)
- 70: 
- 71: Depend on abstractions, not concrete implementations.
- 72: 
- 73: - Use dependency injection for services (e.g., pass clients as props or use context)
- 74: - Define abstract types/interfaces, inject implementations
- 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 76: 
- 77: ### DRY Principle (Don't Repeat Yourself)
- 78: 
- 79: - Extract repeated UI patterns into reusable components
- 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 81: - Use custom hooks for shared stateful logic
- 82: - Avoid duplicating business logic across components
- 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 84: 
- 85: ### KISS Principle (Keep It Simple, Stupid)
- 86: 
- 87: - Use React/Next.js built-in features before custom solutions
- 88: - Write self-explanatory code with clear naming
- 89: - Avoid over-engineering simple problems
- 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 91: - Minimize dependencies
- 92: - Start simple, add complexity only when necessary
- 93: - **Benefits**: Easier to understand, faster development, fewer bugs
- 94: 
- 95: ### YAGNI Principle (You Aren't Gonna Need It)
- 96: 
- 97: Don't implement functionality until it's actually needed.
- 98: 
- 99: - Focus on current requirements, not hypothetical future needs
-100: - Don't create abstraction layers for single implementations
-101: - Avoid premature optimization before measuring performance
-102: - Don't build configuration systems until configurability is required
-103: - Wait for actual use cases before adding flexibility
-104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
-105: 
-106: ### Code Quality Summary
-107: 
-108: Following these principles results in:
-109: 
-110: - Maintainable, extendable code
-111: - Fewer bugs and faster debugging
-112: - Better team collaboration
-113: - Professional quality standards
-114: - Easier testing and refactoring
-115: 
-116: ## UI Development Rules
-117: 
-118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-119: 
-120: ### Interactions
-121: 
-122: #### Keyboard
-123: 
-124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-126: - MUST: Manage focus (trap, move, and return) per APG patterns
-127: 
-128: #### Targets & Input
-129: 
-130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-131: - MUST: Mobile `<input>` font-size ≥16px or set:
-132:   ```html
-133:   <meta
-134:     name="viewport"
-135:     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
-136:   />
-137:   ```
-138: - NEVER: Disable browser zoom
-139: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-140: 
-141: #### Inputs & Forms (Behavior)
-142: 
-143: - MUST: Hydration-safe inputs (no lost focus/value)
-144: - NEVER: Block paste in `<input>/<textarea>`
-145: - MUST: Loading buttons show spinner and keep original label
-146: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-147: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-148: - MUST: Don't block typing; accept free text and validate after
-149: - MUST: Allow submitting incomplete forms to surface validation
-150: - MUST: Errors inline next to fields; on submit, focus first error
-151: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-152: - SHOULD: Disable spellcheck for emails/codes/usernames
-153: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-154: - MUST: Warn on unsaved changes before navigation
-155: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-156: - MUST: Trim values to handle text expansion trailing spaces
-157: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-158: 
-159: #### State & Navigation
-160: 
-161: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-162: - MUST: Back/Forward restores scroll
-163: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-164: 
-165: #### Feedback
-166: 
-167: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-168: - MUST: Confirm destructive actions or provide Undo window
-169: - MUST: Use polite `aria-live` for toasts/inline validation
-170: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-171: 
-172: #### Touch/Drag/Scroll
-173: 
-174: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-175: - MUST: Delay first tooltip in a group; subsequent peers no delay
-176: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-177: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-178: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-179: 
-180: #### Autofocus
-181: 
-182: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-183: 
-184: ### Animation
-185: 
-186: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-187: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-188: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-189: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-190: - SHOULD: Choose easing to match the change (size/distance/trigger)
-191: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-192: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-193: 
-194: ### Layout
-195: 
-196: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-197: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-198: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-199: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-200: - MUST: Respect safe areas (use env(safe-area-inset-\*))
-201: - MUST: Avoid unwanted scrollbars; fix overflows
-202: 
-203: ### Content & Accessibility
-204: 
-205: - SHOULD: Inline help first; tooltips last resort
-206: - MUST: Skeletons mirror final content to avoid layout shift
-207: - MUST: `<title>` matches current context
-208: - MUST: No dead ends; always offer next step/recovery
-209: - MUST: Design empty/sparse/dense/error states
-210: - SHOULD: Curly quotes (" "); avoid widows/orphans
-211: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-212: - MUST: Redundant status cues (not color-only); icons have text labels
-213: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-214: - MUST: Use the ellipsis character `…` (not `...`)
-215: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-216: - MUST: Resilient to user-generated content (short/avg/very long)
-217: - MUST: Locale-aware dates/times/numbers/currency
-218: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-219: - MUST: Icon-only buttons have descriptive `aria-label`
-220: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-221: - SHOULD: Right-clicking the nav logo surfaces brand assets
-222: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-223: 
-224: ### Performance
-225: 
-226: - SHOULD: Test iOS Low Power Mode and macOS Safari
-227: - MUST: Measure reliably (disable extensions that skew runtime)
-228: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-229: - MUST: Profile with CPU/network throttling
-230: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-231: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-232: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-233: - MUST: Virtualize large lists (eg, `virtua`)
-234: - MUST: Preload only above-the-fold images; lazy-load the rest
-235: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-236: 
-237: ### Design
-238: 
-239: - SHOULD: Layered shadows (ambient + direct)
-240: - SHOULD: Crisp edges via semi-transparent borders + shadows
-241: - SHOULD: Nested radii: child ≤ parent; concentric
-242: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-243: - MUST: Accessible charts (color-blind-friendly palettes)
-244: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-245: - MUST: Increase contrast on `:hover/:active/:focus`
-246: - SHOULD: Match browser UI to bg
-247: - SHOULD: Avoid gradient banding (use masks when needed)
-248: 
-249: ## Security — Supply Chain Defense
-250: 
-251: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
-252: 
-253: ### Package Installation Defenses
-254: 
-255: | Defense                             | Config File               | Notes                                                                                       |
-256: | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
-257: | `ignore-scripts=true`               | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
-258: | `allowBuilds` whitelist             | `pnpm-workspace.yaml`     | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
-259: | `minimum-release-age=2880`          | `.npmrc`                  | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions           |
-260: | `block-exotic-subdependencies=true` | `.npmrc`                  | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources  |
-261: | `--frozen-lockfile`                 | All CI workflows          | Prevents lockfile modification during CI installs                                           |
-262: | `engine-strict=true`                | `.npmrc`                  | Fails if Node.js version doesn't match engines field                                        |
-263: | Vulnerability overrides             | `studio/package.json`     | Known CVEs patched via pnpm overrides                                                       |
-264: 
-265: ### Automated Dependency Updates
-266: 
-267: | Defense                        | Config File     | Notes                                                        |
-268: | ------------------------------ | --------------- | ------------------------------------------------------------ |
-269: | 7-day minimum release age      | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h)     |
-270: | OpenSSF Scorecard              | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
-271: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review                          |
-272: 
-273: ### CI/CD Security
-274: 
-275: | Defense                           | Config File            | Notes                                                             |
-276: | --------------------------------- | ---------------------- | ----------------------------------------------------------------- |
-277: | SHA-pinned GitHub Actions         | All workflows          | All `uses:` references pinned to commit SHAs, never floating tags |
-278: | No `pull_request_target`          | All workflows          | NEVER use this trigger — it enables cache poisoning attacks       |
-279: | Least-privilege permissions       | All workflows          | Every workflow specifies minimal `permissions` block              |
-280: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches     |
-281: | Pinned global installs            | `repomix.yml`          | Global npm packages pinned to exact versions                      |
-282: | Lockfile-backed studio installs   | `snyk-scan.yml`        | Uses `npm ci` with committed `package-lock.json`                  |
-283: 
-284: ### Security Scanning
-285: 
-286: | Tool     | Workflow        | Purpose                                                               |
-287: | -------- | --------------- | --------------------------------------------------------------------- |
-288: | Snyk     | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring                        |
-289: | Trivy    | `security.yml`  | Filesystem vulnerability scanning (CRITICAL/HIGH)                     |
-290: | Semgrep  | `security.yml`  | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
-291: | CodeQL   | `codeql.yml`    | GitHub native code analysis with security-and-quality queries         |
-292: | Gitleaks | `security.yml`  | Secret detection in commits                                           |
-293: 
-294: ### Rules for Agents
-295: 
-296: - **NEVER** add `pull_request_target` to any workflow
-297: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
-298: - **NEVER** use `npm install -g <package>` without a pinned version in CI
-299: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
-300: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
-301: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
-302: - **ALWAYS** add explicit `permissions` blocks to new workflows
-303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
-304: - Full hardening plan available at `plans/supply-chain-hardening.md`
 ````
 
 ## File: jest.setup.ts
