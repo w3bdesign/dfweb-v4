@@ -79,10 +79,6 @@ Sanity.io and Typescript.
 - Efficient data fetching in `/prosjekter` using Next.js preloading,
   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
   around 1 second.
-- Recommended:
-  [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
-  for enhanced GROQ query development, including syntax highlighting when using
-  `defineQuery`.
 
 ### Design
 

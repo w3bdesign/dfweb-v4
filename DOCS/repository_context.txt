@@ -580,45 +580,6 @@ vercel.json
 15: ]
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
- 1: name: "CodeQL"
- 2: on:
- 3:   push:
- 4:     branches: ["main"]
- 5:   pull_request:
- 6:     branches: ["main"]
- 7:   schedule:
- 8:     - cron: "0 0 * * *"
- 9: jobs:
-10:   analyze:
-11:     name: Analyze
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     permissions:
-15:       actions: read
-16:       contents: read
-17:       security-events: write
-18:     strategy:
-19:       fail-fast: false
-20:       matrix:
-21:         language: [javascript]
-22:     steps:
-23:       - name: Checkout
-24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-25:       - name: Initialize CodeQL
-26:         uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-27:         with:
-28:           languages: ${{ matrix.language }}
-29:           queries: +security-and-quality
-30:       - name: Autobuild
-31:         uses: github/codeql-action/autobuild@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-32:       - name: Perform CodeQL Analysis
-33:         uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-34:         with:
-35:           category: "/language:${{ matrix.language }}"
-````
-
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -1092,82 +1053,6 @@ vercel.json
 81:           else
 82:             echo "No changes detected in repository_context.txt"
 83:           fi
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: .github/copilot-instructions.md
@@ -2922,6 +2807,297 @@ vercel.json
 43: echo "Next steps:"
 44: echo "1. Edit .env and add your API key (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
 45: echo "2. Make a commit to test the AI commit message generator"
+````
+
+## File: DOCS/architecture-review-2026-08-24.html
+````html
+  1: <!doctype html>
+  2: <html lang="en">
+  3:   <head>
+  4:     <meta charset="utf-8" />
+  5:     <title>Architecture review for dfweb-v4</title>
+  6:     <script src="https://cdn.tailwindcss.com"></script>
+  7:     <script type="module">
+  8:       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  9:       mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+ 10:     </script>
+ 11:     <style>
+ 12:       .seam { stroke-dasharray: 4 4; }
+ 13:       .leak { stroke: #dc2626; }
+ 14:       .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+ 15:       .module-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
+ 16:     </style>
+ 17:   </head>
+ 18:   <body class="bg-stone-50 text-slate-900 font-sans">
+ 19:     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+ 20:       <header class="space-y-3">
+ 21:         <h1 class="font-serif text-3xl">Architecture review · dfweb-v4</h1>
+ 22:         <p class="text-sm text-slate-500">2026-08-24 · Next.js 15 portfolio · Sanity CMS</p>
+ 23:         <div class="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
+ 24:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 border border-slate-500 bg-white"></span> module</span>
+ 25:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#64748b" stroke-width="1.5" class="seam"/></svg> seam</span>
+ 26:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#dc2626" stroke-width="2"/></svg> leakage</span>
+ 27:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 deep rounded-sm"></span> deep module</span>
+ 28:         </div>
+ 29:       </header>
+ 30:       <section id="candidates" class="space-y-10">
+ 31:         <!-- ============ CANDIDATE 1 ============ -->
+ 32:         <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+ 33:           <div class="flex items-start justify-between gap-4">
+ 34:             <h2 class="font-serif text-2xl">Deepen the content module</h2>
+ 35:             <div class="flex gap-2 shrink-0">
+ 36:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+ 37:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+ 38:             </div>
+ 39:           </div>
+ 40:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+ 41:             src/lib/sanity/client.ts · src/lib/sanity/queries.ts · src/app/prosjekter/actions.ts ·
+ 42:             src/app/page.tsx · src/app/cv/page.tsx · src/app/layout.tsx
+ 43:           </p>
+ 44:           <div class="grid md:grid-cols-2 gap-4">
+ 45:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+ 46:               <p class="module-label text-slate-400 mb-2">Before</p>
+ 47:               <pre class="mermaid">
+ 48: flowchart TB
+ 49:   HP[page.tsx] --> SF[sanityFetch]
+ 50:   HP --> Q[queries.ts]
+ 51:   CV[cv/page.tsx] --> SF
+ 52:   CV --> Q
+ 53:   LY[layout.tsx] --> SF
+ 54:   LY --> Q
+ 55:   PR[prosjekter/actions.ts] --> SF
+ 56:   PR --> Q
+ 57:   PR --> EH[error mapping<br/>+ unstable_cache]
+ 58:   HP -. no error handling .-> X1[ ]
+ 59:   CV -. no error handling .-> X1
+ 60:   classDef leak stroke:#dc2626,stroke-width:2px;
+ 61:   class HP,CV,LY leak
+ 62:   classDef ghost fill:none,stroke:none;
+ 63:   class X1 ghost
+ 64:               </pre>
+ 65:             </div>
+ 66:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
+ 67:               <p class="module-label text-slate-400 mb-2">After</p>
+ 68:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
+ 69:                 <div class="flex gap-2">
+ 70:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">home</div>
+ 71:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">cv</div>
+ 72:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">layout</div>
+ 73:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">prosjekter</div>
+ 74:                 </div>
+ 75:                 <svg width="200" height="28"><line x1="100" y1="0" x2="100" y2="28" stroke="#64748b" stroke-width="1.5"/><polygon points="95,20 105,20 100,28" fill="#64748b"/></svg>
+ 76:                 <div class="deep text-white rounded-lg px-6 py-4 w-full max-w-xs text-center">
+ 77:                   <p class="module-label text-emerald-300">content module</p>
+ 78:                   <p class="text-xs mt-1 font-mono">getProjects() · getCv() · getPageContent() · getNavigation() · getSettings()</p>
+ 79:                   <p class="text-[0.6rem] mt-2 text-slate-400">GROQ · caching · revalidation · error mapping — all internal</p>
+ 80:                 </div>
+ 81:               </div>
+ 82:             </div>
+ 83:           </div>
+ 84:           <dl class="space-y-2 text-sm">
+ 85:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Every route reaches through the seam: raw GROQ query + revalidate number + type parameter assembled at each call site, and only <span class="font-mono text-xs">prosjekter</span> gets error mapping.</dd></div>
+ 86:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep content module: five named functions, GROQ / cache policy / error mapping become implementation.</dd></div>
+ 87:           </dl>
+ 88:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+ 89:             <li>Leverage: one interface, five call sites</li>
+ 90:             <li>Locality: error mapping in one module</li>
+ 91:             <li>Interface shrinks; queries become implementation</li>
+ 92:             <li>Tests hit one interface, not mocks-of-mocks</li>
+ 93:             <li>Cache policy stops leaking into routes</li>
+ 94:           </ul>
+ 95:         </article>
+ 96:         <!-- ============ CANDIDATE 2 ============ -->
+ 97:         <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+ 98:           <div class="flex items-start justify-between gap-4">
+ 99:             <h2 class="font-serif text-2xl">One seam for contact submission</h2>
+100:             <div class="flex gap-2 shrink-0">
+101:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+102:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">ports &amp; adapters</span>
+103:             </div>
+104:           </div>
+105:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+106:             src/components/Kontakt/ContactForm.component.tsx · src/app/api/form/route.ts ·
+107:             src/stories/components/Kontakt/ContactFormWithMocks.tsx
+108:           </p>
+109:           <div class="grid md:grid-cols-2 gap-4">
+110:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+111:               <p class="module-label text-slate-400 mb-2">Before</p>
+112:               <pre class="mermaid">
+113: sequenceDiagram
+114:   participant U as User
+115:   participant F as ContactForm
+116:   participant E as EmailJS
+117:   participant A as /api/form
+118:   U->>F: submit
+119:   F->>E: send (JS path)
+120:   Note over F,E: env keys + init inline in the UI module
+121:   U-->>A: submit (no-JS path)
+122:   A->>A: CSRF + Zod validate
+123:   A-->>U: "success" — but nothing sent
+124:               </pre>
+125:             </div>
+126:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
+127:               <p class="module-label text-slate-400 mb-2">After</p>
+128:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
+129:                 <div class="border border-slate-400 bg-white px-4 py-2 module-label">contact form (UI only)</div>
+130:                 <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
+131:                 <div class="deep text-white rounded-lg px-6 py-3 text-center w-full max-w-xs">
+132:                   <p class="module-label text-emerald-300">submission module</p>
+133:                   <p class="text-xs font-mono mt-1">submitContactForm(data)</p>
+134:                 </div>
+135:                 <svg width="200" height="24">
+136:                   <line x1="100" y1="0" x2="40" y2="24" stroke="#64748b" stroke-width="1.5"/>
+137:                   <line x1="100" y1="0" x2="160" y2="24" stroke="#64748b" stroke-width="1.5"/>
+138:                 </svg>
+139:                 <div class="flex gap-3">
+140:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">emailjs adapter</div>
+141:                   <div class="border border-dashed border-slate-400 bg-white px-3 py-1.5 module-label">in-memory adapter (tests / stories)</div>
+142:                 </div>
+143:               </div>
+144:             </div>
+145:           </div>
+146:           <dl class="space-y-2 text-sm">
+147:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Submission leaks across the seam: EmailJS keys and transport live inside the UI module, while <span class="font-mono text-xs">/api/form</span> validates and returns success without sending anything.</dd></div>
+148:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One submission module behind one interface; EmailJS as one adapter, in-memory as the second.</dd></div>
+149:           </dl>
+150:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+151:             <li>Two adapters justify the seam</li>
+152:             <li>Transport stops leaking into the UI module</li>
+153:             <li>Stories drop the hand-rolled mock wrapper</li>
+154:             <li>Locality: send-failure handling in one module</li>
+155:             <li>No-JS path and JS path converge</li>
+156:           </ul>
+157:         </article>
+158:         <!-- ============ CANDIDATE 3 ============ -->
+159:         <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+160:           <div class="flex items-start justify-between gap-4">
+161:             <h2 class="font-serif text-2xl">Collapse the reveal animations</h2>
+162:             <div class="flex gap-2 shrink-0">
+163:               <span class="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">Worth exploring</span>
+164:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+165:             </div>
+166:           </div>
+167:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+168:             src/components/Animations/FadeIn.component.tsx · FadeInScroll.component.tsx ·
+169:             BounceInScroll.component.tsx · Grow.component.tsx · animation-utils.ts
+170:           </p>
+171:           <!-- Mass diagram, hand-built -->
+172:           <div class="grid md:grid-cols-2 gap-4">
+173:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+174:               <p class="module-label text-slate-400 mb-3">Before · four shallow modules</p>
+175:               <div class="flex items-end justify-around h-56">
+176:                 <div class="flex flex-col items-center gap-1 w-16">
+177:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px" title="interface"></div>
+178:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:80px" title="implementation"></div>
+179:                   <p class="module-label text-slate-500">FadeIn</p>
+180:                 </div>
+181:                 <div class="flex flex-col items-center gap-1 w-16">
+182:                   <div class="w-full bg-red-200 border border-red-400" style="height:75px"></div>
+183:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:85px"></div>
+184:                   <p class="module-label text-slate-500">FadeInScroll</p>
+185:                 </div>
+186:                 <div class="flex flex-col items-center gap-1 w-16">
+187:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px"></div>
+188:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:95px"></div>
+189:                   <p class="module-label text-slate-500">BounceInScroll</p>
+190:                 </div>
+191:                 <div class="flex flex-col items-center gap-1 w-16">
+192:                   <div class="w-full bg-red-200 border border-red-400" style="height:60px"></div>
+193:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:70px"></div>
+194:                   <p class="module-label text-slate-500">Grow</p>
+195:                 </div>
+196:               </div>
+197:               <p class="text-xs text-slate-500 mt-2"><span class="inline-block w-3 h-3 bg-red-200 border border-red-400 align-middle"></span> interface · <span class="inline-block w-3 h-3 bg-slate-300 border border-slate-400 align-middle"></span> implementation — nearly the same height: shallow</p>
+198:             </div>
+199:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+200:               <p class="module-label text-slate-400 mb-3">After · one deep module</p>
+201:               <div class="flex items-end justify-center h-56">
+202:                 <div class="flex flex-col items-center gap-1 w-40">
+203:                   <div class="w-full bg-emerald-200 border border-emerald-500" style="height:28px" title="interface: variant, delay, viewAmount"></div>
+204:                   <div class="w-full deep rounded-sm text-white flex flex-col items-center justify-center gap-1" style="height:170px">
+205:                     <p class="text-[0.6rem] text-slate-400">fade · bounce · grow variants</p>
+206:                     <p class="text-[0.6rem] text-slate-400">will-change lifecycle</p>
+207:                     <p class="text-[0.6rem] text-slate-400">scroll vs mount trigger</p>
+208:                     <p class="text-[0.6rem] text-emerald-300">prefers-reduced-motion (new, once)</p>
+209:                   </div>
+210:                   <p class="module-label text-slate-500">Reveal</p>
+211:                 </div>
+212:               </div>
+213:               <p class="text-xs text-slate-500 mt-2">Short interface, tall implementation: deep</p>
+214:             </div>
+215:           </div>
+216:           <dl class="space-y-2 text-sm">
+217:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Four modules whose interfaces nearly match their implementations; will-change handling duplicated in two, absent in two; reduced-motion honored in none.</dd></div>
+218:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep Reveal module with a variant on the interface; deletion test passes — complexity concentrates, wrappers go.</dd></div>
+219:           </dl>
+220:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+221:             <li>Delete 3 shallow modules</li>
+222:             <li>Reduced-motion implemented once, everywhere</li>
+223:             <li>Locality: motion bugs land in one module</li>
+224:             <li>4 test files become 1 richer one</li>
+225:           </ul>
+226:         </article>
+227:         <!-- ============ CANDIDATE 4 ============ -->
+228:         <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+229:           <div class="flex items-start justify-between gap-4">
+230:             <h2 class="font-serif text-2xl">Shrink the CSRF surface</h2>
+231:             <div class="flex gap-2 shrink-0">
+232:               <span class="rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1">Speculative</span>
+233:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+234:             </div>
+235:           </div>
+236:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+237:             src/lib/csrf.ts · src/app/api/csrf-token/route.ts · src/app/api/form/route.ts · src/app/kontakt/page.tsx
+238:           </p>
+239:           <!-- Cross-section, hand-built -->
+240:           <div class="grid md:grid-cols-2 gap-4">
+241:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-1">
+242:               <p class="module-label text-slate-400 mb-2">Before · token reaches the form three ways</p>
+243:               <div class="h-11 border-l-4 border-slate-400 bg-white px-3 flex items-center text-xs">kontakt/page.tsx generates server-side → prop</div>
+244:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">GET /api/csrf-token exists — no caller found</div>
+245:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">/api/form accepts <span class="font-mono mx-1">_csrf</span> or <span class="font-mono mx-1">csrfToken</span> — two names, one seam</div>
+246:               <div class="h-11 border-l-4 border-amber-500 bg-amber-50 px-3 flex items-center text-xs">fallback secret "default-csrf-secret-…" silently used if env missing</div>
+247:             </div>
+248:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col justify-center items-center gap-2">
+249:               <p class="module-label text-slate-400 self-start mb-2">After · one path, one name</p>
+250:               <div class="deep text-white rounded-lg px-6 py-4 text-center w-full max-w-xs">
+251:                 <p class="module-label text-emerald-300">csrf module</p>
+252:                 <p class="text-xs font-mono mt-1">issueToken() · assertValid(token)</p>
+253:                 <p class="text-[0.6rem] mt-2 text-slate-400">one field name · throws on missing secret in prod</p>
+254:               </div>
+255:               <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
+256:               <div class="flex gap-3">
+257:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">kontakt page</div>
+258:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">/api/form</div>
+259:               </div>
+260:               <p class="text-xs text-slate-500 mt-1">GET /api/csrf-token deleted (deletion test: passes)</p>
+261:             </div>
+262:           </div>
+263:           <dl class="space-y-2 text-sm">
+264:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Three entry points and two token field names for one flow; the standalone token route has no caller.</dd></div>
+265:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">Delete the unused route, settle on one field name, fail loudly on missing secret.</dd></div>
+266:           </dl>
+267:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+268:             <li>Interface shrinks: two functions, one field name</li>
+269:             <li>Delete one route module</li>
+270:             <li>Silent insecure fallback becomes a loud failure</li>
+271:           </ul>
+272:         </article>
+273:       </section>
+274:       <!-- ============ TOP RECOMMENDATION ============ -->
+275:       <section id="top-recommendation" class="rounded-xl deep text-white p-8 space-y-3">
+276:         <p class="module-label text-emerald-300">Top recommendation</p>
+277:         <h2 class="font-serif text-2xl"><a href="#c1" class="underline decoration-emerald-400 underline-offset-4">Deepen the content module</a></h2>
+278:         <p class="text-sm text-slate-300 max-w-2xl">
+279:           Highest leverage: every route in the app crosses this seam, the error-mapping asymmetry is a live bug class,
+280:           and the test suite already strains against it — mocking <span class="font-mono text-xs">sanityFetch</span> and
+281:           <span class="font-mono text-xs">unstable_cache</span> separately in every test file. One interface, five call
+282:           sites, one place to test.
+283:         </p>
+284:       </section>
+285:     </main>
+286:   </body>
+287: </html>
 ````
 
 ## File: DOCS/README.md
@@ -6550,222 +6726,6 @@ vercel.json
 105: });
 ````
 
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import { render, screen, fireEvent } from "@testing-library/react";
-  2: import Section from "@/components/Index/Section.component";
-  3: import { Pagecontent } from "@/types/sanity.types";
-  4: // Mock IntersectionObserver
-  5: const mockIntersectionObserver = jest.fn();
-  6: mockIntersectionObserver.mockReturnValue({
-  7:   observe: () => null,
-  8:   unobserve: () => null,
-  9:   disconnect: () => null,
- 10: });
- 11: window.IntersectionObserver = mockIntersectionObserver;
- 12: const mockProps: Pagecontent = {
- 13:   _type: "pagecontent",
- 14:   title: "Test Title",
- 15:   text: [
- 16:     {
- 17:       _key: "a1",
- 18:       _type: "block",
- 19:       children: [
- 20:         {
- 21:           _key: "a1-1",
- 22:           _type: "span",
- 23:           marks: [],
- 24:           text: "Test content",
- 25:         },
- 26:       ],
- 27:       markDefs: [],
- 28:       style: "normal",
- 29:     },
- 30:   ],
- 31: };
- 32: // Type-safe way to make NODE_ENV writable for tests
- 33: type WritableNodeEnv = {
- 34:   NODE_ENV?: string;
- 35: };
- 36: describe("Section Component", () => {
- 37:   beforeEach(() => {
- 38:     (process.env as WritableNodeEnv).NODE_ENV = "development";
- 39:   });
- 40:   afterEach(() => {
- 41:     // Reset to test environment
- 42:     (process.env as WritableNodeEnv).NODE_ENV = "test";
- 43:   });
- 44:   it("renders with valid props", () => {
- 45:     // Arrange
- 46:     render(<Section {...mockProps} />);
- 47:     // Act
- 48:     const title = screen.getByText("Test Title");
- 49:     const content = screen.getByText("Test content");
- 50:     // Assert
- 51:     expect(title).toBeInTheDocument();
- 52:     expect(content).toBeInTheDocument();
- 53:   });
- 54:   describe("error handling for invalid data", () => {
- 55:     let consoleErrorSpy: jest.SpyInstance;
- 56:     beforeEach(() => {
- 57:       consoleErrorSpy = jest
- 58:         .spyOn(console, "error")
- 59:         .mockImplementation(() => {});
- 60:     });
- 61:     afterEach(() => {
- 62:       consoleErrorSpy.mockRestore();
- 63:     });
- 64:     // Type for testing invalid props
- 65:     type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
- 66:       title?: string | null;
- 67:       text?: Pagecontent["text"] | null;
- 68:     };
- 69:     it("returns null and logs error when title is missing", () => {
- 70:       // Arrange
- 71:       const propsWithoutTitle: InvalidSectionProps = {
- 72:         ...mockProps,
- 73:         title: undefined,
- 74:       };
- 75:       // Act
- 76:       const { container } = render(
- 77:         <Section {...(propsWithoutTitle as Pagecontent)} />,
- 78:       );
- 79:       // Assert
- 80:       expect(container.firstChild).toBeNull();
- 81:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 82:         'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 83:       );
- 84:     });
- 85:     it("returns null and logs error when title is null", () => {
- 86:       // Arrange
- 87:       const propsWithNullTitle: InvalidSectionProps = {
- 88:         ...mockProps,
- 89:         title: null,
- 90:       };
- 91:       // Act
- 92:       const { container } = render(
- 93:         <Section {...(propsWithNullTitle as Pagecontent)} />,
- 94:       );
- 95:       // Assert
- 96:       expect(container.firstChild).toBeNull();
- 97:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 98:         'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 99:       );
-100:     });
-101:     it("returns null and logs error when title is empty string", () => {
-102:       // Arrange
-103:       const propsWithEmptyTitle: Pagecontent = { ...mockProps, title: "" };
-104:       // Act
-105:       const { container } = render(<Section {...propsWithEmptyTitle} />);
-106:       // Assert
-107:       expect(container.firstChild).toBeNull();
-108:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-109:         'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
-110:       );
-111:     });
-112:     it("returns null and logs error when text is missing", () => {
-113:       // Arrange
-114:       const propsWithoutText: InvalidSectionProps = {
-115:         ...mockProps,
-116:         text: undefined,
-117:       };
-118:       // Act
-119:       const { container } = render(
-120:         <Section {...(propsWithoutText as Pagecontent)} />,
-121:       );
-122:       // Assert
-123:       expect(container.firstChild).toBeNull();
-124:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-125:         "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
-126:       );
-127:     });
-128:     it("returns null and logs error when text is null", () => {
-129:       // Arrange
-130:       const propsWithNullText: InvalidSectionProps = {
-131:         ...mockProps,
-132:         text: null,
-133:       };
-134:       // Act
-135:       const { container } = render(
-136:         <Section {...(propsWithNullText as Pagecontent)} />,
-137:       );
-138:       // Assert
-139:       expect(container.firstChild).toBeNull();
-140:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-141:         "Ugyldig seksjon data: tittel=Test Title, tekst=null",
-142:       );
-143:     });
-144:     it("renders normally when text is empty array", () => {
-145:       // Arrange
-146:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
-147:       // Act
-148:       const { container } = render(<Section {...propsWithEmptyText} />);
-149:       // Assert
-150:       // Empty array is truthy in JavaScript, so the component renders
-151:       expect(container.firstChild).not.toBeNull();
-152:       expect(consoleErrorSpy).not.toHaveBeenCalled();
-153:       // The title should still be rendered
-154:       expect(screen.getByText("Test Title")).toBeInTheDocument();
-155:     });
-156:     it("returns null and logs error when both title and text are missing", () => {
-157:       // Arrange
-158:       const propsWithoutBoth: InvalidSectionProps = {
-159:         ...mockProps,
-160:         title: undefined,
-161:         text: undefined,
-162:       };
-163:       // Act
-164:       const { container } = render(
-165:         <Section {...(propsWithoutBoth as Pagecontent)} />,
-166:       );
-167:       // Assert
-168:       expect(container.firstChild).toBeNull();
-169:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-170:         "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
-171:       );
-172:     });
-173:   });
-174:   it("triggers error in development mode", () => {
-175:     // Arrange
-176:     const consoleErrorSpy = jest
-177:       .spyOn(console, "error")
-178:       .mockImplementation(() => {});
-179:     render(<Section {...mockProps} />);
-180:     const errorButton = screen.getByText("Utløs Testfeil");
-181:     // Act & Assert
-182:     expect(() => fireEvent.click(errorButton)).toThrow(
-183:       "En uventet feil har oppstått",
-184:     );
-185:     consoleErrorSpy.mockRestore();
-186:   });
-187:   it("does not show error button in production mode", () => {
-188:     // Arrange
-189:     (process.env as WritableNodeEnv).NODE_ENV = "production";
-190:     render(<Section {...mockProps} />);
-191:     // Act
-192:     const errorButton = screen.queryByText("Utløs Testfeil");
-193:     // Assert
-194:     expect(errorButton).not.toBeInTheDocument();
-195:   });
-196:   it("does not show error button when showDebugButton is false in development mode", () => {
-197:     // Arrange
-198:     render(<Section {...mockProps} showDebugButton={false} />);
-199:     // Act
-200:     const errorButton = screen.queryByText("Utløs Testfeil");
-201:     // Assert
-202:     expect(errorButton).not.toBeInTheDocument();
-203:   });
-204:   it("shows error button when showDebugButton is true in development mode", () => {
-205:     // Arrange
-206:     render(<Section {...mockProps} showDebugButton={true} />);
-207:     // Act
-208:     const errorButton = screen.getByText("Utløs Testfeil");
-209:     // Assert
-210:     expect(errorButton).toBeInTheDocument();
-211:   });
-212: });
-````
-
 ## File: src/__tests__/Kontakt/ContactForm.test.tsx
 ````typescript
   1: /**
@@ -7188,6 +7148,179 @@ vercel.json
 158: });
 ````
 
+## File: src/__tests__/lib/content.test.ts
+````typescript
+  1: import {
+  2:   getProjects,
+  3:   getCv,
+  4:   getNavigation,
+  5:   CONTENT_TAGS,
+  6: } from "@/lib/sanity/content";
+  7: import { sanityFetch } from "@/lib/sanity/client";
+  8: // Mock the Sanity client — the content module's only dependency
+  9: jest.mock("@/lib/sanity/client", () => ({
+ 10:   sanityFetch: jest.fn(),
+ 11: }));
+ 12: describe("content module", () => {
+ 13:   beforeEach(() => {
+ 14:     jest.clearAllMocks();
+ 15:   });
+ 16:   describe("getProjects", () => {
+ 17:     it("fetches projects successfully with the projects tag", async () => {
+ 18:       // Arrange
+ 19:       const mockProjects = [
+ 20:         {
+ 21:           id: "1",
+ 22:           name: "Test Project",
+ 23:           description: "Test Description",
+ 24:           subdescription: "Test Subdescription",
+ 25:           projectimage: { asset: { _ref: "test" } },
+ 26:           urlwww: [],
+ 27:           urlgithub: [],
+ 28:         },
+ 29:       ];
+ 30:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+ 31:       // Act
+ 32:       const result = await getProjects();
+ 33:       // Assert
+ 34:       expect(result).toStrictEqual(mockProjects);
+ 35:       expect(sanityFetch).toHaveBeenCalledWith({
+ 36:         query: expect.any(String),
+ 37:         revalidate: 86400, // 24 hours
+ 38:         tags: [CONTENT_TAGS.projects],
+ 39:       });
+ 40:     });
+ 41:   });
+ 42:   describe("getCv", () => {
+ 43:     it("fetches the CV with the cv tag", async () => {
+ 44:       // Arrange
+ 45:       const mockCv = { keyQualifications: ["TypeScript"] };
+ 46:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockCv);
+ 47:       // Act
+ 48:       const result = await getCv();
+ 49:       // Assert
+ 50:       expect(result).toStrictEqual(mockCv);
+ 51:       expect(sanityFetch).toHaveBeenCalledWith({
+ 52:         query: expect.any(String),
+ 53:         revalidate: 86400,
+ 54:         tags: [CONTENT_TAGS.cv],
+ 55:       });
+ 56:     });
+ 57:   });
+ 58:   describe("error mapping (applies to every content type)", () => {
+ 59:     it("handles authentication errors (401)", async () => {
+ 60:       // Arrange
+ 61:       const error = {
+ 62:         statusCode: 401,
+ 63:         message: "Invalid token",
+ 64:         details: {
+ 65:           type: "credentials",
+ 66:           description: "Invalid token provided",
+ 67:         },
+ 68:       };
+ 69:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 70:       // Act & Assert
+ 71:       await expect(getProjects()).rejects.toThrow("Authentication failed");
+ 72:     });
+ 73:     it("handles permission errors (403)", async () => {
+ 74:       // Arrange
+ 75:       const error = {
+ 76:         statusCode: 403,
+ 77:         message: "Insufficient permissions",
+ 78:         details: {
+ 79:           type: "authorization",
+ 80:           description: "Missing read access",
+ 81:         },
+ 82:       };
+ 83:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 84:       // Act & Assert
+ 85:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
+ 86:     });
+ 87:     it("handles rate limiting (429)", async () => {
+ 88:       // Arrange
+ 89:       const error = {
+ 90:         statusCode: 429,
+ 91:         message: "Too Many Requests",
+ 92:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+ 93:       };
+ 94:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+ 95:       // Act & Assert
+ 96:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+ 97:     });
+ 98:     it("handles malformed GROQ queries (400)", async () => {
+ 99:       // Arrange
+100:       const error = {
+101:         statusCode: 400,
+102:         message: "Invalid GROQ query",
+103:         details: {
+104:           type: "query_error",
+105:           description: "Syntax error in GROQ query",
+106:         },
+107:       };
+108:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+109:       // Act & Assert
+110:       await expect(getProjects()).rejects.toThrow(
+111:         "Sanity API error: Invalid GROQ query",
+112:       );
+113:     });
+114:     it("handles network timeouts", async () => {
+115:       // Arrange
+116:       const error = Object.assign(new Error("Network timeout"), {
+117:         name: "TimeoutError",
+118:       });
+119:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+120:       // Act & Assert
+121:       await expect(getProjects()).rejects.toThrow("Request timed out");
+122:     });
+123:     it("handles generic fetch errors with the entity name", async () => {
+124:       // Arrange
+125:       const error = {
+126:         message: "Fetch failed",
+127:       };
+128:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+129:       // Act & Assert
+130:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
+131:     });
+132:     it("maps errors on non-project content too", async () => {
+133:       // Arrange
+134:       const error = {
+135:         statusCode: 429,
+136:         message: "Too Many Requests",
+137:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+138:       };
+139:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+140:       // Act & Assert
+141:       await expect(getNavigation()).rejects.toThrow("Rate limit exceeded");
+142:     });
+143:     it("recovers after temporary errors", async () => {
+144:       // Arrange
+145:       const rateError = {
+146:         statusCode: 429,
+147:         message: "Too Many Requests",
+148:         details: { type: "rate_limit", description: "Rate limit exceeded" },
+149:       };
+150:       const mockProjects = [
+151:         {
+152:           id: "1",
+153:           name: "Test Project",
+154:           description: "Test Description",
+155:           subdescription: "Test Subdescription",
+156:           projectimage: { asset: { _ref: "test" } },
+157:           urlwww: [],
+158:           urlgithub: [],
+159:         },
+160:       ];
+161:       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
+162:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+163:       // Act & Assert
+164:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
+165:       const result = await getProjects();
+166:       expect(result).toStrictEqual(mockProjects);
+167:     });
+168:   });
+169: });
+````
+
 ## File: src/__tests__/Prosjekter/error.test.tsx
 ````typescript
  1: import React from "react";
@@ -7287,6 +7420,155 @@ vercel.json
 41:     });
 42:   });
 43: });
+````
+
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  6: // Define the project type
+  7: interface ProjectType {
+  8:   id: string;
+  9:   name: string;
+ 10:   description: string;
+ 11:   subdescription: string;
+ 12:   projectimage: { asset: { _ref: string } };
+ 13:   urlwww: unknown[];
+ 14:   urlgithub: unknown[];
+ 15: }
+ 16: // Mock the actions before importing the page component
+ 17: const mockGetProjects = jest.fn();
+ 18: const mockPreloadProjects = jest.fn();
+ 19: jest.mock("@/lib/sanity/content", () => ({
+ 20:   getProjects: mockGetProjects,
+ 21:   preloadProjects: mockPreloadProjects,
+ 22: }));
+ 23: // Mock the sanity client
+ 24: const mockUrlBuilder = {
+ 25:   width: jest.fn().mockReturnThis(),
+ 26:   fit: jest.fn().mockReturnThis(),
+ 27:   quality: jest.fn().mockReturnThis(),
+ 28:   auto: jest.fn().mockReturnThis(),
+ 29:   url: jest.fn().mockReturnValue("mock-url"),
+ 30: };
+ 31: jest.mock("@/lib/sanity/client", () => ({
+ 32:   client: {
+ 33:     fetch: jest.fn(),
+ 34:   },
+ 35:   urlFor: jest.fn(() => mockUrlBuilder),
+ 36: }));
+ 37: // Mock components
+ 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 39:   <h1>{children}</h1>
+ 40: );
+ 41: const MockProsjektCard = (props: { name: string }) => (
+ 42:   <div data-testid="project-card">{props.name}</div>
+ 43: );
+ 44: const MockRotatingLoader = () => (
+ 45:   <div data-testid="rotating-loader">Loading...</div>
+ 46: );
+ 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+ 48: jest.mock(
+ 49:   "@/components/Prosjekter/ProsjektCard.component",
+ 50:   () => MockProsjektCard,
+ 51: );
+ 52: jest.mock(
+ 53:   "@/components/Animations/RotatingLoader.component",
+ 54:   () => MockRotatingLoader,
+ 55: );
+ 56: // Create a test component that simulates the page behavior without async server components
+ 57: function TestProsjekterPage() {
+ 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 59:   const [loading, setLoading] = React.useState(true);
+ 60:   React.useEffect(() => {
+ 61:     mockGetProjects().then((data: ProjectType[]) => {
+ 62:       setProjects(data);
+ 63:       setLoading(false);
+ 64:     });
+ 65:   }, []);
+ 66:   return (
+ 67:     <main
+ 68:       role="main"
+ 69:       aria-label="Innhold portefølje"
+ 70:       className="mt-32 bg-graybg"
+ 71:     >
+ 72:       <MockPageHeader>Prosjekter</MockPageHeader>
+ 73:       {loading ? (
+ 74:         <MockRotatingLoader />
+ 75:       ) : (
+ 76:         <div className="container mx-auto">
+ 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 78:             {projects.map((project) => (
+ 79:               <MockProsjektCard key={project.id} {...project} />
+ 80:             ))}
+ 81:           </div>
+ 82:         </div>
+ 83:       )}
+ 84:     </main>
+ 85:   );
+ 86: }
+ 87: describe("ProsjekterPage", () => {
+ 88:   beforeEach(() => {
+ 89:     jest.clearAllMocks();
+ 90:   });
+ 91:   it("renders projects from server component", async () => {
+ 92:     // Arrange - Set up test data and conditions
+ 93:     const mockProjects = [
+ 94:       {
+ 95:         id: "1",
+ 96:         name: "Test Project 1",
+ 97:         description: "Test Description 1",
+ 98:         subdescription: "Test Subdescription 1",
+ 99:         projectimage: { asset: { _ref: "test1" } },
+100:         urlwww: [],
+101:         urlgithub: [],
+102:       },
+103:       {
+104:         id: "2",
+105:         name: "Test Project 2",
+106:         description: "Test Description 2",
+107:         subdescription: "Test Subdescription 2",
+108:         projectimage: { asset: { _ref: "test2" } },
+109:         urlwww: [],
+110:         urlgithub: [],
+111:       },
+112:     ];
+113:     mockGetProjects.mockResolvedValue(mockProjects);
+114:     // Act - Perform the action being tested
+115:     render(<TestProsjekterPage />);
+116:     // Assert - Verify the results
+117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+118:     // Wait for projects to load and render
+119:     const projectCards = await screen.findAllByTestId("project-card");
+120:     expect(projectCards).toHaveLength(2);
+121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+123:     // Test that projects are rendered within the main content area
+124:     const main = screen.getByRole("main");
+125:     expect(main).toContainElement(projectCards[0]);
+126:     expect(main).toContainElement(projectCards[1]);
+127:   });
+128:   it("uses Suspense boundary for loading state", async () => {
+129:     // Arrange - Set up test data and conditions
+130:     const delayedPromise = createDelayedPromise([], 100);
+131:     mockGetProjects.mockImplementation(() => delayedPromise);
+132:     // Act - Perform the action being tested
+133:     render(<TestProsjekterPage />);
+134:     // Assert - Verify the results
+135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+137:     const main = screen.getByRole("main");
+138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+140:     // Wait for loading to complete
+141:     await waitFor(() => {
+142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+143:     });
+144:   });
+145: });
 ````
 
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
@@ -8452,6 +8734,22 @@ vercel.json
 8: }
 ````
 
+## File: src/app/cv/page.tsx
+````typescript
+ 1: import { notFound } from "next/navigation";
+ 2: import CVContent from "@/components/CV/CVContent.component";
+ 3: import { getCv } from "@/lib/sanity/content";
+ 4: import { Metadata } from "next/types";
+ 5: export const metadata: Metadata = {
+ 6:   title: "CV - Dfweb",
+ 7: };
+ 8: export default async function CVPage() {
+ 9:   const cvData = await getCv();
+10:   if (!cvData) notFound();
+11:   return <CVContent cvData={cvData} />;
+12: }
+````
+
 ## File: src/app/kontakt/error.tsx
 ````typescript
  1: "use client";
@@ -8563,6 +8861,49 @@ vercel.json
 14:     </main>
 15:   );
 16: }
+````
+
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 6: import { getProjects, preloadProjects } from "@/lib/sanity/content";
+ 7: export const metadata: Metadata = {
+ 8:   title: "Prosjekter - Dfweb",
+ 9: };
+10: // ISR - regenerate every 24 hours
+11: export const revalidate = 86400;
+12: async function ProjectList() {
+13:   const projects = await getProjects();
+14:   return (
+15:     <div className="container mx-auto">
+16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+17:         {projects.map((project, index) => (
+18:           <ProsjektCard
+19:             key={project.id}
+20:             {...project}
+21:             staggerDelay={(index % 2) * 0.15}
+22:           />
+23:         ))}
+24:       </div>
+25:     </div>
+26:   );
+27: }
+28: export default function Prosjekter() {
+29:   // Start fetching projects data as early as possible
+30:   preloadProjects();
+31:   return (
+32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+33:       <PageHeader>Prosjekter</PageHeader>
+34:       <Suspense fallback={<RotatingLoader />}>
+35:         <ProjectList />
+36:       </Suspense>
+37:     </main>
+38:   );
+39: }
 ````
 
 ## File: src/app/cursor.css
@@ -9040,6 +9381,83 @@ vercel.json
 180:     transition-duration: 0.01ms !important;
 181:   }
 182: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
+ 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 7: import SkipLink from "@/components/UI/SkipLink.component";
+ 8: import Header from "@/components/Layout/Header.component";
+ 9: import Footer from "@/components/Layout/Footer.component";
+10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+11: const jetbrainsMono = JetBrains_Mono({
+12:   subsets: ["latin"],
+13:   display: "swap", // Prevent invisible text during font load (improves FCP)
+14:   preload: true, // Preload font to reduce request chain
+15: });
+16: export const metadata: Metadata = {
+17:   title: "Forside - Dfweb",
+18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+19: };
+20: export default async function RootLayout({
+21:   children,
+22: }: Readonly<{
+23:   children: React.ReactNode;
+24: }>) {
+25:   const [navigation, settings] = await Promise.all([
+26:     getNavigation(),
+27:     getSettings(),
+28:   ]);
+29:   const footerCopyrightText = settings?.footerCopyrightText;
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+38:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+39:         <link rel="icon" href="/favicon.ico" />
+40:         <link rel="apple-touch-icon" href="/logo.png" />
+41:         <meta property="og:title" content="Daniel Fjeldstad" />
+42:         <meta name="author" content="Daniel Fjeldstad" />
+43:         <meta property="og:locale" content="nb_NO" />
+44:         <meta
+45:           property="og:description"
+46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+47:         />
+48:         <meta property="og:url" content="https://www.dfweb.no/" />
+49:         <meta property="og:site_name" content="dfweb.no" />
+50:         <meta name="theme-color" content="#004014" />
+51:       </head>
+52:       <body
+53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+54:       >
+55:         <LazyMotionProvider>
+56:           <SkipLink />
+57:           <ErrorBoundary>
+58:             <div id="main-content" className="grow flex flex-col">
+59:               <Header navigation={navigation} />
+60:               <SpeedInsights />
+61:               <div className="grow">{children}</div>
+62:               <Footer
+63:                 footerCopyrightText={
+64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+65:                 }
+66:               />
+67:             </div>
+68:           </ErrorBoundary>
+69:         </LazyMotionProvider>
+70:       </body>
+71:     </html>
+72:   );
+73: }
 ````
 
 ## File: src/app/loading.tsx
@@ -12502,6 +12920,243 @@ vercel.json
  8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
  9: };
 10: export default LazyMotionProvider;
+````
+
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import { createImageUrlBuilder } from "@sanity/image-url";
+ 2: import { createClient, type QueryParams } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
+ 7: const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: /**
+14:  * Typed fetch helper with consistent caching defaults.
+15:  * Combines time-based revalidation (default 86400s = 24 hours) with
+16:  * tag-based invalidation: tags enable instant webhook-driven refresh via
+17:  * /api/revalidate, while the revalidate window acts as a fallback when
+18:  * no webhook fires.
+19:  */
+20: export async function sanityFetch<T>({
+21:   query,
+22:   params = {},
+23:   revalidate = 86400,
+24:   tags = [],
+25: }: {
+26:   query: string;
+27:   params?: QueryParams;
+28:   revalidate?: number | false;
+29:   tags?: string[];
+30: }): Promise<T> {
+31:   return client.fetch<T>(query, params, {
+32:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
+33:     next: {
+34:       revalidate,
+35:       tags,
+36:     },
+37:   });
+38: }
+39: const builder = createImageUrlBuilder(client);
+40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+41:   return builder.image(source);
+42: }
+````
+
+## File: src/lib/sanity/content.ts
+````typescript
+  1: import "server-only";
+  2: import { sanityFetch } from "@/lib/sanity/client";
+  3: import { isSanityApiError } from "@/types/sanity-errors";
+  4: import type {
+  5:   Cv,
+  6:   Navigation,
+  7:   Page,
+  8:   Project,
+  9:   Settings,
+ 10: } from "@/types/sanity.types";
+ 11: /**
+ 12:  * The content module: the single interface between the app and Sanity.
+ 13:  *
+ 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
+ 15:  * implementation details of this module. Routes call the named functions
+ 16:  * below and receive typed data or a well-mapped error — nothing else
+ 17:  * crosses the seam.
+ 18:  *
+ 19:  * Every content type is tagged, so the /api/revalidate webhook can
+ 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
+ 21:  * window acts as a fallback when no webhook fires.
+ 22:  */
+ 23: const REVALIDATE_SECONDS = 86400; // 24 hours
+ 24: /** Cache tags — the /api/revalidate route accepts any of these. */
+ 25: export const CONTENT_TAGS = {
+ 26:   projects: "projects",
+ 27:   cv: "cv",
+ 28:   pageContent: "page-content",
+ 29:   navigation: "navigation",
+ 30:   settings: "settings",
+ 31: } as const;
+ 32: const projectsQuery = `
+ 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 34:     id,
+ 35:     name,
+ 36:     description,
+ 37:     subdescription,
+ 38:     projectcategory->{
+ 39:       _id,
+ 40:       title
+ 41:     },
+ 42:     urlwww[]{
+ 43:       ...,
+ 44:       _key,
+ 45:     },
+ 46:     urlgithub[]{
+ 47:       ...,
+ 48:       _key,
+ 49:     },
+ 50:     projectimage,
+ 51:     featured,
+ 52:     featureOrder
+ 53:   }
+ 54: `;
+ 55: const cvQuery = `
+ 56:   *[_type == "cv"][0] {
+ 57:     keyQualifications,
+ 58:     experience[] {
+ 59:       period,
+ 60:       company,
+ 61:       role,
+ 62:       description
+ 63:     },
+ 64:     education[] {
+ 65:       period,
+ 66:       institution,
+ 67:       degree,
+ 68:       description
+ 69:     },
+ 70:     volunteerWork[] {
+ 71:       period,
+ 72:       organization,
+ 73:       role,
+ 74:       description
+ 75:     }
+ 76:   }
+ 77: `;
+ 78: const pageContentQuery = `
+ 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+ 80:     "id": _id,
+ 81:     title,
+ 82:     hero,
+ 83:     content
+ 84:   }
+ 85: `;
+ 86: const navigationQuery = `
+ 87:   *[_type == "navigation"][0] {
+ 88:     title,
+ 89:     links[] {
+ 90:       title,
+ 91:       name,
+ 92:       hash,
+ 93:       href,
+ 94:       externalLink
+ 95:     }
+ 96:   }
+ 97: `;
+ 98: const settingsQuery = `
+ 99:   *[_type == "settings"][0] {
+100:     footerCopyrightText
+101:   }
+102: `;
+103: /**
+104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
+105:  * Applied uniformly to every content fetch — this is the only place in the
+106:  * codebase that knows what a Sanity error looks like.
+107:  */
+108: function mapError(error: unknown, entity: string): never {
+109:   console.error("Error fetching content:", entity, error);
+110:   if (isSanityApiError(error)) {
+111:     switch (error.statusCode) {
+112:       case 401:
+113:         throw new Error("Authentication failed");
+114:       case 403:
+115:         throw new Error("Insufficient permissions");
+116:       case 429:
+117:         throw new Error("Rate limit exceeded");
+118:       default:
+119:         throw new Error(`Sanity API error: ${error.message}`);
+120:     }
+121:   }
+122:   if (error instanceof Error && error.name === "TimeoutError") {
+123:     throw new Error("Request timed out");
+124:   }
+125:   throw new Error(`Failed to fetch ${entity}`);
+126: }
+127: async function fetchContent<T>(
+128:   entity: string,
+129:   query: string,
+130:   tag: string,
+131: ): Promise<T> {
+132:   try {
+133:     return await sanityFetch<T>({
+134:       query,
+135:       revalidate: REVALIDATE_SECONDS,
+136:       tags: [tag],
+137:     });
+138:   } catch (error) {
+139:     mapError(error, entity);
+140:   }
+141: }
+142: /** All published projects, ordered by featureOrder. */
+143: export function getProjects(): Promise<Project[]> {
+144:   return fetchContent<Project[]>(
+145:     "projects",
+146:     projectsQuery,
+147:     CONTENT_TAGS.projects,
+148:   );
+149: }
+150: /** The CV document, or null when none is published. */
+151: export function getCv(): Promise<Cv | null> {
+152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
+153: }
+154: /** Home page content (hero + sections), or null when missing. */
+155: export function getPageContent(): Promise<Page | null> {
+156:   return fetchContent<Page | null>(
+157:     "page content",
+158:     pageContentQuery,
+159:     CONTENT_TAGS.pageContent,
+160:   );
+161: }
+162: /** Site navigation links. */
+163: export function getNavigation(): Promise<Navigation> {
+164:   return fetchContent<Navigation>(
+165:     "navigation",
+166:     navigationQuery,
+167:     CONTENT_TAGS.navigation,
+168:   );
+169: }
+170: /** Site-wide settings (footer text etc.). */
+171: export function getSettings(): Promise<Settings> {
+172:   return fetchContent<Settings>(
+173:     "settings",
+174:     settingsQuery,
+175:     CONTENT_TAGS.settings,
+176:   );
+177: }
+178: /**
+179:  * Kicks off the projects fetch without awaiting it, so the request is
+180:  * already in flight when the Suspense boundary renders. Next.js dedupes
+181:  * the underlying fetch, so the awaited call in the page reuses it.
+182:  */
+183: export function preloadProjects(): void {
+184:   void getProjects().catch(() => {
+185:     // Swallow here; the awaited call in the page surfaces the error.
+186:   });
+187: }
 ````
 
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
@@ -18286,6 +18941,314 @@ vercel.json
 24: }
 ````
 
+## File: AGENTS.md
+````markdown
+  1: # AGENTS.md
+  2: 
+  3: This file provides guidance to agents when working with code in this repository.
+  4: 
+  5: ## Non-Obvious Project Patterns
+  6: 
+  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
+  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
+ 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+ 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
+ 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
+ 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
+ 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
+ 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
+ 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
+ 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
+ 18: 
+ 19: ## Critical Commands
+ 20: 
+ 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
+ 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+ 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
+ 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
+ 25: 
+ 26: ## Testing Gotchas
+ 27: 
+ 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+ 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
+ 30: - Matrix component intentionally excluded from test coverage
+ 31: - Cypress and Playwright have different ESLint rule overrides
+ 32: 
+ 33: ## Code Quality Principles
+ 34: 
+ 35: ### SOLID Principles
+ 36: 
+ 37: #### Single Responsibility Principle (SRP)
+ 38: 
+ 39: Each component/function should have one reason to change.
+ 40: 
+ 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
+ 42: - **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
+ 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
+ 44: 
+ 45: #### Open/Closed Principle (OCP)
+ 46: 
+ 47: Software should be open for extension, closed for modification.
+ 48: 
+ 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
+ 50: - Create generic components that can be customized without modifying source
+ 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
+ 52: 
+ 53: #### Liskov Substitution Principle (LSP)
+ 54: 
+ 55: Components accepting a type should work with any subtype.
+ 56: 
+ 57: - Ensure prop interfaces are respected by all implementations
+ 58: - Don't throw unexpected errors or require undocumented props
+ 59: - **Benefits**: Predictable behavior, safer component hierarchies
+ 60: 
+ 61: #### Interface Segregation Principle (ISP)
+ 62: 
+ 63: Don't force components to depend on props they don't use.
+ 64: 
+ 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
+ 66: - Split large prop types into smaller, composable ones
+ 67: - **Benefits**: More flexible components, easier to implement and test
+ 68: 
+ 69: #### Dependency Inversion Principle (DIP)
+ 70: 
+ 71: Depend on abstractions, not concrete implementations.
+ 72: 
+ 73: - Use dependency injection for services (e.g., pass clients as props or use context)
+ 74: - Define abstract types/interfaces, inject implementations
+ 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
+ 76: 
+ 77: ### DRY Principle (Don't Repeat Yourself)
+ 78: 
+ 79: - Extract repeated UI patterns into reusable components
+ 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
+ 81: - Use custom hooks for shared stateful logic
+ 82: - Avoid duplicating business logic across components
+ 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
+ 84: 
+ 85: ### KISS Principle (Keep It Simple, Stupid)
+ 86: 
+ 87: - Use React/Next.js built-in features before custom solutions
+ 88: - Write self-explanatory code with clear naming
+ 89: - Avoid over-engineering simple problems
+ 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
+ 91: - Minimize dependencies
+ 92: - Start simple, add complexity only when necessary
+ 93: - **Benefits**: Easier to understand, faster development, fewer bugs
+ 94: 
+ 95: ### YAGNI Principle (You Aren't Gonna Need It)
+ 96: 
+ 97: Don't implement functionality until it's actually needed.
+ 98: 
+ 99: - Focus on current requirements, not hypothetical future needs
+100: - Don't create abstraction layers for single implementations
+101: - Avoid premature optimization before measuring performance
+102: - Don't build configuration systems until configurability is required
+103: - Wait for actual use cases before adding flexibility
+104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
+105: 
+106: ### Code Quality Summary
+107: 
+108: Following these principles results in:
+109: 
+110: - Maintainable, extendable code
+111: - Fewer bugs and faster debugging
+112: - Better team collaboration
+113: - Professional quality standards
+114: - Easier testing and refactoring
+115: 
+116: ## UI Development Rules
+117: 
+118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
+119: 
+120: ### Interactions
+121: 
+122: #### Keyboard
+123: 
+124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
+125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
+126: - MUST: Manage focus (trap, move, and return) per APG patterns
+127: 
+128: #### Targets & Input
+129: 
+130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
+131: - MUST: Mobile `<input>` font-size ≥16px or set:
+132:   ```html
+133:   <meta
+134:     name="viewport"
+135:     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+136:   />
+137:   ```
+138: - NEVER: Disable browser zoom
+139: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
+140: 
+141: #### Inputs & Forms (Behavior)
+142: 
+143: - MUST: Hydration-safe inputs (no lost focus/value)
+144: - NEVER: Block paste in `<input>/<textarea>`
+145: - MUST: Loading buttons show spinner and keep original label
+146: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
+147: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
+148: - MUST: Don't block typing; accept free text and validate after
+149: - MUST: Allow submitting incomplete forms to surface validation
+150: - MUST: Errors inline next to fields; on submit, focus first error
+151: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
+152: - SHOULD: Disable spellcheck for emails/codes/usernames
+153: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
+154: - MUST: Warn on unsaved changes before navigation
+155: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
+156: - MUST: Trim values to handle text expansion trailing spaces
+157: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
+158: 
+159: #### State & Navigation
+160: 
+161: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
+162: - MUST: Back/Forward restores scroll
+163: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
+164: 
+165: #### Feedback
+166: 
+167: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
+168: - MUST: Confirm destructive actions or provide Undo window
+169: - MUST: Use polite `aria-live` for toasts/inline validation
+170: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
+171: 
+172: #### Touch/Drag/Scroll
+173: 
+174: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
+175: - MUST: Delay first tooltip in a group; subsequent peers no delay
+176: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
+177: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
+178: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
+179: 
+180: #### Autofocus
+181: 
+182: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
+183: 
+184: ### Animation
+185: 
+186: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
+187: - SHOULD: Prefer CSS > Web Animations API > JS libraries
+188: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
+189: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
+190: - SHOULD: Choose easing to match the change (size/distance/trigger)
+191: - MUST: Animations are interruptible and input-driven (avoid autoplay)
+192: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
+193: 
+194: ### Layout
+195: 
+196: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
+197: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
+198: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
+199: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
+200: - MUST: Respect safe areas (use env(safe-area-inset-\*))
+201: - MUST: Avoid unwanted scrollbars; fix overflows
+202: 
+203: ### Content & Accessibility
+204: 
+205: - SHOULD: Inline help first; tooltips last resort
+206: - MUST: Skeletons mirror final content to avoid layout shift
+207: - MUST: `<title>` matches current context
+208: - MUST: No dead ends; always offer next step/recovery
+209: - MUST: Design empty/sparse/dense/error states
+210: - SHOULD: Curly quotes (" "); avoid widows/orphans
+211: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
+212: - MUST: Redundant status cues (not color-only); icons have text labels
+213: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
+214: - MUST: Use the ellipsis character `…` (not `...`)
+215: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
+216: - MUST: Resilient to user-generated content (short/avg/very long)
+217: - MUST: Locale-aware dates/times/numbers/currency
+218: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
+219: - MUST: Icon-only buttons have descriptive `aria-label`
+220: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
+221: - SHOULD: Right-clicking the nav logo surfaces brand assets
+222: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
+223: 
+224: ### Performance
+225: 
+226: - SHOULD: Test iOS Low Power Mode and macOS Safari
+227: - MUST: Measure reliably (disable extensions that skew runtime)
+228: - MUST: Track and minimize re-renders (React DevTools/React Scan)
+229: - MUST: Profile with CPU/network throttling
+230: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
+231: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
+232: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
+233: - MUST: Virtualize large lists (eg, `virtua`)
+234: - MUST: Preload only above-the-fold images; lazy-load the rest
+235: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
+236: 
+237: ### Design
+238: 
+239: - SHOULD: Layered shadows (ambient + direct)
+240: - SHOULD: Crisp edges via semi-transparent borders + shadows
+241: - SHOULD: Nested radii: child ≤ parent; concentric
+242: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
+243: - MUST: Accessible charts (color-blind-friendly palettes)
+244: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
+245: - MUST: Increase contrast on `:hover/:active/:focus`
+246: - SHOULD: Match browser UI to bg
+247: - SHOULD: Avoid gradient banding (use masks when needed)
+248: 
+249: ## Security — Supply Chain Defense
+250: 
+251: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
+252: 
+253: ### Package Installation Defenses
+254: 
+255: | Defense                             | Config File               | Notes                                                                                       |
+256: | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
+257: | `ignore-scripts=true`               | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
+258: | `allowBuilds` whitelist             | `pnpm-workspace.yaml`     | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
+259: | `minimum-release-age=2880`          | `.npmrc`                  | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions           |
+260: | `block-exotic-subdependencies=true` | `.npmrc`                  | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources  |
+261: | `--frozen-lockfile`                 | All CI workflows          | Prevents lockfile modification during CI installs                                           |
+262: | `engine-strict=true`                | `.npmrc`                  | Fails if Node.js version doesn't match engines field                                        |
+263: | Vulnerability overrides             | `studio/package.json`     | Known CVEs patched via pnpm overrides                                                       |
+264: 
+265: ### Automated Dependency Updates
+266: 
+267: | Defense                        | Config File     | Notes                                                        |
+268: | ------------------------------ | --------------- | ------------------------------------------------------------ |
+269: | 7-day minimum release age      | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h)     |
+270: | OpenSSF Scorecard              | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
+271: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review                          |
+272: 
+273: ### CI/CD Security
+274: 
+275: | Defense                           | Config File            | Notes                                                             |
+276: | --------------------------------- | ---------------------- | ----------------------------------------------------------------- |
+277: | SHA-pinned GitHub Actions         | All workflows          | All `uses:` references pinned to commit SHAs, never floating tags |
+278: | No `pull_request_target`          | All workflows          | NEVER use this trigger — it enables cache poisoning attacks       |
+279: | Least-privilege permissions       | All workflows          | Every workflow specifies minimal `permissions` block              |
+280: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches     |
+281: | Pinned global installs            | `repomix.yml`          | Global npm packages pinned to exact versions                      |
+282: | Lockfile-backed studio installs   | `snyk-scan.yml`        | Uses `npm ci` with committed `package-lock.json`                  |
+283: 
+284: ### Security Scanning
+285: 
+286: | Tool     | Workflow        | Purpose                                                               |
+287: | -------- | --------------- | --------------------------------------------------------------------- |
+288: | Snyk     | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring                        |
+289: | Trivy    | `security.yml`  | Filesystem vulnerability scanning (CRITICAL/HIGH)                     |
+290: | Semgrep  | `security.yml`  | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
+291: | CodeQL   | `codeql.yml`    | GitHub native code analysis with security-and-quality queries         |
+292: | Gitleaks | `security.yml`  | Secret detection in commits                                           |
+293: 
+294: ### Rules for Agents
+295: 
+296: - **NEVER** add `pull_request_target` to any workflow
+297: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
+298: - **NEVER** use `npm install -g <package>` without a pinned version in CI
+299: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
+300: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
+301: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
+302: - **ALWAYS** add explicit `permissions` blocks to new workflows
+303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
+304: - Full hardening plan available at `plans/supply-chain-hardening.md`
+````
+
 ## File: codecov.yml
 ````yaml
 1: coverage:
@@ -19479,116 +20442,6 @@ vercel.json
 379: 4. **DOCS/TEST_STRATEGY.md** - Testing methodology
 ````
 
-## File: next.config.ts
-````typescript
-  1: import type { NextConfig } from "next";
-  2: const cspDirectives = {
-  3:   "default-src": ["'self'"],
-  4:   "script-src": [
-  5:     "'self'",
-  6:     "'unsafe-eval'",
-  7:     "'unsafe-inline'",
-  8:     "https://va.vercel-scripts.com",
-  9:   ],
- 10:   "style-src": ["'self'", "'unsafe-inline'"],
- 11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
- 12:   "font-src": ["'self'"],
- 13:   "object-src": ["'none'"],
- 14:   "base-uri": ["'self'"],
- 15:   "form-action": ["'self'"],
- 16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
- 17:   "connect-src": [
- 18:     "'self'",
- 19:     "https://api.emailjs.com",
- 20:     "https://va.vercel-scripts.com",
- 21:   ],
- 22: };
- 23: const buildCspHeader = (directives: Record<string, string[]>) =>
- 24:   Object.entries(directives)
- 25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
- 26:     .join(" ") + " upgrade-insecure-requests;";
- 27: const nextConfig: NextConfig = {
- 28:   transpilePackages: ["@portabletext/react"],
- 29:   compiler: {
- 30:     // Remove console.log in production
- 31:     removeConsole: process.env.NODE_ENV === "production",
- 32:   },
- 33:   // Optimize CSS chunking - merge CSS files to reduce network requests
- 34:   experimental: {
- 35:     cssChunking: true, // Merge CSS files when possible (default)
- 36:   },
- 37:   images: {
- 38:     remotePatterns: [
- 39:       {
- 40:         protocol: "https",
- 41:         hostname: "cdn.sanity.io",
- 42:       },
- 43:     ],
- 44:   },
- 45:   async headers() {
- 46:     return [
- 47:       {
- 48:         source: "/",
- 49:         headers: [
- 50:           {
- 51:             key: "Cache-Control",
- 52:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 53:           },
- 54:           {
- 55:             key: "X-Frame-Options",
- 56:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 57:           },
- 58:           { key: "X-Content-Type-Options", value: "nosniff" },
- 59:           {
- 60:             key: "Content-Security-Policy",
- 61:             value: buildCspHeader(cspDirectives),
- 62:           },
- 63:           { key: "Permissions-Policy", value: "tools=(self)" },
- 64:           { key: "Origin-Agent-Cluster", value: "?1" },
- 65:         ],
- 66:       },
- 67:       {
- 68:         source: "/prosjekter",
- 69:         headers: [
- 70:           {
- 71:             key: "Cache-Control",
- 72:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 73:           },
- 74:           {
- 75:             key: "X-Frame-Options",
- 76:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 77:           },
- 78:           { key: "X-Content-Type-Options", value: "nosniff" },
- 79:           {
- 80:             key: "Content-Security-Policy",
- 81:             value: buildCspHeader(cspDirectives),
- 82:           },
- 83:           { key: "Permissions-Policy", value: "tools=(self)" },
- 84:           { key: "Origin-Agent-Cluster", value: "?1" },
- 85:         ],
- 86:       },
- 87:       {
- 88:         source: "/:path*",
- 89:         headers: [
- 90:           {
- 91:             key: "X-Frame-Options",
- 92:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 93:           },
- 94:           { key: "X-Content-Type-Options", value: "nosniff" },
- 95:           {
- 96:             key: "Content-Security-Policy",
- 97:             value: buildCspHeader(cspDirectives),
- 98:           },
- 99:           { key: "Permissions-Policy", value: "tools=(self)" },
-100:           { key: "Origin-Agent-Cluster", value: "?1" },
-101:         ],
-102:       },
-103:     ];
-104:   },
-105: };
-106: export default nextConfig;
-````
-
 ## File: playwright.config.ts
 ````typescript
  1: import { defineConfig, devices } from "@playwright/test";
@@ -19665,222 +20518,6 @@ vercel.json
 6: };
 7: 
 8: export default config;
-````
-
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
-  4: 
-  5: Fourth version of my personal portfolio website with Next.js, Motion,
-  6: Sanity.io and Typescript.
-  7: 
-  8: ## Table of Contents
-  9: 
- 10: - [Live URL](#live-url)
- 11: - [Frontend (Next.js)](#frontend-nextjs)
- 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 13: - [Google Lighthouse](#google-lighthouse)
- 14: - [Features](#features)
- 15:   - [General](#general)
- 16:   - [Design](#design)
- 17:   - [Accessibility](#accessibility)
- 18:   - [Security](#security)
- 19:   - [Devops and Code quality](#devops-and-code-quality)
- 20:   - [Environment Variables](#environment-variables)
- 21:   - [Testing Standards](#testing-standards)
- 22: 
- 23: ## Live URL
- 24: 
- 25: - <https://www.dfweb.no>
- 26: 
- 27: ## Frontend (Next.js)
- 28: 
- 29: ![Frontend Image](public/images/frontend.png)
- 30: 
- 31: ---
- 32: 
- 33: ## Backend (Sanity headless CMS)
- 34: 
- 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 36: 
- 37: ---
- 38: 
- 39: ## Google Lighthouse
- 40: 
- 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 42: 
- 43: ## Features
- 44: 
- 45: ### General
- 46: 
- 47: - Clean, modern, responsive and Matrix-inspired design
- 48: - The application is 100% typescript (the types are generated from Sanity typegen)
- 49: - Matrix canvas rain effect on front page
- 50: - Custom 404 page with Matrix rain effect
- 51: - Next.js 16 with Typescript and App Router
- 52:   - Server Components implementation for improved performance
- 53:   - Streaming with Suspense boundaries
- 54:   - Automatic static optimization with revalidation
- 55:   - Server-side data fetching with proper error handling
- 56: - React 19
- 57: - Sanity headless CMS for all of the content, projects and navigation links
- 58: - Ladle for component documentation
- 59: - Animations with Motion
- 60: - React testing library for unit testing
- 61: - Cypress for E2E testing
- 62: - Playwright for cross-browser E2E testing
- 63: - Contact form with Email.js and CSRF protection
- 64: - Polymorphic components
- 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 66: - Google rich results for each individual page
- 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 68: - Automated Lighthouse CI testing integrated with GitHub Actions
- 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 70: - Reusable GenericForm component for easy form creation and management
- 71: - Error handling with react-error-boundary for improved user experience and
- 72:   easier debugging
- 73: - AI-friendly repository documentation with automated updates (Repomix with
- 74:   Github action workflow)
- 75: - AI assistant guidance with AGENTS.md files for immediate productivity
- 76:   - Main AGENTS.md with project-specific patterns and gotchas
- 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 4 for styling with a CSS custom-property design token system
- 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
- 93:   colors, surface palette, glow shadows, and custom animations all driven by
- 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
- 95: - Animated reusable input fields
- 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 97:   Matrix characters
- 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 99: 
-100: ### Accessibility
-101: 
-102: - WCAG accessibility tested
-103: - Accessibility testing with Cypress Axe and Pa11y
-104: - Automated Pa11y accessibility testing on every PR and push to main
-105:   - Tests all main pages against WCAG2AA standards
-106:   - Captures screenshots for visual reference
-107:   - Detailed reports available as GitHub Actions artifacts
-108: - Builds will fail if any a11y errors are found
-109: 
-110: ### Devops and Code quality
-111: 
-112: - Continuous Integration with CircleCI
-113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-114: - Github action workflow for Cypress
-115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-116: - E2E testing with Cypress and Playwright integrated with Github actions
-117: - Unit testing with Jest and React Testing Library integrated with CircleCI
-118: - Test coverage setup with Codecov
-119: - 100% test coverage with Jest and React testing library
-120: - AI-powered commit message generation following Conventional Commits with
-121:   gitmojis
-122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
-123:   - Scans for security, performance, correctness, and architecture issues
-124:   - Outputs a 0–100 score with actionable diagnostics on every PR
-125:   - Posts results as PR comments and GitHub Actions job summaries
-126:   - Configurable score threshold (default: 80) to gate merges
-127:   - Auto-detects package manager (pnpm, yarn, npm)
-128: - Automated performance monitoring with Lighthouse CI
-129:   - Performance, accessibility, best practices, and SEO checks on every PR
-130:   - Configurable thresholds for quality metrics
-131:   - Both desktop and performance-focused testing
-132: - Automated repository documentation with Repomix
-133:   - AI-friendly documentation generation on every push to main
-134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-135:   - Automated PR analysis with repository structure insights
-136:   - Security-focused documentation with sensitive information filtering
-137:   - Markdown formatting for improved readability
-138: 
-139: ### Security
-140: 
-141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
-142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-144:   - Secret detection with Gitleaks on every PR and push
-145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-146:   - Runs automatically on every PR and push to main
-147: - Automated security vulnerability scanning with Snyk
-148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-149:   - Integrates with GitHub Security tab for vulnerability tracking
-150: - Supply chain attack prevention with 7-day minimum release age
-151:   - Packages must be published for at least 7 days before installation
-152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
-154:   - Protects against compromised package releases (like Shai Hulud incidents)
-155: - GitHub Actions supply chain hardening with SHA pinning
-156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
-157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
-158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-159:   - Custom audit script at `scripts/pin-actions.py`
-160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
-161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
-162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
-163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
-164: 
-165: ### Environment Variables
-166: 
-167: - Type-safe environment variable validation with envalid
-168:   - Runtime validation of required environment variables
-169:   - Clear error messages with examples for missing variables
-170:   - Separate handling of client-side and server-side variables
-171:   - Default values where appropriate
-172:   - Required variables:
-173: 
-174:     ```env
-175:     # Email Configuration (client-side)
-176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-179: 
-180:     # Security Configuration (server-side)
-181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-182:     ```
-183: 
-184:   - Validation prevents application startup if required variables are missing
-185:   - TypeScript integration for type-safe access to environment variables
-186: 
-187: ### Testing Standards
-188: 
-189: - ISTQB-aligned comprehensive test strategy
-190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-191:   - Multi-level test approach (Unit, Component, E2E)
-192:   - Risk-based testing methodology
-193:   - Defined test metrics and reporting
-194:   - Clear roles and responsibilities
-195:   - Structured defect management process
-196: 
-197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-198:   - Each test must include the following comments:
-199: 
-200:     ```typescript
-201:     // Arrange - Set up test data and conditions
-202:     // Act - Perform the action being tested
-203:     // Assert - Verify the results
-204:     ```
-205: 
-206:   - This pattern ensures:
-207:     - Clear test structure and readability
-208:     - Consistent test organization across the codebase
-209:     - Easy identification of test setup, execution, and verification
-210:   - Simplified test maintenance and debugging
-211:   - Automated validation through custom ESLint rules
-212:   - Tests will fail if AAA pattern is not followed
 ````
 
 ## File: renovate.json
@@ -20121,6 +20758,45 @@ vercel.json
 1: {}
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+ 1: name: "CodeQL"
+ 2: on:
+ 3:   push:
+ 4:     branches: ["main"]
+ 5:   pull_request:
+ 6:     branches: ["main"]
+ 7:   schedule:
+ 8:     - cron: "0 0 * * *"
+ 9: jobs:
+10:   analyze:
+11:     name: Analyze
+12:     runs-on: ubuntu-latest
+13:     timeout-minutes: 30
+14:     permissions:
+15:       actions: read
+16:       contents: read
+17:       security-events: write
+18:     strategy:
+19:       fail-fast: false
+20:       matrix:
+21:         language: [javascript]
+22:     steps:
+23:       - name: Checkout
+24:         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+25:       - name: Initialize CodeQL
+26:         uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+27:         with:
+28:           languages: ${{ matrix.language }}
+29:           queries: +security-and-quality
+30:       - name: Autobuild
+31:         uses: github/codeql-action/autobuild@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+32:       - name: Perform CodeQL Analysis
+33:         uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+34:         with:
+35:           category: "/language:${{ matrix.language }}"
+````
+
 ## File: .github/workflows/security.yml
 ````yaml
  1: name: OWASP Security Scan
@@ -20189,617 +20865,80 @@ vercel.json
 64:           format: table
 ````
 
-## File: DOCS/architecture-review-2026-08-24.html
-````html
-  1: <!doctype html>
-  2: <html lang="en">
-  3:   <head>
-  4:     <meta charset="utf-8" />
-  5:     <title>Architecture review for dfweb-v4</title>
-  6:     <script src="https://cdn.tailwindcss.com"></script>
-  7:     <script type="module">
-  8:       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-  9:       mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
- 10:     </script>
- 11:     <style>
- 12:       .seam { stroke-dasharray: 4 4; }
- 13:       .leak { stroke: #dc2626; }
- 14:       .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
- 15:       .module-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
- 16:     </style>
- 17:   </head>
- 18:   <body class="bg-stone-50 text-slate-900 font-sans">
- 19:     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
- 20:       <header class="space-y-3">
- 21:         <h1 class="font-serif text-3xl">Architecture review · dfweb-v4</h1>
- 22:         <p class="text-sm text-slate-500">2026-08-24 · Next.js 15 portfolio · Sanity CMS</p>
- 23:         <div class="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
- 24:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 border border-slate-500 bg-white"></span> module</span>
- 25:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#64748b" stroke-width="1.5" class="seam"/></svg> seam</span>
- 26:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#dc2626" stroke-width="2"/></svg> leakage</span>
- 27:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 deep rounded-sm"></span> deep module</span>
- 28:         </div>
- 29:       </header>
- 30:       <section id="candidates" class="space-y-10">
- 31:         <!-- ============ CANDIDATE 1 ============ -->
- 32:         <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
- 33:           <div class="flex items-start justify-between gap-4">
- 34:             <h2 class="font-serif text-2xl">Deepen the content module</h2>
- 35:             <div class="flex gap-2 shrink-0">
- 36:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
- 37:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
- 38:             </div>
- 39:           </div>
- 40:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
- 41:             src/lib/sanity/client.ts · src/lib/sanity/queries.ts · src/app/prosjekter/actions.ts ·
- 42:             src/app/page.tsx · src/app/cv/page.tsx · src/app/layout.tsx
- 43:           </p>
- 44:           <div class="grid md:grid-cols-2 gap-4">
- 45:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
- 46:               <p class="module-label text-slate-400 mb-2">Before</p>
- 47:               <pre class="mermaid">
- 48: flowchart TB
- 49:   HP[page.tsx] --> SF[sanityFetch]
- 50:   HP --> Q[queries.ts]
- 51:   CV[cv/page.tsx] --> SF
- 52:   CV --> Q
- 53:   LY[layout.tsx] --> SF
- 54:   LY --> Q
- 55:   PR[prosjekter/actions.ts] --> SF
- 56:   PR --> Q
- 57:   PR --> EH[error mapping<br/>+ unstable_cache]
- 58:   HP -. no error handling .-> X1[ ]
- 59:   CV -. no error handling .-> X1
- 60:   classDef leak stroke:#dc2626,stroke-width:2px;
- 61:   class HP,CV,LY leak
- 62:   classDef ghost fill:none,stroke:none;
- 63:   class X1 ghost
- 64:               </pre>
- 65:             </div>
- 66:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
- 67:               <p class="module-label text-slate-400 mb-2">After</p>
- 68:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
- 69:                 <div class="flex gap-2">
- 70:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">home</div>
- 71:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">cv</div>
- 72:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">layout</div>
- 73:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">prosjekter</div>
- 74:                 </div>
- 75:                 <svg width="200" height="28"><line x1="100" y1="0" x2="100" y2="28" stroke="#64748b" stroke-width="1.5"/><polygon points="95,20 105,20 100,28" fill="#64748b"/></svg>
- 76:                 <div class="deep text-white rounded-lg px-6 py-4 w-full max-w-xs text-center">
- 77:                   <p class="module-label text-emerald-300">content module</p>
- 78:                   <p class="text-xs mt-1 font-mono">getProjects() · getCv() · getPageContent() · getNavigation() · getSettings()</p>
- 79:                   <p class="text-[0.6rem] mt-2 text-slate-400">GROQ · caching · revalidation · error mapping — all internal</p>
- 80:                 </div>
- 81:               </div>
- 82:             </div>
- 83:           </div>
- 84:           <dl class="space-y-2 text-sm">
- 85:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Every route reaches through the seam: raw GROQ query + revalidate number + type parameter assembled at each call site, and only <span class="font-mono text-xs">prosjekter</span> gets error mapping.</dd></div>
- 86:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep content module: five named functions, GROQ / cache policy / error mapping become implementation.</dd></div>
- 87:           </dl>
- 88:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
- 89:             <li>Leverage: one interface, five call sites</li>
- 90:             <li>Locality: error mapping in one module</li>
- 91:             <li>Interface shrinks; queries become implementation</li>
- 92:             <li>Tests hit one interface, not mocks-of-mocks</li>
- 93:             <li>Cache policy stops leaking into routes</li>
- 94:           </ul>
- 95:         </article>
- 96:         <!-- ============ CANDIDATE 2 ============ -->
- 97:         <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
- 98:           <div class="flex items-start justify-between gap-4">
- 99:             <h2 class="font-serif text-2xl">One seam for contact submission</h2>
-100:             <div class="flex gap-2 shrink-0">
-101:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
-102:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">ports &amp; adapters</span>
-103:             </div>
-104:           </div>
-105:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-106:             src/components/Kontakt/ContactForm.component.tsx · src/app/api/form/route.ts ·
-107:             src/stories/components/Kontakt/ContactFormWithMocks.tsx
-108:           </p>
-109:           <div class="grid md:grid-cols-2 gap-4">
-110:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-111:               <p class="module-label text-slate-400 mb-2">Before</p>
-112:               <pre class="mermaid">
-113: sequenceDiagram
-114:   participant U as User
-115:   participant F as ContactForm
-116:   participant E as EmailJS
-117:   participant A as /api/form
-118:   U->>F: submit
-119:   F->>E: send (JS path)
-120:   Note over F,E: env keys + init inline in the UI module
-121:   U-->>A: submit (no-JS path)
-122:   A->>A: CSRF + Zod validate
-123:   A-->>U: "success" — but nothing sent
-124:               </pre>
-125:             </div>
-126:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
-127:               <p class="module-label text-slate-400 mb-2">After</p>
-128:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
-129:                 <div class="border border-slate-400 bg-white px-4 py-2 module-label">contact form (UI only)</div>
-130:                 <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
-131:                 <div class="deep text-white rounded-lg px-6 py-3 text-center w-full max-w-xs">
-132:                   <p class="module-label text-emerald-300">submission module</p>
-133:                   <p class="text-xs font-mono mt-1">submitContactForm(data)</p>
-134:                 </div>
-135:                 <svg width="200" height="24">
-136:                   <line x1="100" y1="0" x2="40" y2="24" stroke="#64748b" stroke-width="1.5"/>
-137:                   <line x1="100" y1="0" x2="160" y2="24" stroke="#64748b" stroke-width="1.5"/>
-138:                 </svg>
-139:                 <div class="flex gap-3">
-140:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">emailjs adapter</div>
-141:                   <div class="border border-dashed border-slate-400 bg-white px-3 py-1.5 module-label">in-memory adapter (tests / stories)</div>
-142:                 </div>
-143:               </div>
-144:             </div>
-145:           </div>
-146:           <dl class="space-y-2 text-sm">
-147:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Submission leaks across the seam: EmailJS keys and transport live inside the UI module, while <span class="font-mono text-xs">/api/form</span> validates and returns success without sending anything.</dd></div>
-148:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One submission module behind one interface; EmailJS as one adapter, in-memory as the second.</dd></div>
-149:           </dl>
-150:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-151:             <li>Two adapters justify the seam</li>
-152:             <li>Transport stops leaking into the UI module</li>
-153:             <li>Stories drop the hand-rolled mock wrapper</li>
-154:             <li>Locality: send-failure handling in one module</li>
-155:             <li>No-JS path and JS path converge</li>
-156:           </ul>
-157:         </article>
-158:         <!-- ============ CANDIDATE 3 ============ -->
-159:         <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
-160:           <div class="flex items-start justify-between gap-4">
-161:             <h2 class="font-serif text-2xl">Collapse the reveal animations</h2>
-162:             <div class="flex gap-2 shrink-0">
-163:               <span class="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">Worth exploring</span>
-164:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
-165:             </div>
-166:           </div>
-167:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-168:             src/components/Animations/FadeIn.component.tsx · FadeInScroll.component.tsx ·
-169:             BounceInScroll.component.tsx · Grow.component.tsx · animation-utils.ts
-170:           </p>
-171:           <!-- Mass diagram, hand-built -->
-172:           <div class="grid md:grid-cols-2 gap-4">
-173:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-174:               <p class="module-label text-slate-400 mb-3">Before · four shallow modules</p>
-175:               <div class="flex items-end justify-around h-56">
-176:                 <div class="flex flex-col items-center gap-1 w-16">
-177:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px" title="interface"></div>
-178:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:80px" title="implementation"></div>
-179:                   <p class="module-label text-slate-500">FadeIn</p>
-180:                 </div>
-181:                 <div class="flex flex-col items-center gap-1 w-16">
-182:                   <div class="w-full bg-red-200 border border-red-400" style="height:75px"></div>
-183:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:85px"></div>
-184:                   <p class="module-label text-slate-500">FadeInScroll</p>
-185:                 </div>
-186:                 <div class="flex flex-col items-center gap-1 w-16">
-187:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px"></div>
-188:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:95px"></div>
-189:                   <p class="module-label text-slate-500">BounceInScroll</p>
-190:                 </div>
-191:                 <div class="flex flex-col items-center gap-1 w-16">
-192:                   <div class="w-full bg-red-200 border border-red-400" style="height:60px"></div>
-193:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:70px"></div>
-194:                   <p class="module-label text-slate-500">Grow</p>
-195:                 </div>
-196:               </div>
-197:               <p class="text-xs text-slate-500 mt-2"><span class="inline-block w-3 h-3 bg-red-200 border border-red-400 align-middle"></span> interface · <span class="inline-block w-3 h-3 bg-slate-300 border border-slate-400 align-middle"></span> implementation — nearly the same height: shallow</p>
-198:             </div>
-199:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-200:               <p class="module-label text-slate-400 mb-3">After · one deep module</p>
-201:               <div class="flex items-end justify-center h-56">
-202:                 <div class="flex flex-col items-center gap-1 w-40">
-203:                   <div class="w-full bg-emerald-200 border border-emerald-500" style="height:28px" title="interface: variant, delay, viewAmount"></div>
-204:                   <div class="w-full deep rounded-sm text-white flex flex-col items-center justify-center gap-1" style="height:170px">
-205:                     <p class="text-[0.6rem] text-slate-400">fade · bounce · grow variants</p>
-206:                     <p class="text-[0.6rem] text-slate-400">will-change lifecycle</p>
-207:                     <p class="text-[0.6rem] text-slate-400">scroll vs mount trigger</p>
-208:                     <p class="text-[0.6rem] text-emerald-300">prefers-reduced-motion (new, once)</p>
-209:                   </div>
-210:                   <p class="module-label text-slate-500">Reveal</p>
-211:                 </div>
-212:               </div>
-213:               <p class="text-xs text-slate-500 mt-2">Short interface, tall implementation: deep</p>
-214:             </div>
-215:           </div>
-216:           <dl class="space-y-2 text-sm">
-217:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Four modules whose interfaces nearly match their implementations; will-change handling duplicated in two, absent in two; reduced-motion honored in none.</dd></div>
-218:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep Reveal module with a variant on the interface; deletion test passes — complexity concentrates, wrappers go.</dd></div>
-219:           </dl>
-220:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-221:             <li>Delete 3 shallow modules</li>
-222:             <li>Reduced-motion implemented once, everywhere</li>
-223:             <li>Locality: motion bugs land in one module</li>
-224:             <li>4 test files become 1 richer one</li>
-225:           </ul>
-226:         </article>
-227:         <!-- ============ CANDIDATE 4 ============ -->
-228:         <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
-229:           <div class="flex items-start justify-between gap-4">
-230:             <h2 class="font-serif text-2xl">Shrink the CSRF surface</h2>
-231:             <div class="flex gap-2 shrink-0">
-232:               <span class="rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1">Speculative</span>
-233:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
-234:             </div>
-235:           </div>
-236:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-237:             src/lib/csrf.ts · src/app/api/csrf-token/route.ts · src/app/api/form/route.ts · src/app/kontakt/page.tsx
-238:           </p>
-239:           <!-- Cross-section, hand-built -->
-240:           <div class="grid md:grid-cols-2 gap-4">
-241:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-1">
-242:               <p class="module-label text-slate-400 mb-2">Before · token reaches the form three ways</p>
-243:               <div class="h-11 border-l-4 border-slate-400 bg-white px-3 flex items-center text-xs">kontakt/page.tsx generates server-side → prop</div>
-244:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">GET /api/csrf-token exists — no caller found</div>
-245:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">/api/form accepts <span class="font-mono mx-1">_csrf</span> or <span class="font-mono mx-1">csrfToken</span> — two names, one seam</div>
-246:               <div class="h-11 border-l-4 border-amber-500 bg-amber-50 px-3 flex items-center text-xs">fallback secret "default-csrf-secret-…" silently used if env missing</div>
-247:             </div>
-248:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col justify-center items-center gap-2">
-249:               <p class="module-label text-slate-400 self-start mb-2">After · one path, one name</p>
-250:               <div class="deep text-white rounded-lg px-6 py-4 text-center w-full max-w-xs">
-251:                 <p class="module-label text-emerald-300">csrf module</p>
-252:                 <p class="text-xs font-mono mt-1">issueToken() · assertValid(token)</p>
-253:                 <p class="text-[0.6rem] mt-2 text-slate-400">one field name · throws on missing secret in prod</p>
-254:               </div>
-255:               <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
-256:               <div class="flex gap-3">
-257:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">kontakt page</div>
-258:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">/api/form</div>
-259:               </div>
-260:               <p class="text-xs text-slate-500 mt-1">GET /api/csrf-token deleted (deletion test: passes)</p>
-261:             </div>
-262:           </div>
-263:           <dl class="space-y-2 text-sm">
-264:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Three entry points and two token field names for one flow; the standalone token route has no caller.</dd></div>
-265:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">Delete the unused route, settle on one field name, fail loudly on missing secret.</dd></div>
-266:           </dl>
-267:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-268:             <li>Interface shrinks: two functions, one field name</li>
-269:             <li>Delete one route module</li>
-270:             <li>Silent insecure fallback becomes a loud failure</li>
-271:           </ul>
-272:         </article>
-273:       </section>
-274:       <!-- ============ TOP RECOMMENDATION ============ -->
-275:       <section id="top-recommendation" class="rounded-xl deep text-white p-8 space-y-3">
-276:         <p class="module-label text-emerald-300">Top recommendation</p>
-277:         <h2 class="font-serif text-2xl"><a href="#c1" class="underline decoration-emerald-400 underline-offset-4">Deepen the content module</a></h2>
-278:         <p class="text-sm text-slate-300 max-w-2xl">
-279:           Highest leverage: every route in the app crosses this seam, the error-mapping asymmetry is a live bug class,
-280:           and the test suite already strains against it — mocking <span class="font-mono text-xs">sanityFetch</span> and
-281:           <span class="font-mono text-xs">unstable_cache</span> separately in every test file. One interface, five call
-282:           sites, one place to test.
-283:         </p>
-284:       </section>
-285:     </main>
-286:   </body>
-287: </html>
-````
-
-## File: src/__tests__/lib/content.test.ts
-````typescript
-  1: import {
-  2:   getProjects,
-  3:   getCv,
-  4:   getNavigation,
-  5:   CONTENT_TAGS,
-  6: } from "@/lib/sanity/content";
-  7: import { sanityFetch } from "@/lib/sanity/client";
-  8: // Mock the Sanity client — the content module's only dependency
-  9: jest.mock("@/lib/sanity/client", () => ({
- 10:   sanityFetch: jest.fn(),
- 11: }));
- 12: describe("content module", () => {
- 13:   beforeEach(() => {
- 14:     jest.clearAllMocks();
- 15:   });
- 16:   describe("getProjects", () => {
- 17:     it("fetches projects successfully with the projects tag", async () => {
- 18:       // Arrange
- 19:       const mockProjects = [
- 20:         {
- 21:           id: "1",
- 22:           name: "Test Project",
- 23:           description: "Test Description",
- 24:           subdescription: "Test Subdescription",
- 25:           projectimage: { asset: { _ref: "test" } },
- 26:           urlwww: [],
- 27:           urlgithub: [],
- 28:         },
- 29:       ];
- 30:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
- 31:       // Act
- 32:       const result = await getProjects();
- 33:       // Assert
- 34:       expect(result).toStrictEqual(mockProjects);
- 35:       expect(sanityFetch).toHaveBeenCalledWith({
- 36:         query: expect.any(String),
- 37:         revalidate: 86400, // 24 hours
- 38:         tags: [CONTENT_TAGS.projects],
- 39:       });
- 40:     });
- 41:   });
- 42:   describe("getCv", () => {
- 43:     it("fetches the CV with the cv tag", async () => {
- 44:       // Arrange
- 45:       const mockCv = { keyQualifications: ["TypeScript"] };
- 46:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockCv);
- 47:       // Act
- 48:       const result = await getCv();
- 49:       // Assert
- 50:       expect(result).toStrictEqual(mockCv);
- 51:       expect(sanityFetch).toHaveBeenCalledWith({
- 52:         query: expect.any(String),
- 53:         revalidate: 86400,
- 54:         tags: [CONTENT_TAGS.cv],
- 55:       });
- 56:     });
- 57:   });
- 58:   describe("error mapping (applies to every content type)", () => {
- 59:     it("handles authentication errors (401)", async () => {
- 60:       // Arrange
- 61:       const error = {
- 62:         statusCode: 401,
- 63:         message: "Invalid token",
- 64:         details: {
- 65:           type: "credentials",
- 66:           description: "Invalid token provided",
- 67:         },
- 68:       };
- 69:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 70:       // Act & Assert
- 71:       await expect(getProjects()).rejects.toThrow("Authentication failed");
- 72:     });
- 73:     it("handles permission errors (403)", async () => {
- 74:       // Arrange
- 75:       const error = {
- 76:         statusCode: 403,
- 77:         message: "Insufficient permissions",
- 78:         details: {
- 79:           type: "authorization",
- 80:           description: "Missing read access",
- 81:         },
- 82:       };
- 83:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 84:       // Act & Assert
- 85:       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
- 86:     });
- 87:     it("handles rate limiting (429)", async () => {
- 88:       // Arrange
- 89:       const error = {
- 90:         statusCode: 429,
- 91:         message: "Too Many Requests",
- 92:         details: { type: "rate_limit", description: "Rate limit exceeded" },
- 93:       };
- 94:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
- 95:       // Act & Assert
- 96:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
- 97:     });
- 98:     it("handles malformed GROQ queries (400)", async () => {
- 99:       // Arrange
-100:       const error = {
-101:         statusCode: 400,
-102:         message: "Invalid GROQ query",
-103:         details: {
-104:           type: "query_error",
-105:           description: "Syntax error in GROQ query",
-106:         },
-107:       };
-108:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-109:       // Act & Assert
-110:       await expect(getProjects()).rejects.toThrow(
-111:         "Sanity API error: Invalid GROQ query",
-112:       );
-113:     });
-114:     it("handles network timeouts", async () => {
-115:       // Arrange
-116:       const error = Object.assign(new Error("Network timeout"), {
-117:         name: "TimeoutError",
-118:       });
-119:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-120:       // Act & Assert
-121:       await expect(getProjects()).rejects.toThrow("Request timed out");
-122:     });
-123:     it("handles generic fetch errors with the entity name", async () => {
-124:       // Arrange
-125:       const error = {
-126:         message: "Fetch failed",
-127:       };
-128:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-129:       // Act & Assert
-130:       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
-131:     });
-132:     it("maps errors on non-project content too", async () => {
-133:       // Arrange
-134:       const error = {
-135:         statusCode: 429,
-136:         message: "Too Many Requests",
-137:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-138:       };
-139:       (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
-140:       // Act & Assert
-141:       await expect(getNavigation()).rejects.toThrow("Rate limit exceeded");
-142:     });
-143:     it("recovers after temporary errors", async () => {
-144:       // Arrange
-145:       const rateError = {
-146:         statusCode: 429,
-147:         message: "Too Many Requests",
-148:         details: { type: "rate_limit", description: "Rate limit exceeded" },
-149:       };
-150:       const mockProjects = [
-151:         {
-152:           id: "1",
-153:           name: "Test Project",
-154:           description: "Test Description",
-155:           subdescription: "Test Subdescription",
-156:           projectimage: { asset: { _ref: "test" } },
-157:           urlwww: [],
-158:           urlgithub: [],
-159:         },
-160:       ];
-161:       (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
-162:       (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
-163:       // Act & Assert
-164:       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
-165:       const result = await getProjects();
-166:       expect(result).toStrictEqual(mockProjects);
-167:     });
-168:   });
-169: });
-````
-
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  6: // Define the project type
-  7: interface ProjectType {
-  8:   id: string;
-  9:   name: string;
- 10:   description: string;
- 11:   subdescription: string;
- 12:   projectimage: { asset: { _ref: string } };
- 13:   urlwww: unknown[];
- 14:   urlgithub: unknown[];
- 15: }
- 16: // Mock the actions before importing the page component
- 17: const mockGetProjects = jest.fn();
- 18: const mockPreloadProjects = jest.fn();
- 19: jest.mock("@/lib/sanity/content", () => ({
- 20:   getProjects: mockGetProjects,
- 21:   preloadProjects: mockPreloadProjects,
- 22: }));
- 23: // Mock the sanity client
- 24: const mockUrlBuilder = {
- 25:   width: jest.fn().mockReturnThis(),
- 26:   fit: jest.fn().mockReturnThis(),
- 27:   quality: jest.fn().mockReturnThis(),
- 28:   auto: jest.fn().mockReturnThis(),
- 29:   url: jest.fn().mockReturnValue("mock-url"),
- 30: };
- 31: jest.mock("@/lib/sanity/client", () => ({
- 32:   client: {
- 33:     fetch: jest.fn(),
- 34:   },
- 35:   urlFor: jest.fn(() => mockUrlBuilder),
- 36: }));
- 37: // Mock components
- 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 39:   <h1>{children}</h1>
- 40: );
- 41: const MockProsjektCard = (props: { name: string }) => (
- 42:   <div data-testid="project-card">{props.name}</div>
- 43: );
- 44: const MockRotatingLoader = () => (
- 45:   <div data-testid="rotating-loader">Loading...</div>
- 46: );
- 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
- 48: jest.mock(
- 49:   "@/components/Prosjekter/ProsjektCard.component",
- 50:   () => MockProsjektCard,
- 51: );
- 52: jest.mock(
- 53:   "@/components/Animations/RotatingLoader.component",
- 54:   () => MockRotatingLoader,
- 55: );
- 56: // Create a test component that simulates the page behavior without async server components
- 57: function TestProsjekterPage() {
- 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 59:   const [loading, setLoading] = React.useState(true);
- 60:   React.useEffect(() => {
- 61:     mockGetProjects().then((data: ProjectType[]) => {
- 62:       setProjects(data);
- 63:       setLoading(false);
- 64:     });
- 65:   }, []);
- 66:   return (
- 67:     <main
- 68:       role="main"
- 69:       aria-label="Innhold portefølje"
- 70:       className="mt-32 bg-graybg"
- 71:     >
- 72:       <MockPageHeader>Prosjekter</MockPageHeader>
- 73:       {loading ? (
- 74:         <MockRotatingLoader />
- 75:       ) : (
- 76:         <div className="container mx-auto">
- 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 78:             {projects.map((project) => (
- 79:               <MockProsjektCard key={project.id} {...project} />
- 80:             ))}
- 81:           </div>
- 82:         </div>
- 83:       )}
- 84:     </main>
- 85:   );
- 86: }
- 87: describe("ProsjekterPage", () => {
- 88:   beforeEach(() => {
- 89:     jest.clearAllMocks();
- 90:   });
- 91:   it("renders projects from server component", async () => {
- 92:     // Arrange - Set up test data and conditions
- 93:     const mockProjects = [
- 94:       {
- 95:         id: "1",
- 96:         name: "Test Project 1",
- 97:         description: "Test Description 1",
- 98:         subdescription: "Test Subdescription 1",
- 99:         projectimage: { asset: { _ref: "test1" } },
-100:         urlwww: [],
-101:         urlgithub: [],
-102:       },
-103:       {
-104:         id: "2",
-105:         name: "Test Project 2",
-106:         description: "Test Description 2",
-107:         subdescription: "Test Subdescription 2",
-108:         projectimage: { asset: { _ref: "test2" } },
-109:         urlwww: [],
-110:         urlgithub: [],
-111:       },
-112:     ];
-113:     mockGetProjects.mockResolvedValue(mockProjects);
-114:     // Act - Perform the action being tested
-115:     render(<TestProsjekterPage />);
-116:     // Assert - Verify the results
-117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-118:     // Wait for projects to load and render
-119:     const projectCards = await screen.findAllByTestId("project-card");
-120:     expect(projectCards).toHaveLength(2);
-121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-123:     // Test that projects are rendered within the main content area
-124:     const main = screen.getByRole("main");
-125:     expect(main).toContainElement(projectCards[0]);
-126:     expect(main).toContainElement(projectCards[1]);
-127:   });
-128:   it("uses Suspense boundary for loading state", async () => {
-129:     // Arrange - Set up test data and conditions
-130:     const delayedPromise = createDelayedPromise([], 100);
-131:     mockGetProjects.mockImplementation(() => delayedPromise);
-132:     // Act - Perform the action being tested
-133:     render(<TestProsjekterPage />);
-134:     // Assert - Verify the results
-135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-137:     const main = screen.getByRole("main");
-138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-140:     // Wait for loading to complete
-141:     await waitFor(() => {
-142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-143:     });
-144:   });
-145: });
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       - name: Run Snyk to check main project vulnerabilities
+32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+33:         env:
+34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+35:         with:
+36:           command: "test"
+37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+38:       - name: Run Snyk to check eslint plugin vulnerabilities
+39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+40:         env:
+41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+42:         with:
+43:           command: "test"
+44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+45:       - name: Upload main project SARIF report to GitHub Security tab
+46:         if: always() && hashFiles('snyk-main.sarif') != ''
+47:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+48:         with:
+49:           sarif_file: snyk-main.sarif
+50:           category: snyk-main
+51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+53:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+54:         with:
+55:           sarif_file: snyk-eslint.sarif
+56:           category: snyk-eslint
+57:       - name: Snyk Monitor main project (only for pushes to main branch)
+58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+60:         env:
+61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+62:         with:
+63:           command: "monitor"
+64:           args: "--all-projects"
+65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+68:         env:
+69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+70:         with:
+71:           command: "monitor"
+72:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/app/api/form/route.ts
@@ -21005,186 +21144,32 @@ vercel.json
 79: }
 ````
 
-## File: src/app/cv/page.tsx
+## File: src/app/page.tsx
 ````typescript
  1: import { notFound } from "next/navigation";
- 2: import CVContent from "@/components/CV/CVContent.component";
- 3: import { getCv } from "@/lib/sanity/content";
- 4: import { Metadata } from "next/types";
- 5: export const metadata: Metadata = {
- 6:   title: "CV - Dfweb",
- 7: };
- 8: export default async function CVPage() {
- 9:   const cvData = await getCv();
-10:   if (!cvData) notFound();
-11:   return <CVContent cvData={cvData} />;
-12: }
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
  2: import type { Metadata } from "next/types";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 6: import { getProjects, preloadProjects } from "@/lib/sanity/content";
- 7: export const metadata: Metadata = {
- 8:   title: "Prosjekter - Dfweb",
+ 3: import { getPageContent } from "@/lib/sanity/content";
+ 4: import Hero from "@/components/Index/Hero.component";
+ 5: import IndexContent from "@/components/Index/IndexContent.component";
+ 6: export const metadata: Metadata = {
+ 7:   title: "Forside - Dfweb",
+ 8:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
  9: };
 10: // ISR - regenerate every 24 hours
 11: export const revalidate = 86400;
-12: async function ProjectList() {
-13:   const projects = await getProjects();
-14:   return (
-15:     <div className="container mx-auto">
-16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-17:         {projects.map((project, index) => (
-18:           <ProsjektCard
-19:             key={project.id}
-20:             {...project}
-21:             staggerDelay={(index % 2) * 0.15}
-22:           />
-23:         ))}
-24:       </div>
-25:     </div>
-26:   );
-27: }
-28: export default function Prosjekter() {
-29:   // Start fetching projects data as early as possible
-30:   preloadProjects();
-31:   return (
-32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-33:       <PageHeader>Prosjekter</PageHeader>
-34:       <Suspense fallback={<RotatingLoader />}>
-35:         <ProjectList />
-36:       </Suspense>
-37:     </main>
-38:   );
-39: }
-````
-
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
- 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 7: import SkipLink from "@/components/UI/SkipLink.component";
- 8: import Header from "@/components/Layout/Header.component";
- 9: import Footer from "@/components/Layout/Footer.component";
-10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-11: const jetbrainsMono = JetBrains_Mono({
-12:   subsets: ["latin"],
-13:   display: "swap", // Prevent invisible text during font load (improves FCP)
-14:   preload: true, // Preload font to reduce request chain
-15: });
-16: export const metadata: Metadata = {
-17:   title: "Forside - Dfweb",
-18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-19: };
-20: export default async function RootLayout({
-21:   children,
-22: }: Readonly<{
-23:   children: React.ReactNode;
-24: }>) {
-25:   const [navigation, settings] = await Promise.all([
-26:     getNavigation(),
-27:     getSettings(),
-28:   ]);
-29:   const footerCopyrightText = settings?.footerCopyrightText;
-30:   return (
-31:     <html lang="nb">
-32:       <head>
-33:         <meta
-34:           name="viewport"
-35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-36:         />
-37:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-38:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-39:         <link rel="icon" href="/favicon.ico" />
-40:         <link rel="apple-touch-icon" href="/logo.png" />
-41:         <meta property="og:title" content="Daniel Fjeldstad" />
-42:         <meta name="author" content="Daniel Fjeldstad" />
-43:         <meta property="og:locale" content="nb_NO" />
-44:         <meta
-45:           property="og:description"
-46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-47:         />
-48:         <meta property="og:url" content="https://www.dfweb.no/" />
-49:         <meta property="og:site_name" content="dfweb.no" />
-50:         <meta name="theme-color" content="#004014" />
-51:       </head>
-52:       <body
-53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-54:       >
-55:         <LazyMotionProvider>
-56:           <SkipLink />
-57:           <ErrorBoundary>
-58:             <div id="main-content" className="grow flex flex-col">
-59:               <Header navigation={navigation} />
-60:               <SpeedInsights />
-61:               <div className="grow">{children}</div>
-62:               <Footer
-63:                 footerCopyrightText={
-64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-65:                 }
-66:               />
-67:             </div>
-68:           </ErrorBoundary>
-69:         </LazyMotionProvider>
-70:       </body>
-71:     </html>
-72:   );
-73: }
-````
-
-## File: src/lib/sanity/client.ts
-````typescript
- 1: import { createImageUrlBuilder } from "@sanity/image-url";
- 2: import { createClient, type QueryParams } from "@sanity/client";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
- 7: const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: /**
-14:  * Typed fetch helper with consistent caching defaults.
-15:  * Combines time-based revalidation (default 86400s = 24 hours) with
-16:  * tag-based invalidation: tags enable instant webhook-driven refresh via
-17:  * /api/revalidate, while the revalidate window acts as a fallback when
-18:  * no webhook fires.
-19:  */
-20: export async function sanityFetch<T>({
-21:   query,
-22:   params = {},
-23:   revalidate = 86400,
-24:   tags = [],
-25: }: {
-26:   query: string;
-27:   params?: QueryParams;
-28:   revalidate?: number | false;
-29:   tags?: string[];
-30: }): Promise<T> {
-31:   return client.fetch<T>(query, params, {
-32:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
-33:     next: {
-34:       revalidate,
-35:       tags,
-36:     },
-37:   });
-38: }
-39: const builder = createImageUrlBuilder(client);
-40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-41:   return builder.image(source);
-42: }
+12: export default async function HomePage() {
+13:   const pageContent = await getPageContent();
+14:   if (!pageContent) notFound();
+15:   const { hero, content } = pageContent;
+16:   return (
+17:     <main>
+18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+19:         {hero && <Hero content={hero} />}
+20:       </div>
+21:       {content && <IndexContent pageContent={content} />}
+22:     </main>
+23:   );
+24: }
 ````
 
 ## File: src/lib/csrf.ts
@@ -21321,314 +21306,6 @@ vercel.json
 11:         created: 2026-08-29T00:00:00.000Z
 12: 
 13: patch: {}
-````
-
-## File: AGENTS.md
-````markdown
-  1: # AGENTS.md
-  2: 
-  3: This file provides guidance to agents when working with code in this repository.
-  4: 
-  5: ## Non-Obvious Project Patterns
-  6: 
-  7: - **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-  8: - **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
-  9: - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
- 10: - **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
- 11: - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
- 12: - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
- 13: - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
- 14: - **Sanity Defaults**: Hardcoded fallback values in client config (projectId: "41s7iutf", dataset: "production")
- 15: - **E2E Test Structure**: Cypress tests in `src/e2e/cypress/`, Playwright in `src/e2e/playwright/` (not standard locations)
- 16: - **Custom Refresh Script**: `pnpm refresh` does full cleanup including store prune and lock file removal
- 17: - **Supply Chain Security**: Multi-layered defense — see Security section below
- 18: 
- 19: ## Critical Commands
- 20: 
- 21: - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
- 22: - **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
- 23: - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
- 24: - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
- 25: 
- 26: ## Testing Gotchas
- 27: 
- 28: - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
- 29: - Test files outside `src/e2e/` must follow AAA pattern or fail
- 30: - Matrix component intentionally excluded from test coverage
- 31: - Cypress and Playwright have different ESLint rule overrides
- 32: 
- 33: ## Code Quality Principles
- 34: 
- 35: ### SOLID Principles
- 36: 
- 37: #### Single Responsibility Principle (SRP)
- 38: 
- 39: Each component/function should have one reason to change.
- 40: 
- 41: - **Components**: Separate UI from business logic (e.g., [`Section.component.tsx`](src/components/Index/Section.component.tsx:1) renders UI, logic lives elsewhere)
- 42: - **Functions**: [`content.ts`](src/lib/sanity/content.ts:1) separates data fetching, error handling, and caching into distinct functions
- 43: - **Benefits**: Easier testing, clearer purpose, simpler maintenance
- 44: 
- 45: #### Open/Closed Principle (OCP)
- 46: 
- 47: Software should be open for extension, closed for modification.
- 48: 
- 49: - Use composition and props to extend component behavior (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:27) accepts `renderAs` prop for different elements)
- 50: - Create generic components that can be customized without modifying source
- 51: - **Benefits**: Reduces bugs in existing code, safer feature additions
- 52: 
- 53: #### Liskov Substitution Principle (LSP)
- 54: 
- 55: Components accepting a type should work with any subtype.
- 56: 
- 57: - Ensure prop interfaces are respected by all implementations
- 58: - Don't throw unexpected errors or require undocumented props
- 59: - **Benefits**: Predictable behavior, safer component hierarchies
- 60: 
- 61: #### Interface Segregation Principle (ISP)
- 62: 
- 63: Don't force components to depend on props they don't use.
- 64: 
- 65: - Create focused prop interfaces (e.g., [`Button.component.tsx`](src/components/UI/Button.component.tsx:3) has targeted props, not a monolithic interface)
- 66: - Split large prop types into smaller, composable ones
- 67: - **Benefits**: More flexible components, easier to implement and test
- 68: 
- 69: #### Dependency Inversion Principle (DIP)
- 70: 
- 71: Depend on abstractions, not concrete implementations.
- 72: 
- 73: - Use dependency injection for services (e.g., pass clients as props or use context)
- 74: - Define abstract types/interfaces, inject implementations
- 75: - **Benefits**: Easier testing with mocks, flexible architecture, decoupled code
- 76: 
- 77: ### DRY Principle (Don't Repeat Yourself)
- 78: 
- 79: - Extract repeated UI patterns into reusable components
- 80: - Share utility functions (e.g., [`test-utils.ts`](src/utils/test-utils.ts:6) for AAA validation)
- 81: - Use custom hooks for shared stateful logic
- 82: - Avoid duplicating business logic across components
- 83: - **Benefits**: Less code, easier maintenance, fewer bugs, better testing
- 84: 
- 85: ### KISS Principle (Keep It Simple, Stupid)
- 86: 
- 87: - Use React/Next.js built-in features before custom solutions
- 88: - Write self-explanatory code with clear naming
- 89: - Avoid over-engineering simple problems
- 90: - Break complex components into smaller pieces (see `.component.tsx` pattern)
- 91: - Minimize dependencies
- 92: - Start simple, add complexity only when necessary
- 93: - **Benefits**: Easier to understand, faster development, fewer bugs
- 94: 
- 95: ### YAGNI Principle (You Aren't Gonna Need It)
- 96: 
- 97: Don't implement functionality until it's actually needed.
- 98: 
- 99: - Focus on current requirements, not hypothetical future needs
-100: - Don't create abstraction layers for single implementations
-101: - Avoid premature optimization before measuring performance
-102: - Don't build configuration systems until configurability is required
-103: - Wait for actual use cases before adding flexibility
-104: - **Benefits**: Less code to maintain, faster delivery, lower complexity, easier to change
-105: 
-106: ### Code Quality Summary
-107: 
-108: Following these principles results in:
-109: 
-110: - Maintainable, extendable code
-111: - Fewer bugs and faster debugging
-112: - Better team collaboration
-113: - Professional quality standards
-114: - Easier testing and refactoring
-115: 
-116: ## UI Development Rules
-117: 
-118: Concise rules for building accessible, fast, delightful UIs. Use MUST/SHOULD/NEVER to guide decisions.
-119: 
-120: ### Interactions
-121: 
-122: #### Keyboard
-123: 
-124: - MUST: Full keyboard support per [WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/)
-125: - MUST: Visible focus rings (`:focus-visible`; group with `:focus-within`)
-126: - MUST: Manage focus (trap, move, and return) per APG patterns
-127: 
-128: #### Targets & Input
-129: 
-130: - MUST: Hit target ≥24px (mobile ≥44px) If visual <24px, expand hit area
-131: - MUST: Mobile `<input>` font-size ≥16px or set:
-132:   ```html
-133:   <meta
-134:     name="viewport"
-135:     content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
-136:   />
-137:   ```
-138: - NEVER: Disable browser zoom
-139: - MUST: `touch-action: manipulation` to prevent double-tap zoom; set `-webkit-tap-highlight-color` to match design
-140: 
-141: #### Inputs & Forms (Behavior)
-142: 
-143: - MUST: Hydration-safe inputs (no lost focus/value)
-144: - NEVER: Block paste in `<input>/<textarea>`
-145: - MUST: Loading buttons show spinner and keep original label
-146: - MUST: Enter submits focused text input In `<textarea>`, ⌘/Ctrl+Enter submits; Enter adds newline
-147: - MUST: Keep submit enabled until request starts; then disable, show spinner, use idempotency key
-148: - MUST: Don't block typing; accept free text and validate after
-149: - MUST: Allow submitting incomplete forms to surface validation
-150: - MUST: Errors inline next to fields; on submit, focus first error
-151: - MUST: `autocomplete` + meaningful `name`; correct `type` and `inputmode`
-152: - SHOULD: Disable spellcheck for emails/codes/usernames
-153: - SHOULD: Placeholders end with ellipsis and show example pattern (eg, `+1 (123) 456-7890`, `sk-012345…`)
-154: - MUST: Warn on unsaved changes before navigation
-155: - MUST: Compatible with password managers & 2FA; allow pasting one-time codes
-156: - MUST: Trim values to handle text expansion trailing spaces
-157: - MUST: No dead zones on checkboxes/radios; label+control share one generous hit target
-158: 
-159: #### State & Navigation
-160: 
-161: - MUST: URL reflects state (deep-link filters/tabs/pagination/expanded panels) Prefer libs like [nuqs](https://nuqs.dev)
-162: - MUST: Back/Forward restores scroll
-163: - MUST: Links are links—use `<a>/<Link>` for navigation (support Cmd/Ctrl/middle-click)
-164: 
-165: #### Feedback
-166: 
-167: - SHOULD: Optimistic UI; reconcile on response; on failure show error and rollback or offer Undo
-168: - MUST: Confirm destructive actions or provide Undo window
-169: - MUST: Use polite `aria-live` for toasts/inline validation
-170: - SHOULD: Ellipsis (`…`) for options that open follow-ups (eg, "Rename…")
-171: 
-172: #### Touch/Drag/Scroll
-173: 
-174: - MUST: Design forgiving interactions (generous targets, clear affordances; avoid finickiness)
-175: - MUST: Delay first tooltip in a group; subsequent peers no delay
-176: - MUST: Intentional `overscroll-behavior: contain` in modals/drawers
-177: - MUST: During drag, disable text selection and set `inert` on dragged element/containers
-178: - MUST: No "dead-looking" interactive zones—if it looks clickable, it is
-179: 
-180: #### Autofocus
-181: 
-182: - SHOULD: Autofocus on desktop when there's a single primary input; rarely on mobile (to avoid layout shift)
-183: 
-184: ### Animation
-185: 
-186: - MUST: Honor `prefers-reduced-motion` (provide reduced variant)
-187: - SHOULD: Prefer CSS > Web Animations API > JS libraries
-188: - MUST: Animate compositor-friendly props (`transform`, `opacity`); avoid layout/repaint props (`top/left/width/height`)
-189: - SHOULD: Animate only to clarify cause/effect or add deliberate delight
-190: - SHOULD: Choose easing to match the change (size/distance/trigger)
-191: - MUST: Animations are interruptible and input-driven (avoid autoplay)
-192: - MUST: Correct `transform-origin` (motion starts where it "physically" should)
-193: 
-194: ### Layout
-195: 
-196: - SHOULD: Optical alignment; adjust by ±1px when perception beats geometry
-197: - MUST: Deliberate alignment to grid/baseline/edges/optical centers—no accidental placement
-198: - SHOULD: Balance icon/text lockups (stroke/weight/size/spacing/color)
-199: - MUST: Verify mobile, laptop, ultra-wide (simulate ultra-wide at 50% zoom)
-200: - MUST: Respect safe areas (use env(safe-area-inset-\*))
-201: - MUST: Avoid unwanted scrollbars; fix overflows
-202: 
-203: ### Content & Accessibility
-204: 
-205: - SHOULD: Inline help first; tooltips last resort
-206: - MUST: Skeletons mirror final content to avoid layout shift
-207: - MUST: `<title>` matches current context
-208: - MUST: No dead ends; always offer next step/recovery
-209: - MUST: Design empty/sparse/dense/error states
-210: - SHOULD: Curly quotes (" "); avoid widows/orphans
-211: - MUST: Tabular numbers for comparisons (`font-variant-numeric: tabular-nums` or a mono like Geist Mono)
-212: - MUST: Redundant status cues (not color-only); icons have text labels
-213: - MUST: Don't ship the schema—visuals may omit labels but accessible names still exist
-214: - MUST: Use the ellipsis character `…` (not `...`)
-215: - MUST: `scroll-margin-top` on headings for anchored links; include a "Skip to content" link; hierarchical `<h1–h6>`
-216: - MUST: Resilient to user-generated content (short/avg/very long)
-217: - MUST: Locale-aware dates/times/numbers/currency
-218: - MUST: Accurate names (`aria-label`), decorative elements `aria-hidden`, verify in the Accessibility Tree
-219: - MUST: Icon-only buttons have descriptive `aria-label`
-220: - MUST: Prefer native semantics (`button`, `a`, `label`, `table`) before ARIA
-221: - SHOULD: Right-clicking the nav logo surfaces brand assets
-222: - MUST: Use non-breaking spaces to glue terms: `10&nbsp;MB`, `⌘&nbsp;+&nbsp;K`, `Vercel&nbsp;SDK`
-223: 
-224: ### Performance
-225: 
-226: - SHOULD: Test iOS Low Power Mode and macOS Safari
-227: - MUST: Measure reliably (disable extensions that skew runtime)
-228: - MUST: Track and minimize re-renders (React DevTools/React Scan)
-229: - MUST: Profile with CPU/network throttling
-230: - MUST: Batch layout reads/writes; avoid unnecessary reflows/repaints
-231: - MUST: Mutations (`POST/PATCH/DELETE`) target <500 ms
-232: - SHOULD: Prefer uncontrolled inputs; make controlled loops cheap (keystroke cost)
-233: - MUST: Virtualize large lists (eg, `virtua`)
-234: - MUST: Preload only above-the-fold images; lazy-load the rest
-235: - MUST: Prevent CLS from images (explicit dimensions or reserved space)
-236: 
-237: ### Design
-238: 
-239: - SHOULD: Layered shadows (ambient + direct)
-240: - SHOULD: Crisp edges via semi-transparent borders + shadows
-241: - SHOULD: Nested radii: child ≤ parent; concentric
-242: - SHOULD: Hue consistency: tint borders/shadows/text toward bg hue
-243: - MUST: Accessible charts (color-blind-friendly palettes)
-244: - MUST: Meet contrast—prefer [APCA](https://apcacontrast.com/) over WCAG 2
-245: - MUST: Increase contrast on `:hover/:active/:focus`
-246: - SHOULD: Match browser UI to bg
-247: - SHOULD: Avoid gradient banding (use masks when needed)
-248: 
-249: ## Security — Supply Chain Defense
-250: 
-251: This project uses multi-layered supply chain attack prevention. Agents MUST preserve these measures when modifying configs or workflows.
-252: 
-253: ### Package Installation Defenses
-254: 
-255: | Defense                             | Config File               | Notes                                                                                       |
-256: | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- |
-257: | `ignore-scripts=true`               | `.npmrc`, `studio/.npmrc` | Blocks post-install scripts; only packages in `allowBuilds` whitelist can run build scripts |
-258: | `allowBuilds` whitelist             | `pnpm-workspace.yaml`     | Explicit opt-in for packages needing native compilation (@swc/core, cypress, esbuild, etc.) |
-259: | `minimum-release-age=2880`          | `.npmrc`                  | Blocks packages less than 48 hours old; use `--ignore-release-age` for exceptions           |
-260: | `block-exotic-subdependencies=true` | `.npmrc`                  | Prevents transitive deps from linking to GitHub commits, tarballs, or non-registry sources  |
-261: | `--frozen-lockfile`                 | All CI workflows          | Prevents lockfile modification during CI installs                                           |
-262: | `engine-strict=true`                | `.npmrc`                  | Fails if Node.js version doesn't match engines field                                        |
-263: | Vulnerability overrides             | `studio/package.json`     | Known CVEs patched via pnpm overrides                                                       |
-264: 
-265: ### Automated Dependency Updates
-266: 
-267: | Defense                        | Config File     | Notes                                                        |
-268: | ------------------------------ | --------------- | ------------------------------------------------------------ |
-269: | 7-day minimum release age      | `renovate.json` | Automated updates wait 7 days (stricter than manual 48h)     |
-270: | OpenSSF Scorecard              | `renovate.json` | `security:openssf-scorecard` preset evaluates package health |
-271: | Automerge only for minor/patch | `renovate.json` | Major updates require manual review                          |
-272: 
-273: ### CI/CD Security
-274: 
-275: | Defense                           | Config File            | Notes                                                             |
-276: | --------------------------------- | ---------------------- | ----------------------------------------------------------------- |
-277: | SHA-pinned GitHub Actions         | All workflows          | All `uses:` references pinned to commit SHAs, never floating tags |
-278: | No `pull_request_target`          | All workflows          | NEVER use this trigger — it enables cache poisoning attacks       |
-279: | Least-privilege permissions       | All workflows          | Every workflow specifies minimal `permissions` block              |
-280: | No cache `restore-keys` fallbacks | Workflows with caching | Prevents stale/poisoned cache restoration from other branches     |
-281: | Pinned global installs            | `repomix.yml`          | Global npm packages pinned to exact versions                      |
-282: | Lockfile-backed studio installs   | `snyk-scan.yml`        | Uses `npm ci` with committed `package-lock.json`                  |
-283: 
-284: ### Security Scanning
-285: 
-286: | Tool     | Workflow        | Purpose                                                               |
-287: | -------- | --------------- | --------------------------------------------------------------------- |
-288: | Snyk     | `snyk-scan.yml` | Dependency vulnerability scanning + monitoring                        |
-289: | Trivy    | `security.yml`  | Filesystem vulnerability scanning (CRITICAL/HIGH)                     |
-290: | Semgrep  | `security.yml`  | SAST with OWASP, JS, TS, React rulesets + custom rules in `.semgrep/` |
-291: | CodeQL   | `codeql.yml`    | GitHub native code analysis with security-and-quality queries         |
-292: | Gitleaks | `security.yml`  | Secret detection in commits                                           |
-293: 
-294: ### Rules for Agents
-295: 
-296: - **NEVER** add `pull_request_target` to any workflow
-297: - **NEVER** use floating tags for GitHub Actions (always pin to SHA)
-298: - **NEVER** use `npm install -g <package>` without a pinned version in CI
-299: - **NEVER** add `restore-keys` fallbacks to cache steps in workflows
-300: - **NEVER** remove `ignore-scripts=true` from `.npmrc`
-301: - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
-302: - **ALWAYS** add explicit `permissions` blocks to new workflows
-303: - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
-304: - Full hardening plan available at `plans/supply-chain-hardening.md`
 ````
 
 ## File: jest.setup.ts
@@ -21770,223 +21447,385 @@ vercel.json
 135: });
 ````
 
-## File: src/app/page.tsx
-````typescript
- 1: import { notFound } from "next/navigation";
- 2: import type { Metadata } from "next/types";
- 3: import { getPageContent } from "@/lib/sanity/content";
- 4: import Hero from "@/components/Index/Hero.component";
- 5: import IndexContent from "@/components/Index/IndexContent.component";
- 6: export const metadata: Metadata = {
- 7:   title: "Forside - Dfweb",
- 8:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
- 9: };
-10: // ISR - regenerate every 24 hours
-11: export const revalidate = 86400;
-12: export default async function HomePage() {
-13:   const pageContent = await getPageContent();
-14:   if (!pageContent) notFound();
-15:   const { hero, content } = pageContent;
-16:   return (
-17:     <main>
-18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-19:         {hero && <Hero content={hero} />}
-20:       </div>
-21:       {content && <IndexContent pageContent={content} />}
-22:     </main>
-23:   );
-24: }
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
+  4: 
+  5: Fourth version of my personal portfolio website with Next.js, Motion,
+  6: Sanity.io and Typescript.
+  7: 
+  8: ## Table of Contents
+  9: 
+ 10: - [Live URL](#live-url)
+ 11: - [Frontend (Next.js)](#frontend-nextjs)
+ 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 13: - [Google Lighthouse](#google-lighthouse)
+ 14: - [Features](#features)
+ 15:   - [General](#general)
+ 16:   - [Design](#design)
+ 17:   - [Accessibility](#accessibility)
+ 18:   - [Security](#security)
+ 19:   - [Devops and Code quality](#devops-and-code-quality)
+ 20:   - [Environment Variables](#environment-variables)
+ 21:   - [Testing Standards](#testing-standards)
+ 22: 
+ 23: ## Live URL
+ 24: 
+ 25: - <https://www.dfweb.no>
+ 26: 
+ 27: ## Frontend (Next.js)
+ 28: 
+ 29: ![Frontend Image](public/images/frontend.png)
+ 30: 
+ 31: ---
+ 32: 
+ 33: ## Backend (Sanity headless CMS)
+ 34: 
+ 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 36: 
+ 37: ---
+ 38: 
+ 39: ## Google Lighthouse
+ 40: 
+ 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 42: 
+ 43: ## Features
+ 44: 
+ 45: ### General
+ 46: 
+ 47: - Clean, modern, responsive and Matrix-inspired design
+ 48: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 49: - Matrix canvas rain effect on front page
+ 50: - Custom 404 page with Matrix rain effect
+ 51: - Next.js 16 with Typescript and App Router
+ 52:   - Server Components implementation for improved performance
+ 53:   - Streaming with Suspense boundaries
+ 54:   - Automatic static optimization with revalidation
+ 55:   - Server-side data fetching with proper error handling
+ 56: - React 19
+ 57: - Sanity headless CMS for all of the content, projects and navigation links
+ 58: - Ladle for component documentation
+ 59: - Animations with Motion
+ 60: - React testing library for unit testing
+ 61: - Cypress for E2E testing
+ 62: - Playwright for cross-browser E2E testing
+ 63: - Contact form with Email.js and CSRF protection
+ 64: - Polymorphic components
+ 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 66: - Google rich results for each individual page
+ 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 68: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 70: - Reusable GenericForm component for easy form creation and management
+ 71: - Error handling with react-error-boundary for improved user experience and
+ 72:   easier debugging
+ 73: - AI-friendly repository documentation with automated updates (Repomix with
+ 74:   Github action workflow)
+ 75: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 76:   - Main AGENTS.md with project-specific patterns and gotchas
+ 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: 
+ 83: ### Design
+ 84: 
+ 85: - Fully responsive design tested on all devices
+ 86: - React Icons for project icons
+ 87: - Tailwind 4 for styling with a CSS custom-property design token system
+ 88:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+ 89:   colors, surface palette, glow shadows, and custom animations all driven by
+ 90:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
+ 91: - Animated reusable input fields
+ 92: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 93:   Matrix characters
+ 94: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 95: 
+ 96: ### Accessibility
+ 97: 
+ 98: - WCAG accessibility tested
+ 99: - Accessibility testing with Cypress Axe and Pa11y
+100: - Automated Pa11y accessibility testing on every PR and push to main
+101:   - Tests all main pages against WCAG2AA standards
+102:   - Captures screenshots for visual reference
+103:   - Detailed reports available as GitHub Actions artifacts
+104: - Builds will fail if any a11y errors are found
+105: 
+106: ### Devops and Code quality
+107: 
+108: - Continuous Integration with CircleCI
+109: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+110: - Github action workflow for Cypress
+111: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+112: - E2E testing with Cypress and Playwright integrated with Github actions
+113: - Unit testing with Jest and React Testing Library integrated with CircleCI
+114: - Test coverage setup with Codecov
+115: - 100% test coverage with Jest and React testing library
+116: - AI-powered commit message generation following Conventional Commits with
+117:   gitmojis
+118: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+119:   - Scans for security, performance, correctness, and architecture issues
+120:   - Outputs a 0–100 score with actionable diagnostics on every PR
+121:   - Posts results as PR comments and GitHub Actions job summaries
+122:   - Configurable score threshold (default: 80) to gate merges
+123:   - Auto-detects package manager (pnpm, yarn, npm)
+124: - Automated performance monitoring with Lighthouse CI
+125:   - Performance, accessibility, best practices, and SEO checks on every PR
+126:   - Configurable thresholds for quality metrics
+127:   - Both desktop and performance-focused testing
+128: - Automated repository documentation with Repomix
+129:   - AI-friendly documentation generation on every push to main
+130:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+131:   - Automated PR analysis with repository structure insights
+132:   - Security-focused documentation with sensitive information filtering
+133:   - Markdown formatting for improved readability
+134: 
+135: ### Security
+136: 
+137: - OWASP security scanning with Semgrep, Gitleaks and Trivy
+138:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+139:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+140:   - Secret detection with Gitleaks on every PR and push
+141:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+142:   - Runs automatically on every PR and push to main
+143: - Automated security vulnerability scanning with Snyk
+144:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+145:   - Integrates with GitHub Security tab for vulnerability tracking
+146: - Supply chain attack prevention with 7-day minimum release age
+147:   - Packages must be published for at least 7 days before installation
+148:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+149:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
+150:   - Protects against compromised package releases (like Shai Hulud incidents)
+151: - GitHub Actions supply chain hardening with SHA pinning
+152:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+153:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+154:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+155:   - Custom audit script at `scripts/pin-actions.py`
+156:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+157:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+158:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+159:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
+160: 
+161: ### Environment Variables
+162: 
+163: - Type-safe environment variable validation with envalid
+164:   - Runtime validation of required environment variables
+165:   - Clear error messages with examples for missing variables
+166:   - Separate handling of client-side and server-side variables
+167:   - Default values where appropriate
+168:   - Required variables:
+169: 
+170:     ```env
+171:     # Email Configuration (client-side)
+172:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+173:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+174:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+175: 
+176:     # Security Configuration (server-side)
+177:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+178:     ```
+179: 
+180:   - Validation prevents application startup if required variables are missing
+181:   - TypeScript integration for type-safe access to environment variables
+182: 
+183: ### Testing Standards
+184: 
+185: - ISTQB-aligned comprehensive test strategy
+186:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+187:   - Multi-level test approach (Unit, Component, E2E)
+188:   - Risk-based testing methodology
+189:   - Defined test metrics and reporting
+190:   - Clear roles and responsibilities
+191:   - Structured defect management process
+192: 
+193: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+194:   - Each test must include the following comments:
+195: 
+196:     ```typescript
+197:     // Arrange - Set up test data and conditions
+198:     // Act - Perform the action being tested
+199:     // Assert - Verify the results
+200:     ```
+201: 
+202:   - This pattern ensures:
+203:     - Clear test structure and readability
+204:     - Consistent test organization across the codebase
+205:     - Easy identification of test setup, execution, and verification
+206:   - Simplified test maintenance and debugging
+207:   - Automated validation through custom ESLint rules
+208:   - Tests will fail if AAA pattern is not followed
 ````
 
-## File: src/lib/sanity/content.ts
+## File: src/__tests__/Index/Section.test.tsx
 ````typescript
-  1: import "server-only";
-  2: import { sanityFetch } from "@/lib/sanity/client";
-  3: import { isSanityApiError } from "@/types/sanity-errors";
-  4: import type {
-  5:   Cv,
-  6:   Navigation,
-  7:   Page,
-  8:   Project,
-  9:   Settings,
- 10: } from "@/types/sanity.types";
- 11: /**
- 12:  * The content module: the single interface between the app and Sanity.
- 13:  *
- 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
- 15:  * implementation details of this module. Routes call the named functions
- 16:  * below and receive typed data or a well-mapped error — nothing else
- 17:  * crosses the seam.
- 18:  *
- 19:  * Every content type is tagged, so the /api/revalidate webhook can
- 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
- 21:  * window acts as a fallback when no webhook fires.
- 22:  */
- 23: const REVALIDATE_SECONDS = 86400; // 24 hours
- 24: /** Cache tags — the /api/revalidate route accepts any of these. */
- 25: export const CONTENT_TAGS = {
- 26:   projects: "projects",
- 27:   cv: "cv",
- 28:   pageContent: "page-content",
- 29:   navigation: "navigation",
- 30:   settings: "settings",
- 31: } as const;
- 32: const projectsQuery = `
- 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
- 34:     id,
- 35:     name,
- 36:     description,
- 37:     subdescription,
- 38:     projectcategory->{
- 39:       _id,
- 40:       title
- 41:     },
- 42:     urlwww[]{
- 43:       ...,
- 44:       _key,
- 45:     },
- 46:     urlgithub[]{
- 47:       ...,
- 48:       _key,
- 49:     },
- 50:     projectimage,
- 51:     featured,
- 52:     featureOrder
- 53:   }
- 54: `;
- 55: const cvQuery = `
- 56:   *[_type == "cv"][0] {
- 57:     keyQualifications,
- 58:     experience[] {
- 59:       period,
- 60:       company,
- 61:       role,
- 62:       description
- 63:     },
- 64:     education[] {
- 65:       period,
- 66:       institution,
- 67:       degree,
- 68:       description
- 69:     },
- 70:     volunteerWork[] {
- 71:       period,
- 72:       organization,
- 73:       role,
- 74:       description
- 75:     }
- 76:   }
- 77: `;
- 78: const pageContentQuery = `
- 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
- 80:     "id": _id,
- 81:     title,
- 82:     hero,
- 83:     content
- 84:   }
- 85: `;
- 86: const navigationQuery = `
- 87:   *[_type == "navigation"][0] {
- 88:     title,
- 89:     links[] {
- 90:       title,
- 91:       name,
- 92:       hash,
- 93:       href,
- 94:       externalLink
- 95:     }
- 96:   }
- 97: `;
- 98: const settingsQuery = `
- 99:   *[_type == "settings"][0] {
-100:     footerCopyrightText
-101:   }
-102: `;
-103: /**
-104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
-105:  * Applied uniformly to every content fetch — this is the only place in the
-106:  * codebase that knows what a Sanity error looks like.
-107:  */
-108: function mapError(error: unknown, entity: string): never {
-109:   console.error("Error fetching content:", entity, error);
-110:   if (isSanityApiError(error)) {
-111:     switch (error.statusCode) {
-112:       case 401:
-113:         throw new Error("Authentication failed");
-114:       case 403:
-115:         throw new Error("Insufficient permissions");
-116:       case 429:
-117:         throw new Error("Rate limit exceeded");
-118:       default:
-119:         throw new Error(`Sanity API error: ${error.message}`);
-120:     }
-121:   }
-122:   if (error instanceof Error && error.name === "TimeoutError") {
-123:     throw new Error("Request timed out");
-124:   }
-125:   throw new Error(`Failed to fetch ${entity}`);
-126: }
-127: async function fetchContent<T>(
-128:   entity: string,
-129:   query: string,
-130:   tag: string,
-131: ): Promise<T> {
-132:   try {
-133:     return await sanityFetch<T>({
-134:       query,
-135:       revalidate: REVALIDATE_SECONDS,
-136:       tags: [tag],
-137:     });
-138:   } catch (error) {
-139:     mapError(error, entity);
-140:   }
-141: }
-142: /** All published projects, ordered by featureOrder. */
-143: export function getProjects(): Promise<Project[]> {
-144:   return fetchContent<Project[]>(
-145:     "projects",
-146:     projectsQuery,
-147:     CONTENT_TAGS.projects,
-148:   );
-149: }
-150: /** The CV document, or null when none is published. */
-151: export function getCv(): Promise<Cv | null> {
-152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
-153: }
-154: /** Home page content (hero + sections), or null when missing. */
-155: export function getPageContent(): Promise<Page | null> {
-156:   return fetchContent<Page | null>(
-157:     "page content",
-158:     pageContentQuery,
-159:     CONTENT_TAGS.pageContent,
-160:   );
-161: }
-162: /** Site navigation links. */
-163: export function getNavigation(): Promise<Navigation> {
-164:   return fetchContent<Navigation>(
-165:     "navigation",
-166:     navigationQuery,
-167:     CONTENT_TAGS.navigation,
-168:   );
-169: }
-170: /** Site-wide settings (footer text etc.). */
-171: export function getSettings(): Promise<Settings> {
-172:   return fetchContent<Settings>(
-173:     "settings",
-174:     settingsQuery,
-175:     CONTENT_TAGS.settings,
-176:   );
-177: }
-178: /**
-179:  * Kicks off the projects fetch without awaiting it, so the request is
-180:  * already in flight when the Suspense boundary renders. Next.js dedupes
-181:  * the underlying fetch, so the awaited call in the page reuses it.
-182:  */
-183: export function preloadProjects(): void {
-184:   void getProjects().catch(() => {
-185:     // Swallow here; the awaited call in the page surfaces the error.
-186:   });
-187: }
+  1: import { render, screen, fireEvent } from "@testing-library/react";
+  2: import Section from "@/components/Index/Section.component";
+  3: import { Pagecontent } from "@/types/sanity.types";
+  4: // Mock IntersectionObserver
+  5: const mockIntersectionObserver = jest.fn();
+  6: mockIntersectionObserver.mockReturnValue({
+  7:   observe: () => null,
+  8:   unobserve: () => null,
+  9:   disconnect: () => null,
+ 10: });
+ 11: window.IntersectionObserver = mockIntersectionObserver;
+ 12: const mockProps: Pagecontent = {
+ 13:   _type: "pagecontent",
+ 14:   title: "Test Title",
+ 15:   text: [
+ 16:     {
+ 17:       _key: "a1",
+ 18:       _type: "block",
+ 19:       children: [
+ 20:         {
+ 21:           _key: "a1-1",
+ 22:           _type: "span",
+ 23:           marks: [],
+ 24:           text: "Test content",
+ 25:         },
+ 26:       ],
+ 27:       markDefs: [],
+ 28:       style: "normal",
+ 29:     },
+ 30:   ],
+ 31: };
+ 32: // Type-safe way to make NODE_ENV writable for tests
+ 33: type WritableNodeEnv = {
+ 34:   NODE_ENV?: string;
+ 35: };
+ 36: // Type for testing invalid props
+ 37: type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
+ 38:   title?: string | null;
+ 39:   text?: Pagecontent["text"] | null;
+ 40: };
+ 41: const SERIALIZED_TEXT = JSON.stringify(mockProps.text);
+ 42: const setNodeEnv = (value: string) => {
+ 43:   (process.env as WritableNodeEnv).NODE_ENV = value;
+ 44: };
+ 45: const invalidDataMessage = (title: unknown, text: unknown) =>
+ 46:   `Ugyldig seksjon data: tittel=${title}, tekst=${text}`;
+ 47: describe("Section Component", () => {
+ 48:   beforeEach(() => setNodeEnv("development"));
+ 49:   afterEach(() => setNodeEnv("test"));
+ 50:   it("renders with valid props", () => {
+ 51:     // Arrange
+ 52:     render(<Section {...mockProps} />);
+ 53:     // Act
+ 54:     const title = screen.getByText("Test Title");
+ 55:     const content = screen.getByText("Test content");
+ 56:     // Assert
+ 57:     expect(title).toBeInTheDocument();
+ 58:     expect(content).toBeInTheDocument();
+ 59:   });
+ 60:   describe("error handling for invalid data", () => {
+ 61:     let consoleErrorSpy: jest.SpyInstance;
+ 62:     beforeEach(() => {
+ 63:       consoleErrorSpy = jest
+ 64:         .spyOn(console, "error")
+ 65:         .mockImplementation(() => {});
+ 66:     });
+ 67:     afterEach(() => consoleErrorSpy.mockRestore());
+ 68:     const invalidCases: ReadonlyArray<{
+ 69:       name: string;
+ 70:       overrides: Partial<InvalidSectionProps>;
+ 71:       expectedMessage: string;
+ 72:     }> = [
+ 73:       {
+ 74:         name: "title is missing",
+ 75:         overrides: { title: undefined },
+ 76:         expectedMessage: invalidDataMessage("undefined", SERIALIZED_TEXT),
+ 77:       },
+ 78:       {
+ 79:         name: "title is null",
+ 80:         overrides: { title: null },
+ 81:         expectedMessage: invalidDataMessage("null", SERIALIZED_TEXT),
+ 82:       },
+ 83:       {
+ 84:         name: "title is empty string",
+ 85:         overrides: { title: "" },
+ 86:         expectedMessage: invalidDataMessage("", SERIALIZED_TEXT),
+ 87:       },
+ 88:       {
+ 89:         name: "text is missing",
+ 90:         overrides: { text: undefined },
+ 91:         expectedMessage: invalidDataMessage("Test Title", "undefined"),
+ 92:       },
+ 93:       {
+ 94:         name: "text is null",
+ 95:         overrides: { text: null },
+ 96:         expectedMessage: invalidDataMessage("Test Title", "null"),
+ 97:       },
+ 98:       {
+ 99:         name: "both title and text are missing",
+100:         overrides: { title: undefined, text: undefined },
+101:         expectedMessage: invalidDataMessage("undefined", "undefined"),
+102:       },
+103:     ];
+104:     invalidCases.forEach(({ name, overrides, expectedMessage }) => {
+105:       it(`returns null and logs error when ${name}`, () => {
+106:         // Arrange
+107:         const props = { ...mockProps, ...overrides } as Pagecontent;
+108:         // Act
+109:         const { container } = render(<Section {...props} />);
+110:         // Assert
+111:         expect(container.firstChild).toBeNull();
+112:         expect(consoleErrorSpy).toHaveBeenCalledWith(expectedMessage);
+113:       });
+114:     });
+115:     it("renders normally when text is empty array", () => {
+116:       // Arrange
+117:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
+118:       // Act
+119:       const { container } = render(<Section {...propsWithEmptyText} />);
+120:       // Assert
+121:       // Empty array is truthy in JavaScript, so the component renders
+122:       expect(container.firstChild).not.toBeNull();
+123:       expect(consoleErrorSpy).not.toHaveBeenCalled();
+124:       expect(screen.getByText("Test Title")).toBeInTheDocument();
+125:     });
+126:   });
+127:   it("triggers error in development mode", () => {
+128:     // Arrange
+129:     const consoleErrorSpy = jest
+130:       .spyOn(console, "error")
+131:       .mockImplementation(() => {});
+132:     render(<Section {...mockProps} />);
+133:     const errorButton = screen.getByText("Utløs Testfeil");
+134:     // Act & Assert
+135:     expect(() => fireEvent.click(errorButton)).toThrow(
+136:       "En uventet feil har oppstått",
+137:     );
+138:     consoleErrorSpy.mockRestore();
+139:   });
+140:   it("does not show error button in production mode", () => {
+141:     // Arrange
+142:     setNodeEnv("production");
+143:     render(<Section {...mockProps} />);
+144:     // Act
+145:     const errorButton = screen.queryByText("Utløs Testfeil");
+146:     // Assert
+147:     expect(errorButton).not.toBeInTheDocument();
+148:   });
+149:   it("does not show error button when showDebugButton is false in development mode", () => {
+150:     // Arrange
+151:     render(<Section {...mockProps} showDebugButton={false} />);
+152:     // Act
+153:     const errorButton = screen.queryByText("Utløs Testfeil");
+154:     // Assert
+155:     expect(errorButton).not.toBeInTheDocument();
+156:   });
+157:   it("shows error button when showDebugButton is true in development mode", () => {
+158:     // Arrange
+159:     render(<Section {...mockProps} showDebugButton={true} />);
+160:     // Act
+161:     const errorButton = screen.getByText("Utløs Testfeil");
+162:     // Assert
+163:     expect(errorButton).toBeInTheDocument();
+164:   });
+165: });
 ````
 
 ## File: src/utils/eslint/package.json
@@ -22020,6 +21859,117 @@ vercel.json
 27:     }
 28:   }
 29: }
+````
+
+## File: next.config.ts
+````typescript
+  1: import type { NextConfig } from "next";
+  2: const cspDirectives = {
+  3:   "default-src": ["'self'"],
+  4:   "script-src": [
+  5:     "'self'",
+  6:     "'unsafe-eval'",
+  7:     "'unsafe-inline'",
+  8:     "https://va.vercel-scripts.com",
+  9:   ],
+ 10:   "style-src": ["'self'", "'unsafe-inline'"],
+ 11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
+ 12:   "font-src": ["'self'"],
+ 13:   "object-src": ["'none'"],
+ 14:   "base-uri": ["'self'"],
+ 15:   "form-action": ["'self'"],
+ 16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
+ 17:   "connect-src": [
+ 18:     "'self'",
+ 19:     "https://api.emailjs.com",
+ 20:     "https://va.vercel-scripts.com",
+ 21:   ],
+ 22: };
+ 23: const buildCspHeader = (directives: Record<string, string[]>) =>
+ 24:   Object.entries(directives)
+ 25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
+ 26:     .join(" ") + " upgrade-insecure-requests;";
+ 27: const nextConfig: NextConfig = {
+ 28:   transpilePackages: ["@portabletext/react"],
+ 29:   compiler: {
+ 30:     // Remove console.log in production
+ 31:     removeConsole: process.env.NODE_ENV === "production",
+ 32:   },
+ 33:   // Optimize CSS chunking - merge CSS files to reduce network requests
+ 34:   experimental: {
+ 35:     cssChunking: true, // Merge CSS files when possible (default)
+ 36:     useTypeScriptCli: true, // https://nextjs.org/docs/app/api-reference/config/typescript#using-typescript-7
+ 37:   },
+ 38:   images: {
+ 39:     remotePatterns: [
+ 40:       {
+ 41:         protocol: "https",
+ 42:         hostname: "cdn.sanity.io",
+ 43:       },
+ 44:     ],
+ 45:   },
+ 46:   async headers() {
+ 47:     return [
+ 48:       {
+ 49:         source: "/",
+ 50:         headers: [
+ 51:           {
+ 52:             key: "Cache-Control",
+ 53:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 54:           },
+ 55:           {
+ 56:             key: "X-Frame-Options",
+ 57:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 58:           },
+ 59:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 60:           {
+ 61:             key: "Content-Security-Policy",
+ 62:             value: buildCspHeader(cspDirectives),
+ 63:           },
+ 64:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 65:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 66:         ],
+ 67:       },
+ 68:       {
+ 69:         source: "/prosjekter",
+ 70:         headers: [
+ 71:           {
+ 72:             key: "Cache-Control",
+ 73:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 74:           },
+ 75:           {
+ 76:             key: "X-Frame-Options",
+ 77:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 78:           },
+ 79:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 80:           {
+ 81:             key: "Content-Security-Policy",
+ 82:             value: buildCspHeader(cspDirectives),
+ 83:           },
+ 84:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 85:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 86:         ],
+ 87:       },
+ 88:       {
+ 89:         source: "/:path*",
+ 90:         headers: [
+ 91:           {
+ 92:             key: "X-Frame-Options",
+ 93:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 94:           },
+ 95:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 96:           {
+ 97:             key: "Content-Security-Policy",
+ 98:             value: buildCspHeader(cspDirectives),
+ 99:           },
+100:           { key: "Permissions-Policy", value: "tools=(self)" },
+101:           { key: "Origin-Agent-Cluster", value: "?1" },
+102:         ],
+103:       },
+104:     ];
+105:   },
+106: };
+107: export default nextConfig;
 ````
 
 ## File: studio/package.json
@@ -22152,7 +22102,7 @@ vercel.json
   3:   "version": "1.1.0",
   4:   "private": true,
   5:   "type": "module",
-  6:   "packageManager": "pnpm@11.21.0",
+  6:   "packageManager": "pnpm@12.3.4",
   7:   "scripts": {
   8:     "dev": "next dev --turbopack",
   9:     "lhci": "lhci autorun",
@@ -22205,7 +22155,7 @@ vercel.json
  56:     "@testing-library/react": "^16.3.3",
  57:     "@testing-library/user-event": "^14.6.6",
  58:     "@types/jest": "^30.0.0",
- 59:     "@types/node": "^26.2.0",
+ 59:     "@types/node": "^26.4.0",
  60:     "@types/react": "^19.2.18",
  61:     "@types/react-dom": "^19.2.5",
  62:     "@typescript-eslint/eslint-plugin": "^8.67.0",
