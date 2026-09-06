@@ -29,6 +29,10 @@ const buildCspHeader = (directives: Record<string, string[]>) =>
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@portabletext/react"],
+  typescript: {
+    // Keep Ladle's development-only sources out of Next.js type checking.
+    tsconfigPath: "tsconfig.build.json",
+  },
   compiler: {
     // Remove console.log in production
     removeConsole: process.env.NODE_ENV === "production",
