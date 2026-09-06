@@ -2924,6 +2924,297 @@ vercel.json
 45: echo "2. Make a commit to test the AI commit message generator"
 ````
 
+## File: DOCS/architecture-review-2026-08-24.html
+````html
+  1: <!doctype html>
+  2: <html lang="en">
+  3:   <head>
+  4:     <meta charset="utf-8" />
+  5:     <title>Architecture review for dfweb-v4</title>
+  6:     <script src="https://cdn.tailwindcss.com"></script>
+  7:     <script type="module">
+  8:       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  9:       mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+ 10:     </script>
+ 11:     <style>
+ 12:       .seam { stroke-dasharray: 4 4; }
+ 13:       .leak { stroke: #dc2626; }
+ 14:       .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+ 15:       .module-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
+ 16:     </style>
+ 17:   </head>
+ 18:   <body class="bg-stone-50 text-slate-900 font-sans">
+ 19:     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+ 20:       <header class="space-y-3">
+ 21:         <h1 class="font-serif text-3xl">Architecture review · dfweb-v4</h1>
+ 22:         <p class="text-sm text-slate-500">2026-08-24 · Next.js 15 portfolio · Sanity CMS</p>
+ 23:         <div class="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
+ 24:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 border border-slate-500 bg-white"></span> module</span>
+ 25:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#64748b" stroke-width="1.5" class="seam"/></svg> seam</span>
+ 26:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#dc2626" stroke-width="2"/></svg> leakage</span>
+ 27:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 deep rounded-sm"></span> deep module</span>
+ 28:         </div>
+ 29:       </header>
+ 30:       <section id="candidates" class="space-y-10">
+ 31:         <!-- ============ CANDIDATE 1 ============ -->
+ 32:         <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+ 33:           <div class="flex items-start justify-between gap-4">
+ 34:             <h2 class="font-serif text-2xl">Deepen the content module</h2>
+ 35:             <div class="flex gap-2 shrink-0">
+ 36:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+ 37:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+ 38:             </div>
+ 39:           </div>
+ 40:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+ 41:             src/lib/sanity/client.ts · src/lib/sanity/queries.ts · src/app/prosjekter/actions.ts ·
+ 42:             src/app/page.tsx · src/app/cv/page.tsx · src/app/layout.tsx
+ 43:           </p>
+ 44:           <div class="grid md:grid-cols-2 gap-4">
+ 45:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+ 46:               <p class="module-label text-slate-400 mb-2">Before</p>
+ 47:               <pre class="mermaid">
+ 48: flowchart TB
+ 49:   HP[page.tsx] --> SF[sanityFetch]
+ 50:   HP --> Q[queries.ts]
+ 51:   CV[cv/page.tsx] --> SF
+ 52:   CV --> Q
+ 53:   LY[layout.tsx] --> SF
+ 54:   LY --> Q
+ 55:   PR[prosjekter/actions.ts] --> SF
+ 56:   PR --> Q
+ 57:   PR --> EH[error mapping<br/>+ unstable_cache]
+ 58:   HP -. no error handling .-> X1[ ]
+ 59:   CV -. no error handling .-> X1
+ 60:   classDef leak stroke:#dc2626,stroke-width:2px;
+ 61:   class HP,CV,LY leak
+ 62:   classDef ghost fill:none,stroke:none;
+ 63:   class X1 ghost
+ 64:               </pre>
+ 65:             </div>
+ 66:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
+ 67:               <p class="module-label text-slate-400 mb-2">After</p>
+ 68:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
+ 69:                 <div class="flex gap-2">
+ 70:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">home</div>
+ 71:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">cv</div>
+ 72:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">layout</div>
+ 73:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">prosjekter</div>
+ 74:                 </div>
+ 75:                 <svg width="200" height="28"><line x1="100" y1="0" x2="100" y2="28" stroke="#64748b" stroke-width="1.5"/><polygon points="95,20 105,20 100,28" fill="#64748b"/></svg>
+ 76:                 <div class="deep text-white rounded-lg px-6 py-4 w-full max-w-xs text-center">
+ 77:                   <p class="module-label text-emerald-300">content module</p>
+ 78:                   <p class="text-xs mt-1 font-mono">getProjects() · getCv() · getPageContent() · getNavigation() · getSettings()</p>
+ 79:                   <p class="text-[0.6rem] mt-2 text-slate-400">GROQ · caching · revalidation · error mapping — all internal</p>
+ 80:                 </div>
+ 81:               </div>
+ 82:             </div>
+ 83:           </div>
+ 84:           <dl class="space-y-2 text-sm">
+ 85:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Every route reaches through the seam: raw GROQ query + revalidate number + type parameter assembled at each call site, and only <span class="font-mono text-xs">prosjekter</span> gets error mapping.</dd></div>
+ 86:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep content module: five named functions, GROQ / cache policy / error mapping become implementation.</dd></div>
+ 87:           </dl>
+ 88:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+ 89:             <li>Leverage: one interface, five call sites</li>
+ 90:             <li>Locality: error mapping in one module</li>
+ 91:             <li>Interface shrinks; queries become implementation</li>
+ 92:             <li>Tests hit one interface, not mocks-of-mocks</li>
+ 93:             <li>Cache policy stops leaking into routes</li>
+ 94:           </ul>
+ 95:         </article>
+ 96:         <!-- ============ CANDIDATE 2 ============ -->
+ 97:         <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+ 98:           <div class="flex items-start justify-between gap-4">
+ 99:             <h2 class="font-serif text-2xl">One seam for contact submission</h2>
+100:             <div class="flex gap-2 shrink-0">
+101:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
+102:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">ports &amp; adapters</span>
+103:             </div>
+104:           </div>
+105:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+106:             src/components/Kontakt/ContactForm.component.tsx · src/app/api/form/route.ts ·
+107:             src/stories/components/Kontakt/ContactFormWithMocks.tsx
+108:           </p>
+109:           <div class="grid md:grid-cols-2 gap-4">
+110:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+111:               <p class="module-label text-slate-400 mb-2">Before</p>
+112:               <pre class="mermaid">
+113: sequenceDiagram
+114:   participant U as User
+115:   participant F as ContactForm
+116:   participant E as EmailJS
+117:   participant A as /api/form
+118:   U->>F: submit
+119:   F->>E: send (JS path)
+120:   Note over F,E: env keys + init inline in the UI module
+121:   U-->>A: submit (no-JS path)
+122:   A->>A: CSRF + Zod validate
+123:   A-->>U: "success" — but nothing sent
+124:               </pre>
+125:             </div>
+126:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
+127:               <p class="module-label text-slate-400 mb-2">After</p>
+128:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
+129:                 <div class="border border-slate-400 bg-white px-4 py-2 module-label">contact form (UI only)</div>
+130:                 <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
+131:                 <div class="deep text-white rounded-lg px-6 py-3 text-center w-full max-w-xs">
+132:                   <p class="module-label text-emerald-300">submission module</p>
+133:                   <p class="text-xs font-mono mt-1">submitContactForm(data)</p>
+134:                 </div>
+135:                 <svg width="200" height="24">
+136:                   <line x1="100" y1="0" x2="40" y2="24" stroke="#64748b" stroke-width="1.5"/>
+137:                   <line x1="100" y1="0" x2="160" y2="24" stroke="#64748b" stroke-width="1.5"/>
+138:                 </svg>
+139:                 <div class="flex gap-3">
+140:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">emailjs adapter</div>
+141:                   <div class="border border-dashed border-slate-400 bg-white px-3 py-1.5 module-label">in-memory adapter (tests / stories)</div>
+142:                 </div>
+143:               </div>
+144:             </div>
+145:           </div>
+146:           <dl class="space-y-2 text-sm">
+147:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Submission leaks across the seam: EmailJS keys and transport live inside the UI module, while <span class="font-mono text-xs">/api/form</span> validates and returns success without sending anything.</dd></div>
+148:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One submission module behind one interface; EmailJS as one adapter, in-memory as the second.</dd></div>
+149:           </dl>
+150:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+151:             <li>Two adapters justify the seam</li>
+152:             <li>Transport stops leaking into the UI module</li>
+153:             <li>Stories drop the hand-rolled mock wrapper</li>
+154:             <li>Locality: send-failure handling in one module</li>
+155:             <li>No-JS path and JS path converge</li>
+156:           </ul>
+157:         </article>
+158:         <!-- ============ CANDIDATE 3 ============ -->
+159:         <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+160:           <div class="flex items-start justify-between gap-4">
+161:             <h2 class="font-serif text-2xl">Collapse the reveal animations</h2>
+162:             <div class="flex gap-2 shrink-0">
+163:               <span class="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">Worth exploring</span>
+164:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+165:             </div>
+166:           </div>
+167:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+168:             src/components/Animations/FadeIn.component.tsx · FadeInScroll.component.tsx ·
+169:             BounceInScroll.component.tsx · Grow.component.tsx · animation-utils.ts
+170:           </p>
+171:           <!-- Mass diagram, hand-built -->
+172:           <div class="grid md:grid-cols-2 gap-4">
+173:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+174:               <p class="module-label text-slate-400 mb-3">Before · four shallow modules</p>
+175:               <div class="flex items-end justify-around h-56">
+176:                 <div class="flex flex-col items-center gap-1 w-16">
+177:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px" title="interface"></div>
+178:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:80px" title="implementation"></div>
+179:                   <p class="module-label text-slate-500">FadeIn</p>
+180:                 </div>
+181:                 <div class="flex flex-col items-center gap-1 w-16">
+182:                   <div class="w-full bg-red-200 border border-red-400" style="height:75px"></div>
+183:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:85px"></div>
+184:                   <p class="module-label text-slate-500">FadeInScroll</p>
+185:                 </div>
+186:                 <div class="flex flex-col items-center gap-1 w-16">
+187:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px"></div>
+188:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:95px"></div>
+189:                   <p class="module-label text-slate-500">BounceInScroll</p>
+190:                 </div>
+191:                 <div class="flex flex-col items-center gap-1 w-16">
+192:                   <div class="w-full bg-red-200 border border-red-400" style="height:60px"></div>
+193:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:70px"></div>
+194:                   <p class="module-label text-slate-500">Grow</p>
+195:                 </div>
+196:               </div>
+197:               <p class="text-xs text-slate-500 mt-2"><span class="inline-block w-3 h-3 bg-red-200 border border-red-400 align-middle"></span> interface · <span class="inline-block w-3 h-3 bg-slate-300 border border-slate-400 align-middle"></span> implementation — nearly the same height: shallow</p>
+198:             </div>
+199:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+200:               <p class="module-label text-slate-400 mb-3">After · one deep module</p>
+201:               <div class="flex items-end justify-center h-56">
+202:                 <div class="flex flex-col items-center gap-1 w-40">
+203:                   <div class="w-full bg-emerald-200 border border-emerald-500" style="height:28px" title="interface: variant, delay, viewAmount"></div>
+204:                   <div class="w-full deep rounded-sm text-white flex flex-col items-center justify-center gap-1" style="height:170px">
+205:                     <p class="text-[0.6rem] text-slate-400">fade · bounce · grow variants</p>
+206:                     <p class="text-[0.6rem] text-slate-400">will-change lifecycle</p>
+207:                     <p class="text-[0.6rem] text-slate-400">scroll vs mount trigger</p>
+208:                     <p class="text-[0.6rem] text-emerald-300">prefers-reduced-motion (new, once)</p>
+209:                   </div>
+210:                   <p class="module-label text-slate-500">Reveal</p>
+211:                 </div>
+212:               </div>
+213:               <p class="text-xs text-slate-500 mt-2">Short interface, tall implementation: deep</p>
+214:             </div>
+215:           </div>
+216:           <dl class="space-y-2 text-sm">
+217:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Four modules whose interfaces nearly match their implementations; will-change handling duplicated in two, absent in two; reduced-motion honored in none.</dd></div>
+218:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep Reveal module with a variant on the interface; deletion test passes — complexity concentrates, wrappers go.</dd></div>
+219:           </dl>
+220:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+221:             <li>Delete 3 shallow modules</li>
+222:             <li>Reduced-motion implemented once, everywhere</li>
+223:             <li>Locality: motion bugs land in one module</li>
+224:             <li>4 test files become 1 richer one</li>
+225:           </ul>
+226:         </article>
+227:         <!-- ============ CANDIDATE 4 ============ -->
+228:         <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+229:           <div class="flex items-start justify-between gap-4">
+230:             <h2 class="font-serif text-2xl">Shrink the CSRF surface</h2>
+231:             <div class="flex gap-2 shrink-0">
+232:               <span class="rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1">Speculative</span>
+233:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
+234:             </div>
+235:           </div>
+236:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
+237:             src/lib/csrf.ts · src/app/api/csrf-token/route.ts · src/app/api/form/route.ts · src/app/kontakt/page.tsx
+238:           </p>
+239:           <!-- Cross-section, hand-built -->
+240:           <div class="grid md:grid-cols-2 gap-4">
+241:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-1">
+242:               <p class="module-label text-slate-400 mb-2">Before · token reaches the form three ways</p>
+243:               <div class="h-11 border-l-4 border-slate-400 bg-white px-3 flex items-center text-xs">kontakt/page.tsx generates server-side → prop</div>
+244:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">GET /api/csrf-token exists — no caller found</div>
+245:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">/api/form accepts <span class="font-mono mx-1">_csrf</span> or <span class="font-mono mx-1">csrfToken</span> — two names, one seam</div>
+246:               <div class="h-11 border-l-4 border-amber-500 bg-amber-50 px-3 flex items-center text-xs">fallback secret "default-csrf-secret-…" silently used if env missing</div>
+247:             </div>
+248:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col justify-center items-center gap-2">
+249:               <p class="module-label text-slate-400 self-start mb-2">After · one path, one name</p>
+250:               <div class="deep text-white rounded-lg px-6 py-4 text-center w-full max-w-xs">
+251:                 <p class="module-label text-emerald-300">csrf module</p>
+252:                 <p class="text-xs font-mono mt-1">issueToken() · assertValid(token)</p>
+253:                 <p class="text-[0.6rem] mt-2 text-slate-400">one field name · throws on missing secret in prod</p>
+254:               </div>
+255:               <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
+256:               <div class="flex gap-3">
+257:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">kontakt page</div>
+258:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">/api/form</div>
+259:               </div>
+260:               <p class="text-xs text-slate-500 mt-1">GET /api/csrf-token deleted (deletion test: passes)</p>
+261:             </div>
+262:           </div>
+263:           <dl class="space-y-2 text-sm">
+264:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Three entry points and two token field names for one flow; the standalone token route has no caller.</dd></div>
+265:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">Delete the unused route, settle on one field name, fail loudly on missing secret.</dd></div>
+266:           </dl>
+267:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
+268:             <li>Interface shrinks: two functions, one field name</li>
+269:             <li>Delete one route module</li>
+270:             <li>Silent insecure fallback becomes a loud failure</li>
+271:           </ul>
+272:         </article>
+273:       </section>
+274:       <!-- ============ TOP RECOMMENDATION ============ -->
+275:       <section id="top-recommendation" class="rounded-xl deep text-white p-8 space-y-3">
+276:         <p class="module-label text-emerald-300">Top recommendation</p>
+277:         <h2 class="font-serif text-2xl"><a href="#c1" class="underline decoration-emerald-400 underline-offset-4">Deepen the content module</a></h2>
+278:         <p class="text-sm text-slate-300 max-w-2xl">
+279:           Highest leverage: every route in the app crosses this seam, the error-mapping asymmetry is a live bug class,
+280:           and the test suite already strains against it — mocking <span class="font-mono text-xs">sanityFetch</span> and
+281:           <span class="font-mono text-xs">unstable_cache</span> separately in every test file. One interface, five call
+282:           sites, one place to test.
+283:         </p>
+284:       </section>
+285:     </main>
+286:   </body>
+287: </html>
+````
+
 ## File: DOCS/README.md
 ````markdown
   1: # DFWeb v4 - Technical Documentation
@@ -6548,222 +6839,6 @@ vercel.json
 103:     }).toThrow(expectedError);
 104:   });
 105: });
-````
-
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import { render, screen, fireEvent } from "@testing-library/react";
-  2: import Section from "@/components/Index/Section.component";
-  3: import { Pagecontent } from "@/types/sanity.types";
-  4: // Mock IntersectionObserver
-  5: const mockIntersectionObserver = jest.fn();
-  6: mockIntersectionObserver.mockReturnValue({
-  7:   observe: () => null,
-  8:   unobserve: () => null,
-  9:   disconnect: () => null,
- 10: });
- 11: window.IntersectionObserver = mockIntersectionObserver;
- 12: const mockProps: Pagecontent = {
- 13:   _type: "pagecontent",
- 14:   title: "Test Title",
- 15:   text: [
- 16:     {
- 17:       _key: "a1",
- 18:       _type: "block",
- 19:       children: [
- 20:         {
- 21:           _key: "a1-1",
- 22:           _type: "span",
- 23:           marks: [],
- 24:           text: "Test content",
- 25:         },
- 26:       ],
- 27:       markDefs: [],
- 28:       style: "normal",
- 29:     },
- 30:   ],
- 31: };
- 32: // Type-safe way to make NODE_ENV writable for tests
- 33: type WritableNodeEnv = {
- 34:   NODE_ENV?: string;
- 35: };
- 36: describe("Section Component", () => {
- 37:   beforeEach(() => {
- 38:     (process.env as WritableNodeEnv).NODE_ENV = "development";
- 39:   });
- 40:   afterEach(() => {
- 41:     // Reset to test environment
- 42:     (process.env as WritableNodeEnv).NODE_ENV = "test";
- 43:   });
- 44:   it("renders with valid props", () => {
- 45:     // Arrange
- 46:     render(<Section {...mockProps} />);
- 47:     // Act
- 48:     const title = screen.getByText("Test Title");
- 49:     const content = screen.getByText("Test content");
- 50:     // Assert
- 51:     expect(title).toBeInTheDocument();
- 52:     expect(content).toBeInTheDocument();
- 53:   });
- 54:   describe("error handling for invalid data", () => {
- 55:     let consoleErrorSpy: jest.SpyInstance;
- 56:     beforeEach(() => {
- 57:       consoleErrorSpy = jest
- 58:         .spyOn(console, "error")
- 59:         .mockImplementation(() => {});
- 60:     });
- 61:     afterEach(() => {
- 62:       consoleErrorSpy.mockRestore();
- 63:     });
- 64:     // Type for testing invalid props
- 65:     type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
- 66:       title?: string | null;
- 67:       text?: Pagecontent["text"] | null;
- 68:     };
- 69:     it("returns null and logs error when title is missing", () => {
- 70:       // Arrange
- 71:       const propsWithoutTitle: InvalidSectionProps = {
- 72:         ...mockProps,
- 73:         title: undefined,
- 74:       };
- 75:       // Act
- 76:       const { container } = render(
- 77:         <Section {...(propsWithoutTitle as Pagecontent)} />,
- 78:       );
- 79:       // Assert
- 80:       expect(container.firstChild).toBeNull();
- 81:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 82:         'Ugyldig seksjon data: tittel=undefined, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 83:       );
- 84:     });
- 85:     it("returns null and logs error when title is null", () => {
- 86:       // Arrange
- 87:       const propsWithNullTitle: InvalidSectionProps = {
- 88:         ...mockProps,
- 89:         title: null,
- 90:       };
- 91:       // Act
- 92:       const { container } = render(
- 93:         <Section {...(propsWithNullTitle as Pagecontent)} />,
- 94:       );
- 95:       // Assert
- 96:       expect(container.firstChild).toBeNull();
- 97:       expect(consoleErrorSpy).toHaveBeenCalledWith(
- 98:         'Ugyldig seksjon data: tittel=null, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
- 99:       );
-100:     });
-101:     it("returns null and logs error when title is empty string", () => {
-102:       // Arrange
-103:       const propsWithEmptyTitle: Pagecontent = { ...mockProps, title: "" };
-104:       // Act
-105:       const { container } = render(<Section {...propsWithEmptyTitle} />);
-106:       // Assert
-107:       expect(container.firstChild).toBeNull();
-108:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-109:         'Ugyldig seksjon data: tittel=, tekst=[{"_key":"a1","_type":"block","children":[{"_key":"a1-1","_type":"span","marks":[],"text":"Test content"}],"markDefs":[],"style":"normal"}]',
-110:       );
-111:     });
-112:     it("returns null and logs error when text is missing", () => {
-113:       // Arrange
-114:       const propsWithoutText: InvalidSectionProps = {
-115:         ...mockProps,
-116:         text: undefined,
-117:       };
-118:       // Act
-119:       const { container } = render(
-120:         <Section {...(propsWithoutText as Pagecontent)} />,
-121:       );
-122:       // Assert
-123:       expect(container.firstChild).toBeNull();
-124:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-125:         "Ugyldig seksjon data: tittel=Test Title, tekst=undefined",
-126:       );
-127:     });
-128:     it("returns null and logs error when text is null", () => {
-129:       // Arrange
-130:       const propsWithNullText: InvalidSectionProps = {
-131:         ...mockProps,
-132:         text: null,
-133:       };
-134:       // Act
-135:       const { container } = render(
-136:         <Section {...(propsWithNullText as Pagecontent)} />,
-137:       );
-138:       // Assert
-139:       expect(container.firstChild).toBeNull();
-140:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-141:         "Ugyldig seksjon data: tittel=Test Title, tekst=null",
-142:       );
-143:     });
-144:     it("renders normally when text is empty array", () => {
-145:       // Arrange
-146:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
-147:       // Act
-148:       const { container } = render(<Section {...propsWithEmptyText} />);
-149:       // Assert
-150:       // Empty array is truthy in JavaScript, so the component renders
-151:       expect(container.firstChild).not.toBeNull();
-152:       expect(consoleErrorSpy).not.toHaveBeenCalled();
-153:       // The title should still be rendered
-154:       expect(screen.getByText("Test Title")).toBeInTheDocument();
-155:     });
-156:     it("returns null and logs error when both title and text are missing", () => {
-157:       // Arrange
-158:       const propsWithoutBoth: InvalidSectionProps = {
-159:         ...mockProps,
-160:         title: undefined,
-161:         text: undefined,
-162:       };
-163:       // Act
-164:       const { container } = render(
-165:         <Section {...(propsWithoutBoth as Pagecontent)} />,
-166:       );
-167:       // Assert
-168:       expect(container.firstChild).toBeNull();
-169:       expect(consoleErrorSpy).toHaveBeenCalledWith(
-170:         "Ugyldig seksjon data: tittel=undefined, tekst=undefined",
-171:       );
-172:     });
-173:   });
-174:   it("triggers error in development mode", () => {
-175:     // Arrange
-176:     const consoleErrorSpy = jest
-177:       .spyOn(console, "error")
-178:       .mockImplementation(() => {});
-179:     render(<Section {...mockProps} />);
-180:     const errorButton = screen.getByText("Utløs Testfeil");
-181:     // Act & Assert
-182:     expect(() => fireEvent.click(errorButton)).toThrow(
-183:       "En uventet feil har oppstått",
-184:     );
-185:     consoleErrorSpy.mockRestore();
-186:   });
-187:   it("does not show error button in production mode", () => {
-188:     // Arrange
-189:     (process.env as WritableNodeEnv).NODE_ENV = "production";
-190:     render(<Section {...mockProps} />);
-191:     // Act
-192:     const errorButton = screen.queryByText("Utløs Testfeil");
-193:     // Assert
-194:     expect(errorButton).not.toBeInTheDocument();
-195:   });
-196:   it("does not show error button when showDebugButton is false in development mode", () => {
-197:     // Arrange
-198:     render(<Section {...mockProps} showDebugButton={false} />);
-199:     // Act
-200:     const errorButton = screen.queryByText("Utløs Testfeil");
-201:     // Assert
-202:     expect(errorButton).not.toBeInTheDocument();
-203:   });
-204:   it("shows error button when showDebugButton is true in development mode", () => {
-205:     // Arrange
-206:     render(<Section {...mockProps} showDebugButton={true} />);
-207:     // Act
-208:     const errorButton = screen.getByText("Utløs Testfeil");
-209:     // Assert
-210:     expect(errorButton).toBeInTheDocument();
-211:   });
-212: });
 ````
 
 ## File: src/__tests__/Kontakt/ContactForm.test.tsx
@@ -12502,6 +12577,52 @@ vercel.json
  8:   return <LazyMotion features={domAnimation}>{children}</LazyMotion>;
  9: };
 10: export default LazyMotionProvider;
+````
+
+## File: src/lib/sanity/client.ts
+````typescript
+ 1: import { createImageUrlBuilder } from "@sanity/image-url";
+ 2: import { createClient, type QueryParams } from "@sanity/client";
+ 3: import type { Project } from "@/types/sanity.types";
+ 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
+ 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+ 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
+ 7: const client = createClient({
+ 8:   projectId,
+ 9:   dataset,
+10:   apiVersion,
+11:   useCdn: true,
+12: });
+13: /**
+14:  * Typed fetch helper with consistent caching defaults.
+15:  * Combines time-based revalidation (default 86400s = 24 hours) with
+16:  * tag-based invalidation: tags enable instant webhook-driven refresh via
+17:  * /api/revalidate, while the revalidate window acts as a fallback when
+18:  * no webhook fires.
+19:  */
+20: export async function sanityFetch<T>({
+21:   query,
+22:   params = {},
+23:   revalidate = 86400,
+24:   tags = [],
+25: }: {
+26:   query: string;
+27:   params?: QueryParams;
+28:   revalidate?: number | false;
+29:   tags?: string[];
+30: }): Promise<T> {
+31:   return client.fetch<T>(query, params, {
+32:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
+33:     next: {
+34:       revalidate,
+35:       tags,
+36:     },
+37:   });
+38: }
+39: const builder = createImageUrlBuilder(client);
+40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
+41:   return builder.image(source);
+42: }
 ````
 
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
@@ -19667,222 +19788,6 @@ vercel.json
 8: export default config;
 ````
 
-## File: README.md
-````markdown
-  1: # Dfweb.no Portfolio Version 4
-  2: 
-  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
-  4: 
-  5: Fourth version of my personal portfolio website with Next.js, Motion,
-  6: Sanity.io and Typescript.
-  7: 
-  8: ## Table of Contents
-  9: 
- 10: - [Live URL](#live-url)
- 11: - [Frontend (Next.js)](#frontend-nextjs)
- 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
- 13: - [Google Lighthouse](#google-lighthouse)
- 14: - [Features](#features)
- 15:   - [General](#general)
- 16:   - [Design](#design)
- 17:   - [Accessibility](#accessibility)
- 18:   - [Security](#security)
- 19:   - [Devops and Code quality](#devops-and-code-quality)
- 20:   - [Environment Variables](#environment-variables)
- 21:   - [Testing Standards](#testing-standards)
- 22: 
- 23: ## Live URL
- 24: 
- 25: - <https://www.dfweb.no>
- 26: 
- 27: ## Frontend (Next.js)
- 28: 
- 29: ![Frontend Image](public/images/frontend.png)
- 30: 
- 31: ---
- 32: 
- 33: ## Backend (Sanity headless CMS)
- 34: 
- 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
- 36: 
- 37: ---
- 38: 
- 39: ## Google Lighthouse
- 40: 
- 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
- 42: 
- 43: ## Features
- 44: 
- 45: ### General
- 46: 
- 47: - Clean, modern, responsive and Matrix-inspired design
- 48: - The application is 100% typescript (the types are generated from Sanity typegen)
- 49: - Matrix canvas rain effect on front page
- 50: - Custom 404 page with Matrix rain effect
- 51: - Next.js 16 with Typescript and App Router
- 52:   - Server Components implementation for improved performance
- 53:   - Streaming with Suspense boundaries
- 54:   - Automatic static optimization with revalidation
- 55:   - Server-side data fetching with proper error handling
- 56: - React 19
- 57: - Sanity headless CMS for all of the content, projects and navigation links
- 58: - Ladle for component documentation
- 59: - Animations with Motion
- 60: - React testing library for unit testing
- 61: - Cypress for E2E testing
- 62: - Playwright for cross-browser E2E testing
- 63: - Contact form with Email.js and CSRF protection
- 64: - Polymorphic components
- 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
- 66: - Google rich results for each individual page
- 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
- 68: - Automated Lighthouse CI testing integrated with GitHub Actions
- 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
- 70: - Reusable GenericForm component for easy form creation and management
- 71: - Error handling with react-error-boundary for improved user experience and
- 72:   easier debugging
- 73: - AI-friendly repository documentation with automated updates (Repomix with
- 74:   Github action workflow)
- 75: - AI assistant guidance with AGENTS.md files for immediate productivity
- 76:   - Main AGENTS.md with project-specific patterns and gotchas
- 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
- 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
- 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
- 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
- 81:   around 1 second.
- 82: - Recommended:
- 83:   [Sanity VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sanity-io.vscode-sanity)
- 84:   for enhanced GROQ query development, including syntax highlighting when using
- 85:   `defineQuery`.
- 86: 
- 87: ### Design
- 88: 
- 89: - Fully responsive design tested on all devices
- 90: - React Icons for project icons
- 91: - Tailwind 4 for styling with a CSS custom-property design token system
- 92:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
- 93:   colors, surface palette, glow shadows, and custom animations all driven by
- 94:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
- 95: - Animated reusable input fields
- 96: - Matrix-inspired animated cursor with dynamic trailing effect with fading
- 97:   Matrix characters
- 98: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
- 99: 
-100: ### Accessibility
-101: 
-102: - WCAG accessibility tested
-103: - Accessibility testing with Cypress Axe and Pa11y
-104: - Automated Pa11y accessibility testing on every PR and push to main
-105:   - Tests all main pages against WCAG2AA standards
-106:   - Captures screenshots for visual reference
-107:   - Detailed reports available as GitHub Actions artifacts
-108: - Builds will fail if any a11y errors are found
-109: 
-110: ### Devops and Code quality
-111: 
-112: - Continuous Integration with CircleCI
-113: - CircleCI will warn before deploy if tests fail (setup for React testing library)
-114: - Github action workflow for Cypress
-115: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
-116: - E2E testing with Cypress and Playwright integrated with Github actions
-117: - Unit testing with Jest and React Testing Library integrated with CircleCI
-118: - Test coverage setup with Codecov
-119: - 100% test coverage with Jest and React testing library
-120: - AI-powered commit message generation following Conventional Commits with
-121:   gitmojis
-122: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
-123:   - Scans for security, performance, correctness, and architecture issues
-124:   - Outputs a 0–100 score with actionable diagnostics on every PR
-125:   - Posts results as PR comments and GitHub Actions job summaries
-126:   - Configurable score threshold (default: 80) to gate merges
-127:   - Auto-detects package manager (pnpm, yarn, npm)
-128: - Automated performance monitoring with Lighthouse CI
-129:   - Performance, accessibility, best practices, and SEO checks on every PR
-130:   - Configurable thresholds for quality metrics
-131:   - Both desktop and performance-focused testing
-132: - Automated repository documentation with Repomix
-133:   - AI-friendly documentation generation on every push to main
-134:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
-135:   - Automated PR analysis with repository structure insights
-136:   - Security-focused documentation with sensitive information filtering
-137:   - Markdown formatting for improved readability
-138: 
-139: ### Security
-140: 
-141: - OWASP security scanning with Semgrep, Gitleaks and Trivy
-142:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
-143:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
-144:   - Secret detection with Gitleaks on every PR and push
-145:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
-146:   - Runs automatically on every PR and push to main
-147: - Automated security vulnerability scanning with Snyk
-148:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
-149:   - Integrates with GitHub Security tab for vulnerability tracking
-150: - Supply chain attack prevention with 7-day minimum release age
-151:   - Packages must be published for at least 7 days before installation
-152:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-153:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
-154:   - Protects against compromised package releases (like Shai Hulud incidents)
-155: - GitHub Actions supply chain hardening with SHA pinning
-156:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
-157:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
-158:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
-159:   - Custom audit script at `scripts/pin-actions.py`
-160:     - `python scripts/pin-actions.py audit` — scan and report mutable references
-161:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
-162:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
-163:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
-164: 
-165: ### Environment Variables
-166: 
-167: - Type-safe environment variable validation with envalid
-168:   - Runtime validation of required environment variables
-169:   - Clear error messages with examples for missing variables
-170:   - Separate handling of client-side and server-side variables
-171:   - Default values where appropriate
-172:   - Required variables:
-173: 
-174:     ```env
-175:     # Email Configuration (client-side)
-176:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-177:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-178:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
-179: 
-180:     # Security Configuration (server-side)
-181:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-182:     ```
-183: 
-184:   - Validation prevents application startup if required variables are missing
-185:   - TypeScript integration for type-safe access to environment variables
-186: 
-187: ### Testing Standards
-188: 
-189: - ISTQB-aligned comprehensive test strategy
-190:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
-191:   - Multi-level test approach (Unit, Component, E2E)
-192:   - Risk-based testing methodology
-193:   - Defined test metrics and reporting
-194:   - Clear roles and responsibilities
-195:   - Structured defect management process
-196: 
-197: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
-198:   - Each test must include the following comments:
-199: 
-200:     ```typescript
-201:     // Arrange - Set up test data and conditions
-202:     // Act - Perform the action being tested
-203:     // Assert - Verify the results
-204:     ```
-205: 
-206:   - This pattern ensures:
-207:     - Clear test structure and readability
-208:     - Consistent test organization across the codebase
-209:     - Easy identification of test setup, execution, and verification
-210:   - Simplified test maintenance and debugging
-211:   - Automated validation through custom ESLint rules
-212:   - Tests will fail if AAA pattern is not followed
-````
-
 ## File: renovate.json
 ````json
  1: {
@@ -20187,297 +20092,6 @@ vercel.json
 62:           severity: CRITICAL,HIGH
 63:           exit-code: 1
 64:           format: table
-````
-
-## File: DOCS/architecture-review-2026-08-24.html
-````html
-  1: <!doctype html>
-  2: <html lang="en">
-  3:   <head>
-  4:     <meta charset="utf-8" />
-  5:     <title>Architecture review for dfweb-v4</title>
-  6:     <script src="https://cdn.tailwindcss.com"></script>
-  7:     <script type="module">
-  8:       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-  9:       mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
- 10:     </script>
- 11:     <style>
- 12:       .seam { stroke-dasharray: 4 4; }
- 13:       .leak { stroke: #dc2626; }
- 14:       .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
- 15:       .module-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; }
- 16:     </style>
- 17:   </head>
- 18:   <body class="bg-stone-50 text-slate-900 font-sans">
- 19:     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
- 20:       <header class="space-y-3">
- 21:         <h1 class="font-serif text-3xl">Architecture review · dfweb-v4</h1>
- 22:         <p class="text-sm text-slate-500">2026-08-24 · Next.js 15 portfolio · Sanity CMS</p>
- 23:         <div class="flex flex-wrap gap-4 text-xs text-slate-600 pt-2">
- 24:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 border border-slate-500 bg-white"></span> module</span>
- 25:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#64748b" stroke-width="1.5" class="seam"/></svg> seam</span>
- 26:           <span class="inline-flex items-center gap-1"><svg width="24" height="6"><line x1="0" y1="3" x2="24" y2="3" stroke="#dc2626" stroke-width="2"/></svg> leakage</span>
- 27:           <span class="inline-flex items-center gap-1"><span class="inline-block w-4 h-3 deep rounded-sm"></span> deep module</span>
- 28:         </div>
- 29:       </header>
- 30:       <section id="candidates" class="space-y-10">
- 31:         <!-- ============ CANDIDATE 1 ============ -->
- 32:         <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
- 33:           <div class="flex items-start justify-between gap-4">
- 34:             <h2 class="font-serif text-2xl">Deepen the content module</h2>
- 35:             <div class="flex gap-2 shrink-0">
- 36:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
- 37:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
- 38:             </div>
- 39:           </div>
- 40:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
- 41:             src/lib/sanity/client.ts · src/lib/sanity/queries.ts · src/app/prosjekter/actions.ts ·
- 42:             src/app/page.tsx · src/app/cv/page.tsx · src/app/layout.tsx
- 43:           </p>
- 44:           <div class="grid md:grid-cols-2 gap-4">
- 45:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
- 46:               <p class="module-label text-slate-400 mb-2">Before</p>
- 47:               <pre class="mermaid">
- 48: flowchart TB
- 49:   HP[page.tsx] --> SF[sanityFetch]
- 50:   HP --> Q[queries.ts]
- 51:   CV[cv/page.tsx] --> SF
- 52:   CV --> Q
- 53:   LY[layout.tsx] --> SF
- 54:   LY --> Q
- 55:   PR[prosjekter/actions.ts] --> SF
- 56:   PR --> Q
- 57:   PR --> EH[error mapping<br/>+ unstable_cache]
- 58:   HP -. no error handling .-> X1[ ]
- 59:   CV -. no error handling .-> X1
- 60:   classDef leak stroke:#dc2626,stroke-width:2px;
- 61:   class HP,CV,LY leak
- 62:   classDef ghost fill:none,stroke:none;
- 63:   class X1 ghost
- 64:               </pre>
- 65:             </div>
- 66:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
- 67:               <p class="module-label text-slate-400 mb-2">After</p>
- 68:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
- 69:                 <div class="flex gap-2">
- 70:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">home</div>
- 71:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">cv</div>
- 72:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">layout</div>
- 73:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">prosjekter</div>
- 74:                 </div>
- 75:                 <svg width="200" height="28"><line x1="100" y1="0" x2="100" y2="28" stroke="#64748b" stroke-width="1.5"/><polygon points="95,20 105,20 100,28" fill="#64748b"/></svg>
- 76:                 <div class="deep text-white rounded-lg px-6 py-4 w-full max-w-xs text-center">
- 77:                   <p class="module-label text-emerald-300">content module</p>
- 78:                   <p class="text-xs mt-1 font-mono">getProjects() · getCv() · getPageContent() · getNavigation() · getSettings()</p>
- 79:                   <p class="text-[0.6rem] mt-2 text-slate-400">GROQ · caching · revalidation · error mapping — all internal</p>
- 80:                 </div>
- 81:               </div>
- 82:             </div>
- 83:           </div>
- 84:           <dl class="space-y-2 text-sm">
- 85:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Every route reaches through the seam: raw GROQ query + revalidate number + type parameter assembled at each call site, and only <span class="font-mono text-xs">prosjekter</span> gets error mapping.</dd></div>
- 86:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep content module: five named functions, GROQ / cache policy / error mapping become implementation.</dd></div>
- 87:           </dl>
- 88:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
- 89:             <li>Leverage: one interface, five call sites</li>
- 90:             <li>Locality: error mapping in one module</li>
- 91:             <li>Interface shrinks; queries become implementation</li>
- 92:             <li>Tests hit one interface, not mocks-of-mocks</li>
- 93:             <li>Cache policy stops leaking into routes</li>
- 94:           </ul>
- 95:         </article>
- 96:         <!-- ============ CANDIDATE 2 ============ -->
- 97:         <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
- 98:           <div class="flex items-start justify-between gap-4">
- 99:             <h2 class="font-serif text-2xl">One seam for contact submission</h2>
-100:             <div class="flex gap-2 shrink-0">
-101:               <span class="rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1">Strong</span>
-102:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">ports &amp; adapters</span>
-103:             </div>
-104:           </div>
-105:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-106:             src/components/Kontakt/ContactForm.component.tsx · src/app/api/form/route.ts ·
-107:             src/stories/components/Kontakt/ContactFormWithMocks.tsx
-108:           </p>
-109:           <div class="grid md:grid-cols-2 gap-4">
-110:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-111:               <p class="module-label text-slate-400 mb-2">Before</p>
-112:               <pre class="mermaid">
-113: sequenceDiagram
-114:   participant U as User
-115:   participant F as ContactForm
-116:   participant E as EmailJS
-117:   participant A as /api/form
-118:   U->>F: submit
-119:   F->>E: send (JS path)
-120:   Note over F,E: env keys + init inline in the UI module
-121:   U-->>A: submit (no-JS path)
-122:   A->>A: CSRF + Zod validate
-123:   A-->>U: "success" — but nothing sent
-124:               </pre>
-125:             </div>
-126:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col">
-127:               <p class="module-label text-slate-400 mb-2">After</p>
-128:               <div class="flex-1 flex flex-col items-center justify-center gap-2">
-129:                 <div class="border border-slate-400 bg-white px-4 py-2 module-label">contact form (UI only)</div>
-130:                 <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
-131:                 <div class="deep text-white rounded-lg px-6 py-3 text-center w-full max-w-xs">
-132:                   <p class="module-label text-emerald-300">submission module</p>
-133:                   <p class="text-xs font-mono mt-1">submitContactForm(data)</p>
-134:                 </div>
-135:                 <svg width="200" height="24">
-136:                   <line x1="100" y1="0" x2="40" y2="24" stroke="#64748b" stroke-width="1.5"/>
-137:                   <line x1="100" y1="0" x2="160" y2="24" stroke="#64748b" stroke-width="1.5"/>
-138:                 </svg>
-139:                 <div class="flex gap-3">
-140:                   <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">emailjs adapter</div>
-141:                   <div class="border border-dashed border-slate-400 bg-white px-3 py-1.5 module-label">in-memory adapter (tests / stories)</div>
-142:                 </div>
-143:               </div>
-144:             </div>
-145:           </div>
-146:           <dl class="space-y-2 text-sm">
-147:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Submission leaks across the seam: EmailJS keys and transport live inside the UI module, while <span class="font-mono text-xs">/api/form</span> validates and returns success without sending anything.</dd></div>
-148:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One submission module behind one interface; EmailJS as one adapter, in-memory as the second.</dd></div>
-149:           </dl>
-150:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-151:             <li>Two adapters justify the seam</li>
-152:             <li>Transport stops leaking into the UI module</li>
-153:             <li>Stories drop the hand-rolled mock wrapper</li>
-154:             <li>Locality: send-failure handling in one module</li>
-155:             <li>No-JS path and JS path converge</li>
-156:           </ul>
-157:         </article>
-158:         <!-- ============ CANDIDATE 3 ============ -->
-159:         <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
-160:           <div class="flex items-start justify-between gap-4">
-161:             <h2 class="font-serif text-2xl">Collapse the reveal animations</h2>
-162:             <div class="flex gap-2 shrink-0">
-163:               <span class="rounded-full bg-amber-100 text-amber-800 text-xs font-medium px-3 py-1">Worth exploring</span>
-164:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
-165:             </div>
-166:           </div>
-167:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-168:             src/components/Animations/FadeIn.component.tsx · FadeInScroll.component.tsx ·
-169:             BounceInScroll.component.tsx · Grow.component.tsx · animation-utils.ts
-170:           </p>
-171:           <!-- Mass diagram, hand-built -->
-172:           <div class="grid md:grid-cols-2 gap-4">
-173:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-174:               <p class="module-label text-slate-400 mb-3">Before · four shallow modules</p>
-175:               <div class="flex items-end justify-around h-56">
-176:                 <div class="flex flex-col items-center gap-1 w-16">
-177:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px" title="interface"></div>
-178:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:80px" title="implementation"></div>
-179:                   <p class="module-label text-slate-500">FadeIn</p>
-180:                 </div>
-181:                 <div class="flex flex-col items-center gap-1 w-16">
-182:                   <div class="w-full bg-red-200 border border-red-400" style="height:75px"></div>
-183:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:85px"></div>
-184:                   <p class="module-label text-slate-500">FadeInScroll</p>
-185:                 </div>
-186:                 <div class="flex flex-col items-center gap-1 w-16">
-187:                   <div class="w-full bg-red-200 border border-red-400" style="height:70px"></div>
-188:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:95px"></div>
-189:                   <p class="module-label text-slate-500">BounceInScroll</p>
-190:                 </div>
-191:                 <div class="flex flex-col items-center gap-1 w-16">
-192:                   <div class="w-full bg-red-200 border border-red-400" style="height:60px"></div>
-193:                   <div class="w-full bg-slate-300 border border-slate-400" style="height:70px"></div>
-194:                   <p class="module-label text-slate-500">Grow</p>
-195:                 </div>
-196:               </div>
-197:               <p class="text-xs text-slate-500 mt-2"><span class="inline-block w-3 h-3 bg-red-200 border border-red-400 align-middle"></span> interface · <span class="inline-block w-3 h-3 bg-slate-300 border border-slate-400 align-middle"></span> implementation — nearly the same height: shallow</p>
-198:             </div>
-199:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
-200:               <p class="module-label text-slate-400 mb-3">After · one deep module</p>
-201:               <div class="flex items-end justify-center h-56">
-202:                 <div class="flex flex-col items-center gap-1 w-40">
-203:                   <div class="w-full bg-emerald-200 border border-emerald-500" style="height:28px" title="interface: variant, delay, viewAmount"></div>
-204:                   <div class="w-full deep rounded-sm text-white flex flex-col items-center justify-center gap-1" style="height:170px">
-205:                     <p class="text-[0.6rem] text-slate-400">fade · bounce · grow variants</p>
-206:                     <p class="text-[0.6rem] text-slate-400">will-change lifecycle</p>
-207:                     <p class="text-[0.6rem] text-slate-400">scroll vs mount trigger</p>
-208:                     <p class="text-[0.6rem] text-emerald-300">prefers-reduced-motion (new, once)</p>
-209:                   </div>
-210:                   <p class="module-label text-slate-500">Reveal</p>
-211:                 </div>
-212:               </div>
-213:               <p class="text-xs text-slate-500 mt-2">Short interface, tall implementation: deep</p>
-214:             </div>
-215:           </div>
-216:           <dl class="space-y-2 text-sm">
-217:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Four modules whose interfaces nearly match their implementations; will-change handling duplicated in two, absent in two; reduced-motion honored in none.</dd></div>
-218:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">One deep Reveal module with a variant on the interface; deletion test passes — complexity concentrates, wrappers go.</dd></div>
-219:           </dl>
-220:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-221:             <li>Delete 3 shallow modules</li>
-222:             <li>Reduced-motion implemented once, everywhere</li>
-223:             <li>Locality: motion bugs land in one module</li>
-224:             <li>4 test files become 1 richer one</li>
-225:           </ul>
-226:         </article>
-227:         <!-- ============ CANDIDATE 4 ============ -->
-228:         <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
-229:           <div class="flex items-start justify-between gap-4">
-230:             <h2 class="font-serif text-2xl">Shrink the CSRF surface</h2>
-231:             <div class="flex gap-2 shrink-0">
-232:               <span class="rounded-full bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1">Speculative</span>
-233:               <span class="rounded-full bg-slate-100 text-slate-600 text-xs px-3 py-1">in-process</span>
-234:             </div>
-235:           </div>
-236:           <p class="font-mono text-sm text-slate-600 leading-relaxed">
-237:             src/lib/csrf.ts · src/app/api/csrf-token/route.ts · src/app/api/form/route.ts · src/app/kontakt/page.tsx
-238:           </p>
-239:           <!-- Cross-section, hand-built -->
-240:           <div class="grid md:grid-cols-2 gap-4">
-241:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 space-y-1">
-242:               <p class="module-label text-slate-400 mb-2">Before · token reaches the form three ways</p>
-243:               <div class="h-11 border-l-4 border-slate-400 bg-white px-3 flex items-center text-xs">kontakt/page.tsx generates server-side → prop</div>
-244:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">GET /api/csrf-token exists — no caller found</div>
-245:               <div class="h-11 border-l-4 border-red-500 bg-white px-3 flex items-center text-xs">/api/form accepts <span class="font-mono mx-1">_csrf</span> or <span class="font-mono mx-1">csrfToken</span> — two names, one seam</div>
-246:               <div class="h-11 border-l-4 border-amber-500 bg-amber-50 px-3 flex items-center text-xs">fallback secret "default-csrf-secret-…" silently used if env missing</div>
-247:             </div>
-248:             <div class="rounded-lg border border-slate-200 bg-stone-50 p-4 flex flex-col justify-center items-center gap-2">
-249:               <p class="module-label text-slate-400 self-start mb-2">After · one path, one name</p>
-250:               <div class="deep text-white rounded-lg px-6 py-4 text-center w-full max-w-xs">
-251:                 <p class="module-label text-emerald-300">csrf module</p>
-252:                 <p class="text-xs font-mono mt-1">issueToken() · assertValid(token)</p>
-253:                 <p class="text-[0.6rem] mt-2 text-slate-400">one field name · throws on missing secret in prod</p>
-254:               </div>
-255:               <svg width="200" height="24"><line x1="100" y1="0" x2="100" y2="24" stroke="#64748b" stroke-width="1.5" class="seam"/></svg>
-256:               <div class="flex gap-3">
-257:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">kontakt page</div>
-258:                 <div class="border border-slate-400 bg-white px-3 py-1.5 module-label">/api/form</div>
-259:               </div>
-260:               <p class="text-xs text-slate-500 mt-1">GET /api/csrf-token deleted (deletion test: passes)</p>
-261:             </div>
-262:           </div>
-263:           <dl class="space-y-2 text-sm">
-264:             <div><dt class="inline font-semibold">Problem:</dt> <dd class="inline">Three entry points and two token field names for one flow; the standalone token route has no caller.</dd></div>
-265:             <div><dt class="inline font-semibold">Solution:</dt> <dd class="inline">Delete the unused route, settle on one field name, fail loudly on missing secret.</dd></div>
-266:           </dl>
-267:           <ul class="text-sm space-y-1 list-disc list-inside text-slate-700">
-268:             <li>Interface shrinks: two functions, one field name</li>
-269:             <li>Delete one route module</li>
-270:             <li>Silent insecure fallback becomes a loud failure</li>
-271:           </ul>
-272:         </article>
-273:       </section>
-274:       <!-- ============ TOP RECOMMENDATION ============ -->
-275:       <section id="top-recommendation" class="rounded-xl deep text-white p-8 space-y-3">
-276:         <p class="module-label text-emerald-300">Top recommendation</p>
-277:         <h2 class="font-serif text-2xl"><a href="#c1" class="underline decoration-emerald-400 underline-offset-4">Deepen the content module</a></h2>
-278:         <p class="text-sm text-slate-300 max-w-2xl">
-279:           Highest leverage: every route in the app crosses this seam, the error-mapping asymmetry is a live bug class,
-280:           and the test suite already strains against it — mocking <span class="font-mono text-xs">sanityFetch</span> and
-281:           <span class="font-mono text-xs">unstable_cache</span> separately in every test file. One interface, five call
-282:           sites, one place to test.
-283:         </p>
-284:       </section>
-285:     </main>
-286:   </body>
-287: </html>
 ````
 
 ## File: src/__tests__/lib/content.test.ts
@@ -21141,50 +20755,195 @@ vercel.json
 73: }
 ````
 
-## File: src/lib/sanity/client.ts
+## File: src/lib/sanity/content.ts
 ````typescript
- 1: import { createImageUrlBuilder } from "@sanity/image-url";
- 2: import { createClient, type QueryParams } from "@sanity/client";
- 3: import type { Project } from "@/types/sanity.types";
- 4: const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "41s7iutf";
- 5: const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
- 6: const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-05-01";
- 7: const client = createClient({
- 8:   projectId,
- 9:   dataset,
-10:   apiVersion,
-11:   useCdn: true,
-12: });
-13: /**
-14:  * Typed fetch helper with consistent caching defaults.
-15:  * Combines time-based revalidation (default 86400s = 24 hours) with
-16:  * tag-based invalidation: tags enable instant webhook-driven refresh via
-17:  * /api/revalidate, while the revalidate window acts as a fallback when
-18:  * no webhook fires.
-19:  */
-20: export async function sanityFetch<T>({
-21:   query,
-22:   params = {},
-23:   revalidate = 86400,
-24:   tags = [],
-25: }: {
-26:   query: string;
-27:   params?: QueryParams;
-28:   revalidate?: number | false;
-29:   tags?: string[];
-30: }): Promise<T> {
-31:   return client.fetch<T>(query, params, {
-32:     cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
-33:     next: {
-34:       revalidate,
-35:       tags,
-36:     },
-37:   });
-38: }
-39: const builder = createImageUrlBuilder(client);
-40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
-41:   return builder.image(source);
-42: }
+  1: import "server-only";
+  2: import { sanityFetch } from "@/lib/sanity/client";
+  3: import { isSanityApiError } from "@/types/sanity-errors";
+  4: import type {
+  5:   Cv,
+  6:   Navigation,
+  7:   Page,
+  8:   Project,
+  9:   Settings,
+ 10: } from "@/types/sanity.types";
+ 11: /**
+ 12:  * The content module: the single interface between the app and Sanity.
+ 13:  *
+ 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
+ 15:  * implementation details of this module. Routes call the named functions
+ 16:  * below and receive typed data or a well-mapped error — nothing else
+ 17:  * crosses the seam.
+ 18:  *
+ 19:  * Every content type is tagged, so the /api/revalidate webhook can
+ 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
+ 21:  * window acts as a fallback when no webhook fires.
+ 22:  */
+ 23: const REVALIDATE_SECONDS = 86400; // 24 hours
+ 24: /** Cache tags — the /api/revalidate route accepts any of these. */
+ 25: export const CONTENT_TAGS = {
+ 26:   projects: "projects",
+ 27:   cv: "cv",
+ 28:   pageContent: "page-content",
+ 29:   navigation: "navigation",
+ 30:   settings: "settings",
+ 31: } as const;
+ 32: const projectsQuery = `
+ 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
+ 34:     id,
+ 35:     name,
+ 36:     description,
+ 37:     subdescription,
+ 38:     projectcategory->{
+ 39:       _id,
+ 40:       title
+ 41:     },
+ 42:     urlwww[]{
+ 43:       ...,
+ 44:       _key,
+ 45:     },
+ 46:     urlgithub[]{
+ 47:       ...,
+ 48:       _key,
+ 49:     },
+ 50:     projectimage,
+ 51:     featured,
+ 52:     featureOrder
+ 53:   }
+ 54: `;
+ 55: const cvQuery = `
+ 56:   *[_type == "cv"][0] {
+ 57:     keyQualifications,
+ 58:     experience[] {
+ 59:       period,
+ 60:       company,
+ 61:       role,
+ 62:       description
+ 63:     },
+ 64:     education[] {
+ 65:       period,
+ 66:       institution,
+ 67:       degree,
+ 68:       description
+ 69:     },
+ 70:     volunteerWork[] {
+ 71:       period,
+ 72:       organization,
+ 73:       role,
+ 74:       description
+ 75:     }
+ 76:   }
+ 77: `;
+ 78: const pageContentQuery = `
+ 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
+ 80:     "id": _id,
+ 81:     title,
+ 82:     hero,
+ 83:     content
+ 84:   }
+ 85: `;
+ 86: const navigationQuery = `
+ 87:   *[_type == "navigation"][0] {
+ 88:     title,
+ 89:     links[] {
+ 90:       title,
+ 91:       name,
+ 92:       hash,
+ 93:       href,
+ 94:       externalLink
+ 95:     }
+ 96:   }
+ 97: `;
+ 98: const settingsQuery = `
+ 99:   *[_type == "settings"][0] {
+100:     footerCopyrightText
+101:   }
+102: `;
+103: /**
+104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
+105:  * Applied uniformly to every content fetch — this is the only place in the
+106:  * codebase that knows what a Sanity error looks like.
+107:  */
+108: function mapError(error: unknown, entity: string): never {
+109:   console.error("Error fetching content:", entity, error);
+110:   if (isSanityApiError(error)) {
+111:     switch (error.statusCode) {
+112:       case 401:
+113:         throw new Error("Authentication failed");
+114:       case 403:
+115:         throw new Error("Insufficient permissions");
+116:       case 429:
+117:         throw new Error("Rate limit exceeded");
+118:       default:
+119:         throw new Error(`Sanity API error: ${error.message}`);
+120:     }
+121:   }
+122:   if (error instanceof Error && error.name === "TimeoutError") {
+123:     throw new Error("Request timed out");
+124:   }
+125:   throw new Error(`Failed to fetch ${entity}`);
+126: }
+127: async function fetchContent<T>(
+128:   entity: string,
+129:   query: string,
+130:   tag: string,
+131: ): Promise<T> {
+132:   try {
+133:     return await sanityFetch<T>({
+134:       query,
+135:       revalidate: REVALIDATE_SECONDS,
+136:       tags: [tag],
+137:     });
+138:   } catch (error) {
+139:     mapError(error, entity);
+140:   }
+141: }
+142: /** All published projects, ordered by featureOrder. */
+143: export function getProjects(): Promise<Project[]> {
+144:   return fetchContent<Project[]>(
+145:     "projects",
+146:     projectsQuery,
+147:     CONTENT_TAGS.projects,
+148:   );
+149: }
+150: /** The CV document, or null when none is published. */
+151: export function getCv(): Promise<Cv | null> {
+152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
+153: }
+154: /** Home page content (hero + sections), or null when missing. */
+155: export function getPageContent(): Promise<Page | null> {
+156:   return fetchContent<Page | null>(
+157:     "page content",
+158:     pageContentQuery,
+159:     CONTENT_TAGS.pageContent,
+160:   );
+161: }
+162: /** Site navigation links. */
+163: export function getNavigation(): Promise<Navigation> {
+164:   return fetchContent<Navigation>(
+165:     "navigation",
+166:     navigationQuery,
+167:     CONTENT_TAGS.navigation,
+168:   );
+169: }
+170: /** Site-wide settings (footer text etc.). */
+171: export function getSettings(): Promise<Settings> {
+172:   return fetchContent<Settings>(
+173:     "settings",
+174:     settingsQuery,
+175:     CONTENT_TAGS.settings,
+176:   );
+177: }
+178: /**
+179:  * Kicks off the projects fetch without awaiting it, so the request is
+180:  * already in flight when the Suspense boundary renders. Next.js dedupes
+181:  * the underlying fetch, so the awaited call in the page reuses it.
+182:  */
+183: export function preloadProjects(): void {
+184:   void getProjects().catch(() => {
+185:     // Swallow here; the awaited call in the page surfaces the error.
+186:   });
+187: }
 ````
 
 ## File: src/lib/csrf.ts
@@ -21770,6 +21529,387 @@ vercel.json
 135: });
 ````
 
+## File: README.md
+````markdown
+  1: # Dfweb.no Portfolio Version 4
+  2: 
+  3: [![Cypress](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/cypress.yml?branch=main&style=flat-square&logo=cypress&label=Cypress)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/cypress.yml) [![Lighthouse](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/lighthouse.yml?branch=main&style=flat-square&logo=lighthouse&label=Lighthouse)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/lighthouse.yml) [![Quality](https://img.shields.io/codacy/grade/3e803ad0f17146b78bbed9850eb1461f?style=flat-square&logo=codacy&label=Quality)](https://app.codacy.com/gh/w3bdesign/dfweb-v4/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade) [![Coverage](https://img.shields.io/codecov/c/github/w3bdesign/dfweb-v4?token=AHQW8WQ6U8&style=flat-square&logo=codecov&label=Coverage)](https://codecov.io/gh/w3bdesign/dfweb-v4)<br>[![A11y](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/pa11y.yml?branch=main&style=flat-square&logo=data:image/svg%2bxml;base64,PHN2ZyBoZWlnaHQ9IjE2IiB2aWV3Qm94PSIwIDAgMTYgMTYiIHdpZHRoPSIxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSIjZmZmIj48cGF0aCBkPSJtMTAuNCAxMGgtLjVjLjEuMy4xLjcuMSAxIDAgMi4yLTEuOCA0LTQgNHMtNC0xLjgtNC00YzAtMi4xIDEuNi0zLjggMy43LTRsLS4yLTFjLTIuNi40LTQuNSAyLjQtNC41IDUgMCAyLjggMi4yIDUgNSA1IDIuNCAwIDQuNC0xLjcgNC45LTMuOXoiLz48cGF0aCBkPSJtMTMuMSAxMy0xLjEtNWgtNC4xbC0uMi0xaDMuM3YtMWgtMy41bC0uNi0yLjVjLjktLjEgMS42LS44IDEuNi0xLjcgMC0xLS44LTEuOC0xLjgtMS44cy0xLjcuOC0xLjcgMS44YzAgLjYuMyAxLjIuOCAxLjVsMS4zIDUuN2g0LjFsMS4yIDVoMi42di0xeiIvPjwvZz48L3N2Zz4%3D&label=A11y)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/pa11y.yml) [![React Doctor](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/react-doctor.yml?branch=main&style=flat-square&logo=react&label=React%20Doctor)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/react-doctor.yml) [![OWASP](https://img.shields.io/github/actions/workflow/status/w3bdesign/dfweb-v4/security.yml?branch=main&style=flat-square&logo=owasp&label=OWASP)](https://github.com/w3bdesign/dfweb-v4/actions/workflows/security.yml)
+  4: 
+  5: Fourth version of my personal portfolio website with Next.js, Motion,
+  6: Sanity.io and Typescript.
+  7: 
+  8: ## Table of Contents
+  9: 
+ 10: - [Live URL](#live-url)
+ 11: - [Frontend (Next.js)](#frontend-nextjs)
+ 12: - [Backend (Sanity headless CMS)](#backend-sanity-headless-cms)
+ 13: - [Google Lighthouse](#google-lighthouse)
+ 14: - [Features](#features)
+ 15:   - [General](#general)
+ 16:   - [Design](#design)
+ 17:   - [Accessibility](#accessibility)
+ 18:   - [Security](#security)
+ 19:   - [Devops and Code quality](#devops-and-code-quality)
+ 20:   - [Environment Variables](#environment-variables)
+ 21:   - [Testing Standards](#testing-standards)
+ 22: 
+ 23: ## Live URL
+ 24: 
+ 25: - <https://www.dfweb.no>
+ 26: 
+ 27: ## Frontend (Next.js)
+ 28: 
+ 29: ![Frontend Image](public/images/frontend.png)
+ 30: 
+ 31: ---
+ 32: 
+ 33: ## Backend (Sanity headless CMS)
+ 34: 
+ 35: ![Backend Image](https://github.com/user-attachments/assets/67099a89-0cda-458a-9fcd-ab09b016ace4)
+ 36: 
+ 37: ---
+ 38: 
+ 39: ## Google Lighthouse
+ 40: 
+ 41: ![image](https://github.com/user-attachments/assets/418aa995-1913-4946-b6f8-5ca8eb9d07a5)
+ 42: 
+ 43: ## Features
+ 44: 
+ 45: ### General
+ 46: 
+ 47: - Clean, modern, responsive and Matrix-inspired design
+ 48: - The application is 100% typescript (the types are generated from Sanity typegen)
+ 49: - Matrix canvas rain effect on front page
+ 50: - Custom 404 page with Matrix rain effect
+ 51: - Next.js 16 with Typescript and App Router
+ 52:   - Server Components implementation for improved performance
+ 53:   - Streaming with Suspense boundaries
+ 54:   - Automatic static optimization with revalidation
+ 55:   - Server-side data fetching with proper error handling
+ 56: - React 19
+ 57: - Sanity headless CMS for all of the content, projects and navigation links
+ 58: - Ladle for component documentation
+ 59: - Animations with Motion
+ 60: - React testing library for unit testing
+ 61: - Cypress for E2E testing
+ 62: - Playwright for cross-browser E2E testing
+ 63: - Contact form with Email.js and CSRF protection
+ 64: - Polymorphic components
+ 65: - Automatic sitemap generation (see /api/siteMapGenerator.ts)
+ 66: - Google rich results for each individual page
+ 67: - 100% / 100% / 100% / 100% score in Google Lighthouse
+ 68: - Automated Lighthouse CI testing integrated with GitHub Actions
+ 69: - React Hook Form with Typescript and Zod for efficient form handling and validation
+ 70: - Reusable GenericForm component for easy form creation and management
+ 71: - Error handling with react-error-boundary for improved user experience and
+ 72:   easier debugging
+ 73: - AI-friendly repository documentation with automated updates (Repomix with
+ 74:   Github action workflow)
+ 75: - AI assistant guidance with AGENTS.md files for immediate productivity
+ 76:   - Main AGENTS.md with project-specific patterns and gotchas
+ 77:   - Mode-specific guidance in .roo/rules-{mode}/AGENTS.md for specialized workflows
+ 78: - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
+ 79: - Efficient data fetching in `/prosjekter` using Next.js preloading,
+ 80:   React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
+ 81:   around 1 second.
+ 82: 
+ 83: ### Design
+ 84: 
+ 85: - Fully responsive design tested on all devices
+ 86: - React Icons for project icons
+ 87: - Tailwind 4 for styling with a CSS custom-property design token system
+ 88:   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
+ 89:   colors, surface palette, glow shadows, and custom animations all driven by
+ 90:   CSS variables defined in [`globals.css`](src/app/globals.css:33)
+ 91: - Animated reusable input fields
+ 92: - Matrix-inspired animated cursor with dynamic trailing effect with fading
+ 93:   Matrix characters
+ 94: - Skeleton loaders with shimmer effects for smooth loading states and improved Lighthouse performance
+ 95: 
+ 96: ### Accessibility
+ 97: 
+ 98: - WCAG accessibility tested
+ 99: - Accessibility testing with Cypress Axe and Pa11y
+100: - Automated Pa11y accessibility testing on every PR and push to main
+101:   - Tests all main pages against WCAG2AA standards
+102:   - Captures screenshots for visual reference
+103:   - Detailed reports available as GitHub Actions artifacts
+104: - Builds will fail if any a11y errors are found
+105: 
+106: ### Devops and Code quality
+107: 
+108: - Continuous Integration with CircleCI
+109: - CircleCI will warn before deploy if tests fail (setup for React testing library)
+110: - Github action workflow for Cypress
+111: - Code quality analysis with Codacy, Sonarcloud and Codeclimate
+112: - E2E testing with Cypress and Playwright integrated with Github actions
+113: - Unit testing with Jest and React Testing Library integrated with CircleCI
+114: - Test coverage setup with Codecov
+115: - 100% test coverage with Jest and React testing library
+116: - AI-powered commit message generation following Conventional Commits with
+117:   gitmojis
+118: - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
+119:   - Scans for security, performance, correctness, and architecture issues
+120:   - Outputs a 0–100 score with actionable diagnostics on every PR
+121:   - Posts results as PR comments and GitHub Actions job summaries
+122:   - Configurable score threshold (default: 80) to gate merges
+123:   - Auto-detects package manager (pnpm, yarn, npm)
+124: - Automated performance monitoring with Lighthouse CI
+125:   - Performance, accessibility, best practices, and SEO checks on every PR
+126:   - Configurable thresholds for quality metrics
+127:   - Both desktop and performance-focused testing
+128: - Automated repository documentation with Repomix
+129:   - AI-friendly documentation generation on every push to main
+130:   - Comprehensive repository context maintained in `DOCS/repository_context.txt`
+131:   - Automated PR analysis with repository structure insights
+132:   - Security-focused documentation with sensitive information filtering
+133:   - Markdown formatting for improved readability
+134: 
+135: ### Security
+136: 
+137: - OWASP security scanning with Semgrep, Gitleaks and Trivy
+138:   - Custom Semgrep SAST rules aligned to OWASP Top 10 2021 (`.semgrep/`)
+139:   - React and Next.js specific security rules (XSS, SSRF, auth token storage)
+140:   - Secret detection with Gitleaks on every PR and push
+141:   - Dependency vulnerability scanning with Trivy (CRITICAL/HIGH severity)
+142:   - Runs automatically on every PR and push to main
+143: - Automated security vulnerability scanning with Snyk
+144:   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
+145:   - Integrates with GitHub Security tab for vulnerability tracking
+146: - Supply chain attack prevention with 7-day minimum release age
+147:   - Packages must be published for at least 7 days before installation
+148:   - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
+149:   - All CI workflows use `--frozen-lockfile` to prevent bypassing
+150:   - Protects against compromised package releases (like Shai Hulud incidents)
+151: - GitHub Actions supply chain hardening with SHA pinning
+152:   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
+153:   - Prevents tag-rewriting attacks (e.g. tj-actions/changed-files compromise)
+154:   - Original version preserved as trailing comment for readability (`@<sha> # v6`)
+155:   - Custom audit script at `scripts/pin-actions.py`
+156:     - `python scripts/pin-actions.py audit` — scan and report mutable references
+157:     - `python scripts/pin-actions.py verify` — CI gate (exit 1 if any unpinned)
+158:     - `python scripts/pin-actions.py pin` — resolve tags/branches to SHAs and rewrite workflow files
+159:     - `python scripts/pin-actions.py pin --dry-run` — preview changes without writing
+160: 
+161: ### Environment Variables
+162: 
+163: - Type-safe environment variable validation with envalid
+164:   - Runtime validation of required environment variables
+165:   - Clear error messages with examples for missing variables
+166:   - Separate handling of client-side and server-side variables
+167:   - Default values where appropriate
+168:   - Required variables:
+169: 
+170:     ```env
+171:     # Email Configuration (client-side)
+172:     NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
+173:     NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
+174:     NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+175: 
+176:     # Security Configuration (server-side)
+177:     CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
+178:     ```
+179: 
+180:   - Validation prevents application startup if required variables are missing
+181:   - TypeScript integration for type-safe access to environment variables
+182: 
+183: ### Testing Standards
+184: 
+185: - ISTQB-aligned comprehensive test strategy
+186:   - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
+187:   - Multi-level test approach (Unit, Component, E2E)
+188:   - Risk-based testing methodology
+189:   - Defined test metrics and reporting
+190:   - Clear roles and responsibilities
+191:   - Structured defect management process
+192: 
+193: - Enforced AAA (Arrange-Act-Assert) pattern in all test files
+194:   - Each test must include the following comments:
+195: 
+196:     ```typescript
+197:     // Arrange - Set up test data and conditions
+198:     // Act - Perform the action being tested
+199:     // Assert - Verify the results
+200:     ```
+201: 
+202:   - This pattern ensures:
+203:     - Clear test structure and readability
+204:     - Consistent test organization across the codebase
+205:     - Easy identification of test setup, execution, and verification
+206:   - Simplified test maintenance and debugging
+207:   - Automated validation through custom ESLint rules
+208:   - Tests will fail if AAA pattern is not followed
+````
+
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+  1: import { render, screen, fireEvent } from "@testing-library/react";
+  2: import Section from "@/components/Index/Section.component";
+  3: import { Pagecontent } from "@/types/sanity.types";
+  4: // Mock IntersectionObserver
+  5: const mockIntersectionObserver = jest.fn();
+  6: mockIntersectionObserver.mockReturnValue({
+  7:   observe: () => null,
+  8:   unobserve: () => null,
+  9:   disconnect: () => null,
+ 10: });
+ 11: window.IntersectionObserver = mockIntersectionObserver;
+ 12: const mockProps: Pagecontent = {
+ 13:   _type: "pagecontent",
+ 14:   title: "Test Title",
+ 15:   text: [
+ 16:     {
+ 17:       _key: "a1",
+ 18:       _type: "block",
+ 19:       children: [
+ 20:         {
+ 21:           _key: "a1-1",
+ 22:           _type: "span",
+ 23:           marks: [],
+ 24:           text: "Test content",
+ 25:         },
+ 26:       ],
+ 27:       markDefs: [],
+ 28:       style: "normal",
+ 29:     },
+ 30:   ],
+ 31: };
+ 32: // Type-safe way to make NODE_ENV writable for tests
+ 33: type WritableNodeEnv = {
+ 34:   NODE_ENV?: string;
+ 35: };
+ 36: // Type for testing invalid props
+ 37: type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
+ 38:   title?: string | null;
+ 39:   text?: Pagecontent["text"] | null;
+ 40: };
+ 41: const SERIALIZED_TEXT = JSON.stringify(mockProps.text);
+ 42: const setNodeEnv = (value: string) => {
+ 43:   (process.env as WritableNodeEnv).NODE_ENV = value;
+ 44: };
+ 45: const invalidDataMessage = (title: unknown, text: unknown) =>
+ 46:   `Ugyldig seksjon data: tittel=${title}, tekst=${text}`;
+ 47: describe("Section Component", () => {
+ 48:   beforeEach(() => setNodeEnv("development"));
+ 49:   afterEach(() => setNodeEnv("test"));
+ 50:   it("renders with valid props", () => {
+ 51:     // Arrange
+ 52:     render(<Section {...mockProps} />);
+ 53:     // Act
+ 54:     const title = screen.getByText("Test Title");
+ 55:     const content = screen.getByText("Test content");
+ 56:     // Assert
+ 57:     expect(title).toBeInTheDocument();
+ 58:     expect(content).toBeInTheDocument();
+ 59:   });
+ 60:   describe("error handling for invalid data", () => {
+ 61:     let consoleErrorSpy: jest.SpyInstance;
+ 62:     beforeEach(() => {
+ 63:       consoleErrorSpy = jest
+ 64:         .spyOn(console, "error")
+ 65:         .mockImplementation(() => {});
+ 66:     });
+ 67:     afterEach(() => consoleErrorSpy.mockRestore());
+ 68:     const invalidCases: ReadonlyArray<{
+ 69:       name: string;
+ 70:       overrides: Partial<InvalidSectionProps>;
+ 71:       expectedMessage: string;
+ 72:     }> = [
+ 73:       {
+ 74:         name: "title is missing",
+ 75:         overrides: { title: undefined },
+ 76:         expectedMessage: invalidDataMessage("undefined", SERIALIZED_TEXT),
+ 77:       },
+ 78:       {
+ 79:         name: "title is null",
+ 80:         overrides: { title: null },
+ 81:         expectedMessage: invalidDataMessage("null", SERIALIZED_TEXT),
+ 82:       },
+ 83:       {
+ 84:         name: "title is empty string",
+ 85:         overrides: { title: "" },
+ 86:         expectedMessage: invalidDataMessage("", SERIALIZED_TEXT),
+ 87:       },
+ 88:       {
+ 89:         name: "text is missing",
+ 90:         overrides: { text: undefined },
+ 91:         expectedMessage: invalidDataMessage("Test Title", "undefined"),
+ 92:       },
+ 93:       {
+ 94:         name: "text is null",
+ 95:         overrides: { text: null },
+ 96:         expectedMessage: invalidDataMessage("Test Title", "null"),
+ 97:       },
+ 98:       {
+ 99:         name: "both title and text are missing",
+100:         overrides: { title: undefined, text: undefined },
+101:         expectedMessage: invalidDataMessage("undefined", "undefined"),
+102:       },
+103:     ];
+104:     invalidCases.forEach(({ name, overrides, expectedMessage }) => {
+105:       it(`returns null and logs error when ${name}`, () => {
+106:         // Arrange
+107:         const props = { ...mockProps, ...overrides } as Pagecontent;
+108:         // Act
+109:         const { container } = render(<Section {...props} />);
+110:         // Assert
+111:         expect(container.firstChild).toBeNull();
+112:         expect(consoleErrorSpy).toHaveBeenCalledWith(expectedMessage);
+113:       });
+114:     });
+115:     it("renders normally when text is empty array", () => {
+116:       // Arrange
+117:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
+118:       // Act
+119:       const { container } = render(<Section {...propsWithEmptyText} />);
+120:       // Assert
+121:       // Empty array is truthy in JavaScript, so the component renders
+122:       expect(container.firstChild).not.toBeNull();
+123:       expect(consoleErrorSpy).not.toHaveBeenCalled();
+124:       expect(screen.getByText("Test Title")).toBeInTheDocument();
+125:     });
+126:   });
+127:   it("triggers error in development mode", () => {
+128:     // Arrange
+129:     const consoleErrorSpy = jest
+130:       .spyOn(console, "error")
+131:       .mockImplementation(() => {});
+132:     render(<Section {...mockProps} />);
+133:     const errorButton = screen.getByText("Utløs Testfeil");
+134:     // Act & Assert
+135:     expect(() => fireEvent.click(errorButton)).toThrow(
+136:       "En uventet feil har oppstått",
+137:     );
+138:     consoleErrorSpy.mockRestore();
+139:   });
+140:   it("does not show error button in production mode", () => {
+141:     // Arrange
+142:     setNodeEnv("production");
+143:     render(<Section {...mockProps} />);
+144:     // Act
+145:     const errorButton = screen.queryByText("Utløs Testfeil");
+146:     // Assert
+147:     expect(errorButton).not.toBeInTheDocument();
+148:   });
+149:   it("does not show error button when showDebugButton is false in development mode", () => {
+150:     // Arrange
+151:     render(<Section {...mockProps} showDebugButton={false} />);
+152:     // Act
+153:     const errorButton = screen.queryByText("Utløs Testfeil");
+154:     // Assert
+155:     expect(errorButton).not.toBeInTheDocument();
+156:   });
+157:   it("shows error button when showDebugButton is true in development mode", () => {
+158:     // Arrange
+159:     render(<Section {...mockProps} showDebugButton={true} />);
+160:     // Act
+161:     const errorButton = screen.getByText("Utløs Testfeil");
+162:     // Assert
+163:     expect(errorButton).toBeInTheDocument();
+164:   });
+165: });
+````
+
 ## File: src/app/page.tsx
 ````typescript
  1: import { notFound } from "next/navigation";
@@ -21796,197 +21936,6 @@ vercel.json
 22:     </main>
 23:   );
 24: }
-````
-
-## File: src/lib/sanity/content.ts
-````typescript
-  1: import "server-only";
-  2: import { sanityFetch } from "@/lib/sanity/client";
-  3: import { isSanityApiError } from "@/types/sanity-errors";
-  4: import type {
-  5:   Cv,
-  6:   Navigation,
-  7:   Page,
-  8:   Project,
-  9:   Settings,
- 10: } from "@/types/sanity.types";
- 11: /**
- 12:  * The content module: the single interface between the app and Sanity.
- 13:  *
- 14:  * GROQ queries, cache policy, revalidation tags, and error mapping are all
- 15:  * implementation details of this module. Routes call the named functions
- 16:  * below and receive typed data or a well-mapped error — nothing else
- 17:  * crosses the seam.
- 18:  *
- 19:  * Every content type is tagged, so the /api/revalidate webhook can
- 20:  * invalidate any of them instantly (e.g. ?tag=cv). The 24-hour revalidate
- 21:  * window acts as a fallback when no webhook fires.
- 22:  */
- 23: const REVALIDATE_SECONDS = 86400; // 24 hours
- 24: /** Cache tags — the /api/revalidate route accepts any of these. */
- 25: export const CONTENT_TAGS = {
- 26:   projects: "projects",
- 27:   cv: "cv",
- 28:   pageContent: "page-content",
- 29:   navigation: "navigation",
- 30:   settings: "settings",
- 31: } as const;
- 32: const projectsQuery = `
- 33:   *[_type == "project" && published == true] | order(featureOrder asc) {
- 34:     id,
- 35:     name,
- 36:     description,
- 37:     subdescription,
- 38:     projectcategory->{
- 39:       _id,
- 40:       title
- 41:     },
- 42:     urlwww[]{
- 43:       ...,
- 44:       _key,
- 45:     },
- 46:     urlgithub[]{
- 47:       ...,
- 48:       _key,
- 49:     },
- 50:     projectimage,
- 51:     featured,
- 52:     featureOrder
- 53:   }
- 54: `;
- 55: const cvQuery = `
- 56:   *[_type == "cv"][0] {
- 57:     keyQualifications,
- 58:     experience[] {
- 59:       period,
- 60:       company,
- 61:       role,
- 62:       description
- 63:     },
- 64:     education[] {
- 65:       period,
- 66:       institution,
- 67:       degree,
- 68:       description
- 69:     },
- 70:     volunteerWork[] {
- 71:       period,
- 72:       organization,
- 73:       role,
- 74:       description
- 75:     }
- 76:   }
- 77: `;
- 78: const pageContentQuery = `
- 79:   *[_type == 'page' && (slug.current == 'hjem' || title == 'Hjem')] | order(defined(slug.current) desc)[0]{
- 80:     "id": _id,
- 81:     title,
- 82:     hero,
- 83:     content
- 84:   }
- 85: `;
- 86: const navigationQuery = `
- 87:   *[_type == "navigation"][0] {
- 88:     title,
- 89:     links[] {
- 90:       title,
- 91:       name,
- 92:       hash,
- 93:       href,
- 94:       externalLink
- 95:     }
- 96:   }
- 97: `;
- 98: const settingsQuery = `
- 99:   *[_type == "settings"][0] {
-100:     footerCopyrightText
-101:   }
-102: `;
-103: /**
-104:  * Maps low-level Sanity/network errors to stable, user-presentable errors.
-105:  * Applied uniformly to every content fetch — this is the only place in the
-106:  * codebase that knows what a Sanity error looks like.
-107:  */
-108: function mapError(error: unknown, entity: string): never {
-109:   console.error("Error fetching content:", entity, error);
-110:   if (isSanityApiError(error)) {
-111:     switch (error.statusCode) {
-112:       case 401:
-113:         throw new Error("Authentication failed");
-114:       case 403:
-115:         throw new Error("Insufficient permissions");
-116:       case 429:
-117:         throw new Error("Rate limit exceeded");
-118:       default:
-119:         throw new Error(`Sanity API error: ${error.message}`);
-120:     }
-121:   }
-122:   if (error instanceof Error && error.name === "TimeoutError") {
-123:     throw new Error("Request timed out");
-124:   }
-125:   throw new Error(`Failed to fetch ${entity}`);
-126: }
-127: async function fetchContent<T>(
-128:   entity: string,
-129:   query: string,
-130:   tag: string,
-131: ): Promise<T> {
-132:   try {
-133:     return await sanityFetch<T>({
-134:       query,
-135:       revalidate: REVALIDATE_SECONDS,
-136:       tags: [tag],
-137:     });
-138:   } catch (error) {
-139:     mapError(error, entity);
-140:   }
-141: }
-142: /** All published projects, ordered by featureOrder. */
-143: export function getProjects(): Promise<Project[]> {
-144:   return fetchContent<Project[]>(
-145:     "projects",
-146:     projectsQuery,
-147:     CONTENT_TAGS.projects,
-148:   );
-149: }
-150: /** The CV document, or null when none is published. */
-151: export function getCv(): Promise<Cv | null> {
-152:   return fetchContent<Cv | null>("cv", cvQuery, CONTENT_TAGS.cv);
-153: }
-154: /** Home page content (hero + sections), or null when missing. */
-155: export function getPageContent(): Promise<Page | null> {
-156:   return fetchContent<Page | null>(
-157:     "page content",
-158:     pageContentQuery,
-159:     CONTENT_TAGS.pageContent,
-160:   );
-161: }
-162: /** Site navigation links. */
-163: export function getNavigation(): Promise<Navigation> {
-164:   return fetchContent<Navigation>(
-165:     "navigation",
-166:     navigationQuery,
-167:     CONTENT_TAGS.navigation,
-168:   );
-169: }
-170: /** Site-wide settings (footer text etc.). */
-171: export function getSettings(): Promise<Settings> {
-172:   return fetchContent<Settings>(
-173:     "settings",
-174:     settingsQuery,
-175:     CONTENT_TAGS.settings,
-176:   );
-177: }
-178: /**
-179:  * Kicks off the projects fetch without awaiting it, so the request is
-180:  * already in flight when the Suspense boundary renders. Next.js dedupes
-181:  * the underlying fetch, so the awaited call in the page reuses it.
-182:  */
-183: export function preloadProjects(): void {
-184:   void getProjects().catch(() => {
-185:     // Swallow here; the awaited call in the page surfaces the error.
-186:   });
-187: }
 ````
 
 ## File: src/utils/eslint/package.json
