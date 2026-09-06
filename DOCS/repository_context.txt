@@ -8527,6 +8527,22 @@ vercel.json
 8: }
 ````
 
+## File: src/app/cv/page.tsx
+````typescript
+ 1: import { notFound } from "next/navigation";
+ 2: import CVContent from "@/components/CV/CVContent.component";
+ 3: import { getCv } from "@/lib/sanity/content";
+ 4: import { Metadata } from "next/types";
+ 5: export const metadata: Metadata = {
+ 6:   title: "CV - Dfweb",
+ 7: };
+ 8: export default async function CVPage() {
+ 9:   const cvData = await getCv();
+10:   if (!cvData) notFound();
+11:   return <CVContent cvData={cvData} />;
+12: }
+````
+
 ## File: src/app/kontakt/error.tsx
 ````typescript
  1: "use client";
@@ -8638,6 +8654,49 @@ vercel.json
 14:     </main>
 15:   );
 16: }
+````
+
+## File: src/app/prosjekter/page.tsx
+````typescript
+ 1: import { Suspense } from "react";
+ 2: import type { Metadata } from "next/types";
+ 3: import PageHeader from "@/components/UI/PageHeader.component";
+ 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
+ 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 6: import { getProjects, preloadProjects } from "@/lib/sanity/content";
+ 7: export const metadata: Metadata = {
+ 8:   title: "Prosjekter - Dfweb",
+ 9: };
+10: // ISR - regenerate every 24 hours
+11: export const revalidate = 86400;
+12: async function ProjectList() {
+13:   const projects = await getProjects();
+14:   return (
+15:     <div className="container mx-auto">
+16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+17:         {projects.map((project, index) => (
+18:           <ProsjektCard
+19:             key={project.id}
+20:             {...project}
+21:             staggerDelay={(index % 2) * 0.15}
+22:           />
+23:         ))}
+24:       </div>
+25:     </div>
+26:   );
+27: }
+28: export default function Prosjekter() {
+29:   // Start fetching projects data as early as possible
+30:   preloadProjects();
+31:   return (
+32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+33:       <PageHeader>Prosjekter</PageHeader>
+34:       <Suspense fallback={<RotatingLoader />}>
+35:         <ProjectList />
+36:       </Suspense>
+37:     </main>
+38:   );
+39: }
 ````
 
 ## File: src/app/cursor.css
@@ -9115,6 +9174,83 @@ vercel.json
 180:     transition-duration: 0.01ms !important;
 181:   }
 182: }
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
+ 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 7: import SkipLink from "@/components/UI/SkipLink.component";
+ 8: import Header from "@/components/Layout/Header.component";
+ 9: import Footer from "@/components/Layout/Footer.component";
+10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+11: const jetbrainsMono = JetBrains_Mono({
+12:   subsets: ["latin"],
+13:   display: "swap", // Prevent invisible text during font load (improves FCP)
+14:   preload: true, // Preload font to reduce request chain
+15: });
+16: export const metadata: Metadata = {
+17:   title: "Forside - Dfweb",
+18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+19: };
+20: export default async function RootLayout({
+21:   children,
+22: }: Readonly<{
+23:   children: React.ReactNode;
+24: }>) {
+25:   const [navigation, settings] = await Promise.all([
+26:     getNavigation(),
+27:     getSettings(),
+28:   ]);
+29:   const footerCopyrightText = settings?.footerCopyrightText;
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+38:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+39:         <link rel="icon" href="/favicon.ico" />
+40:         <link rel="apple-touch-icon" href="/logo.png" />
+41:         <meta property="og:title" content="Daniel Fjeldstad" />
+42:         <meta name="author" content="Daniel Fjeldstad" />
+43:         <meta property="og:locale" content="nb_NO" />
+44:         <meta
+45:           property="og:description"
+46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+47:         />
+48:         <meta property="og:url" content="https://www.dfweb.no/" />
+49:         <meta property="og:site_name" content="dfweb.no" />
+50:         <meta name="theme-color" content="#004014" />
+51:       </head>
+52:       <body
+53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+54:       >
+55:         <LazyMotionProvider>
+56:           <SkipLink />
+57:           <ErrorBoundary>
+58:             <div id="main-content" className="grow flex flex-col">
+59:               <Header navigation={navigation} />
+60:               <SpeedInsights />
+61:               <div className="grow">{children}</div>
+62:               <Footer
+63:                 footerCopyrightText={
+64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+65:                 }
+66:               />
+67:             </div>
+68:           </ErrorBoundary>
+69:         </LazyMotionProvider>
+70:       </body>
+71:     </html>
+72:   );
+73: }
 ````
 
 ## File: src/app/loading.tsx
@@ -20619,140 +20755,32 @@ vercel.json
 79: }
 ````
 
-## File: src/app/cv/page.tsx
+## File: src/app/page.tsx
 ````typescript
  1: import { notFound } from "next/navigation";
- 2: import CVContent from "@/components/CV/CVContent.component";
- 3: import { getCv } from "@/lib/sanity/content";
- 4: import { Metadata } from "next/types";
- 5: export const metadata: Metadata = {
- 6:   title: "CV - Dfweb",
- 7: };
- 8: export default async function CVPage() {
- 9:   const cvData = await getCv();
-10:   if (!cvData) notFound();
-11:   return <CVContent cvData={cvData} />;
-12: }
-````
-
-## File: src/app/prosjekter/page.tsx
-````typescript
- 1: import { Suspense } from "react";
  2: import type { Metadata } from "next/types";
- 3: import PageHeader from "@/components/UI/PageHeader.component";
- 4: import ProsjektCard from "@/components/Prosjekter/ProsjektCard.component";
- 5: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 6: import { getProjects, preloadProjects } from "@/lib/sanity/content";
- 7: export const metadata: Metadata = {
- 8:   title: "Prosjekter - Dfweb",
+ 3: import { getPageContent } from "@/lib/sanity/content";
+ 4: import Hero from "@/components/Index/Hero.component";
+ 5: import IndexContent from "@/components/Index/IndexContent.component";
+ 6: export const metadata: Metadata = {
+ 7:   title: "Forside - Dfweb",
+ 8:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
  9: };
 10: // ISR - regenerate every 24 hours
 11: export const revalidate = 86400;
-12: async function ProjectList() {
-13:   const projects = await getProjects();
-14:   return (
-15:     <div className="container mx-auto">
-16:       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
-17:         {projects.map((project, index) => (
-18:           <ProsjektCard
-19:             key={project.id}
-20:             {...project}
-21:             staggerDelay={(index % 2) * 0.15}
-22:           />
-23:         ))}
-24:       </div>
-25:     </div>
-26:   );
-27: }
-28: export default function Prosjekter() {
-29:   // Start fetching projects data as early as possible
-30:   preloadProjects();
-31:   return (
-32:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
-33:       <PageHeader>Prosjekter</PageHeader>
-34:       <Suspense fallback={<RotatingLoader />}>
-35:         <ProjectList />
-36:       </Suspense>
-37:     </main>
-38:   );
-39: }
-````
-
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
- 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 7: import SkipLink from "@/components/UI/SkipLink.component";
- 8: import Header from "@/components/Layout/Header.component";
- 9: import Footer from "@/components/Layout/Footer.component";
-10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
-11: const jetbrainsMono = JetBrains_Mono({
-12:   subsets: ["latin"],
-13:   display: "swap", // Prevent invisible text during font load (improves FCP)
-14:   preload: true, // Preload font to reduce request chain
-15: });
-16: export const metadata: Metadata = {
-17:   title: "Forside - Dfweb",
-18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-19: };
-20: export default async function RootLayout({
-21:   children,
-22: }: Readonly<{
-23:   children: React.ReactNode;
-24: }>) {
-25:   const [navigation, settings] = await Promise.all([
-26:     getNavigation(),
-27:     getSettings(),
-28:   ]);
-29:   const footerCopyrightText = settings?.footerCopyrightText;
-30:   return (
-31:     <html lang="nb">
-32:       <head>
-33:         <meta
-34:           name="viewport"
-35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-36:         />
-37:         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
-38:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-39:         <link rel="icon" href="/favicon.ico" />
-40:         <link rel="apple-touch-icon" href="/logo.png" />
-41:         <meta property="og:title" content="Daniel Fjeldstad" />
-42:         <meta name="author" content="Daniel Fjeldstad" />
-43:         <meta property="og:locale" content="nb_NO" />
-44:         <meta
-45:           property="og:description"
-46:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-47:         />
-48:         <meta property="og:url" content="https://www.dfweb.no/" />
-49:         <meta property="og:site_name" content="dfweb.no" />
-50:         <meta name="theme-color" content="#004014" />
-51:       </head>
-52:       <body
-53:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-54:       >
-55:         <LazyMotionProvider>
-56:           <SkipLink />
-57:           <ErrorBoundary>
-58:             <div id="main-content" className="grow flex flex-col">
-59:               <Header navigation={navigation} />
-60:               <SpeedInsights />
-61:               <div className="grow">{children}</div>
-62:               <Footer
-63:                 footerCopyrightText={
-64:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-65:                 }
-66:               />
-67:             </div>
-68:           </ErrorBoundary>
-69:         </LazyMotionProvider>
-70:       </body>
-71:     </html>
-72:   );
-73: }
+12: export default async function HomePage() {
+13:   const pageContent = await getPageContent();
+14:   if (!pageContent) notFound();
+15:   const { hero, content } = pageContent;
+16:   return (
+17:     <main>
+18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
+19:         {hero && <Hero content={hero} />}
+20:       </div>
+21:       {content && <IndexContent pageContent={content} />}
+22:     </main>
+23:   );
+24: }
 ````
 
 ## File: src/lib/sanity/content.ts
@@ -21910,34 +21938,6 @@ vercel.json
 165: });
 ````
 
-## File: src/app/page.tsx
-````typescript
- 1: import { notFound } from "next/navigation";
- 2: import type { Metadata } from "next/types";
- 3: import { getPageContent } from "@/lib/sanity/content";
- 4: import Hero from "@/components/Index/Hero.component";
- 5: import IndexContent from "@/components/Index/IndexContent.component";
- 6: export const metadata: Metadata = {
- 7:   title: "Forside - Dfweb",
- 8:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
- 9: };
-10: // ISR - regenerate every 24 hours
-11: export const revalidate = 86400;
-12: export default async function HomePage() {
-13:   const pageContent = await getPageContent();
-14:   if (!pageContent) notFound();
-15:   const { hero, content } = pageContent;
-16:   return (
-17:     <main>
-18:       <div className="mt-[4.5rem] md:mt-32 overflow-hidden">
-19:         {hero && <Hero content={hero} />}
-20:       </div>
-21:       {content && <IndexContent pageContent={content} />}
-22:     </main>
-23:   );
-24: }
-````
-
 ## File: src/utils/eslint/package.json
 ````json
  1: {
@@ -22101,7 +22101,7 @@ vercel.json
   3:   "version": "1.1.0",
   4:   "private": true,
   5:   "type": "module",
-  6:   "packageManager": "pnpm@11.21.0",
+  6:   "packageManager": "pnpm@12.3.4",
   7:   "scripts": {
   8:     "dev": "next dev --turbopack",
   9:     "lhci": "lhci autorun",
