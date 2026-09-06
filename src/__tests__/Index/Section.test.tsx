@@ -80,11 +80,11 @@ describe("Section Component", () => {
 
     afterEach(() => consoleErrorSpy.mockRestore());
 
-    it.each<{
+    const invalidCases: ReadonlyArray<{
       name: string;
       overrides: Partial<InvalidSectionProps>;
       expectedMessage: string;
-    }>([
+    }> = [
       {
         name: "title is missing",
         overrides: { title: undefined },
@@ -115,9 +115,10 @@ describe("Section Component", () => {
         overrides: { title: undefined, text: undefined },
         expectedMessage: invalidDataMessage("undefined", "undefined"),
       },
-    ])(
-      "returns null and logs error when $name",
-      ({ overrides, expectedMessage }) => {
+    ];
+
+    invalidCases.forEach(({ name, overrides, expectedMessage }) => {
+      it(`returns null and logs error when ${name}`, () => {
         // Arrange
         const props = { ...mockProps, ...overrides } as Pagecontent;
 
@@ -127,8 +128,8 @@ describe("Section Component", () => {
         // Assert
         expect(container.firstChild).toBeNull();
         expect(consoleErrorSpy).toHaveBeenCalledWith(expectedMessage);
-      },
-    );
+      });
+    });
 
     it("renders normally when text is empty array", () => {
       // Arrange
