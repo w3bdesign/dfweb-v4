@@ -36,6 +36,7 @@ const nextConfig: NextConfig = {
   // Optimize CSS chunking - merge CSS files to reduce network requests
   experimental: {
     cssChunking: true, // Merge CSS files when possible (default)
+    useTypeScriptCli: true, // https://nextjs.org/docs/app/api-reference/config/typescript#using-typescript-7
   },
   images: {
     remotePatterns: [
