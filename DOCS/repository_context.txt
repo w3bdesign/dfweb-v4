@@ -426,99 +426,6 @@ vercel.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@6.0.0
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:24.19.0
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: sudo npm i -g pnpm@11.0.8
-19:       - run:
-20:           name: Install Dependencies
-21:           command: pnpm install --frozen-lockfile
-22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-23:       - save_cache:
-24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-25:           paths:
-26:             - ~/.pnpm-store
-27:   build:
-28:     working_directory: /home/circleci/dfweb
-29:     docker:
-30:       - image: cimg/node:24.19.0-browsers
-31:     steps:
-32:       - checkout
-33:       - restore_cache:
-34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-35:       - run:
-36:           name: Install pnpm package manager
-37:           command: sudo npm i -g pnpm@11.0.8
-38:       - run:
-39:           name: Install Dependencies
-40:           command: pnpm install --frozen-lockfile
-41:       - run:
-42:           name: Chrome key start setup
-43:           command: sudo apt update -y
-44:       - run:
-45:           name: Chrome key finish setup
-46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-47:       - run:
-48:           name: Chrome package download
-49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-50:       - save_cache:
-51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-52:           paths:
-53:             - ~/.pnpm-store
-54:       - store_artifacts:
-55:           path: /root/.npm/_logs
-56:       - run:
-57:           name: Run Jest Tests
-58:           command: pnpm test
-59:       - run:
-60:           name: Make sure ~/.gnupg directory exists
-61:           command: mkdir -p ~/.gnupg
-62:       - run:
-63:           name: Fix GPG directory permissions
-64:           command: |
-65:             chmod 700 ~/.gnupg
-66:             chmod 600 ~/.gnupg/* || true
-67:       - run:
-68:           name: Import Codecov GPG key
-69:           command: |
-70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
-71:       - run:
-72:           name: Download and Verify Codecov CLI
-73:           command: |
-74:             curl -Os https://cli.codecov.io/latest/linux/codecov
-75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
-77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
-78:             shasum -a 256 -c codecov.SHA256SUM
-79:             sudo chmod +x codecov
-80:       - run:
-81:           name: Upload Coverage to Codecov
-82:           command: |
-83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
-84:     parallelism: 6
-85: workflows:
-86:   chromatic-deploy:
-87:     jobs:
-88:       - build:
-89:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -20743,6 +20650,99 @@ vercel.json
 ## File: vercel.json
 ````json
 1: {}
+````
+
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@6.0.0
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:26.8.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: sudo npm i -g pnpm@11.0.8
+19:       - run:
+20:           name: Install Dependencies
+21:           command: pnpm install --frozen-lockfile
+22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+23:       - save_cache:
+24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+25:           paths:
+26:             - ~/.pnpm-store
+27:   build:
+28:     working_directory: /home/circleci/dfweb
+29:     docker:
+30:       - image: cimg/node:26.8.1-browsers
+31:     steps:
+32:       - checkout
+33:       - restore_cache:
+34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+35:       - run:
+36:           name: Install pnpm package manager
+37:           command: sudo npm i -g pnpm@11.0.8
+38:       - run:
+39:           name: Install Dependencies
+40:           command: pnpm install --frozen-lockfile
+41:       - run:
+42:           name: Chrome key start setup
+43:           command: sudo apt update -y
+44:       - run:
+45:           name: Chrome key finish setup
+46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+47:       - run:
+48:           name: Chrome package download
+49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+50:       - save_cache:
+51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+52:           paths:
+53:             - ~/.pnpm-store
+54:       - store_artifacts:
+55:           path: /root/.npm/_logs
+56:       - run:
+57:           name: Run Jest Tests
+58:           command: pnpm test
+59:       - run:
+60:           name: Make sure ~/.gnupg directory exists
+61:           command: mkdir -p ~/.gnupg
+62:       - run:
+63:           name: Fix GPG directory permissions
+64:           command: |
+65:             chmod 700 ~/.gnupg
+66:             chmod 600 ~/.gnupg/* || true
+67:       - run:
+68:           name: Import Codecov GPG key
+69:           command: |
+70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
+71:       - run:
+72:           name: Download and Verify Codecov CLI
+73:           command: |
+74:             curl -Os https://cli.codecov.io/latest/linux/codecov
+75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
+77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+78:             shasum -a 256 -c codecov.SHA256SUM
+79:             sudo chmod +x codecov
+80:       - run:
+81:           name: Upload Coverage to Codecov
+82:           command: |
+83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
+84:     parallelism: 6
+85: workflows:
+86:   chromatic-deploy:
+87:     jobs:
+88:       - build:
+89:           name: Build Next.js project
 ````
 
 ## File: .github/workflows/codeql.yml
