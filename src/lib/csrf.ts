@@ -3,32 +3,20 @@ import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
 const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
 
 /**
- * Per-process fallback secret used only outside production when CSRF_SECRET is
- * not provided. It is generated at random on startup, so tokens created and
- * validated within the same process remain consistent (e.g. in dev and tests)
- * without ever hardcoding a secret value.
+ * Per-process fallback secret used when CSRF_SECRET is not provided. It is
+ * generated at random on startup so tokens created and validated within the
+ * same process stay consistent, without ever hardcoding a secret value.
  */
 const ephemeralSecret = randomBytes(32).toString("hex");
 
 /**
  * Resolves the secret used to sign and verify CSRF tokens.
- * In production a CSRF_SECRET environment variable is required.
+ * Uses the CSRF_SECRET environment variable when set, falling back to a
+ * per-process random secret otherwise.
  * @returns {string} The CSRF signing secret
  */
 function getCSRFSecret(): string {
-  const secret = process.env.CSRF_SECRET;
-
-  if (secret) {
-    return secret;
-  }
-
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "CSRF_SECRET environment variable must be set in production",
-    );
-  }
-
-  return ephemeralSecret;
+  return process.env.CSRF_SECRET ?? ephemeralSecret;
 }
 
 /**
