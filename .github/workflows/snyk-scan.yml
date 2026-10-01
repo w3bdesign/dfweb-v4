@@ -36,13 +36,24 @@ jobs:
       - name: Install studio dependencies
         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
 
+      # Each Snyk scan targets a single project and writes its own SARIF file.
+      # Avoid `--all-projects`, which emits multiple runs in one SARIF file and
+      # is rejected by GitHub code scanning (one run per category per file).
       - name: Run Snyk to check main project vulnerabilities
         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: "test"
-          args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+          args: "--file=package.json --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+
+      - name: Run Snyk to check studio project vulnerabilities
+        uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: "test"
+          args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
 
       - name: Run Snyk to check eslint plugin vulnerabilities
         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
@@ -58,6 +69,13 @@ jobs:
         with:
           sarif_file: snyk-main.sarif
           category: snyk-main
+
+      - name: Upload studio project SARIF report to GitHub Security tab
+        if: always() && hashFiles('snyk-studio.sarif') != ''
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+        with:
+          sarif_file: snyk-studio.sarif
+          category: snyk-studio
 
       - name: Upload eslint plugin SARIF report to GitHub Security tab
         if: always() && hashFiles('snyk-eslint.sarif') != ''
