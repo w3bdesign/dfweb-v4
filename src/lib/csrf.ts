@@ -40,7 +40,7 @@ export function generateCSRFToken(): string {
   const randomValue = randomBytes(32).toString("hex");
   const payload = `${timestamp}:${randomValue}`;
 
-  const signature = createHmac("sha256", CSRF_SECRET)
+  const signature = createHmac("sha256", getCSRFSecret())
     .update(payload)
     .digest("hex");
 
@@ -74,7 +74,7 @@ function decodeCSRFToken(token: string): DecodedCSRFToken | null {
  * Verifies the HMAC signature of a token payload using constant-time comparison.
  */
 function hasValidSignature(payload: string, signature: string): boolean {
-  const expectedSignature = createHmac("sha256", CSRF_SECRET)
+  const expectedSignature = createHmac("sha256", getCSRFSecret())
     .update(payload)
     .digest("hex");
 
