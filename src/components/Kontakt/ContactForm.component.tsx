@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import React from "react";
 
 import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import InputField from "@/components/UI/InputField.component";
-import { formSchema, FormData } from "./config/formConfig";
+import { useContactForm } from "@/hooks/useContactForm";
+import { FormData } from "./config/formConfig";
 
 interface ContactFormProps {
   csrfToken?: string;
@@ -16,53 +15,23 @@ interface ContactFormProps {
 }
 
 /**
- * ContactForm component - A complete contact form with EmailJS integration
- * Handles both the form UI and submission logic in a single, clear component
+ * ContactForm component - presentational contact form.
+ * All submission logic and state live in the useContactForm hook, keeping this
+ * component focused solely on rendering (Separation of Concerns / SRP).
  */
 const ContactForm: React.FC<ContactFormProps> = ({
   csrfToken = "",
-  onSubmit: onSubmitProp,
+  onSubmit,
   initialResponse = "",
 }) => {
-  const [submittedResponse, setSubmittedResponse] = useState<string | null>(
-    null,
-  );
-  const serverResponse = submittedResponse ?? initialResponse;
-
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-  });
-
-  /**
-   * Default form submission handler using EmailJS.
-   * Dynamically imports @emailjs/browser only when the user submits,
-   * reducing the initial bundle size (Vercel React Best Practices Rule 2.2).
-   */
-  const defaultOnSubmit = async (data: FormData): Promise<string> => {
-    const EMAIL_API_KEY = process.env.NEXT_PUBLIC_EMAIL_API_KEY ?? "changeme";
-    const TEMPLATE_KEY =
-      process.env.NEXT_PUBLIC_EMAIL_TEMPLATE_KEY ?? "changeme";
-    const SERVICE_KEY = process.env.NEXT_PUBLIC_EMAIL_SERVICE_KEY ?? "changeme";
-
-    try {
-      const emailjs = (await import("@emailjs/browser")).default;
-      emailjs.init(EMAIL_API_KEY);
-      await emailjs.send(SERVICE_KEY, TEMPLATE_KEY, data);
-      return "Takk for din beskjed";
-    } catch {
-      return "Feil under sending av skjema";
-    }
-  };
-
-  const handleFormSubmit = async (data: FormData): Promise<void> => {
-    const submitHandler = onSubmitProp ?? defaultOnSubmit;
-    const message = await submitHandler(data);
-    setSubmittedResponse(message);
-  };
+    handleFormSubmit,
+    errors,
+    isSubmitting,
+    serverResponse,
+  } = useContactForm({ onSubmit, initialResponse });
 
   return (
     <main data-testid="kontaktcontent" id="maincontent">
