@@ -39,7 +39,16 @@ jobs:
       # Each Snyk scan targets a single manifest so that every SARIF file
       # contains exactly one run. `--all-projects` emits one run per detected
       # project, which the CodeQL upload action rejects under a single category.
+      #
+      # `snyk test` exits non-zero when it finds issues at or above the
+      # threshold. Without `continue-on-error` + `if: always()` the first
+      # failing scan would abort the remaining scans, leaving their SARIF
+      # files (and therefore their code scanning configurations) missing.
+      # GitHub then reports "configurations present on main were not found"
+      # on pull requests. Every scan must run and every SARIF must upload.
       - name: Run Snyk to check main project vulnerabilities
+        id: snyk_main
+        continue-on-error: true
         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -48,6 +57,9 @@ jobs:
           args: "--file=package.json --sarif-file-output=snyk-main.sarif --severity-threshold=high"
 
       - name: Run Snyk to check studio vulnerabilities
+        id: snyk_studio
+        if: always()
+        continue-on-error: true
         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -56,6 +68,9 @@ jobs:
           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
 
       - name: Run Snyk to check eslint plugin vulnerabilities
+        id: snyk_eslint
+        if: always()
+        continue-on-error: true
         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -63,26 +78,76 @@ jobs:
           command: "test"
           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
 
+      # A SARIF file must always be uploaded for every category, even when a
+      # scan crashed, otherwise the configuration vanishes from the branch and
+      # code scanning can no longer diff pull requests against main.
+      - name: Ensure a SARIF file exists for every category
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          emit_placeholder() {
+            local file="$1" tool="$2"
+            if [ ! -s "$file" ]; then
+              echo "::warning::${file} missing - uploading empty placeholder SARIF for ${tool}"
+              cat > "$file" <<JSON
+          {
+            "\$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+              {
+                "tool": { "driver": { "name": "Snyk Open Source", "informationUri": "https://snyk.io", "rules": [] } },
+                "results": []
+              }
+            ]
+          }
+          JSON
+            fi
+          }
+          emit_placeholder snyk-main.sarif "main project"
+          emit_placeholder snyk-studio.sarif "studio"
+          emit_placeholder snyk-eslint.sarif "eslint plugin"
+
       - name: Upload main project SARIF report to GitHub Security tab
-        if: always() && hashFiles('snyk-main.sarif') != ''
+        if: always()
         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         with:
           sarif_file: snyk-main.sarif
           category: snyk-main
 
       - name: Upload studio SARIF report to GitHub Security tab
-        if: always() && hashFiles('snyk-studio.sarif') != ''
+        if: always()
         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         with:
           sarif_file: snyk-studio.sarif
           category: snyk-studio
 
       - name: Upload eslint plugin SARIF report to GitHub Security tab
-        if: always() && hashFiles('snyk-eslint.sarif') != ''
+        if: always()
         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
         with:
           sarif_file: snyk-eslint.sarif
           category: snyk-eslint
+
+      - name: Fail if any Snyk scan reported issues
+        if: always()
+        shell: bash
+        env:
+          MAIN_RESULT: ${{ steps.snyk_main.outcome }}
+          STUDIO_RESULT: ${{ steps.snyk_studio.outcome }}
+          ESLINT_RESULT: ${{ steps.snyk_eslint.outcome }}
+        run: |
+          set -euo pipefail
+          failed=0
+          for scan in "main:$MAIN_RESULT" "studio:$STUDIO_RESULT" "eslint:$ESLINT_RESULT"; do
+            name="${scan%%:*}"
+            outcome="${scan##*:}"
+            if [ "$outcome" = "failure" ]; then
+              echo "::error::Snyk scan failed for ${name}"
+              failed=1
+            fi
+          done
+          exit "$failed"
 
       - name: Snyk Monitor main project (only for pushes to main branch)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
