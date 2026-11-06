@@ -1,5 +1,10 @@
 name: Snyk Security Scan
 on: push
+
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   security:
     runs-on: ubuntu-latest
@@ -11,7 +16,11 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --sarif-file-output=snyk.sarif
+          # --all-projects is required: the Snyk CLI refuses to run when both
+          # pnpm-lock.yaml and pnpm-workspace.yaml are present at the repo root
+          # (SNYK-CLI-0000). Without it no SARIF is produced and the upload
+          # below fails with "Path does not exist: snyk.sarif".
+          args: --all-projects --sarif-file-output=snyk.sarif
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@5895b2c9be147bc7f1c75ce72c5cb577febb1907 # v4
         with:
