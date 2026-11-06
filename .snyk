@@ -1,0 +1,24 @@
+# Snyk (https://snyk.io) policy file.
+# Documents accepted risks for transitive dependencies that have no upstream fix.
+# Every entry MUST have a reason and an expiry so it gets re-evaluated.
+version: v1.25.0
+ignore:
+  SNYK-JS-BRACES-19963945:
+    - "*":
+        reason: >-
+          Uncontrolled Recursion in braces@3.0.3. No patched release exists -
+          3.0.3 is the current `latest` on npm, so a pnpm override cannot
+          resolve it. Both vulnerable paths are build/dev tooling only and
+          never process untrusted input:
+            1) sanity > @sanity/cli > @sanity/codegen > chokidar > braces
+            2) eslint-config-next / stylelint / @ladle/react > fast-glob >
+               micromatch > braces
+          Glob patterns come exclusively from committed config files, not from
+          user or network input, so the recursion cannot be triggered at
+          runtime. The production Next.js bundle does not include braces.
+          Revisit when micromatch/chokidar ship a patched braces, or when
+          chokidar v4 (which drops braces entirely) propagates through
+          @sanity/codegen.
+        created: 2026-11-06T00:00:00.000Z
+        expires: 2027-02-04T00:00:00.000Z
+patch: {}
