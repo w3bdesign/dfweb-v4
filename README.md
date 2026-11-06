@@ -183,7 +183,6 @@ Sanity.io and Typescript.
 ### Testing Standards
 
 - ISTQB-aligned comprehensive test strategy
-  - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
   - Multi-level test approach (Unit, Component, E2E)
   - Risk-based testing methodology
   - Defined test metrics and reporting
