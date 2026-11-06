@@ -20,9 +20,21 @@ const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
     useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
 
   useEffect(() => {
-    import("@/components/Animations/Matrix.component").then((mod) => {
-      setMatrix(() => mod.default);
-    });
+    let isMounted = true;
+
+    void import("@/components/Animations/Matrix.component")
+      .then((mod) => {
+        if (isMounted) {
+          setMatrix(() => mod.default);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to load Matrix component", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (!Matrix) {
