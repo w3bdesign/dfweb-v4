@@ -78,35 +78,59 @@ jobs:
           command: "test"
           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
 
-      # A SARIF file must always be uploaded for every category, even when a
-      # scan crashed, otherwise the configuration vanishes from the branch and
-      # code scanning can no longer diff pull requests against main.
-      - name: Ensure a SARIF file exists for every category
+      # Two things are normalized here, both required for stable configurations:
+      #
+      # 1. Snyk writes `runs[].automationDetails.id` itself, e.g.
+      #    "Snyk/Open Source/dfweb-v4/0". `github/codeql-action/upload-sarif`
+      #    only applies its `category` input when `automationDetails` is
+      #    ABSENT, so Snyk's value wins and becomes the code scanning
+      #    configuration name. That name embeds a project index that shifts
+      #    between runs, so main collects orphaned configurations like
+      #    "Snyk/Open Source/dfweb-v4/0" that later runs never reproduce -
+      #    producing the "configurations present on main were not found"
+      #    warning on every pull request. Deleting `automationDetails` lets the
+      #    explicit `category` below take effect and stay constant forever.
+      #
+      # 2. A SARIF file must always be uploaded for every category, even when a
+      #    scan crashed, otherwise that configuration vanishes from the branch
+      #    and code scanning can no longer diff pull requests against main.
+      - name: Normalize SARIF output for stable code scanning categories
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          emit_placeholder() {
-            local file="$1" tool="$2"
+
+          normalize() {
+            local file="$1" label="$2"
+
             if [ ! -s "$file" ]; then
-              echo "::warning::${file} missing - uploading empty placeholder SARIF for ${tool}"
-              cat > "$file" <<JSON
-          {
-            "\$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-            "version": "2.1.0",
-            "runs": [
-              {
-                "tool": { "driver": { "name": "Snyk Open Source", "informationUri": "https://snyk.io", "rules": [] } },
-                "results": []
-              }
-            ]
-          }
-          JSON
+              echo "::warning::${file} missing - writing empty placeholder SARIF for ${label}"
+              jq -n '{
+                "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                version: "2.1.0",
+                runs: [{
+                  tool: { driver: { name: "Snyk Open Source", informationUri: "https://snyk.io", rules: [] } },
+                  results: []
+                }]
+              }' > "$file"
+              return
             fi
+
+            local runs
+            runs=$(jq '.runs | length' "$file")
+            if [ "$runs" -ne 1 ]; then
+              echo "::error::${file} contains ${runs} runs but exactly 1 is required; a single --file scan must not fan out"
+              exit 1
+            fi
+
+            jq 'del(.runs[].automationDetails)' "$file" > "${file}.normalized"
+            mv "${file}.normalized" "$file"
+            echo "Normalized ${file} for ${label}"
           }
-          emit_placeholder snyk-main.sarif "main project"
-          emit_placeholder snyk-studio.sarif "studio"
-          emit_placeholder snyk-eslint.sarif "eslint plugin"
+
+          normalize snyk-main.sarif "main project"
+          normalize snyk-studio.sarif "studio"
+          normalize snyk-eslint.sarif "eslint plugin"
 
       - name: Upload main project SARIF report to GitHub Security tab
         if: always()
