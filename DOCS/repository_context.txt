@@ -13281,123 +13281,6 @@ vercel.json
 36: );
 ````
 
-## File: src/stories/components/Animations/Matrix.stories.tsx
-````typescript
-  1: import React, { useEffect, useState } from "react";
-  2: import { Meta } from "@ladle/react";
-  3: interface ReactMatrixAnimationProps {
-  4:   tileSize?: number;
-  5:   fadeFactor?: number;
-  6:   backgroundColor?: string;
-  7:   fontColor?: string;
-  8:   glowColor?: string;
-  9:   tileSet?: string[] | null;
- 10: }
- 11: export default {
- 12:   title: "Animations/Matrix",
- 13: } as Meta;
- 14: // Client-side only wrapper component
- 15: const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
- 16:   const [Matrix, setMatrix] =
- 17:     useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
- 18:   useEffect(() => {
- 19:     import("@/components/Animations/Matrix.component").then((mod) => {
- 20:       setMatrix(() => mod.default);
- 21:     });
- 22:   }, []);
- 23:   if (!Matrix) {
- 24:     return <div>Loading Matrix...</div>;
- 25:   }
- 26:   return <Matrix {...props} />;
- 27: };
- 28: const Container = ({ children }: { children: React.ReactNode }) => (
- 29:   <div className="relative w-full h-[400px] bg-gray-900">{children}</div>
- 30: );
- 31: // Basic story with default props
- 32: export const Default = () => (
- 33:   <Container>
- 34:     <ClientOnlyMatrix />
- 35:   </Container>
- 36: );
- 37: // Story with custom colors
- 38: export const CustomColors = () => (
- 39:   <Container>
- 40:     <ClientOnlyMatrix
- 41:       backgroundColor="#000000"
- 42:       fontColor="#FF0000"
- 43:       glowColor="#FF4444"
- 44:     />
- 45:   </Container>
- 46: );
- 47: // Story with larger tiles
- 48: export const LargeTiles = () => (
- 49:   <Container>
- 50:     <ClientOnlyMatrix
- 51:       tileSize={30}
- 52:       backgroundColor="#000000"
- 53:       fontColor="#00FF00"
- 54:       glowColor="#00FF00"
- 55:     />
- 56:   </Container>
- 57: );
- 58: // Story with smaller tiles
- 59: export const SmallTiles = () => (
- 60:   <Container>
- 61:     <ClientOnlyMatrix
- 62:       tileSize={12}
- 63:       backgroundColor="#000000"
- 64:       fontColor="#00FF00"
- 65:       glowColor="#00FF00"
- 66:     />
- 67:   </Container>
- 68: );
- 69: // Story with binary characters
- 70: export const BinaryMatrix = () => (
- 71:   <Container>
- 72:     <ClientOnlyMatrix
- 73:       tileSet={["0", "1"]}
- 74:       backgroundColor="#000000"
- 75:       fontColor="#00FF00"
- 76:       glowColor="#00FF00"
- 77:     />
- 78:   </Container>
- 79: );
- 80: // Story with slow fade effect
- 81: export const SlowFade = () => (
- 82:   <Container>
- 83:     <ClientOnlyMatrix
- 84:       fadeFactor={0.1}
- 85:       backgroundColor="#000000"
- 86:       fontColor="#00FF00"
- 87:       glowColor="#00FF00"
- 88:     />
- 89:   </Container>
- 90: );
- 91: // Story with blue theme
- 92: export const BlueTheme = () => (
- 93:   <Container>
- 94:     <ClientOnlyMatrix
- 95:       backgroundColor="#000033"
- 96:       fontColor="#0088FF"
- 97:       glowColor="#00AAFF"
- 98:       tileSet={["@", "#", "$", "%", "&", "*"]}
- 99:     />
-100:   </Container>
-101: );
-102: // Story with purple theme
-103: export const PurpleTheme = () => (
-104:   <Container>
-105:     <ClientOnlyMatrix
-106:       backgroundColor="#1a0033"
-107:       fontColor="#9933ff"
-108:       glowColor="#bf80ff"
-109:       tileSize={25}
-110:       fadeFactor={0.3}
-111:     />
-112:   </Container>
-113: );
-````
-
 ## File: src/stories/components/Animations/MatrixCursor.stories.tsx
 ````typescript
   1: import React, { useRef } from "react";
@@ -20607,6 +20490,74 @@ vercel.json
 35:           category: "/language:${{ matrix.language }}"
 ````
 
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.175.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: commit/.env.example
 ````
  1: # Provider Selection (optional - auto-detects based on available API keys if not set)
@@ -20626,6 +20577,133 @@ vercel.json
 15: 
 16: # Optional: Override the default model
 17: MODEL_NAME="anthropic/claude-haiku-5.5"
+````
+
+## File: src/stories/components/Animations/Matrix.stories.tsx
+````typescript
+  1: import React, { useEffect, useState } from "react";
+  2: import { Meta } from "@ladle/react";
+  3: interface ReactMatrixAnimationProps {
+  4:   tileSize?: number;
+  5:   fadeFactor?: number;
+  6:   backgroundColor?: string;
+  7:   fontColor?: string;
+  8:   glowColor?: string;
+  9:   tileSet?: string[] | null;
+ 10: }
+ 11: export default {
+ 12:   title: "Animations/Matrix",
+ 13: } as Meta;
+ 14: // Client-side only wrapper component
+ 15: const ClientOnlyMatrix = (props: ReactMatrixAnimationProps) => {
+ 16:   const [Matrix, setMatrix] =
+ 17:     useState<React.ComponentType<ReactMatrixAnimationProps> | null>(null);
+ 18:   useEffect(() => {
+ 19:     let isMounted = true;
+ 20:     void import("@/components/Animations/Matrix.component")
+ 21:       .then((mod) => {
+ 22:         if (isMounted) {
+ 23:           setMatrix(() => mod.default);
+ 24:         }
+ 25:       })
+ 26:       .catch((error: unknown) => {
+ 27:         console.error("Failed to load Matrix component", error);
+ 28:       });
+ 29:     return () => {
+ 30:       isMounted = false;
+ 31:     };
+ 32:   }, []);
+ 33:   if (!Matrix) {
+ 34:     return <div>Loading Matrix...</div>;
+ 35:   }
+ 36:   return <Matrix {...props} />;
+ 37: };
+ 38: const Container = ({ children }: { children: React.ReactNode }) => (
+ 39:   <div className="relative w-full h-[400px] bg-gray-900">{children}</div>
+ 40: );
+ 41: // Basic story with default props
+ 42: export const Default = () => (
+ 43:   <Container>
+ 44:     <ClientOnlyMatrix />
+ 45:   </Container>
+ 46: );
+ 47: // Story with custom colors
+ 48: export const CustomColors = () => (
+ 49:   <Container>
+ 50:     <ClientOnlyMatrix
+ 51:       backgroundColor="#000000"
+ 52:       fontColor="#FF0000"
+ 53:       glowColor="#FF4444"
+ 54:     />
+ 55:   </Container>
+ 56: );
+ 57: // Story with larger tiles
+ 58: export const LargeTiles = () => (
+ 59:   <Container>
+ 60:     <ClientOnlyMatrix
+ 61:       tileSize={30}
+ 62:       backgroundColor="#000000"
+ 63:       fontColor="#00FF00"
+ 64:       glowColor="#00FF00"
+ 65:     />
+ 66:   </Container>
+ 67: );
+ 68: // Story with smaller tiles
+ 69: export const SmallTiles = () => (
+ 70:   <Container>
+ 71:     <ClientOnlyMatrix
+ 72:       tileSize={12}
+ 73:       backgroundColor="#000000"
+ 74:       fontColor="#00FF00"
+ 75:       glowColor="#00FF00"
+ 76:     />
+ 77:   </Container>
+ 78: );
+ 79: // Story with binary characters
+ 80: export const BinaryMatrix = () => (
+ 81:   <Container>
+ 82:     <ClientOnlyMatrix
+ 83:       tileSet={["0", "1"]}
+ 84:       backgroundColor="#000000"
+ 85:       fontColor="#00FF00"
+ 86:       glowColor="#00FF00"
+ 87:     />
+ 88:   </Container>
+ 89: );
+ 90: // Story with slow fade effect
+ 91: export const SlowFade = () => (
+ 92:   <Container>
+ 93:     <ClientOnlyMatrix
+ 94:       fadeFactor={0.1}
+ 95:       backgroundColor="#000000"
+ 96:       fontColor="#00FF00"
+ 97:       glowColor="#00FF00"
+ 98:     />
+ 99:   </Container>
+100: );
+101: // Story with blue theme
+102: export const BlueTheme = () => (
+103:   <Container>
+104:     <ClientOnlyMatrix
+105:       backgroundColor="#000033"
+106:       fontColor="#0088FF"
+107:       glowColor="#00AAFF"
+108:       tileSet={["@", "#", "$", "%", "&", "*"]}
+109:     />
+110:   </Container>
+111: );
+112: // Story with purple theme
+113: export const PurpleTheme = () => (
+114:   <Container>
+115:     <ClientOnlyMatrix
+116:       backgroundColor="#1a0033"
+117:       fontColor="#9933ff"
+118:       glowColor="#bf80ff"
+119:       tileSize={25}
+120:       fadeFactor={0.3}
+121:     />
+122:   </Container>
+123: );
 ````
 
 ## File: src/utils/eslint/package.json
@@ -21324,166 +21402,6 @@ vercel.json
 2:   "extends": "./tsconfig.json",
 3:   "exclude": ["node_modules", "src/stories", ".ladle"]
 4: }
-````
-
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.175.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       # Each Snyk scan targets a single manifest so that every SARIF file
-32:       # contains exactly one run. `--all-projects` emits one run per detected
-33:       # project, which the CodeQL upload action rejects under a single category.
-34:       - name: Run Snyk to check main project vulnerabilities
-35:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-36:         env:
-37:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-38:         with:
-39:           command: "test"
-40:           args: "--file=package.json --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-41:       - name: Run Snyk to check studio vulnerabilities
-42:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-43:         env:
-44:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-45:         with:
-46:           command: "test"
-47:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
-48:       - name: Run Snyk to check eslint plugin vulnerabilities
-49:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-50:         env:
-51:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-52:         with:
-53:           command: "test"
-54:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-55:       - name: Upload main project SARIF report to GitHub Security tab
-56:         if: always() && hashFiles('snyk-main.sarif') != ''
-57:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
-58:         with:
-59:           sarif_file: snyk-main.sarif
-60:           category: snyk-main
-61:       - name: Upload studio SARIF report to GitHub Security tab
-62:         if: always() && hashFiles('snyk-studio.sarif') != ''
-63:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
-64:         with:
-65:           sarif_file: snyk-studio.sarif
-66:           category: snyk-studio
-67:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-68:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-69:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
-70:         with:
-71:           sarif_file: snyk-eslint.sarif
-72:           category: snyk-eslint
-73:       - name: Snyk Monitor main project (only for pushes to main branch)
-74:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-75:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-76:         env:
-77:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-78:         with:
-79:           command: "monitor"
-80:           args: "--all-projects"
-81:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-82:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-83:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-84:         env:
-85:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-86:         with:
-87:           command: "monitor"
-88:           args: "--file=src/utils/eslint/package.json"
 ````
 
 ## File: src/__tests__/Index/Section.test.tsx
@@ -22276,4 +22194,31 @@ vercel.json
  98:     "edge >= 92"
  99:   ]
 100: }
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11: jobs:
+12:   security:
+13:     runs-on: ubuntu-latest
+14:     steps:
+15:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+16:       - name: Run Snyk to check for vulnerabilities
+17:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+18:         env:
+19:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+20:         with:
+21:           # --all-projects is required: the Snyk CLI refuses to run when both
+22:           # pnpm-lock.yaml and pnpm-workspace.yaml are present at the repo root.
+23:           args: --all-projects --severity-threshold=high
 ````
