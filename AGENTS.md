@@ -27,8 +27,12 @@ This file provides guidance to agents when working with code in this repository.
 
 - AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
 - Test files outside `src/e2e/` must follow AAA pattern or fail
+- Use `checkAAAPattern()` from `src/utils/test-utils.ts` for AAA validation
 - Matrix component intentionally excluded from test coverage
 - Cypress and Playwright have different ESLint rule overrides
+- Jest runs on `jest-environment-jsdom` with custom setup in `jest.setup.ts`
+- Custom ESLint rule source lives in `src/utils/eslint/index.ts` (`test-rules/arrange-act-assert`)
+- CSP violations from `next.config.ts` headers surface in the browser console, check there first
 
 ## Code Quality Principles
 
@@ -301,4 +305,3 @@ This project uses multi-layered supply chain attack prevention. Agents MUST pres
 - **ALWAYS** use `--frozen-lockfile` for pnpm installs in CI
 - **ALWAYS** add explicit `permissions` blocks to new workflows
 - When adding a package that needs build scripts, add it to `allowBuilds` in `pnpm-workspace.yaml`
-- Full hardening plan available at `plans/supply-chain-hardening.md`
