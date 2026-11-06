@@ -15868,6 +15868,39 @@ vercel.json
 82: };
 ````
 
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.9.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^7.0.2"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.7",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
 ## File: src/utils/eslint/tsconfig.json
 ````json
  1: {
@@ -20539,6 +20572,175 @@ vercel.json
 17: MODEL_NAME="anthropic/claude-haiku-5.5"
 ````
 
+## File: src/__tests__/Index/Section.test.tsx
+````typescript
+  1: import { render, screen, fireEvent } from "@testing-library/react";
+  2: import Section from "@/components/Index/Section.component";
+  3: import { Pagecontent } from "@/types/sanity.types";
+  4: // Mock IntersectionObserver
+  5: const mockIntersectionObserver = jest.fn();
+  6: mockIntersectionObserver.mockReturnValue({
+  7:   observe: () => null,
+  8:   unobserve: () => null,
+  9:   disconnect: () => null,
+ 10: });
+ 11: window.IntersectionObserver = mockIntersectionObserver;
+ 12: const mockProps: Pagecontent = {
+ 13:   _type: "pagecontent",
+ 14:   title: "Test Title",
+ 15:   text: [
+ 16:     {
+ 17:       _key: "a1",
+ 18:       _type: "block",
+ 19:       children: [
+ 20:         {
+ 21:           _key: "a1-1",
+ 22:           _type: "span",
+ 23:           marks: [],
+ 24:           text: "Test content",
+ 25:         },
+ 26:       ],
+ 27:       markDefs: [],
+ 28:       style: "normal",
+ 29:     },
+ 30:   ],
+ 31: };
+ 32: // Type-safe way to make NODE_ENV writable for tests
+ 33: type WritableNodeEnv = {
+ 34:   NODE_ENV?: string;
+ 35: };
+ 36: // Type for testing invalid props
+ 37: type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
+ 38:   title?: string | null;
+ 39:   text?: Pagecontent["text"] | null;
+ 40: };
+ 41: const SERIALIZED_TEXT = JSON.stringify(mockProps.text);
+ 42: const setNodeEnv = (value: string) => {
+ 43:   (process.env as WritableNodeEnv).NODE_ENV = value;
+ 44: };
+ 45: const invalidDataMessage = (title: unknown, text: unknown) =>
+ 46:   `Ugyldig seksjon data: tittel=${title}, tekst=${text}`;
+ 47: describe("Section Component", () => {
+ 48:   beforeEach(() => setNodeEnv("development"));
+ 49:   afterEach(() => setNodeEnv("test"));
+ 50:   it("renders with valid props", () => {
+ 51:     // Arrange
+ 52:     render(<Section {...mockProps} />);
+ 53:     // Act
+ 54:     const title = screen.getByText("Test Title");
+ 55:     const content = screen.getByText("Test content");
+ 56:     // Assert
+ 57:     expect(title).toBeInTheDocument();
+ 58:     expect(content).toBeInTheDocument();
+ 59:   });
+ 60:   describe("error handling for invalid data", () => {
+ 61:     let consoleErrorSpy: jest.SpyInstance;
+ 62:     beforeEach(() => {
+ 63:       consoleErrorSpy = jest
+ 64:         .spyOn(console, "error")
+ 65:         .mockImplementation(() => {});
+ 66:     });
+ 67:     afterEach(() => consoleErrorSpy.mockRestore());
+ 68:     const invalidCases: ReadonlyArray<{
+ 69:       name: string;
+ 70:       overrides: Partial<InvalidSectionProps>;
+ 71:       expectedMessage: string;
+ 72:     }> = [
+ 73:       {
+ 74:         name: "title is missing",
+ 75:         overrides: { title: undefined },
+ 76:         expectedMessage: invalidDataMessage("undefined", SERIALIZED_TEXT),
+ 77:       },
+ 78:       {
+ 79:         name: "title is null",
+ 80:         overrides: { title: null },
+ 81:         expectedMessage: invalidDataMessage("null", SERIALIZED_TEXT),
+ 82:       },
+ 83:       {
+ 84:         name: "title is empty string",
+ 85:         overrides: { title: "" },
+ 86:         expectedMessage: invalidDataMessage("", SERIALIZED_TEXT),
+ 87:       },
+ 88:       {
+ 89:         name: "text is missing",
+ 90:         overrides: { text: undefined },
+ 91:         expectedMessage: invalidDataMessage("Test Title", "undefined"),
+ 92:       },
+ 93:       {
+ 94:         name: "text is null",
+ 95:         overrides: { text: null },
+ 96:         expectedMessage: invalidDataMessage("Test Title", "null"),
+ 97:       },
+ 98:       {
+ 99:         name: "both title and text are missing",
+100:         overrides: { title: undefined, text: undefined },
+101:         expectedMessage: invalidDataMessage("undefined", "undefined"),
+102:       },
+103:     ];
+104:     invalidCases.forEach(({ name, overrides, expectedMessage }) => {
+105:       it(`returns null and logs error when ${name}`, () => {
+106:         // Arrange
+107:         const props = { ...mockProps, ...overrides } as Pagecontent;
+108:         // Act
+109:         const { container } = render(<Section {...props} />);
+110:         // Assert
+111:         expect(container.firstChild).toBeNull();
+112:         expect(consoleErrorSpy).toHaveBeenCalledWith(expectedMessage);
+113:       });
+114:     });
+115:     it("renders normally when text is empty array", () => {
+116:       // Arrange
+117:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
+118:       // Act
+119:       const { container } = render(<Section {...propsWithEmptyText} />);
+120:       // Assert
+121:       // Empty array is truthy in JavaScript, so the component renders
+122:       expect(container.firstChild).not.toBeNull();
+123:       expect(consoleErrorSpy).not.toHaveBeenCalled();
+124:       expect(screen.getByText("Test Title")).toBeInTheDocument();
+125:     });
+126:   });
+127:   it("triggers error in development mode", () => {
+128:     // Arrange
+129:     const consoleErrorSpy = jest
+130:       .spyOn(console, "error")
+131:       .mockImplementation(() => {});
+132:     render(<Section {...mockProps} />);
+133:     const errorButton = screen.getByText("Utløs Testfeil");
+134:     // Act & Assert
+135:     expect(() => fireEvent.click(errorButton)).toThrow(
+136:       "En uventet feil har oppstått",
+137:     );
+138:     consoleErrorSpy.mockRestore();
+139:   });
+140:   it("does not show error button in production mode", () => {
+141:     // Arrange
+142:     setNodeEnv("production");
+143:     render(<Section {...mockProps} />);
+144:     // Act
+145:     const errorButton = screen.queryByText("Utløs Testfeil");
+146:     // Assert
+147:     expect(errorButton).not.toBeInTheDocument();
+148:   });
+149:   it("does not show error button when showDebugButton is false in development mode", () => {
+150:     // Arrange
+151:     render(<Section {...mockProps} showDebugButton={false} />);
+152:     // Act
+153:     const errorButton = screen.queryByText("Utløs Testfeil");
+154:     // Assert
+155:     expect(errorButton).not.toBeInTheDocument();
+156:   });
+157:   it("shows error button when showDebugButton is true in development mode", () => {
+158:     // Arrange
+159:     render(<Section {...mockProps} showDebugButton={true} />);
+160:     // Act
+161:     const errorButton = screen.getByText("Utløs Testfeil");
+162:     // Assert
+163:     expect(errorButton).toBeInTheDocument();
+164:   });
+165: });
+````
+
 ## File: src/stories/components/Animations/Matrix.stories.tsx
 ````typescript
   1: import React, { useEffect, useState } from "react";
@@ -20664,39 +20866,6 @@ vercel.json
 121:     />
 122:   </Container>
 123: );
-````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.9.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^7.0.2"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.7",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
 ````
 
 ## File: .snyk
@@ -21364,175 +21533,6 @@ vercel.json
 4: }
 ````
 
-## File: src/__tests__/Index/Section.test.tsx
-````typescript
-  1: import { render, screen, fireEvent } from "@testing-library/react";
-  2: import Section from "@/components/Index/Section.component";
-  3: import { Pagecontent } from "@/types/sanity.types";
-  4: // Mock IntersectionObserver
-  5: const mockIntersectionObserver = jest.fn();
-  6: mockIntersectionObserver.mockReturnValue({
-  7:   observe: () => null,
-  8:   unobserve: () => null,
-  9:   disconnect: () => null,
- 10: });
- 11: window.IntersectionObserver = mockIntersectionObserver;
- 12: const mockProps: Pagecontent = {
- 13:   _type: "pagecontent",
- 14:   title: "Test Title",
- 15:   text: [
- 16:     {
- 17:       _key: "a1",
- 18:       _type: "block",
- 19:       children: [
- 20:         {
- 21:           _key: "a1-1",
- 22:           _type: "span",
- 23:           marks: [],
- 24:           text: "Test content",
- 25:         },
- 26:       ],
- 27:       markDefs: [],
- 28:       style: "normal",
- 29:     },
- 30:   ],
- 31: };
- 32: // Type-safe way to make NODE_ENV writable for tests
- 33: type WritableNodeEnv = {
- 34:   NODE_ENV?: string;
- 35: };
- 36: // Type for testing invalid props
- 37: type InvalidSectionProps = Omit<Pagecontent, "title" | "text"> & {
- 38:   title?: string | null;
- 39:   text?: Pagecontent["text"] | null;
- 40: };
- 41: const SERIALIZED_TEXT = JSON.stringify(mockProps.text);
- 42: const setNodeEnv = (value: string) => {
- 43:   (process.env as WritableNodeEnv).NODE_ENV = value;
- 44: };
- 45: const invalidDataMessage = (title: unknown, text: unknown) =>
- 46:   `Ugyldig seksjon data: tittel=${title}, tekst=${text}`;
- 47: describe("Section Component", () => {
- 48:   beforeEach(() => setNodeEnv("development"));
- 49:   afterEach(() => setNodeEnv("test"));
- 50:   it("renders with valid props", () => {
- 51:     // Arrange
- 52:     render(<Section {...mockProps} />);
- 53:     // Act
- 54:     const title = screen.getByText("Test Title");
- 55:     const content = screen.getByText("Test content");
- 56:     // Assert
- 57:     expect(title).toBeInTheDocument();
- 58:     expect(content).toBeInTheDocument();
- 59:   });
- 60:   describe("error handling for invalid data", () => {
- 61:     let consoleErrorSpy: jest.SpyInstance;
- 62:     beforeEach(() => {
- 63:       consoleErrorSpy = jest
- 64:         .spyOn(console, "error")
- 65:         .mockImplementation(() => {});
- 66:     });
- 67:     afterEach(() => consoleErrorSpy.mockRestore());
- 68:     const invalidCases: ReadonlyArray<{
- 69:       name: string;
- 70:       overrides: Partial<InvalidSectionProps>;
- 71:       expectedMessage: string;
- 72:     }> = [
- 73:       {
- 74:         name: "title is missing",
- 75:         overrides: { title: undefined },
- 76:         expectedMessage: invalidDataMessage("undefined", SERIALIZED_TEXT),
- 77:       },
- 78:       {
- 79:         name: "title is null",
- 80:         overrides: { title: null },
- 81:         expectedMessage: invalidDataMessage("null", SERIALIZED_TEXT),
- 82:       },
- 83:       {
- 84:         name: "title is empty string",
- 85:         overrides: { title: "" },
- 86:         expectedMessage: invalidDataMessage("", SERIALIZED_TEXT),
- 87:       },
- 88:       {
- 89:         name: "text is missing",
- 90:         overrides: { text: undefined },
- 91:         expectedMessage: invalidDataMessage("Test Title", "undefined"),
- 92:       },
- 93:       {
- 94:         name: "text is null",
- 95:         overrides: { text: null },
- 96:         expectedMessage: invalidDataMessage("Test Title", "null"),
- 97:       },
- 98:       {
- 99:         name: "both title and text are missing",
-100:         overrides: { title: undefined, text: undefined },
-101:         expectedMessage: invalidDataMessage("undefined", "undefined"),
-102:       },
-103:     ];
-104:     invalidCases.forEach(({ name, overrides, expectedMessage }) => {
-105:       it(`returns null and logs error when ${name}`, () => {
-106:         // Arrange
-107:         const props = { ...mockProps, ...overrides } as Pagecontent;
-108:         // Act
-109:         const { container } = render(<Section {...props} />);
-110:         // Assert
-111:         expect(container.firstChild).toBeNull();
-112:         expect(consoleErrorSpy).toHaveBeenCalledWith(expectedMessage);
-113:       });
-114:     });
-115:     it("renders normally when text is empty array", () => {
-116:       // Arrange
-117:       const propsWithEmptyText: Pagecontent = { ...mockProps, text: [] };
-118:       // Act
-119:       const { container } = render(<Section {...propsWithEmptyText} />);
-120:       // Assert
-121:       // Empty array is truthy in JavaScript, so the component renders
-122:       expect(container.firstChild).not.toBeNull();
-123:       expect(consoleErrorSpy).not.toHaveBeenCalled();
-124:       expect(screen.getByText("Test Title")).toBeInTheDocument();
-125:     });
-126:   });
-127:   it("triggers error in development mode", () => {
-128:     // Arrange
-129:     const consoleErrorSpy = jest
-130:       .spyOn(console, "error")
-131:       .mockImplementation(() => {});
-132:     render(<Section {...mockProps} />);
-133:     const errorButton = screen.getByText("Utløs Testfeil");
-134:     // Act & Assert
-135:     expect(() => fireEvent.click(errorButton)).toThrow(
-136:       "En uventet feil har oppstått",
-137:     );
-138:     consoleErrorSpy.mockRestore();
-139:   });
-140:   it("does not show error button in production mode", () => {
-141:     // Arrange
-142:     setNodeEnv("production");
-143:     render(<Section {...mockProps} />);
-144:     // Act
-145:     const errorButton = screen.queryByText("Utløs Testfeil");
-146:     // Assert
-147:     expect(errorButton).not.toBeInTheDocument();
-148:   });
-149:   it("does not show error button when showDebugButton is false in development mode", () => {
-150:     // Arrange
-151:     render(<Section {...mockProps} showDebugButton={false} />);
-152:     // Act
-153:     const errorButton = screen.queryByText("Utløs Testfeil");
-154:     // Assert
-155:     expect(errorButton).not.toBeInTheDocument();
-156:   });
-157:   it("shows error button when showDebugButton is true in development mode", () => {
-158:     // Arrange
-159:     render(<Section {...mockProps} showDebugButton={true} />);
-160:     // Act
-161:     const errorButton = screen.getByText("Utløs Testfeil");
-162:     // Assert
-163:     expect(errorButton).toBeInTheDocument();
-164:   });
-165: });
-````
-
 ## File: src/components/Layout/MobileMenu.component.tsx
 ````typescript
   1: "use client";
@@ -21918,6 +21918,84 @@ vercel.json
 111: export default nextConfig;
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.5",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.8",
+18:     "react-dom": "^19.2.8",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.11.0",
+21:     "styled-components": "^6.5.3"
+22:   },
+23:   "devDependencies": {
+24:     "@types/react": "^19.2.18",
+25:     "eslint": "^10.9.1",
+26:     "prettier": "^3.9.6",
+27:     "typescript": "^7.0.2"
+28:   },
+29:   "pnpm": {
+30:     "overrides": {
+31:       "adm-zip": ">=0.6.1",
+32:       "basic-ftp": ">=6.2.1",
+33:       "brace-expansion": ">=5.0.12",
+34:       "dompurify": ">=3.4.17",
+35:       "esbuild": ">=0.28.2",
+36:       "flatted": ">=3.4.4",
+37:       "js-yaml": ">=5.4.1",
+38:       "lodash": ">=4.18.1",
+39:       "lodash-es": ">=4.18.1",
+40:       "minimatch": "11.0.5",
+41:       "nanoid": "5.1.16",
+42:       "picomatch": "4.0.7",
+43:       "postcss": ">=8.5.26",
+44:       "smol-toml": ">=1.9.1",
+45:       "source-map-js": ">=1.2.2",
+46:       "undici": ">=8.12.2",
+47:       "vite": ">=8.3.3",
+48:       "ws": ">=8.21.3",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.1",
+55:     "smol-toml": ">=1.9.1",
+56:     "brace-expansion": ">=5.0.12",
+57:     "dompurify": ">=3.4.17",
+58:     "esbuild": ">=0.28.2",
+59:     "uuid": ">=14.0.3",
+60:     "js-yaml": ">=5.5.0",
+61:     "nanoid": ">=6.0.2",
+62:     "postcss": ">=8.5.26",
+63:     "source-map-js": ">=1.2.2",
+64:     "undici": ">=8.12.4",
+65:     "vite": ">=8.3.3",
+66:     "ws": ">=8.21.3"
+67:   },
+68:   "prettier": {
+69:     "semi": false,
+70:     "printWidth": 100,
+71:     "bracketSpacing": false,
+72:     "singleQuote": true
+73:   }
+74: }
+````
+
 ## File: package.json
 ````json
   1: {
@@ -21925,7 +22003,7 @@ vercel.json
   3:   "version": "1.1.0",
   4:   "private": true,
   5:   "type": "module",
-  6:   "packageManager": "pnpm@12.3.4",
+  6:   "packageManager": "pnpm@12.15.0",
   7:   "scripts": {
   8:     "dev": "next dev --turbopack",
   9:     "lhci": "lhci autorun",
@@ -22076,84 +22154,6 @@ vercel.json
 50:   - browserslist@4.28.9
 51:   - undici@8.10.2 || 8.12.4
 52:   - '@vercel/speed-insights@2.1.0'
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.5",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.8",
-18:     "react-dom": "^19.2.8",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.11.0",
-21:     "styled-components": "^6.5.3"
-22:   },
-23:   "devDependencies": {
-24:     "@types/react": "^19.2.18",
-25:     "eslint": "^10.9.1",
-26:     "prettier": "^3.9.6",
-27:     "typescript": "^7.0.2"
-28:   },
-29:   "pnpm": {
-30:     "overrides": {
-31:       "adm-zip": ">=0.6.1",
-32:       "basic-ftp": ">=6.2.1",
-33:       "brace-expansion": ">=5.0.12",
-34:       "dompurify": ">=3.4.17",
-35:       "esbuild": ">=0.28.2",
-36:       "flatted": ">=3.4.4",
-37:       "js-yaml": ">=5.4.1",
-38:       "lodash": ">=4.18.1",
-39:       "lodash-es": ">=4.18.1",
-40:       "minimatch": "11.0.5",
-41:       "nanoid": "5.1.16",
-42:       "picomatch": "4.0.7",
-43:       "postcss": ">=8.5.26",
-44:       "smol-toml": ">=1.9.1",
-45:       "source-map-js": ">=1.2.2",
-46:       "undici": ">=8.12.2",
-47:       "vite": ">=8.3.3",
-48:       "ws": ">=8.21.3",
-49:       "yaml": ">=2.9.0",
-50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-51:     }
-52:   },
-53:   "overrides": {
-54:     "adm-zip": ">=0.6.1",
-55:     "smol-toml": ">=1.9.1",
-56:     "brace-expansion": ">=5.0.12",
-57:     "dompurify": ">=3.4.17",
-58:     "esbuild": ">=0.28.2",
-59:     "uuid": ">=14.0.3",
-60:     "js-yaml": ">=5.5.0",
-61:     "nanoid": ">=6.0.2",
-62:     "postcss": ">=8.5.26",
-63:     "source-map-js": ">=1.2.2",
-64:     "undici": ">=8.12.4",
-65:     "vite": ">=8.3.3",
-66:     "ws": ">=8.21.3"
-67:   },
-68:   "prettier": {
-69:     "semi": false,
-70:     "printWidth": 100,
-71:     "bracketSpacing": false,
-72:     "singleQuote": true
-73:   }
-74: }
 ````
 
 ## File: .github/workflows/snyk-scan.yml
