@@ -7,6 +7,14 @@ on:
   pull_request:
     branches:
       - main
+  # Manual trigger for the one-off cleanup of stale Snyk code scanning
+  # configurations left on main by the previous auto-generated category names.
+  workflow_dispatch:
+    inputs:
+      cleanup_stale_configurations:
+        description: "Delete stale Snyk code scanning configurations on main"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -190,3 +198,73 @@ jobs:
         with:
           command: "monitor"
           args: "--file=src/utils/eslint/package.json"
+
+  # Renaming the categories stops NEW stale configurations from appearing, but
+  # the ones already recorded on main ("Snyk/Open Source/dfweb-v4/0", "/2",
+  # "eslint-plugin-test-rules/0", "/1") stay registered until their analyses
+  # are deleted. Until then every pull request keeps reporting
+  # "configurations present on refs/heads/main were not found".
+  # Run this job once from the Actions tab with the input enabled.
+  cleanup_stale_configurations:
+    if: github.event_name == 'workflow_dispatch' && inputs.cleanup_stale_configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Delete stale Snyk analyses from refs/heads/main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # Categories the workflow publishes today. Anything else from the
+          # Snyk tool on main is stale and must go.
+          KEEP: "snyk-main snyk-studio snyk-eslint"
+        run: |
+          set -euo pipefail
+
+          is_kept() {
+            local category="$1" keep
+            for keep in $KEEP; do
+              # Code scanning stores categories with a trailing "/".
+              [ "${category%/}" = "$keep" ] && return 0
+            done
+            return 1
+          }
+
+          deleted=0
+          # Deleting an analysis can expose an older one in the same
+          # configuration, so loop until no stale analyses remain.
+          for _ in $(seq 1 50); do
+            stale=$(
+              gh api \
+                --paginate \
+                "repos/${REPO}/code-scanning/analyses?ref=refs/heads/main&tool_name=Snyk%20Open%20Source&per_page=100" \
+                --jq '.[] | "\(.id) \(.category)"'
+            )
+
+            target=""
+            while read -r id category; do
+              [ -z "${id:-}" ] && continue
+              if ! is_kept "${category:-}"; then
+                target="$id"
+                echo "Stale analysis ${id} (category: ${category:-<none>})"
+                break
+              fi
+            done <<< "$stale"
+
+            if [ -z "$target" ]; then
+              echo "No stale Snyk analyses remain on main."
+              break
+            fi
+
+            # confirm_delete is required when removing the last analysis of a
+            # configuration, which is exactly what retires the configuration.
+            gh api --method DELETE \
+              "repos/${REPO}/code-scanning/analyses/${target}?confirm_delete=true" > /dev/null
+            deleted=$((deleted + 1))
+            echo "Deleted analysis ${target}"
+          done
+
+          echo "Deleted ${deleted} stale Snyk analyses."
