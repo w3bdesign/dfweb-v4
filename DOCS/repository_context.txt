@@ -398,6 +398,7 @@ UTKAST/
 .npmrc
 .pa11yci.json
 .semgrepignore
+.snyk
 .stylelintrc.json
 .swcrc
 AGENTS.md
@@ -2254,27 +2255,6 @@ vercel.json
 51:             stream=False,
 52:         )
 53:         return response.choices[0].message.content.strip()
-````
-
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model
-17: MODEL_NAME="anthropic/claude-sonnet-5"
 ````
 
 ## File: commit/commit_analyzer.py
@@ -16744,23 +16724,6 @@ vercel.json
 1: ignore-scripts=true
 ````
 
-## File: studio/.snyk
-````
- 1: version: v1.25.0
- 2: 
- 3: # adm-zip 0.6.0 is currently the latest release. It is pulled in only by
- 4: # Sanity's development/build CLI dependency graph, not by application code.
- 5: # Keep this exception short-lived so CI re-evaluates the upstream dependency.
- 6: ignore:
- 7:   SNYK-JS-ADMZIP-19276676:
- 8:     - '*':
- 9:         reason: No patched adm-zip release exists; transitive Sanity CLI dependency only
-10:         expires: 2026-11-27T00:00:00.000Z
-11:         created: 2026-08-29T00:00:00.000Z
-12: 
-13: patch: {}
-````
-
 ## File: studio/README.md
 ````markdown
  1: # Sanity Clean Content Studio
@@ -20644,80 +20607,86 @@ vercel.json
 35:           category: "/language:${{ matrix.language }}"
 ````
 
-## File: .github/workflows/snyk-scan.yml
-````yaml
- 1: name: Snyk Security Scan
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   pull_request:
- 7:     branches:
- 8:       - main
- 9: permissions:
-10:   contents: read
-11:   pull-requests: write
-12:   security-events: write
-13: jobs:
-14:   snyk_scan:
-15:     runs-on: ubuntu-latest
-16:     timeout-minutes: 30
-17:     steps:
-18:       - name: Checkout code
-19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - name: Install pnpm
-21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-22:       - name: Set up Node.js
-23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-24:         with:
-25:           node-version: "24.x"
-26:           cache: "pnpm"
-27:       - name: Install dependencies
-28:         run: pnpm install --frozen-lockfile --ignore-scripts
-29:       - name: Install studio dependencies
-30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
-31:       - name: Run Snyk to check main project vulnerabilities
-32:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-33:         env:
-34:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-35:         with:
-36:           command: "test"
-37:           args: "--all-projects --sarif-file-output=snyk-main.sarif --severity-threshold=high"
-38:       - name: Run Snyk to check eslint plugin vulnerabilities
-39:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-40:         env:
-41:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-42:         with:
-43:           command: "test"
-44:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
-45:       - name: Upload main project SARIF report to GitHub Security tab
-46:         if: always() && hashFiles('snyk-main.sarif') != ''
-47:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
-48:         with:
-49:           sarif_file: snyk-main.sarif
-50:           category: snyk-main
-51:       - name: Upload eslint plugin SARIF report to GitHub Security tab
-52:         if: always() && hashFiles('snyk-eslint.sarif') != ''
-53:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
-54:         with:
-55:           sarif_file: snyk-eslint.sarif
-56:           category: snyk-eslint
-57:       - name: Snyk Monitor main project (only for pushes to main branch)
-58:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-59:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-60:         env:
-61:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-62:         with:
-63:           command: "monitor"
-64:           args: "--all-projects"
-65:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
-66:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-67:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
-68:         env:
-69:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-70:         with:
-71:           command: "monitor"
-72:           args: "--file=src/utils/eslint/package.json"
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model
+17: MODEL_NAME="anthropic/claude-haiku-5.5"
+````
+
+## File: src/utils/eslint/package.json
+````json
+ 1: {
+ 2:   "name": "eslint-plugin-test-rules",
+ 3:   "version": "1.0.1",
+ 4:   "description": "Custom ESLint rules for testing",
+ 5:   "main": "dist/index.js",
+ 6:   "scripts": {
+ 7:     "build": "tsc",
+ 8:     "test": "echo \"Error: no test specified\" && exit 1"
+ 9:   },
+10:   "keywords": [
+11:     "eslint",
+12:     "eslintplugin",
+13:     "eslint-plugin"
+14:   ],
+15:   "author": "",
+16:   "license": "ISC",
+17:   "peerDependencies": {
+18:     "eslint": ">=10.9.1"
+19:   },
+20:   "devDependencies": {
+21:     "typescript": "^7.0.2"
+22:   },
+23:   "pnpm": {
+24:     "overrides": {
+25:       "brace-expansion": ">=5.0.7",
+26:       "flatted": ">=3.4.2"
+27:     }
+28:   }
+29: }
+````
+
+## File: .snyk
+````
+ 1: # Snyk (https://snyk.io) policy file.
+ 2: # Documents accepted risks for transitive dependencies that have no upstream fix.
+ 3: # Every entry MUST have a reason and an expiry so it gets re-evaluated.
+ 4: version: v1.25.0
+ 5: ignore:
+ 6:   SNYK-JS-BRACES-19963945:
+ 7:     - "*":
+ 8:         reason: >-
+ 9:           Uncontrolled Recursion in braces@3.0.3. No patched release exists -
+10:           3.0.3 is the current `latest` on npm, so a pnpm override cannot
+11:           resolve it. Both vulnerable paths are build/dev tooling only and
+12:           never process untrusted input:
+13:             1) sanity > @sanity/cli > @sanity/codegen > chokidar > braces
+14:             2) eslint-config-next / stylelint / @ladle/react > fast-glob >
+15:                micromatch > braces
+16:           Glob patterns come exclusively from committed config files, not from
+17:           user or network input, so the recursion cannot be triggered at
+18:           runtime. The production Next.js bundle does not include braces.
+19:           Revisit when micromatch/chokidar ship a patched braces, or when
+20:           chokidar v4 (which drops braces entirely) propagates through
+21:           @sanity/codegen.
+22:         created: 2026-11-06T00:00:00.000Z
+23:         expires: 2027-02-04T00:00:00.000Z
+24: patch: {}
 ````
 
 ## File: jest.config.mjs
@@ -21357,6 +21326,166 @@ vercel.json
 4: }
 ````
 
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.175.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
+## File: .github/workflows/snyk-scan.yml
+````yaml
+ 1: name: Snyk Security Scan
+ 2: on:
+ 3:   push:
+ 4:     branches:
+ 5:       - main
+ 6:   pull_request:
+ 7:     branches:
+ 8:       - main
+ 9: permissions:
+10:   contents: read
+11:   pull-requests: write
+12:   security-events: write
+13: jobs:
+14:   snyk_scan:
+15:     runs-on: ubuntu-latest
+16:     timeout-minutes: 30
+17:     steps:
+18:       - name: Checkout code
+19:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+20:       - name: Install pnpm
+21:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+22:       - name: Set up Node.js
+23:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+24:         with:
+25:           node-version: "24.x"
+26:           cache: "pnpm"
+27:       - name: Install dependencies
+28:         run: pnpm install --frozen-lockfile --ignore-scripts
+29:       - name: Install studio dependencies
+30:         run: cd studio && npm ci --ignore-scripts --legacy-peer-deps
+31:       # Each Snyk scan targets a single manifest so that every SARIF file
+32:       # contains exactly one run. `--all-projects` emits one run per detected
+33:       # project, which the CodeQL upload action rejects under a single category.
+34:       - name: Run Snyk to check main project vulnerabilities
+35:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+36:         env:
+37:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+38:         with:
+39:           command: "test"
+40:           args: "--file=package.json --sarif-file-output=snyk-main.sarif --severity-threshold=high"
+41:       - name: Run Snyk to check studio vulnerabilities
+42:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+43:         env:
+44:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+45:         with:
+46:           command: "test"
+47:           args: "--file=studio/package.json --sarif-file-output=snyk-studio.sarif --severity-threshold=high"
+48:       - name: Run Snyk to check eslint plugin vulnerabilities
+49:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+50:         env:
+51:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+52:         with:
+53:           command: "test"
+54:           args: "--file=src/utils/eslint/package.json --sarif-file-output=snyk-eslint.sarif --severity-threshold=high"
+55:       - name: Upload main project SARIF report to GitHub Security tab
+56:         if: always() && hashFiles('snyk-main.sarif') != ''
+57:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+58:         with:
+59:           sarif_file: snyk-main.sarif
+60:           category: snyk-main
+61:       - name: Upload studio SARIF report to GitHub Security tab
+62:         if: always() && hashFiles('snyk-studio.sarif') != ''
+63:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+64:         with:
+65:           sarif_file: snyk-studio.sarif
+66:           category: snyk-studio
+67:       - name: Upload eslint plugin SARIF report to GitHub Security tab
+68:         if: always() && hashFiles('snyk-eslint.sarif') != ''
+69:         uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+70:         with:
+71:           sarif_file: snyk-eslint.sarif
+72:           category: snyk-eslint
+73:       - name: Snyk Monitor main project (only for pushes to main branch)
+74:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+75:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+76:         env:
+77:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+78:         with:
+79:           command: "monitor"
+80:           args: "--all-projects"
+81:       - name: Snyk Monitor eslint plugin (only for pushes to main branch)
+82:         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+83:         uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # master
+84:         env:
+85:           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+86:         with:
+87:           command: "monitor"
+88:           args: "--file=src/utils/eslint/package.json"
+````
+
 ## File: src/__tests__/Index/Section.test.tsx
 ````typescript
   1: import { render, screen, fireEvent } from "@testing-library/react";
@@ -21773,177 +21902,27 @@ vercel.json
 86: export default ProsjektCard;
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.175.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
+## File: studio/.snyk
 ````
-
-## File: src/utils/eslint/package.json
-````json
- 1: {
- 2:   "name": "eslint-plugin-test-rules",
- 3:   "version": "1.0.1",
- 4:   "description": "Custom ESLint rules for testing",
- 5:   "main": "dist/index.js",
- 6:   "scripts": {
- 7:     "build": "tsc",
- 8:     "test": "echo \"Error: no test specified\" && exit 1"
- 9:   },
-10:   "keywords": [
-11:     "eslint",
-12:     "eslintplugin",
-13:     "eslint-plugin"
-14:   ],
-15:   "author": "",
-16:   "license": "ISC",
-17:   "peerDependencies": {
-18:     "eslint": ">=10.9.1"
-19:   },
-20:   "devDependencies": {
-21:     "typescript": "^7.0.2"
-22:   },
-23:   "pnpm": {
-24:     "overrides": {
-25:       "brace-expansion": ">=5.0.7",
-26:       "flatted": ">=3.4.2"
-27:     }
-28:   }
-29: }
-````
-
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.5",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.8",
-18:     "react-dom": "^19.2.8",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.11.0",
-21:     "styled-components": "^6.5.3"
-22:   },
-23:   "devDependencies": {
-24:     "@types/react": "^19.2.18",
-25:     "eslint": "^10.9.1",
-26:     "prettier": "^3.9.6",
-27:     "typescript": "^7.0.2"
-28:   },
-29:   "pnpm": {
-30:     "overrides": {
-31:       "basic-ftp": ">=6.2.1",
-32:       "brace-expansion": ">=5.0.9",
-33:       "dompurify": ">=3.4.13",
-34:       "esbuild": ">=0.28.2",
-35:       "flatted": ">=3.4.4",
-36:       "js-yaml": ">=5.4.1",
-37:       "lodash": ">=4.18.1",
-38:       "lodash-es": ">=4.18.1",
-39:       "minimatch": "10.2.6",
-40:       "nanoid": "5.1.16",
-41:       "picomatch": "4.0.7",
-42:       "postcss": ">=8.5.26",
-43:       "smol-toml": ">=1.8.0",
-44:       "undici": ">=7.29.1",
-45:       "vite": ">=8.2.2",
-46:       "ws": ">=8.21.3",
-47:       "yaml": ">=2.9.0",
-48:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-49:     }
-50:   },
-51:   "overrides": {
-52:     "smol-toml": ">=1.8.0",
-53:     "brace-expansion": ">=5.0.9",
-54:     "esbuild": ">=0.28.2",
-55:     "uuid": ">=14.0.2",
-56:     "js-yaml": ">=5.4.1",
-57:     "nanoid": ">=6.0.1",
-58:     "postcss": ">=8.5.26",
-59:     "undici": ">=7.29.1",
-60:     "ws": ">=8.21.3"
-61:   },
-62:   "prettier": {
-63:     "semi": false,
-64:     "printWidth": 100,
-65:     "bracketSpacing": false,
-66:     "singleQuote": true
-67:   }
-68: }
+ 1: # Snyk (https://snyk.io) policy file for the Sanity Studio workspace.
+ 2: # Mirrors the root `.snyk`; the Snyk CLI resolves the policy relative to the
+ 3: # manifest passed via `--file=studio/package.json` in `.github/workflows/snyk-scan.yml`.
+ 4: version: v1.25.0
+ 5: ignore:
+ 6:   SNYK-JS-BRACES-19963945:
+ 7:     - "*":
+ 8:         reason: >-
+ 9:           Uncontrolled Recursion in braces@3.0.3. No patched release exists -
+10:           3.0.3 is the current `latest` on npm, so an override cannot resolve
+11:           it. Reached only through Sanity CLI build tooling
+12:           (sanity > @sanity/cli > @sanity/codegen > chokidar > braces), which
+13:           expands glob patterns from committed config files, never from user
+14:           or network input. Not part of any deployed runtime bundle.
+15:           Revisit when chokidar/micromatch ship a patched braces, or when
+16:           @sanity/codegen moves to chokidar v4 (which drops braces entirely).
+17:         created: 2026-11-06T00:00:00.000Z
+18:         expires: 2027-02-04T00:00:00.000Z
+19: patch: {}
 ````
 
 ## File: next.config.ts
@@ -22061,55 +22040,138 @@ vercel.json
 111: export default nextConfig;
 ````
 
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.5",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.8",
+18:     "react-dom": "^19.2.8",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.11.0",
+21:     "styled-components": "^6.5.3"
+22:   },
+23:   "devDependencies": {
+24:     "@types/react": "^19.2.18",
+25:     "eslint": "^10.9.1",
+26:     "prettier": "^3.9.6",
+27:     "typescript": "^7.0.2"
+28:   },
+29:   "pnpm": {
+30:     "overrides": {
+31:       "adm-zip": ">=0.6.1",
+32:       "basic-ftp": ">=6.2.1",
+33:       "brace-expansion": ">=5.0.12",
+34:       "dompurify": ">=3.4.17",
+35:       "esbuild": ">=0.28.2",
+36:       "flatted": ">=3.4.4",
+37:       "js-yaml": ">=5.4.1",
+38:       "lodash": ">=4.18.1",
+39:       "lodash-es": ">=4.18.1",
+40:       "minimatch": "11.0.5",
+41:       "nanoid": "5.1.16",
+42:       "picomatch": "4.0.7",
+43:       "postcss": ">=8.5.26",
+44:       "smol-toml": ">=1.9.1",
+45:       "source-map-js": ">=1.2.2",
+46:       "undici": ">=8.12.2",
+47:       "vite": ">=8.3.3",
+48:       "ws": ">=8.21.3",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.1",
+55:     "smol-toml": ">=1.9.1",
+56:     "brace-expansion": ">=5.0.12",
+57:     "dompurify": ">=3.4.17",
+58:     "esbuild": ">=0.28.2",
+59:     "uuid": ">=14.0.3",
+60:     "js-yaml": ">=5.5.0",
+61:     "nanoid": ">=6.0.2",
+62:     "postcss": ">=8.5.26",
+63:     "source-map-js": ">=1.2.2",
+64:     "undici": ">=8.12.4",
+65:     "vite": ">=8.3.3",
+66:     "ws": ">=8.21.3"
+67:   },
+68:   "prettier": {
+69:     "semi": false,
+70:     "printWidth": 100,
+71:     "bracketSpacing": false,
+72:     "singleQuote": true
+73:   }
+74: }
+````
+
 ## File: pnpm-workspace.yaml
 ````yaml
  1: packages:
  2:   - "."
  3: overrides:
- 4:   "@babel/core": ">=8.0.1"
- 5:   "brace-expansion": "5.0.10"
- 6:   "js-yaml": ">=5.4.1"
- 7:   "sharp": ">=0.35.4"
- 8:   "adm-zip": ">=0.6.0"
- 9:   "nanoid": ">=6.0.1"
-10:   "postcss": ">=8.5.28"
-11:   "jest-mock": "30.5.1"
-12:   "@jest/environment": "30.5.1"
-13:   "@jest/fake-timers": "30.5.1"
+ 4:   "@babel/core": ">=8.1.0"
+ 5:   "brace-expansion": "5.0.12"
+ 6:   "js-yaml": ">=5.5.0"
+ 7:   "sharp": ">=0.35.5"
+ 8:   "adm-zip": ">=0.6.1"
+ 9:   "nanoid": ">=6.0.2"
+10:   "postcss": ">=8.5.32"
+11:   "jest-mock": "30.5.2"
+12:   "@jest/environment": "30.5.2"
+13:   "@jest/fake-timers": "30.5.2"
 14:   "jest-util": "30.5.1"
 15:   "@jest/types": "30.5.1"
-16:   "react": "19.2.8"
-17:   "react-dom": "19.2.8"
-18:   "fast-uri": "4.1.4"
-19:   "browserslist": ">=4.28.9"
-20:   "undici": ">=8.10.2"
-21: allowBuilds:
-22:   "@parcel/watcher": true
-23:   "@swc/core": true
-24:   cypress: true
-25:   esbuild: true
-26:   msw: true
-27:   puppeteer: true
-28:   sharp: true
-29:   unrs-resolver: true
-30: minimumReleaseAgeExclude:
-31:   - postcss@8.5.21
-32:   - wait-on@9.1.0
-33:   - eslint@10.8.1
-34:   - '@jest/environment@30.5.0'
-35:   - '@jest/expect-utils@30.5.0'
-36:   - '@jest/fake-timers@30.5.0'
-37:   - '@jest/get-type@30.5.0'
-38:   - '@jest/pattern@30.5.0'
-39:   - '@jest/schemas@30.5.0'
-40:   - '@jest/types@30.5.0'
-41:   - jest-message-util@30.5.0
-42:   - jest-mock@30.5.0
-43:   - jest-regex-util@30.5.0
-44:   - jest-util@30.5.0
-45:   - pretty-format@30.5.0
-46:   - browserslist@4.28.9
-47:   - undici@8.10.2
+16:   "react": "19.3.1"
+17:   "react-dom": "19.3.1"
+18:   "fast-uri": "4.2.3"
+19:   "browserslist": ">=4.29.5"
+20:   "undici": ">=8.12.4"
+21:   "dompurify": ">=3.4.17"
+22:   "source-map-js": ">=1.2.2"
+23:   "vite": ">=8.3.3"
+24:   "joi": ">=18.3.1"
+25: allowBuilds:
+26:   "@parcel/watcher": true
+27:   "@swc/core": true
+28:   cypress: true
+29:   esbuild: true
+30:   msw: true
+31:   puppeteer: true
+32:   sharp: true
+33:   unrs-resolver: true
+34: minimumReleaseAgeExclude:
+35:   - postcss@8.5.21
+36:   - wait-on@9.1.0
+37:   - eslint@10.8.1
+38:   - '@jest/environment@30.5.0'
+39:   - '@jest/expect-utils@30.5.0'
+40:   - '@jest/fake-timers@30.5.0'
+41:   - '@jest/get-type@30.5.0'
+42:   - '@jest/pattern@30.5.0'
+43:   - '@jest/schemas@30.5.0'
+44:   - '@jest/types@30.5.0'
+45:   - jest-message-util@30.5.0
+46:   - jest-mock@30.5.0
+47:   - jest-regex-util@30.5.0
+48:   - jest-util@30.5.0
+49:   - pretty-format@30.5.0
+50:   - browserslist@4.28.9
+51:   - undici@8.10.2 || 8.12.4
+52:   - '@vercel/speed-insights@2.1.0'
 ````
 
 ## File: package.json
@@ -22145,20 +22207,20 @@ vercel.json
  29:     "@emailjs/browser": "^4.4.1",
  30:     "@hookform/resolvers": "^5.9.1",
  31:     "@portabletext/react": "^8.0.1",
- 32:     "@sanity/client": "^8.4.0",
+ 32:     "@sanity/client": "^8.14.1",
  33:     "@sanity/image-url": "^2.1.1",
- 34:     "@vercel/speed-insights": "2.0.0",
- 35:     "babel-jest": "30.4.1",
- 36:     "jest": "30.4.2",
- 37:     "motion": "^13.2.0",
- 38:     "next": "^16.3.3",
+ 34:     "@vercel/speed-insights": "2.1.0",
+ 35:     "babel-jest": "30.5.2",
+ 36:     "jest": "30.5.2",
+ 37:     "motion": "^13.5.1",
+ 38:     "next": "^16.4.5",
  39:     "react": "^19.2.8",
  40:     "react-dom": "^19.2.8",
  41:     "react-error-boundary": "^6.1.3",
  42:     "react-hook-form": "^7.86.0",
  43:     "react-icons": "^5.7.0",
  44:     "ts-node": "^10.9.2",
- 45:     "zod": "^4.5.2"
+ 45:     "zod": "^4.6.7"
  46:   },
  47:   "devDependencies": {
  48:     "@jest/expect": "^30.4.1",
