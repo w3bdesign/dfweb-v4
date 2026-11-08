@@ -21354,6 +21354,121 @@ vercel.json
 19: patch: {}
 ````
 
+## File: next.config.ts
+````typescript
+  1: import type { NextConfig } from "next";
+  2: const cspDirectives = {
+  3:   "default-src": ["'self'"],
+  4:   "script-src": [
+  5:     "'self'",
+  6:     "'unsafe-eval'",
+  7:     "'unsafe-inline'",
+  8:     "https://va.vercel-scripts.com",
+  9:   ],
+ 10:   "style-src": ["'self'", "'unsafe-inline'"],
+ 11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
+ 12:   "font-src": ["'self'"],
+ 13:   "object-src": ["'none'"],
+ 14:   "base-uri": ["'self'"],
+ 15:   "form-action": ["'self'"],
+ 16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
+ 17:   "connect-src": [
+ 18:     "'self'",
+ 19:     "https://api.emailjs.com",
+ 20:     "https://va.vercel-scripts.com",
+ 21:   ],
+ 22: };
+ 23: const buildCspHeader = (directives: Record<string, string[]>) =>
+ 24:   Object.entries(directives)
+ 25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
+ 26:     .join(" ") + " upgrade-insecure-requests;";
+ 27: const nextConfig: NextConfig = {
+ 28:   transpilePackages: ["@portabletext/react"],
+ 29:   typescript: {
+ 30:     // Keep Ladle's development-only sources out of Next.js type checking.
+ 31:     tsconfigPath: "tsconfig.build.json",
+ 32:   },
+ 33:   compiler: {
+ 34:     // Remove console.log in production
+ 35:     removeConsole: process.env.NODE_ENV === "production",
+ 36:   },
+ 37:   // Optimize CSS chunking - merge CSS files to reduce network requests
+ 38:   experimental: {
+ 39:     cssChunking: true, // Merge CSS files when possible (default)
+ 40:     useTypeScriptCli: true, // https://nextjs.org/docs/app/api-reference/config/typescript#using-typescript-7
+ 41:   },
+ 42:   images: {
+ 43:     remotePatterns: [
+ 44:       {
+ 45:         protocol: "https",
+ 46:         hostname: "cdn.sanity.io",
+ 47:       },
+ 48:     ],
+ 49:   },
+ 50:   async headers() {
+ 51:     return [
+ 52:       {
+ 53:         source: "/",
+ 54:         headers: [
+ 55:           {
+ 56:             key: "Cache-Control",
+ 57:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 58:           },
+ 59:           {
+ 60:             key: "X-Frame-Options",
+ 61:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 62:           },
+ 63:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 64:           {
+ 65:             key: "Content-Security-Policy",
+ 66:             value: buildCspHeader(cspDirectives),
+ 67:           },
+ 68:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 69:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 70:         ],
+ 71:       },
+ 72:       {
+ 73:         source: "/prosjekter",
+ 74:         headers: [
+ 75:           {
+ 76:             key: "Cache-Control",
+ 77:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
+ 78:           },
+ 79:           {
+ 80:             key: "X-Frame-Options",
+ 81:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 82:           },
+ 83:           { key: "X-Content-Type-Options", value: "nosniff" },
+ 84:           {
+ 85:             key: "Content-Security-Policy",
+ 86:             value: buildCspHeader(cspDirectives),
+ 87:           },
+ 88:           { key: "Permissions-Policy", value: "tools=(self)" },
+ 89:           { key: "Origin-Agent-Cluster", value: "?1" },
+ 90:         ],
+ 91:       },
+ 92:       {
+ 93:         source: "/:path*",
+ 94:         headers: [
+ 95:           {
+ 96:             key: "X-Frame-Options",
+ 97:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
+ 98:           },
+ 99:           { key: "X-Content-Type-Options", value: "nosniff" },
+100:           {
+101:             key: "Content-Security-Policy",
+102:             value: buildCspHeader(cspDirectives),
+103:           },
+104:           { key: "Permissions-Policy", value: "tools=(self)" },
+105:           { key: "Origin-Agent-Cluster", value: "?1" },
+106:         ],
+107:       },
+108:     ];
+109:   },
+110: };
+111: export default nextConfig;
+````
+
 ## File: llms.txt
 ````
   1: # dfweb-v4
@@ -21734,119 +21849,60 @@ vercel.json
 376: 3. **DOCS/README.md** - Technical deep dive
 ````
 
-## File: next.config.ts
-````typescript
-  1: import type { NextConfig } from "next";
-  2: const cspDirectives = {
-  3:   "default-src": ["'self'"],
-  4:   "script-src": [
-  5:     "'self'",
-  6:     "'unsafe-eval'",
-  7:     "'unsafe-inline'",
-  8:     "https://va.vercel-scripts.com",
-  9:   ],
- 10:   "style-src": ["'self'", "'unsafe-inline'"],
- 11:   "img-src": ["'self'", "blob:", "data:", "https://cdn.sanity.io"],
- 12:   "font-src": ["'self'"],
- 13:   "object-src": ["'none'"],
- 14:   "base-uri": ["'self'"],
- 15:   "form-action": ["'self'"],
- 16:   "frame-ancestors": ["'self'", "https://presentasjon.dfweb.no"],
- 17:   "connect-src": [
- 18:     "'self'",
- 19:     "https://api.emailjs.com",
- 20:     "https://va.vercel-scripts.com",
- 21:   ],
- 22: };
- 23: const buildCspHeader = (directives: Record<string, string[]>) =>
- 24:   Object.entries(directives)
- 25:     .map(([key, values]) => `${key} ${values.join(" ")};`)
- 26:     .join(" ") + " upgrade-insecure-requests;";
- 27: const nextConfig: NextConfig = {
- 28:   transpilePackages: ["@portabletext/react"],
- 29:   typescript: {
- 30:     // Keep Ladle's development-only sources out of Next.js type checking.
- 31:     tsconfigPath: "tsconfig.build.json",
- 32:   },
- 33:   compiler: {
- 34:     // Remove console.log in production
- 35:     removeConsole: process.env.NODE_ENV === "production",
- 36:   },
- 37:   // Optimize CSS chunking - merge CSS files to reduce network requests
- 38:   experimental: {
- 39:     cssChunking: true, // Merge CSS files when possible (default)
- 40:     useTypeScriptCli: true, // https://nextjs.org/docs/app/api-reference/config/typescript#using-typescript-7
- 41:   },
- 42:   images: {
- 43:     remotePatterns: [
- 44:       {
- 45:         protocol: "https",
- 46:         hostname: "cdn.sanity.io",
- 47:       },
- 48:     ],
- 49:   },
- 50:   async headers() {
- 51:     return [
- 52:       {
- 53:         source: "/",
- 54:         headers: [
- 55:           {
- 56:             key: "Cache-Control",
- 57:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 58:           },
- 59:           {
- 60:             key: "X-Frame-Options",
- 61:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 62:           },
- 63:           { key: "X-Content-Type-Options", value: "nosniff" },
- 64:           {
- 65:             key: "Content-Security-Policy",
- 66:             value: buildCspHeader(cspDirectives),
- 67:           },
- 68:           { key: "Permissions-Policy", value: "tools=(self)" },
- 69:           { key: "Origin-Agent-Cluster", value: "?1" },
- 70:         ],
- 71:       },
- 72:       {
- 73:         source: "/prosjekter",
- 74:         headers: [
- 75:           {
- 76:             key: "Cache-Control",
- 77:             value: "public, s-maxage=86400, stale-while-revalidate=604800",
- 78:           },
- 79:           {
- 80:             key: "X-Frame-Options",
- 81:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 82:           },
- 83:           { key: "X-Content-Type-Options", value: "nosniff" },
- 84:           {
- 85:             key: "Content-Security-Policy",
- 86:             value: buildCspHeader(cspDirectives),
- 87:           },
- 88:           { key: "Permissions-Policy", value: "tools=(self)" },
- 89:           { key: "Origin-Agent-Cluster", value: "?1" },
- 90:         ],
- 91:       },
- 92:       {
- 93:         source: "/:path*",
- 94:         headers: [
- 95:           {
- 96:             key: "X-Frame-Options",
- 97:             value: "ALLOW-FROM https://presentasjon.dfweb.no",
- 98:           },
- 99:           { key: "X-Content-Type-Options", value: "nosniff" },
-100:           {
-101:             key: "Content-Security-Policy",
-102:             value: buildCspHeader(cspDirectives),
-103:           },
-104:           { key: "Permissions-Policy", value: "tools=(self)" },
-105:           { key: "Origin-Agent-Cluster", value: "?1" },
-106:         ],
-107:       },
-108:     ];
-109:   },
-110: };
-111: export default nextConfig;
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - "."
+ 3: overrides:
+ 4:   "@babel/core": ">=8.1.0"
+ 5:   "brace-expansion": "5.0.12"
+ 6:   "js-yaml": ">=5.5.0"
+ 7:   "sharp": ">=0.35.5"
+ 8:   "adm-zip": ">=0.6.1"
+ 9:   "nanoid": ">=6.0.2"
+10:   "postcss": ">=8.5.32"
+11:   "jest-mock": "30.5.2"
+12:   "@jest/environment": "30.5.2"
+13:   "@jest/fake-timers": "30.5.2"
+14:   "jest-util": "30.5.1"
+15:   "@jest/types": "30.5.1"
+16:   "react": "19.3.1"
+17:   "react-dom": "19.3.1"
+18:   "fast-uri": "4.2.3"
+19:   "browserslist": ">=4.29.5"
+20:   "undici": ">=8.12.4"
+21:   "dompurify": ">=3.4.17"
+22:   "source-map-js": ">=1.2.2"
+23:   "vite": ">=8.3.3"
+24:   "joi": ">=18.3.1"
+25: allowBuilds:
+26:   "@parcel/watcher": true
+27:   "@swc/core": true
+28:   cypress: true
+29:   esbuild: true
+30:   msw: true
+31:   puppeteer: true
+32:   sharp: true
+33:   unrs-resolver: true
+34: minimumReleaseAgeExclude:
+35:   - postcss@8.5.21
+36:   - wait-on@9.1.0
+37:   - eslint@10.8.1
+38:   - '@jest/environment@30.5.0'
+39:   - '@jest/expect-utils@30.5.0'
+40:   - '@jest/fake-timers@30.5.0'
+41:   - '@jest/get-type@30.5.0'
+42:   - '@jest/pattern@30.5.0'
+43:   - '@jest/schemas@30.5.0'
+44:   - '@jest/types@30.5.0'
+45:   - jest-message-util@30.5.0
+46:   - jest-mock@30.5.0
+47:   - jest-regex-util@30.5.0
+48:   - jest-util@30.5.0
+49:   - pretty-format@30.5.0
+50:   - browserslist@4.28.9
+51:   - undici@8.10.2 || 8.12.4
+52:   - '@vercel/speed-insights@2.1.0'
 ````
 
 ## File: studio/package.json
@@ -21870,7 +21926,7 @@ vercel.json
 17:     "react": "^19.2.8",
 18:     "react-dom": "^19.2.8",
 19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.11.0",
+20:     "sanity": "^6.21.0",
 21:     "styled-components": "^6.5.3"
 22:   },
 23:   "devDependencies": {
@@ -22014,7 +22070,7 @@ vercel.json
  83:     "postcss-load-config": "^6.0.1",
  84:     "prettier": "3.9.6",
  85:     "react-doctor": "^0.0.47",
- 86:     "sanity": "6.11.0",
+ 86:     "sanity": "6.21.0",
  87:     "stylelint": "^17.14.1",
  88:     "stylelint-config-standard": "^40.0.0",
  89:     "tailwindcss": "^4.3.3",
@@ -22029,62 +22085,6 @@ vercel.json
  98:     "edge >= 92"
  99:   ]
 100: }
-````
-
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - "."
- 3: overrides:
- 4:   "@babel/core": ">=8.1.0"
- 5:   "brace-expansion": "5.0.12"
- 6:   "js-yaml": ">=5.5.0"
- 7:   "sharp": ">=0.35.5"
- 8:   "adm-zip": ">=0.6.1"
- 9:   "nanoid": ">=6.0.2"
-10:   "postcss": ">=8.5.32"
-11:   "jest-mock": "30.5.2"
-12:   "@jest/environment": "30.5.2"
-13:   "@jest/fake-timers": "30.5.2"
-14:   "jest-util": "30.5.1"
-15:   "@jest/types": "30.5.1"
-16:   "react": "19.3.1"
-17:   "react-dom": "19.3.1"
-18:   "fast-uri": "4.2.3"
-19:   "browserslist": ">=4.29.5"
-20:   "undici": ">=8.12.4"
-21:   "dompurify": ">=3.4.17"
-22:   "source-map-js": ">=1.2.2"
-23:   "vite": ">=8.3.3"
-24:   "joi": ">=18.3.1"
-25: allowBuilds:
-26:   "@parcel/watcher": true
-27:   "@swc/core": true
-28:   cypress: true
-29:   esbuild: true
-30:   msw: true
-31:   puppeteer: true
-32:   sharp: true
-33:   unrs-resolver: true
-34: minimumReleaseAgeExclude:
-35:   - postcss@8.5.21
-36:   - wait-on@9.1.0
-37:   - eslint@10.8.1
-38:   - '@jest/environment@30.5.0'
-39:   - '@jest/expect-utils@30.5.0'
-40:   - '@jest/fake-timers@30.5.0'
-41:   - '@jest/get-type@30.5.0'
-42:   - '@jest/pattern@30.5.0'
-43:   - '@jest/schemas@30.5.0'
-44:   - '@jest/types@30.5.0'
-45:   - jest-message-util@30.5.0
-46:   - jest-mock@30.5.0
-47:   - jest-regex-util@30.5.0
-48:   - jest-util@30.5.0
-49:   - pretty-format@30.5.0
-50:   - browserslist@4.28.9
-51:   - undici@8.10.2 || 8.12.4
-52:   - '@vercel/speed-insights@2.1.0'
 ````
 
 ## File: .github/workflows/snyk-scan.yml
