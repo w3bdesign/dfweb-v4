@@ -2,13 +2,15 @@
 
 ## Project Overview
 
-DFWeb v4 is a portfolio website built with Next.js 15, React 19, and TypeScript, featuring a Matrix-inspired design with custom animations and a strong focus on performance and accessibility.
+DFWeb v4 is a portfolio website built with Next.js 16, React 19, and TypeScript, featuring a Matrix-inspired design with custom animations and a strong focus on performance and accessibility.
+
+Hard rules and the CI checks that enforce them are listed under "Enforced Rules" in `AGENTS.md`.
 
 ## Tech Stack
 
 - **Frontend Core**
 
-  - Next.js 15 with App Router and Server Components
+  - Next.js 16 with App Router and Server Components
   - React 19 with latest features
   - TypeScript with strict mode
   - Motion for animations
@@ -20,7 +22,7 @@ DFWeb v4 is a portfolio website built with Next.js 15, React 19, and TypeScript,
   - Jest & React Testing Library for unit tests
   - Cypress for E2E testing with accessibility checks
   - Playwright for cross-browser testing
-  - 100% test coverage requirement
+  - Coverage floor enforced by `coverageThreshold` in `jest.config.mjs`
 
 - **Performance & Monitoring**
   - Lighthouse CI integration
@@ -42,7 +44,6 @@ src/
 │   ├── Layout/        # Layout components
 │   ├── Prosjekter/    # Projects section
 │   └── UI/            # Reusable UI components
-├── config/             # Configuration files
 ├── e2e/               # End-to-end tests
 ├── hooks/             # Custom React hooks
 ├── lib/               # Core libraries
@@ -82,7 +83,7 @@ src/
 - Write comprehensive unit tests
 - Include integration tests for complex features
 - Add E2E tests for critical flows
-- Maintain 100% test coverage
+- Keep coverage at or above the floor in `jest.config.mjs`
 
 ### State Management
 
@@ -123,8 +124,6 @@ src/
 - Use Tailwind CSS classes
 - Follow mobile-first approach
 - Maintain consistent spacing
-- Use CSS modules for component-specific styles
-- Follow BEM naming convention when needed
 
 ## Best Practices
 
