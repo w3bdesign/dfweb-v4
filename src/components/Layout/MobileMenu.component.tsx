@@ -138,16 +138,16 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                           <div className="glitch relative" data-text={name}>
                             {name}
                             <m.span
-                              className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                              className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
                                 pathname === href
                                   ? "bg-[var(--matrix-light)]"
                                   : "bg-white"
                               }`}
                               initial={{
-                                width: pathname === href ? "100%" : "0%",
+                                scaleX: pathname === href ? 1 : 0,
                               }}
                               animate={{
-                                width: pathname === href ? "100%" : "0%",
+                                scaleX: pathname === href ? 1 : 0,
                               }}
                               transition={{ duration: 0.3 }}
                             />
