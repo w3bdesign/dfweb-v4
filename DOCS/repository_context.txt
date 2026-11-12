@@ -155,6 +155,7 @@ src/
     ErrorBoundary/
       ErrorBoundary.test.tsx
       ErrorFallback.test.tsx
+      RouteError.test.tsx
     Index/
       fixtures/
         hero.json
@@ -239,6 +240,7 @@ src/
     ErrorBoundary/
       ErrorBoundary.component.tsx
       ErrorFallback.component.tsx
+      RouteError.component.tsx
     Index/
       Hero.component.tsx
       Icons.component.tsx
@@ -262,6 +264,7 @@ src/
       Button.component.tsx
       ContentLoader.component.tsx
       InputField.component.tsx
+      InputField.utils.ts
       PageHeader.component.tsx
       Pill.component.tsx
       Skeleton.component.tsx
@@ -6379,155 +6382,6 @@ vercel.json
 43: });
 ````
 
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: import "@testing-library/jest-dom";
-  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  6: // Define the project type
-  7: interface ProjectType {
-  8:   id: string;
-  9:   name: string;
- 10:   description: string;
- 11:   subdescription: string;
- 12:   projectimage: { asset: { _ref: string } };
- 13:   urlwww: unknown[];
- 14:   urlgithub: unknown[];
- 15: }
- 16: // Mock the actions before importing the page component
- 17: const mockGetProjects = jest.fn();
- 18: const mockPreloadProjects = jest.fn();
- 19: jest.mock("@/lib/sanity/content", () => ({
- 20:   getProjects: mockGetProjects,
- 21:   preloadProjects: mockPreloadProjects,
- 22: }));
- 23: // Mock the sanity client
- 24: const mockUrlBuilder = {
- 25:   width: jest.fn().mockReturnThis(),
- 26:   fit: jest.fn().mockReturnThis(),
- 27:   quality: jest.fn().mockReturnThis(),
- 28:   auto: jest.fn().mockReturnThis(),
- 29:   url: jest.fn().mockReturnValue("mock-url"),
- 30: };
- 31: jest.mock("@/lib/sanity/client", () => ({
- 32:   client: {
- 33:     fetch: jest.fn(),
- 34:   },
- 35:   urlFor: jest.fn(() => mockUrlBuilder),
- 36: }));
- 37: // Mock components
- 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 39:   <h1>{children}</h1>
- 40: );
- 41: const MockProsjektCard = (props: { name: string }) => (
- 42:   <div data-testid="project-card">{props.name}</div>
- 43: );
- 44: const MockRotatingLoader = () => (
- 45:   <div data-testid="rotating-loader">Loading...</div>
- 46: );
- 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
- 48: jest.mock(
- 49:   "@/components/Prosjekter/ProsjektCard.component",
- 50:   () => MockProsjektCard,
- 51: );
- 52: jest.mock(
- 53:   "@/components/Animations/RotatingLoader.component",
- 54:   () => MockRotatingLoader,
- 55: );
- 56: // Create a test component that simulates the page behavior without async server components
- 57: function TestProsjekterPage() {
- 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 59:   const [loading, setLoading] = React.useState(true);
- 60:   React.useEffect(() => {
- 61:     mockGetProjects().then((data: ProjectType[]) => {
- 62:       setProjects(data);
- 63:       setLoading(false);
- 64:     });
- 65:   }, []);
- 66:   return (
- 67:     <main
- 68:       role="main"
- 69:       aria-label="Innhold portefølje"
- 70:       className="mt-32 bg-graybg"
- 71:     >
- 72:       <MockPageHeader>Prosjekter</MockPageHeader>
- 73:       {loading ? (
- 74:         <MockRotatingLoader />
- 75:       ) : (
- 76:         <div className="container mx-auto">
- 77:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 78:             {projects.map((project) => (
- 79:               <MockProsjektCard key={project.id} {...project} />
- 80:             ))}
- 81:           </div>
- 82:         </div>
- 83:       )}
- 84:     </main>
- 85:   );
- 86: }
- 87: describe("ProsjekterPage", () => {
- 88:   beforeEach(() => {
- 89:     jest.clearAllMocks();
- 90:   });
- 91:   it("renders projects from server component", async () => {
- 92:     // Arrange - Set up test data and conditions
- 93:     const mockProjects = [
- 94:       {
- 95:         id: "1",
- 96:         name: "Test Project 1",
- 97:         description: "Test Description 1",
- 98:         subdescription: "Test Subdescription 1",
- 99:         projectimage: { asset: { _ref: "test1" } },
-100:         urlwww: [],
-101:         urlgithub: [],
-102:       },
-103:       {
-104:         id: "2",
-105:         name: "Test Project 2",
-106:         description: "Test Description 2",
-107:         subdescription: "Test Subdescription 2",
-108:         projectimage: { asset: { _ref: "test2" } },
-109:         urlwww: [],
-110:         urlgithub: [],
-111:       },
-112:     ];
-113:     mockGetProjects.mockResolvedValue(mockProjects);
-114:     // Act - Perform the action being tested
-115:     render(<TestProsjekterPage />);
-116:     // Assert - Verify the results
-117:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-118:     // Wait for projects to load and render
-119:     const projectCards = await screen.findAllByTestId("project-card");
-120:     expect(projectCards).toHaveLength(2);
-121:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
-122:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
-123:     // Test that projects are rendered within the main content area
-124:     const main = screen.getByRole("main");
-125:     expect(main).toContainElement(projectCards[0]);
-126:     expect(main).toContainElement(projectCards[1]);
-127:   });
-128:   it("uses Suspense boundary for loading state", async () => {
-129:     // Arrange - Set up test data and conditions
-130:     const delayedPromise = createDelayedPromise([], 100);
-131:     mockGetProjects.mockImplementation(() => delayedPromise);
-132:     // Act - Perform the action being tested
-133:     render(<TestProsjekterPage />);
-134:     // Assert - Verify the results
-135:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-136:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-137:     const main = screen.getByRole("main");
-138:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-139:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-140:     // Wait for loading to complete
-141:     await waitFor(() => {
-142:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-143:     });
-144:   });
-145: });
-````
-
 ## File: src/__tests__/UI/Button.test.tsx
 ````typescript
  1: /**
@@ -6638,109 +6492,6 @@ vercel.json
 44:     });
 45:   });
 46: });
-````
-
-## File: src/__tests__/UI/InputField.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import "@testing-library/jest-dom";
- 4: import { UseFormRegister } from "react-hook-form";
- 5: import InputField, {
- 6:   createRegisterOptions,
- 7: } from "@/components/UI/InputField.component";
- 8: interface TestFormData {
- 9:   testField: string;
-10: }
-11: const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
-12:   onChange: jest.fn(),
-13:   onBlur: jest.fn(),
-14:   ref: jest.fn(),
-15:   name,
-16: }));
-17: const TestComponent = ({
-18:   type = "input",
-19:   isRequired = false,
-20:   inputPattern,
-21: }: {
-22:   type?: "input" | "textarea";
-23:   isRequired?: boolean;
-24:   inputPattern?: RegExp;
-25: }) => {
-26:   return (
-27:     <InputField<TestFormData>
-28:       name="testField"
-29:       label="Test Field"
-30:       htmlFor="testField"
-31:       type={type}
-32:       isRequired={isRequired}
-33:       inputPattern={inputPattern}
-34:       register={mockRegister}
-35:     />
-36:   );
-37: };
-38: describe("InputField", () => {
-39:   describe("rendering", () => {
-40:     it("renders input field with label", () => {
-41:       // Arrange
-42:       const expectedLabel = "Test Field";
-43:       // Act
-44:       render(<TestComponent />);
-45:       const input = screen.getByLabelText(expectedLabel);
-46:       // Assert
-47:       expect(input).toBeInTheDocument();
-48:     });
-49:     it("renders textarea when specified", () => {
-50:       // Arrange
-51:       const expectedLabel = "Test Field";
-52:       const expectedTag = "TEXTAREA";
-53:       // Act
-54:       render(<TestComponent type="textarea" />);
-55:       const textarea = screen.getByLabelText(expectedLabel);
-56:       // Assert
-57:       expect(textarea).toBeInTheDocument();
-58:       expect(textarea.tagName).toBe(expectedTag);
-59:     });
-60:     it("displays provided error message", () => {
-61:       // Arrange
-62:       const errorMessage = "This is an error message";
-63:       const props = {
-64:         name: "testField" as const,
-65:         label: "Test Field",
-66:         htmlFor: "testField",
-67:         register: mockRegister,
-68:         error: errorMessage,
-69:       };
-70:       // Act
-71:       render(<InputField<TestFormData> {...props} />);
-72:       // Assert
-73:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
-74:     });
-75:   });
-76:   describe("form registration", () => {
-77:     it("creates required validation option when isRequired is true", () => {
-78:       // Arrange
-79:       const isRequired = true;
-80:       const expectedMessage = "Dette feltet er påkrevd";
-81:       // Act
-82:       const options = createRegisterOptions(isRequired);
-83:       // Assert
-84:       expect(options.required).toBe(expectedMessage);
-85:     });
-86:     it("creates pattern validation option when pattern is provided", () => {
-87:       // Arrange
-88:       const pattern = /[A-Za-z]+/;
-89:       const isRequired = false;
-90:       // Act
-91:       const options = createRegisterOptions(isRequired, pattern);
-92:       // Assert
-93:       expect(options.pattern).toBeDefined();
-94:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(
-95:         pattern,
-96:       );
-97:     });
-98:   });
-99: });
 ````
 
 ## File: src/__tests__/UI/Pill.test.tsx
@@ -7364,43 +7115,6 @@ vercel.json
 79: }
 ````
 
-## File: src/app/cv/error.tsx
-````typescript
- 1: "use client";
- 2: import { useEffect } from "react";
- 3: type ErrorBoundaryProps = Readonly<{
- 4:   error: Error & { digest?: string };
- 5:   reset: () => void;
- 6: }>;
- 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
- 8:   useEffect(() => {
- 9:     console.error(error);
-10:   }, [error]);
-11:   return (
-12:     <main className="flex min-h-screen flex-col items-center justify-center p-4">
-13:       <div className="text-center space-y-4 max-w-md">
-14:         <h2 className="text-2xl font-bold text-red-400">Noe gikk galt</h2>
-15:         <p className="text-gray-300">
-16:           Det oppsto en feil under lasting av CV-siden.
-17:         </p>
-18:         {error.message && (
-19:           <p className="text-sm text-gray-400 font-mono bg-slate-800 p-3 rounded">
-20:             {error.message}
-21:           </p>
-22:         )}
-23:         <button
-24:           type="button"
-25:           onClick={reset}
-26:           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
-27:         >
-28:           Prøv igjen
-29:         </button>
-30:       </div>
-31:     </main>
-32:   );
-33: }
-````
-
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -7427,43 +7141,6 @@ vercel.json
 10:   if (!cvData) notFound();
 11:   return <CVContent cvData={cvData} />;
 12: }
-````
-
-## File: src/app/kontakt/error.tsx
-````typescript
- 1: "use client";
- 2: import { useEffect } from "react";
- 3: type ErrorBoundaryProps = Readonly<{
- 4:   error: Error & { digest?: string };
- 5:   reset: () => void;
- 6: }>;
- 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
- 8:   useEffect(() => {
- 9:     console.error(error);
-10:   }, [error]);
-11:   return (
-12:     <main className="flex min-h-screen flex-col items-center justify-center p-4">
-13:       <div className="text-center space-y-4 max-w-md">
-14:         <h2 className="text-2xl font-bold text-red-400">Noe gikk galt</h2>
-15:         <p className="text-gray-300">
-16:           Det oppsto en feil under lasting av kontaktskjemaet.
-17:         </p>
-18:         {error.message && (
-19:           <p className="text-sm text-gray-400 font-mono bg-slate-800 p-3 rounded">
-20:             {error.message}
-21:           </p>
-22:         )}
-23:         <button
-24:           type="button"
-25:           onClick={reset}
-26:           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
-27:         >
-28:           Prøv igjen
-29:         </button>
-30:       </div>
-31:     </main>
-32:   );
-33: }
 ````
 
 ## File: src/app/kontakt/loading.tsx
@@ -7520,26 +7197,6 @@ vercel.json
 23:     </div>
 24:   );
 25: }
-````
-
-## File: src/app/prosjekter/loading.tsx
-````typescript
- 1: import PageHeader from "@/components/UI/PageHeader.component";
- 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 3: export default function Loading() {
- 4:   return (
- 5:     <main
- 6:       role="main"
- 7:       aria-label="Laster portefølje"
- 8:       className="mt-32 bg-graybg"
- 9:     >
-10:       <PageHeader>Prosjekter</PageHeader>
-11:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
-12:         <RotatingLoader />
-13:       </div>
-14:     </main>
-15:   );
-16: }
 ````
 
 ## File: src/app/prosjekter/page.tsx
@@ -9125,60 +8782,6 @@ vercel.json
 44: export default Header;
 ````
 
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import * as m from "motion/react-m";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-[var(--matrix-light)]" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <m.span
-34:           className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
-36:           }`}
-37:           initial={false}
-38:           animate={{
-39:             width: isActive ? "100%" : "0%",
-40:           }}
-41:           variants={{
-42:             hover: { width: "100%" },
-43:           }}
-44:           transition={{ duration: 0.3 }}
-45:         />
-46:       </div>
-47:     </Link>
-48:   </MotionDiv>
-49: );
-50: export default NavigationLink;
-````
-
 ## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
  1: "use client";
@@ -9338,125 +8941,6 @@ vercel.json
 65:   );
 66: };
 67: export default Button;
-````
-
-## File: src/components/UI/InputField.component.tsx
-````typescript
-  1: import React from "react";
-  2: import {
-  3:   UseFormRegister,
-  4:   FieldValues,
-  5:   RegisterOptions,
-  6:   Path,
-  7: } from "react-hook-form";
-  8: interface InputProps<T extends FieldValues> {
-  9:   readonly name: Path<T>;
- 10:   readonly label: string;
- 11:   readonly htmlFor: string;
- 12:   readonly isRequired?: boolean;
- 13:   readonly inputPattern?: RegExp;
- 14:   readonly title?: string;
- 15:   readonly type?: "input" | "textarea";
- 16:   readonly register: UseFormRegister<T>;
- 17:   readonly error?: string;
- 18:   readonly autoComplete?: string;
- 19:   readonly spellCheck?: boolean;
- 20:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
- 21: }
- 22: /**
- 23:  * Creates register options for react-hook-form
- 24:  * @template T - Type extending FieldValues
- 25:  * @param {boolean} [isRequired] - Whether the field is required
- 26:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
- 27:  * @param {string} [title] - Title for the input field
- 28:  * @returns {RegisterOptions<T, Path<T>>} Register options object
- 29:  */
- 30: export function createRegisterOptions<T extends FieldValues>(
- 31:   isRequired?: boolean,
- 32:   inputPattern?: RegExp,
- 33:   title?: string,
- 34: ): RegisterOptions<T, Path<T>> {
- 35:   return {
- 36:     required: isRequired ? "Dette feltet er påkrevd" : false,
- 37:     ...(inputPattern
- 38:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
- 39:       : {}),
- 40:   };
- 41: }
- 42: /**
- 43:  * InputField component for rendering form inputs
- 44:  * @template T - Type extending FieldValues
- 45:  * @param {InputProps<T>} props - The props for the InputField component
- 46:  * @returns {JSX.Element} The rendered InputField component
- 47:  */
- 48: function InputField<T extends FieldValues>({
- 49:   name,
- 50:   label,
- 51:   inputPattern,
- 52:   isRequired,
- 53:   htmlFor,
- 54:   title,
- 55:   type = "input",
- 56:   register,
- 57:   error,
- 58:   autoComplete,
- 59:   spellCheck,
- 60:   inputMode,
- 61:   ...props
- 62: }: InputProps<T>) {
- 63:   const sharedClasses =
- 64:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
- 65:   const registerOptions = createRegisterOptions<T>(
- 66:     isRequired,
- 67:     inputPattern,
- 68:     title,
- 69:   );
- 70:   return (
- 71:     <div className="relative my-2 flex flex-col items-center">
- 72:       <div className="relative">
- 73:         {type === "input" ? (
- 74:           <input
- 75:             id={htmlFor}
- 76:             type="text"
- 77:             placeholder={label}
- 78:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 79:             autoComplete={autoComplete}
- 80:             spellCheck={spellCheck}
- 81:             inputMode={inputMode}
- 82:             {...register(name, {
- 83:               ...registerOptions,
- 84:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 85:             })}
- 86:             {...props}
- 87:           />
- 88:         ) : (
- 89:           <textarea
- 90:             id={htmlFor}
- 91:             placeholder={label}
- 92:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
- 93:             spellCheck={spellCheck}
- 94:             {...register(name, {
- 95:               ...registerOptions,
- 96:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
- 97:             })}
- 98:             {...props}
- 99:           ></textarea>
-100:         )}
-101:         <label
-102:           htmlFor={htmlFor}
-103:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
-104:             // Removed peer-focus:text-primary
-105:             type === "textarea" ? "peer-focus:-top-4" : ""
-106:           }`}
-107:         >
-108:           {label}
-109:         </label>
-110:       </div>
-111:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-112:     </div>
-113:   );
-114: }
-115: export default InputField;
 ````
 
 ## File: src/components/UI/PageHeader.component.tsx
@@ -10340,47 +9824,6 @@ vercel.json
 34: });
 ````
 
-## File: src/hooks/useMobile.tsx
-````typescript
- 1: import { useState, useEffect } from "react";
- 2: /**
- 3:  * A React hook that returns a boolean indicating if the user is on a mobile device.
- 4:  * Uses matchMedia to subscribe to breakpoint changes instead of resize events,
- 5:  * aligning with React best practices for derived state subscriptions.
- 6:  * Includes fallback for test environments where matchMedia is not available.
- 7:  *
- 8:  * @returns true if the device width is under 640px, else false.
- 9:  */
-10: export function useMobile(): boolean {
-11:   const [isMobile, setIsMobile] = useState<boolean>(() => {
-12:     if (globalThis.window === undefined) return false;
-13:     if (globalThis.matchMedia) {
-14:       return globalThis.matchMedia("(max-width: 639px)").matches;
-15:     }
-16:     return globalThis.innerWidth < 640;
-17:   });
-18:   useEffect(() => {
-19:     if (globalThis.window === undefined) return;
-20:     // Fallback to resize listener for test environments without matchMedia
-21:     if (!globalThis.matchMedia) {
-22:       const handleResize = (): void => {
-23:         setIsMobile(globalThis.innerWidth < 640);
-24:       };
-25:       globalThis.addEventListener("resize", handleResize);
-26:       return () => globalThis.removeEventListener("resize", handleResize);
-27:     }
-28:     // Subscribe to media query changes for mobile breakpoint (max-width: 639px)
-29:     const mediaQuery = globalThis.matchMedia("(max-width: 639px)");
-30:     const handleChange = (event: MediaQueryListEvent): void => {
-31:       setIsMobile(event.matches);
-32:     };
-33:     mediaQuery.addEventListener("change", handleChange);
-34:     return () => mediaQuery.removeEventListener("change", handleChange);
-35:   }, []);
-36:   return isMobile;
-37: }
-````
-
 ## File: src/lib/framer/client.ts
 ````typescript
 1: "use client";
@@ -10593,86 +10036,6 @@ vercel.json
 185:     // Swallow here; the awaited call in the page surfaces the error.
 186:   });
 187: }
-````
-
-## File: src/lib/csrf.ts
-````typescript
- 1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
- 2: const CSRF_SECRET =
- 3:   process.env.CSRF_SECRET ?? "default-csrf-secret-change-in-production";
- 4: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
- 5: /**
- 6:  * Generates a CSRF token with timestamp
- 7:  * @returns {string} Base64 encoded CSRF token
- 8:  */
- 9: export function generateCSRFToken(): string {
-10:   const timestamp = Date.now().toString();
-11:   const randomValue = randomBytes(32).toString("hex");
-12:   const payload = `${timestamp}:${randomValue}`;
-13:   const signature = createHmac("sha256", CSRF_SECRET)
-14:     .update(payload)
-15:     .digest("hex");
-16:   const token = `${payload}:${signature}`;
-17:   return Buffer.from(token).toString("base64");
-18: }
-19: interface DecodedCSRFToken {
-20:   timestamp: string;
-21:   payload: string;
-22:   signature: string;
-23: }
-24: /**
-25:  * Decodes a base64 CSRF token into its parts.
-26:  * Returns null if the token does not have the expected structure.
-27:  */
-28: function decodeCSRFToken(token: string): DecodedCSRFToken | null {
-29:   const decoded = Buffer.from(token, "base64").toString("utf-8");
-30:   const parts = decoded.split(":");
-31:   if (parts.length !== 3) {
-32:     return null;
-33:   }
-34:   const [timestamp, randomValue, signature] = parts;
-35:   return { timestamp, payload: `${timestamp}:${randomValue}`, signature };
-36: }
-37: /**
-38:  * Verifies the HMAC signature of a token payload using constant-time comparison.
-39:  */
-40: function hasValidSignature(payload: string, signature: string): boolean {
-41:   const expectedSignature = createHmac("sha256", CSRF_SECRET)
-42:     .update(payload)
-43:     .digest("hex");
-44:   const signatureBuffer = Buffer.from(signature, "hex");
-45:   const expectedBuffer = Buffer.from(expectedSignature, "hex");
-46:   return (
-47:     signatureBuffer.length === expectedBuffer.length &&
-48:     timingSafeEqual(signatureBuffer, expectedBuffer)
-49:   );
-50: }
-51: /**
-52:  * Checks whether the token timestamp is older than the allowed expiry window.
-53:  */
-54: function isExpired(timestamp: string): boolean {
-55:   const tokenTime = Number.parseInt(timestamp, 10);
-56:   return Date.now() - tokenTime > TOKEN_EXPIRY;
-57: }
-58: /**
-59:  * Validates a CSRF token
-60:  * @param {string} token - Base64 encoded CSRF token
-61:  * @returns {boolean} True if token is valid and not expired
-62:  */
-63: export function validateCSRFToken(token: string): boolean {
-64:   try {
-65:     const decoded = decodeCSRFToken(token);
-66:     if (!decoded) {
-67:       return false;
-68:     }
-69:     return (
-70:       hasValidSignature(decoded.payload, decoded.signature) &&
-71:       !isExpired(decoded.timestamp)
-72:     );
-73:   } catch {
-74:     return false;
-75:   }
-76: }
 ````
 
 ## File: src/stories/components/Animations/BounceInScroll.stories.tsx
@@ -15816,117 +15179,6 @@ vercel.json
 66: export default eslintCustomRules;
 ````
 
-## File: .eslintrc.json
-````json
-  1: {
-  2:   "extends": [
-  3:     "next/core-web-vitals",
-  4:     "eslint:recommended",
-  5:     "plugin:@typescript-eslint/recommended",
-  6:     "plugin:react/recommended",
-  7:     "plugin:react-hooks/recommended",
-  8:     "plugin:jsx-a11y/recommended",
-  9:     "plugin:jest/recommended",
- 10:     "plugin:jest/style",
- 11:     "plugin:testing-library/react",
- 12:     "plugin:test-rules/recommended",
- 13:     "plugin:prettier/recommended"
- 14:   ],
- 15:   "plugins": [
- 16:     "@typescript-eslint",
- 17:     "react",
- 18:     "jsx-a11y",
- 19:     "jest",
- 20:     "testing-library",
- 21:     "test-rules"
- 22:   ],
- 23:   "overrides": [
- 24:     {
- 25:       "files": ["**/*.test.ts", "**/*.test.tsx"],
- 26:       "rules": {
- 27:         "@typescript-eslint/no-explicit-any": "error"
- 28:       }
- 29:     },
- 30:     {
- 31:       "files": ["./src/e2e/cypress/**/*.ts", "./src/e2e/cypress/**/*.tsx"],
- 32:       "rules": {
- 33:         "test-rules/arrange-act-assert": "off",
- 34:         "jest/expect-expect": "off"
- 35:       }
- 36:     },
- 37:     {
- 38:       "files": ["./src/e2e/playwright/**/*.ts"],
- 39:       "rules": {
- 40:         "test-rules/arrange-act-assert": "off",
- 41:         "testing-library/prefer-screen-queries": "off"
- 42:       }
- 43:     },
- 44:     {
- 45:       "files": ["./src/e2e/cypress/support/component.ts"],
- 46:       "rules": {
- 47:         "@typescript-eslint/triple-slash-reference": "off"
- 48:       }
- 49:     }
- 50:   ],
- 51:   "parser": "@typescript-eslint/parser",
- 52:   "rules": {
- 53:     "jest/expect-expect": "error",
- 54:     "jest/no-disabled-tests": "warn",
- 55:     "jest/no-focused-tests": "error",
- 56:     "jest/no-identical-title": "error",
- 57:     "jest/valid-expect": "error",
- 58:     "jest/prefer-to-have-length": "warn",
- 59:     "jest/prefer-to-be": "warn",
- 60:     "jest/no-commented-out-tests": "warn",
- 61:     "jest/prefer-strict-equal": "warn",
- 62:     "jest/prefer-spy-on": "error",
- 63:     "jest/prefer-todo": "warn",
- 64:     "testing-library/no-node-access": "warn",
- 65:     "testing-library/await-async-queries": "error",
- 66:     "testing-library/no-await-sync-queries": "error",
- 67:     "testing-library/no-container": "error",
- 68:     "testing-library/no-debugging-utils": "warn",
- 69:     "testing-library/prefer-screen-queries": "error",
- 70:     "react/react-in-jsx-scope": "off",
- 71:     "react/prop-types": "off",
- 72:     "@typescript-eslint/explicit-module-boundary-types": "off",
- 73:     "@typescript-eslint/no-unused-vars": [
- 74:       "error",
- 75:       { "argsIgnorePattern": "^_" }
- 76:     ],
- 77:     "@typescript-eslint/no-explicit-any": "error",
- 78:     "no-console": ["warn", { "allow": ["warn", "error"] }],
- 79:     "prefer-const": "error",
- 80:     "jsx-a11y/anchor-is-valid": [
- 81:       "error",
- 82:       {
- 83:         "components": ["Link"],
- 84:         "specialLink": ["hrefLeft", "hrefRight"],
- 85:         "aspects": ["invalidHref", "preferButton"]
- 86:       }
- 87:     ],
- 88:     "react-hooks/rules-of-hooks": "error",
- 89:     "react-hooks/exhaustive-deps": "warn",
- 90:     "jsx-a11y/label-has-associated-control": [
- 91:       "error",
- 92:       {
- 93:         "labelComponents": [],
- 94:         "labelAttributes": [],
- 95:         "controlComponents": [],
- 96:         "assert": "either",
- 97:         "depth": 25
- 98:       }
- 99:     ]
-100:   },
-101:   "settings": {
-102:     "react": {
-103:       "version": "detect"
-104:     }
-105:   },
-106:   "ignorePatterns": ["node_modules/", "build/", ".next/", "coverage/"]
-107: }
-````
-
 ## File: .fallowrc.json
 ````json
  1: {
@@ -18931,6 +18183,211 @@ vercel.json
 64: });
 ````
 
+## File: src/__tests__/ErrorBoundary/RouteError.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import userEvent from "@testing-library/user-event";
+ 4: import "@testing-library/jest-dom";
+ 5: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 6: describe("RouteError", () => {
+ 7:   let consoleErrorSpy: jest.SpyInstance;
+ 8:   beforeEach(() => {
+ 9:     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterEach(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("renders the description and error message, and logs the error", () => {
+15:     // Arrange
+16:     const error = new Error("Something broke");
+17:     const description = "Det oppsto en feil under lasting av CV-siden.";
+18:     // Act
+19:     render(
+20:       <RouteError error={error} reset={jest.fn()} description={description} />,
+21:     );
+22:     // Assert
+23:     expect(
+24:       screen.getByRole("heading", { name: "Noe gikk galt" }),
+25:     ).toBeInTheDocument();
+26:     expect(screen.getByText(description)).toBeInTheDocument();
+27:     expect(screen.getByText("Something broke")).toBeInTheDocument();
+28:     expect(consoleErrorSpy).toHaveBeenCalledWith(error);
+29:   });
+30:   it("does not render the message block when the error has no message", () => {
+31:     // Arrange
+32:     const error = new Error("");
+33:     // Act
+34:     const { container } = render(
+35:       <RouteError error={error} reset={jest.fn()} description="Beskrivelse" />,
+36:     );
+37:     // Assert
+38:     expect(container.querySelector(".font-mono")).not.toBeInTheDocument();
+39:   });
+40:   it("calls reset when the retry button is clicked", async () => {
+41:     // Arrange
+42:     const reset = jest.fn();
+43:     const user = userEvent.setup();
+44:     render(
+45:       <RouteError
+46:         error={new Error("x")}
+47:         reset={reset}
+48:         description="Beskrivelse"
+49:       />,
+50:     );
+51:     // Act
+52:     await user.click(screen.getByRole("button", { name: "Prøv igjen" }));
+53:     // Assert
+54:     expect(reset).toHaveBeenCalledTimes(1);
+55:   });
+56: });
+````
+
+## File: src/__tests__/Prosjekter/page.test.tsx
+````typescript
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: import "@testing-library/jest-dom";
+  4: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  5:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  6: // Define the project type
+  7: interface ProjectType {
+  8:   id: string;
+  9:   name: string;
+ 10:   description: string;
+ 11:   subdescription: string;
+ 12:   projectimage: { asset: { _ref: string } };
+ 13:   urlwww: unknown[];
+ 14:   urlgithub: unknown[];
+ 15: }
+ 16: // Mock the actions before importing the page component
+ 17: const mockGetProjects = jest.fn();
+ 18: const mockPreloadProjects = jest.fn();
+ 19: jest.mock("@/lib/sanity/content", () => ({
+ 20:   getProjects: mockGetProjects,
+ 21:   preloadProjects: mockPreloadProjects,
+ 22: }));
+ 23: // Mock the sanity client
+ 24: const mockUrlBuilder = {
+ 25:   width: jest.fn().mockReturnThis(),
+ 26:   fit: jest.fn().mockReturnThis(),
+ 27:   quality: jest.fn().mockReturnThis(),
+ 28:   auto: jest.fn().mockReturnThis(),
+ 29:   url: jest.fn().mockReturnValue("mock-url"),
+ 30: };
+ 31: jest.mock("@/lib/sanity/client", () => ({
+ 32:   client: {
+ 33:     fetch: jest.fn(),
+ 34:   },
+ 35:   urlFor: jest.fn(() => mockUrlBuilder),
+ 36: }));
+ 37: // Mock components
+ 38: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 39:   <h1>{children}</h1>
+ 40: );
+ 41: const MockProsjektCard = (props: { name: string }) => (
+ 42:   <div data-testid="project-card">{props.name}</div>
+ 43: );
+ 44: const MockRotatingLoader = () => (
+ 45:   <div data-testid="rotating-loader">Loading...</div>
+ 46: );
+ 47: jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+ 48: jest.mock(
+ 49:   "@/components/Prosjekter/ProsjektCard.component",
+ 50:   () => MockProsjektCard,
+ 51: );
+ 52: jest.mock(
+ 53:   "@/components/Animations/RotatingLoader.component",
+ 54:   () => MockRotatingLoader,
+ 55: );
+ 56: // Create a test component that simulates the page behavior without async server components
+ 57: function TestProsjekterPage() {
+ 58:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 59:   const [loading, setLoading] = React.useState(true);
+ 60:   React.useEffect(() => {
+ 61:     mockGetProjects().then((data: ProjectType[]) => {
+ 62:       setProjects(data);
+ 63:       setLoading(false);
+ 64:     });
+ 65:   }, []);
+ 66:   return (
+ 67:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+ 68:       <MockPageHeader>Prosjekter</MockPageHeader>
+ 69:       {loading ? (
+ 70:         <MockRotatingLoader />
+ 71:       ) : (
+ 72:         <div className="container mx-auto">
+ 73:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 74:             {projects.map((project) => (
+ 75:               <MockProsjektCard key={project.id} {...project} />
+ 76:             ))}
+ 77:           </div>
+ 78:         </div>
+ 79:       )}
+ 80:     </main>
+ 81:   );
+ 82: }
+ 83: describe("ProsjekterPage", () => {
+ 84:   beforeEach(() => {
+ 85:     jest.clearAllMocks();
+ 86:   });
+ 87:   it("renders projects from server component", async () => {
+ 88:     // Arrange - Set up test data and conditions
+ 89:     const mockProjects = [
+ 90:       {
+ 91:         id: "1",
+ 92:         name: "Test Project 1",
+ 93:         description: "Test Description 1",
+ 94:         subdescription: "Test Subdescription 1",
+ 95:         projectimage: { asset: { _ref: "test1" } },
+ 96:         urlwww: [],
+ 97:         urlgithub: [],
+ 98:       },
+ 99:       {
+100:         id: "2",
+101:         name: "Test Project 2",
+102:         description: "Test Description 2",
+103:         subdescription: "Test Subdescription 2",
+104:         projectimage: { asset: { _ref: "test2" } },
+105:         urlwww: [],
+106:         urlgithub: [],
+107:       },
+108:     ];
+109:     mockGetProjects.mockResolvedValue(mockProjects);
+110:     // Act - Perform the action being tested
+111:     render(<TestProsjekterPage />);
+112:     // Assert - Verify the results
+113:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+114:     // Wait for projects to load and render
+115:     const projectCards = await screen.findAllByTestId("project-card");
+116:     expect(projectCards).toHaveLength(2);
+117:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+118:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+119:     // Test that projects are rendered within the main content area
+120:     const main = screen.getByRole("main");
+121:     expect(main).toContainElement(projectCards[0]);
+122:     expect(main).toContainElement(projectCards[1]);
+123:   });
+124:   it("uses Suspense boundary for loading state", async () => {
+125:     // Arrange - Set up test data and conditions
+126:     const delayedPromise = createDelayedPromise([], 100);
+127:     mockGetProjects.mockImplementation(() => delayedPromise);
+128:     // Act - Perform the action being tested
+129:     render(<TestProsjekterPage />);
+130:     // Assert - Verify the results
+131:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+132:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+133:     const main = screen.getByRole("main");
+134:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+135:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+136:     // Wait for loading to complete
+137:     await waitFor(() => {
+138:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+139:     });
+140:   });
+141: });
+````
+
 ## File: src/__tests__/Prosjekter/ProsjektCard.test.tsx
 ````typescript
   1: import React from "react";
@@ -19060,6 +18517,108 @@ vercel.json
 125:     });
 126:   });
 127: });
+````
+
+## File: src/__tests__/UI/InputField.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import "@testing-library/jest-dom";
+ 4: import { UseFormRegister } from "react-hook-form";
+ 5: import InputField from "@/components/UI/InputField.component";
+ 6: import { createRegisterOptions } from "@/components/UI/InputField.utils";
+ 7: interface TestFormData {
+ 8:   testField: string;
+ 9: }
+10: const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
+11:   onChange: jest.fn(),
+12:   onBlur: jest.fn(),
+13:   ref: jest.fn(),
+14:   name,
+15: }));
+16: const TestComponent = ({
+17:   type = "input",
+18:   isRequired = false,
+19:   inputPattern,
+20: }: {
+21:   type?: "input" | "textarea";
+22:   isRequired?: boolean;
+23:   inputPattern?: RegExp;
+24: }) => {
+25:   return (
+26:     <InputField<TestFormData>
+27:       name="testField"
+28:       label="Test Field"
+29:       htmlFor="testField"
+30:       type={type}
+31:       isRequired={isRequired}
+32:       inputPattern={inputPattern}
+33:       register={mockRegister}
+34:     />
+35:   );
+36: };
+37: describe("InputField", () => {
+38:   describe("rendering", () => {
+39:     it("renders input field with label", () => {
+40:       // Arrange
+41:       const expectedLabel = "Test Field";
+42:       // Act
+43:       render(<TestComponent />);
+44:       const input = screen.getByLabelText(expectedLabel);
+45:       // Assert
+46:       expect(input).toBeInTheDocument();
+47:     });
+48:     it("renders textarea when specified", () => {
+49:       // Arrange
+50:       const expectedLabel = "Test Field";
+51:       const expectedTag = "TEXTAREA";
+52:       // Act
+53:       render(<TestComponent type="textarea" />);
+54:       const textarea = screen.getByLabelText(expectedLabel);
+55:       // Assert
+56:       expect(textarea).toBeInTheDocument();
+57:       expect(textarea.tagName).toBe(expectedTag);
+58:     });
+59:     it("displays provided error message", () => {
+60:       // Arrange
+61:       const errorMessage = "This is an error message";
+62:       const props = {
+63:         name: "testField" as const,
+64:         label: "Test Field",
+65:         htmlFor: "testField",
+66:         register: mockRegister,
+67:         error: errorMessage,
+68:       };
+69:       // Act
+70:       render(<InputField<TestFormData> {...props} />);
+71:       // Assert
+72:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
+73:     });
+74:   });
+75:   describe("form registration", () => {
+76:     it("creates required validation option when isRequired is true", () => {
+77:       // Arrange
+78:       const isRequired = true;
+79:       const expectedMessage = "Dette feltet er påkrevd";
+80:       // Act
+81:       const options = createRegisterOptions(isRequired);
+82:       // Assert
+83:       expect(options.required).toBe(expectedMessage);
+84:     });
+85:     it("creates pattern validation option when pattern is provided", () => {
+86:       // Arrange
+87:       const pattern = /[A-Za-z]+/;
+88:       const isRequired = false;
+89:       // Act
+90:       const options = createRegisterOptions(isRequired, pattern);
+91:       // Assert
+92:       expect(options.pattern).toBeDefined();
+93:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(
+94:         pattern,
+95:       );
+96:     });
+97:   });
+98: });
 ````
 
 ## File: src/__tests__/UI/Tabs.test.tsx
@@ -19430,6 +18989,60 @@ vercel.json
 113: }
 ````
 
+## File: src/app/cv/error.tsx
+````typescript
+ 1: "use client";
+ 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 3: type ErrorBoundaryProps = Readonly<{
+ 4:   error: Error & { digest?: string };
+ 5:   reset: () => void;
+ 6: }>;
+ 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+ 8:   return (
+ 9:     <RouteError
+10:       error={error}
+11:       reset={reset}
+12:       description="Det oppsto en feil under lasting av CV-siden."
+13:     />
+14:   );
+15: }
+````
+
+## File: src/app/kontakt/error.tsx
+````typescript
+ 1: "use client";
+ 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 3: type ErrorBoundaryProps = Readonly<{
+ 4:   error: Error & { digest?: string };
+ 5:   reset: () => void;
+ 6: }>;
+ 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+ 8:   return (
+ 9:     <RouteError
+10:       error={error}
+11:       reset={reset}
+12:       description="Det oppsto en feil under lasting av kontaktskjemaet."
+13:     />
+14:   );
+15: }
+````
+
+## File: src/app/prosjekter/loading.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 3: export default function Loading() {
+ 4:   return (
+ 5:     <main aria-label="Laster portefølje" className="mt-32 bg-graybg">
+ 6:       <PageHeader>Prosjekter</PageHeader>
+ 7:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
+ 8:         <RotatingLoader />
+ 9:       </div>
+10:     </main>
+11:   );
+12: }
+````
+
 ## File: src/components/Animations/animation-utils.ts
 ````typescript
  1: import type { RefObject } from "react";
@@ -19770,6 +19383,49 @@ vercel.json
 57: export default ErrorFallback;
 ````
 
+## File: src/components/ErrorBoundary/RouteError.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useEffect } from "react";
+ 3: interface RouteErrorProps {
+ 4:   readonly error: Error & { digest?: string };
+ 5:   readonly reset: () => void;
+ 6:   readonly description: string;
+ 7: }
+ 8: /**
+ 9:  * Shared error UI for Next.js route segment `error.tsx` files.
+10:  * Logs the error, shows a description and the error message, and offers a retry.
+11:  * @param {RouteErrorProps} props - The error, the reset callback and the description
+12:  * @returns {JSX.Element} The rendered error state
+13:  */
+14: const RouteError = ({ error, reset, description }: RouteErrorProps) => {
+15:   useEffect(() => {
+16:     console.error(error);
+17:   }, [error]);
+18:   return (
+19:     <main className="flex min-h-screen flex-col items-center justify-center p-4">
+20:       <div className="text-center space-y-4 max-w-md">
+21:         <h2 className="text-2xl font-bold text-red-400">Noe gikk galt</h2>
+22:         <p className="text-gray-300">{description}</p>
+23:         {error.message && (
+24:           <p className="text-sm text-gray-400 font-mono bg-slate-800 p-3 rounded">
+25:             {error.message}
+26:           </p>
+27:         )}
+28:         <button
+29:           type="button"
+30:           onClick={reset}
+31:           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
+32:         >
+33:           Prøv igjen
+34:         </button>
+35:       </div>
+36:     </main>
+37:   );
+38: };
+39: export default RouteError;
+````
+
 ## File: src/components/Index/Hero.component.tsx
 ````typescript
  1: "use client";
@@ -20020,6 +19676,60 @@ vercel.json
 84: export default Section;
 ````
 
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import * as m from "motion/react-m";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-[var(--matrix-light)]" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <m.span
+34:           className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
+35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
+36:           }`}
+37:           initial={false}
+38:           animate={{
+39:             scaleX: isActive ? 1 : 0,
+40:           }}
+41:           variants={{
+42:             hover: { scaleX: 1 },
+43:           }}
+44:           transition={{ duration: 0.3 }}
+45:         />
+46:       </div>
+47:     </Link>
+48:   </MotionDiv>
+49: );
+50: export default NavigationLink;
+````
+
 ## File: src/components/UI/ContentLoader.component.tsx
 ````typescript
  1: import Skeleton from "./Skeleton.component";
@@ -20090,6 +19800,126 @@ vercel.json
 66:   );
 67: };
 68: export default ContentLoader;
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { UseFormRegister, FieldValues, Path } from "react-hook-form";
+ 3: import { createRegisterOptions } from "./InputField.utils";
+ 4: interface InputProps<T extends FieldValues> {
+ 5:   readonly name: Path<T>;
+ 6:   readonly label: string;
+ 7:   readonly htmlFor: string;
+ 8:   readonly isRequired?: boolean;
+ 9:   readonly inputPattern?: RegExp;
+10:   readonly title?: string;
+11:   readonly type?: "input" | "textarea";
+12:   readonly register: UseFormRegister<T>;
+13:   readonly error?: string;
+14:   readonly autoComplete?: string;
+15:   readonly spellCheck?: boolean;
+16:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
+17: }
+18: /**
+19:  * InputField component for rendering form inputs
+20:  * @template T - Type extending FieldValues
+21:  * @param {InputProps<T>} props - The props for the InputField component
+22:  * @returns {JSX.Element} The rendered InputField component
+23:  */
+24: function InputField<T extends FieldValues>({
+25:   name,
+26:   label,
+27:   inputPattern,
+28:   isRequired,
+29:   htmlFor,
+30:   title,
+31:   type = "input",
+32:   register,
+33:   error,
+34:   autoComplete,
+35:   spellCheck,
+36:   inputMode,
+37:   ...props
+38: }: InputProps<T>) {
+39:   const sharedClasses =
+40:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
+41:   const registerOptions = createRegisterOptions<T>(
+42:     isRequired,
+43:     inputPattern,
+44:     title,
+45:   );
+46:   return (
+47:     <div className="relative my-2 flex flex-col items-center">
+48:       <div className="relative">
+49:         {type === "input" ? (
+50:           <input
+51:             id={htmlFor}
+52:             type="text"
+53:             placeholder={label}
+54:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+55:             autoComplete={autoComplete}
+56:             spellCheck={spellCheck}
+57:             inputMode={inputMode}
+58:             {...register(name, {
+59:               ...registerOptions,
+60:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+61:             })}
+62:             {...props}
+63:           />
+64:         ) : (
+65:           <textarea
+66:             id={htmlFor}
+67:             placeholder={label}
+68:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+69:             spellCheck={spellCheck}
+70:             {...register(name, {
+71:               ...registerOptions,
+72:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+73:             })}
+74:             {...props}
+75:           ></textarea>
+76:         )}
+77:         <label
+78:           htmlFor={htmlFor}
+79:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+80:             // Removed peer-focus:text-primary
+81:             type === "textarea" ? "peer-focus:-top-4" : ""
+82:           }`}
+83:         >
+84:           {label}
+85:         </label>
+86:       </div>
+87:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+88:     </div>
+89:   );
+90: }
+91: export default InputField;
+````
+
+## File: src/components/UI/InputField.utils.ts
+````typescript
+ 1: import type { FieldValues, Path, RegisterOptions } from "react-hook-form";
+ 2: /**
+ 3:  * Creates register options for react-hook-form
+ 4:  * @template T - Type extending FieldValues
+ 5:  * @param {boolean} [isRequired] - Whether the field is required
+ 6:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ 7:  * @param {string} [title] - Title for the input field
+ 8:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+ 9:  */
+10: export function createRegisterOptions<T extends FieldValues>(
+11:   isRequired?: boolean,
+12:   inputPattern?: RegExp,
+13:   title?: string,
+14: ): RegisterOptions<T, Path<T>> {
+15:   return {
+16:     required: isRequired ? "Dette feltet er påkrevd" : false,
+17:     ...(inputPattern
+18:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+19:       : {}),
+20:   };
+21: }
 ````
 
 ## File: src/e2e/playwright/cv.spec.ts
@@ -20181,6 +20011,44 @@ vercel.json
 85: });
 ````
 
+## File: src/hooks/useMobile.tsx
+````typescript
+ 1: import { useSyncExternalStore } from "react";
+ 2: const MOBILE_QUERY = "(max-width: 639px)";
+ 3: const MOBILE_BREAKPOINT = 640;
+ 4: function subscribe(onChange: () => void): () => void {
+ 5:   // Fallback to resize listener for test environments without matchMedia
+ 6:   if (!globalThis.matchMedia) {
+ 7:     globalThis.addEventListener("resize", onChange);
+ 8:     return () => globalThis.removeEventListener("resize", onChange);
+ 9:   }
+10:   const mediaQuery = globalThis.matchMedia(MOBILE_QUERY);
+11:   mediaQuery.addEventListener("change", onChange);
+12:   return () => mediaQuery.removeEventListener("change", onChange);
+13: }
+14: function getSnapshot(): boolean {
+15:   if (globalThis.matchMedia) {
+16:     return globalThis.matchMedia(MOBILE_QUERY).matches;
+17:   }
+18:   return globalThis.innerWidth < MOBILE_BREAKPOINT;
+19: }
+20: function getServerSnapshot(): boolean {
+21:   return false;
+22: }
+23: /**
+24:  * A React hook that returns a boolean indicating if the user is on a mobile device.
+25:  * Subscribes to the mobile breakpoint through useSyncExternalStore, so the
+26:  * server render and hydration use `false` and the client value applies after
+27:  * hydration without a mismatch.
+28:  * Includes fallback for test environments where matchMedia is not available.
+29:  *
+30:  * @returns true if the device width is under 640px, else false.
+31:  */
+32: export function useMobile(): boolean {
+33:   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+34: }
+````
+
 ## File: src/lib/sanity/client.ts
 ````typescript
  1: import { createImageUrlBuilder } from "@sanity/image-url";
@@ -20225,6 +20093,105 @@ vercel.json
 40: export function urlFor(source: NonNullable<Project["projectimage"]>) {
 41:   return builder.image(source);
 42: }
+````
+
+## File: src/lib/csrf.ts
+````typescript
+ 1: import { randomBytes, createHmac, timingSafeEqual } from "node:crypto";
+ 2: const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour in milliseconds
+ 3: let ephemeralSecret: string | undefined;
+ 4: /**
+ 5:  * Returns the HMAC secret used to sign CSRF tokens.
+ 6:  * Uses CSRF_SECRET when set. Otherwise falls back to a random secret that
+ 7:  * only lives for the current process, so no known secret ships in the source.
+ 8:  * Tokens signed with the fallback do not validate across processes or
+ 9:  * instances, so set CSRF_SECRET in every deployed environment.
+10:  */
+11: function getCSRFSecret(): string {
+12:   const configuredSecret = process.env.CSRF_SECRET;
+13:   if (configuredSecret) {
+14:     return configuredSecret;
+15:   }
+16:   if (!ephemeralSecret) {
+17:     console.warn(
+18:       "CSRF_SECRET is not set. Using a random per-process secret; tokens will not validate across instances or restarts.",
+19:     );
+20:     ephemeralSecret = randomBytes(32).toString("hex");
+21:   }
+22:   return ephemeralSecret;
+23: }
+24: /**
+25:  * Generates a CSRF token with timestamp
+26:  * @returns {string} Base64 encoded CSRF token
+27:  */
+28: export function generateCSRFToken(): string {
+29:   const timestamp = Date.now().toString();
+30:   const randomValue = randomBytes(32).toString("hex");
+31:   const payload = `${timestamp}:${randomValue}`;
+32:   const signature = createHmac("sha256", getCSRFSecret())
+33:     .update(payload)
+34:     .digest("hex");
+35:   const token = `${payload}:${signature}`;
+36:   return Buffer.from(token).toString("base64");
+37: }
+38: interface DecodedCSRFToken {
+39:   timestamp: string;
+40:   payload: string;
+41:   signature: string;
+42: }
+43: /**
+44:  * Decodes a base64 CSRF token into its parts.
+45:  * Returns null if the token does not have the expected structure.
+46:  */
+47: function decodeCSRFToken(token: string): DecodedCSRFToken | null {
+48:   const decoded = Buffer.from(token, "base64").toString("utf-8");
+49:   const parts = decoded.split(":");
+50:   if (parts.length !== 3) {
+51:     return null;
+52:   }
+53:   const [timestamp, randomValue, signature] = parts;
+54:   return { timestamp, payload: `${timestamp}:${randomValue}`, signature };
+55: }
+56: /**
+57:  * Verifies the HMAC signature of a token payload using constant-time comparison.
+58:  */
+59: function hasValidSignature(payload: string, signature: string): boolean {
+60:   const expectedSignature = createHmac("sha256", getCSRFSecret())
+61:     .update(payload)
+62:     .digest("hex");
+63:   const signatureBuffer = Buffer.from(signature, "hex");
+64:   const expectedBuffer = Buffer.from(expectedSignature, "hex");
+65:   return (
+66:     signatureBuffer.length === expectedBuffer.length &&
+67:     timingSafeEqual(signatureBuffer, expectedBuffer)
+68:   );
+69: }
+70: /**
+71:  * Checks whether the token timestamp is older than the allowed expiry window.
+72:  */
+73: function isExpired(timestamp: string): boolean {
+74:   const tokenTime = Number.parseInt(timestamp, 10);
+75:   return Date.now() - tokenTime > TOKEN_EXPIRY;
+76: }
+77: /**
+78:  * Validates a CSRF token
+79:  * @param {string} token - Base64 encoded CSRF token
+80:  * @returns {boolean} True if token is valid and not expired
+81:  */
+82: export function validateCSRFToken(token: string): boolean {
+83:   try {
+84:     const decoded = decodeCSRFToken(token);
+85:     if (!decoded) {
+86:       return false;
+87:     }
+88:     return (
+89:       hasValidSignature(decoded.payload, decoded.signature) &&
+90:       !isExpired(decoded.timestamp)
+91:     );
+92:   } catch {
+93:     return false;
+94:   }
+95: }
 ````
 
 ## File: src/stories/components/Animations/Matrix.stories.tsx
@@ -20603,6 +20570,117 @@ vercel.json
 123:     </div>
 124:   </div>
 125: );
+````
+
+## File: .eslintrc.json
+````json
+  1: {
+  2:   "extends": [
+  3:     "next/core-web-vitals",
+  4:     "eslint:recommended",
+  5:     "plugin:@typescript-eslint/recommended",
+  6:     "plugin:react/recommended",
+  7:     "plugin:react-hooks/recommended",
+  8:     "plugin:jsx-a11y/recommended",
+  9:     "plugin:jest/recommended",
+ 10:     "plugin:jest/style",
+ 11:     "plugin:testing-library/react",
+ 12:     "plugin:test-rules/recommended",
+ 13:     "plugin:prettier/recommended"
+ 14:   ],
+ 15:   "plugins": [
+ 16:     "@typescript-eslint",
+ 17:     "react",
+ 18:     "jsx-a11y",
+ 19:     "jest",
+ 20:     "testing-library",
+ 21:     "test-rules"
+ 22:   ],
+ 23:   "overrides": [
+ 24:     {
+ 25:       "files": ["**/*.test.ts", "**/*.test.tsx"],
+ 26:       "rules": {
+ 27:         "@typescript-eslint/no-explicit-any": "error"
+ 28:       }
+ 29:     },
+ 30:     {
+ 31:       "files": ["./src/e2e/cypress/**/*.ts", "./src/e2e/cypress/**/*.tsx"],
+ 32:       "rules": {
+ 33:         "test-rules/arrange-act-assert": "off",
+ 34:         "jest/expect-expect": "off"
+ 35:       }
+ 36:     },
+ 37:     {
+ 38:       "files": ["./src/e2e/playwright/**/*.ts"],
+ 39:       "rules": {
+ 40:         "test-rules/arrange-act-assert": "off",
+ 41:         "testing-library/prefer-screen-queries": "off"
+ 42:       }
+ 43:     },
+ 44:     {
+ 45:       "files": ["./src/e2e/cypress/support/component.ts"],
+ 46:       "rules": {
+ 47:         "@typescript-eslint/triple-slash-reference": "off"
+ 48:       }
+ 49:     }
+ 50:   ],
+ 51:   "parser": "@typescript-eslint/parser",
+ 52:   "rules": {
+ 53:     "jest/expect-expect": "error",
+ 54:     "jest/no-disabled-tests": "warn",
+ 55:     "jest/no-focused-tests": "error",
+ 56:     "jest/no-identical-title": "error",
+ 57:     "jest/valid-expect": "error",
+ 58:     "jest/prefer-to-have-length": "warn",
+ 59:     "jest/prefer-to-be": "warn",
+ 60:     "jest/no-commented-out-tests": "warn",
+ 61:     "jest/prefer-strict-equal": "warn",
+ 62:     "jest/prefer-spy-on": "error",
+ 63:     "jest/prefer-todo": "warn",
+ 64:     "testing-library/no-node-access": "warn",
+ 65:     "testing-library/await-async-queries": "error",
+ 66:     "testing-library/no-await-sync-queries": "error",
+ 67:     "testing-library/no-container": "error",
+ 68:     "testing-library/no-debugging-utils": "warn",
+ 69:     "testing-library/prefer-screen-queries": "error",
+ 70:     "react/react-in-jsx-scope": "off",
+ 71:     "react/prop-types": "off",
+ 72:     "@typescript-eslint/explicit-module-boundary-types": "off",
+ 73:     "@typescript-eslint/no-unused-vars": [
+ 74:       "error",
+ 75:       { "argsIgnorePattern": "^_" }
+ 76:     ],
+ 77:     "@typescript-eslint/no-explicit-any": "error",
+ 78:     "no-console": ["warn", { "allow": ["warn", "error"] }],
+ 79:     "prefer-const": "error",
+ 80:     "jsx-a11y/anchor-is-valid": [
+ 81:       "error",
+ 82:       {
+ 83:         "components": ["Link"],
+ 84:         "specialLink": ["hrefLeft", "hrefRight"],
+ 85:         "aspects": ["invalidHref", "preferButton"]
+ 86:       }
+ 87:     ],
+ 88:     "react-hooks/rules-of-hooks": "error",
+ 89:     "react-hooks/exhaustive-deps": "warn",
+ 90:     "jsx-a11y/label-has-associated-control": [
+ 91:       "error",
+ 92:       {
+ 93:         "labelComponents": [],
+ 94:         "labelAttributes": [],
+ 95:         "controlComponents": [],
+ 96:         "assert": "either",
+ 97:         "depth": 25
+ 98:       }
+ 99:     ]
+100:   },
+101:   "settings": {
+102:     "react": {
+103:       "version": "19.2"
+104:     }
+105:   },
+106:   "ignorePatterns": ["node_modules/", "build/", ".next/", "coverage/"]
+107: }
 ````
 
 ## File: .prettierignore
@@ -21092,6 +21170,167 @@ vercel.json
 28:   />
 29: );
 30: export default VolunteerWorkTabContent;
+````
+
+## File: src/components/Layout/MobileMenu.component.tsx
+````typescript
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: const menuVariants: Variants = {
+ 10:   closed: {
+ 11:     x: "125%",
+ 12:     transition: {
+ 13:       type: "spring",
+ 14:       stiffness: 60,
+ 15:       damping: 10,
+ 16:       delay: 0.3,
+ 17:     },
+ 18:   },
+ 19:   open: {
+ 20:     x: 0,
+ 21:     transition: {
+ 22:       type: "spring",
+ 23:       stiffness: 60,
+ 24:       damping: 10,
+ 25:     },
+ 26:   },
+ 27: };
+ 28: /**
+ 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 30:  * @param {Object} props
+ 31:  * @param {ILink[]} props.links - Array of navigation link objects
+ 32:  * @returns {JSX.Element} The rendered MobileMenu component
+ 33:  */
+ 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 36:   const closeMenu = () => toggleExpanded(0);
+ 37:   const pathname = usePathname();
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             className="fixed top-0 -left-[50vw] -right-[50vw] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <m.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
+ 94:                   const linkClassName =
+ 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
+ 96:                   return (
+ 97:                     <m.li
+ 98:                       key={title}
+ 99:                       className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+100:                       data-cy="mobile-menu-item"
+101:                       custom={index}
+102:                       variants={itemVariants}
+103:                     >
+104:                       {externalLink ? (
+105:                         <a
+106:                           aria-label={name}
+107:                           href={href}
+108:                           target="_blank"
+109:                           rel="noreferrer"
+110:                           data-testid={`mobil-${name}`}
+111:                           className={linkClassName}
+112:                         >
+113:                           {name}
+114:                         </a>
+115:                       ) : (
+116:                         <Link
+117:                           href={href ?? ""}
+118:                           data-testid={`mobil-${name}`}
+119:                           prefetch={true}
+120:                           onClick={closeMenu}
+121:                           className={`${linkClassName} ${
+122:                             pathname === href
+123:                               ? "text-[var(--matrix-light)]"
+124:                               : ""
+125:                           }`}
+126:                         >
+127:                           <div className="glitch relative" data-text={name}>
+128:                             {name}
+129:                             <m.span
+130:                               className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
+131:                                 pathname === href
+132:                                   ? "bg-[var(--matrix-light)]"
+133:                                   : "bg-white"
+134:                               }`}
+135:                               initial={{
+136:                                 scaleX: pathname === href ? 1 : 0,
+137:                               }}
+138:                               animate={{
+139:                                 scaleX: pathname === href ? 1 : 0,
+140:                               }}
+141:                               transition={{ duration: 0.3 }}
+142:                             />
+143:                           </div>
+144:                         </Link>
+145:                       )}
+146:                     </m.li>
+147:                   );
+148:                 })}
+149:               </m.ul>
+150:             </nav>
+151:           </m.div>
+152:         )}
+153:       </AnimatePresence>
+154:     </div>
+155:   );
+156: };
+157: export default MobileMenu;
 ````
 
 ## File: studio/.snyk
@@ -22065,167 +22304,6 @@ vercel.json
 218:   - Simplified test maintenance and debugging
 219:   - Automated validation through custom ESLint rules
 220:   - Tests will fail if AAA pattern is not followed
-````
-
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: const menuVariants: Variants = {
- 10:   closed: {
- 11:     x: "125%",
- 12:     transition: {
- 13:       type: "spring",
- 14:       stiffness: 60,
- 15:       damping: 10,
- 16:       delay: 0.3,
- 17:     },
- 18:   },
- 19:   open: {
- 20:     x: 0,
- 21:     transition: {
- 22:       type: "spring",
- 23:       stiffness: 60,
- 24:       damping: 10,
- 25:     },
- 26:   },
- 27: };
- 28: /**
- 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 30:  * @param {Object} props
- 31:  * @param {ILink[]} props.links - Array of navigation link objects
- 32:  * @returns {JSX.Element} The rendered MobileMenu component
- 33:  */
- 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 36:   const closeMenu = () => toggleExpanded(0);
- 37:   const pathname = usePathname();
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             className="fixed top-0 -left-[50vw] -right-[50vw] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
- 73:             initial="closed"
- 74:             animate="open"
- 75:             exit="closed"
- 76:             variants={menuVariants}
- 77:           >
- 78:             <nav aria-label="Navigasjon" className="w-full">
- 79:               <m.ul
- 80:                 className="w-full"
- 81:                 initial="closed"
- 82:                 animate="open"
- 83:                 exit="closed"
- 84:                 variants={{
- 85:                   open: {
- 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 87:                   },
- 88:                   closed: {
- 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 90:                   },
- 91:                 }}
- 92:               >
- 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
- 94:                   const linkClassName =
- 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
- 96:                   return (
- 97:                     <m.li
- 98:                       key={title}
- 99:                       className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-100:                       data-cy="mobile-menu-item"
-101:                       custom={index}
-102:                       variants={itemVariants}
-103:                     >
-104:                       {externalLink ? (
-105:                         <a
-106:                           aria-label={name}
-107:                           href={href}
-108:                           target="_blank"
-109:                           rel="noreferrer"
-110:                           data-testid={`mobil-${name}`}
-111:                           className={linkClassName}
-112:                         >
-113:                           {name}
-114:                         </a>
-115:                       ) : (
-116:                         <Link
-117:                           href={href ?? ""}
-118:                           data-testid={`mobil-${name}`}
-119:                           prefetch={true}
-120:                           onClick={closeMenu}
-121:                           className={`${linkClassName} ${
-122:                             pathname === href
-123:                               ? "text-[var(--matrix-light)]"
-124:                               : ""
-125:                           }`}
-126:                         >
-127:                           <div className="glitch relative" data-text={name}>
-128:                             {name}
-129:                             <m.span
-130:                               className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-131:                                 pathname === href
-132:                                   ? "bg-[var(--matrix-light)]"
-133:                                   : "bg-white"
-134:                               }`}
-135:                               initial={{
-136:                                 width: pathname === href ? "100%" : "0%",
-137:                               }}
-138:                               animate={{
-139:                                 width: pathname === href ? "100%" : "0%",
-140:                               }}
-141:                               transition={{ duration: 0.3 }}
-142:                             />
-143:                           </div>
-144:                         </Link>
-145:                       )}
-146:                     </m.li>
-147:                   );
-148:                 })}
-149:               </m.ul>
-150:             </nav>
-151:           </m.div>
-152:         )}
-153:       </AnimatePresence>
-154:     </div>
-155:   );
-156: };
-157: export default MobileMenu;
 ````
 
 ## File: studio/package.json
