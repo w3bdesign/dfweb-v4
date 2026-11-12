@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 
 describe("ErrorBoundary", () => {
   let consoleErrorSpy: jest.SpyInstance;

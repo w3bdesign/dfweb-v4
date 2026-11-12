@@ -10,7 +10,7 @@ import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 import SkipLink from "@/components/UI/SkipLink.component";
 import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
-import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary";
+import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],

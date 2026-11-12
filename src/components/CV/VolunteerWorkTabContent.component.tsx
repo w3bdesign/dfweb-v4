@@ -1,5 +1,5 @@
 import React from "react";
-import GenericCVSectionContent from "./GenericCVSectionContent";
+import GenericCVSectionContent from "./GenericCVSectionContent.component";
 
 interface VolunteerWork {
   _key: string;
