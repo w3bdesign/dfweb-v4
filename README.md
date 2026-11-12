@@ -131,6 +131,18 @@ Sanity.io and Typescript.
   - Automated PR analysis with repository structure insights
   - Security-focused documentation with sensitive information filtering
   - Markdown formatting for improved readability
+- Hard rules for code style, structure and architecture, enforced in CI by the
+  Code Quality workflow (`.github/workflows/lint.yml`)
+  - Prettier formatting check (`pnpm format:check`)
+  - Stylelint for CSS (`pnpm lint:css`)
+  - Architecture tests in `src/__tests__/architecture/`
+    - Components end with `.component.tsx` and hooks start with `use`
+    - Import boundaries between `app`, `components`, `hooks`, `lib`, `utils`
+      and `types`
+    - Production code never imports tests, mocks, stories or e2e code, and
+      uses `@/` instead of `../` imports
+  - Coverage floor in `jest.config.mjs` fails the Jest run if coverage drops
+  - Every rule and the check that enforces it is listed in `AGENTS.md`
 
 ### Security
 
