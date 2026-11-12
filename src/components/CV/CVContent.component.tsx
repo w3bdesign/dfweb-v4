@@ -2,10 +2,10 @@ import PageHeader from "@/components/UI/PageHeader.component";
 import Button from "@/components/UI/Button.component";
 import Tabs from "@/components/UI/Tabs.component";
 
-import QualificationsTabContent from "./QualificationsTabContent";
-import ExperienceTabContent from "./ExperienceTabContent";
-import EducationTabContent from "./EducationTabContent";
-import VolunteerWorkTabContent from "./VolunteerWorkTabContent";
+import QualificationsTabContent from "./QualificationsTabContent.component";
+import ExperienceTabContent from "./ExperienceTabContent.component";
+import EducationTabContent from "./EducationTabContent.component";
+import VolunteerWorkTabContent from "./VolunteerWorkTabContent.component";
 
 import type { Cv } from "@/types/sanity.types";
 

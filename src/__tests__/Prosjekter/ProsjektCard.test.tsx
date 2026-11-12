@@ -89,7 +89,7 @@ describe("ProsjektCard", () => {
       const src = img.getAttribute("src");
       // Check for either raw path or URL-encoded path (%2F = /)
       expect(
-        src?.includes("/test-image.jpg") || src?.includes("%2Ftest-image.jpg")
+        src?.includes("/test-image.jpg") || src?.includes("%2Ftest-image.jpg"),
       ).toBe(true);
     });
 

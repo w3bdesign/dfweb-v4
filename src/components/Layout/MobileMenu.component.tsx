@@ -105,52 +105,56 @@ const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
 
                   return (
-                  <m.li
-                    key={title}
-                    className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-                    data-cy="mobile-menu-item"
-                    custom={index}
-                    variants={itemVariants}
-                  >
-                    {externalLink ? (
-                      <a
-                        aria-label={name}
-                        href={href}
-                        target="_blank"
-                        rel="noreferrer"
-                        data-testid={`mobil-${name}`}
-                        className={linkClassName}
-                      >
-                        {name}
-                      </a>
-                    ) : (
-                      <Link
-                        href={href ?? ""}
-                        data-testid={`mobil-${name}`}
-                        prefetch={true}
-                        onClick={closeMenu}
-                        className={`${linkClassName} ${
-                          pathname === href ? "text-[var(--matrix-light)]" : ""
-                        }`}
-                      >
-                        <div className="glitch relative" data-text={name}>
+                    <m.li
+                      key={title}
+                      className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+                      data-cy="mobile-menu-item"
+                      custom={index}
+                      variants={itemVariants}
+                    >
+                      {externalLink ? (
+                        <a
+                          aria-label={name}
+                          href={href}
+                          target="_blank"
+                          rel="noreferrer"
+                          data-testid={`mobil-${name}`}
+                          className={linkClassName}
+                        >
                           {name}
-                          <m.span
-                            className={`absolute bottom-0 left-0 h-0.5 bg-current ${
-                              pathname === href ? "bg-[var(--matrix-light)]" : "bg-white"
-                            }`}
-                            initial={{
-                              width: pathname === href ? "100%" : "0%",
-                            }}
-                            animate={{
-                              width: pathname === href ? "100%" : "0%",
-                            }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        </div>
-                      </Link>
-                    )}
-                  </m.li>
+                        </a>
+                      ) : (
+                        <Link
+                          href={href ?? ""}
+                          data-testid={`mobil-${name}`}
+                          prefetch={true}
+                          onClick={closeMenu}
+                          className={`${linkClassName} ${
+                            pathname === href
+                              ? "text-[var(--matrix-light)]"
+                              : ""
+                          }`}
+                        >
+                          <div className="glitch relative" data-text={name}>
+                            {name}
+                            <m.span
+                              className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+                                pathname === href
+                                  ? "bg-[var(--matrix-light)]"
+                                  : "bg-white"
+                              }`}
+                              initial={{
+                                width: pathname === href ? "100%" : "0%",
+                              }}
+                              animate={{
+                                width: pathname === href ? "100%" : "0%",
+                              }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
+                        </Link>
+                      )}
+                    </m.li>
                   );
                 })}
               </m.ul>

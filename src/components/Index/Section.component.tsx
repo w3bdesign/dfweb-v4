@@ -2,8 +2,8 @@
 
 import { PortableText } from "@portabletext/react";
 import { useState } from "react";
-import FadeInScroll from "../Animations/FadeInScroll.component";
-import Button from "../UI/Button.component";
+import FadeInScroll from "@/components/Animations/FadeInScroll.component";
+import Button from "@/components/UI/Button.component";
 import { myPortableTextComponents } from "@/utils/portableTextComponents";
 import type { Pagecontent } from "@/types/sanity.types";
 

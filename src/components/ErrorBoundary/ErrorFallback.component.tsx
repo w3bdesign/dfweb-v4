@@ -1,6 +1,6 @@
 import React from "react";
 
-import ReactMatrixAnimation from "../../components/Animations/Matrix.component";
+import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 
 interface ErrorFallbackProps {
   error: Error;
