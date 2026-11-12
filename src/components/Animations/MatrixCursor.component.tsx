@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, RefObject, useCallback } from "react";
 
-import { useMobile } from "../../hooks/useMobile";
+import { useMobile } from "@/hooks/useMobile";
 
 import "@/app/cursor.css";
 
