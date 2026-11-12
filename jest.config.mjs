@@ -25,6 +25,15 @@ const customJestConfig = {
     "!src/pages/**/*.*",
     "!src/utils/**/*.*",
   ],
+  // Floor measured on 2026-11-12, rounded down. Raise it when coverage improves; never lower it.
+  coverageThreshold: {
+    global: {
+      statements: 99,
+      branches: 91,
+      functions: 98,
+      lines: 99,
+    },
+  },
 };
 
 export default createJestConfig(customJestConfig);
