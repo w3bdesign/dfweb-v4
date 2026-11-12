@@ -75,11 +75,7 @@ function TestProsjekterPage() {
   }, []);
 
   return (
-    <main
-      role="main"
-      aria-label="Innhold portefølje"
-      className="mt-32 bg-graybg"
-    >
+    <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
       <MockPageHeader>Prosjekter</MockPageHeader>
       {loading ? (
         <MockRotatingLoader />
