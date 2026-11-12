@@ -32,7 +32,7 @@ export async function sanityFetch<T>({
   tags?: string[];
 }): Promise<T> {
   return client.fetch<T>(query, params, {
-    cache: 'force-cache', // Explicitly enable caching (Next.js 15+ requires this)
+    cache: "force-cache", // Explicitly enable caching (Next.js 15+ requires this)
     next: {
       revalidate,
       tags,

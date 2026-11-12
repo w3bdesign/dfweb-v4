@@ -28,7 +28,12 @@ const ContentLoader = ({
           <Skeleton height="h-6" width="w-80 max-w-full mx-auto" shimmer />
           <div className="flex justify-center space-x-4 mt-4">
             {[1, 2, 3].map((iconNum) => (
-              <Skeleton key={`icon-skeleton-${iconNum}`} height="h-10 w-10" rounded shimmer />
+              <Skeleton
+                key={`icon-skeleton-${iconNum}`}
+                height="h-10 w-10"
+                rounded
+                shimmer
+              />
             ))}
           </div>
         </div>
@@ -48,16 +53,16 @@ const ContentLoader = ({
               sectionNum % 2 === 0 ? "bg-slate-800/30" : "bg-slate-900"
             }`}
           >
-          <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
-            <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
-            <div className="max-w-3xl mx-auto space-y-3 mt-4">
-              <Skeleton shimmer />
-              <Skeleton width="w-5/6" shimmer />
-              <Skeleton width="w-4/6" shimmer />
-              <Skeleton shimmer />
-              <Skeleton width="w-3/4" shimmer />
+            <div className="p-6 md:p-2 max-w-7xl mx-auto space-y-4">
+              <Skeleton height="h-9" width="w-48 mx-auto" shimmer />
+              <div className="max-w-3xl mx-auto space-y-3 mt-4">
+                <Skeleton shimmer />
+                <Skeleton width="w-5/6" shimmer />
+                <Skeleton width="w-4/6" shimmer />
+                <Skeleton shimmer />
+                <Skeleton width="w-3/4" shimmer />
+              </div>
             </div>
-          </div>
           </div>
         ),
       )}

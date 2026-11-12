@@ -41,19 +41,21 @@ interface MarkComponentProps {
 }
 
 interface PortableTextComponents {
-  marks?: Record<
-    string,
-    React.ComponentType<MarkComponentProps>
-  >;
+  marks?: Record<string, React.ComponentType<MarkComponentProps>>;
 }
 
 interface PortableTextProps {
   readonly value: PortableTextBlock[];
   readonly components?: PortableTextComponents;
-  readonly onMissingComponent?: false | ((message: string, options: Record<string, unknown>) => void);
+  readonly onMissingComponent?:
+    false | ((message: string, options: Record<string, unknown>) => void);
 }
 
-export function PortableText({ value, components, onMissingComponent: _onMissingComponent }: Readonly<PortableTextProps>) {
+export function PortableText({
+  value,
+  components,
+  onMissingComponent: _onMissingComponent,
+}: Readonly<PortableTextProps>) {
   if (!value || !Array.isArray(value)) return null;
 
   return (
@@ -81,10 +83,7 @@ export function PortableText({ value, components, onMissingComponent: _onMissing
 
                   if (MarkComponent) {
                     content = (
-                      <MarkComponent
-                        value={markDef}
-                        markType={markType}
-                      >
+                      <MarkComponent value={markDef} markType={markType}>
                         {content}
                       </MarkComponent>
                     );

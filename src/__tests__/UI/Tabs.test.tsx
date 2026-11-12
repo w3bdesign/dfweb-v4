@@ -211,7 +211,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("ArrowUp moves to previous tab in vertical orientation", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
+    await pressKeysAndExpectFocus(
+      "vertical",
+      0,
+      ["{ArrowDown}", "{ArrowUp}"],
+      0,
+    );
   });
 
   it("ArrowRight moves to next tab in horizontal orientation", async () => {
@@ -221,7 +226,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
+    await pressKeysAndExpectFocus(
+      "horizontal",
+      0,
+      ["{ArrowRight}", "{ArrowLeft}"],
+      0,
+    );
   });
 
   it("wraps focus from last tab to first tab on ArrowDown", async () => {
@@ -236,7 +246,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("Home key moves focus to first tab from any position", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
+    await pressKeysAndExpectFocus(
+      "vertical",
+      0,
+      ["{ArrowDown}", "{ArrowDown}", "{Home}"],
+      0,
+    );
   });
 
   it("End key moves focus to last tab", async () => {
@@ -249,7 +264,10 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
     renderKeyboardTabs("vertical");
 
     // Assert
-    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+    expect(screen.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "vertical",
+    );
   });
 
   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
@@ -257,7 +275,10 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
     renderKeyboardTabs("horizontal");
 
     // Assert
-    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+    expect(screen.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "horizontal",
+    );
   });
 
   it("tab panel is focusable with tabIndex=0", () => {
