@@ -581,74 +581,6 @@ vercel.json
 15: ]
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.175.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: .ladle/components.tsx
 ````typescript
 1: import "@/app/globals.css";
@@ -16851,44 +16783,6 @@ vercel.json
 50:           pkill -f "next start" || true
 ````
 
-## File: .github/workflows/lint.yml
-````yaml
- 1: name: Code Quality
- 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
- 3: # structure/architecture (Jest tests in src/__tests__/architecture).
- 4: on:
- 5:   push:
- 6:     branches: [main]
- 7:   pull_request:
- 8: permissions:
- 9:   contents: read
-10: concurrency:
-11:   group: ${{ github.workflow }}-${{ github.ref }}
-12:   cancel-in-progress: true
-13: jobs:
-14:   quality:
-15:     name: Style and architecture
-16:     runs-on: ubuntu-latest
-17:     timeout-minutes: 15
-18:     steps:
-19:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-20:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-22:         with:
-23:           node-version: 26
-24:           cache: "pnpm"
-25:       - name: Install dependencies
-26:         run: pnpm install --frozen-lockfile --ignore-scripts
-27:       - name: Check formatting (Prettier)
-28:         run: pnpm format:check
-29:       - name: Lint CSS (Stylelint)
-30:         run: pnpm lint:css
-31:       - name: Architecture tests (naming and import boundaries)
-32:         env:
-33:           NODE_OPTIONS: --no-experimental-strip-types
-34:         run: pnpm exec jest src/__tests__/architecture --coverage=false
-````
-
 ## File: .github/workflows/pa11y.yml
 ````yaml
  1: name: A11y
@@ -17259,6 +17153,74 @@ vercel.json
 81:           else
 82:             echo "No changes detected in repository_context.txt"
 83:           fi
+````
+
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.183.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
 ````
 
 ## File: .github/copilot-instructions.md
@@ -20810,6 +20772,41 @@ vercel.json
 37: };
 38: 
 39: export default createJestConfig(customJestConfig);
+````
+
+## File: .github/workflows/lint.yml
+````yaml
+ 1: name: Code Quality
+ 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
+ 3: # structure/architecture (Jest tests in src/__tests__/architecture).
+ 4: on: [push, pull_request]
+ 5: permissions:
+ 6:   contents: read
+ 7: concurrency:
+ 8:   group: ${{ github.workflow }}-${{ github.ref }}
+ 9:   cancel-in-progress: true
+10: jobs:
+11:   quality:
+12:     name: Style and architecture
+13:     runs-on: ubuntu-latest
+14:     timeout-minutes: 15
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+17:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+19:         with:
+20:           node-version: 26
+21:           cache: "pnpm"
+22:       - name: Install dependencies
+23:         run: pnpm install --frozen-lockfile --ignore-scripts
+24:       - name: Check formatting (Prettier)
+25:         run: pnpm format:check
+26:       - name: Lint CSS (Stylelint)
+27:         run: pnpm lint:css
+28:       - name: Architecture tests (naming and import boundaries)
+29:         env:
+30:           NODE_OPTIONS: --no-experimental-strip-types
+31:         run: pnpm exec jest src/__tests__/architecture --coverage=false
 ````
 
 ## File: src/app/layout.tsx
