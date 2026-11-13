@@ -426,99 +426,6 @@ vercel.json
 
 # Files
 
-## File: .circleci/config.yml
-````yaml
- 1: version: 2.1
- 2: orbs:
- 3:   codecov: codecov/codecov@6.0.0
- 4:   node: circleci/node@7.2.1
- 5: jobs:
- 6:   chromatic-deployment:
- 7:     docker:
- 8:       - image: cimg/node:26.8.1
- 9:     working_directory: ~/chromatic
-10:     steps:
-11:       - checkout
-12:       - restore_cache:
-13:           keys:
-14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-15:             - pnpm-packages-cache-v1
-16:       - run:
-17:           name: Install pnpm package manager
-18:           command: sudo npm i -g pnpm@11.0.8
-19:       - run:
-20:           name: Install Dependencies
-21:           command: pnpm install --frozen-lockfile
-22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
-23:       - save_cache:
-24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
-25:           paths:
-26:             - ~/.pnpm-store
-27:   build:
-28:     working_directory: /home/circleci/dfweb
-29:     docker:
-30:       - image: cimg/node:26.8.1-browsers
-31:     steps:
-32:       - checkout
-33:       - restore_cache:
-34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-35:       - run:
-36:           name: Install pnpm package manager
-37:           command: sudo npm i -g pnpm@11.0.8
-38:       - run:
-39:           name: Install Dependencies
-40:           command: pnpm install --frozen-lockfile
-41:       - run:
-42:           name: Chrome key start setup
-43:           command: sudo apt update -y
-44:       - run:
-45:           name: Chrome key finish setup
-46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-47:       - run:
-48:           name: Chrome package download
-49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
-50:       - save_cache:
-51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
-52:           paths:
-53:             - ~/.pnpm-store
-54:       - store_artifacts:
-55:           path: /root/.npm/_logs
-56:       - run:
-57:           name: Run Jest Tests
-58:           command: pnpm test
-59:       - run:
-60:           name: Make sure ~/.gnupg directory exists
-61:           command: mkdir -p ~/.gnupg
-62:       - run:
-63:           name: Fix GPG directory permissions
-64:           command: |
-65:             chmod 700 ~/.gnupg
-66:             chmod 600 ~/.gnupg/* || true
-67:       - run:
-68:           name: Import Codecov GPG key
-69:           command: |
-70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
-71:       - run:
-72:           name: Download and Verify Codecov CLI
-73:           command: |
-74:             curl -Os https://cli.codecov.io/latest/linux/codecov
-75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
-77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
-78:             shasum -a 256 -c codecov.SHA256SUM
-79:             sudo chmod +x codecov
-80:       - run:
-81:           name: Upload Coverage to Codecov
-82:           command: |
-83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
-84:     parallelism: 6
-85: workflows:
-86:   chromatic-deploy:
-87:     jobs:
-88:       - build:
-89:           name: Build Next.js project
-````
-
 ## File: .github/ISSUE_TEMPLATE/bug_report.md
 ````markdown
  1: ---
@@ -1638,6 +1545,27 @@ vercel.json
 51:             stream=False,
 52:         )
 53:         return response.choices[0].message.content.strip()
+````
+
+## File: commit/.env.example
+````
+ 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
+ 2: # Valid values: anthropic, openai, openai-compatible
+ 3: # PROVIDER=""
+ 4: 
+ 5: # API Keys - set at least one (or more for fallback options)
+ 6: # The system auto-detects which provider to use based on which key is present
+ 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
+ 8: # ANTHROPIC_API_KEY=""
+ 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
+10: 
+11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
+12: # Both are required if using openai-compatible provider
+13: OPENAI_COMPATIBLE_API_KEY=""
+14: OPENAI_COMPATIBLE_BASE_URL=""
+15: 
+16: # Optional: Override the default model
+17: MODEL_NAME="anthropic/claude-haiku-5.5"
 ````
 
 ## File: commit/commit_analyzer.py
@@ -16680,6 +16608,99 @@ vercel.json
 1: {}
 ````
 
+## File: .circleci/config.yml
+````yaml
+ 1: version: 2.1
+ 2: orbs:
+ 3:   codecov: codecov/codecov@6.0.0
+ 4:   node: circleci/node@7.2.1
+ 5: jobs:
+ 6:   chromatic-deployment:
+ 7:     docker:
+ 8:       - image: cimg/node:26.8.1
+ 9:     working_directory: ~/chromatic
+10:     steps:
+11:       - checkout
+12:       - restore_cache:
+13:           keys:
+14:             - pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+15:             - pnpm-packages-cache-v1
+16:       - run:
+17:           name: Install pnpm package manager
+18:           command: sudo npm i -g pnpm@12.15.0
+19:       - run:
+20:           name: Install Dependencies
+21:           command: pnpm install --frozen-lockfile
+22:       - run: pnpm run chromatic -- --project-token=${CHROMATIC_PROJECT_TOKEN}
+23:       - save_cache:
+24:           key: pnpm-packages-v1-{{ checksum "pnpm-lock.yaml" }}
+25:           paths:
+26:             - ~/.pnpm-store
+27:   build:
+28:     working_directory: /home/circleci/dfweb
+29:     docker:
+30:       - image: cimg/node:26.8.1-browsers
+31:     steps:
+32:       - checkout
+33:       - restore_cache:
+34:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+35:       - run:
+36:           name: Install pnpm package manager
+37:           command: sudo npm i -g pnpm@12.15.0
+38:       - run:
+39:           name: Install Dependencies
+40:           command: pnpm install --frozen-lockfile
+41:       - run:
+42:           name: Chrome key start setup
+43:           command: sudo apt update -y
+44:       - run:
+45:           name: Chrome key finish setup
+46:           command: wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+47:       - run:
+48:           name: Chrome package download
+49:           command: sudo apt install ./google-chrome-stable_current_amd64.deb
+50:       - save_cache:
+51:           key: pnpm-cache-v2-{{ checksum "pnpm-lock.yaml" }}
+52:           paths:
+53:             - ~/.pnpm-store
+54:       - store_artifacts:
+55:           path: /root/.npm/_logs
+56:       - run:
+57:           name: Run Jest Tests
+58:           command: pnpm test
+59:       - run:
+60:           name: Make sure ~/.gnupg directory exists
+61:           command: mkdir -p ~/.gnupg
+62:       - run:
+63:           name: Fix GPG directory permissions
+64:           command: |
+65:             chmod 700 ~/.gnupg
+66:             chmod 600 ~/.gnupg/* || true
+67:       - run:
+68:           name: Import Codecov GPG key
+69:           command: |
+70:             curl -s https://keybase.io/codecovsecops/pgp_keys.asc | gpg --import
+71:       - run:
+72:           name: Download and Verify Codecov CLI
+73:           command: |
+74:             curl -Os https://cli.codecov.io/latest/linux/codecov
+75:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+76:             curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
+77:             gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
+78:             shasum -a 256 -c codecov.SHA256SUM
+79:             sudo chmod +x codecov
+80:       - run:
+81:           name: Upload Coverage to Codecov
+82:           command: |
+83:             ./codecov upload-process --fail-on-error -t ${CODECOV_TOKEN}
+84:     parallelism: 6
+85: workflows:
+86:   chromatic-deploy:
+87:     jobs:
+88:       - build:
+89:           name: Build Next.js project
+````
+
 ## File: .github/workflows/cypress.yml
 ````yaml
  1: name: Cypress Tests
@@ -17394,27 +17415,6 @@ vercel.json
 167: - Use Server Components where possible
 168: - Keep components focused and modular
 169: - Document complex logic
-````
-
-## File: commit/.env.example
-````
- 1: # Provider Selection (optional - auto-detects based on available API keys if not set)
- 2: # Valid values: anthropic, openai, openai-compatible
- 3: # PROVIDER=""
- 4: 
- 5: # API Keys - set at least one (or more for fallback options)
- 6: # The system auto-detects which provider to use based on which key is present
- 7: # Priority order: Anthropic > OpenAI > OpenAI-compatible
- 8: # ANTHROPIC_API_KEY=""
- 9: # OPENAI_API_KEY=""     # For OpenAI GPT models (sk-...)
-10: 
-11: # OpenAI-Compatible provider (for local LLMs, custom endpoints, etc.)
-12: # Both are required if using openai-compatible provider
-13: OPENAI_COMPATIBLE_API_KEY=""
-14: OPENAI_COMPATIBLE_BASE_URL=""
-15: 
-16: # Optional: Override the default model
-17: MODEL_NAME="anthropic/claude-haiku-5.5"
 ````
 
 ## File: src/__mocks__/motion.ts
@@ -22303,6 +22303,62 @@ vercel.json
 220:   - Tests will fail if AAA pattern is not followed
 ````
 
+## File: pnpm-workspace.yaml
+````yaml
+ 1: packages:
+ 2:   - "."
+ 3: overrides:
+ 4:   "@babel/core": ">=8.1.0"
+ 5:   "brace-expansion": "5.0.12"
+ 6:   "js-yaml": ">=5.5.0"
+ 7:   "sharp": ">=0.35.5"
+ 8:   "adm-zip": ">=0.6.1"
+ 9:   "nanoid": ">=6.0.2"
+10:   "postcss": ">=8.5.32"
+11:   "jest-mock": "30.5.2"
+12:   "@jest/environment": "30.5.2"
+13:   "@jest/fake-timers": "30.5.2"
+14:   "jest-util": "30.5.1"
+15:   "@jest/types": "30.5.1"
+16:   "react": "19.3.1"
+17:   "react-dom": "19.3.1"
+18:   "fast-uri": "4.2.3"
+19:   "browserslist": ">=4.29.5"
+20:   "undici": ">=8.12.4"
+21:   "dompurify": ">=3.4.17"
+22:   "source-map-js": ">=1.2.2"
+23:   "vite": ">=8.3.3"
+24:   "joi": ">=18.3.1"
+25: allowBuilds:
+26:   "@parcel/watcher": true
+27:   "@swc/core": true
+28:   cypress: true
+29:   esbuild: true
+30:   msw: true
+31:   puppeteer: true
+32:   sharp: true
+33:   unrs-resolver: true
+34: minimumReleaseAgeExclude:
+35:   - postcss@8.5.21
+36:   - wait-on@9.1.0
+37:   - eslint@10.8.1
+38:   - '@jest/environment@30.5.0'
+39:   - '@jest/expect-utils@30.5.0'
+40:   - '@jest/fake-timers@30.5.0'
+41:   - '@jest/get-type@30.5.0'
+42:   - '@jest/pattern@30.5.0'
+43:   - '@jest/schemas@30.5.0'
+44:   - '@jest/types@30.5.0'
+45:   - jest-message-util@30.5.0
+46:   - jest-mock@30.5.0
+47:   - jest-regex-util@30.5.0
+48:   - jest-util@30.5.0
+49:   - pretty-format@30.5.0
+50:   - browserslist@4.28.9
+51:   - undici@8.10.2 || 8.12.4
+52:   - '@vercel/speed-insights@2.1.0'
+````
+
 ## File: studio/package.json
 ````json
  1: {
@@ -22381,62 +22437,6 @@ vercel.json
 74: }
 ````
 
-## File: pnpm-workspace.yaml
-````yaml
- 1: packages:
- 2:   - "."
- 3: overrides:
- 4:   "@babel/core": ">=8.1.0"
- 5:   "brace-expansion": "5.0.12"
- 6:   "js-yaml": ">=5.5.0"
- 7:   "sharp": ">=0.35.5"
- 8:   "adm-zip": ">=0.6.1"
- 9:   "nanoid": ">=6.0.2"
-10:   "postcss": ">=8.5.32"
-11:   "jest-mock": "30.5.2"
-12:   "@jest/environment": "30.5.2"
-13:   "@jest/fake-timers": "30.5.2"
-14:   "jest-util": "30.5.1"
-15:   "@jest/types": "30.5.1"
-16:   "react": "19.3.1"
-17:   "react-dom": "19.3.1"
-18:   "fast-uri": "4.2.3"
-19:   "browserslist": ">=4.29.5"
-20:   "undici": ">=8.12.4"
-21:   "dompurify": ">=3.4.17"
-22:   "source-map-js": ">=1.2.2"
-23:   "vite": ">=8.3.3"
-24:   "joi": ">=18.3.1"
-25: allowBuilds:
-26:   "@parcel/watcher": true
-27:   "@swc/core": true
-28:   cypress: true
-29:   esbuild: true
-30:   msw: true
-31:   puppeteer: true
-32:   sharp: true
-33:   unrs-resolver: true
-34: minimumReleaseAgeExclude:
-35:   - postcss@8.5.21
-36:   - wait-on@9.1.0
-37:   - eslint@10.8.1
-38:   - '@jest/environment@30.5.0'
-39:   - '@jest/expect-utils@30.5.0'
-40:   - '@jest/fake-timers@30.5.0'
-41:   - '@jest/get-type@30.5.0'
-42:   - '@jest/pattern@30.5.0'
-43:   - '@jest/schemas@30.5.0'
-44:   - '@jest/types@30.5.0'
-45:   - jest-message-util@30.5.0
-46:   - jest-mock@30.5.0
-47:   - jest-regex-util@30.5.0
-48:   - jest-util@30.5.0
-49:   - pretty-format@30.5.0
-50:   - browserslist@4.28.9
-51:   - undici@8.10.2 || 8.12.4
-52:   - '@vercel/speed-insights@2.1.0'
-````
-
 ## File: package.json
 ````json
   1: {
@@ -22445,101 +22445,104 @@ vercel.json
   4:   "private": true,
   5:   "type": "module",
   6:   "packageManager": "pnpm@12.15.0",
-  7:   "scripts": {
-  8:     "dev": "next dev --turbopack",
-  9:     "lhci": "lhci autorun",
- 10:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
- 11:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
- 12:     "build": "next build",
- 13:     "start": "next start",
- 14:     "lint": "next lint",
- 15:     "lint:css": "stylelint \"src/**/*.css\"",
- 16:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
- 17:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
- 18:     "format:check": "prettier --check \"**/*.{ts,tsx,json}\"",
- 19:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
- 20:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
- 21:     "cypress:open": "cypress open",
- 22:     "cypress:headless": "cypress run",
- 23:     "e2e": "start-test dev 3000 cypress:headless",
- 24:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
- 25:     "ladle": "ladle serve",
- 26:     "typegen": "npx sanity typegen generate",
- 27:     "doctor": "react-doctor . --verbose"
- 28:   },
- 29:   "dependencies": {
- 30:     "@emailjs/browser": "^4.4.1",
- 31:     "@hookform/resolvers": "^5.9.1",
- 32:     "@portabletext/react": "^8.0.1",
- 33:     "@sanity/client": "^8.14.1",
- 34:     "@sanity/image-url": "^2.1.1",
- 35:     "@vercel/speed-insights": "2.1.0",
- 36:     "babel-jest": "30.5.2",
- 37:     "jest": "30.5.2",
- 38:     "motion": "^13.5.1",
- 39:     "next": "^16.4.5",
- 40:     "react": "^19.2.8",
- 41:     "react-dom": "^19.2.8",
- 42:     "react-error-boundary": "^6.1.3",
- 43:     "react-hook-form": "^7.86.0",
- 44:     "react-icons": "^5.7.0",
- 45:     "ts-node": "^10.9.2",
- 46:     "zod": "^4.6.7"
- 47:   },
- 48:   "devDependencies": {
- 49:     "@jest/expect": "^30.5.2",
- 50:     "@jest/globals": "^30.5.2",
- 51:     "@ladle/react": "^5.1.1",
- 52:     "@lhci/cli": "^0.15.1",
- 53:     "@playwright/test": "^1.62.1",
- 54:     "@tailwindcss/postcss": "^4.3.3",
- 55:     "@testing-library/cypress": "^10.1.3",
- 56:     "@testing-library/jest-dom": "^7.0.1",
- 57:     "@testing-library/react": "^16.3.3",
- 58:     "@testing-library/user-event": "^14.6.6",
- 59:     "@types/jest": "^30.0.0",
- 60:     "@types/node": "^26.6.6",
- 61:     "@types/react": "^19.2.18",
- 62:     "@types/react-dom": "^19.2.5",
- 63:     "@typescript-eslint/eslint-plugin": "^8.72.1",
- 64:     "@typescript-eslint/parser": "^8.72.1",
- 65:     "@typescript-eslint/utils": "^8.72.1",
- 66:     "axe-core": "^4.13.0",
- 67:     "cypress": "15.21.1",
- 68:     "cypress-axe": "^1.7.0",
- 69:     "eslint": "10.9.1",
- 70:     "eslint-config-next": "16.3.3",
- 71:     "eslint-config-prettier": "^10.1.8",
- 72:     "eslint-plugin-jest": "^29.17.0",
- 73:     "eslint-plugin-jsx-a11y": "^6.10.2",
- 74:     "eslint-plugin-prettier": "^5.5.6",
- 75:     "eslint-plugin-react": "^7.37.5",
- 76:     "eslint-plugin-react-hooks": "^7.1.1",
- 77:     "eslint-plugin-test-rules": "file:src/utils/eslint",
- 78:     "eslint-plugin-testing-library": "^7.16.2",
- 79:     "jest-environment-jsdom": "^30.5.2",
- 80:     "jest-extended": "^7.0.0",
- 81:     "jsdom-testing-mocks": "^1.16.0",
- 82:     "pa11y": "^10.0.0",
- 83:     "postcss": "^8.5.26",
- 84:     "postcss-load-config": "^6.0.1",
- 85:     "prettier": "3.9.6",
- 86:     "react-doctor": "^0.9.22",
- 87:     "sanity": "6.21.0",
- 88:     "stylelint": "^17.14.1",
- 89:     "stylelint-config-standard": "^40.0.0",
- 90:     "tailwindcss": "^4.3.3",
- 91:     "ts-jest": "^29.4.12",
- 92:     "typescript": "^7.0.2",
- 93:     "wait-on": "^9.1.0"
- 94:   },
- 95:   "browserslist": [
- 96:     "chrome >= 92",
- 97:     "firefox >= 90",
- 98:     "safari >= 15.4",
- 99:     "edge >= 92"
-100:   ]
-101: }
+  7:   "engines": {
+  8:     "node": ">=26"
+  9:   },
+ 10:   "scripts": {
+ 11:     "dev": "next dev --turbopack",
+ 12:     "lhci": "lhci autorun",
+ 13:     "lhci:perf": "lhci autorun --collect.settings.preset=perf",
+ 14:     "lhci:desktop": "lhci autorun --collect.settings.preset=desktop",
+ 15:     "build": "next build",
+ 16:     "start": "next start",
+ 17:     "lint": "next lint",
+ 18:     "lint:css": "stylelint \"src/**/*.css\"",
+ 19:     "lint:css:fix": "stylelint \"src/**/*.css\" --fix",
+ 20:     "format": "prettier --write \"**/*.{ts,tsx,json}\"",
+ 21:     "format:check": "prettier --check \"**/*.{ts,tsx,json}\"",
+ 22:     "test": "NODE_OPTIONS='--no-experimental-strip-types' jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'",
+ 23:     "test:watch": "NODE_OPTIONS='--no-experimental-strip-types' jest --watch",
+ 24:     "cypress:open": "cypress open",
+ 25:     "cypress:headless": "cypress run",
+ 26:     "e2e": "start-test dev 3000 cypress:headless",
+ 27:     "refresh": "pnpm i && rm -rf node_modules && rm pnpm-lock.yaml && pnpm store prune && pnpm i && pnpm format",
+ 28:     "ladle": "ladle serve",
+ 29:     "typegen": "npx sanity typegen generate",
+ 30:     "doctor": "react-doctor . --verbose"
+ 31:   },
+ 32:   "dependencies": {
+ 33:     "@emailjs/browser": "^4.4.1",
+ 34:     "@hookform/resolvers": "^5.9.1",
+ 35:     "@portabletext/react": "^8.0.1",
+ 36:     "@sanity/client": "^8.14.1",
+ 37:     "@sanity/image-url": "^2.1.1",
+ 38:     "@vercel/speed-insights": "2.1.0",
+ 39:     "babel-jest": "30.5.2",
+ 40:     "jest": "30.5.2",
+ 41:     "motion": "^13.5.1",
+ 42:     "next": "^16.4.5",
+ 43:     "react": "^19.2.8",
+ 44:     "react-dom": "^19.2.8",
+ 45:     "react-error-boundary": "^6.1.3",
+ 46:     "react-hook-form": "^7.86.0",
+ 47:     "react-icons": "^5.7.0",
+ 48:     "ts-node": "^10.9.2",
+ 49:     "zod": "^4.6.7"
+ 50:   },
+ 51:   "devDependencies": {
+ 52:     "@jest/expect": "^30.5.2",
+ 53:     "@jest/globals": "^30.5.2",
+ 54:     "@ladle/react": "^5.1.1",
+ 55:     "@lhci/cli": "^0.15.1",
+ 56:     "@playwright/test": "^1.62.1",
+ 57:     "@tailwindcss/postcss": "^4.3.3",
+ 58:     "@testing-library/cypress": "^10.1.3",
+ 59:     "@testing-library/jest-dom": "^7.0.1",
+ 60:     "@testing-library/react": "^16.3.3",
+ 61:     "@testing-library/user-event": "^14.6.6",
+ 62:     "@types/jest": "^30.0.0",
+ 63:     "@types/node": "^26.6.6",
+ 64:     "@types/react": "^19.2.18",
+ 65:     "@types/react-dom": "^19.2.5",
+ 66:     "@typescript-eslint/eslint-plugin": "^8.72.1",
+ 67:     "@typescript-eslint/parser": "^8.72.1",
+ 68:     "@typescript-eslint/utils": "^8.72.1",
+ 69:     "axe-core": "^4.13.0",
+ 70:     "cypress": "15.21.1",
+ 71:     "cypress-axe": "^1.7.0",
+ 72:     "eslint": "10.9.1",
+ 73:     "eslint-config-next": "16.3.3",
+ 74:     "eslint-config-prettier": "^10.1.8",
+ 75:     "eslint-plugin-jest": "^29.17.0",
+ 76:     "eslint-plugin-jsx-a11y": "^6.10.2",
+ 77:     "eslint-plugin-prettier": "^5.5.6",
+ 78:     "eslint-plugin-react": "^7.37.5",
+ 79:     "eslint-plugin-react-hooks": "^7.1.1",
+ 80:     "eslint-plugin-test-rules": "file:src/utils/eslint",
+ 81:     "eslint-plugin-testing-library": "^7.16.2",
+ 82:     "jest-environment-jsdom": "^30.5.2",
+ 83:     "jest-extended": "^7.0.0",
+ 84:     "jsdom-testing-mocks": "^1.16.0",
+ 85:     "pa11y": "^10.0.0",
+ 86:     "postcss": "^8.5.26",
+ 87:     "postcss-load-config": "^6.0.1",
+ 88:     "prettier": "3.9.6",
+ 89:     "react-doctor": "^0.9.22",
+ 90:     "sanity": "6.21.0",
+ 91:     "stylelint": "^17.14.1",
+ 92:     "stylelint-config-standard": "^40.0.0",
+ 93:     "tailwindcss": "^4.3.3",
+ 94:     "ts-jest": "^29.4.12",
+ 95:     "typescript": "^7.0.2",
+ 96:     "wait-on": "^9.1.0"
+ 97:   },
+ 98:   "browserslist": [
+ 99:     "chrome >= 92",
+100:     "firefox >= 90",
+101:     "safari >= 15.4",
+102:     "edge >= 92"
+103:   ]
+104: }
 ````
 
 ## File: .github/workflows/snyk-scan.yml
