@@ -191,6 +191,9 @@ src/
 
 ### Testing Standards
 
+See [TEST-STRATEGY.md](./TEST-STRATEGY.md) for the full test strategy: layers,
+risk matrix, the Cypress/Playwright split, merge criteria and defect management.
+
 All tests must follow the AAA (Arrange-Act-Assert) pattern:
 
 ```typescript
