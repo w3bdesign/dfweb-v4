@@ -2,7 +2,18 @@
  * @jest-environment node
  */
 import { GET } from "@/app/api/csrf-token/route";
-import * as csrf from "@/lib/csrf";
+import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
+
+// Wrap the real implementation so a single test can force a failure
+jest.mock("@/lib/csrf", () => {
+  const actual = jest.requireActual("@/lib/csrf");
+  return {
+    ...actual,
+    generateCSRFToken: jest.fn(actual.generateCSRFToken),
+  };
+});
+
+const mockGenerateCSRFToken = generateCSRFToken as jest.Mock;
 
 describe("GET /api/csrf-token", () => {
   const originalSecret = process.env.CSRF_SECRET;
@@ -31,7 +42,7 @@ describe("GET /api/csrf-token", () => {
     // Assert
     expect(response.status).toBe(200);
     expect(typeof body.csrfToken).toBe("string");
-    expect(csrf.validateCSRFToken(body.csrfToken)).toBe(true);
+    expect(validateCSRFToken(body.csrfToken)).toBe(true);
   });
 
   it("sends no-store cache headers", async () => {
@@ -51,7 +62,7 @@ describe("GET /api/csrf-token", () => {
   it("returns 500 when token generation throws", async () => {
     // Arrange
     jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(csrf, "generateCSRFToken").mockImplementation(() => {
+    mockGenerateCSRFToken.mockImplementationOnce(() => {
       throw new Error("boom");
     });
 
