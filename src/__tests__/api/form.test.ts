@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { randomBytes } from "node:crypto";
 import { NextRequest } from "next/server";
 import { DELETE, GET, POST, PUT } from "@/app/api/form/route";
 import { GET as getCsrfToken } from "@/app/api/csrf-token/route";
@@ -33,7 +34,7 @@ describe("POST /api/form", () => {
   const originalSecret = process.env.CSRF_SECRET;
 
   beforeEach(() => {
-    process.env.CSRF_SECRET = "form-test-secret";
+    process.env.CSRF_SECRET = randomBytes(16).toString("hex");
   });
 
   afterEach(() => {

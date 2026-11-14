@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { randomBytes } from "node:crypto";
 import { GET } from "@/app/api/csrf-token/route";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
 
@@ -19,7 +20,7 @@ describe("GET /api/csrf-token", () => {
   const originalSecret = process.env.CSRF_SECRET;
 
   beforeEach(() => {
-    process.env.CSRF_SECRET = "token-test-secret";
+    process.env.CSRF_SECRET = randomBytes(16).toString("hex");
   });
 
   afterEach(() => {

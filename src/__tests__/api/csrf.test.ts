@@ -1,10 +1,11 @@
 /**
  * @jest-environment node
  */
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
 
-const TEST_SECRET = "test-csrf-secret";
+// Generated per run so no secret value is committed to the repo
+const TEST_SECRET = randomBytes(16).toString("hex");
 const ONE_HOUR = 60 * 60 * 1000;
 
 const decode = (token: string) =>
@@ -125,7 +126,7 @@ describe("lib/csrf", () => {
   it("rejects a token signed with a different secret", () => {
     // Arrange
     const token = generateCSRFToken();
-    process.env.CSRF_SECRET = "another-secret";
+    process.env.CSRF_SECRET = randomBytes(16).toString("hex");
 
     // Act
     const result = validateCSRFToken(token);
