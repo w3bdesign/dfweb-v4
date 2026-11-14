@@ -1,5 +1,5 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 import { randomBytes } from "node:crypto";
 import { NextRequest } from "next/server";

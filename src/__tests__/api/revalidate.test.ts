@@ -1,6 +1,7 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
+import type { Mock } from "vitest";
 import { randomBytes } from "node:crypto";
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
@@ -10,7 +11,7 @@ vi.mock("next/cache", () => ({
   revalidateTag: vi.fn(),
 }));
 
-const mockRevalidateTag = revalidateTag as jest.Mock;
+const mockRevalidateTag = revalidateTag as Mock;
 
 // Generated per run so no secret value is committed to the repo
 const SECRET = randomBytes(16).toString("hex");

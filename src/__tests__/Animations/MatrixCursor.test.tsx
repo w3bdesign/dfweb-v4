@@ -1,3 +1,4 @@
+import type { MockedFunction } from "vitest";
 import React, { useRef } from "react";
 import { render, fireEvent, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -7,7 +8,7 @@ import { useMobile } from "@/hooks/useMobile";
 
 // Mock useMobile hook
 vi.mock("@/hooks/useMobile");
-const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
+const mockUseMobile = useMobile as MockedFunction<typeof useMobile>;
 
 // Wrapper component to provide ref
 const TestWrapper = () => {

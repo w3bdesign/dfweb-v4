@@ -1,12 +1,13 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
+import type { Mock } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import ContactForm from "@/components/Kontakt/ContactForm.component";
 import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
 
-type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+type SendType = Mock<Promise<EmailJSResponseStatus>>;
 
 vi.mock("@emailjs/browser", () => ({
   send: vi.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,

@@ -1,3 +1,4 @@
+import type { MockInstance } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
@@ -5,7 +6,7 @@ import "@testing-library/jest-dom";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 
 describe("ErrorBoundary", () => {
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleErrorSpy: MockInstance;
   const errorMock = new Error("Dette er en testfeil");
 
   beforeAll(() => {

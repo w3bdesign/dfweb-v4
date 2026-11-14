@@ -1,6 +1,7 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
+import type { Mock } from "vitest";
 import { randomBytes } from "node:crypto";
 import { GET } from "@/app/api/csrf-token/route";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
@@ -14,7 +15,7 @@ vi.mock("@/lib/csrf", () => {
   };
 });
 
-const mockGenerateCSRFToken = generateCSRFToken as jest.Mock;
+const mockGenerateCSRFToken = generateCSRFToken as Mock;
 
 describe("GET /api/csrf-token", () => {
   const originalSecret = process.env.CSRF_SECRET;

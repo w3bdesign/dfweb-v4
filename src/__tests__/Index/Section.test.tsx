@@ -1,3 +1,4 @@
+import type { MockInstance } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import Section from "@/components/Index/Section.component";
 import { Pagecontent } from "@/types/sanity.types";
@@ -70,7 +71,7 @@ describe("Section Component", () => {
   });
 
   describe("error handling for invalid data", () => {
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: MockInstance;
 
     beforeEach(() => {
       consoleErrorSpy = vi

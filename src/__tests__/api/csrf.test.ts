@@ -1,5 +1,5 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 import { createHmac, randomBytes } from "node:crypto";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";

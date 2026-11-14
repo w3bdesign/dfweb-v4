@@ -1,7 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
+import type { MockedFunction } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { usePathname } from "next/navigation";
@@ -56,7 +57,7 @@ vi.mock("next/navigation", () => ({
   usePathname: vi.fn(),
 }));
 
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
+const mockUsePathname = usePathname as MockedFunction<typeof usePathname>;
 
 describe("MobileMenu - elementer eksisterer", () => {
   const testidMenu = "mobile-menu";
