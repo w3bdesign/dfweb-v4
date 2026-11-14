@@ -21,7 +21,7 @@ This file provides guidance to agents when working with code in this repository.
 - **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
 - **Architecture Tests**: `pnpm exec jest src/__tests__/architecture --coverage=false`
 - **Style Checks**: `pnpm format:check`, `pnpm lint:css`
-- **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+- **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='src/app/api/**/*.{js,ts}' --collectCoverageFrom='src/lib/csrf.ts' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/types/**'` (same scope as `pnpm test`)
 - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
 - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
 
