@@ -8,13 +8,13 @@ const fromRoot = (p: string) => path.resolve(root, p);
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    // Same as moduleNameMapper in jest.config.mjs. Specific entries come first, because the first match wins.
+    // Specific entries come first, because the first match wins.
     alias: [
       {
         find: /^@portabletext\/react$/,
         replacement: fromRoot("src/__mocks__/portabletext-react.tsx"),
       },
-      // next/jest mapped this to an empty module; the package isn't installed.
+      // Next.js provides "server-only" at build time; the package isn't installed, so tests get an empty module.
       {
         find: /^server-only$/,
         replacement: fromRoot("src/__mocks__/server-only.ts"),

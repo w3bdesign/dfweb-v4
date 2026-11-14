@@ -48,8 +48,8 @@ Each rule below has a check that fails CI. If you add a hard rule, add its check
 | Imports follow the layer table below | `src/__tests__/architecture/boundaries.test.ts` | `lint.yml`, CircleCI |
 | Production code never imports from `__tests__`, `__mocks__`, `stories` or `e2e` | `boundaries.test.ts` | `lint.yml`, CircleCI |
 | Production code uses `@/` instead of `../` imports | `boundaries.test.ts` | `lint.yml`, CircleCI |
-| Every test file has AAA comments | `jest.setup.ts` | CircleCI |
-| Coverage stays at or above statements 99, branches 91, functions 98, lines 99 | `coverageThreshold` in `jest.config.mjs` | CircleCI |
+| Every test file has AAA comments | `vitest.setup.ts` | `lint.yml` (architecture tests only), CircleCI |
+| Coverage stays at or above statements 99, branches 91, functions 98, lines 99 | `coverage.thresholds` in `vitest.config.mts` | CircleCI |
 | No type errors | `next build` | Cypress, Playwright, pa11y and Lighthouse workflows |
 
 "Production code" means the layers in the table below.
