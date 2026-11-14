@@ -39,16 +39,16 @@ HTMLCanvasElement.prototype.getContext = function (contextId: string) {
   }
 } as typeof HTMLCanvasElement.prototype.getContext;
 
-vi
-  .spyOn(global, "requestAnimationFrame")
-  .mockImplementation((cb) => setTimeout(cb, 0));
+vi.spyOn(global, "requestAnimationFrame").mockImplementation((cb) =>
+  setTimeout(cb, 0),
+);
 
 describe("ReactMatrixAnimation", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi
-      .spyOn(window, "requestAnimationFrame")
-      .mockImplementation((cb) => setTimeout(cb, 0));
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) =>
+      setTimeout(cb, 0),
+    );
   });
 
   afterEach(() => {

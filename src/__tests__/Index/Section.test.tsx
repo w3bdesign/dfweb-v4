@@ -74,9 +74,7 @@ describe("Section Component", () => {
     let consoleErrorSpy: MockInstance;
 
     beforeEach(() => {
-      consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     });
 
     afterEach(() => consoleErrorSpy.mockRestore());

@@ -5,7 +5,11 @@ import Loading from "@/app/prosjekter/loading";
 
 // Mock the components used in Loading
 vi.mock("@/components/UI/PageHeader.component", () => ({
-  default: function MockPageHeader({ children }: { children: React.ReactNode }) {
+  default: function MockPageHeader({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
     return <h1>{children}</h1>;
   },
 }));
