@@ -112,7 +112,7 @@ Sanity.io and Typescript.
 - E2E testing with Cypress and Playwright integrated with Github actions
 - Unit testing with Jest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
-- 100% test coverage with Jest and React testing library
+- 100% Jest coverage of components, API routes and CSRF (see [`DOCS/TEST-STRATEGY.md`](DOCS/TEST-STRATEGY.md))
 - AI-powered commit message generation following Conventional Commits with
   gitmojis
 - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
