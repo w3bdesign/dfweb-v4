@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { randomBytes } from "node:crypto";
 import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { POST } from "@/app/api/revalidate/route";
@@ -11,7 +12,8 @@ jest.mock("next/cache", () => ({
 
 const mockRevalidateTag = revalidateTag as jest.Mock;
 
-const SECRET = "revalidate-test-secret";
+// Generated per run so no secret value is committed to the repo
+const SECRET = randomBytes(16).toString("hex");
 
 const makeRequest = (params: Record<string, string>) => {
   const query = new URLSearchParams(params).toString();
