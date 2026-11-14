@@ -1,13 +1,4 @@
-import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
-
-// jest-dom's "/vitest" types declare `Assertion<T>` with one type parameter, but Vitest 5 declares
-// `Assertion<R, T>`, so that augmentation never merges. `Matchers` is Vitest's hook for custom
-// matchers; its type parameters must match Vitest's declaration exactly for the merge to apply.
-declare module "vitest" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars
-  interface Matchers<R extends void | Promise<void> = void | Promise<void>, T = unknown>
-    extends TestingLibraryMatchers<unknown, R> {}
-}
+// Vitest gets the jest-dom matcher types from "@testing-library/jest-dom/vitest" in tsconfig.json.
 
 // Augment Chai assertions for Cypress
 declare global {
