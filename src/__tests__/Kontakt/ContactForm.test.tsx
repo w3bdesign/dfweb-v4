@@ -58,9 +58,12 @@ describe("ContactForm", () => {
     render(<ContactForm csrfToken={csrfToken} />);
 
     // Assert
-    expect(screen.getByRole("form", { name: "Contact Form" })).toHaveFormValues(
-      { _csrf: csrfToken },
-    );
+    const form = screen.getByRole<HTMLFormElement>("form", {
+      name: "Contact Form",
+    });
+    const field = form.elements.namedItem("_csrf") as HTMLInputElement | null;
+    expect(field?.type).toBe("hidden");
+    expect(field?.value).toBe(csrfToken);
   });
 
   it("omits the CSRF field when no token is provided", () => {
@@ -71,9 +74,8 @@ describe("ContactForm", () => {
     render(<ContactForm />);
 
     // Assert
-    expect(
-      screen.getByRole("form", { name: formName }).querySelector('[name="_csrf"]'),
-    ).toBeNull();
+    const form = screen.getByRole<HTMLFormElement>("form", { name: formName });
+    expect(form.elements.namedItem("_csrf")).toBeNull();
   });
 
   it("submits the form successfully and disables submit button while submitting", async () => {
