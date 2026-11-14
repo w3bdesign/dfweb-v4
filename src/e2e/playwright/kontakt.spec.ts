@@ -138,10 +138,9 @@ test.describe("Contact form", () => {
     });
     await page.getByTestId("submit-button").click();
 
-    await expect(page.getByText("Vennligst bruk norske bokstaver")).toHaveCount(
-      // The input title attribute is not rendered text, so only the error matches
-      1,
-    );
+    await expect(
+      page.getByText("Vennligst bruk norske bokstaver"),
+    ).toBeVisible();
     await expect(
       page.getByText("Vennligst oppgi et gyldig telefonnummer"),
     ).toBeVisible();
