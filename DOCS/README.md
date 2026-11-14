@@ -31,7 +31,7 @@ development practices and architectural patterns. Built with Next.js 15, React
 
 4. **Testing Excellence**
 
-   - 100% test coverage with Jest and RTL
+   - 100% Jest coverage of components, API routes and CSRF
    - E2E testing with Cypress and Playwright
    - Custom ESLint rules enforcing AAA pattern
    - Automated accessibility testing
