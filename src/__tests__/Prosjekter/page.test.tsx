@@ -15,32 +15,9 @@ interface ProjectType {
   urlgithub: unknown[];
 }
 
-// Mock the actions before importing the page component
+// Stand-ins for the data source and child components used by TestProsjekterPage
 const mockGetProjects = vi.fn();
-const mockPreloadProjects = vi.fn();
 
-vi.mock("@/lib/sanity/content", () => ({
-  getProjects: mockGetProjects,
-  preloadProjects: mockPreloadProjects,
-}));
-
-// Mock the sanity client
-const mockUrlBuilder = {
-  width: vi.fn().mockReturnThis(),
-  fit: vi.fn().mockReturnThis(),
-  quality: vi.fn().mockReturnThis(),
-  auto: vi.fn().mockReturnThis(),
-  url: vi.fn().mockReturnValue("mock-url"),
-};
-
-vi.mock("@/lib/sanity/client", () => ({
-  client: {
-    fetch: vi.fn(),
-  },
-  urlFor: vi.fn(() => mockUrlBuilder),
-}));
-
-// Mock components
 const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
   <h1>{children}</h1>
 );
@@ -49,16 +26,6 @@ const MockProsjektCard = (props: { name: string }) => (
 );
 const MockRotatingLoader = () => (
   <div data-testid="rotating-loader">Loading...</div>
-);
-
-vi.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
-vi.mock(
-  "@/components/Prosjekter/ProsjektCard.component",
-  () => MockProsjektCard,
-);
-vi.mock(
-  "@/components/Animations/RotatingLoader.component",
-  () => MockRotatingLoader,
 );
 
 // Create a test component that simulates the page behavior without async server components
