@@ -86,9 +86,7 @@ test.describe("POST /api/form", () => {
     });
 
     expect(response.status()).toBe(403);
-    expect((await response.json()).error).toBe(
-      "Invalid or expired CSRF token",
-    );
+    expect((await response.json()).error).toBe("Invalid or expired CSRF token");
   });
 
   test("returns 400 with a validation message for invalid data", async ({
