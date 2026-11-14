@@ -4,9 +4,9 @@ import "@testing-library/jest-dom";
 import ErrorBoundary from "@/app/prosjekter/error";
 
 // Mock React's useEffect
-const mockUseEffect = vi.fn();
-vi.mock("react", () => ({
-  ...jest.requireActual("react"),
+const mockUseEffect = vi.hoisted(() => vi.fn());
+vi.mock("react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react")>()),
   useEffect: (cb: () => void) => mockUseEffect(cb),
 }));
 

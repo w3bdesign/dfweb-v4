@@ -2,16 +2,19 @@
  * @vitest-environment jsdom
  */
 
-import type { Mock } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import ContactForm from "@/components/Kontakt/ContactForm.component";
-import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+import emailjs from "@emailjs/browser";
 
-type SendType = Mock<Promise<EmailJSResponseStatus>>;
+// The component loads the SDK with a dynamic import and calls its default export
+const emailjsMock = vi.hoisted(() => ({
+  send: vi.fn(() => Promise.resolve({ status: 200, text: "OK" })),
+  init: vi.fn(),
+}));
 
 vi.mock("@emailjs/browser", () => ({
-  send: vi.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
-  init: vi.fn(),
+  default: emailjsMock,
+  ...emailjsMock,
 }));
 
 describe("ContactForm", () => {
@@ -68,7 +71,7 @@ describe("ContactForm", () => {
 
   it("displays error message on form submission failure", async () => {
     // Arrange
-    (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+    vi.mocked(emailjs.send).mockRejectedValueOnce(new Error("Test error"));
     render(<ContactForm />);
 
     // Act

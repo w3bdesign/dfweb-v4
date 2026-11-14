@@ -1,21 +1,20 @@
 /**
  * @vitest-environment node
  */
-import type { Mock } from "vitest";
 import { randomBytes } from "node:crypto";
 import { GET } from "@/app/api/csrf-token/route";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
 
 // Wrap the real implementation so a single test can force a failure
-vi.mock("@/lib/csrf", () => {
-  const actual = jest.requireActual("@/lib/csrf");
+vi.mock("@/lib/csrf", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/csrf")>();
   return {
     ...actual,
     generateCSRFToken: vi.fn(actual.generateCSRFToken),
   };
 });
 
-const mockGenerateCSRFToken = generateCSRFToken as Mock;
+const mockGenerateCSRFToken = vi.mocked(generateCSRFToken);
 
 describe("GET /api/csrf-token", () => {
   const originalSecret = process.env.CSRF_SECRET;
