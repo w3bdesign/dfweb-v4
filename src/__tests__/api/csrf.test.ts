@@ -53,7 +53,7 @@ describe("lib/csrf", () => {
     const second = generateCSRFToken();
 
     // Assert
-    expect(second).not.toBe(first);
+    expect(second === first).toBe(false);
   });
 
   it("accepts a freshly generated token", () => {
@@ -67,7 +67,7 @@ describe("lib/csrf", () => {
     expect(result).toBe(true);
   });
 
-  it("accepts a token just inside the one hour window", () => {
+  it("accepts a token exactly at the one hour boundary", () => {
     // Arrange
     const issuedAt = 1_700_000_000_000;
     const nowSpy = jest.spyOn(Date, "now").mockReturnValue(issuedAt);
@@ -134,21 +134,25 @@ describe("lib/csrf", () => {
     expect(result).toBe(false);
   });
 
-  it.each([
-    ["an empty string", ""],
-    ["random text", "not-a-token"],
-    ["too few parts", encode("123:abc")],
-    ["too many parts", encode("1:2:3:4")],
-    ["a non-hex signature", encode(`${Date.now()}:abc:zz`)],
-  ])("rejects a malformed token (%s)", (_label, token) => {
-    // Arrange
-    const input = token;
+  const malformedTokens: Array<{ label: string; token: string }> = [
+    { label: "an empty string", token: "" },
+    { label: "random text", token: "not-a-token" },
+    { label: "too few parts", token: encode("123:abc") },
+    { label: "too many parts", token: encode("1:2:3:4") },
+    { label: "a non-hex signature", token: encode("1700000000000:abc:zz") },
+  ];
 
-    // Act
-    const result = validateCSRFToken(input);
+  malformedTokens.forEach(({ label, token }) => {
+    it(`rejects a malformed token (${label})`, () => {
+      // Arrange
+      const input = token;
 
-    // Assert
-    expect(result).toBe(false);
+      // Act
+      const result = validateCSRFToken(input);
+
+      // Assert
+      expect(result).toBe(false);
+    });
   });
 
   it("returns false instead of throwing for a non-string token", () => {
