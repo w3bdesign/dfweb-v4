@@ -1,7 +1,6 @@
 import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
 import { RGB, Column } from "@/components/Animations/Matrix.utils";
 
-
 describe("Matrix Renderer", () => {
   let mockCtx: CanvasRenderingContext2D;
   let mockCanvas: HTMLCanvasElement;
