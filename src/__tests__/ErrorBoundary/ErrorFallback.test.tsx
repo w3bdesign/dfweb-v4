@@ -5,11 +5,11 @@ import "@testing-library/jest-dom";
 import ErrorFallback from "@/components/ErrorBoundary/ErrorFallback.component";
 
 // Mock the Matrix component to avoid rendering issues in tests
-jest.mock("@/components/Animations/Matrix.component", () => {
-  return function DummyMatrix() {
+vi.mock("@/components/Animations/Matrix.component", () => ({
+  default: function DummyMatrix() {
     return <div data-testid="matrix-animation" />;
-  };
-});
+  },
+}));
 
 describe("ErrorFallback", () => {
   const mockError = new Error("Test error message");

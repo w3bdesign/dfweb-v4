@@ -17,28 +17,28 @@ interface ProjectType {
 }
 
 // Mock the actions before importing the page component
-const mockGetProjects = jest.fn();
-const mockPreloadProjects = jest.fn();
+const mockGetProjects = vi.fn();
+const mockPreloadProjects = vi.fn();
 
-jest.mock("@/lib/sanity/content", () => ({
+vi.mock("@/lib/sanity/content", () => ({
   getProjects: mockGetProjects,
   preloadProjects: mockPreloadProjects,
 }));
 
 // Mock the sanity client
 const mockUrlBuilder = {
-  width: jest.fn().mockReturnThis(),
-  fit: jest.fn().mockReturnThis(),
-  quality: jest.fn().mockReturnThis(),
-  auto: jest.fn().mockReturnThis(),
-  url: jest.fn().mockReturnValue("mock-url"),
+  width: vi.fn().mockReturnThis(),
+  fit: vi.fn().mockReturnThis(),
+  quality: vi.fn().mockReturnThis(),
+  auto: vi.fn().mockReturnThis(),
+  url: vi.fn().mockReturnValue("mock-url"),
 };
 
-jest.mock("@/lib/sanity/client", () => ({
+vi.mock("@/lib/sanity/client", () => ({
   client: {
-    fetch: jest.fn(),
+    fetch: vi.fn(),
   },
-  urlFor: jest.fn(() => mockUrlBuilder),
+  urlFor: vi.fn(() => mockUrlBuilder),
 }));
 
 // Mock components
@@ -52,12 +52,12 @@ const MockRotatingLoader = () => (
   <div data-testid="rotating-loader">Loading...</div>
 );
 
-jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
-jest.mock(
+vi.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
+vi.mock(
   "@/components/Prosjekter/ProsjektCard.component",
   () => MockProsjektCard,
 );
-jest.mock(
+vi.mock(
   "@/components/Animations/RotatingLoader.component",
   () => MockRotatingLoader,
 );
@@ -94,7 +94,7 @@ function TestProsjekterPage() {
 
 describe("ProsjekterPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders projects from server component", async () => {

@@ -6,8 +6,8 @@ import { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { POST } from "@/app/api/revalidate/route";
 
-jest.mock("next/cache", () => ({
-  revalidateTag: jest.fn(),
+vi.mock("next/cache", () => ({
+  revalidateTag: vi.fn(),
 }));
 
 const mockRevalidateTag = revalidateTag as jest.Mock;
@@ -31,7 +31,7 @@ describe("POST /api/revalidate", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     if (originalSecret === undefined) {
       delete process.env.REVALIDATE_SECRET;
     } else {
@@ -141,7 +141,7 @@ describe("POST /api/revalidate", () => {
 
   it("returns 500 when revalidateTag throws", async () => {
     // Arrange
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     mockRevalidateTag.mockImplementation(() => {
       throw new Error("cache down");
     });

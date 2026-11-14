@@ -21,7 +21,7 @@ describe("lib/csrf", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     if (originalSecret === undefined) {
       delete process.env.CSRF_SECRET;
     } else {
@@ -32,7 +32,7 @@ describe("lib/csrf", () => {
   it("generates a base64 token with timestamp, random value and HMAC signature", () => {
     // Arrange
     const now = 1_700_000_000_000;
-    jest.spyOn(Date, "now").mockReturnValue(now);
+    vi.spyOn(Date, "now").mockReturnValue(now);
 
     // Act
     const [timestamp, randomValue, signature] = decode(generateCSRFToken());
@@ -71,7 +71,7 @@ describe("lib/csrf", () => {
   it("accepts a token exactly at the one hour boundary", () => {
     // Arrange
     const issuedAt = 1_700_000_000_000;
-    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(issuedAt);
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(issuedAt);
     const token = generateCSRFToken();
     nowSpy.mockReturnValue(issuedAt + ONE_HOUR);
 
@@ -85,7 +85,7 @@ describe("lib/csrf", () => {
   it("rejects an expired token", () => {
     // Arrange
     const issuedAt = 1_700_000_000_000;
-    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(issuedAt);
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(issuedAt);
     const token = generateCSRFToken();
     nowSpy.mockReturnValue(issuedAt + ONE_HOUR + 1);
 
@@ -170,8 +170,8 @@ describe("lib/csrf", () => {
   it("falls back to a per-process secret and warns once when CSRF_SECRET is missing", async () => {
     // Arrange
     delete process.env.CSRF_SECRET;
-    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
-    jest.resetModules();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.resetModules();
     const csrf = await import("@/lib/csrf");
 
     // Act

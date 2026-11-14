@@ -19,6 +19,31 @@ Object.defineProperty(globalThis, "matchMedia", {
   })),
 });
 
+// jsdom has no AnimationEvent. Without it, React picks the event name for onAnimationEnd by
+// vendor detection, and jsdom 31 exposes WebkitAnimation, so React listens for
+// "webkitAnimationEnd" while fireEvent.animationEnd dispatches "animationend". Browsers have
+// AnimationEvent, so this minimal stand-in restores browser behaviour. It must exist before
+// react-dom loads, which setup files guarantee.
+if (typeof window !== "undefined" && !("AnimationEvent" in window)) {
+  class AnimationEventPolyfill extends Event {
+    readonly animationName: string;
+    readonly elapsedTime: number;
+    readonly pseudoElement: string;
+
+    constructor(type: string, init: AnimationEventInit = {}) {
+      super(type, init);
+      this.animationName = init.animationName ?? "";
+      this.elapsedTime = init.elapsedTime ?? 0;
+      this.pseudoElement = init.pseudoElement ?? "";
+    }
+  }
+  Object.defineProperty(window, "AnimationEvent", {
+    writable: true,
+    configurable: true,
+    value: AnimationEventPolyfill,
+  });
+}
+
 // Test files that should never be checked for the AAA pattern
 const AAA_EXEMPT_PATTERNS = ["test-rule.test.tsx", "node_modules"];
 

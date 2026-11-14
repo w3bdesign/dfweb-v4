@@ -52,8 +52,8 @@ const linksmock = [
 ];
 
 // Mock next/navigation
-jest.mock("next/navigation", () => ({
-  usePathname: jest.fn(),
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(),
 }));
 
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
@@ -62,7 +62,7 @@ describe("MobileMenu - elementer eksisterer", () => {
   const testidMenu = "mobile-menu";
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders mobile menu when hamburger is clicked", () => {

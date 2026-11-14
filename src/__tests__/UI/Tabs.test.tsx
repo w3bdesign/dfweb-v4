@@ -29,7 +29,7 @@ const mockMotion = {
   ),
 };
 
-jest.mock("motion", () => mockMotion);
+vi.mock("motion", () => mockMotion);
 
 const mockTabs = [
   {

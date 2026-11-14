@@ -9,10 +9,10 @@ interface TestFormData {
   testField: string;
 }
 
-const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
-  onChange: jest.fn(),
-  onBlur: jest.fn(),
-  ref: jest.fn(),
+const mockRegister: UseFormRegister<TestFormData> = vi.fn((name) => ({
+  onChange: vi.fn(),
+  onBlur: vi.fn(),
+  ref: vi.fn(),
   name,
 }));
 

@@ -9,7 +9,7 @@ describe("ErrorBoundary", () => {
   const errorMock = new Error("Dette er en testfeil");
 
   beforeAll(() => {
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterAll(() => {

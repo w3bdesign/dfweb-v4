@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 
-const mockFillRect = jest.fn();
-const mockFillText = jest.fn();
+const mockFillRect = vi.fn();
+const mockFillText = vi.fn();
 
 const mock2DContext = {
   fillRect: mockFillRect,
@@ -12,8 +12,8 @@ const mock2DContext = {
   getContextAttributes: () => ({}),
   globalAlpha: 1,
   globalCompositeOperation: "source-over",
-  save: jest.fn(),
-  restore: jest.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
   font: "",
   fillStyle: "",
   shadowColor: "",
@@ -22,7 +22,7 @@ const mock2DContext = {
 
 const mockBitmapContext = {
   canvas: document.createElement("canvas"),
-  transferFromImageBitmap: jest.fn(),
+  transferFromImageBitmap: vi.fn(),
 } as unknown as ImageBitmapRenderingContext;
 
 HTMLCanvasElement.prototype.getContext = function (contextId: string) {
@@ -39,21 +39,21 @@ HTMLCanvasElement.prototype.getContext = function (contextId: string) {
   }
 } as typeof HTMLCanvasElement.prototype.getContext;
 
-jest
+vi
   .spyOn(global, "requestAnimationFrame")
   .mockImplementation((cb) => setTimeout(cb, 0));
 
 describe("ReactMatrixAnimation", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
-    jest
+    vi.useFakeTimers();
+    vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((cb) => setTimeout(cb, 0));
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe("rendering", () => {
@@ -96,7 +96,7 @@ describe("ReactMatrixAnimation", () => {
   describe("validation", () => {
     beforeEach(() => {
       // Arrange - Suppress console.error for validation tests
-      jest.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(console, "error").mockImplementation(() => {});
     });
 
     it("throws error for invalid background color", () => {

@@ -6,11 +6,11 @@ import { GET } from "@/app/api/csrf-token/route";
 import { generateCSRFToken, validateCSRFToken } from "@/lib/csrf";
 
 // Wrap the real implementation so a single test can force a failure
-jest.mock("@/lib/csrf", () => {
+vi.mock("@/lib/csrf", () => {
   const actual = jest.requireActual("@/lib/csrf");
   return {
     ...actual,
-    generateCSRFToken: jest.fn(actual.generateCSRFToken),
+    generateCSRFToken: vi.fn(actual.generateCSRFToken),
   };
 });
 
@@ -24,7 +24,7 @@ describe("GET /api/csrf-token", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     if (originalSecret === undefined) {
       delete process.env.CSRF_SECRET;
     } else {
@@ -62,7 +62,7 @@ describe("GET /api/csrf-token", () => {
 
   it("returns 500 when token generation throws", async () => {
     // Arrange
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     mockGenerateCSRFToken.mockImplementationOnce(() => {
       throw new Error("boom");
     });

@@ -24,11 +24,11 @@ describe("Matrix Renderer", () => {
   beforeEach(() => {
     mockCtx = {
       fillStyle: "",
-      fillRect: jest.fn(),
-      fillText: jest.fn(),
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
       font: "",
-      save: jest.fn(),
-      restore: jest.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
       shadowColor: "",
       shadowBlur: 0,
     } as unknown as CanvasRenderingContext2D;

@@ -6,7 +6,7 @@ import MatrixCursor from "@/components/Animations/MatrixCursor.component";
 import { useMobile } from "@/hooks/useMobile";
 
 // Mock useMobile hook
-jest.mock("@/hooks/useMobile");
+vi.mock("@/hooks/useMobile");
 const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
 
 // Wrapper component to provide ref
@@ -27,7 +27,7 @@ describe("MatrixCursor", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("should not render when heroRef is null", () => {

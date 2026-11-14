@@ -8,9 +8,9 @@ import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
 
 type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
 
-jest.mock("@emailjs/browser", () => ({
-  send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
-  init: jest.fn(),
+vi.mock("@emailjs/browser", () => ({
+  send: vi.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
+  init: vi.fn(),
 }));
 
 describe("ContactForm", () => {
@@ -20,7 +20,7 @@ describe("ContactForm", () => {
   const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const fillFormWithValidData = () => {

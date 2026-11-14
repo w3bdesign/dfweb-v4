@@ -9,11 +9,11 @@ interface LinkProps {
 }
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
-  return function MockLink({ children, href }: LinkProps) {
+vi.mock("next/link", () => ({
+  default: function MockLink({ children, href }: LinkProps) {
     return <a href={href}>{children}</a>;
-  };
-});
+  },
+}));
 
 describe("Pill Component", () => {
   describe("rendering", () => {
@@ -86,7 +86,7 @@ describe("Pill Component", () => {
   describe("interactions", () => {
     it("calls onClick when clicked as button", () => {
       // Arrange
-      const mockOnClick = jest.fn();
+      const mockOnClick = vi.fn();
       const props = {
         text: "Clickable Pill",
         onClick: mockOnClick,
@@ -103,7 +103,7 @@ describe("Pill Component", () => {
 
     it("does not call onClick when rendered as link", () => {
       // Arrange
-      const mockOnClick = jest.fn();
+      const mockOnClick = vi.fn();
       const props = {
         text: "Link Pill",
         href: "/test",

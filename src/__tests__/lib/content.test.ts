@@ -7,13 +7,13 @@ import {
 import { sanityFetch } from "@/lib/sanity/client";
 
 // Mock the Sanity client — the content module's only dependency
-jest.mock("@/lib/sanity/client", () => ({
-  sanityFetch: jest.fn(),
+vi.mock("@/lib/sanity/client", () => ({
+  sanityFetch: vi.fn(),
 }));
 
 describe("content module", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getProjects", () => {

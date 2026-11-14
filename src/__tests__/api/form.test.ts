@@ -38,7 +38,7 @@ describe("POST /api/form", () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     if (originalSecret === undefined) {
       delete process.env.CSRF_SECRET;
     } else {
@@ -158,7 +158,7 @@ describe("POST /api/form", () => {
   it("returns 403 for an expired CSRF token", async () => {
     // Arrange
     const issuedAt = 1_700_000_000_000;
-    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(issuedAt);
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(issuedAt);
     const token = generateCSRFToken();
     nowSpy.mockReturnValue(issuedAt + ONE_HOUR + 1);
     const request = jsonRequest({ ...VALID_FORM, csrfToken: token });
@@ -221,7 +221,7 @@ describe("POST /api/form", () => {
 
   it("returns 500 when the body cannot be parsed", async () => {
     // Arrange
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
     const request = new NextRequest(FORM_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },

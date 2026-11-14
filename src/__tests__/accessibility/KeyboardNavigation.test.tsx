@@ -99,7 +99,7 @@ describe("Keyboard Navigation Accessibility", () => {
 
 describe("ARIA Attributes", () => {
   // Arrange
-  const mockOnClick = jest.fn();
+  const mockOnClick = vi.fn();
 
   // Act & Assert
   it("should have proper aria-label on icon-only buttons", () => {
@@ -179,7 +179,7 @@ describe("Form Accessibility", () => {
   it("should trim whitespace from input values", async () => {
     // Arrange
     const user = userEvent.setup();
-    const mockSubmit = jest.fn();
+    const mockSubmit = vi.fn();
 
     const TestFormWithSubmit = () => {
       const { register, handleSubmit } = useForm();

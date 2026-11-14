@@ -3,7 +3,7 @@ import Section from "@/components/Index/Section.component";
 import { Pagecontent } from "@/types/sanity.types";
 
 // Mock IntersectionObserver
-const mockIntersectionObserver = jest.fn();
+const mockIntersectionObserver = vi.fn();
 mockIntersectionObserver.mockReturnValue({
   observe: () => null,
   unobserve: () => null,
@@ -73,7 +73,7 @@ describe("Section Component", () => {
     let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleErrorSpy = jest
+      consoleErrorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
     });
@@ -148,7 +148,7 @@ describe("Section Component", () => {
 
   it("triggers error in development mode", () => {
     // Arrange
-    const consoleErrorSpy = jest
+    const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
     render(<Section {...mockProps} />);
