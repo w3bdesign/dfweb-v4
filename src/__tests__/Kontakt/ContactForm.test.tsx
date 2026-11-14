@@ -50,6 +50,32 @@ describe("ContactForm", () => {
     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
   });
 
+  it("posts the CSRF token as a hidden field when one is provided", () => {
+    // Arrange
+    const csrfToken = "test-csrf-token";
+
+    // Act
+    render(<ContactForm csrfToken={csrfToken} />);
+
+    // Assert
+    expect(screen.getByRole("form", { name: "Contact Form" })).toHaveFormValues(
+      { _csrf: csrfToken },
+    );
+  });
+
+  it("omits the CSRF field when no token is provided", () => {
+    // Arrange
+    const formName = "Contact Form";
+
+    // Act
+    render(<ContactForm />);
+
+    // Assert
+    expect(
+      screen.getByRole("form", { name: formName }).querySelector('[name="_csrf"]'),
+    ).toBeNull();
+  });
+
   it("submits the form successfully and disables submit button while submitting", async () => {
     // Arrange
     render(<ContactForm />);

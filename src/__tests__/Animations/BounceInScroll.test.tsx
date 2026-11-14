@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 import React from "react";
 

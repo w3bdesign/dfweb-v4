@@ -1,7 +1,6 @@
 import type { MockedFunction } from "vitest";
 import React, { useRef } from "react";
 import { render, fireEvent, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 import MatrixCursor from "@/components/Animations/MatrixCursor.component";
 import { useMobile } from "@/hooks/useMobile";

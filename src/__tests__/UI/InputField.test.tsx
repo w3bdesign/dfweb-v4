@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import { UseFormRegister } from "react-hook-form";
 import InputField from "@/components/UI/InputField.component";
 import { createRegisterOptions } from "@/components/UI/InputField.utils";

@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(data), delay));

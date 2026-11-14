@@ -1,7 +1,6 @@
 import type { MockInstance } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 

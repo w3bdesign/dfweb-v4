@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
 import { Page } from "@/types/sanity.types";
 

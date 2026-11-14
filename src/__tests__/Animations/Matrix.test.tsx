@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
 
 const mockFillRect = vi.fn();

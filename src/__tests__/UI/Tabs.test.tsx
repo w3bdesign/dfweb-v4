@@ -5,7 +5,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
 import Tabs from "@/components/UI/Tabs.component";
 
 // Component that throws an error immediately
@@ -141,6 +140,18 @@ describe("Tabs", () => {
     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
   });
 
+  it("renders an empty tablist without a panel when there are no tabs", () => {
+    // Arrange
+    const noTabs: React.ComponentProps<typeof Tabs>["tabs"] = [];
+
+    // Act
+    render(<Tabs tabs={noTabs} />);
+
+    // Assert
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+  });
+
   it("renders tab panels with correct attributes", () => {
     // Arrange
     const expectedAttributes = {
@@ -257,6 +268,11 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
   it("End key moves focus to last tab", async () => {
     // Arrange, Act & Assert
     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
+  });
+
+  it("keeps focus on the current tab for keys outside the pattern", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 1, ["x"], 1);
   });
 
   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
