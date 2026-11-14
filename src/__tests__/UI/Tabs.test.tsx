@@ -12,24 +12,6 @@ const ImmediateCrash = () => {
   throw new Error("Immediate crash!");
 };
 
-const mockMotion = {
-  motion: {
-    div: (props: React.ComponentProps<"div">) => (
-      <div {...props}>{props.children}</div>
-    ),
-    button: (props: React.ComponentProps<"button">) => (
-      <button type="button" {...props}>
-        {props.children}
-      </button>
-    ),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-};
-
-vi.mock("motion", () => mockMotion);
-
 const mockTabs = [
   {
     id: "tab1",

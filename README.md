@@ -110,9 +110,9 @@ Sanity.io and Typescript.
 - Github action workflow for Cypress
 - Code quality analysis with Codacy, Sonarcloud and Codeclimate
 - E2E testing with Cypress and Playwright integrated with Github actions
-- Unit testing with Jest and React Testing Library integrated with CircleCI
+- Unit testing with Vitest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
-- 100% Jest coverage of components, API routes and CSRF (see [`DOCS/TEST-STRATEGY.md`](DOCS/TEST-STRATEGY.md))
+- 100% Vitest coverage of components, API routes and CSRF (see [`DOCS/TEST-STRATEGY.md`](DOCS/TEST-STRATEGY.md))
 - AI-powered commit message generation following Conventional Commits with
   gitmojis
 - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
@@ -141,7 +141,7 @@ Sanity.io and Typescript.
       and `types`
     - Production code never imports tests, mocks, stories or e2e code, and
       uses `@/` instead of `../` imports
-  - Coverage floor in `jest.config.mjs` fails the Jest run if coverage drops
+  - Coverage floor in `vitest.config.mts` fails the Vitest run if coverage drops
   - Every rule and the check that enforces it is listed in `AGENTS.md`
 
 ### Security

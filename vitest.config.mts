@@ -42,7 +42,7 @@ export default defineConfig({
         "src/components/Animations/Matrix.component.{js,jsx,ts,tsx}",
         "src/components/Animations/types/**",
       ],
-      // Jest's default reporters, plus json-summary for the Phase 4 comparison.
+      // json-summary feeds coverage tooling; lcov is uploaded to Codecov.
       reporter: ["clover", "json", "json-summary", "lcov", "text"],
       // Floor measured on 2026-11-12, rounded down. Raise it when coverage improves; never lower it.
       thresholds: {

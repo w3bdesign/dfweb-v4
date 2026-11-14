@@ -19,10 +19,10 @@ Hard rules and the CI checks that enforce them are listed under "Enforced Rules"
 
 - **Testing**
 
-  - Jest & React Testing Library for unit tests
+  - Vitest & React Testing Library for unit tests
   - Cypress for E2E testing with accessibility checks
   - Playwright for cross-browser testing
-  - Coverage floor enforced by `coverageThreshold` in `jest.config.mjs`
+  - Coverage floor enforced by `coverage.thresholds` in `vitest.config.mts`
 
 - **Performance & Monitoring**
   - Lighthouse CI integration
@@ -83,7 +83,7 @@ src/
 - Write comprehensive unit tests
 - Include integration tests for complex features
 - Add E2E tests for critical flows
-- Keep coverage at or above the floor in `jest.config.mjs`
+- Keep coverage at or above the floor in `vitest.config.mts`
 
 ### State Management
 

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 /**
  * HTTP-level tests against the running Next.js server.
- * These complement the Jest route tests by exercising the real request
+ * These complement the Vitest route tests by exercising the real request
  * pipeline (routing, headers, body parsing and the CSP middleware).
  */
 
@@ -115,7 +115,7 @@ test.describe("POST /api/form", () => {
 
 test.describe("POST /api/revalidate (negative cases only)", () => {
   // REVALIDATE_SECRET is not set in CI, so only rejection paths are tested here.
-  // The success paths are covered by the Jest route tests with a mocked next/cache.
+  // The success paths are covered by the Vitest route tests with a mocked next/cache.
 
   test("returns 401 without a secret", async ({ request }) => {
     const response = await request.post("/api/revalidate?tag=projects");

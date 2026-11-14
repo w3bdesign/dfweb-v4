@@ -31,7 +31,7 @@ development practices and architectural patterns. Built with Next.js 15, React
 
 4. **Testing Excellence**
 
-   - 100% Jest coverage of components, API routes and CSRF
+   - 100% Vitest coverage of components, API routes and CSRF
    - E2E testing with Cypress and Playwright
    - Custom ESLint rules enforcing AAA pattern
    - Automated accessibility testing
@@ -91,7 +91,7 @@ development practices and architectural patterns. Built with Next.js 15, React
 
 #### Development & Testing Infrastructure
 
-- **Jest & React Testing Library**
+- **Vitest & React Testing Library**
 
   - Custom test utilities and helpers
   - Mock implementations for external services
@@ -175,7 +175,7 @@ src/
 
 #### 4. Testing Infrastructure
 
-- Jest and React Testing Library for unit tests
+- Vitest and React Testing Library for unit tests
 - Cypress for E2E testing with accessibility checks
 - Playwright for cross-browser testing
 - Custom ESLint rules enforcing AAA pattern
