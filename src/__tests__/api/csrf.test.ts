@@ -53,7 +53,7 @@ describe("lib/csrf", () => {
     const second = generateCSRFToken();
 
     // Assert
-    expect(second === first).toBe(false);
+    expect(second).not.toBe(first);
   });
 
   it("accepts a freshly generated token", () => {
