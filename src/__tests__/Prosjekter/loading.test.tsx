@@ -1,20 +1,23 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import Loading from "@/app/prosjekter/loading";
 
 // Mock the components used in Loading
-jest.mock("@/components/UI/PageHeader.component", () => {
-  return function MockPageHeader({ children }: { children: React.ReactNode }) {
+vi.mock("@/components/UI/PageHeader.component", () => ({
+  default: function MockPageHeader({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
     return <h1>{children}</h1>;
-  };
-});
+  },
+}));
 
-jest.mock("@/components/Animations/RotatingLoader.component", () => {
-  return function MockRotatingLoader() {
+vi.mock("@/components/Animations/RotatingLoader.component", () => ({
+  default: function MockRotatingLoader() {
     return <div data-testid="rotating-loader">Loading...</div>;
-  };
-});
+  },
+}));
 
 describe("Loading", () => {
   describe("rendering", () => {

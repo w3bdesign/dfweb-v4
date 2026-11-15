@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import { UseFormRegister } from "react-hook-form";
 import InputField from "@/components/UI/InputField.component";
 import { createRegisterOptions } from "@/components/UI/InputField.utils";
@@ -9,10 +8,10 @@ interface TestFormData {
   testField: string;
 }
 
-const mockRegister: UseFormRegister<TestFormData> = jest.fn((name) => ({
-  onChange: jest.fn(),
-  onBlur: jest.fn(),
-  ref: jest.fn(),
+const mockRegister: UseFormRegister<TestFormData> = vi.fn((name) => ({
+  onChange: vi.fn(),
+  onBlur: vi.fn(),
+  ref: vi.fn(),
   name,
 }));
 

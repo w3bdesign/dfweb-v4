@@ -1,5 +1,5 @@
 /**
- * Jest mock for @portabletext/react
+ * Test mock for @portabletext/react
  *
  * Implements the PortableText component's marks rendering pipeline
  * per the documented API at https://github.com/portabletext/react-portabletext

@@ -15,8 +15,8 @@ interface LinkProps {
 }
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
-  return function MockLink({
+vi.mock("next/link", () => ({
+  default: function MockLink({
     children,
     href,
     className,
@@ -27,8 +27,8 @@ jest.mock("next/link", () => {
         {children}
       </a>
     );
-  };
-});
+  },
+}));
 
 describe("getTextFromChildren", () => {
   it("returns the string directly when children is a plain string", () => {

@@ -1,9 +1,10 @@
+import type { MockInstance } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import Section from "@/components/Index/Section.component";
 import { Pagecontent } from "@/types/sanity.types";
 
 // Mock IntersectionObserver
-const mockIntersectionObserver = jest.fn();
+const mockIntersectionObserver = vi.fn();
 mockIntersectionObserver.mockReturnValue({
   observe: () => null,
   unobserve: () => null,
@@ -70,12 +71,10 @@ describe("Section Component", () => {
   });
 
   describe("error handling for invalid data", () => {
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: MockInstance;
 
     beforeEach(() => {
-      consoleErrorSpy = jest
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     });
 
     afterEach(() => consoleErrorSpy.mockRestore());
@@ -148,7 +147,7 @@ describe("Section Component", () => {
 
   it("triggers error in development mode", () => {
     // Arrange
-    const consoleErrorSpy = jest
+    const consoleErrorSpy = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
     render(<Section {...mockProps} />);

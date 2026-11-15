@@ -1,9 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import Hero from "@/components/Index/Hero.component";
 import type { Herocontent } from "@/types/sanity.types";
 import heromock from "./fixtures/hero.json";

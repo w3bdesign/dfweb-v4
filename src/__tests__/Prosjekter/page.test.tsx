@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(data), delay));
@@ -16,32 +15,9 @@ interface ProjectType {
   urlgithub: unknown[];
 }
 
-// Mock the actions before importing the page component
-const mockGetProjects = jest.fn();
-const mockPreloadProjects = jest.fn();
+// Stand-ins for the data source and child components used by TestProsjekterPage
+const mockGetProjects = vi.fn();
 
-jest.mock("@/lib/sanity/content", () => ({
-  getProjects: mockGetProjects,
-  preloadProjects: mockPreloadProjects,
-}));
-
-// Mock the sanity client
-const mockUrlBuilder = {
-  width: jest.fn().mockReturnThis(),
-  fit: jest.fn().mockReturnThis(),
-  quality: jest.fn().mockReturnThis(),
-  auto: jest.fn().mockReturnThis(),
-  url: jest.fn().mockReturnValue("mock-url"),
-};
-
-jest.mock("@/lib/sanity/client", () => ({
-  client: {
-    fetch: jest.fn(),
-  },
-  urlFor: jest.fn(() => mockUrlBuilder),
-}));
-
-// Mock components
 const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
   <h1>{children}</h1>
 );
@@ -50,16 +26,6 @@ const MockProsjektCard = (props: { name: string }) => (
 );
 const MockRotatingLoader = () => (
   <div data-testid="rotating-loader">Loading...</div>
-);
-
-jest.mock("@/components/UI/PageHeader.component", () => MockPageHeader);
-jest.mock(
-  "@/components/Prosjekter/ProsjektCard.component",
-  () => MockProsjektCard,
-);
-jest.mock(
-  "@/components/Animations/RotatingLoader.component",
-  () => MockRotatingLoader,
 );
 
 // Create a test component that simulates the page behavior without async server components
@@ -94,7 +60,7 @@ function TestProsjekterPage() {
 
 describe("ProsjekterPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders projects from server component", async () => {

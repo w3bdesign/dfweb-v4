@@ -1,13 +1,13 @@
+import type { MockedFunction } from "vitest";
 import React, { useRef } from "react";
 import { render, fireEvent, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 
 import MatrixCursor from "@/components/Animations/MatrixCursor.component";
 import { useMobile } from "@/hooks/useMobile";
 
 // Mock useMobile hook
-jest.mock("@/hooks/useMobile");
-const mockUseMobile = useMobile as jest.MockedFunction<typeof useMobile>;
+vi.mock("@/hooks/useMobile");
+const mockUseMobile = useMobile as MockedFunction<typeof useMobile>;
 
 // Wrapper component to provide ref
 const TestWrapper = () => {
@@ -27,7 +27,7 @@ describe("MatrixCursor", () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("should not render when heroRef is null", () => {

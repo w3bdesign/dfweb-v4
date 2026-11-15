@@ -1,15 +1,15 @@
+import type { MockInstance } from "vitest";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
 
 import RouteError from "@/components/ErrorBoundary/RouteError.component";
 
 describe("RouteError", () => {
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -23,7 +23,7 @@ describe("RouteError", () => {
 
     // Act
     render(
-      <RouteError error={error} reset={jest.fn()} description={description} />,
+      <RouteError error={error} reset={vi.fn()} description={description} />,
     );
 
     // Assert
@@ -41,7 +41,7 @@ describe("RouteError", () => {
 
     // Act
     const { container } = render(
-      <RouteError error={error} reset={jest.fn()} description="Beskrivelse" />,
+      <RouteError error={error} reset={vi.fn()} description="Beskrivelse" />,
     );
 
     // Assert
@@ -50,7 +50,7 @@ describe("RouteError", () => {
 
   it("calls reset when the retry button is clicked", async () => {
     // Arrange
-    const reset = jest.fn();
+    const reset = vi.fn();
     const user = userEvent.setup();
     render(
       <RouteError

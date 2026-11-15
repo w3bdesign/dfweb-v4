@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { render, screen } from "@testing-library/react";
@@ -10,7 +10,7 @@ describe("Button", () => {
   describe("Button Component", () => {
     it("renders button and handles click events", async () => {
       // Arrange
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       const buttonText = "Click Me";
 
       // Act
@@ -34,7 +34,7 @@ describe("Button", () => {
       it(`renders button with '${children}' text and '${ariaLabel}' aria-label`, () => {
         // Arrange
         const props = {
-          onClick: jest.fn(),
+          onClick: vi.fn(),
           "aria-label": ariaLabel,
         };
 
@@ -51,7 +51,7 @@ describe("Button", () => {
 
     it("is disabled when disabled prop is true", () => {
       // Arrange
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
 
       // Act
       render(

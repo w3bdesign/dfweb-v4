@@ -1,16 +1,20 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import ContactForm from "@/components/Kontakt/ContactForm.component";
-import emailjs, { EmailJSResponseStatus } from "@emailjs/browser";
+import emailjs from "@emailjs/browser";
 
-type SendType = jest.Mock<Promise<EmailJSResponseStatus>>;
+// The component loads the SDK with a dynamic import and calls its default export
+const emailjsMock = vi.hoisted(() => ({
+  send: vi.fn(() => Promise.resolve({ status: 200, text: "OK" })),
+  init: vi.fn(),
+}));
 
-jest.mock("@emailjs/browser", () => ({
-  send: jest.fn(() => Promise.resolve({ status: 200, text: "OK" })) as SendType,
-  init: jest.fn(),
+vi.mock("@emailjs/browser", () => ({
+  default: emailjsMock,
+  ...emailjsMock,
 }));
 
 describe("ContactForm", () => {
@@ -20,7 +24,7 @@ describe("ContactForm", () => {
   const sendSkjemaText = "Send skjema";
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const fillFormWithValidData = () => {
@@ -46,6 +50,34 @@ describe("ContactForm", () => {
     expect(screen.getByTestId(expectedTestId)).toBeInTheDocument();
   });
 
+  it("posts the CSRF token as a hidden field when one is provided", () => {
+    // Arrange
+    const csrfToken = "test-csrf-token";
+
+    // Act
+    render(<ContactForm csrfToken={csrfToken} />);
+
+    // Assert
+    const form = screen.getByRole<HTMLFormElement>("form", {
+      name: "Contact Form",
+    });
+    const field = form.elements.namedItem("_csrf") as HTMLInputElement | null;
+    expect(field?.type).toBe("hidden");
+    expect(field?.value).toBe(csrfToken);
+  });
+
+  it("omits the CSRF field when no token is provided", () => {
+    // Arrange
+    const formName = "Contact Form";
+
+    // Act
+    render(<ContactForm />);
+
+    // Assert
+    const form = screen.getByRole<HTMLFormElement>("form", { name: formName });
+    expect(form.elements.namedItem("_csrf")).toBeNull();
+  });
+
   it("submits the form successfully and disables submit button while submitting", async () => {
     // Arrange
     render(<ContactForm />);
@@ -67,7 +99,7 @@ describe("ContactForm", () => {
 
   it("displays error message on form submission failure", async () => {
     // Arrange
-    (emailjs.send as SendType).mockRejectedValueOnce(new Error("Test error"));
+    vi.mocked(emailjs.send).mockRejectedValueOnce(new Error("Test error"));
     render(<ContactForm />);
 
     // Act

@@ -1,10 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import BounceInScroll from "@/components/Animations/BounceInScroll.component";
 import React from "react";
 
 // Mock framer-motion
-jest.mock("motion/react-m", () => ({
+vi.mock("motion/react-m", () => ({
   div: ({
     children,
     className,
@@ -20,7 +19,7 @@ jest.mock("motion/react-m", () => ({
   ),
 }));
 
-jest.mock("motion/react", () => ({
+vi.mock("motion/react", () => ({
   Variants: {},
 }));
 

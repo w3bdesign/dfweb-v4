@@ -1,8 +1,6 @@
 import { createMatrixRenderer } from "@/components/Animations/Matrix.renderer";
 import { RGB, Column } from "@/components/Animations/Matrix.utils";
 
-import "@testing-library/jest-dom";
-
 describe("Matrix Renderer", () => {
   let mockCtx: CanvasRenderingContext2D;
   let mockCanvas: HTMLCanvasElement;
@@ -24,11 +22,11 @@ describe("Matrix Renderer", () => {
   beforeEach(() => {
     mockCtx = {
       fillStyle: "",
-      fillRect: jest.fn(),
-      fillText: jest.fn(),
+      fillRect: vi.fn(),
+      fillText: vi.fn(),
       font: "",
-      save: jest.fn(),
-      restore: jest.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
       shadowColor: "",
       shadowBlur: 0,
     } as unknown as CanvasRenderingContext2D;

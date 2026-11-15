@@ -1,22 +1,21 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import ErrorBoundary from "@/app/prosjekter/error";
 
 // Mock React's useEffect
-const mockUseEffect = jest.fn();
-jest.mock("react", () => ({
-  ...jest.requireActual("react"),
+const mockUseEffect = vi.hoisted(() => vi.fn());
+vi.mock("react", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react")>()),
   useEffect: (cb: () => void) => mockUseEffect(cb),
 }));
 
 describe("ErrorBoundary", () => {
-  const mockReset = jest.fn();
+  const mockReset = vi.fn();
   const mockError = new Error("Test error") as Error & { digest?: string };
   const mockProps = { error: mockError, reset: mockReset };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders error message and retry button", () => {

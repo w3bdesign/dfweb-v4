@@ -6,7 +6,7 @@ import FadeIn from "@/components/Animations/FadeIn.component";
 let capturedOnAnimationStart: (() => void) | undefined;
 let capturedOnAnimationComplete: (() => void) | undefined;
 
-jest.mock("motion/react-m", () => ({
+vi.mock("motion/react-m", () => ({
   div: React.forwardRef(
     (
       {
