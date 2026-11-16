@@ -550,116 +550,6 @@ vitest.setup.ts
 50:           pkill -f "next start" || true
 ````
 
-## File: .github/workflows/pa11y.yml
-````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
-13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-17:         with:
-18:           node-version: "26"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile --ignore-scripts
-32:       - name: Create pa11y config
-33:         run: |
-34:           # Create pa11y config file
-35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-36:       - name: Build Next.js app
-37:         run: pnpm build
-38:       - name: Start Next.js app
-39:         run: pnpm start &
-40:       - name: Wait for the application to be ready
-41:         run: pnpm exec wait-on http://localhost:3000
-42:       - name: Run pa11y
-43:         run: |
-44:           # Create a directory for the reports
-45:           mkdir -p pa11y-reports
-46:           # Run pa11y on main pages with config
-47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-51:       - name: Upload pa11y results
-52:         if: always()
-53:         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-54:         with:
-55:           name: pa11y-reports
-56:           path: pa11y-reports/
-57:       - name: Check for accessibility issues
-58:         run: |
-59:           if grep -q "Error:" pa11y-reports/*.txt; then
-60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-61:             exit 1
-62:           fi
-````
-
-## File: .github/workflows/playwright.yml
-````yaml
- 1: name: Playwright Tests
- 2: on:
- 3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
-12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-17:         with:
-18:           node-version: 26
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         env:
-24:           npm_config_ignore_scripts: true
-25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
-````
-
 ## File: .github/workflows/react-doctor.yml
 ````yaml
   1: name: React Doctor
@@ -13330,6 +13220,184 @@ vitest.setup.ts
 59: Add any other context about the problem here.
 ````
 
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+17:         with:
+18:           node-version: "26"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile --ignore-scripts
+32:       - name: Create pa11y config
+33:         run: |
+34:           # Create pa11y config file
+35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+36:       - name: Build Next.js app
+37:         run: pnpm build
+38:       - name: Start Next.js app
+39:         run: pnpm start &
+40:       - name: Wait for the application to be ready
+41:         run: pnpm exec wait-on http://localhost:3000
+42:       - name: Run pa11y
+43:         run: |
+44:           # Create a directory for the reports
+45:           mkdir -p pa11y-reports
+46:           # Run pa11y on main pages with config
+47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+51:       - name: Upload pa11y results
+52:         if: always()
+53:         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+54:         with:
+55:           name: pa11y-reports
+56:           path: pa11y-reports/
+57:       - name: Check for accessibility issues
+58:         run: |
+59:           if grep -q "Error:" pa11y-reports/*.txt; then
+60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+61:             exit 1
+62:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+17:         with:
+18:           node-version: 26
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
+````
+
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.184.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: src/__tests__/Animations/animation-utils.test.ts
 ````typescript
  1: import { createWillChangeHandlers } from "@/components/Animations/animation-utils";
@@ -13895,6 +13963,55 @@ vitest.setup.ts
 45: }
 46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
 47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
+````
+
+## File: src/__tests__/architecture/naming.test.ts
+````typescript
+ 1: /**
+ 2:  * @vitest-environment node
+ 3:  */
+ 4: import fs from "node:fs";
+ 5: import path from "node:path";
+ 6: const ROOT = process.cwd();
+ 7: const COMPONENTS_DIR = path.join(ROOT, "src", "components");
+ 8: const HOOKS_DIR = path.join(ROOT, "src", "hooks");
+ 9: const listFiles = (dir: string): string[] => {
+10:   if (!fs.existsSync(dir)) {
+11:     return [];
+12:   }
+13:   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+14:     const fullPath = path.join(dir, entry.name);
+15:     return entry.isDirectory() ? listFiles(fullPath) : [fullPath];
+16:   });
+17: };
+18: const toRepoPath = (file: string) =>
+19:   path.relative(ROOT, file).split(path.sep).join("/");
+20: describe("Architecture: file naming", () => {
+21:   it("every .tsx file in src/components ends with .component.tsx", () => {
+22:     // Arrange
+23:     const tsxFiles = listFiles(COMPONENTS_DIR).filter((file) =>
+24:       file.endsWith(".tsx"),
+25:     );
+26:     // Act
+27:     const violations = tsxFiles
+28:       .filter((file) => !file.endsWith(".component.tsx"))
+29:       .map(toRepoPath);
+30:     // Assert
+31:     expect(tsxFiles.length).toBeGreaterThan(0);
+32:     expect(violations).toStrictEqual([]);
+33:   });
+34:   it("every file in src/hooks starts with use", () => {
+35:     // Arrange
+36:     const hookFiles = listFiles(HOOKS_DIR);
+37:     // Act
+38:     const violations = hookFiles
+39:       .filter((file) => !path.basename(file).startsWith("use"))
+40:       .map(toRepoPath);
+41:     // Assert
+42:     expect(hookFiles.length).toBeGreaterThan(0);
+43:     expect(violations).toStrictEqual([]);
+44:   });
+45: });
 ````
 
 ## File: src/__tests__/CV/CVContent.test.tsx
@@ -17010,74 +17127,6 @@ vitest.setup.ts
 35:   - '@vercel/speed-insights@2.1.0'
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.184.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -18008,55 +18057,6 @@ vitest.setup.ts
 135:     expect(violations).toStrictEqual([]);
 136:   });
 137: });
-````
-
-## File: src/__tests__/architecture/naming.test.ts
-````typescript
- 1: /**
- 2:  * @vitest-environment node
- 3:  */
- 4: import fs from "node:fs";
- 5: import path from "node:path";
- 6: const ROOT = process.cwd();
- 7: const COMPONENTS_DIR = path.join(ROOT, "src", "components");
- 8: const HOOKS_DIR = path.join(ROOT, "src", "hooks");
- 9: const listFiles = (dir: string): string[] => {
-10:   if (!fs.existsSync(dir)) {
-11:     return [];
-12:   }
-13:   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-14:     const fullPath = path.join(dir, entry.name);
-15:     return entry.isDirectory() ? listFiles(fullPath) : [fullPath];
-16:   });
-17: };
-18: const toRepoPath = (file: string) =>
-19:   path.relative(ROOT, file).split(path.sep).join("/");
-20: describe("Architecture: file naming", () => {
-21:   it("every .tsx file in src/components ends with .component.tsx", () => {
-22:     // Arrange
-23:     const tsxFiles = listFiles(COMPONENTS_DIR).filter((file) =>
-24:       file.endsWith(".tsx"),
-25:     );
-26:     // Act
-27:     const violations = tsxFiles
-28:       .filter((file) => !file.endsWith(".component.tsx"))
-29:       .map(toRepoPath);
-30:     // Assert
-31:     expect(tsxFiles.length).toBeGreaterThan(0);
-32:     expect(violations).toStrictEqual([]);
-33:   });
-34:   it("every file in src/hooks starts with use", () => {
-35:     // Arrange
-36:     const hookFiles = listFiles(HOOKS_DIR);
-37:     // Act
-38:     const violations = hookFiles
-39:       .filter((file) => !path.basename(file).startsWith("use"))
-40:       .map(toRepoPath);
-41:     // Assert
-42:     expect(hookFiles.length).toBeGreaterThan(0);
-43:     expect(violations).toStrictEqual([]);
-44:   });
-45: });
 ````
 
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
