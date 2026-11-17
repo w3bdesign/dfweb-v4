@@ -127,7 +127,6 @@ src/
       KeyboardNavigation.test.tsx
     Animations/
       animation-utils.test.ts
-      BounceInScroll.test.tsx
       FadeIn.test.tsx
       FadeInScroll.test.tsx
       Grow.test.tsx
@@ -136,6 +135,7 @@ src/
       Matrix.utils.test.ts
       MatrixCursor.test.tsx
       RotatingLoader.test.tsx
+      SlideUpInScroll.test.tsx
       TestAnimation.test.tsx
     api/
       revalidate.test.ts
@@ -213,7 +213,6 @@ src/
       types/
         Animations.types.ts
       animation-utils.ts
-      BounceInScroll.component.tsx
       FadeIn.component.tsx
       FadeInScroll.component.tsx
       Grow.component.tsx
@@ -223,6 +222,7 @@ src/
       MatrixCursor.component.tsx
       PageTransition.component.tsx
       RotatingLoader.component.tsx
+      SlideUpInScroll.component.tsx
     CV/
       CVContent.component.tsx
       EducationTabContent.component.tsx
@@ -303,7 +303,6 @@ src/
   stories/
     components/
       Animations/
-        BounceInScroll.stories.tsx
         FadeIn.stories.tsx
         FadeInScroll.stories.tsx
         Grow.stories.tsx
@@ -311,6 +310,7 @@ src/
         MatrixCursor.stories.tsx
         PageTransition.stories.tsx
         RotatingLoader.stories.tsx
+        SlideUpInScroll.stories.tsx
       CV/
         CVContent.stories.tsx
       ErrorHandling/
@@ -3491,6 +3491,25 @@ vitest.setup.ts
 79: }
 ````
 
+## File: src/app/cv/error.tsx
+````typescript
+ 1: "use client";
+ 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 3: type ErrorBoundaryProps = Readonly<{
+ 4:   error: Error & { digest?: string };
+ 5:   reset: () => void;
+ 6: }>;
+ 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+ 8:   return (
+ 9:     <RouteError
+10:       error={error}
+11:       reset={reset}
+12:       description="Det oppsto en feil under lasting av CV-siden."
+13:     />
+14:   );
+15: }
+````
+
 ## File: src/app/cv/loading.tsx
 ````typescript
 1: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
@@ -3517,6 +3536,25 @@ vitest.setup.ts
 10:   if (!cvData) notFound();
 11:   return <CVContent cvData={cvData} />;
 12: }
+````
+
+## File: src/app/kontakt/error.tsx
+````typescript
+ 1: "use client";
+ 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 3: type ErrorBoundaryProps = Readonly<{
+ 4:   error: Error & { digest?: string };
+ 5:   reset: () => void;
+ 6: }>;
+ 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
+ 8:   return (
+ 9:     <RouteError
+10:       error={error}
+11:       reset={reset}
+12:       description="Det oppsto en feil under lasting av kontaktskjemaet."
+13:     />
+14:   );
+15: }
 ````
 
 ## File: src/app/kontakt/loading.tsx
@@ -3558,6 +3596,22 @@ vitest.setup.ts
 23:     </div>
 24:   );
 25: }
+````
+
+## File: src/app/prosjekter/loading.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 3: export default function Loading() {
+ 4:   return (
+ 5:     <main aria-label="Laster portefølje" className="mt-32 bg-graybg">
+ 6:       <PageHeader>Prosjekter</PageHeader>
+ 7:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
+ 8:         <RotatingLoader />
+ 9:       </div>
+10:     </main>
+11:   );
+12: }
 ````
 
 ## File: src/app/prosjekter/page.tsx
@@ -4171,28 +4225,6 @@ vitest.setup.ts
 30: }
 ````
 
-## File: src/components/Animations/types/Animations.types.ts
-````typescript
- 1: import { ReactNode } from "react";
- 2: export interface IAnimateProps {
- 3:   children: ReactNode;
- 4:   cssClass?: string;
- 5: }
- 6: export interface IAnimateBounceProps {
- 7:   children: ReactNode;
- 8:   cssClass?: string;
- 9:   viewAmount?: "some" | "all" | number;
-10:   instant?: boolean;
-11:   delay?: number;
-12: }
-13: export interface IGrowProps {
-14:   duration?: number;
-15:   delay?: number;
-16:   easing?: [number, number, number, number];
-17:   children: ReactNode;
-18: }
-````
-
 ## File: src/components/Animations/animation-utils.ts
 ````typescript
  1: import type { RefObject } from "react";
@@ -4212,70 +4244,6 @@ vitest.setup.ts
 15:     },
 16:   };
 17: }
-````
-
-## File: src/components/Animations/BounceInScroll.component.tsx
-````typescript
- 1: "use client";
- 2: import { useMemo } from "react";
- 3: import { Variants } from "motion/react";
- 4: import * as m from "motion/react-m";
- 5: import { IAnimateBounceProps } from "./types/Animations.types";
- 6: /**
- 7:  * Creates bounce variants with an optional stagger delay for coordinated group animations.
- 8:  * @param {number} delay - Delay in seconds before the animation starts
- 9:  * @returns {Variants} Motion variants with the specified delay
-10:  */
-11: function createBounceVariants(delay: number): Variants {
-12:   return {
-13:     offscreen: {
-14:       y: 15,
-15:       opacity: 0,
-16:     },
-17:     onscreen: {
-18:       y: 0,
-19:       opacity: 1,
-20:       transition: {
-21:         type: "spring",
-22:         bounce: 0.3,
-23:         duration: 1,
-24:         delay,
-25:       },
-26:     },
-27:   };
-28: }
-29: /**
-30:  * Bounce in content when content becomes visible in viewport
-31:  * @function BounceInScroll
-32:  * @param {ReactNode} children - Children content to render
-33:  * @param {string} cssClass - CSS classes to apply to component
-34:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
-35:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
-36:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
-37:  * @returns {JSX.Element} - Rendered component
-38:  */
-39: const BounceInScroll = ({
-40:   children,
-41:   cssClass,
-42:   viewAmount,
-43:   instant,
-44:   delay = 0,
-45: }: IAnimateBounceProps) => {
-46:   const variants = useMemo(() => createBounceVariants(delay), [delay]);
-47:   return (
-48:     <m.div
-49:       initial="offscreen"
-50:       animate={instant ? "onscreen" : undefined}
-51:       whileInView={instant ? undefined : "onscreen"}
-52:       viewport={instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }}
-53:       className={cssClass}
-54:       data-testid="bounceinscroll"
-55:     >
-56:       <m.div variants={variants}>{children}</m.div>
-57:     </m.div>
-58:   );
-59: };
-60: export default BounceInScroll;
 ````
 
 ## File: src/components/Animations/FadeIn.component.tsx
@@ -5344,6 +5312,49 @@ vitest.setup.ts
 57: export default ErrorFallback;
 ````
 
+## File: src/components/ErrorBoundary/RouteError.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useEffect } from "react";
+ 3: interface RouteErrorProps {
+ 4:   readonly error: Error & { digest?: string };
+ 5:   readonly reset: () => void;
+ 6:   readonly description: string;
+ 7: }
+ 8: /**
+ 9:  * Shared error UI for Next.js route segment `error.tsx` files.
+10:  * Logs the error, shows a description and the error message, and offers a retry.
+11:  * @param {RouteErrorProps} props - The error, the reset callback and the description
+12:  * @returns {JSX.Element} The rendered error state
+13:  */
+14: const RouteError = ({ error, reset, description }: RouteErrorProps) => {
+15:   useEffect(() => {
+16:     console.error(error);
+17:   }, [error]);
+18:   return (
+19:     <main className="flex min-h-screen flex-col items-center justify-center p-4">
+20:       <div className="text-center space-y-4 max-w-md">
+21:         <h2 className="text-2xl font-bold text-red-400">Noe gikk galt</h2>
+22:         <p className="text-gray-300">{description}</p>
+23:         {error.message && (
+24:           <p className="text-sm text-gray-400 font-mono bg-slate-800 p-3 rounded">
+25:             {error.message}
+26:           </p>
+27:         )}
+28:         <button
+29:           type="button"
+30:           onClick={reset}
+31:           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
+32:         >
+33:           Prøv igjen
+34:         </button>
+35:       </div>
+36:     </main>
+37:   );
+38: };
+39: export default RouteError;
+````
+
 ## File: src/components/Index/Hero.component.tsx
 ````typescript
  1: "use client";
@@ -5859,94 +5870,219 @@ vitest.setup.ts
 44: export default Header;
 ````
 
-## File: src/components/Prosjekter/ProsjektCard.component.tsx
+## File: src/components/Layout/MobileMenu.component.tsx
 ````typescript
- 1: "use client";
- 2: import React from "react";
- 3: import Image from "next/image";
- 4: import Button from "@/components/UI/Button.component";
- 5: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 6: import { urlFor } from "@/lib/sanity/client";
- 7: import type { Project } from "@/types/sanity.types";
- 8: interface ProsjektCardProps extends Project {
- 9:   /** Stagger delay in seconds for coordinated group animations */
-10:   staggerDelay?: number;
-11: }
-12: /**
-13:  * Renders a card displaying information about a single project.
-14:  * Uses the Project type definition from Sanity types.
-15:  *
-16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
-17:  * @param {string} props.name - The name of the project.
-18:  * @param {string} [props.description] - A brief description of the project (optional).
-19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
-20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
-21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
-22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
-23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
-24:  * @returns {JSX.Element} The rendered ProsjektCard component.
-25:  */
-26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
-27:   name,
-28:   description,
-29:   subdescription,
-30:   projectimage,
-31:   urlwww,
-32:   urlgithub,
-33:   staggerDelay = 0,
-34: }) => {
-35:   return (
-36:     <div
-37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
-38:       data-testid="project-card"
-39:     >
-40:       <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
-41:         <div className="relative w-full md:h-60">
-42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
-43:             {projectimage && (
-44:               <Image
-45:                 className="transition-[box-shadow,filter] duration-300 ease-in-out hover:shadow-md hover:brightness-90"
-46:                 width={600}
-47:                 height={300}
-48:                 src={urlFor(projectimage)
-49:                   .width(600)
-50:                   .fit("max")
-51:                   .quality(100)
-52:                   .auto("format")
-53:                   .url()}
-54:                 quality={100}
-55:                 alt={`Skjermbilde av prosjektet ${name}`}
-56:                 sizes="(max-width: 768px) 100vw, 600px"
-57:               />
-58:             )}
-59:           </div>
-60:         </div>
-61:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-62:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
-63:             {name}
-64:           </h2>
-65:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
-66:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
-67:             {subdescription}
-68:           </p>
-69:           <div className="flex justify-center mt-4">
-70:             {urlwww && urlwww.length > 0 && (
-71:               <Button href={urlwww?.[0]?.url} renderAs="a">
-72:                 Besøk
-73:               </Button>
-74:             )}
-75:             {urlgithub && urlgithub.length > 0 && (
-76:               <Button href={urlgithub?.[0]?.url} renderAs="a">
-77:                 GitHub
-78:               </Button>
-79:             )}
-80:           </div>
-81:         </div>
-82:       </BounceInScroll>
-83:     </div>
-84:   );
-85: };
-86: export default ProsjektCard;
+  1: "use client";
+  2: import Link from "next/link";
+  3: import { usePathname } from "next/navigation";
+  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
+  5: import * as m from "motion/react-m";
+  6: import Hamburger from "./Hamburger.component";
+  7: import type { Navigation } from "@/types/sanity.types";
+  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
+  9: const menuVariants: Variants = {
+ 10:   closed: {
+ 11:     x: "125%",
+ 12:     transition: {
+ 13:       type: "spring",
+ 14:       stiffness: 60,
+ 15:       damping: 10,
+ 16:       delay: 0.3,
+ 17:     },
+ 18:   },
+ 19:   open: {
+ 20:     x: 0,
+ 21:     transition: {
+ 22:       type: "spring",
+ 23:       stiffness: 60,
+ 24:       damping: 10,
+ 25:     },
+ 26:   },
+ 27: };
+ 28: /**
+ 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
+ 30:  * @param {Object} props
+ 31:  * @param {ILink[]} props.links - Array of navigation link objects
+ 32:  * @returns {JSX.Element} The rendered MobileMenu component
+ 33:  */
+ 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
+ 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
+ 36:   const closeMenu = () => toggleExpanded(0);
+ 37:   const pathname = usePathname();
+ 38:   const itemVariants: Variants = {
+ 39:     closed: (i: number) => ({
+ 40:       x: i % 2 === 0 ? "-50%" : "50%",
+ 41:       opacity: 0,
+ 42:       transition: {
+ 43:         type: "spring",
+ 44:         stiffness: 120,
+ 45:         damping: 12,
+ 46:         duration: 0.25,
+ 47:       },
+ 48:     }),
+ 49:     open: (i: number) => ({
+ 50:       x: 0,
+ 51:       opacity: 1,
+ 52:       transition: {
+ 53:         type: "spring",
+ 54:         stiffness: 120,
+ 55:         damping: 12,
+ 56:         delay: i * 0.25,
+ 57:       },
+ 58:     }),
+ 59:   };
+ 60:   return (
+ 61:     <div
+ 62:       className="z-50 md:hidden lg:hidden xl:hidden"
+ 63:       data-testid="mobilemenu"
+ 64:     >
+ 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
+ 66:       <AnimatePresence>
+ 67:         {isExpanded && (
+ 68:           <m.div
+ 69:             id="mobile-menu"
+ 70:             data-testid="mobile-menu"
+ 71:             data-cy="mobile-menu"
+ 72:             className="fixed top-0 -left-[50vw] -right-[50vw] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
+ 73:             initial="closed"
+ 74:             animate="open"
+ 75:             exit="closed"
+ 76:             variants={menuVariants}
+ 77:           >
+ 78:             <nav aria-label="Navigasjon" className="w-full">
+ 79:               <m.ul
+ 80:                 className="w-full"
+ 81:                 initial="closed"
+ 82:                 animate="open"
+ 83:                 exit="closed"
+ 84:                 variants={{
+ 85:                   open: {
+ 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
+ 87:                   },
+ 88:                   closed: {
+ 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
+ 90:                   },
+ 91:                 }}
+ 92:               >
+ 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
+ 94:                   const linkClassName =
+ 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
+ 96:                   return (
+ 97:                     <m.li
+ 98:                       key={title}
+ 99:                       className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
+100:                       data-cy="mobile-menu-item"
+101:                       custom={index}
+102:                       variants={itemVariants}
+103:                     >
+104:                       {externalLink ? (
+105:                         <a
+106:                           aria-label={name}
+107:                           href={href}
+108:                           target="_blank"
+109:                           rel="noreferrer"
+110:                           data-testid={`mobil-${name}`}
+111:                           className={linkClassName}
+112:                         >
+113:                           {name}
+114:                         </a>
+115:                       ) : (
+116:                         <Link
+117:                           href={href ?? ""}
+118:                           data-testid={`mobil-${name}`}
+119:                           prefetch={true}
+120:                           onClick={closeMenu}
+121:                           className={`${linkClassName} ${
+122:                             pathname === href
+123:                               ? "text-[var(--matrix-light)]"
+124:                               : ""
+125:                           }`}
+126:                         >
+127:                           <div className="glitch relative" data-text={name}>
+128:                             {name}
+129:                             <m.span
+130:                               className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
+131:                                 pathname === href
+132:                                   ? "bg-[var(--matrix-light)]"
+133:                                   : "bg-white"
+134:                               }`}
+135:                               initial={{
+136:                                 scaleX: pathname === href ? 1 : 0,
+137:                               }}
+138:                               animate={{
+139:                                 scaleX: pathname === href ? 1 : 0,
+140:                               }}
+141:                               transition={{ duration: 0.3 }}
+142:                             />
+143:                           </div>
+144:                         </Link>
+145:                       )}
+146:                     </m.li>
+147:                   );
+148:                 })}
+149:               </m.ul>
+150:             </nav>
+151:           </m.div>
+152:         )}
+153:       </AnimatePresence>
+154:     </div>
+155:   );
+156: };
+157: export default MobileMenu;
+````
+
+## File: src/components/Layout/NavigationLink.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import Link from "next/link";
+ 3: import * as m from "motion/react-m";
+ 4: import { MotionDiv } from "@/lib/framer/client";
+ 5: interface NavigationLinkProps {
+ 6:   name: string;
+ 7:   href: string;
+ 8:   isActive: boolean;
+ 9: }
+10: /**
+11:  * NavigationLink component that renders a single navigation link with hover and active states
+12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
+13:  * @param {string} props.name - The text to display for the link
+14:  * @param {string} props.href - The URL the link should navigate to
+15:  * @param {boolean} props.isActive - Whether the link is currently active
+16:  * @returns {JSX.Element} The rendered NavigationLink component
+17:  */
+18: const NavigationLink: React.FC<NavigationLinkProps> = ({
+19:   name,
+20:   href,
+21:   isActive,
+22: }) => (
+23:   <MotionDiv className="relative" whileHover="hover">
+24:     <Link
+25:       prefetch={true}
+26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
+27:         isActive ? "text-[var(--matrix-light)]" : ""
+28:       }`}
+29:       href={href}
+30:     >
+31:       <div className="glitch relative" data-text={name}>
+32:         {name}
+33:         <m.span
+34:           className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
+35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
+36:           }`}
+37:           initial={false}
+38:           animate={{
+39:             scaleX: isActive ? 1 : 0,
+40:           }}
+41:           variants={{
+42:             hover: { scaleX: 1 },
+43:           }}
+44:           transition={{ duration: 0.3 }}
+45:         />
+46:       </div>
+47:     </Link>
+48:   </MotionDiv>
+49: );
+50: export default NavigationLink;
 ````
 
 ## File: src/components/UI/Button.component.tsx
@@ -6090,6 +6226,126 @@ vitest.setup.ts
 66:   );
 67: };
 68: export default ContentLoader;
+````
+
+## File: src/components/UI/InputField.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { UseFormRegister, FieldValues, Path } from "react-hook-form";
+ 3: import { createRegisterOptions } from "./InputField.utils";
+ 4: interface InputProps<T extends FieldValues> {
+ 5:   readonly name: Path<T>;
+ 6:   readonly label: string;
+ 7:   readonly htmlFor: string;
+ 8:   readonly isRequired?: boolean;
+ 9:   readonly inputPattern?: RegExp;
+10:   readonly title?: string;
+11:   readonly type?: "input" | "textarea";
+12:   readonly register: UseFormRegister<T>;
+13:   readonly error?: string;
+14:   readonly autoComplete?: string;
+15:   readonly spellCheck?: boolean;
+16:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
+17: }
+18: /**
+19:  * InputField component for rendering form inputs
+20:  * @template T - Type extending FieldValues
+21:  * @param {InputProps<T>} props - The props for the InputField component
+22:  * @returns {JSX.Element} The rendered InputField component
+23:  */
+24: function InputField<T extends FieldValues>({
+25:   name,
+26:   label,
+27:   inputPattern,
+28:   isRequired,
+29:   htmlFor,
+30:   title,
+31:   type = "input",
+32:   register,
+33:   error,
+34:   autoComplete,
+35:   spellCheck,
+36:   inputMode,
+37:   ...props
+38: }: InputProps<T>) {
+39:   const sharedClasses =
+40:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
+41:   const registerOptions = createRegisterOptions<T>(
+42:     isRequired,
+43:     inputPattern,
+44:     title,
+45:   );
+46:   return (
+47:     <div className="relative my-2 flex flex-col items-center">
+48:       <div className="relative">
+49:         {type === "input" ? (
+50:           <input
+51:             id={htmlFor}
+52:             type="text"
+53:             placeholder={label}
+54:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+55:             autoComplete={autoComplete}
+56:             spellCheck={spellCheck}
+57:             inputMode={inputMode}
+58:             {...register(name, {
+59:               ...registerOptions,
+60:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+61:             })}
+62:             {...props}
+63:           />
+64:         ) : (
+65:           <textarea
+66:             id={htmlFor}
+67:             placeholder={label}
+68:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
+69:             spellCheck={spellCheck}
+70:             {...register(name, {
+71:               ...registerOptions,
+72:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
+73:             })}
+74:             {...props}
+75:           ></textarea>
+76:         )}
+77:         <label
+78:           htmlFor={htmlFor}
+79:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
+80:             // Removed peer-focus:text-primary
+81:             type === "textarea" ? "peer-focus:-top-4" : ""
+82:           }`}
+83:         >
+84:           {label}
+85:         </label>
+86:       </div>
+87:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
+88:     </div>
+89:   );
+90: }
+91: export default InputField;
+````
+
+## File: src/components/UI/InputField.utils.ts
+````typescript
+ 1: import type { FieldValues, Path, RegisterOptions } from "react-hook-form";
+ 2: /**
+ 3:  * Creates register options for react-hook-form
+ 4:  * @template T - Type extending FieldValues
+ 5:  * @param {boolean} [isRequired] - Whether the field is required
+ 6:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
+ 7:  * @param {string} [title] - Title for the input field
+ 8:  * @returns {RegisterOptions<T, Path<T>>} Register options object
+ 9:  */
+10: export function createRegisterOptions<T extends FieldValues>(
+11:   isRequired?: boolean,
+12:   inputPattern?: RegExp,
+13:   title?: string,
+14: ): RegisterOptions<T, Path<T>> {
+15:   return {
+16:     required: isRequired ? "Dette feltet er påkrevd" : false,
+17:     ...(inputPattern
+18:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
+19:       : {}),
+20:   };
+21: }
 ````
 
 ## File: src/components/UI/PageHeader.component.tsx
@@ -7017,6 +7273,44 @@ vitest.setup.ts
 34: });
 ````
 
+## File: src/hooks/useMobile.tsx
+````typescript
+ 1: import { useSyncExternalStore } from "react";
+ 2: const MOBILE_QUERY = "(max-width: 639px)";
+ 3: const MOBILE_BREAKPOINT = 640;
+ 4: function subscribe(onChange: () => void): () => void {
+ 5:   // Fallback to resize listener for test environments without matchMedia
+ 6:   if (!globalThis.matchMedia) {
+ 7:     globalThis.addEventListener("resize", onChange);
+ 8:     return () => globalThis.removeEventListener("resize", onChange);
+ 9:   }
+10:   const mediaQuery = globalThis.matchMedia(MOBILE_QUERY);
+11:   mediaQuery.addEventListener("change", onChange);
+12:   return () => mediaQuery.removeEventListener("change", onChange);
+13: }
+14: function getSnapshot(): boolean {
+15:   if (globalThis.matchMedia) {
+16:     return globalThis.matchMedia(MOBILE_QUERY).matches;
+17:   }
+18:   return globalThis.innerWidth < MOBILE_BREAKPOINT;
+19: }
+20: function getServerSnapshot(): boolean {
+21:   return false;
+22: }
+23: /**
+24:  * A React hook that returns a boolean indicating if the user is on a mobile device.
+25:  * Subscribes to the mobile breakpoint through useSyncExternalStore, so the
+26:  * server render and hydration use `false` and the client value applies after
+27:  * hydration without a mismatch.
+28:  * Includes fallback for test environments where matchMedia is not available.
+29:  *
+30:  * @returns true if the device width is under 640px, else false.
+31:  */
+32: export function useMobile(): boolean {
+33:   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+34: }
+````
+
 ## File: src/lib/framer/client.ts
 ````typescript
 1: "use client";
@@ -7275,85 +7569,6 @@ vitest.setup.ts
 185:     // Swallow here; the awaited call in the page surfaces the error.
 186:   });
 187: }
-````
-
-## File: src/stories/components/Animations/BounceInScroll.stories.tsx
-````typescript
- 1: import React from "react";
- 2: import { Meta, Story } from "@ladle/react";
- 3: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 4: import { IAnimateBounceProps } from "@/components/Animations/types/Animations.types";
- 5: export default {
- 6:   title: "Animations/BounceInScroll",
- 7:   component: BounceInScroll,
- 8: } as Meta;
- 9: const Card = () => (
-10:   <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-11:     <h2 className="text-2xl text-white mb-4">Animated Card</h2>
-12:     <p className="text-gray-300">
-13:       This card demonstrates the BounceInScroll animation component.
-14:     </p>
-15:   </div>
-16: );
-17: const storyWrapper = (storyArgs: IAnimateBounceProps) => (
-18:   <div className="min-h-[150vh] bg-gray-800 p-8">
-19:     <div className="text-white mb-[100vh]">
-20:       ⬇️ Scroll down to see the animation
-21:     </div>
-22:     <BounceInScroll {...storyArgs} />
-23:   </div>
-24: );
-25: export const Default: Story<IAnimateBounceProps> = () =>
-26:   storyWrapper({
-27:     children: <Card />,
-28:     viewAmount: 0.2,
-29:   });
-30: export const InstantAnimation: Story<IAnimateBounceProps> = () =>
-31:   storyWrapper({
-32:     children: <Card />,
-33:     instant: true,
-34:   });
-35: export const FullViewTrigger: Story<IAnimateBounceProps> = () =>
-36:   storyWrapper({
-37:     children: <Card />,
-38:     viewAmount: "all",
-39:   });
-40: export const PartialViewTrigger: Story<IAnimateBounceProps> = () =>
-41:   storyWrapper({
-42:     children: <Card />,
-43:     viewAmount: "some",
-44:   });
-45: export const CustomViewAmount: Story<IAnimateBounceProps> = () =>
-46:   storyWrapper({
-47:     children: <Card />,
-48:     viewAmount: 0.5,
-49:   });
-50: export const WithCustomClass: Story<IAnimateBounceProps> = () =>
-51:   storyWrapper({
-52:     children: <Card />,
-53:     cssClass: "max-w-md mx-auto",
-54:   });
-55: export const LargeContent: Story<IAnimateBounceProps> = () =>
-56:   storyWrapper({
-57:     children: (
-58:       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-59:         <Card />
-60:         <Card />
-61:         <Card />
-62:       </div>
-63:     ),
-64:     viewAmount: 0.2,
-65:   });
-66: export const TextContent: Story<IAnimateBounceProps> = () =>
-67:   storyWrapper({
-68:     children: (
-69:       <div className="text-white text-center">
-70:         <h1 className="text-4xl font-bold mb-4">Welcome</h1>
-71:         <p className="text-xl">This is a simple text animation example.</p>
-72:       </div>
-73:     ),
-74:     viewAmount: 0.2,
-75:   });
 ````
 
 ## File: src/stories/components/Animations/FadeIn.stories.tsx
@@ -15462,57 +15677,6 @@ vitest.setup.ts
 44: });
 ````
 
-## File: src/__tests__/Animations/TestAnimation.test.tsx
-````typescript
- 1: /**
- 2:  * @vitest-environment jsdom
- 3:  */
- 4: import React from "react";
- 5: import { render, screen } from "@testing-library/react";
- 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
- 7: import PageTransition from "@/components/Animations/PageTransition.component";
- 8: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 9: mockIntersectionObserver();
-10: type AnimationComponent = typeof PageTransition | typeof BounceInScroll;
-11: /**
-12:  * Reusable tests for animation components.
-13:  *
-14:  * @param {AnimationComponent} Component - The animation component to test.
-15:  * @param {string} testId - The test ID for the component.
-16:  * @param {string} expectedAttribute - The expected attribute value for the component.
-17:  * @return {void} This function does not return anything.
-18:  */
-19: function testAnimationComponent(
-20:   Component: AnimationComponent,
-21:   testId: string,
-22:   expectedAttribute: string,
-23: ) {
-24:   describe(`${Component.name}`, () => {
-25:     // Arrange - Set up test data and conditions
-26:     const testContent = Component.name;
-27:     it(`loads and can be displayed`, () => {
-28:       // Arrange - Set up test data and conditions
-29:       const expectedTestId = testId;
-30:       // Act - Perform the action being tested
-31:       render(<Component delay={1}>{testContent}</Component>);
-32:       const element = screen.getByTestId(expectedTestId);
-33:       expect(element).toBeInTheDocument();
-34:     });
-35:     it(`Framer motion sets ${expectedAttribute}`, () => {
-36:       // Arrange - Set up test data and conditions
-37:       const expectedTestId = testId;
-38:       // Act - Perform the action being tested
-39:       render(<Component delay={1}>{testContent}</Component>);
-40:       const element = screen.getByTestId(expectedTestId);
-41:       // Assert - Verify the results
-42:       expect(element).toContainHTML(expectedAttribute);
-43:     });
-44:   });
-45: }
-46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
-47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
-````
-
 ## File: src/__tests__/architecture/boundaries.test.ts
 ````typescript
   1: /**
@@ -16470,44 +16634,6 @@ vitest.setup.ts
 284: });
 ````
 
-## File: src/app/cv/error.tsx
-````typescript
- 1: "use client";
- 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
- 3: type ErrorBoundaryProps = Readonly<{
- 4:   error: Error & { digest?: string };
- 5:   reset: () => void;
- 6: }>;
- 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
- 8:   return (
- 9:     <RouteError
-10:       error={error}
-11:       reset={reset}
-12:       description="Det oppsto en feil under lasting av CV-siden."
-13:     />
-14:   );
-15: }
-````
-
-## File: src/app/kontakt/error.tsx
-````typescript
- 1: "use client";
- 2: import RouteError from "@/components/ErrorBoundary/RouteError.component";
- 3: type ErrorBoundaryProps = Readonly<{
- 4:   error: Error & { digest?: string };
- 5:   reset: () => void;
- 6: }>;
- 7: export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
- 8:   return (
- 9:     <RouteError
-10:       error={error}
-11:       reset={reset}
-12:       description="Det oppsto en feil under lasting av kontaktskjemaet."
-13:     />
-14:   );
-15: }
-````
-
 ## File: src/app/kontakt/page.tsx
 ````typescript
 1: import ContactForm from "@/components/Kontakt/ContactForm.component";
@@ -16520,63 +16646,26 @@ vitest.setup.ts
 8: }
 ````
 
-## File: src/app/prosjekter/loading.tsx
+## File: src/components/Animations/types/Animations.types.ts
 ````typescript
- 1: import PageHeader from "@/components/UI/PageHeader.component";
- 2: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 3: export default function Loading() {
- 4:   return (
- 5:     <main aria-label="Laster portefølje" className="mt-32 bg-graybg">
- 6:       <PageHeader>Prosjekter</PageHeader>
- 7:       <div className="container mx-auto flex justify-center items-center min-h-[400px]">
- 8:         <RotatingLoader />
- 9:       </div>
-10:     </main>
-11:   );
+ 1: import { ReactNode } from "react";
+ 2: export interface IAnimateProps {
+ 3:   children: ReactNode;
+ 4:   cssClass?: string;
+ 5: }
+ 6: export interface ISlideUpProps {
+ 7:   children: ReactNode;
+ 8:   cssClass?: string;
+ 9:   viewAmount?: "some" | "all" | number;
+10:   instant?: boolean;
+11:   delay?: number;
 12: }
-````
-
-## File: src/components/ErrorBoundary/RouteError.component.tsx
-````typescript
- 1: "use client";
- 2: import { useEffect } from "react";
- 3: interface RouteErrorProps {
- 4:   readonly error: Error & { digest?: string };
- 5:   readonly reset: () => void;
- 6:   readonly description: string;
- 7: }
- 8: /**
- 9:  * Shared error UI for Next.js route segment `error.tsx` files.
-10:  * Logs the error, shows a description and the error message, and offers a retry.
-11:  * @param {RouteErrorProps} props - The error, the reset callback and the description
-12:  * @returns {JSX.Element} The rendered error state
-13:  */
-14: const RouteError = ({ error, reset, description }: RouteErrorProps) => {
-15:   useEffect(() => {
-16:     console.error(error);
-17:   }, [error]);
-18:   return (
-19:     <main className="flex min-h-screen flex-col items-center justify-center p-4">
-20:       <div className="text-center space-y-4 max-w-md">
-21:         <h2 className="text-2xl font-bold text-red-400">Noe gikk galt</h2>
-22:         <p className="text-gray-300">{description}</p>
-23:         {error.message && (
-24:           <p className="text-sm text-gray-400 font-mono bg-slate-800 p-3 rounded">
-25:             {error.message}
-26:           </p>
-27:         )}
-28:         <button
-29:           type="button"
-30:           onClick={reset}
-31:           className="px-6 py-3 bg-matrix-dark hover:bg-matrix-dark/80 text-white rounded-sm transition-colors"
-32:         >
-33:           Prøv igjen
-34:         </button>
-35:       </div>
-36:     </main>
-37:   );
-38: };
-39: export default RouteError;
+13: export interface IGrowProps {
+14:   duration?: number;
+15:   delay?: number;
+16:   easing?: [number, number, number, number];
+17:   children: ReactNode;
+18: }
 ````
 
 ## File: src/components/Kontakt/ContactForm.component.tsx
@@ -16725,221 +16814,6 @@ vitest.setup.ts
 142: export default ContactForm;
 ````
 
-## File: src/components/Layout/MobileMenu.component.tsx
-````typescript
-  1: "use client";
-  2: import Link from "next/link";
-  3: import { usePathname } from "next/navigation";
-  4: import { AnimatePresence, useCycle, Variants } from "motion/react";
-  5: import * as m from "motion/react-m";
-  6: import Hamburger from "./Hamburger.component";
-  7: import type { Navigation } from "@/types/sanity.types";
-  8: type NavigationLinksArray = NonNullable<Navigation["links"]>;
-  9: const menuVariants: Variants = {
- 10:   closed: {
- 11:     x: "125%",
- 12:     transition: {
- 13:       type: "spring",
- 14:       stiffness: 60,
- 15:       damping: 10,
- 16:       delay: 0.3,
- 17:     },
- 18:   },
- 19:   open: {
- 20:     x: 0,
- 21:     transition: {
- 22:       type: "spring",
- 23:       stiffness: 60,
- 24:       damping: 10,
- 25:     },
- 26:   },
- 27: };
- 28: /**
- 29:  * MobileMenu component that renders a responsive navigation menu for mobile devices
- 30:  * @param {Object} props
- 31:  * @param {ILink[]} props.links - Array of navigation link objects
- 32:  * @returns {JSX.Element} The rendered MobileMenu component
- 33:  */
- 34: const MobileMenu: React.FC<{ links: NavigationLinksArray }> = ({ links }) => {
- 35:   const [isExpanded, toggleExpanded] = useCycle<boolean>(false, true);
- 36:   const closeMenu = () => toggleExpanded(0);
- 37:   const pathname = usePathname();
- 38:   const itemVariants: Variants = {
- 39:     closed: (i: number) => ({
- 40:       x: i % 2 === 0 ? "-50%" : "50%",
- 41:       opacity: 0,
- 42:       transition: {
- 43:         type: "spring",
- 44:         stiffness: 120,
- 45:         damping: 12,
- 46:         duration: 0.25,
- 47:       },
- 48:     }),
- 49:     open: (i: number) => ({
- 50:       x: 0,
- 51:       opacity: 1,
- 52:       transition: {
- 53:         type: "spring",
- 54:         stiffness: 120,
- 55:         damping: 12,
- 56:         delay: i * 0.25,
- 57:       },
- 58:     }),
- 59:   };
- 60:   return (
- 61:     <div
- 62:       className="z-50 md:hidden lg:hidden xl:hidden"
- 63:       data-testid="mobilemenu"
- 64:     >
- 65:       <Hamburger onClick={toggleExpanded} animatetoX={isExpanded} />
- 66:       <AnimatePresence>
- 67:         {isExpanded && (
- 68:           <m.div
- 69:             id="mobile-menu"
- 70:             data-testid="mobile-menu"
- 71:             data-cy="mobile-menu"
- 72:             className="fixed top-0 -left-[50vw] -right-[50vw] h-[calc(100vh+20px)] bg-gray-800 flex items-center justify-center z-40 -mt-4 overflow-y-auto scrollbar-gutter-stable"
- 73:             initial="closed"
- 74:             animate="open"
- 75:             exit="closed"
- 76:             variants={menuVariants}
- 77:           >
- 78:             <nav aria-label="Navigasjon" className="w-full">
- 79:               <m.ul
- 80:                 className="w-full"
- 81:                 initial="closed"
- 82:                 animate="open"
- 83:                 exit="closed"
- 84:                 variants={{
- 85:                   open: {
- 86:                     transition: { staggerChildren: 0.07, delayChildren: 0.2 },
- 87:                   },
- 88:                   closed: {
- 89:                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
- 90:                   },
- 91:                 }}
- 92:               >
- 93:                 {links?.map(({ title, name, href, externalLink }, index) => {
- 94:                   const linkClassName =
- 95:                     "flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-xl";
- 96:                   return (
- 97:                     <m.li
- 98:                       key={title}
- 99:                       className="block p-4 text-white mx-auto text-center border-t border-b border-gray-600 border-solid shadow-sm"
-100:                       data-cy="mobile-menu-item"
-101:                       custom={index}
-102:                       variants={itemVariants}
-103:                     >
-104:                       {externalLink ? (
-105:                         <a
-106:                           aria-label={name}
-107:                           href={href}
-108:                           target="_blank"
-109:                           rel="noreferrer"
-110:                           data-testid={`mobil-${name}`}
-111:                           className={linkClassName}
-112:                         >
-113:                           {name}
-114:                         </a>
-115:                       ) : (
-116:                         <Link
-117:                           href={href ?? ""}
-118:                           data-testid={`mobil-${name}`}
-119:                           prefetch={true}
-120:                           onClick={closeMenu}
-121:                           className={`${linkClassName} ${
-122:                             pathname === href
-123:                               ? "text-[var(--matrix-light)]"
-124:                               : ""
-125:                           }`}
-126:                         >
-127:                           <div className="glitch relative" data-text={name}>
-128:                             {name}
-129:                             <m.span
-130:                               className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
-131:                                 pathname === href
-132:                                   ? "bg-[var(--matrix-light)]"
-133:                                   : "bg-white"
-134:                               }`}
-135:                               initial={{
-136:                                 scaleX: pathname === href ? 1 : 0,
-137:                               }}
-138:                               animate={{
-139:                                 scaleX: pathname === href ? 1 : 0,
-140:                               }}
-141:                               transition={{ duration: 0.3 }}
-142:                             />
-143:                           </div>
-144:                         </Link>
-145:                       )}
-146:                     </m.li>
-147:                   );
-148:                 })}
-149:               </m.ul>
-150:             </nav>
-151:           </m.div>
-152:         )}
-153:       </AnimatePresence>
-154:     </div>
-155:   );
-156: };
-157: export default MobileMenu;
-````
-
-## File: src/components/Layout/NavigationLink.component.tsx
-````typescript
- 1: import React from "react";
- 2: import Link from "next/link";
- 3: import * as m from "motion/react-m";
- 4: import { MotionDiv } from "@/lib/framer/client";
- 5: interface NavigationLinkProps {
- 6:   name: string;
- 7:   href: string;
- 8:   isActive: boolean;
- 9: }
-10: /**
-11:  * NavigationLink component that renders a single navigation link with hover and active states
-12:  * @param {NavigationLinkProps} props - The props for the NavigationLink component
-13:  * @param {string} props.name - The text to display for the link
-14:  * @param {string} props.href - The URL the link should navigate to
-15:  * @param {boolean} props.isActive - Whether the link is currently active
-16:  * @returns {JSX.Element} The rendered NavigationLink component
-17:  */
-18: const NavigationLink: React.FC<NavigationLinkProps> = ({
-19:   name,
-20:   href,
-21:   isActive,
-22: }) => (
-23:   <MotionDiv className="relative" whileHover="hover">
-24:     <Link
-25:       prefetch={true}
-26:       className={`flex w-full items-center justify-center px-2 py-2 hover:text-white transition font-semibold text-lg ${
-27:         isActive ? "text-[var(--matrix-light)]" : ""
-28:       }`}
-29:       href={href}
-30:     >
-31:       <div className="glitch relative" data-text={name}>
-32:         {name}
-33:         <m.span
-34:           className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
-35:             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
-36:           }`}
-37:           initial={false}
-38:           animate={{
-39:             scaleX: isActive ? 1 : 0,
-40:           }}
-41:           variants={{
-42:             hover: { scaleX: 1 },
-43:           }}
-44:           transition={{ duration: 0.3 }}
-45:         />
-46:       </div>
-47:     </Link>
-48:   </MotionDiv>
-49: );
-50: export default NavigationLink;
-````
-
 ## File: src/components/Layout/StructuredData.component.tsx
 ````typescript
  1: import {
@@ -16955,124 +16829,94 @@ vitest.setup.ts
 11: }
 ````
 
-## File: src/components/UI/InputField.component.tsx
+## File: src/components/Prosjekter/ProsjektCard.component.tsx
 ````typescript
- 1: import React from "react";
- 2: import { UseFormRegister, FieldValues, Path } from "react-hook-form";
- 3: import { createRegisterOptions } from "./InputField.utils";
- 4: interface InputProps<T extends FieldValues> {
- 5:   readonly name: Path<T>;
- 6:   readonly label: string;
- 7:   readonly htmlFor: string;
- 8:   readonly isRequired?: boolean;
- 9:   readonly inputPattern?: RegExp;
-10:   readonly title?: string;
-11:   readonly type?: "input" | "textarea";
-12:   readonly register: UseFormRegister<T>;
-13:   readonly error?: string;
-14:   readonly autoComplete?: string;
-15:   readonly spellCheck?: boolean;
-16:   readonly inputMode?: "text" | "tel" | "email" | "numeric";
-17: }
-18: /**
-19:  * InputField component for rendering form inputs
-20:  * @template T - Type extending FieldValues
-21:  * @param {InputProps<T>} props - The props for the InputField component
-22:  * @returns {JSX.Element} The rendered InputField component
-23:  */
-24: function InputField<T extends FieldValues>({
-25:   name,
-26:   label,
-27:   inputPattern,
-28:   isRequired,
-29:   htmlFor,
-30:   title,
-31:   type = "input",
-32:   register,
-33:   error,
-34:   autoComplete,
-35:   spellCheck,
-36:   inputMode,
-37:   ...props
-38: }: InputProps<T>) {
-39:   const sharedClasses =
-40:     "peer block text-base md:text-xl w-64 p-2 bg-gray-800 text-slate-100 border-gray-500/50 border rounded-sm outline-hidden hover:border-gray-400 focus:border-[var(--matrix-dark)] placeholder-gray-300/0 transition duration-200 cursor-text";
-41:   const registerOptions = createRegisterOptions<T>(
-42:     isRequired,
-43:     inputPattern,
-44:     title,
-45:   );
-46:   return (
-47:     <div className="relative my-2 flex flex-col items-center">
-48:       <div className="relative">
-49:         {type === "input" ? (
-50:           <input
-51:             id={htmlFor}
-52:             type="text"
-53:             placeholder={label}
-54:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-55:             autoComplete={autoComplete}
-56:             spellCheck={spellCheck}
-57:             inputMode={inputMode}
-58:             {...register(name, {
-59:               ...registerOptions,
-60:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
-61:             })}
-62:             {...props}
-63:           />
-64:         ) : (
-65:           <textarea
-66:             id={htmlFor}
-67:             placeholder={label}
-68:             className={`${sharedClasses} ${error ? "border-red-500" : ""}`}
-69:             spellCheck={spellCheck}
-70:             {...register(name, {
-71:               ...registerOptions,
-72:               setValueAs: (v: string) => v?.trim(), // Trim whitespace
-73:             })}
-74:             {...props}
-75:           ></textarea>
-76:         )}
-77:         <label
-78:           htmlFor={htmlFor}
-79:           className={`cursor-text absolute left-1 top-0 z-10 origin-[0] -translate-y-8 scale-75 transform bg-gray-800 px-2 text-slate-100 duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-10 peer-focus:scale-75 peer-focus:px-2 peer-focus:bg-gray-800 ${
-80:             // Removed peer-focus:text-primary
-81:             type === "textarea" ? "peer-focus:-top-4" : ""
-82:           }`}
-83:         >
-84:           {label}
-85:         </label>
-86:       </div>
-87:       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
-88:     </div>
-89:   );
-90: }
-91: export default InputField;
-````
-
-## File: src/components/UI/InputField.utils.ts
-````typescript
- 1: import type { FieldValues, Path, RegisterOptions } from "react-hook-form";
- 2: /**
- 3:  * Creates register options for react-hook-form
- 4:  * @template T - Type extending FieldValues
- 5:  * @param {boolean} [isRequired] - Whether the field is required
- 6:  * @param {RegExp} [inputPattern] - Regular expression pattern for input validation
- 7:  * @param {string} [title] - Title for the input field
- 8:  * @returns {RegisterOptions<T, Path<T>>} Register options object
- 9:  */
-10: export function createRegisterOptions<T extends FieldValues>(
-11:   isRequired?: boolean,
-12:   inputPattern?: RegExp,
-13:   title?: string,
-14: ): RegisterOptions<T, Path<T>> {
-15:   return {
-16:     required: isRequired ? "Dette feltet er påkrevd" : false,
-17:     ...(inputPattern
-18:       ? { pattern: { value: inputPattern, message: title ?? "Ugyldig format" } }
-19:       : {}),
-20:   };
-21: }
+ 1: "use client";
+ 2: import React from "react";
+ 3: import Image from "next/image";
+ 4: import Button from "@/components/UI/Button.component";
+ 5: import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
+ 6: import { urlFor } from "@/lib/sanity/client";
+ 7: import type { Project } from "@/types/sanity.types";
+ 8: interface ProsjektCardProps extends Project {
+ 9:   /** Stagger delay in seconds for coordinated group animations */
+10:   staggerDelay?: number;
+11: }
+12: /**
+13:  * Renders a card displaying information about a single project.
+14:  * Uses the Project type definition from Sanity types.
+15:  *
+16:  * @param {ProsjektCardProps} props - The project data object with optional stagger delay.
+17:  * @param {string} props.name - The name of the project.
+18:  * @param {string} [props.description] - A brief description of the project (optional).
+19:  * @param {string} [props.subdescription] - Additional description of the project (optional).
+20:  * @param {SanityImageObject} [props.projectimage] - The Sanity image object for the project (optional).
+21:  * @param {Array<{url: string}>} [props.urlwww] - Array of website URL objects for the project (optional).
+22:  * @param {Array<{url: string}>} [props.urlgithub] - Array of GitHub URL objects for the project (optional).
+23:  * @param {number} [props.staggerDelay=0] - Stagger delay in seconds for coordinated group animations.
+24:  * @returns {JSX.Element} The rendered ProsjektCard component.
+25:  */
+26: const ProsjektCard: React.FC<ProsjektCardProps> = ({
+27:   name,
+28:   description,
+29:   subdescription,
+30:   projectimage,
+31:   urlwww,
+32:   urlgithub,
+33:   staggerDelay = 0,
+34: }) => {
+35:   return (
+36:     <div
+37:       className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+38:       data-testid="project-card"
+39:     >
+40:       <SlideUpInScroll viewAmount={0.3} delay={staggerDelay}>
+41:         <div className="relative w-full md:h-60">
+42:           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
+43:             {projectimage && (
+44:               <Image
+45:                 className="transition-[box-shadow,filter] duration-300 ease-in-out hover:shadow-md hover:brightness-90"
+46:                 width={600}
+47:                 height={300}
+48:                 src={urlFor(projectimage)
+49:                   .width(600)
+50:                   .fit("max")
+51:                   .quality(100)
+52:                   .auto("format")
+53:                   .url()}
+54:                 quality={100}
+55:                 alt={`Skjermbilde av prosjektet ${name}`}
+56:                 sizes="(max-width: 768px) 100vw, 600px"
+57:               />
+58:             )}
+59:           </div>
+60:         </div>
+61:         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
+62:           <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+63:             {name}
+64:           </h2>
+65:           <h3 className="text-base px-4 text-gray-300">{description}</h3>
+66:           <p className="mt-4 text-sm mt-2 px-4 text-gray-300">
+67:             {subdescription}
+68:           </p>
+69:           <div className="flex justify-center mt-4">
+70:             {urlwww && urlwww.length > 0 && (
+71:               <Button href={urlwww?.[0]?.url} renderAs="a">
+72:                 Besøk
+73:               </Button>
+74:             )}
+75:             {urlgithub && urlgithub.length > 0 && (
+76:               <Button href={urlgithub?.[0]?.url} renderAs="a">
+77:                 GitHub
+78:               </Button>
+79:             )}
+80:           </div>
+81:         </div>
+82:       </SlideUpInScroll>
+83:     </div>
+84:   );
+85: };
+86: export default ProsjektCard;
 ````
 
 ## File: src/e2e/cypress/e2e/kontakt.cy.ts
@@ -17105,44 +16949,6 @@ vitest.setup.ts
 26:     checkAccessibility(5000);
 27:   });
 28: });
-````
-
-## File: src/hooks/useMobile.tsx
-````typescript
- 1: import { useSyncExternalStore } from "react";
- 2: const MOBILE_QUERY = "(max-width: 639px)";
- 3: const MOBILE_BREAKPOINT = 640;
- 4: function subscribe(onChange: () => void): () => void {
- 5:   // Fallback to resize listener for test environments without matchMedia
- 6:   if (!globalThis.matchMedia) {
- 7:     globalThis.addEventListener("resize", onChange);
- 8:     return () => globalThis.removeEventListener("resize", onChange);
- 9:   }
-10:   const mediaQuery = globalThis.matchMedia(MOBILE_QUERY);
-11:   mediaQuery.addEventListener("change", onChange);
-12:   return () => mediaQuery.removeEventListener("change", onChange);
-13: }
-14: function getSnapshot(): boolean {
-15:   if (globalThis.matchMedia) {
-16:     return globalThis.matchMedia(MOBILE_QUERY).matches;
-17:   }
-18:   return globalThis.innerWidth < MOBILE_BREAKPOINT;
-19: }
-20: function getServerSnapshot(): boolean {
-21:   return false;
-22: }
-23: /**
-24:  * A React hook that returns a boolean indicating if the user is on a mobile device.
-25:  * Subscribes to the mobile breakpoint through useSyncExternalStore, so the
-26:  * server render and hydration use `false` and the client value applies after
-27:  * hydration without a mismatch.
-28:  * Includes fallback for test environments where matchMedia is not available.
-29:  *
-30:  * @returns true if the device width is under 640px, else false.
-31:  */
-32: export function useMobile(): boolean {
-33:   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-34: }
 ````
 
 ## File: src/lib/structuredData.ts
@@ -17929,6 +17735,39 @@ vitest.setup.ts
 35:   - '@vercel/speed-insights@2.1.0'
 ````
 
+## File: .github/workflows/lint.yml
+````yaml
+ 1: name: Code Quality
+ 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
+ 3: # structure/architecture (Vitest tests in src/__tests__/architecture).
+ 4: on: [push, pull_request]
+ 5: permissions:
+ 6:   contents: read
+ 7: concurrency:
+ 8:   group: ${{ github.workflow }}-${{ github.ref }}
+ 9:   cancel-in-progress: true
+10: jobs:
+11:   quality:
+12:     name: Style and architecture
+13:     runs-on: ubuntu-latest
+14:     timeout-minutes: 15
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+17:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+19:         with:
+20:           node-version: 26
+21:           cache: "pnpm"
+22:       - name: Install dependencies
+23:         run: pnpm install --frozen-lockfile --ignore-scripts
+24:       - name: Check formatting (Prettier)
+25:         run: pnpm format:check
+26:       - name: Lint CSS (Stylelint)
+27:         run: pnpm lint:css
+28:       - name: Architecture tests (naming and import boundaries)
+29:         run: pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false
+````
+
 ## File: .github/workflows/pa11y.yml
 ````yaml
  1: name: A11y
@@ -18242,107 +18081,6 @@ vitest.setup.ts
 192: });
 ````
 
-## File: src/__tests__/Animations/BounceInScroll.test.tsx
-````typescript
- 1: import { render, screen } from "@testing-library/react";
- 2: import BounceInScroll from "@/components/Animations/BounceInScroll.component";
- 3: import React from "react";
- 4: // Mock framer-motion
- 5: vi.mock("motion/react-m", () => ({
- 6:   div: ({
- 7:     children,
- 8:     className,
- 9:     "data-testid": testId,
-10:   }: {
-11:     children: React.ReactNode;
-12:     className: string;
-13:     "data-testid": string;
-14:   }) => (
-15:     <div className={className} data-testid={testId}>
-16:       {children}
-17:     </div>
-18:   ),
-19: }));
-20: vi.mock("motion/react", () => ({
-21:   Variants: {},
-22: }));
-23: /**
-24:  * Helper to render BounceInScroll and assert element + content are present.
-25:  */
-26: function renderAndAssertBounceInScroll(
-27:   props: Partial<React.ComponentProps<typeof BounceInScroll>> = {},
-28:   testContent = "Test content",
-29: ) {
-30:   // Arrange & Act
-31:   const result = render(
-32:     <BounceInScroll {...props}>
-33:       <div>{testContent}</div>
-34:     </BounceInScroll>,
-35:   );
-36:   // Assert
-37:   const element = screen.getByTestId("bounceinscroll");
-38:   expect(element).toBeInTheDocument();
-39:   expect(screen.getByText(testContent)).toBeInTheDocument();
-40:   return { element, ...result };
-41: }
-42: describe("BounceInScroll", () => {
-43:   it("renders children content", () => {
-44:     // Arrange
-45:     const testContent = "Test content";
-46:     // Act
-47:     render(
-48:       <BounceInScroll>
-49:         <div>{testContent}</div>
-50:       </BounceInScroll>,
-51:     );
-52:     // Assert
-53:     expect(screen.getByText(testContent)).toBeInTheDocument();
-54:   });
-55:   it("applies custom CSS class", () => {
-56:     // Arrange
-57:     const testClass = "test-class";
-58:     // Act
-59:     render(
-60:       <BounceInScroll cssClass={testClass}>
-61:         <div>Test content</div>
-62:       </BounceInScroll>,
-63:     );
-64:     // Assert
-65:     expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
-66:   });
-67:   it("configures viewport with default amount when viewAmount not provided", () => {
-68:     // Arrange & Act & Assert
-69:     renderAndAssertBounceInScroll();
-70:   });
-71:   it("configures viewport with custom amount when viewAmount provided", () => {
-72:     // Arrange & Act & Assert
-73:     renderAndAssertBounceInScroll({ viewAmount: 0.5 });
-74:   });
-75:   it("configures for instant animation when instant prop is true", () => {
-76:     // Arrange & Act & Assert
-77:     renderAndAssertBounceInScroll({ instant: true });
-78:   });
-79:   it("handles all viewport amount types", () => {
-80:     // Arrange
-81:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
-82:     amounts.forEach((amount) => {
-83:       // Act
-84:       const { unmount } = render(
-85:         <BounceInScroll viewAmount={amount}>
-86:           <div>Test content</div>
-87:         </BounceInScroll>,
-88:       );
-89:       // Assert
-90:       const element = screen.getByTestId("bounceinscroll");
-91:       expect(element).toBeInTheDocument();
-92:       expect(screen.getByText("Test content")).toBeInTheDocument();
-93:       // Cleanup
-94:       unmount();
-95:     });
-96:   });
-97: });
-````
-
 ## File: src/__tests__/Animations/Grow.test.tsx
 ````typescript
  1: /**
@@ -18406,6 +18144,158 @@ vitest.setup.ts
 59:     });
 60:   });
 61: });
+````
+
+## File: src/__tests__/Animations/SlideUpInScroll.test.tsx
+````typescript
+ 1: import { render, screen } from "@testing-library/react";
+ 2: import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
+ 3: import React from "react";
+ 4: // Mock framer-motion
+ 5: vi.mock("motion/react-m", () => ({
+ 6:   div: ({
+ 7:     children,
+ 8:     className,
+ 9:     "data-testid": testId,
+10:   }: {
+11:     children: React.ReactNode;
+12:     className: string;
+13:     "data-testid": string;
+14:   }) => (
+15:     <div className={className} data-testid={testId}>
+16:       {children}
+17:     </div>
+18:   ),
+19: }));
+20: vi.mock("motion/react", () => ({
+21:   Variants: {},
+22: }));
+23: /**
+24:  * Helper to render SlideUpInScroll and assert element + content are present.
+25:  */
+26: function renderAndAssertSlideUpInScroll(
+27:   props: Partial<React.ComponentProps<typeof SlideUpInScroll>> = {},
+28:   testContent = "Test content",
+29: ) {
+30:   // Arrange & Act
+31:   const result = render(
+32:     <SlideUpInScroll {...props}>
+33:       <div>{testContent}</div>
+34:     </SlideUpInScroll>,
+35:   );
+36:   // Assert
+37:   const element = screen.getByTestId("slideupinscroll");
+38:   expect(element).toBeInTheDocument();
+39:   expect(screen.getByText(testContent)).toBeInTheDocument();
+40:   return { element, ...result };
+41: }
+42: describe("SlideUpInScroll", () => {
+43:   it("renders children content", () => {
+44:     // Arrange
+45:     const testContent = "Test content";
+46:     // Act
+47:     render(
+48:       <SlideUpInScroll>
+49:         <div>{testContent}</div>
+50:       </SlideUpInScroll>,
+51:     );
+52:     // Assert
+53:     expect(screen.getByText(testContent)).toBeInTheDocument();
+54:   });
+55:   it("applies custom CSS class", () => {
+56:     // Arrange
+57:     const testClass = "test-class";
+58:     // Act
+59:     render(
+60:       <SlideUpInScroll cssClass={testClass}>
+61:         <div>Test content</div>
+62:       </SlideUpInScroll>,
+63:     );
+64:     // Assert
+65:     expect(screen.getByTestId("slideupinscroll")).toHaveClass(testClass);
+66:   });
+67:   it("configures viewport with default amount when viewAmount not provided", () => {
+68:     // Arrange & Act & Assert
+69:     renderAndAssertSlideUpInScroll();
+70:   });
+71:   it("configures viewport with custom amount when viewAmount provided", () => {
+72:     // Arrange & Act & Assert
+73:     renderAndAssertSlideUpInScroll({ viewAmount: 0.5 });
+74:   });
+75:   it("configures for instant animation when instant prop is true", () => {
+76:     // Arrange & Act & Assert
+77:     renderAndAssertSlideUpInScroll({ instant: true });
+78:   });
+79:   it("handles all viewport amount types", () => {
+80:     // Arrange
+81:     const amounts: Array<"some" | "all" | number> = ["some", "all", 0.7];
+82:     amounts.forEach((amount) => {
+83:       // Act
+84:       const { unmount } = render(
+85:         <SlideUpInScroll viewAmount={amount}>
+86:           <div>Test content</div>
+87:         </SlideUpInScroll>,
+88:       );
+89:       // Assert
+90:       const element = screen.getByTestId("slideupinscroll");
+91:       expect(element).toBeInTheDocument();
+92:       expect(screen.getByText("Test content")).toBeInTheDocument();
+93:       // Cleanup
+94:       unmount();
+95:     });
+96:   });
+97: });
+````
+
+## File: src/__tests__/Animations/TestAnimation.test.tsx
+````typescript
+ 1: /**
+ 2:  * @vitest-environment jsdom
+ 3:  */
+ 4: import React from "react";
+ 5: import { render, screen } from "@testing-library/react";
+ 6: import { mockIntersectionObserver } from "jsdom-testing-mocks";
+ 7: import PageTransition from "@/components/Animations/PageTransition.component";
+ 8: import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
+ 9: mockIntersectionObserver();
+10: type AnimationComponent = typeof PageTransition | typeof SlideUpInScroll;
+11: /**
+12:  * Reusable tests for animation components.
+13:  *
+14:  * @param {AnimationComponent} Component - The animation component to test.
+15:  * @param {string} testId - The test ID for the component.
+16:  * @param {string} expectedAttribute - The expected attribute value for the component.
+17:  * @return {void} This function does not return anything.
+18:  */
+19: function testAnimationComponent(
+20:   Component: AnimationComponent,
+21:   testId: string,
+22:   expectedAttribute: string,
+23: ) {
+24:   describe(`${Component.name}`, () => {
+25:     // Arrange - Set up test data and conditions
+26:     const testContent = Component.name;
+27:     it(`loads and can be displayed`, () => {
+28:       // Arrange - Set up test data and conditions
+29:       const expectedTestId = testId;
+30:       // Act - Perform the action being tested
+31:       render(<Component delay={1}>{testContent}</Component>);
+32:       const element = screen.getByTestId(expectedTestId);
+33:       expect(element).toBeInTheDocument();
+34:     });
+35:     it(`Framer motion sets ${expectedAttribute}`, () => {
+36:       // Arrange - Set up test data and conditions
+37:       const expectedTestId = testId;
+38:       // Act - Perform the action being tested
+39:       render(<Component delay={1}>{testContent}</Component>);
+40:       const element = screen.getByTestId(expectedTestId);
+41:       // Assert - Verify the results
+42:       expect(element).toContainHTML(expectedAttribute);
+43:     });
+44:   });
+45: }
+46: testAnimationComponent(PageTransition, "pagetransition", "opacity: 0");
+47: testAnimationComponent(SlideUpInScroll, "slideupinscroll", "translateY");
 ````
 
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
@@ -19199,88 +19089,105 @@ vitest.setup.ts
 58: });
 ````
 
-## File: src/app/layout.tsx
+## File: src/__tests__/UI/InputField.test.tsx
 ````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
- 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 7: import SkipLink from "@/components/UI/SkipLink.component";
- 8: import Header from "@/components/Layout/Header.component";
- 9: import Footer from "@/components/Layout/Footer.component";
-10: import StructuredData from "@/components/Layout/StructuredData.component";
-11: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
-12: const jetbrainsMono = JetBrains_Mono({
-13:   subsets: ["latin"],
-14:   display: "swap", // Prevent invisible text during font load (improves FCP)
-15:   preload: true, // Preload font to reduce request chain
-16: });
-17: export const metadata: Metadata = {
-18:   title: "Forside - Dfweb",
-19:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-20: };
-21: export default async function RootLayout({
-22:   children,
-23: }: Readonly<{
-24:   children: React.ReactNode;
-25: }>) {
-26:   const [navigation, settings] = await Promise.all([
-27:     getNavigation(),
-28:     getSettings(),
-29:   ]);
-30:   const footerCopyrightText = settings?.footerCopyrightText;
-31:   return (
-32:     <html lang="nb">
-33:       <head>
-34:         <meta
-35:           name="viewport"
-36:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-37:         />
-38:         <link
-39:           rel="preconnect"
-40:           href="https://cdn.sanity.io"
-41:           crossOrigin="anonymous"
-42:         />
-43:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-44:         <link rel="icon" href="/favicon.ico" />
-45:         <link rel="apple-touch-icon" href="/logo.png" />
-46:         <meta property="og:title" content="Daniel Fjeldstad" />
-47:         <meta name="author" content="Daniel Fjeldstad" />
-48:         <meta property="og:locale" content="nb_NO" />
-49:         <meta
-50:           property="og:description"
-51:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-52:         />
-53:         <meta property="og:url" content="https://www.dfweb.no/" />
-54:         <meta property="og:site_name" content="dfweb.no" />
-55:         <meta name="theme-color" content="#004014" />
-56:       </head>
-57:       <body
-58:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-59:       >
-60:         {/* JSON-LD lives in <body>: an inline script in <head> breaks hydration */}
-61:         <StructuredData />
-62:         <LazyMotionProvider>
-63:           <SkipLink />
-64:           <ErrorBoundary>
-65:             <div id="main-content" className="grow flex flex-col">
-66:               <Header navigation={navigation} />
-67:               <SpeedInsights />
-68:               <div className="grow">{children}</div>
-69:               <Footer
-70:                 footerCopyrightText={
-71:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-72:                 }
-73:               />
-74:             </div>
-75:           </ErrorBoundary>
-76:         </LazyMotionProvider>
-77:       </body>
-78:     </html>
-79:   );
-80: }
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import { UseFormRegister } from "react-hook-form";
+ 4: import InputField from "@/components/UI/InputField.component";
+ 5: import { createRegisterOptions } from "@/components/UI/InputField.utils";
+ 6: interface TestFormData {
+ 7:   testField: string;
+ 8: }
+ 9: const mockRegister: UseFormRegister<TestFormData> = vi.fn((name) => ({
+10:   onChange: vi.fn(),
+11:   onBlur: vi.fn(),
+12:   ref: vi.fn(),
+13:   name,
+14: }));
+15: const TestComponent = ({
+16:   type = "input",
+17:   isRequired = false,
+18:   inputPattern,
+19: }: {
+20:   type?: "input" | "textarea";
+21:   isRequired?: boolean;
+22:   inputPattern?: RegExp;
+23: }) => {
+24:   return (
+25:     <InputField<TestFormData>
+26:       name="testField"
+27:       label="Test Field"
+28:       htmlFor="testField"
+29:       type={type}
+30:       isRequired={isRequired}
+31:       inputPattern={inputPattern}
+32:       register={mockRegister}
+33:     />
+34:   );
+35: };
+36: describe("InputField", () => {
+37:   describe("rendering", () => {
+38:     it("renders input field with label", () => {
+39:       // Arrange
+40:       const expectedLabel = "Test Field";
+41:       // Act
+42:       render(<TestComponent />);
+43:       const input = screen.getByLabelText(expectedLabel);
+44:       // Assert
+45:       expect(input).toBeInTheDocument();
+46:     });
+47:     it("renders textarea when specified", () => {
+48:       // Arrange
+49:       const expectedLabel = "Test Field";
+50:       const expectedTag = "TEXTAREA";
+51:       // Act
+52:       render(<TestComponent type="textarea" />);
+53:       const textarea = screen.getByLabelText(expectedLabel);
+54:       // Assert
+55:       expect(textarea).toBeInTheDocument();
+56:       expect(textarea.tagName).toBe(expectedTag);
+57:     });
+58:     it("displays provided error message", () => {
+59:       // Arrange
+60:       const errorMessage = "This is an error message";
+61:       const props = {
+62:         name: "testField" as const,
+63:         label: "Test Field",
+64:         htmlFor: "testField",
+65:         register: mockRegister,
+66:         error: errorMessage,
+67:       };
+68:       // Act
+69:       render(<InputField<TestFormData> {...props} />);
+70:       // Assert
+71:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
+72:     });
+73:   });
+74:   describe("form registration", () => {
+75:     it("creates required validation option when isRequired is true", () => {
+76:       // Arrange
+77:       const isRequired = true;
+78:       const expectedMessage = "Dette feltet er påkrevd";
+79:       // Act
+80:       const options = createRegisterOptions(isRequired);
+81:       // Assert
+82:       expect(options.required).toBe(expectedMessage);
+83:     });
+84:     it("creates pattern validation option when pattern is provided", () => {
+85:       // Arrange
+86:       const pattern = /[A-Za-z]+/;
+87:       const isRequired = false;
+88:       // Act
+89:       const options = createRegisterOptions(isRequired, pattern);
+90:       // Assert
+91:       expect(options.pattern).toBeDefined();
+92:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(
+93:         pattern,
+94:       );
+95:     });
+96:   });
+97: });
 ````
 
 ## File: src/e2e/playwright/kontakt.spec.ts
@@ -19457,6 +19364,85 @@ vitest.setup.ts
 170:     await expect(page.getByText(SUCCESS_MESSAGE)).toBeVisible();
 171:   });
 172: });
+````
+
+## File: src/stories/components/Animations/SlideUpInScroll.stories.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { Meta, Story } from "@ladle/react";
+ 3: import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
+ 4: import { ISlideUpProps } from "@/components/Animations/types/Animations.types";
+ 5: export default {
+ 6:   title: "Animations/SlideUpInScroll",
+ 7:   component: SlideUpInScroll,
+ 8: } as Meta;
+ 9: const Card = () => (
+10:   <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
+11:     <h2 className="text-2xl text-white mb-4">Animated Card</h2>
+12:     <p className="text-gray-300">
+13:       This card demonstrates the SlideUpInScroll animation component.
+14:     </p>
+15:   </div>
+16: );
+17: const storyWrapper = (storyArgs: ISlideUpProps) => (
+18:   <div className="min-h-[150vh] bg-gray-800 p-8">
+19:     <div className="text-white mb-[100vh]">
+20:       ⬇️ Scroll down to see the animation
+21:     </div>
+22:     <SlideUpInScroll {...storyArgs} />
+23:   </div>
+24: );
+25: export const Default: Story<ISlideUpProps> = () =>
+26:   storyWrapper({
+27:     children: <Card />,
+28:     viewAmount: 0.2,
+29:   });
+30: export const InstantAnimation: Story<ISlideUpProps> = () =>
+31:   storyWrapper({
+32:     children: <Card />,
+33:     instant: true,
+34:   });
+35: export const FullViewTrigger: Story<ISlideUpProps> = () =>
+36:   storyWrapper({
+37:     children: <Card />,
+38:     viewAmount: "all",
+39:   });
+40: export const PartialViewTrigger: Story<ISlideUpProps> = () =>
+41:   storyWrapper({
+42:     children: <Card />,
+43:     viewAmount: "some",
+44:   });
+45: export const CustomViewAmount: Story<ISlideUpProps> = () =>
+46:   storyWrapper({
+47:     children: <Card />,
+48:     viewAmount: 0.5,
+49:   });
+50: export const WithCustomClass: Story<ISlideUpProps> = () =>
+51:   storyWrapper({
+52:     children: <Card />,
+53:     cssClass: "max-w-md mx-auto",
+54:   });
+55: export const LargeContent: Story<ISlideUpProps> = () =>
+56:   storyWrapper({
+57:     children: (
+58:       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+59:         <Card />
+60:         <Card />
+61:         <Card />
+62:       </div>
+63:     ),
+64:     viewAmount: 0.2,
+65:   });
+66: export const TextContent: Story<ISlideUpProps> = () =>
+67:   storyWrapper({
+68:     children: (
+69:       <div className="text-white text-center">
+70:         <h1 className="text-4xl font-bold mb-4">Welcome</h1>
+71:         <p className="text-xl">This is a simple text animation example.</p>
+72:       </div>
+73:     ),
+74:     viewAmount: 0.2,
+75:   });
 ````
 
 ## File: tsconfig.json
@@ -19683,39 +19669,6 @@ vitest.setup.ts
 65:     jobs:
 66:       - build:
 67:           name: Build Next.js project
-````
-
-## File: .github/workflows/lint.yml
-````yaml
- 1: name: Code Quality
- 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
- 3: # structure/architecture (Vitest tests in src/__tests__/architecture).
- 4: on: [push, pull_request]
- 5: permissions:
- 6:   contents: read
- 7: concurrency:
- 8:   group: ${{ github.workflow }}-${{ github.ref }}
- 9:   cancel-in-progress: true
-10: jobs:
-11:   quality:
-12:     name: Style and architecture
-13:     runs-on: ubuntu-latest
-14:     timeout-minutes: 15
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-17:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-19:         with:
-20:           node-version: 26
-21:           cache: "pnpm"
-22:       - name: Install dependencies
-23:         run: pnpm install --frozen-lockfile --ignore-scripts
-24:       - name: Check formatting (Prettier)
-25:         run: pnpm format:check
-26:       - name: Lint CSS (Stylelint)
-27:         run: pnpm lint:css
-28:       - name: Architecture tests (naming and import boundaries)
-29:         run: pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false
 ````
 
 ## File: DOCS/TEST-STRATEGY.md
@@ -20390,6 +20343,66 @@ vitest.setup.ts
 64: });
 ````
 
+## File: src/__tests__/ErrorBoundary/RouteError.test.tsx
+````typescript
+ 1: import type { MockInstance } from "vitest";
+ 2: import React from "react";
+ 3: import { render, screen } from "@testing-library/react";
+ 4: import userEvent from "@testing-library/user-event";
+ 5: import RouteError from "@/components/ErrorBoundary/RouteError.component";
+ 6: describe("RouteError", () => {
+ 7:   let consoleErrorSpy: MockInstance;
+ 8:   beforeEach(() => {
+ 9:     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterEach(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("renders the description and error message, and logs the error", () => {
+15:     // Arrange
+16:     const error = new Error("Something broke");
+17:     const description = "Det oppsto en feil under lasting av CV-siden.";
+18:     // Act
+19:     render(
+20:       <RouteError error={error} reset={vi.fn()} description={description} />,
+21:     );
+22:     // Assert
+23:     expect(
+24:       screen.getByRole("heading", { name: "Noe gikk galt" }),
+25:     ).toBeInTheDocument();
+26:     expect(screen.getByText(description)).toBeInTheDocument();
+27:     expect(screen.getByText("Something broke")).toBeInTheDocument();
+28:     expect(consoleErrorSpy).toHaveBeenCalledWith(error);
+29:   });
+30:   it("does not render the message block when the error has no message", () => {
+31:     // Arrange
+32:     const error = new Error("");
+33:     // Act
+34:     const { container } = render(
+35:       <RouteError error={error} reset={vi.fn()} description="Beskrivelse" />,
+36:     );
+37:     // Assert
+38:     expect(container.querySelector(".font-mono")).not.toBeInTheDocument();
+39:   });
+40:   it("calls reset when the retry button is clicked", async () => {
+41:     // Arrange
+42:     const reset = vi.fn();
+43:     const user = userEvent.setup();
+44:     render(
+45:       <RouteError
+46:         error={new Error("x")}
+47:         reset={reset}
+48:         description="Beskrivelse"
+49:       />,
+50:     );
+51:     // Act
+52:     await user.click(screen.getByRole("button", { name: "Prøv igjen" }));
+53:     // Assert
+54:     expect(reset).toHaveBeenCalledTimes(1);
+55:   });
+56: });
+````
+
 ## File: src/__tests__/Index/Section.test.tsx
 ````typescript
   1: import type { MockInstance } from "vitest";
@@ -20661,105 +20674,184 @@ vitest.setup.ts
 46: });
 ````
 
-## File: src/__tests__/UI/InputField.test.tsx
+## File: src/__tests__/Prosjekter/page.test.tsx
 ````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import { UseFormRegister } from "react-hook-form";
- 4: import InputField from "@/components/UI/InputField.component";
- 5: import { createRegisterOptions } from "@/components/UI/InputField.utils";
- 6: interface TestFormData {
- 7:   testField: string;
- 8: }
- 9: const mockRegister: UseFormRegister<TestFormData> = vi.fn((name) => ({
-10:   onChange: vi.fn(),
-11:   onBlur: vi.fn(),
-12:   ref: vi.fn(),
-13:   name,
-14: }));
-15: const TestComponent = ({
-16:   type = "input",
-17:   isRequired = false,
-18:   inputPattern,
-19: }: {
-20:   type?: "input" | "textarea";
-21:   isRequired?: boolean;
-22:   inputPattern?: RegExp;
-23: }) => {
-24:   return (
-25:     <InputField<TestFormData>
-26:       name="testField"
-27:       label="Test Field"
-28:       htmlFor="testField"
-29:       type={type}
-30:       isRequired={isRequired}
-31:       inputPattern={inputPattern}
-32:       register={mockRegister}
-33:     />
-34:   );
-35: };
-36: describe("InputField", () => {
-37:   describe("rendering", () => {
-38:     it("renders input field with label", () => {
-39:       // Arrange
-40:       const expectedLabel = "Test Field";
-41:       // Act
-42:       render(<TestComponent />);
-43:       const input = screen.getByLabelText(expectedLabel);
-44:       // Assert
-45:       expect(input).toBeInTheDocument();
-46:     });
-47:     it("renders textarea when specified", () => {
-48:       // Arrange
-49:       const expectedLabel = "Test Field";
-50:       const expectedTag = "TEXTAREA";
-51:       // Act
-52:       render(<TestComponent type="textarea" />);
-53:       const textarea = screen.getByLabelText(expectedLabel);
-54:       // Assert
-55:       expect(textarea).toBeInTheDocument();
-56:       expect(textarea.tagName).toBe(expectedTag);
-57:     });
-58:     it("displays provided error message", () => {
-59:       // Arrange
-60:       const errorMessage = "This is an error message";
-61:       const props = {
-62:         name: "testField" as const,
-63:         label: "Test Field",
-64:         htmlFor: "testField",
-65:         register: mockRegister,
-66:         error: errorMessage,
-67:       };
-68:       // Act
-69:       render(<InputField<TestFormData> {...props} />);
-70:       // Assert
-71:       expect(screen.getByText(errorMessage)).toBeInTheDocument();
-72:     });
-73:   });
-74:   describe("form registration", () => {
-75:     it("creates required validation option when isRequired is true", () => {
-76:       // Arrange
-77:       const isRequired = true;
-78:       const expectedMessage = "Dette feltet er påkrevd";
-79:       // Act
-80:       const options = createRegisterOptions(isRequired);
-81:       // Assert
-82:       expect(options.required).toBe(expectedMessage);
-83:     });
-84:     it("creates pattern validation option when pattern is provided", () => {
-85:       // Arrange
-86:       const pattern = /[A-Za-z]+/;
-87:       const isRequired = false;
-88:       // Act
-89:       const options = createRegisterOptions(isRequired, pattern);
-90:       // Assert
-91:       expect(options.pattern).toBeDefined();
-92:       expect((options.pattern as { value: RegExp }).value).toStrictEqual(
-93:         pattern,
-94:       );
-95:     });
-96:   });
-97: });
+  1: import React from "react";
+  2: import { render, screen, waitFor } from "@testing-library/react";
+  3: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
+  4:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
+  5: // Define the project type
+  6: interface ProjectType {
+  7:   id: string;
+  8:   name: string;
+  9:   description: string;
+ 10:   subdescription: string;
+ 11:   projectimage: { asset: { _ref: string } };
+ 12:   urlwww: unknown[];
+ 13:   urlgithub: unknown[];
+ 14: }
+ 15: // Stand-ins for the data source and child components used by TestProsjekterPage
+ 16: const mockGetProjects = vi.fn();
+ 17: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
+ 18:   <h1>{children}</h1>
+ 19: );
+ 20: const MockProsjektCard = (props: { name: string }) => (
+ 21:   <div data-testid="project-card">{props.name}</div>
+ 22: );
+ 23: const MockRotatingLoader = () => (
+ 24:   <div data-testid="rotating-loader">Loading...</div>
+ 25: );
+ 26: // Create a test component that simulates the page behavior without async server components
+ 27: function TestProsjekterPage() {
+ 28:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
+ 29:   const [loading, setLoading] = React.useState(true);
+ 30:   React.useEffect(() => {
+ 31:     mockGetProjects().then((data: ProjectType[]) => {
+ 32:       setProjects(data);
+ 33:       setLoading(false);
+ 34:     });
+ 35:   }, []);
+ 36:   return (
+ 37:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
+ 38:       <MockPageHeader>Prosjekter</MockPageHeader>
+ 39:       {loading ? (
+ 40:         <MockRotatingLoader />
+ 41:       ) : (
+ 42:         <div className="container mx-auto">
+ 43:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
+ 44:             {projects.map((project) => (
+ 45:               <MockProsjektCard key={project.id} {...project} />
+ 46:             ))}
+ 47:           </div>
+ 48:         </div>
+ 49:       )}
+ 50:     </main>
+ 51:   );
+ 52: }
+ 53: describe("ProsjekterPage", () => {
+ 54:   beforeEach(() => {
+ 55:     vi.clearAllMocks();
+ 56:   });
+ 57:   it("renders projects from server component", async () => {
+ 58:     // Arrange - Set up test data and conditions
+ 59:     const mockProjects = [
+ 60:       {
+ 61:         id: "1",
+ 62:         name: "Test Project 1",
+ 63:         description: "Test Description 1",
+ 64:         subdescription: "Test Subdescription 1",
+ 65:         projectimage: { asset: { _ref: "test1" } },
+ 66:         urlwww: [],
+ 67:         urlgithub: [],
+ 68:       },
+ 69:       {
+ 70:         id: "2",
+ 71:         name: "Test Project 2",
+ 72:         description: "Test Description 2",
+ 73:         subdescription: "Test Subdescription 2",
+ 74:         projectimage: { asset: { _ref: "test2" } },
+ 75:         urlwww: [],
+ 76:         urlgithub: [],
+ 77:       },
+ 78:     ];
+ 79:     mockGetProjects.mockResolvedValue(mockProjects);
+ 80:     // Act - Perform the action being tested
+ 81:     render(<TestProsjekterPage />);
+ 82:     // Assert - Verify the results
+ 83:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+ 84:     // Wait for projects to load and render
+ 85:     const projectCards = await screen.findAllByTestId("project-card");
+ 86:     expect(projectCards).toHaveLength(2);
+ 87:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
+ 88:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
+ 89:     // Test that projects are rendered within the main content area
+ 90:     const main = screen.getByRole("main");
+ 91:     expect(main).toContainElement(projectCards[0]);
+ 92:     expect(main).toContainElement(projectCards[1]);
+ 93:   });
+ 94:   it("uses Suspense boundary for loading state", async () => {
+ 95:     // Arrange - Set up test data and conditions
+ 96:     const delayedPromise = createDelayedPromise([], 100);
+ 97:     mockGetProjects.mockImplementation(() => delayedPromise);
+ 98:     // Act - Perform the action being tested
+ 99:     render(<TestProsjekterPage />);
+100:     // Assert - Verify the results
+101:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
+102:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
+103:     const main = screen.getByRole("main");
+104:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
+105:     expect(main).toContainElement(screen.getByText("Prosjekter"));
+106:     // Wait for loading to complete
+107:     await waitFor(() => {
+108:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
+109:     });
+110:   });
+111: });
+````
+
+## File: src/components/Animations/SlideUpInScroll.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useMemo } from "react";
+ 3: import { Variants } from "motion/react";
+ 4: import * as m from "motion/react-m";
+ 5: import { ISlideUpProps } from "./types/Animations.types";
+ 6: /** ease-out-quart: fast start, smooth exponential deceleration, no overshoot */
+ 7: const EASE_OUT_QUART: [number, number, number, number] = [0.25, 1, 0.5, 1];
+ 8: /**
+ 9:  * Creates fade/slide-in variants with an optional stagger delay for coordinated group animations.
+10:  * @param {number} delay - Delay in seconds before the animation starts
+11:  * @returns {Variants} Motion variants with the specified delay
+12:  */
+13: function createSlideUpVariants(delay: number): Variants {
+14:   return {
+15:     offscreen: {
+16:       y: 15,
+17:       opacity: 0,
+18:     },
+19:     onscreen: {
+20:       y: 0,
+21:       opacity: 1,
+22:       transition: {
+23:         ease: EASE_OUT_QUART,
+24:         duration: 0.6,
+25:         delay,
+26:       },
+27:     },
+28:   };
+29: }
+30: /**
+31:  * Fade and slide content up when it becomes visible in viewport
+32:  * @function SlideUpInScroll
+33:  * @param {ReactNode} children - Children content to render
+34:  * @param {string} cssClass - CSS classes to apply to component
+35:  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
+36:  * @param {boolean} instant - Whether to animate instantly without scroll trigger
+37:  * @param {number} delay - Stagger delay in seconds for coordinated group animations
+38:  * @returns {JSX.Element} - Rendered component
+39:  */
+40: const SlideUpInScroll = ({
+41:   children,
+42:   cssClass,
+43:   viewAmount,
+44:   instant,
+45:   delay = 0,
+46: }: ISlideUpProps) => {
+47:   const variants = useMemo(() => createSlideUpVariants(delay), [delay]);
+48:   return (
+49:     <m.div
+50:       initial="offscreen"
+51:       animate={instant ? "onscreen" : undefined}
+52:       whileInView={instant ? undefined : "onscreen"}
+53:       viewport={instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }}
+54:       className={cssClass}
+55:       data-testid="slideupinscroll"
+56:     >
+57:       <m.div variants={variants}>{children}</m.div>
+58:     </m.div>
+59:   );
+60: };
+61: export default SlideUpInScroll;
 ````
 
 ## File: src/types/testing-library.d.ts
@@ -21904,181 +21996,6 @@ vitest.setup.ts
 130: });
 ````
 
-## File: src/__tests__/ErrorBoundary/RouteError.test.tsx
-````typescript
- 1: import type { MockInstance } from "vitest";
- 2: import React from "react";
- 3: import { render, screen } from "@testing-library/react";
- 4: import userEvent from "@testing-library/user-event";
- 5: import RouteError from "@/components/ErrorBoundary/RouteError.component";
- 6: describe("RouteError", () => {
- 7:   let consoleErrorSpy: MockInstance;
- 8:   beforeEach(() => {
- 9:     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-10:   });
-11:   afterEach(() => {
-12:     consoleErrorSpy.mockRestore();
-13:   });
-14:   it("renders the description and error message, and logs the error", () => {
-15:     // Arrange
-16:     const error = new Error("Something broke");
-17:     const description = "Det oppsto en feil under lasting av CV-siden.";
-18:     // Act
-19:     render(
-20:       <RouteError error={error} reset={vi.fn()} description={description} />,
-21:     );
-22:     // Assert
-23:     expect(
-24:       screen.getByRole("heading", { name: "Noe gikk galt" }),
-25:     ).toBeInTheDocument();
-26:     expect(screen.getByText(description)).toBeInTheDocument();
-27:     expect(screen.getByText("Something broke")).toBeInTheDocument();
-28:     expect(consoleErrorSpy).toHaveBeenCalledWith(error);
-29:   });
-30:   it("does not render the message block when the error has no message", () => {
-31:     // Arrange
-32:     const error = new Error("");
-33:     // Act
-34:     const { container } = render(
-35:       <RouteError error={error} reset={vi.fn()} description="Beskrivelse" />,
-36:     );
-37:     // Assert
-38:     expect(container.querySelector(".font-mono")).not.toBeInTheDocument();
-39:   });
-40:   it("calls reset when the retry button is clicked", async () => {
-41:     // Arrange
-42:     const reset = vi.fn();
-43:     const user = userEvent.setup();
-44:     render(
-45:       <RouteError
-46:         error={new Error("x")}
-47:         reset={reset}
-48:         description="Beskrivelse"
-49:       />,
-50:     );
-51:     // Act
-52:     await user.click(screen.getByRole("button", { name: "Prøv igjen" }));
-53:     // Assert
-54:     expect(reset).toHaveBeenCalledTimes(1);
-55:   });
-56: });
-````
-
-## File: src/__tests__/Prosjekter/page.test.tsx
-````typescript
-  1: import React from "react";
-  2: import { render, screen, waitFor } from "@testing-library/react";
-  3: const createDelayedPromise = <T,>(data: T, delay: number): Promise<T> =>
-  4:   new Promise((resolve) => setTimeout(() => resolve(data), delay));
-  5: // Define the project type
-  6: interface ProjectType {
-  7:   id: string;
-  8:   name: string;
-  9:   description: string;
- 10:   subdescription: string;
- 11:   projectimage: { asset: { _ref: string } };
- 12:   urlwww: unknown[];
- 13:   urlgithub: unknown[];
- 14: }
- 15: // Stand-ins for the data source and child components used by TestProsjekterPage
- 16: const mockGetProjects = vi.fn();
- 17: const MockPageHeader = ({ children }: { children: React.ReactNode }) => (
- 18:   <h1>{children}</h1>
- 19: );
- 20: const MockProsjektCard = (props: { name: string }) => (
- 21:   <div data-testid="project-card">{props.name}</div>
- 22: );
- 23: const MockRotatingLoader = () => (
- 24:   <div data-testid="rotating-loader">Loading...</div>
- 25: );
- 26: // Create a test component that simulates the page behavior without async server components
- 27: function TestProsjekterPage() {
- 28:   const [projects, setProjects] = React.useState<ProjectType[]>([]);
- 29:   const [loading, setLoading] = React.useState(true);
- 30:   React.useEffect(() => {
- 31:     mockGetProjects().then((data: ProjectType[]) => {
- 32:       setProjects(data);
- 33:       setLoading(false);
- 34:     });
- 35:   }, []);
- 36:   return (
- 37:     <main aria-label="Innhold portefølje" className="mt-32 bg-graybg">
- 38:       <MockPageHeader>Prosjekter</MockPageHeader>
- 39:       {loading ? (
- 40:         <MockRotatingLoader />
- 41:       ) : (
- 42:         <div className="container mx-auto">
- 43:           <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8">
- 44:             {projects.map((project) => (
- 45:               <MockProsjektCard key={project.id} {...project} />
- 46:             ))}
- 47:           </div>
- 48:         </div>
- 49:       )}
- 50:     </main>
- 51:   );
- 52: }
- 53: describe("ProsjekterPage", () => {
- 54:   beforeEach(() => {
- 55:     vi.clearAllMocks();
- 56:   });
- 57:   it("renders projects from server component", async () => {
- 58:     // Arrange - Set up test data and conditions
- 59:     const mockProjects = [
- 60:       {
- 61:         id: "1",
- 62:         name: "Test Project 1",
- 63:         description: "Test Description 1",
- 64:         subdescription: "Test Subdescription 1",
- 65:         projectimage: { asset: { _ref: "test1" } },
- 66:         urlwww: [],
- 67:         urlgithub: [],
- 68:       },
- 69:       {
- 70:         id: "2",
- 71:         name: "Test Project 2",
- 72:         description: "Test Description 2",
- 73:         subdescription: "Test Subdescription 2",
- 74:         projectimage: { asset: { _ref: "test2" } },
- 75:         urlwww: [],
- 76:         urlgithub: [],
- 77:       },
- 78:     ];
- 79:     mockGetProjects.mockResolvedValue(mockProjects);
- 80:     // Act - Perform the action being tested
- 81:     render(<TestProsjekterPage />);
- 82:     // Assert - Verify the results
- 83:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
- 84:     // Wait for projects to load and render
- 85:     const projectCards = await screen.findAllByTestId("project-card");
- 86:     expect(projectCards).toHaveLength(2);
- 87:     expect(projectCards[0]).toHaveTextContent("Test Project 1");
- 88:     expect(projectCards[1]).toHaveTextContent("Test Project 2");
- 89:     // Test that projects are rendered within the main content area
- 90:     const main = screen.getByRole("main");
- 91:     expect(main).toContainElement(projectCards[0]);
- 92:     expect(main).toContainElement(projectCards[1]);
- 93:   });
- 94:   it("uses Suspense boundary for loading state", async () => {
- 95:     // Arrange - Set up test data and conditions
- 96:     const delayedPromise = createDelayedPromise([], 100);
- 97:     mockGetProjects.mockImplementation(() => delayedPromise);
- 98:     // Act - Perform the action being tested
- 99:     render(<TestProsjekterPage />);
-100:     // Assert - Verify the results
-101:     expect(screen.getByTestId("rotating-loader")).toBeInTheDocument();
-102:     expect(screen.getByText("Prosjekter")).toBeInTheDocument();
-103:     const main = screen.getByRole("main");
-104:     expect(main).toHaveAttribute("aria-label", "Innhold portefølje");
-105:     expect(main).toContainElement(screen.getByText("Prosjekter"));
-106:     // Wait for loading to complete
-107:     await waitFor(() => {
-108:       expect(screen.queryByTestId("rotating-loader")).not.toBeInTheDocument();
-109:     });
-110:   });
-111: });
-````
-
 ## File: src/__tests__/UI/Tabs.test.tsx
 ````typescript
   1: /**
@@ -22410,6 +22327,89 @@ vitest.setup.ts
 54:     },
 55:   },
 56: });
+````
+
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
+ 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 7: import SkipLink from "@/components/UI/SkipLink.component";
+ 8: import Header from "@/components/Layout/Header.component";
+ 9: import Footer from "@/components/Layout/Footer.component";
+10: import StructuredData from "@/components/Layout/StructuredData.component";
+11: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
+12: const jetbrainsMono = JetBrains_Mono({
+13:   subsets: ["latin"],
+14:   display: "swap", // Prevent invisible text during font load (improves FCP)
+15:   preload: true, // Preload font to reduce request chain
+16: });
+17: export const metadata: Metadata = {
+18:   title: "Forside - Dfweb",
+19:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+20: };
+21: export default async function RootLayout({
+22:   children,
+23: }: Readonly<{
+24:   children: React.ReactNode;
+25: }>) {
+26:   const [navigation, settings] = await Promise.all([
+27:     getNavigation(),
+28:     getSettings(),
+29:   ]);
+30:   const footerCopyrightText = settings?.footerCopyrightText;
+31:   return (
+32:     <html lang="nb">
+33:       <head>
+34:         <meta
+35:           name="viewport"
+36:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+37:         />
+38:         <link
+39:           rel="preconnect"
+40:           href="https://cdn.sanity.io"
+41:           crossOrigin="anonymous"
+42:         />
+43:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+44:         <link rel="icon" href="/favicon.ico" />
+45:         <link rel="apple-touch-icon" href="/logo.png" />
+46:         <meta property="og:title" content="Daniel Fjeldstad" />
+47:         <meta name="author" content="Daniel Fjeldstad" />
+48:         <meta property="og:locale" content="nb_NO" />
+49:         <meta
+50:           property="og:description"
+51:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+52:         />
+53:         <meta property="og:url" content="https://www.dfweb.no/" />
+54:         <meta property="og:site_name" content="dfweb.no" />
+55:         <meta name="theme-color" content="#004014" />
+56:       </head>
+57:       <body
+58:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased ${jetbrainsMono.className}`}
+59:       >
+60:         <StructuredData />
+61:         <LazyMotionProvider>
+62:           <SkipLink />
+63:           <ErrorBoundary>
+64:             <div id="main-content" className="grow flex flex-col">
+65:               <Header navigation={navigation} />
+66:               <SpeedInsights />
+67:               <div className="grow">{children}</div>
+68:               <Footer
+69:                 footerCopyrightText={
+70:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+71:                 }
+72:               />
+73:             </div>
+74:           </ErrorBoundary>
+75:         </LazyMotionProvider>
+76:       </body>
+77:     </html>
+78:   );
+79: }
 ````
 
 ## File: src/__tests__/Kontakt/ContactForm.test.tsx
