@@ -5,7 +5,7 @@ export interface IAnimateProps {
   cssClass?: string;
 }
 
-export interface IAnimateBounceProps {
+export interface ISlideUpProps {
   children: ReactNode;
   cssClass?: string;
   viewAmount?: "some" | "all" | number;
