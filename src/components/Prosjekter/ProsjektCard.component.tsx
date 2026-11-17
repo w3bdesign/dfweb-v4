@@ -40,10 +40,14 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
+      className="flex flex-col bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
       data-testid="project-card"
     >
-      <SlideUpInScroll viewAmount={0.3} delay={staggerDelay}>
+      <SlideUpInScroll
+        viewAmount={0.3}
+        delay={staggerDelay}
+        cssClass="flex-1 flex flex-col [&>div]:flex-1 [&>div]:flex [&>div]:flex-col"
+      >
         <div className="relative w-full md:h-60">
           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
             {projectimage && (
@@ -64,17 +68,17 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
             )}
           </div>
         </div>
-        <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-          <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100 text-balance">
+        <div className="flex-1 md:mt-[4.5rem] md:p-2 flex flex-col min-h-[250px] xl:min-h-[275px]">
+          <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
             {name}
           </h2>
-          <h3 className="text-base px-4 text-gray-300 text-balance">
+          <h3 className="text-base px-4 xl:px-10 text-gray-300">
             {description}
           </h3>
-          <p className="mt-4 text-sm mt-2 px-4 text-gray-300 text-pretty">
+          <p className="mt-4 text-sm px-4 xl:px-10 text-gray-300">
             {subdescription}
           </p>
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center mt-auto pt-4">
             {urlwww && urlwww.length > 0 && (
               <Button href={urlwww?.[0]?.url} renderAs="a">
                 Besøk
