@@ -3,7 +3,7 @@
 ## Project Overview
 
 DFWeb v4 is a modern portfolio website that demonstrates advanced web
-development practices and architectural patterns. Built with Next.js 15, React
+development practices and architectural patterns. Built with Next.js 16, React
 19, TypeScript, and Sanity.io, it showcases several key technical achievements:
 
 ### Technical Highlights
@@ -31,7 +31,7 @@ development practices and architectural patterns. Built with Next.js 15, React
 
 4. **Testing Excellence**
 
-   - 100% Vitest coverage of components, API routes and CSRF
+   - Enforced Vitest coverage thresholds for components, API routes and structured data
    - E2E testing with Cypress and Playwright
    - Custom ESLint rules enforcing AAA pattern
    - Automated accessibility testing
@@ -48,7 +48,7 @@ development practices and architectural patterns. Built with Next.js 15, React
 
 #### Frontend Core
 
-- **Next.js 15**
+- **Next.js 16**
 
   - App Router for enhanced routing control
   - Server Components for improved performance
@@ -157,7 +157,6 @@ src/
 - Server-side rendering for optimal performance
 - Streaming with Suspense boundaries
 - Automatic static optimization with revalidation
-- Type-safe environment variables using envalid
 
 #### 2. Animation System
 
@@ -170,8 +169,7 @@ src/
 
 - React Hook Form with TypeScript
 - Zod schema validation
-- Reusable GenericForm component
-- Email.js integration for contact form
+- Client-side EmailJS integration for the contact form (requires JavaScript)
 
 #### 4. Testing Infrastructure
 
@@ -273,7 +271,7 @@ NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx
 
 ### Prerequisites
 
-- Node.js >= 20.16.0
+- Node.js >= 26
 - pnpm (recommended package manager)
 
 ### Development Commands
