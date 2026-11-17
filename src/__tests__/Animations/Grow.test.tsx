@@ -1,9 +1,8 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import Grow from "@/components/Animations/Grow.component";
 
 describe("Grow", () => {

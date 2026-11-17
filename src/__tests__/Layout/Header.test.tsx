@@ -1,21 +1,21 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import { render, screen } from "@testing-library/react";
 import Header from "@/components/Layout/Header.component";
 
 // Mock the usePathname hook
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
 // Mock the MobileMenu component
-jest.mock("@/components/Layout/MobileMenu.component", () => {
-  return function MockMobileMenu() {
+vi.mock("@/components/Layout/MobileMenu.component", () => ({
+  default: function MockMobileMenu() {
     return <div data-testid="mobile-menu">Mobile Menu</div>;
-  };
-});
+  },
+}));
 
 describe("Header", () => {
   const mockNavigationLinks = [

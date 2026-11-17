@@ -1,35 +1,16 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
 import Tabs from "@/components/UI/Tabs.component";
 
 // Component that throws an error immediately
 const ImmediateCrash = () => {
   throw new Error("Immediate crash!");
 };
-
-const mockMotion = {
-  motion: {
-    div: (props: React.ComponentProps<"div">) => (
-      <div {...props}>{props.children}</div>
-    ),
-    button: (props: React.ComponentProps<"button">) => (
-      <button type="button" {...props}>
-        {props.children}
-      </button>
-    ),
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-};
-
-jest.mock("motion", () => mockMotion);
 
 const mockTabs = [
   {
@@ -141,6 +122,18 @@ describe("Tabs", () => {
     expect(tabs[1]).toHaveClass("border-t", "border-gray-600");
   });
 
+  it("renders an empty tablist without a panel when there are no tabs", () => {
+    // Arrange
+    const noTabs: React.ComponentProps<typeof Tabs>["tabs"] = [];
+
+    // Act
+    render(<Tabs tabs={noTabs} />);
+
+    // Assert
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+  });
+
   it("renders tab panels with correct attributes", () => {
     // Arrange
     const expectedAttributes = {
@@ -211,7 +204,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("ArrowUp moves to previous tab in vertical orientation", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowUp}"], 0);
+    await pressKeysAndExpectFocus(
+      "vertical",
+      0,
+      ["{ArrowDown}", "{ArrowUp}"],
+      0,
+    );
   });
 
   it("ArrowRight moves to next tab in horizontal orientation", async () => {
@@ -221,7 +219,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("ArrowLeft moves to previous tab in horizontal orientation", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("horizontal", 0, ["{ArrowRight}", "{ArrowLeft}"], 0);
+    await pressKeysAndExpectFocus(
+      "horizontal",
+      0,
+      ["{ArrowRight}", "{ArrowLeft}"],
+      0,
+    );
   });
 
   it("wraps focus from last tab to first tab on ArrowDown", async () => {
@@ -236,7 +239,12 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
 
   it("Home key moves focus to first tab from any position", async () => {
     // Arrange, Act & Assert
-    await pressKeysAndExpectFocus("vertical", 0, ["{ArrowDown}", "{ArrowDown}", "{Home}"], 0);
+    await pressKeysAndExpectFocus(
+      "vertical",
+      0,
+      ["{ArrowDown}", "{ArrowDown}", "{Home}"],
+      0,
+    );
   });
 
   it("End key moves focus to last tab", async () => {
@@ -244,12 +252,20 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
     await pressKeysAndExpectFocus("vertical", 0, ["{End}"], 2);
   });
 
+  it("keeps focus on the current tab for keys outside the pattern", async () => {
+    // Arrange, Act & Assert
+    await pressKeysAndExpectFocus("vertical", 1, ["x"], 1);
+  });
+
   it("sets aria-orientation=vertical on tablist for vertical tabs", () => {
     // Arrange & Act
     renderKeyboardTabs("vertical");
 
     // Assert
-    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+    expect(screen.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "vertical",
+    );
   });
 
   it("sets aria-orientation=horizontal on tablist for horizontal tabs", () => {
@@ -257,7 +273,10 @@ describe("Tabs Keyboard Navigation (WAI-ARIA APG)", () => {
     renderKeyboardTabs("horizontal");
 
     // Assert
-    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+    expect(screen.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "horizontal",
+    );
   });
 
   it("tab panel is focusable with tabIndex=0", () => {

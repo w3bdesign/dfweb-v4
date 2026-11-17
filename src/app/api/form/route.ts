@@ -38,10 +38,7 @@ function validateCsrf(formData: Record<string, string>): NextResponse | null {
   const csrfToken = formData._csrf || formData.csrfToken;
 
   if (!csrfToken) {
-    return NextResponse.json(
-      { error: "CSRF token missing" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: "CSRF token missing" }, { status: 403 });
   }
 
   if (!validateCSRFToken(csrfToken)) {

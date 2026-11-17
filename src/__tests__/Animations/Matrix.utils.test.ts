@@ -38,7 +38,7 @@ describe("Matrix Utils", () => {
     it("returns a random integer within the range", () => {
       // Arrange
       const max = 10;
-      const mockGetRandomValues = jest
+      const mockGetRandomValues = vi
         .spyOn(window.crypto, "getRandomValues")
         .mockImplementation((array) => {
           if (array instanceof Uint32Array) {
@@ -63,7 +63,7 @@ describe("Matrix Utils", () => {
     it("returns a character from the provided tileSet", () => {
       // Arrange
       const tileSet = ["A", "B", "C"];
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomInt = vi.spyOn(Math, "random").mockReturnValue(0.5);
 
       // Act
       const result = getRandomCharacter(tileSet);
@@ -75,7 +75,7 @@ describe("Matrix Utils", () => {
 
     it("returns a random ASCII character when tileSet is null", () => {
       // Arrange
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomInt = vi.spyOn(Math, "random").mockReturnValue(0.5);
 
       // Act
       const result = getRandomCharacter(null);
@@ -87,7 +87,7 @@ describe("Matrix Utils", () => {
 
     it("returns a random ASCII character when tileSet is empty", () => {
       // Arrange
-      const mockGetRandomInt = jest.spyOn(Math, "random").mockReturnValue(0.5);
+      const mockGetRandomInt = vi.spyOn(Math, "random").mockReturnValue(0.5);
 
       // Act
       const result = getRandomCharacter([]);
@@ -100,16 +100,16 @@ describe("Matrix Utils", () => {
 
   describe("debounce", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it("debounces function calls", () => {
       // Arrange
-      const func = jest.fn();
+      const func = vi.fn();
       const debouncedFunc = debounce(func, 100);
 
       // Act
@@ -117,7 +117,7 @@ describe("Matrix Utils", () => {
       debouncedFunc();
       debouncedFunc();
       expect(func).not.toHaveBeenCalled();
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       // Assert
       expect(func).toHaveBeenCalledTimes(1);
@@ -125,13 +125,13 @@ describe("Matrix Utils", () => {
 
     it("calls function with correct arguments", () => {
       // Arrange
-      const func = jest.fn();
+      const func = vi.fn();
       const debouncedFunc = debounce(func, 100);
       const args = ["test", 123];
 
       // Act
       debouncedFunc(...args);
-      jest.runAllTimers();
+      vi.runAllTimers();
 
       // Assert
       expect(func).toHaveBeenCalledWith(...args);

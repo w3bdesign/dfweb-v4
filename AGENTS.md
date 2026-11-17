@@ -4,10 +4,10 @@ This file provides guidance to agents when working with code in this repository.
 
 ## Non-Obvious Project Patterns
 
-- **Custom ESLint Plugin**: Uses local `eslint-plugin-test-rules` from `src/utils/eslint/` - enforces AAA pattern in tests
-- **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or builds fail
+- **Custom ESLint Plugin**: Local `eslint-plugin-test-rules` in `src/utils/eslint/` holds an AAA rule.
+- **Mandatory AAA Comments**: All tests MUST include `// Arrange`, `// Act`, `// Assert` comments or the Vitest run fails
 - **Test Coverage Exclusion**: Matrix.component.tsx excluded from coverage via package.json script
-- **Custom Test Validation**: `jest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
+- **Custom Test Validation**: `vitest.setup.ts` validates AAA pattern at runtime using `src/utils/test-utils.ts`
 - **Turbopack Development**: Uses `--turbopack` flag for dev server (non-standard Next.js setup)
 - **Component Naming**: Components use `.component.tsx` suffix (not standard React convention)
 - **Custom CSP Headers**: Allows `https://presentasjon.dfweb.no` for iframe embedding in `next.config.ts`
@@ -18,21 +18,56 @@ This file provides guidance to agents when working with code in this repository.
 
 ## Critical Commands
 
-- **Single Test**: `jest --testNamePattern="test name"` (no built-in script)
-- **Coverage**: `jest --coverage --collectCoverageFrom='src/components/**/*.{js,jsx,ts,tsx}' --collectCoverageFrom='!src/components/Animations/Matrix.component.{js,jsx,ts,tsx}'`
+- **Single Test**: `pnpm exec vitest run -t "test name"` (no built-in script)
+- **Architecture Tests**: `pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false`
+- **Style Checks**: `pnpm format:check`, `pnpm lint:css`
+- **Coverage**: `pnpm test` (scope and thresholds live in `coverage` in `vitest.config.mts`)
 - **E2E**: `start-test dev 3000 cypress:headless` (requires dev server running)
 - **Lighthouse Variants**: `lhci:perf`, `lhci:desktop` for specific performance testing
 
 ## Testing Gotchas
 
-- AAA pattern enforced by both ESLint rule AND runtime validation in jest.setup.ts
+- AAA pattern enforced by runtime validation in `vitest.setup.ts`. It checks each file, not each test, so write all three comments in every test
 - Test files outside `src/e2e/` must follow AAA pattern or fail
 - Use `checkAAAPattern()` from `src/utils/test-utils.ts` for AAA validation
 - Matrix component intentionally excluded from test coverage
 - Cypress and Playwright have different ESLint rule overrides
-- Jest runs on `jest-environment-jsdom` with custom setup in `jest.setup.ts`
+- Vitest runs on `jsdom` with custom setup in `vitest.setup.ts`; use a `@vitest-environment node` docblock for route tests
 - Custom ESLint rule source lives in `src/utils/eslint/index.ts` (`test-rules/arrange-act-assert`)
 - CSP violations from `next.config.ts` headers surface in the browser console, check there first
+
+## Enforced Rules
+
+Each rule below has a check that fails CI. If you add a hard rule, add its check and a row here.
+
+| Rule | Check | Runs in |
+| --- | --- | --- |
+| Prettier formatting | `pnpm format:check` | `lint.yml` |
+| CSS style | `pnpm lint:css` | `lint.yml` |
+| `.tsx` files in `src/components` end with `.component.tsx`; files in `src/hooks` start with `use` | `src/__tests__/architecture/naming.test.ts` | `lint.yml`, CircleCI |
+| Imports follow the layer table below | `src/__tests__/architecture/boundaries.test.ts` | `lint.yml`, CircleCI |
+| Production code never imports from `__tests__`, `__mocks__`, `stories` or `e2e` | `boundaries.test.ts` | `lint.yml`, CircleCI |
+| Production code uses `@/` instead of `../` imports | `boundaries.test.ts` | `lint.yml`, CircleCI |
+| Every test file has AAA comments | `vitest.setup.ts` | `lint.yml` (architecture tests only), CircleCI |
+| Coverage stays at or above statements 99, branches 91, functions 98, lines 99 | `coverage.thresholds` in `vitest.config.mts` | CircleCI |
+| No type errors | `next build` | Cypress, Playwright, pa11y and Lighthouse workflows |
+
+"Production code" means the layers in the table below.
+
+### Layer table
+
+A layer may always import from itself. Keep this table in sync with `ALLOWED_IMPORTS` in `boundaries.test.ts`.
+
+| Layer | May import from |
+| --- | --- |
+| `src/app` | `components`, `hooks`, `lib`, `utils`, `types` |
+| `src/components` | `hooks`, `lib`, `utils`, `types` |
+| `src/hooks` | `lib`, `utils`, `types` |
+| `src/lib` | `utils`, `types` |
+| `src/utils` | `types` |
+| `src/types` | nothing else |
+
+Global CSS lives in `src/app` and is loaded by `src/app/layout.tsx` through `globals.css`; components must not import it.
 
 ## Code Quality Principles
 

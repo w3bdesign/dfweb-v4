@@ -34,15 +34,15 @@ const NavigationLink: React.FC<NavigationLinkProps> = ({
       <div className="glitch relative" data-text={name}>
         {name}
         <m.span
-          className={`absolute bottom-0 left-0 h-0.5 bg-current ${
+          className={`absolute bottom-0 left-0 h-0.5 w-full origin-left bg-current ${
             isActive ? "bg-[var(--matrix-light)]" : "bg-white"
           }`}
           initial={false}
           animate={{
-            width: isActive ? "100%" : "0%",
+            scaleX: isActive ? 1 : 0,
           }}
           variants={{
-            hover: { width: "100%" },
+            hover: { scaleX: 1 },
           }}
           transition={{ duration: 0.3 }}
         />

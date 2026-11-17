@@ -1,11 +1,36 @@
 import { test, expect } from "@playwright/test";
 
 const keyboardNavigationCases = [
-  { name: "ArrowDown moves focus to next tab", start: "Nøkkelkvalifikasjoner", key: "ArrowDown", expected: "Erfaring" },
-  { name: "ArrowUp moves focus to previous tab", start: "Erfaring", key: "ArrowUp", expected: "Nøkkelkvalifikasjoner" },
-  { name: "ArrowDown wraps from last tab to first tab", start: "Frivillig arbeid", key: "ArrowDown", expected: "Nøkkelkvalifikasjoner" },
-  { name: "Home key moves focus to first tab", start: "Erfaring", key: "Home", expected: "Nøkkelkvalifikasjoner" },
-  { name: "End key moves focus to last tab", start: "Nøkkelkvalifikasjoner", key: "End", expected: "Frivillig arbeid" },
+  {
+    name: "ArrowDown moves focus to next tab",
+    start: "Nøkkelkvalifikasjoner",
+    key: "ArrowDown",
+    expected: "Erfaring",
+  },
+  {
+    name: "ArrowUp moves focus to previous tab",
+    start: "Erfaring",
+    key: "ArrowUp",
+    expected: "Nøkkelkvalifikasjoner",
+  },
+  {
+    name: "ArrowDown wraps from last tab to first tab",
+    start: "Frivillig arbeid",
+    key: "ArrowDown",
+    expected: "Nøkkelkvalifikasjoner",
+  },
+  {
+    name: "Home key moves focus to first tab",
+    start: "Erfaring",
+    key: "Home",
+    expected: "Nøkkelkvalifikasjoner",
+  },
+  {
+    name: "End key moves focus to last tab",
+    start: "Nøkkelkvalifikasjoner",
+    key: "End",
+    expected: "Frivillig arbeid",
+  },
 ] as const;
 
 test.describe("CV page", () => {
@@ -50,11 +75,21 @@ test.describe("CV page", () => {
   }
 
   test("tablist has aria-orientation=vertical", async ({ page }) => {
-    await expect(page.getByRole("tablist")).toHaveAttribute("aria-orientation", "vertical");
+    await expect(page.getByRole("tablist")).toHaveAttribute(
+      "aria-orientation",
+      "vertical",
+    );
   });
 
-  test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({ page }) => {
-    await expect(page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" })).toHaveAttribute("tabindex", "0");
-    await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute("tabindex", "-1");
+  test("active tab has tabIndex=0, inactive tabs have tabIndex=-1", async ({
+    page,
+  }) => {
+    await expect(
+      page.getByRole("tab", { name: "Nøkkelkvalifikasjoner" }),
+    ).toHaveAttribute("tabindex", "0");
+    await expect(page.getByRole("tab", { name: "Erfaring" })).toHaveAttribute(
+      "tabindex",
+      "-1",
+    );
   });
 });

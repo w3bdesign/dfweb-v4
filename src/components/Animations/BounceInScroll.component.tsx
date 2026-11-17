@@ -55,9 +55,7 @@ const BounceInScroll = ({
       initial="offscreen"
       animate={instant ? "onscreen" : undefined}
       whileInView={instant ? undefined : "onscreen"}
-      viewport={
-        instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }
-      }
+      viewport={instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }}
       className={cssClass}
       data-testid="bounceinscroll"
     >

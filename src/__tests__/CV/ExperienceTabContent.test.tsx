@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import ExperienceTabContent from "@/components/CV/ExperienceTabContent";
+import ExperienceTabContent from "@/components/CV/ExperienceTabContent.component";
 
 describe("ExperienceTabContent", () => {
   it("renders experience items with role (conditional branch)", () => {

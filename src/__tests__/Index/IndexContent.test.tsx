@@ -1,6 +1,5 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
 import IndexContent from "@/components/Index/IndexContent.component";
 import { Page } from "@/types/sanity.types";
 
@@ -21,8 +20,8 @@ interface SectionProps {
 }
 
 // Mock the Section component
-jest.mock("@/components/Index/Section.component", () => {
-  return function MockSection({ title, text }: SectionProps) {
+vi.mock("@/components/Index/Section.component", () => ({
+  default: function MockSection({ title, text }: SectionProps) {
     return (
       <div data-testid="mock-section">
         <h2 data-testid="sanity-title">{title}</h2>
@@ -40,8 +39,8 @@ jest.mock("@/components/Index/Section.component", () => {
         </div>
       </div>
     );
-  };
-});
+  },
+}));
 
 const mockContent: Page["content"] = [
   {

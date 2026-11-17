@@ -12,20 +12,20 @@ interface ButtonProps {
   children: React.ReactNode;
 }
 
-jest.mock("@/components/UI/Button.component", () => {
-  return function MockButton({ href, children }: ButtonProps) {
+vi.mock("@/components/UI/Button.component", () => ({
+  default: function MockButton({ href, children }: ButtonProps) {
     return <a href={href}>{children}</a>;
-  };
-});
+  },
+}));
 
-jest.mock("@/lib/sanity/client", () => ({
-  urlFor: jest.fn().mockReturnValue({
-    width: jest.fn().mockReturnThis(),
-    height: jest.fn().mockReturnThis(),
-    fit: jest.fn().mockReturnThis(),
-    quality: jest.fn().mockReturnThis(),
-    auto: jest.fn().mockReturnThis(),
-    url: jest.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
+vi.mock("@/lib/sanity/client", () => ({
+  urlFor: vi.fn().mockReturnValue({
+    width: vi.fn().mockReturnThis(),
+    height: vi.fn().mockReturnThis(),
+    fit: vi.fn().mockReturnThis(),
+    quality: vi.fn().mockReturnThis(),
+    auto: vi.fn().mockReturnThis(),
+    url: vi.fn().mockReturnValue("/test-image.jpg"), // The URL the tests expect
   }),
 }));
 
@@ -89,7 +89,7 @@ describe("ProsjektCard", () => {
       const src = img.getAttribute("src");
       // Check for either raw path or URL-encoded path (%2F = /)
       expect(
-        src?.includes("/test-image.jpg") || src?.includes("%2Ftest-image.jpg")
+        src?.includes("/test-image.jpg") || src?.includes("%2Ftest-image.jpg"),
       ).toBe(true);
     });
 

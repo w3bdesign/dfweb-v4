@@ -4,6 +4,11 @@
 
 import { checkAccessibility } from "../support/functions";
 
+/**
+ * Smoke + accessibility checks for the contact page.
+ * Form submission, validation and network mocking are covered by
+ * Playwright in src/e2e/playwright/kontakt.spec.ts (see DOCS/TEST-STRATEGY.md).
+ */
 describe("Kontakt", () => {
   const beVisible = "be.visible";
 
@@ -11,12 +16,15 @@ describe("Kontakt", () => {
     cy.visit("http://localhost:3000/kontakt");
   });
 
-  it(`Navn vises`, () => {
+  it("Kontaktsiden laster med skjema og alle felt", () => {
+    cy.title().should("eq", "Kontakt - Dfweb");
+    cy.get("form[aria-label='Contact Form']").should(beVisible);
     cy.get("#navn").should(beVisible);
-  });
-
-  it(`Vi kan skrive navn`, () => {
-    cy.get("#navn").type("Fullt navn").should("have.value", "Fullt navn");
+    cy.get("#telefon").should(beVisible);
+    cy.get("#tekst").should(beVisible);
+    cy.get("[data-testid='submit-button']")
+      .should(beVisible)
+      .and("contain.text", "Send skjema");
   });
 
   it("Kontakt skal ikke ha noen a11y feilmeldinger", () => {

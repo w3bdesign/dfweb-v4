@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent";
+import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent.component";
 
 describe("VolunteerWorkTabContent", () => {
   it("renders volunteer work items with all fields", () => {

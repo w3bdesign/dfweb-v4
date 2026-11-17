@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import {
   getProjects,
   getCv,
@@ -7,13 +8,13 @@ import {
 import { sanityFetch } from "@/lib/sanity/client";
 
 // Mock the Sanity client — the content module's only dependency
-jest.mock("@/lib/sanity/client", () => ({
-  sanityFetch: jest.fn(),
+vi.mock("@/lib/sanity/client", () => ({
+  sanityFetch: vi.fn(),
 }));
 
 describe("content module", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getProjects", () => {
@@ -30,7 +31,7 @@ describe("content module", () => {
           urlgithub: [],
         },
       ];
-      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+      (sanityFetch as Mock).mockResolvedValueOnce(mockProjects);
 
       // Act
       const result = await getProjects();
@@ -49,7 +50,7 @@ describe("content module", () => {
     it("fetches the CV with the cv tag", async () => {
       // Arrange
       const mockCv = { keyQualifications: ["TypeScript"] };
-      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockCv);
+      (sanityFetch as Mock).mockResolvedValueOnce(mockCv);
 
       // Act
       const result = await getCv();
@@ -75,7 +76,7 @@ describe("content module", () => {
           description: "Invalid token provided",
         },
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Authentication failed");
@@ -91,7 +92,7 @@ describe("content module", () => {
           description: "Missing read access",
         },
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Insufficient permissions");
@@ -104,7 +105,7 @@ describe("content module", () => {
         message: "Too Many Requests",
         details: { type: "rate_limit", description: "Rate limit exceeded" },
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");
@@ -120,7 +121,7 @@ describe("content module", () => {
           description: "Syntax error in GROQ query",
         },
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow(
@@ -133,7 +134,7 @@ describe("content module", () => {
       const error = Object.assign(new Error("Network timeout"), {
         name: "TimeoutError",
       });
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Request timed out");
@@ -144,7 +145,7 @@ describe("content module", () => {
       const error = {
         message: "Fetch failed",
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Failed to fetch projects");
@@ -157,7 +158,7 @@ describe("content module", () => {
         message: "Too Many Requests",
         details: { type: "rate_limit", description: "Rate limit exceeded" },
       };
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(error);
+      (sanityFetch as Mock).mockRejectedValueOnce(error);
 
       // Act & Assert
       await expect(getNavigation()).rejects.toThrow("Rate limit exceeded");
@@ -181,8 +182,8 @@ describe("content module", () => {
           urlgithub: [],
         },
       ];
-      (sanityFetch as jest.Mock).mockRejectedValueOnce(rateError);
-      (sanityFetch as jest.Mock).mockResolvedValueOnce(mockProjects);
+      (sanityFetch as Mock).mockRejectedValueOnce(rateError);
+      (sanityFetch as Mock).mockResolvedValueOnce(mockProjects);
 
       // Act & Assert
       await expect(getProjects()).rejects.toThrow("Rate limit exceeded");

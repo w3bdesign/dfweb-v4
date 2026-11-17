@@ -1,72 +1,47 @@
-/// <reference types="jest" />
-import "@testing-library/jest-dom";
-import "jest-extended";
-import { checkAAAPattern } from "./src/utils/test-utils";
+import "@testing-library/jest-dom/vitest";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { beforeEach, expect, vi } from "vitest";
+import { checkAAAPattern } from "./src/utils/test-utils";
 
 // Mock matchMedia for prefers-reduced-motion and other media queries
 Object.defineProperty(globalThis, "matchMedia", {
   writable: true,
-  value: jest.fn().mockImplementation((query: string) => ({
+  value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
   })),
 });
 
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      // Testing Library matchers
-      toBeInTheDocument(): R;
-      toHaveTextContent(text: string): R;
-      toBeVisible(): R;
-      toBeDisabled(): R;
-      toBeEnabled(): R;
-      toHaveAttribute(attr: string, value?: string): R;
-      toHaveClass(...classNames: string[]): R;
-      toHaveStyle(css: Record<string, unknown>): R;
-      toContainElement(element: Element | null): R;
-      toContainHTML(html: string): R;
-      toHaveLength(length: number): R;
+// jsdom has no AnimationEvent. Without it, React picks the event name for onAnimationEnd by
+// vendor detection, and jsdom 31 exposes WebkitAnimation, so React listens for
+// "webkitAnimationEnd" while fireEvent.animationEnd dispatches "animationend". Browsers have
+// AnimationEvent, so this minimal stand-in restores browser behaviour. It must exist before
+// react-dom loads, which setup files guarantee.
+if (typeof window !== "undefined" && !("AnimationEvent" in window)) {
+  class AnimationEventPolyfill extends Event {
+    readonly animationName: string;
+    readonly elapsedTime: number;
+    readonly pseudoElement: string;
 
-      // Jest matchers
-      toBe(expected: unknown): R;
-      toEqual(expected: unknown): R;
-      toStrictEqual(expected: unknown): R;
-      toBeNull(): R;
-      toBeDefined(): R;
-      toBeUndefined(): R;
-      toBeTruthy(): R;
-      toBeFalsy(): R;
-      toBeGreaterThan(number: number): R;
-      toBeLessThan(number: number): R;
-      toBeLessThanOrEqual(number: number): R;
-      toBeGreaterThanOrEqual(number: number): R;
-      toContain(item: unknown): R;
-      toHaveBeenCalled(): R;
-      toHaveBeenCalledTimes(number: number): R;
-      toHaveBeenCalledWith(...args: unknown[]): R;
-      toHaveBeenCalledExactly(times: number): R;
-      toThrow(error?: string | Error | RegExp): R;
-      toMatch(regexpOrString: string | RegExp): R;
-      rejects: {
-        toThrow(error?: string | Error | RegExp): Promise<R>;
-      };
+    constructor(type: string, init: AnimationEventInit = {}) {
+      super(type, init);
+      this.animationName = init.animationName ?? "";
+      this.elapsedTime = init.elapsedTime ?? 0;
+      this.pseudoElement = init.pseudoElement ?? "";
     }
   }
-}
-
-function getTestPath(): string | undefined {
-  return (
-    expect as unknown as { getState: () => { testPath?: string } }
-  ).getState().testPath;
+  Object.defineProperty(window, "AnimationEvent", {
+    writable: true,
+    configurable: true,
+    value: AnimationEventPolyfill,
+  });
 }
 
 // Test files that should never be checked for the AAA pattern
@@ -85,7 +60,7 @@ const TEST_FILE_SUFFIXES = [".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"];
 function isValidTestPath(testPath: string): boolean {
   // Resolve to absolute path to eliminate ../ sequences
   const resolvedPath = path.resolve(testPath);
-  const projectRoot = path.resolve(__dirname);
+  const projectRoot = path.resolve(import.meta.dirname);
 
   // Must be within project directory
   if (!resolvedPath.startsWith(projectRoot)) {
@@ -135,7 +110,7 @@ function toValidationError(error: unknown): unknown {
 }
 
 beforeEach(async () => {
-  const testPath = getTestPath();
+  const testPath = expect.getState().testPath;
 
   if (!shouldValidateAAA(testPath)) {
     return;

@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import EducationTabContent from "@/components/CV/EducationTabContent";
+import EducationTabContent from "@/components/CV/EducationTabContent.component";
 
 describe("EducationTabContent", () => {
   it("renders education items with degree (conditional branch)", () => {
