@@ -32,11 +32,11 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, "src/e2e/**"],
     coverage: {
       provider: "v8",
-      // Same scope as the --collectCoverageFrom flags in the `test` script in package.json.
+      // Components, API routes and structured data are covered by the test suite.
       include: [
         "src/components/**/*.{js,jsx,ts,tsx}",
         "src/app/api/**/*.{js,ts}",
-        "src/lib/csrf.ts",
+        "src/lib/structuredData.ts",
       ],
       exclude: [
         "src/components/Animations/Matrix.component.{js,jsx,ts,tsx}",

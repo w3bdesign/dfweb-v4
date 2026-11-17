@@ -10,6 +10,7 @@ import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 import SkipLink from "@/components/UI/SkipLink.component";
 import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
+import StructuredData from "@/components/Layout/StructuredData.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -69,6 +70,8 @@ export default async function RootLayout({
       <body
         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
       >
+        {/* JSON-LD lives in <body>: an inline script in <head> breaks hydration */}
+        <StructuredData />
         <LazyMotionProvider>
           <SkipLink />
           <ErrorBoundary>

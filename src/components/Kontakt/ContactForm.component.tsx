@@ -10,7 +10,6 @@ import InputField from "@/components/UI/InputField.component";
 import { formSchema, FormData } from "./config/formConfig";
 
 interface ContactFormProps {
-  csrfToken?: string;
   onSubmit?: (data: FormData) => Promise<string>;
   initialResponse?: string;
 }
@@ -20,7 +19,6 @@ interface ContactFormProps {
  * Handles both the form UI and submission logic in a single, clear component
  */
 const ContactForm: React.FC<ContactFormProps> = ({
-  csrfToken = "",
   onSubmit: onSubmitProp,
   initialResponse = "",
 }) => {
@@ -84,17 +82,12 @@ const ContactForm: React.FC<ContactFormProps> = ({
                       id="contact-form"
                       className="text-center"
                       onSubmit={handleSubmit(handleFormSubmit)}
-                      method="POST"
-                      action="/api/form"
                       aria-label="Contact Form"
                       data-tool-name="submit_contact_form"
                       data-tool-description="Submit a contact form to Dfweb with name, phone number, and message"
                       data-tool-schema='{"type":"object","properties":{"navn":{"type":"string","description":"Full name","minLength":2,"maxLength":100,"pattern":"^[a-zA-ZæøåÆØÅ ]+$"},"telefon":{"type":"string","description":"Norwegian phone number (8 digits)","pattern":"^\\d{8}$"},"tekst":{"type":"string","description":"Message text","minLength":10,"maxLength":1000}},"required":["navn","telefon","tekst"],"additionalProperties":false}'
                       data-tool-confirmation="required"
                     >
-                      {csrfToken && (
-                        <input type="hidden" name="_csrf" value={csrfToken} />
-                      )}
                       <fieldset>
                         <legend className="text-center mx-auto text-xl mt-4 sr-only">
                           Kontaktskjema
