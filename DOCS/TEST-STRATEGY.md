@@ -11,7 +11,7 @@ This document describes how dfweb-v4 is tested: what we test, with which tool, w
 | Goal | Target | Measured by |
 | --- | --- | --- |
 | Correctness | Every route returns the documented status codes | Vitest route tests, Playwright `api.spec.ts` |
-| Security | CSRF and the revalidate secret cannot be bypassed | Vitest (`csrf.test.ts`, `revalidate.test.ts`), Semgrep, CodeQL |
+| Security | The revalidate secret cannot be bypassed; structured data cannot terminate its script | Vitest (`revalidate.test.ts`, `structuredData.test.ts`), Semgrep |
 | Accessibility | No axe violations on any page, full keyboard support | cypress-axe, pa11y, Vitest keyboard tests |
 | Performance | Lighthouse budgets in `lighthouserc.json` and `.github/workflows/budget.json` | Lighthouse CI |
 | Regression safety | Coverage at or above the floor in `vitest.config.mts` | Vitest coverage in CircleCI, Codecov |
@@ -23,7 +23,7 @@ This document describes how dfweb-v4 is tested: what we test, with which tool, w
 | Static | TypeScript (`next build`), Prettier, Stylelint, ESLint | Type errors, style drift | `lint.yml`, every E2E workflow (build step) |
 | Architecture | Vitest (`src/__tests__/architecture`) | Layer violations, naming, test code leaking into production | `lint.yml`, CircleCI |
 | Unit / component | Vitest + React Testing Library (jsdom) | Component logic, rendering states, hooks, CMS data mapping | CircleCI (`pnpm test`) |
-| API / integration | Vitest with `@vitest-environment node` + `NextRequest` | Route status codes, CSRF token lifecycle, revalidate auth, contract between `/api/csrf-token` and `/api/form` | CircleCI (`pnpm test`) |
+| API / integration | Vitest with `@vitest-environment node` + `NextRequest` | Revalidate route status codes, authentication and cache invalidation | CircleCI (`pnpm test`) |
 | Component (browser) | Cypress component tests (`src/e2e/cypress/component`) | Rendering in a real browser engine | Cypress workflow |
 | Smoke + a11y | Cypress + cypress-axe (`src/e2e/cypress/e2e`) | A page fails to load, axe violations | `cypress.yml` (Chrome, Firefox, Edge) |
 | User journeys + HTTP | Playwright (`src/e2e/playwright`) | Broken flows, network failure handling, real HTTP pipeline | `playwright.yml` (Chromium, Firefox) |
@@ -39,9 +39,9 @@ Likelihood and impact are rated 1 (low) to 3 (high). Risk = likelihood × impact
 
 | Area | Risk | L | I | Risk | Covered by |
 | --- | --- | --- | --- | --- | --- |
-| Contact form / CSRF | CSRF bypass, or an expired or forged token is accepted | 2 | 3 | **6** | Vitest `csrf.test.ts`, `form.test.ts` (expired, tampered, malformed, contract), Playwright `api.spec.ts` |
-| Contact form / CSRF | User can't send the form, or gets no feedback on failure | 2 | 3 | **6** | Playwright `kontakt.spec.ts` (200, 500, abort, in-flight state), Vitest `ContactForm.test.tsx` |
-| Contact form / CSRF | Client and server validation drift apart | 2 | 2 | 4 | Shared Zod schema, Vitest `form.test.ts`, Playwright validation cases |
+| Contact form | User can't send the form, or gets no feedback on failure | 2 | 3 | **6** | Playwright `kontakt.spec.ts` (200, 500, abort, in-flight state), Vitest `ContactForm.test.tsx` |
+| Contact form | Invalid values reach EmailJS | 2 | 2 | 4 | Client-side Zod schema, Vitest `ContactForm.test.tsx`, Playwright validation cases |
+| Structured data | Invalid JSON or script injection in metadata | 1 | 3 | 3 | Vitest `structuredData.test.ts`, `StructuredData.test.tsx` |
 | Revalidate webhook | Unauthenticated cache purge (DoS / content tampering) | 1 | 3 | 3 | Vitest `revalidate.test.ts` (all 401 branches), Playwright negative cases |
 | Revalidate webhook | Wrong revalidation mode, so stale content stays live | 2 | 2 | 4 | Vitest `revalidate.test.ts` (mocked `next/cache`) |
 | CMS content fetching | Sanity is down or returns an unexpected shape, so a page crashes | 2 | 3 | **6** | Vitest `content.test.ts`, route `error.tsx` tests, ErrorBoundary tests |
@@ -83,7 +83,12 @@ New tests go to the tool that owns the concern. Existing Cypress tests that pred
 | pa11y and Lighthouse budgets | `pa11y.yml`, `lighthouse.yml` |
 | No new HIGH/CRITICAL security findings | `security.yml`, `codeql.yml` |
 
-Coverage scope: `src/components/**`, `src/app/api/**` and `src/lib/csrf.ts` (Matrix animation excluded). Never lower the floor; raise it when coverage improves.
+Coverage scope: `src/components/**`, `src/app/api/**` and `src/lib/structuredData.ts` (Matrix animation excluded). Never lower the floor; raise it when coverage improves.
+
+The contact form sends directly through the browser EmailJS SDK and requires
+JavaScript. There is no custom form endpoint or CSRF token lifecycle to test.
+Client-side validation is a usability feature, not a server-side security boundary;
+EmailJS dashboard controls govern abuse prevention.
 
 ## 6. Test data and mocking
 
@@ -91,8 +96,7 @@ Coverage scope: `src/components/**`, `src/app/api/**` and `src/lib/csrf.ts` (Mat
 - **Sanity:** Vitest mocks `@/lib/sanity/client` so no test calls the real CMS.
 - **EmailJS:** Vitest mocks `@emailjs/browser`. Playwright intercepts `**/api.emailjs.com/**` with `page.route`, so no real email is ever sent.
 - **`next/cache`:** mocked in the revalidate tests so the revalidation mode can be asserted.
-- **Secrets:** tests generate `CSRF_SECRET` and `REVALIDATE_SECRET` with `randomBytes` at runtime. Never commit a secret literal (Semgrep blocks it).
-- **Time:** CSRF expiry is tested by spying on `Date.now`, not by waiting.
+- **Secrets:** tests generate `REVALIDATE_SECRET` with `randomBytes` at runtime. Never commit a secret literal (Semgrep blocks it).
 - **Test inputs** use Norwegian data (names with æøå, 8-digit phone numbers) to match production validation.
 
 ## 7. Defect management
@@ -101,7 +105,7 @@ Coverage scope: `src/components/**`, `src/app/api/**` and `src/lib/csrf.ts` (Mat
 
 | Severity | Meaning | Example |
 | --- | --- | --- |
-| S1 Critical | Site down, security hole, data loss | CSRF check bypassed |
+| S1 Critical | Site down, security hole, data loss | Revalidation authentication bypassed |
 | S2 Major | Core journey broken, no workaround | Contact form can't be sent |
 | S3 Minor | Broken with a workaround, or a single-page a11y/visual defect | Focus ring missing on one button |
 | S4 Trivial | Cosmetic | Typo, console warning |

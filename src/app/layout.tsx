@@ -10,6 +10,7 @@ import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
 import SkipLink from "@/components/UI/SkipLink.component";
 import Header from "@/components/Layout/Header.component";
 import Footer from "@/components/Layout/Footer.component";
+import StructuredData from "@/components/Layout/StructuredData.component";
 import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -38,6 +39,7 @@ export default async function RootLayout({
   return (
     <html lang="nb">
       <head>
+        <StructuredData />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
