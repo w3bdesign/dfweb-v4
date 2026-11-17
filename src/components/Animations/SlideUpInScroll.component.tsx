@@ -33,7 +33,7 @@ function createSlideUpVariants(delay: number): Variants {
 }
 
 /**
- * Bounce in content when content becomes visible in viewport
+ * Fade and slide content up when it becomes visible in viewport
  * @function SlideUpInScroll
  * @param {ReactNode} children - Children content to render
  * @param {string} cssClass - CSS classes to apply to component
