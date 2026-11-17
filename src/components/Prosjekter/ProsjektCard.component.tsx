@@ -65,10 +65,10 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
           </div>
         </div>
         <div className="md:mt-[4.5rem] md:p-2 flex flex-col justify-between min-h-[250px] xl:min-h-[275px]">
-          <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100">
+          <h2 className="lg:mt-4 text-xl text-center font-bold py-2 text-slate-100 text-balance">
             {name}
           </h2>
-          <h3 className="text-base px-4 text-gray-300 text-pretty">
+          <h3 className="text-base px-4 text-gray-300 text-balance">
             {description}
           </h3>
           <p className="mt-4 text-sm mt-2 px-4 text-gray-300 text-pretty">
