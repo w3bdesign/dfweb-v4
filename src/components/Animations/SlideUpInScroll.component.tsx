@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Variants } from "motion/react";
 import * as m from "motion/react-m";
 
-import { IAnimateBounceProps } from "./types/Animations.types";
+import { ISlideUpProps } from "./types/Animations.types";
 
 /** ease-out-quart: fast start, smooth exponential deceleration, no overshoot */
 const EASE_OUT_QUART: [number, number, number, number] = [0.25, 1, 0.5, 1];
@@ -14,7 +14,7 @@ const EASE_OUT_QUART: [number, number, number, number] = [0.25, 1, 0.5, 1];
  * @param {number} delay - Delay in seconds before the animation starts
  * @returns {Variants} Motion variants with the specified delay
  */
-function createBounceVariants(delay: number): Variants {
+function createSlideUpVariants(delay: number): Variants {
   return {
     offscreen: {
       y: 15,
@@ -34,7 +34,7 @@ function createBounceVariants(delay: number): Variants {
 
 /**
  * Bounce in content when content becomes visible in viewport
- * @function BounceInScroll
+ * @function SlideUpInScroll
  * @param {ReactNode} children - Children content to render
  * @param {string} cssClass - CSS classes to apply to component
  * @param {"some" | "all" | number} viewAmount - Amount of component needed to be visible before animating
@@ -43,14 +43,14 @@ function createBounceVariants(delay: number): Variants {
  * @returns {JSX.Element} - Rendered component
  */
 
-const BounceInScroll = ({
+const SlideUpInScroll = ({
   children,
   cssClass,
   viewAmount,
   instant,
   delay = 0,
-}: IAnimateBounceProps) => {
-  const variants = useMemo(() => createBounceVariants(delay), [delay]);
+}: ISlideUpProps) => {
+  const variants = useMemo(() => createSlideUpVariants(delay), [delay]);
 
   return (
     <m.div
@@ -59,11 +59,11 @@ const BounceInScroll = ({
       whileInView={instant ? undefined : "onscreen"}
       viewport={instant ? undefined : { once: true, amount: viewAmount ?? 0.2 }}
       className={cssClass}
-      data-testid="bounceinscroll"
+      data-testid="slideupinscroll"
     >
       <m.div variants={variants}>{children}</m.div>
     </m.div>
   );
 };
 
-export default BounceInScroll;
+export default SlideUpInScroll;

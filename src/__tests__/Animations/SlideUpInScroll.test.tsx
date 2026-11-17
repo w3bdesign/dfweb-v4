@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
 import React from "react";
 
 // Mock framer-motion
@@ -24,37 +24,37 @@ vi.mock("motion/react", () => ({
 }));
 
 /**
- * Helper to render BounceInScroll and assert element + content are present.
+ * Helper to render SlideUpInScroll and assert element + content are present.
  */
-function renderAndAssertBounceInScroll(
-  props: Partial<React.ComponentProps<typeof BounceInScroll>> = {},
+function renderAndAssertSlideUpInScroll(
+  props: Partial<React.ComponentProps<typeof SlideUpInScroll>> = {},
   testContent = "Test content",
 ) {
   // Arrange & Act
   const result = render(
-    <BounceInScroll {...props}>
+    <SlideUpInScroll {...props}>
       <div>{testContent}</div>
-    </BounceInScroll>,
+    </SlideUpInScroll>,
   );
 
   // Assert
-  const element = screen.getByTestId("bounceinscroll");
+  const element = screen.getByTestId("slideupinscroll");
   expect(element).toBeInTheDocument();
   expect(screen.getByText(testContent)).toBeInTheDocument();
 
   return { element, ...result };
 }
 
-describe("BounceInScroll", () => {
+describe("SlideUpInScroll", () => {
   it("renders children content", () => {
     // Arrange
     const testContent = "Test content";
 
     // Act
     render(
-      <BounceInScroll>
+      <SlideUpInScroll>
         <div>{testContent}</div>
-      </BounceInScroll>,
+      </SlideUpInScroll>,
     );
 
     // Assert
@@ -67,28 +67,28 @@ describe("BounceInScroll", () => {
 
     // Act
     render(
-      <BounceInScroll cssClass={testClass}>
+      <SlideUpInScroll cssClass={testClass}>
         <div>Test content</div>
-      </BounceInScroll>,
+      </SlideUpInScroll>,
     );
 
     // Assert
-    expect(screen.getByTestId("bounceinscroll")).toHaveClass(testClass);
+    expect(screen.getByTestId("slideupinscroll")).toHaveClass(testClass);
   });
 
   it("configures viewport with default amount when viewAmount not provided", () => {
     // Arrange & Act & Assert
-    renderAndAssertBounceInScroll();
+    renderAndAssertSlideUpInScroll();
   });
 
   it("configures viewport with custom amount when viewAmount provided", () => {
     // Arrange & Act & Assert
-    renderAndAssertBounceInScroll({ viewAmount: 0.5 });
+    renderAndAssertSlideUpInScroll({ viewAmount: 0.5 });
   });
 
   it("configures for instant animation when instant prop is true", () => {
     // Arrange & Act & Assert
-    renderAndAssertBounceInScroll({ instant: true });
+    renderAndAssertSlideUpInScroll({ instant: true });
   });
 
   it("handles all viewport amount types", () => {
@@ -98,13 +98,13 @@ describe("BounceInScroll", () => {
     amounts.forEach((amount) => {
       // Act
       const { unmount } = render(
-        <BounceInScroll viewAmount={amount}>
+        <SlideUpInScroll viewAmount={amount}>
           <div>Test content</div>
-        </BounceInScroll>,
+        </SlideUpInScroll>,
       );
 
       // Assert
-      const element = screen.getByTestId("bounceinscroll");
+      const element = screen.getByTestId("slideupinscroll");
       expect(element).toBeInTheDocument();
       expect(screen.getByText("Test content")).toBeInTheDocument();
 

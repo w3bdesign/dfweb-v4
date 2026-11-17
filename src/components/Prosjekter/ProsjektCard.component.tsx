@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Button from "@/components/UI/Button.component";
-import BounceInScroll from "@/components/Animations/BounceInScroll.component";
+import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
 
 import { urlFor } from "@/lib/sanity/client";
 
@@ -43,7 +43,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
       className="bg-slate-700 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-300 rounded-sm overflow-hidden mx-4 md:m-0 border border-matrix-dark/10 hover:border-matrix-dark/25"
       data-testid="project-card"
     >
-      <BounceInScroll viewAmount={0.3} delay={staggerDelay}>
+      <SlideUpInScroll viewAmount={0.3} delay={staggerDelay}>
         <div className="relative w-full md:h-60">
           <div className="w-full h-full p-5 md:pb-[15px] relative overflow-hidden flex justify-center md:h-[350px]">
             {projectimage && (
@@ -85,7 +85,7 @@ const ProsjektCard: React.FC<ProsjektCardProps> = ({
             )}
           </div>
         </div>
-      </BounceInScroll>
+      </SlideUpInScroll>
     </div>
   );
 };
