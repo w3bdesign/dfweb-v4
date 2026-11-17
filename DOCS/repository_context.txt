@@ -447,371 +447,6 @@ vitest.setup.ts
 15: ]
 ````
 
-## File: .github/workflows/cypress.yml
-````yaml
- 1: name: Cypress Tests
- 2: on: [push]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   cypress-run:
- 7:     runs-on: ubuntu-24.04
- 8:     timeout-minutes: 30   
- 9:     strategy:
-10:       fail-fast: false
-11:       matrix:
-12:         browser: [chrome, firefox, edge]
-13:     steps:
-14:       - name: Checkout
-15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-16:       - name: Install pnpm
-17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - name: Setup Node.js
-19:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-20:         with:
-21:           node-version: 26
-22:           cache: "pnpm"
-23:           cache-dependency-path: pnpm-lock.yaml
-24:       - name: Cache Cypress binary
-25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-26:         with:
-27:           path: ~/.cache/Cypress
-28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
-29:       - name: Install dependencies
-30:         run: pnpm install --frozen-lockfile --ignore-scripts
-31:       - name: Verify and install Cypress binary
-32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
-33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
-34:         # NOT a package-manager install running third-party lifecycle scripts.
-35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
-36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
-37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
-38:       - name: Build the project
-39:         run: pnpm build
-40:       - name: Start the application
-41:         run: pnpm dev &
-42:       - name: Wait for the application to be ready
-43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
-44:       - name: Run Cypress tests
-45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
- 1: name: Lighthouse CI
- 2: on: [push, pull_request]
- 3: permissions:
- 4:   contents: read
- 5: jobs:
- 6:   lighthouse:
- 7:     runs-on: ubuntu-latest
- 8:     timeout-minutes: 30
- 9:     steps:
-10:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-11:       - name: Setup Node.js
-12:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-13:         with:
-14:           node-version: "26"
-15:       - name: Setup pnpm
-16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-17:       - name: Get pnpm store directory
-18:         shell: bash
-19:         run: |
-20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-21:       - name: Setup pnpm cache
-22:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-23:         with:
-24:           path: ${{ env.STORE_PATH }}
-25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-26:       - name: Install dependencies
-27:         run: pnpm install --frozen-lockfile --ignore-scripts
-28:       - name: Build project
-29:         run: pnpm build
-30:       - name: Start server
-31:         run: |
-32:           pnpm start &
-33:           echo "Waiting for server to be ready..."
-34:           while ! nc -z localhost 3000; do
-35:             sleep 5
-36:           done
-37:           # Additional wait to ensure full initialization
-38:           sleep 20
-39:       - name: Run Lighthouse CI (Mobile)
-40:         run: pnpm lhci:perf
-41:         env:
-42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-43:       - name: Run Lighthouse CI (Desktop)
-44:         run: pnpm lhci:desktop
-45:         env:
-46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-47:       - name: Stop server
-48:         if: always()
-49:         run: |
-50:           pkill -f "next start" || true
-````
-
-## File: .github/workflows/react-doctor.yml
-````yaml
-  1: name: React Doctor
-  2: on:
-  3:   push:
-  4:     branches: [main, master]
-  5:   pull_request:
-  6:     branches: [main, master]
-  7: concurrency:
-  8:   group: ${{ github.workflow }}-${{ github.ref }}
-  9:   cancel-in-progress: true
- 10: jobs:
- 11:   react-doctor:
- 12:     name: React Health Check
- 13:     runs-on: ubuntu-latest
- 14:     timeout-minutes: 30
- 15:     permissions:
- 16:       contents: read
- 17:       pull-requests: write
- 18:       issues: write
- 19:     steps:
- 20:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
- 21:       - name: Detect package manager
- 22:         id: pm
- 23:         run: |
- 24:           if [ -f "pnpm-lock.yaml" ]; then
- 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
- 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
- 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
- 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
- 30:           elif [ -f "yarn.lock" ]; then
- 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
- 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
- 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
- 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
- 35:             echo "Detected yarn (yarn.lock found)"
- 36:           else
- 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
- 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
- 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
- 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
- 41:             echo "Detected npm (default)"
- 42:           fi
- 43:       - name: Install pnpm
- 44:         if: steps.pm.outputs.manager == 'pnpm'
- 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
- 46:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
- 47:         with:
- 48:           node-version: 26
- 49:           cache: ${{ steps.pm.outputs.cache }}
- 50:       - name: Install dependencies
- 51:         run: ${{ steps.pm.outputs.install }}
- 52:       - name: Run React Doctor
- 53:         id: doctor
- 54:         run: |
- 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
- 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
- 57:           # Strip ANSI escape codes for clean output
- 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
- 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
- 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
- 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
- 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
- 63:           else
- 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
- 65:           fi
- 66:           # Check for lint issues (the actionable part of the report)
- 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
- 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
- 69:           else
- 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
- 71:           fi
- 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
- 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
- 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
- 75:           # Extract just the numeric score for threshold check
- 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
- 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
- 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
- 79:       - name: Post PR comment with results
- 80:         if: github.event_name == 'pull_request'
- 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
- 82:         with:
- 83:           script: |
- 84:             const fs = require('fs');
- 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
- 86:             const score = '${{ steps.doctor.outputs.score }}';
- 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
- 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
- 89:             const scoreDisplay = offline
- 90:               ? 'N/A (scoring server unreachable)'
- 91:               : score;
- 92:             const statusEmoji = offline
- 93:               ? (issuesFound ? '⚠️' : '✅')
- 94:               : '';
- 95:             const body = [
- 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
- 97:               '',
- 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
- 99:               '',
-100:               '<details>',
-101:               '<summary>Full diagnostics</summary>',
-102:               '',
-103:               '```',
-104:               output.trim(),
-105:               '```',
-106:               '',
-107:               '</details>',
-108:               '',
-109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
-110:             ].filter(Boolean).join('\n');
-111:             // Find existing comment to update instead of creating duplicates
-112:             const { data: comments } = await github.rest.issues.listComments({
-113:               owner: context.repo.owner,
-114:               repo: context.repo.repo,
-115:               issue_number: context.issue.number,
-116:             });
-117:             const botComment = comments.find(
-118:               (c) => c.body?.includes('🩺 React Doctor')
-119:             );
-120:             if (botComment) {
-121:               await github.rest.issues.updateComment({
-122:                 owner: context.repo.owner,
-123:                 repo: context.repo.repo,
-124:                 comment_id: botComment.id,
-125:                 body,
-126:               });
-127:             } else {
-128:               await github.rest.issues.createComment({
-129:                 owner: context.repo.owner,
-130:                 repo: context.repo.repo,
-131:                 issue_number: context.issue.number,
-132:                 body,
-133:               });
-134:             }
-135:       - name: Write job summary
-136:         if: always()
-137:         run: |
-138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-139:           if [ "$OFFLINE" = "true" ]; then
-140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
-141:             echo "" >> "$GITHUB_STEP_SUMMARY"
-142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
-143:           else
-144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
-145:           fi
-146:           echo "" >> "$GITHUB_STEP_SUMMARY"
-147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
-149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
-150:       - name: Check score threshold
-151:         run: |
-152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
-153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
-154:           # When offline, skip numeric threshold — only fail if lint issues were found
-155:           if [ "$OFFLINE" = "true" ]; then
-156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
-157:             if [ "$ISSUES" = "true" ]; then
-158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
-159:               exit 1
-160:             fi
-161:             echo "✅ No lint issues found (score unavailable due to offline)"
-162:             exit 0
-163:           fi
-164:           SCORE="${{ steps.doctor.outputs.score_num }}"
-165:           SCORE="${SCORE:-0}"
-166:           THRESHOLD=80
-167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
-168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
-169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
-170:             exit 1
-171:           fi
-````
-
-## File: .github/workflows/repomix.yml
-````yaml
- 1: name: Repository Documentation
- 2: on:
- 3:   push:
- 4:     branches:
- 5:       - main
- 6:   workflow_dispatch: # allows manual triggering
- 7: permissions:
- 8:   contents: write
- 9:   pull-requests: write
-10: jobs:
-11:   analyze:
-12:     runs-on: ubuntu-latest
-13:     timeout-minutes: 30
-14:     steps:
-15:       - name: Checkout repository
-16:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-17:         with:
-18:           fetch-depth: 0 # fetch all history for better context
-19:       - name: Wait for other checks
-20:         run: |
-21:           echo "Waiting for 5 minutes to allow other checks to complete..."
-22:           sleep 300
-23:       - name: Setup Node.js
-24:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-25:         with:
-26:           node-version: "26"
-27:       - name: Install Repomix
-28:         run: npm install -g repomix@1.14.0 --ignore-scripts
-29:       - name: Generate Repository Documentation
-30:         run: |
-31:           echo "Creating DOCS directory..."
-32:           mkdir -p DOCS
-33:           echo "Running Repomix..."
-34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
-35:             echo "Error: Repomix command failed"
-36:             # Print directory contents for debugging
-37:             echo "DOCS directory contents:"
-38:             ls -la DOCS/
-39:             exit 1
-40:           fi
-41:           echo "Verifying output file..."
-42:           if [ ! -f "DOCS/repository_context.txt" ]; then
-43:             echo "Error: repository_context.txt was not created"
-44:             # Print directory contents for debugging
-45:             echo "DOCS directory contents:"
-46:             ls -la DOCS/
-47:             exit 1
-48:           fi
-49:           if [ ! -s "DOCS/repository_context.txt" ]; then
-50:             echo "Error: repository_context.txt is empty"
-51:             exit 1
-52:           fi
-53:           echo "Repository context file generated successfully"
-54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
-55:           echo "First few lines of the file:"
-56:           head -n 5 "DOCS/repository_context.txt"
-57:       # Update Documentation
-58:       - name: Commit and Push Changes
-59:         run: |
-60:           echo "Configuring git..."
-61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-62:           git config --local user.name "github-actions[bot]"
-63:           echo "Checking for changes..."
-64:           if [[ -n "$(git status --porcelain)" ]]; then
-65:             echo "Changes detected, committing..."
-66:             # Stage only repository_context.txt to avoid unintended changes
-67:             if ! git add DOCS/repository_context.txt; then
-68:               echo "Error: Failed to stage repository_context.txt"
-69:               exit 1
-70:             fi
-71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
-72:               echo "Error: Failed to create commit"
-73:               exit 1
-74:             fi
-75:             echo "Pushing to main branch..."
-76:             if ! git push; then
-77:               echo "Error: Failed to push changes"
-78:               exit 1
-79:             fi
-80:             echo "Successfully updated repository context"
-81:           else
-82:             echo "No changes detected in repository_context.txt"
-83:           fi
-````
-
 ## File: .github/workflows/snyk-scan.yml
 ````yaml
  1: name: Snyk Security Scan
@@ -3469,6 +3104,268 @@ vitest.setup.ts
 2: export {};
 ````
 
+## File: src/__tests__/CV/EducationTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import EducationTabContent from "@/components/CV/EducationTabContent.component";
+ 4: describe("EducationTabContent", () => {
+ 5:   it("renders education items with degree (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockEducation = [
+ 8:       {
+ 9:         _key: "education-with-degree",
+10:         period: "2020-2024",
+11:         institution: "University of Technology",
+12:         degree: "Bachelor of Computer Science",
+13:         description: "Studied computer science fundamentals",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<EducationTabContent education={mockEducation} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2024 - University of Technology";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(
+25:       screen.getByText("Bachelor of Computer Science"),
+26:     ).toBeInTheDocument();
+27:   });
+28:   it("renders education items without degree (conditional branch)", () => {
+29:     // Arrange
+30:     const mockEducation = [
+31:       {
+32:         _key: "education-without-degree",
+33:         period: "2020-2024",
+34:         institution: "University of Technology",
+35:         description: "Studied computer science fundamentals",
+36:         // No degree property to test the conditional
+37:       },
+38:     ];
+39:     // Act
+40:     render(<EducationTabContent education={mockEducation} />);
+41:     // Assert
+42:     expect(
+43:       screen.getByText((content, element) => {
+44:         return element?.textContent === "2020-2024 - University of Technology";
+45:       }),
+46:     ).toBeInTheDocument();
+47:     expect(
+48:       screen.queryByText("Bachelor of Computer Science"),
+49:     ).not.toBeInTheDocument();
+50:   });
+51:   it("renders education items with empty degree (conditional branch)", () => {
+52:     // Arrange
+53:     const mockEducation = [
+54:       {
+55:         _key: "education-with-empty-degree",
+56:         period: "2020-2024",
+57:         institution: "University of Technology",
+58:         degree: "", // Empty string to test the conditional
+59:         description: "Studied computer science fundamentals",
+60:       },
+61:     ];
+62:     // Act
+63:     render(<EducationTabContent education={mockEducation} />);
+64:     // Assert
+65:     expect(
+66:       screen.getByText((content, element) => {
+67:         return element?.textContent === "2020-2024 - University of Technology";
+68:       }),
+69:     ).toBeInTheDocument();
+70:     expect(
+71:       screen.queryByText("Bachelor of Computer Science"),
+72:     ).not.toBeInTheDocument();
+73:   });
+74:   it("renders with undefined education", () => {
+75:     // Act
+76:     render(<EducationTabContent />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(
+79:       screen.queryByText("University of Technology"),
+80:     ).not.toBeInTheDocument();
+81:   });
+82:   it("renders with empty education array", () => {
+83:     // Act
+84:     render(<EducationTabContent education={[]} />);
+85:     // Assert - Should not crash and render empty content
+86:     expect(
+87:       screen.queryByText("University of Technology"),
+88:     ).not.toBeInTheDocument();
+89:   });
+90: });
+````
+
+## File: src/__tests__/CV/ExperienceTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent.component";
+ 4: describe("ExperienceTabContent", () => {
+ 5:   it("renders experience items with role (conditional branch)", () => {
+ 6:     // Arrange
+ 7:     const mockExperience = [
+ 8:       {
+ 9:         _key: "experience-with-role",
+10:         period: "2022-2024",
+11:         company: "Tech Company Inc",
+12:         role: "Senior Developer",
+13:         description: "Developed web applications",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<ExperienceTabContent experience={mockExperience} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2022-2024 - Tech Company Inc";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
+25:   });
+26:   it("renders experience items without role (conditional branch)", () => {
+27:     // Arrange
+28:     const mockExperience = [
+29:       {
+30:         _key: "experience-without-role",
+31:         period: "2022-2024",
+32:         company: "Tech Company Inc",
+33:         description: "Developed web applications",
+34:         // No role property to test the conditional
+35:       },
+36:     ];
+37:     // Act
+38:     render(<ExperienceTabContent experience={mockExperience} />);
+39:     // Assert
+40:     expect(
+41:       screen.getByText((content, element) => {
+42:         return element?.textContent === "2022-2024 - Tech Company Inc";
+43:       }),
+44:     ).toBeInTheDocument();
+45:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+46:   });
+47:   it("renders experience items with empty role (conditional branch)", () => {
+48:     // Arrange
+49:     const mockExperience = [
+50:       {
+51:         _key: "experience-with-empty-role",
+52:         period: "2022-2024",
+53:         company: "Tech Company Inc",
+54:         role: "", // Empty string to test the conditional
+55:         description: "Developed web applications",
+56:       },
+57:     ];
+58:     // Act
+59:     render(<ExperienceTabContent experience={mockExperience} />);
+60:     // Assert
+61:     expect(
+62:       screen.getByText((content, element) => {
+63:         return element?.textContent === "2022-2024 - Tech Company Inc";
+64:       }),
+65:     ).toBeInTheDocument();
+66:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
+67:   });
+68:   it("renders with undefined experience", () => {
+69:     // Act
+70:     render(<ExperienceTabContent />);
+71:     // Assert - Should not crash and render empty content
+72:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+73:   });
+74:   it("renders with empty experience array", () => {
+75:     // Act
+76:     render(<ExperienceTabContent experience={[]} />);
+77:     // Assert - Should not crash and render empty content
+78:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
+## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
+````typescript
+ 1: import React from "react";
+ 2: import { render, screen } from "@testing-library/react";
+ 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent.component";
+ 4: describe("VolunteerWorkTabContent", () => {
+ 5:   it("renders volunteer work items with all fields", () => {
+ 6:     // Arrange
+ 7:     const mockVolunteerWork = [
+ 8:       {
+ 9:         _key: "volunteer-work-all-fields",
+10:         period: "2020-2022",
+11:         organization: "Open Source Foundation",
+12:         role: "Maintainer",
+13:         description: "Maintained open source projects",
+14:       },
+15:     ];
+16:     // Act
+17:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+18:     // Assert
+19:     expect(
+20:       screen.getByText((content, element) => {
+21:         return element?.textContent === "2020-2022 - Open Source Foundation";
+22:       }),
+23:     ).toBeInTheDocument();
+24:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
+25:     expect(
+26:       screen.getByText("Maintained open source projects"),
+27:     ).toBeInTheDocument();
+28:   });
+29:   it("renders with missing period and organization (nullish coalescing branches)", () => {
+30:     // Arrange
+31:     const mockVolunteerWork = [
+32:       {
+33:         _key: "volunteer-work-missing-header-fields",
+34:         role: "Volunteer",
+35:         description: "Helped with events",
+36:       },
+37:     ];
+38:     // Act
+39:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+40:     // Assert
+41:     expect(screen.getByText(/-/)).toBeInTheDocument();
+42:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
+43:   });
+44:   it("renders without role (conditional branch)", () => {
+45:     // Arrange
+46:     const mockVolunteerWork = [
+47:       {
+48:         _key: "volunteer-work-without-role",
+49:         period: "2021-2023",
+50:         organization: "Community Group",
+51:         description: "Community outreach",
+52:       },
+53:     ];
+54:     // Act
+55:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
+56:     // Assert
+57:     expect(
+58:       screen.getByText((content, element) => {
+59:         return element?.textContent === "2021-2023 - Community Group";
+60:       }),
+61:     ).toBeInTheDocument();
+62:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
+63:   });
+64:   it("renders with undefined volunteerWork", () => {
+65:     // Act
+66:     render(<VolunteerWorkTabContent />);
+67:     // Assert
+68:     expect(
+69:       screen.queryByText("Open Source Foundation"),
+70:     ).not.toBeInTheDocument();
+71:   });
+72:   it("renders with empty volunteerWork array", () => {
+73:     // Act
+74:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
+75:     // Assert
+76:     expect(
+77:       screen.queryByText("Open Source Foundation"),
+78:     ).not.toBeInTheDocument();
+79:   });
+80: });
+````
+
 ## File: src/__tests__/Index/fixtures/hero.json
 ````json
  1: {
@@ -4962,6 +4859,525 @@ vitest.setup.ts
 42: }
 ````
 
+## File: src/components/CV/CVContent.component.tsx
+````typescript
+ 1: import PageHeader from "@/components/UI/PageHeader.component";
+ 2: import Button from "@/components/UI/Button.component";
+ 3: import Tabs from "@/components/UI/Tabs.component";
+ 4: import QualificationsTabContent from "./QualificationsTabContent.component";
+ 5: import ExperienceTabContent from "./ExperienceTabContent.component";
+ 6: import EducationTabContent from "./EducationTabContent.component";
+ 7: import VolunteerWorkTabContent from "./VolunteerWorkTabContent.component";
+ 8: import type { Cv } from "@/types/sanity.types";
+ 9: /**
+10:  * CVContent component for rendering the CV page with tabs
+11:  * @param {Object} props - The props for the CVContent component
+12:  * @param {Cv} props.cvData - The CV data from Sanity
+13:  * @returns {JSX.Element} The rendered CVContent component
+14:  */
+15: const CVContent = ({ cvData }: { cvData: Cv }) => {
+16:   const tabs = [
+17:     {
+18:       id: "qualifications",
+19:       label: "Nøkkelkvalifikasjoner",
+20:       content: (
+21:         <QualificationsTabContent qualifications={cvData.keyQualifications} />
+22:       ),
+23:     },
+24:     {
+25:       id: "experience",
+26:       label: "Erfaring",
+27:       content: <ExperienceTabContent experience={cvData.experience} />,
+28:     },
+29:     {
+30:       id: "education",
+31:       label: "Utdanning",
+32:       content: <EducationTabContent education={cvData.education} />,
+33:     },
+34:     {
+35:       id: "volunteerWork",
+36:       label: "Frivillig arbeid",
+37:       content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
+38:     },
+39:   ];
+40:   return (
+41:     <main id="maincontent">
+42:       <div className="mt-32 bg-graybg">
+43:         <PageHeader>CV</PageHeader>
+44:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
+45:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
+46:             <div className="p-4 mx-auto mt-4 flex flex-col items-center">
+47:               <div className="p-4 text-lg rounded-sm md:w-full">
+48:                 {/* Desktop: tabbed CV interface */}
+49:                 <div className="hidden sm:block">
+50:                   <div className="flex justify-center">
+51:                     <Tabs tabs={tabs} />
+52:                   </div>
+53:                   <div className="mx-auto text-center mt-8">
+54:                     <Button href="./cv2.pdf" renderAs="a" type="button">
+55:                       Last ned PDF
+56:                     </Button>
+57:                   </div>
+58:                 </div>
+59:                 {/* Mobile: download button only */}
+60:                 <div className="flex sm:hidden justify-center py-8">
+61:                   <Button href="./cv2.pdf" renderAs="a" type="button">
+62:                     Last ned PDF
+63:                   </Button>
+64:                 </div>
+65:               </div>
+66:             </div>
+67:           </div>
+68:         </div>
+69:       </div>
+70:     </main>
+71:   );
+72: };
+73: export default CVContent;
+````
+
+## File: src/components/CV/EducationTabContent.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
+ 3: interface Education {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   institution?: string;
+ 7:   degree?: string;
+ 8:   description?: string;
+ 9: }
+10: interface EducationTabContentProps {
+11:   education?: Education[];
+12: }
+13: const renderEducationHeader = (edu: Education): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
+16:     {edu.institution ?? ""}
+17:   </>
+18: );
+19: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
+20:   edu.degree && <p className="italic">{edu.degree}</p>;
+21: const EducationTabContent: React.FC<EducationTabContentProps> = ({
+22:   education,
+23: }) => (
+24:   <GenericCVSectionContent<Education>
+25:     items={education}
+26:     renderHeaderContent={renderEducationHeader}
+27:     renderSubHeaderContent={renderEducationSubHeader}
+28:   />
+29: );
+30: export default EducationTabContent;
+````
+
+## File: src/components/CV/ExperienceTabContent.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
+ 3: interface Experience {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   company?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface ExperienceTabContentProps {
+11:   experience?: Experience[];
+12: }
+13: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
+16:     {exp.company ?? ""}
+17:   </>
+18: );
+19: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
+20:   exp.role && <p className="italic">{exp.role}</p>;
+21: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
+22:   experience,
+23: }) => (
+24:   <GenericCVSectionContent<Experience>
+25:     items={experience}
+26:     renderHeaderContent={renderExperienceHeader}
+27:     renderSubHeaderContent={renderExperienceSubHeader}
+28:   />
+29: );
+30: export default ExperienceTabContent;
+````
+
+## File: src/components/CV/GenericCVSectionContent.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface BaseItem {
+ 3:   _key: string;
+ 4:   description?: string;
+ 5: }
+ 6: interface GenericCVSectionContentProps<T extends BaseItem> {
+ 7:   items?: T[];
+ 8:   renderHeaderContent: (item: T) => React.ReactNode;
+ 9:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+10: }
+11: interface CVListItemProps<T extends BaseItem> {
+12:   item: T;
+13:   renderHeaderContent: (item: T) => React.ReactNode;
+14:   renderSubHeaderContent?: (item: T) => React.ReactNode;
+15: }
+16: const CVListItem = <T extends BaseItem>({
+17:   item,
+18:   renderHeaderContent,
+19:   renderSubHeaderContent,
+20: }: CVListItemProps<T>) => (
+21:   <div className="mb-6">
+22:     <h3 className="font-semibold text-slate-100">
+23:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
+24:       {renderHeaderContent(item)}
+25:     </h3>
+26:     {renderSubHeaderContent?.(item)}
+27:     <p>{item.description ?? ""}</p>
+28:   </div>
+29: );
+30: const GenericCVSectionContent = <T extends BaseItem>({
+31:   items,
+32:   renderHeaderContent,
+33:   renderSubHeaderContent,
+34: }: GenericCVSectionContentProps<T>) => (
+35:   <div className="text-slate-300/[0.9]">
+36:     {items?.map((item) => (
+37:       <CVListItem
+38:         key={item._key}
+39:         item={item}
+40:         renderHeaderContent={renderHeaderContent}
+41:         renderSubHeaderContent={renderSubHeaderContent}
+42:       />
+43:     ))}
+44:   </div>
+45: );
+46: export default GenericCVSectionContent;
+````
+
+## File: src/components/CV/QualificationsTabContent.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: interface QualificationsTabContentProps {
+ 3:   qualifications?: string[];
+ 4: }
+ 5: const QualificationsTabContent: React.FC<QualificationsTabContentProps> = ({
+ 6:   qualifications,
+ 7: }) => (
+ 8:   <ul className="list-disc pl-5 text-slate-300/[0.9]">
+ 9:     {qualifications?.map((qual) => (
+10:       <li key={qual ?? ""} className="mb-2">
+11:         {qual ?? ""}
+12:       </li>
+13:     ))}
+14:   </ul>
+15: );
+16: export default QualificationsTabContent;
+````
+
+## File: src/components/CV/VolunteerWorkTabContent.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
+ 3: interface VolunteerWork {
+ 4:   _key: string;
+ 5:   period?: string;
+ 6:   organization?: string;
+ 7:   role?: string;
+ 8:   description?: string;
+ 9: }
+10: interface VolunteerWorkTabContentProps {
+11:   volunteerWork?: VolunteerWork[];
+12: }
+13: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
+14:   <>
+15:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
+16:     {vol.organization ?? ""}
+17:   </>
+18: );
+19: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
+20:   vol.role && <p className="italic">{vol.role}</p>;
+21: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
+22:   volunteerWork,
+23: }) => (
+24:   <GenericCVSectionContent<VolunteerWork>
+25:     items={volunteerWork}
+26:     renderHeaderContent={renderVolunteerHeader}
+27:     renderSubHeaderContent={renderVolunteerSubHeader}
+28:   />
+29: );
+30: export default VolunteerWorkTabContent;
+````
+
+## File: src/components/ErrorBoundary/ErrorBoundary.component.tsx
+````typescript
+ 1: "use client";
+ 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
+ 3: import {
+ 4:   ErrorBoundary as ReactErrorBoundary,
+ 5:   FallbackProps,
+ 6: } from "react-error-boundary";
+ 7: import ErrorFallback from "./ErrorFallback.component";
+ 8: interface ErrorBoundaryProps {
+ 9:   children: ReactNode;
+10:   compact?: boolean;
+11: }
+12: const handleError = (error: unknown, info: ErrorInfo) => {
+13:   console.error("Uventet feil i Matrix:", error, info);
+14: };
+15: /**
+16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
+17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
+18:  *
+19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
+20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
+21:  *
+22:  * @param {Object} props - The component props
+23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
+24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
+25:  * @returns {JSX.Element} A React component that catches errors in its child components
+26:  */
+27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
+28:   children,
+29:   compact = false,
+30: }) => {
+31:   const renderFallback = useCallback(
+32:     (props: FallbackProps) => (
+33:       <ErrorFallback error={props.error as Error} compact={compact} />
+34:     ),
+35:     [compact],
+36:   );
+37:   return (
+38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
+39:       {children}
+40:     </ReactErrorBoundary>
+41:   );
+42: };
+43: export default ErrorBoundary;
+````
+
+## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
+````typescript
+ 1: import React from "react";
+ 2: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
+ 3: interface ErrorFallbackProps {
+ 4:   error: Error;
+ 5:   compact?: boolean;
+ 6: }
+ 7: /**
+ 8:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
+ 9:  * It shows a Matrix-themed error message.
+10:  *
+11:  * @param {Object} props - The component props
+12:  * @param {Error} props.error - The error object caught by the ErrorBoundary
+13:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
+14:  * @returns {JSX.Element} A React component displaying the error message and reload option
+15:  */
+16: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+17:   error,
+18:   compact = false,
+19: }) => {
+20:   if (compact) {
+21:     return (
+22:       <div
+23:         data-testid="error-fallback-container"
+24:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
+25:       >
+26:         <div className="absolute inset-0 opacity-30">
+27:           <ReactMatrixAnimation />
+28:         </div>
+29:         <div className="relative z-10 flex flex-col items-center text-center">
+30:           <h2 className="text-white text-lg mb-2">
+31:             Har du funnet en feil i Matrix?
+32:           </h2>
+33:           <p className="text-white text-sm mb-3">
+34:             {error.message || "En uventet feil har oppstått."}
+35:           </p>
+36:         </div>
+37:       </div>
+38:     );
+39:   }
+40:   return (
+41:     <div
+42:       data-testid="error-fallback-container"
+43:       className="absolute w-full h-full"
+44:     >
+45:       <ReactMatrixAnimation />
+46:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
+47:         <h1 className="text-white text-5xl m-6">
+48:           Har du funnet en feil i Matrix?
+49:         </h1>
+50:         <p className="text-white text-xl mb-6">
+51:           {error.message || "En uventet feil har oppstått."}
+52:         </p>
+53:       </div>
+54:     </div>
+55:   );
+56: };
+57: export default ErrorFallback;
+````
+
+## File: src/components/Index/Hero.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { useRef } from "react";
+ 3: import dynamic from "next/dynamic";
+ 4: import type { Herocontent } from "@/types/sanity.types";
+ 5: import Icons from "./Icons.component";
+ 6: import FadeIn from "@/components/Animations/FadeIn.component";
+ 7: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
+ 8: import MobileBackground from "./MobileBackground.component";
+ 9: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
+10: const ReactMatrixAnimation = dynamic(
+11:   () => import("@/components/Animations/Matrix.component"),
+12:   {
+13:     ssr: false,
+14:     loading: () => (
+15:       <div className="text-center">
+16:         <RotatingLoader />
+17:       </div>
+18:     ),
+19:   },
+20: );
+21: /**
+22:  * Safely retrieves hero text at a given index with a fallback.
+23:  */
+24: function getHeroText(
+25:   content: Herocontent[],
+26:   index: number,
+27:   fallback = "",
+28: ): string {
+29:   return content[index]?.text ?? fallback;
+30: }
+31: /**
+32:  * Hero component for rendering the main hero section of the page
+33:  * @param {Object} props - The props for the Hero component
+34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
+35:  * @returns {JSX.Element} The rendered Hero component
+36:  */
+37: const Hero = ({ content }: { content: Herocontent[] }) => {
+38:   const heroRef = useRef<HTMLElement>(null);
+39:   const heading = getHeroText(content, 0, "Hei!");
+40:   const subheading = getHeroText(content, 1);
+41:   const paragraph = getHeroText(content, 2);
+42:   return (
+43:     <article
+44:       aria-label="Kontainer for animasjoner av introtekst"
+45:       id="main-hero"
+46:       data-testid="main-hero"
+47:       ref={heroRef}
+48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
+49:     >
+50:       <MatrixCursor heroRef={heroRef} />
+51:       <MobileBackground />
+52:       <div className="hidden md:block absolute inset-0 w-full h-full">
+53:         <ReactMatrixAnimation />
+54:       </div>
+55:       <div className="relative z-10">
+56:         <div className="px-4 md:px-0" data-testid="fade-in">
+57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
+58:             <FadeIn delay={0.3}>
+59:               <h1
+60:                 data-cy="hei"
+61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
+62:               >
+63:                 {heading}
+64:               </h1>
+65:             </FadeIn>
+66:             <FadeIn delay={0.9}>
+67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
+68:                 {subheading}
+69:               </h2>
+70:             </FadeIn>
+71:             <FadeIn delay={1.5}>
+72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
+73:                 {paragraph}
+74:               </p>
+75:             </FadeIn>
+76:           </div>
+77:           <div className="mt-4">
+78:             <Icons />
+79:           </div>
+80:         </div>
+81:       </div>
+82:     </article>
+83:   );
+84: };
+85: export default Hero;
+````
+
+## File: src/components/Index/Icons.component.tsx
+````typescript
+ 1: import { IconType } from "react-icons";
+ 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
+ 3: import { SiTypescript, SiWordpress } from "react-icons/si";
+ 4: import Grow from "@/components/Animations/Grow.component";
+ 5: interface IAnimateIcons {
+ 6:   id: number;
+ 7:   Icon: IconType;
+ 8:   iconName: string;
+ 9: }
+10: const AnimateIcons: IAnimateIcons[] = [
+11:   {
+12:     id: 0,
+13:     Icon: FaReact,
+14:     iconName: "React",
+15:   },
+16:   {
+17:     id: 1,
+18:     Icon: FaVuejs,
+19:     iconName: "VueJS",
+20:   },
+21:   {
+22:     id: 2,
+23:     Icon: SiTypescript,
+24:     iconName: "TypeScript",
+25:   },
+26:   {
+27:     id: 3,
+28:     Icon: SiWordpress,
+29:     iconName: "WordPress",
+30:   },
+31:   {
+32:     id: 4,
+33:     Icon: FaPhp,
+34:     iconName: "PHP",
+35:   },
+36: ];
+37: /**
+38:  * Icons component that renders SVG icons used on the front page
+39:  * Uses Framer Motion for animations to show the SVGs
+40:  * @returns {JSX.Element} The rendered Icons component
+41:  */
+42: const Icons = () => (
+43:   <div
+44:     data-testid="icons"
+45:     className="flex flex-wrap justify-center gap-2 md:gap-8 p-2 text-slate-300/[0.8]"
+46:   >
+47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
+48:       <div className="relative" key={id}>
+49:         <Grow delay={2.5 + id * 0.2}>
+50:           <div className="relative group">
+51:             <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-[background-color,border-color] duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
+52:               <Icon
+53:                 data-testid={iconName}
+54:                 aria-label={`${iconName} ikon`}
+55:                 title={`${iconName} ikon`}
+56:                 size="1em"
+57:                 className="transition-[color] duration-300 group-hover:text-matrix-light"
+58:               />
+59:             </div>
+60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-matrix-light">
+61:               {iconName}
+62:             </span>
+63:           </div>
+64:         </Grow>
+65:       </div>
+66:     ))}
+67:   </div>
+68: );
+69: export default Icons;
+````
+
 ## File: src/components/Index/IndexContent.component.tsx
 ````typescript
  1: "use client";
@@ -5011,6 +5427,94 @@ vitest.setup.ts
 13:   />
 14: );
 15: export default MobileBackground;
+````
+
+## File: src/components/Index/Section.component.tsx
+````typescript
+ 1: "use client";
+ 2: import { PortableText } from "@portabletext/react";
+ 3: import { useState } from "react";
+ 4: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
+ 5: import Button from "@/components/UI/Button.component";
+ 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
+ 7: import type { Pagecontent } from "@/types/sanity.types";
+ 8: interface SectionProps extends Pagecontent {
+ 9:   variant?: "default" | "alternate";
+10:   showDebugButton?: boolean;
+11:   viewAmount?: number;
+12: }
+13: const sectionStyles = {
+14:   default: "bg-slate-900",
+15:   alternate: "bg-slate-800/30",
+16: };
+17: /**
+18:  * Section component that renders a single content section
+19:  * @param {SectionProps} props - The props for the Section component
+20:  * @param {Pagecontent['text']} props.text - The text content from Sanity
+21:  * @param {string} props.title - The title of the section
+22:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
+23:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
+24:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
+25:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
+26:  */
+27: const Section = ({
+28:   text,
+29:   title,
+30:   variant = "default",
+31:   showDebugButton = true,
+32:   viewAmount = 0.2,
+33: }: SectionProps) => {
+34:   const [shouldError, setShouldError] = useState(false);
+35:   if (!title || !text) {
+36:     console.error(
+37:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
+38:     );
+39:     return null;
+40:   }
+41:   if (shouldError) {
+42:     throw new Error("En uventet feil har oppstått");
+43:   }
+44:   return (
+45:     <section
+46:       aria-label={title}
+47:       data-testid="sanity-section"
+48:       className={`
+49:         md:py-6
+50:         relative
+51:         transition-colors
+52:         duration-300
+53:         contain-layout
+54:         ${sectionStyles[variant]}
+55:       `}
+56:     >
+57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
+58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
+59:           <h2
+60:             data-testid="sanity-title"
+61:             data-cy={title}
+62:             className="text-2xl md:text-3xl text-center text-slate-100"
+63:           >
+64:             {title}
+65:           </h2>
+66:           <div className="flex justify-center">
+67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
+68:               <PortableText
+69:                 value={text}
+70:                 components={myPortableTextComponents}
+71:               />
+72:             </div>
+73:           </div>
+74:           {process.env.NODE_ENV === "development" && showDebugButton && (
+75:             <Button onClick={() => setShouldError(true)} type="button">
+76:               Utløs Testfeil
+77:             </Button>
+78:           )}
+79:         </FadeInScroll>
+80:       </div>
+81:     </section>
+82:   );
+83: };
+84: export default Section;
 ````
 
 ## File: src/components/Kontakt/config/formConfig.ts
@@ -13220,114 +13724,369 @@ vitest.setup.ts
 59: Add any other context about the problem here.
 ````
 
-## File: .github/workflows/pa11y.yml
+## File: .github/workflows/cypress.yml
 ````yaml
- 1: name: A11y
- 2: on:
- 3:   push:
- 4:     branches: [main]
- 5:   pull_request:
- 6:     branches: [main]
- 7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   pa11y:
-11:     runs-on: ubuntu-latest
-12:     timeout-minutes: 30
+ 1: name: Cypress Tests
+ 2: on: [push]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   cypress-run:
+ 7:     runs-on: ubuntu-24.04
+ 8:     timeout-minutes: 30   
+ 9:     strategy:
+10:       fail-fast: false
+11:       matrix:
+12:         browser: [chrome, firefox, edge]
 13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - name: Setup Node.js
-16:         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-17:         with:
-18:           node-version: "26"
-19:       - name: Install pnpm
-20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-21:       - name: Get pnpm store directory
-22:         shell: bash
-23:         run: |
-24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-25:       - name: Setup pnpm cache
-26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-27:         with:
-28:           path: ${{ env.STORE_PATH }}
-29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-30:       - name: Install dependencies
-31:         run: pnpm install --frozen-lockfile --ignore-scripts
-32:       - name: Create pa11y config
-33:         run: |
-34:           # Create pa11y config file
-35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
-36:       - name: Build Next.js app
-37:         run: pnpm build
-38:       - name: Start Next.js app
-39:         run: pnpm start &
-40:       - name: Wait for the application to be ready
-41:         run: pnpm exec wait-on http://localhost:3000
-42:       - name: Run pa11y
-43:         run: |
-44:           # Create a directory for the reports
-45:           mkdir -p pa11y-reports
-46:           # Run pa11y on main pages with config
-47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
-48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
-49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
-50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
-51:       - name: Upload pa11y results
-52:         if: always()
-53:         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-54:         with:
-55:           name: pa11y-reports
-56:           path: pa11y-reports/
-57:       - name: Check for accessibility issues
-58:         run: |
-59:           if grep -q "Error:" pa11y-reports/*.txt; then
-60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
-61:             exit 1
-62:           fi
+14:       - name: Checkout
+15:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+16:       - name: Install pnpm
+17:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - name: Setup Node.js
+19:         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+20:         with:
+21:           node-version: 26
+22:           cache: "pnpm"
+23:           cache-dependency-path: pnpm-lock.yaml
+24:       - name: Cache Cypress binary
+25:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+26:         with:
+27:           path: ~/.cache/Cypress
+28:           key: ${{ runner.os }}-cypress-${{ hashFiles('pnpm-lock.yaml') }}
+29:       - name: Install dependencies
+30:         run: pnpm install --frozen-lockfile --ignore-scripts
+31:       - name: Verify and install Cypress binary
+32:         # Uses cypress@15.14.1 from lockfile (specified in package.json).
+33:         # `cypress install` is the Cypress CLI downloading its pre-vetted binary,
+34:         # NOT a package-manager install running third-party lifecycle scripts.
+35:         # Dependency lifecycle scripts remain blocked by ignore-scripts=true in .npmrc
+36:         # and the allowBuilds whitelist in pnpm-workspace.yaml.
+37:         run: pnpm exec cypress verify || pnpm exec cypress install # NOSONAR
+38:       - name: Build the project
+39:         run: pnpm build
+40:       - name: Start the application
+41:         run: pnpm dev &
+42:       - name: Wait for the application to be ready
+43:         run: pnpm dlx wait-on@8.0.1 http://localhost:3000 --timeout 120000
+44:       - name: Run Cypress tests
+45:         run: pnpm exec cypress run --browser ${{ matrix.browser }}
 ````
 
-## File: .github/workflows/playwright.yml
+## File: .github/workflows/lighthouse.yml
 ````yaml
- 1: name: Playwright Tests
+ 1: name: Lighthouse CI
+ 2: on: [push, pull_request]
+ 3: permissions:
+ 4:   contents: read
+ 5: jobs:
+ 6:   lighthouse:
+ 7:     runs-on: ubuntu-latest
+ 8:     timeout-minutes: 30
+ 9:     steps:
+10:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+11:       - name: Setup Node.js
+12:         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+13:         with:
+14:           node-version: "26"
+15:       - name: Setup pnpm
+16:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+17:       - name: Get pnpm store directory
+18:         shell: bash
+19:         run: |
+20:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+21:       - name: Setup pnpm cache
+22:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+23:         with:
+24:           path: ${{ env.STORE_PATH }}
+25:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+26:       - name: Install dependencies
+27:         run: pnpm install --frozen-lockfile --ignore-scripts
+28:       - name: Build project
+29:         run: pnpm build
+30:       - name: Start server
+31:         run: |
+32:           pnpm start &
+33:           echo "Waiting for server to be ready..."
+34:           while ! nc -z localhost 3000; do
+35:             sleep 5
+36:           done
+37:           # Additional wait to ensure full initialization
+38:           sleep 20
+39:       - name: Run Lighthouse CI (Mobile)
+40:         run: pnpm lhci:perf
+41:         env:
+42:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+43:       - name: Run Lighthouse CI (Desktop)
+44:         run: pnpm lhci:desktop
+45:         env:
+46:           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+47:       - name: Stop server
+48:         if: always()
+49:         run: |
+50:           pkill -f "next start" || true
+````
+
+## File: .github/workflows/react-doctor.yml
+````yaml
+  1: name: React Doctor
+  2: on:
+  3:   push:
+  4:     branches: [main, master]
+  5:   pull_request:
+  6:     branches: [main, master]
+  7: concurrency:
+  8:   group: ${{ github.workflow }}-${{ github.ref }}
+  9:   cancel-in-progress: true
+ 10: jobs:
+ 11:   react-doctor:
+ 12:     name: React Health Check
+ 13:     runs-on: ubuntu-latest
+ 14:     timeout-minutes: 30
+ 15:     permissions:
+ 16:       contents: read
+ 17:       pull-requests: write
+ 18:       issues: write
+ 19:     steps:
+ 20:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+ 21:       - name: Detect package manager
+ 22:         id: pm
+ 23:         run: |
+ 24:           if [ -f "pnpm-lock.yaml" ]; then
+ 25:             echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+ 26:             echo "install=pnpm install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 27:             echo "run=pnpm run" >> "$GITHUB_OUTPUT"
+ 28:             echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+ 29:             echo "Detected pnpm (pnpm-lock.yaml found)"
+ 30:           elif [ -f "yarn.lock" ]; then
+ 31:             echo "manager=yarn" >> "$GITHUB_OUTPUT"
+ 32:             echo "install=yarn install --frozen-lockfile --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 33:             echo "run=yarn" >> "$GITHUB_OUTPUT"
+ 34:             echo "cache=yarn" >> "$GITHUB_OUTPUT"
+ 35:             echo "Detected yarn (yarn.lock found)"
+ 36:           else
+ 37:             echo "manager=npm" >> "$GITHUB_OUTPUT"
+ 38:             echo "install=npm ci --ignore-scripts" >> "$GITHUB_OUTPUT"
+ 39:             echo "run=npm run" >> "$GITHUB_OUTPUT"
+ 40:             echo "cache=npm" >> "$GITHUB_OUTPUT"
+ 41:             echo "Detected npm (default)"
+ 42:           fi
+ 43:       - name: Install pnpm
+ 44:         if: steps.pm.outputs.manager == 'pnpm'
+ 45:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+ 46:       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+ 47:         with:
+ 48:           node-version: 26
+ 49:           cache: ${{ steps.pm.outputs.cache }}
+ 50:       - name: Install dependencies
+ 51:         run: ${{ steps.pm.outputs.install }}
+ 52:       - name: Run React Doctor
+ 53:         id: doctor
+ 54:         run: |
+ 55:           # Run react-doctor via local devDependency (avoids npx isolation issues with typescript)
+ 56:           ${{ steps.pm.outputs.run }} doctor 2>&1 | tee /tmp/react-doctor-raw.txt
+ 57:           # Strip ANSI escape codes for clean output
+ 58:           sed 's/\x1b\[[0-9;]*m//g; s/\x1b\[[0-9;]*[A-Za-z]//g' /tmp/react-doctor-raw.txt | tr -d '\r' > /tmp/react-doctor-output.txt
+ 59:           # Check if react-doctor was offline (can't reach scoring server in CI)
+ 60:           if grep -qi 'offline\|could not calculate score' /tmp/react-doctor-output.txt; then
+ 61:             echo "offline=true" >> "$GITHUB_OUTPUT"
+ 62:             echo "⚠️ react-doctor could not reach scoring server (offline in CI)"
+ 63:           else
+ 64:             echo "offline=false" >> "$GITHUB_OUTPUT"
+ 65:           fi
+ 66:           # Check for lint issues (the actionable part of the report)
+ 67:           if grep -qi 'No issues found' /tmp/react-doctor-output.txt; then
+ 68:             echo "issues_found=false" >> "$GITHUB_OUTPUT"
+ 69:           else
+ 70:             echo "issues_found=true" >> "$GITHUB_OUTPUT"
+ 71:           fi
+ 72:           # Extract score from the cleaned output (matches "96 / 100" pattern)
+ 73:           SCORE=$(grep -oP '\d+ / 100' /tmp/react-doctor-output.txt | head -1 || echo "unknown")
+ 74:           echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+ 75:           # Extract just the numeric score for threshold check
+ 76:           SCORE_NUM=$(echo "$SCORE" | grep -oP '^\d+' || echo "0")
+ 77:           echo "score_num=$SCORE_NUM" >> "$GITHUB_OUTPUT"
+ 78:           echo "Detected score: $SCORE (numeric: $SCORE_NUM)"
+ 79:       - name: Post PR comment with results
+ 80:         if: github.event_name == 'pull_request'
+ 81:         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+ 82:         with:
+ 83:           script: |
+ 84:             const fs = require('fs');
+ 85:             const output = fs.readFileSync('/tmp/react-doctor-output.txt', 'utf8');
+ 86:             const score = '${{ steps.doctor.outputs.score }}';
+ 87:             const offline = '${{ steps.doctor.outputs.offline }}' === 'true';
+ 88:             const issuesFound = '${{ steps.doctor.outputs.issues_found }}' === 'true';
+ 89:             const scoreDisplay = offline
+ 90:               ? 'N/A (scoring server unreachable)'
+ 91:               : score;
+ 92:             const statusEmoji = offline
+ 93:               ? (issuesFound ? '⚠️' : '✅')
+ 94:               : '';
+ 95:             const body = [
+ 96:               `## 🩺 React Doctor — Score: ${scoreDisplay} ${statusEmoji}`,
+ 97:               '',
+ 98:               offline ? '> ⚠️ Scoring server was unreachable in CI. Lint results are still valid.' : '',
+ 99:               '',
+100:               '<details>',
+101:               '<summary>Full diagnostics</summary>',
+102:               '',
+103:               '```',
+104:               output.trim(),
+105:               '```',
+106:               '',
+107:               '</details>',
+108:               '',
+109:               '> Powered by [react-doctor](https://github.com/millionco/react-doctor)',
+110:             ].filter(Boolean).join('\n');
+111:             // Find existing comment to update instead of creating duplicates
+112:             const { data: comments } = await github.rest.issues.listComments({
+113:               owner: context.repo.owner,
+114:               repo: context.repo.repo,
+115:               issue_number: context.issue.number,
+116:             });
+117:             const botComment = comments.find(
+118:               (c) => c.body?.includes('🩺 React Doctor')
+119:             );
+120:             if (botComment) {
+121:               await github.rest.issues.updateComment({
+122:                 owner: context.repo.owner,
+123:                 repo: context.repo.repo,
+124:                 comment_id: botComment.id,
+125:                 body,
+126:               });
+127:             } else {
+128:               await github.rest.issues.createComment({
+129:                 owner: context.repo.owner,
+130:                 repo: context.repo.repo,
+131:                 issue_number: context.issue.number,
+132:                 body,
+133:               });
+134:             }
+135:       - name: Write job summary
+136:         if: always()
+137:         run: |
+138:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+139:           if [ "$OFFLINE" = "true" ]; then
+140:             echo "## 🩺 React Doctor — Score: N/A (scoring server unreachable)" >> "$GITHUB_STEP_SUMMARY"
+141:             echo "" >> "$GITHUB_STEP_SUMMARY"
+142:             echo "> ⚠️ Scoring server was unreachable in CI. Lint results are still valid." >> "$GITHUB_STEP_SUMMARY"
+143:           else
+144:             echo "## 🩺 React Doctor — Score: ${{ steps.doctor.outputs.score }}" >> "$GITHUB_STEP_SUMMARY"
+145:           fi
+146:           echo "" >> "$GITHUB_STEP_SUMMARY"
+147:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+148:           cat /tmp/react-doctor-output.txt >> "$GITHUB_STEP_SUMMARY"
+149:           echo '```' >> "$GITHUB_STEP_SUMMARY"
+150:       - name: Check score threshold
+151:         run: |
+152:           OFFLINE="${{ steps.doctor.outputs.offline }}"
+153:           ISSUES="${{ steps.doctor.outputs.issues_found }}"
+154:           # When offline, skip numeric threshold — only fail if lint issues were found
+155:           if [ "$OFFLINE" = "true" ]; then
+156:             echo "⚠️ Scoring server unreachable — skipping numeric threshold check"
+157:             if [ "$ISSUES" = "true" ]; then
+158:               echo "::error::react-doctor found lint issues (score unavailable due to offline)"
+159:               exit 1
+160:             fi
+161:             echo "✅ No lint issues found (score unavailable due to offline)"
+162:             exit 0
+163:           fi
+164:           SCORE="${{ steps.doctor.outputs.score_num }}"
+165:           SCORE="${SCORE:-0}"
+166:           THRESHOLD=80
+167:           echo "React Doctor score: $SCORE (threshold: $THRESHOLD)"
+168:           if [ "$SCORE" -lt "$THRESHOLD" ]; then
+169:             echo "::error::React Doctor score $SCORE is below threshold $THRESHOLD"
+170:             exit 1
+171:           fi
+````
+
+## File: .github/workflows/repomix.yml
+````yaml
+ 1: name: Repository Documentation
  2: on:
  3:   push:
- 4:     branches: [main, master]
- 5:   pull_request:
- 6:     branches: [main, master]
+ 4:     branches:
+ 5:       - main
+ 6:   workflow_dispatch: # allows manual triggering
  7: permissions:
- 8:   contents: read
- 9: jobs:
-10:   test:
-11:     timeout-minutes: 60
+ 8:   contents: write
+ 9:   pull-requests: write
+10: jobs:
+11:   analyze:
 12:     runs-on: ubuntu-latest
-13:     steps:
-14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-16:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+13:     timeout-minutes: 30
+14:     steps:
+15:       - name: Checkout repository
+16:         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 17:         with:
-18:           node-version: 26
-19:           cache: "pnpm"
-20:       - name: Install dependencies
-21:         run: pnpm install --frozen-lockfile --ignore-scripts
-22:       - name: Install Playwright Browsers
-23:         env:
-24:           npm_config_ignore_scripts: true
-25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
-26:       - name: Build the project
-27:         run: pnpm build
-28:       - name: Start the application
-29:         run: pnpm start &
-30:       - name: Wait for the application to be ready
-31:         run: |
-32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
-33:       - name: Run Playwright tests
-34:         run: pnpm exec playwright test
-35:       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-36:         if: always()
-37:         with:
-38:           name: playwright-report
-39:           path: playwright-report/
-40:           retention-days: 30
+18:           fetch-depth: 0 # fetch all history for better context
+19:       - name: Wait for other checks
+20:         run: |
+21:           echo "Waiting for 5 minutes to allow other checks to complete..."
+22:           sleep 300
+23:       - name: Setup Node.js
+24:         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+25:         with:
+26:           node-version: "26"
+27:       - name: Install Repomix
+28:         run: npm install -g repomix@1.14.0 --ignore-scripts
+29:       - name: Generate Repository Documentation
+30:         run: |
+31:           echo "Creating DOCS directory..."
+32:           mkdir -p DOCS
+33:           echo "Running Repomix..."
+34:           if ! repomix --output DOCS/repository_context.txt --style markdown --remove-empty-lines --verbose; then
+35:             echo "Error: Repomix command failed"
+36:             # Print directory contents for debugging
+37:             echo "DOCS directory contents:"
+38:             ls -la DOCS/
+39:             exit 1
+40:           fi
+41:           echo "Verifying output file..."
+42:           if [ ! -f "DOCS/repository_context.txt" ]; then
+43:             echo "Error: repository_context.txt was not created"
+44:             # Print directory contents for debugging
+45:             echo "DOCS directory contents:"
+46:             ls -la DOCS/
+47:             exit 1
+48:           fi
+49:           if [ ! -s "DOCS/repository_context.txt" ]; then
+50:             echo "Error: repository_context.txt is empty"
+51:             exit 1
+52:           fi
+53:           echo "Repository context file generated successfully"
+54:           echo "File size: $(stat --format=%s "DOCS/repository_context.txt") bytes"
+55:           echo "First few lines of the file:"
+56:           head -n 5 "DOCS/repository_context.txt"
+57:       # Update Documentation
+58:       - name: Commit and Push Changes
+59:         run: |
+60:           echo "Configuring git..."
+61:           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+62:           git config --local user.name "github-actions[bot]"
+63:           echo "Checking for changes..."
+64:           if [[ -n "$(git status --porcelain)" ]]; then
+65:             echo "Changes detected, committing..."
+66:             # Stage only repository_context.txt to avoid unintended changes
+67:             if ! git add DOCS/repository_context.txt; then
+68:               echo "Error: Failed to stage repository_context.txt"
+69:               exit 1
+70:             fi
+71:             if ! git commit -m "docs: update repository context via Repomix [skip ci]"; then
+72:               echo "Error: Failed to create commit"
+73:               exit 1
+74:             fi
+75:             echo "Pushing to main branch..."
+76:             if ! git push; then
+77:               echo "Error: Failed to push changes"
+78:               exit 1
+79:             fi
+80:             echo "Successfully updated repository context"
+81:           else
+82:             echo "No changes detected in repository_context.txt"
+83:           fi
 ````
 
 ## File: .github/workflows/security.yml
@@ -13965,6 +14724,147 @@ vitest.setup.ts
 47: testAnimationComponent(BounceInScroll, "bounceinscroll", "translateY");
 ````
 
+## File: src/__tests__/architecture/boundaries.test.ts
+````typescript
+  1: /**
+  2:  * @vitest-environment node
+  3:  */
+  4: import fs from "node:fs";
+  5: import path from "node:path";
+  6: const ROOT = process.cwd();
+  7: const SRC = path.join(ROOT, "src");
+  8: /**
+  9:  * Which layer may import from which. A layer may always import from itself.
+ 10:  * Keep in sync with the layer table in AGENTS.md.
+ 11:  */
+ 12: const ALLOWED_IMPORTS: Record<string, readonly string[]> = {
+ 13:   app: ["components", "hooks", "lib", "utils", "types"],
+ 14:   components: ["hooks", "lib", "utils", "types"],
+ 15:   hooks: ["lib", "utils", "types"],
+ 16:   lib: ["utils", "types"],
+ 17:   utils: ["types"],
+ 18:   types: [],
+ 19: };
+ 20: const LAYERS = Object.keys(ALLOWED_IMPORTS);
+ 21: /** Folders that production code must never import from. */
+ 22: const NON_PRODUCTION_FOLDERS = ["__tests__", "__mocks__", "stories", "e2e"];
+ 23: const SOURCE_EXTENSIONS = [".ts", ".tsx"];
+ 24: const IMPORT_PATTERNS = [
+ 25:   /\bfrom\s+["']([^"']+)["']/g,
+ 26:   /\bimport\s+["']([^"']+)["']/g,
+ 27:   /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+ 28:   /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
+ 29: ];
+ 30: type ImportRecord = { file: string; specifier: string };
+ 31: /** Installed or generated folders that are not project source. */
+ 32: const SKIPPED_FOLDERS = ["node_modules", "dist"];
+ 33: const listFiles = (dir: string): string[] => {
+ 34:   if (!fs.existsSync(dir)) {
+ 35:     return [];
+ 36:   }
+ 37:   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+ 38:     const fullPath = path.join(dir, entry.name);
+ 39:     if (entry.isDirectory()) {
+ 40:       return SKIPPED_FOLDERS.includes(entry.name) ? [] : listFiles(fullPath);
+ 41:     }
+ 42:     return [fullPath];
+ 43:   });
+ 44: };
+ 45: const toRepoPath = (file: string) =>
+ 46:   path.relative(ROOT, file).split(path.sep).join("/");
+ 47: const extractSpecifiers = (source: string): string[] =>
+ 48:   IMPORT_PATTERNS.flatMap((pattern) =>
+ 49:     Array.from(source.matchAll(pattern), (match) => match[1]),
+ 50:   );
+ 51: const collectImports = (): ImportRecord[] =>
+ 52:   LAYERS.flatMap((layer) =>
+ 53:     listFiles(path.join(SRC, layer))
+ 54:       .filter((file) => SOURCE_EXTENSIONS.includes(path.extname(file)))
+ 55:       .flatMap((file) =>
+ 56:         extractSpecifiers(fs.readFileSync(file, "utf8")).map((specifier) => ({
+ 57:           file,
+ 58:           specifier,
+ 59:         })),
+ 60:       ),
+ 61:   );
+ 62: const layerOfFile = (file: string): string =>
+ 63:   path.relative(SRC, file).split(path.sep)[0];
+ 64: /** Returns the top-level src folder a specifier points to, or null for packages. */
+ 65: const targetFolder = (file: string, specifier: string): string | null => {
+ 66:   if (specifier.startsWith("@/")) {
+ 67:     return specifier.slice(2).split("/")[0];
+ 68:   }
+ 69:   if (specifier.startsWith("src/")) {
+ 70:     return specifier.slice(4).split("/")[0];
+ 71:   }
+ 72:   if (specifier.startsWith(".")) {
+ 73:     const resolved = path.resolve(path.dirname(file), specifier);
+ 74:     const relative = path.relative(SRC, resolved);
+ 75:     return relative.startsWith("..") ? null : relative.split(path.sep)[0];
+ 76:   }
+ 77:   return null;
+ 78: };
+ 79: const describeImport = ({ file, specifier }: ImportRecord) =>
+ 80:   `${toRepoPath(file)} -> "${specifier}"`;
+ 81: describe("Architecture: import boundaries", () => {
+ 82:   const imports = collectImports();
+ 83:   it("finds source files in every layer that exists", () => {
+ 84:     // Arrange
+ 85:     const existingLayers = LAYERS.filter((layer) =>
+ 86:       fs.existsSync(path.join(SRC, layer)),
+ 87:     );
+ 88:     // Act
+ 89:     const layersWithImports = new Set(
+ 90:       imports.map(({ file }) => layerOfFile(file)),
+ 91:     );
+ 92:     // Assert
+ 93:     expect(existingLayers.length).toBeGreaterThan(0);
+ 94:     expect(layersWithImports.size).toBeGreaterThan(0);
+ 95:   });
+ 96:   it("each layer imports only from the layers it is allowed to use", () => {
+ 97:     // Arrange
+ 98:     const isAllowed = (from: string, to: string) =>
+ 99:       from === to || ALLOWED_IMPORTS[from].includes(to);
+100:     // Act
+101:     const violations = imports
+102:       .filter((record) => {
+103:         const target = targetFolder(record.file, record.specifier);
+104:         return (
+105:           target !== null &&
+106:           LAYERS.includes(target) &&
+107:           !isAllowed(layerOfFile(record.file), target)
+108:         );
+109:       })
+110:       .map(describeImport);
+111:     // Assert
+112:     expect(violations).toStrictEqual([]);
+113:   });
+114:   it("production code never imports tests, mocks, stories or e2e code", () => {
+115:     // Arrange
+116:     const isNonProduction = (target: string | null) =>
+117:       target !== null && NON_PRODUCTION_FOLDERS.includes(target);
+118:     // Act
+119:     const violations = imports
+120:       .filter((record) =>
+121:         isNonProduction(targetFolder(record.file, record.specifier)),
+122:       )
+123:       .map(describeImport);
+124:     // Assert
+125:     expect(violations).toStrictEqual([]);
+126:   });
+127:   it("production code uses the @/ alias instead of parent-relative imports", () => {
+128:     // Arrange
+129:     const isParentRelative = (specifier: string) => specifier.startsWith("../");
+130:     // Act
+131:     const violations = imports
+132:       .filter(({ specifier }) => isParentRelative(specifier))
+133:       .map(describeImport);
+134:     // Assert
+135:     expect(violations).toStrictEqual([]);
+136:   });
+137: });
+````
+
 ## File: src/__tests__/architecture/naming.test.ts
 ````typescript
  1: /**
@@ -14120,268 +15020,6 @@ vitest.setup.ts
 102:     ).toBeInTheDocument();
 103:   });
 104: });
-````
-
-## File: src/__tests__/CV/EducationTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import EducationTabContent from "@/components/CV/EducationTabContent.component";
- 4: describe("EducationTabContent", () => {
- 5:   it("renders education items with degree (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockEducation = [
- 8:       {
- 9:         _key: "education-with-degree",
-10:         period: "2020-2024",
-11:         institution: "University of Technology",
-12:         degree: "Bachelor of Computer Science",
-13:         description: "Studied computer science fundamentals",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<EducationTabContent education={mockEducation} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2020-2024 - University of Technology";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(
-25:       screen.getByText("Bachelor of Computer Science"),
-26:     ).toBeInTheDocument();
-27:   });
-28:   it("renders education items without degree (conditional branch)", () => {
-29:     // Arrange
-30:     const mockEducation = [
-31:       {
-32:         _key: "education-without-degree",
-33:         period: "2020-2024",
-34:         institution: "University of Technology",
-35:         description: "Studied computer science fundamentals",
-36:         // No degree property to test the conditional
-37:       },
-38:     ];
-39:     // Act
-40:     render(<EducationTabContent education={mockEducation} />);
-41:     // Assert
-42:     expect(
-43:       screen.getByText((content, element) => {
-44:         return element?.textContent === "2020-2024 - University of Technology";
-45:       }),
-46:     ).toBeInTheDocument();
-47:     expect(
-48:       screen.queryByText("Bachelor of Computer Science"),
-49:     ).not.toBeInTheDocument();
-50:   });
-51:   it("renders education items with empty degree (conditional branch)", () => {
-52:     // Arrange
-53:     const mockEducation = [
-54:       {
-55:         _key: "education-with-empty-degree",
-56:         period: "2020-2024",
-57:         institution: "University of Technology",
-58:         degree: "", // Empty string to test the conditional
-59:         description: "Studied computer science fundamentals",
-60:       },
-61:     ];
-62:     // Act
-63:     render(<EducationTabContent education={mockEducation} />);
-64:     // Assert
-65:     expect(
-66:       screen.getByText((content, element) => {
-67:         return element?.textContent === "2020-2024 - University of Technology";
-68:       }),
-69:     ).toBeInTheDocument();
-70:     expect(
-71:       screen.queryByText("Bachelor of Computer Science"),
-72:     ).not.toBeInTheDocument();
-73:   });
-74:   it("renders with undefined education", () => {
-75:     // Act
-76:     render(<EducationTabContent />);
-77:     // Assert - Should not crash and render empty content
-78:     expect(
-79:       screen.queryByText("University of Technology"),
-80:     ).not.toBeInTheDocument();
-81:   });
-82:   it("renders with empty education array", () => {
-83:     // Act
-84:     render(<EducationTabContent education={[]} />);
-85:     // Assert - Should not crash and render empty content
-86:     expect(
-87:       screen.queryByText("University of Technology"),
-88:     ).not.toBeInTheDocument();
-89:   });
-90: });
-````
-
-## File: src/__tests__/CV/ExperienceTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import ExperienceTabContent from "@/components/CV/ExperienceTabContent.component";
- 4: describe("ExperienceTabContent", () => {
- 5:   it("renders experience items with role (conditional branch)", () => {
- 6:     // Arrange
- 7:     const mockExperience = [
- 8:       {
- 9:         _key: "experience-with-role",
-10:         period: "2022-2024",
-11:         company: "Tech Company Inc",
-12:         role: "Senior Developer",
-13:         description: "Developed web applications",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<ExperienceTabContent experience={mockExperience} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2022-2024 - Tech Company Inc";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(screen.getByText("Senior Developer")).toBeInTheDocument();
-25:   });
-26:   it("renders experience items without role (conditional branch)", () => {
-27:     // Arrange
-28:     const mockExperience = [
-29:       {
-30:         _key: "experience-without-role",
-31:         period: "2022-2024",
-32:         company: "Tech Company Inc",
-33:         description: "Developed web applications",
-34:         // No role property to test the conditional
-35:       },
-36:     ];
-37:     // Act
-38:     render(<ExperienceTabContent experience={mockExperience} />);
-39:     // Assert
-40:     expect(
-41:       screen.getByText((content, element) => {
-42:         return element?.textContent === "2022-2024 - Tech Company Inc";
-43:       }),
-44:     ).toBeInTheDocument();
-45:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-46:   });
-47:   it("renders experience items with empty role (conditional branch)", () => {
-48:     // Arrange
-49:     const mockExperience = [
-50:       {
-51:         _key: "experience-with-empty-role",
-52:         period: "2022-2024",
-53:         company: "Tech Company Inc",
-54:         role: "", // Empty string to test the conditional
-55:         description: "Developed web applications",
-56:       },
-57:     ];
-58:     // Act
-59:     render(<ExperienceTabContent experience={mockExperience} />);
-60:     // Assert
-61:     expect(
-62:       screen.getByText((content, element) => {
-63:         return element?.textContent === "2022-2024 - Tech Company Inc";
-64:       }),
-65:     ).toBeInTheDocument();
-66:     expect(screen.queryByText("Senior Developer")).not.toBeInTheDocument();
-67:   });
-68:   it("renders with undefined experience", () => {
-69:     // Act
-70:     render(<ExperienceTabContent />);
-71:     // Assert - Should not crash and render empty content
-72:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-73:   });
-74:   it("renders with empty experience array", () => {
-75:     // Act
-76:     render(<ExperienceTabContent experience={[]} />);
-77:     // Assert - Should not crash and render empty content
-78:     expect(screen.queryByText("Tech Company Inc")).not.toBeInTheDocument();
-79:   });
-80: });
-````
-
-## File: src/__tests__/CV/VolunteerWorkTabContent.test.tsx
-````typescript
- 1: import React from "react";
- 2: import { render, screen } from "@testing-library/react";
- 3: import VolunteerWorkTabContent from "@/components/CV/VolunteerWorkTabContent.component";
- 4: describe("VolunteerWorkTabContent", () => {
- 5:   it("renders volunteer work items with all fields", () => {
- 6:     // Arrange
- 7:     const mockVolunteerWork = [
- 8:       {
- 9:         _key: "volunteer-work-all-fields",
-10:         period: "2020-2022",
-11:         organization: "Open Source Foundation",
-12:         role: "Maintainer",
-13:         description: "Maintained open source projects",
-14:       },
-15:     ];
-16:     // Act
-17:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-18:     // Assert
-19:     expect(
-20:       screen.getByText((content, element) => {
-21:         return element?.textContent === "2020-2022 - Open Source Foundation";
-22:       }),
-23:     ).toBeInTheDocument();
-24:     expect(screen.getByText("Maintainer")).toBeInTheDocument();
-25:     expect(
-26:       screen.getByText("Maintained open source projects"),
-27:     ).toBeInTheDocument();
-28:   });
-29:   it("renders with missing period and organization (nullish coalescing branches)", () => {
-30:     // Arrange
-31:     const mockVolunteerWork = [
-32:       {
-33:         _key: "volunteer-work-missing-header-fields",
-34:         role: "Volunteer",
-35:         description: "Helped with events",
-36:       },
-37:     ];
-38:     // Act
-39:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-40:     // Assert
-41:     expect(screen.getByText(/-/)).toBeInTheDocument();
-42:     expect(screen.getByText("Volunteer")).toBeInTheDocument();
-43:   });
-44:   it("renders without role (conditional branch)", () => {
-45:     // Arrange
-46:     const mockVolunteerWork = [
-47:       {
-48:         _key: "volunteer-work-without-role",
-49:         period: "2021-2023",
-50:         organization: "Community Group",
-51:         description: "Community outreach",
-52:       },
-53:     ];
-54:     // Act
-55:     render(<VolunteerWorkTabContent volunteerWork={mockVolunteerWork} />);
-56:     // Assert
-57:     expect(
-58:       screen.getByText((content, element) => {
-59:         return element?.textContent === "2021-2023 - Community Group";
-60:       }),
-61:     ).toBeInTheDocument();
-62:     expect(screen.queryByText("Maintainer")).not.toBeInTheDocument();
-63:   });
-64:   it("renders with undefined volunteerWork", () => {
-65:     // Act
-66:     render(<VolunteerWorkTabContent />);
-67:     // Assert
-68:     expect(
-69:       screen.queryByText("Open Source Foundation"),
-70:     ).not.toBeInTheDocument();
-71:   });
-72:   it("renders with empty volunteerWork array", () => {
-73:     // Act
-74:     render(<VolunteerWorkTabContent volunteerWork={[]} />);
-75:     // Assert
-76:     expect(
-77:       screen.queryByText("Open Source Foundation"),
-78:     ).not.toBeInTheDocument();
-79:   });
-80: });
 ````
 
 ## File: src/__tests__/Index/Icons.test.tsx
@@ -15060,6 +15698,87 @@ vitest.setup.ts
 12: }
 ````
 
+## File: src/app/layout.tsx
+````typescript
+ 1: import type { Metadata } from "next";
+ 2: import { JetBrains_Mono } from "next/font/google";
+ 3: import { SpeedInsights } from "@vercel/speed-insights/next";
+ 4: import "./globals.css";
+ 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
+ 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
+ 7: import SkipLink from "@/components/UI/SkipLink.component";
+ 8: import Header from "@/components/Layout/Header.component";
+ 9: import Footer from "@/components/Layout/Footer.component";
+10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
+11: const jetbrainsMono = JetBrains_Mono({
+12:   subsets: ["latin"],
+13:   display: "swap", // Prevent invisible text during font load (improves FCP)
+14:   preload: true, // Preload font to reduce request chain
+15: });
+16: export const metadata: Metadata = {
+17:   title: "Forside - Dfweb",
+18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
+19: };
+20: export default async function RootLayout({
+21:   children,
+22: }: Readonly<{
+23:   children: React.ReactNode;
+24: }>) {
+25:   const [navigation, settings] = await Promise.all([
+26:     getNavigation(),
+27:     getSettings(),
+28:   ]);
+29:   const footerCopyrightText = settings?.footerCopyrightText;
+30:   return (
+31:     <html lang="nb">
+32:       <head>
+33:         <meta
+34:           name="viewport"
+35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
+36:         />
+37:         <link
+38:           rel="preconnect"
+39:           href="https://cdn.sanity.io"
+40:           crossOrigin="anonymous"
+41:         />
+42:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
+43:         <link rel="icon" href="/favicon.ico" />
+44:         <link rel="apple-touch-icon" href="/logo.png" />
+45:         <meta property="og:title" content="Daniel Fjeldstad" />
+46:         <meta name="author" content="Daniel Fjeldstad" />
+47:         <meta property="og:locale" content="nb_NO" />
+48:         <meta
+49:           property="og:description"
+50:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
+51:         />
+52:         <meta property="og:url" content="https://www.dfweb.no/" />
+53:         <meta property="og:site_name" content="dfweb.no" />
+54:         <meta name="theme-color" content="#004014" />
+55:       </head>
+56:       <body
+57:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
+58:       >
+59:         <LazyMotionProvider>
+60:           <SkipLink />
+61:           <ErrorBoundary>
+62:             <div id="main-content" className="grow flex flex-col">
+63:               <Header navigation={navigation} />
+64:               <SpeedInsights />
+65:               <div className="grow">{children}</div>
+66:               <Footer
+67:                 footerCopyrightText={
+68:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
+69:                 }
+70:               />
+71:             </div>
+72:           </ErrorBoundary>
+73:         </LazyMotionProvider>
+74:       </body>
+75:     </html>
+76:   );
+77: }
+````
+
 ## File: src/components/Animations/animation-utils.ts
 ````typescript
  1: import type { RefObject } from "react";
@@ -15145,259 +15864,181 @@ vitest.setup.ts
 60: export default BounceInScroll;
 ````
 
-## File: src/components/CV/CVContent.component.tsx
+## File: src/components/Animations/MatrixCursor.component.tsx
 ````typescript
- 1: import PageHeader from "@/components/UI/PageHeader.component";
- 2: import Button from "@/components/UI/Button.component";
- 3: import Tabs from "@/components/UI/Tabs.component";
- 4: import QualificationsTabContent from "./QualificationsTabContent.component";
- 5: import ExperienceTabContent from "./ExperienceTabContent.component";
- 6: import EducationTabContent from "./EducationTabContent.component";
- 7: import VolunteerWorkTabContent from "./VolunteerWorkTabContent.component";
- 8: import type { Cv } from "@/types/sanity.types";
- 9: /**
-10:  * CVContent component for rendering the CV page with tabs
-11:  * @param {Object} props - The props for the CVContent component
-12:  * @param {Cv} props.cvData - The CV data from Sanity
-13:  * @returns {JSX.Element} The rendered CVContent component
-14:  */
-15: const CVContent = ({ cvData }: { cvData: Cv }) => {
-16:   const tabs = [
-17:     {
-18:       id: "qualifications",
-19:       label: "Nøkkelkvalifikasjoner",
-20:       content: (
-21:         <QualificationsTabContent qualifications={cvData.keyQualifications} />
-22:       ),
-23:     },
-24:     {
-25:       id: "experience",
-26:       label: "Erfaring",
-27:       content: <ExperienceTabContent experience={cvData.experience} />,
-28:     },
-29:     {
-30:       id: "education",
-31:       label: "Utdanning",
-32:       content: <EducationTabContent education={cvData.education} />,
-33:     },
-34:     {
-35:       id: "volunteerWork",
-36:       label: "Frivillig arbeid",
-37:       content: <VolunteerWorkTabContent volunteerWork={cvData.volunteerWork} />,
-38:     },
-39:   ];
-40:   return (
-41:     <main id="maincontent">
-42:       <div className="mt-32 bg-graybg">
-43:         <PageHeader>CV</PageHeader>
-44:         <div className="px-4 lg:px-0 xl:px-0 md:px-0">
-45:           <div className="container mx-auto bg-slate-700 rounded-sm shadow-sm sm:mb-4">
-46:             <div className="p-4 mx-auto mt-4 flex flex-col items-center">
-47:               <div className="p-4 text-lg rounded-sm md:w-full">
-48:                 {/* Desktop: tabbed CV interface */}
-49:                 <div className="hidden sm:block">
-50:                   <div className="flex justify-center">
-51:                     <Tabs tabs={tabs} />
-52:                   </div>
-53:                   <div className="mx-auto text-center mt-8">
-54:                     <Button href="./cv2.pdf" renderAs="a" type="button">
-55:                       Last ned PDF
-56:                     </Button>
-57:                   </div>
-58:                 </div>
-59:                 {/* Mobile: download button only */}
-60:                 <div className="flex sm:hidden justify-center py-8">
-61:                   <Button href="./cv2.pdf" renderAs="a" type="button">
-62:                     Last ned PDF
-63:                   </Button>
-64:                 </div>
-65:               </div>
-66:             </div>
-67:           </div>
-68:         </div>
-69:       </div>
-70:     </main>
-71:   );
-72: };
-73: export default CVContent;
-````
-
-## File: src/components/CV/GenericCVSectionContent.component.tsx
-````typescript
- 1: import React from "react";
- 2: interface BaseItem {
- 3:   _key: string;
- 4:   description?: string;
- 5: }
- 6: interface GenericCVSectionContentProps<T extends BaseItem> {
- 7:   items?: T[];
- 8:   renderHeaderContent: (item: T) => React.ReactNode;
- 9:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-10: }
-11: interface CVListItemProps<T extends BaseItem> {
-12:   item: T;
-13:   renderHeaderContent: (item: T) => React.ReactNode;
-14:   renderSubHeaderContent?: (item: T) => React.ReactNode;
-15: }
-16: const CVListItem = <T extends BaseItem>({
-17:   item,
-18:   renderHeaderContent,
-19:   renderSubHeaderContent,
-20: }: CVListItemProps<T>) => (
-21:   <div className="mb-6">
-22:     <h3 className="font-semibold text-slate-100">
-23:       {/* eslint-disable-next-line react/no-unstable-nested-components */}
-24:       {renderHeaderContent(item)}
-25:     </h3>
-26:     {renderSubHeaderContent?.(item)}
-27:     <p>{item.description ?? ""}</p>
-28:   </div>
-29: );
-30: const GenericCVSectionContent = <T extends BaseItem>({
-31:   items,
-32:   renderHeaderContent,
-33:   renderSubHeaderContent,
-34: }: GenericCVSectionContentProps<T>) => (
-35:   <div className="text-slate-300/[0.9]">
-36:     {items?.map((item) => (
-37:       <CVListItem
-38:         key={item._key}
-39:         item={item}
-40:         renderHeaderContent={renderHeaderContent}
-41:         renderSubHeaderContent={renderSubHeaderContent}
-42:       />
-43:     ))}
-44:   </div>
-45: );
-46: export default GenericCVSectionContent;
-````
-
-## File: src/components/CV/QualificationsTabContent.component.tsx
-````typescript
- 1: import React from "react";
- 2: interface QualificationsTabContentProps {
- 3:   qualifications?: string[];
- 4: }
- 5: const QualificationsTabContent: React.FC<QualificationsTabContentProps> = ({
- 6:   qualifications,
- 7: }) => (
- 8:   <ul className="list-disc pl-5 text-slate-300/[0.9]">
- 9:     {qualifications?.map((qual) => (
-10:       <li key={qual ?? ""} className="mb-2">
-11:         {qual ?? ""}
-12:       </li>
-13:     ))}
-14:   </ul>
-15: );
-16: export default QualificationsTabContent;
-````
-
-## File: src/components/ErrorBoundary/ErrorBoundary.component.tsx
-````typescript
- 1: "use client";
- 2: import React, { ReactNode, ErrorInfo, useCallback } from "react";
- 3: import {
- 4:   ErrorBoundary as ReactErrorBoundary,
- 5:   FallbackProps,
- 6: } from "react-error-boundary";
- 7: import ErrorFallback from "./ErrorFallback.component";
- 8: interface ErrorBoundaryProps {
- 9:   children: ReactNode;
-10:   compact?: boolean;
-11: }
-12: const handleError = (error: unknown, info: ErrorInfo) => {
-13:   console.error("Uventet feil i Matrix:", error, info);
-14: };
-15: /**
-16:  * ErrorBoundary component that catches JavaScript errors anywhere in the child component tree.
-17:  * It logs the error and displays a fallback UI instead of the component tree that crashed.
-18:  *
-19:  * Uses fallbackRender instead of FallbackComponent to avoid defining a component inside
-20:  * a component (Vercel React Best Practices Rule 5.4), which would cause remounts on every render.
-21:  *
-22:  * @param {Object} props - The component props
-23:  * @param {ReactNode} props.children - The child components to be wrapped by the ErrorBoundary
-24:  * @param {boolean} props.compact - Whether to show a compact error fallback (used in stories)
-25:  * @returns {JSX.Element} A React component that catches errors in its child components
-26:  */
-27: const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({
-28:   children,
-29:   compact = false,
-30: }) => {
-31:   const renderFallback = useCallback(
-32:     (props: FallbackProps) => (
-33:       <ErrorFallback error={props.error as Error} compact={compact} />
-34:     ),
-35:     [compact],
-36:   );
-37:   return (
-38:     <ReactErrorBoundary fallbackRender={renderFallback} onError={handleError}>
-39:       {children}
-40:     </ReactErrorBoundary>
-41:   );
-42: };
-43: export default ErrorBoundary;
-````
-
-## File: src/components/ErrorBoundary/ErrorFallback.component.tsx
-````typescript
- 1: import React from "react";
- 2: import ReactMatrixAnimation from "@/components/Animations/Matrix.component";
- 3: interface ErrorFallbackProps {
- 4:   error: Error;
- 5:   compact?: boolean;
- 6: }
- 7: /**
- 8:  * ErrorFallback component to display when an error occurs within the ErrorBoundary.
- 9:  * It shows a Matrix-themed error message.
-10:  *
-11:  * @param {Object} props - The component props
-12:  * @param {Error} props.error - The error object caught by the ErrorBoundary
-13:  * @param {boolean} props.compact - Whether to show a compact version (used in stories)
-14:  * @returns {JSX.Element} A React component displaying the error message and reload option
-15:  */
-16: const ErrorFallback: React.FC<ErrorFallbackProps> = ({
-17:   error,
-18:   compact = false,
-19: }) => {
-20:   if (compact) {
-21:     return (
-22:       <div
-23:         data-testid="error-fallback-container"
-24:         className="relative bg-gray-900 p-4 rounded-lg overflow-hidden"
-25:       >
-26:         <div className="absolute inset-0 opacity-30">
-27:           <ReactMatrixAnimation />
-28:         </div>
-29:         <div className="relative z-10 flex flex-col items-center text-center">
-30:           <h2 className="text-white text-lg mb-2">
-31:             Har du funnet en feil i Matrix?
-32:           </h2>
-33:           <p className="text-white text-sm mb-3">
-34:             {error.message || "En uventet feil har oppstått."}
-35:           </p>
-36:         </div>
-37:       </div>
-38:     );
-39:   }
-40:   return (
-41:     <div
-42:       data-testid="error-fallback-container"
-43:       className="absolute w-full h-full"
-44:     >
-45:       <ReactMatrixAnimation />
-46:       <div className="absolute inset-0 flex flex-col items-center justify-center h-full">
-47:         <h1 className="text-white text-5xl m-6">
-48:           Har du funnet en feil i Matrix?
-49:         </h1>
-50:         <p className="text-white text-xl mb-6">
-51:           {error.message || "En uventet feil har oppstått."}
-52:         </p>
-53:       </div>
-54:     </div>
-55:   );
-56: };
-57: export default ErrorFallback;
+  1: "use client";
+  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
+  3: import { useMobile } from "@/hooks/useMobile";
+  4: interface MatrixCursorProps {
+  5:   heroRef: RefObject<HTMLElement | null>;
+  6: }
+  7: interface CursorStyles extends React.CSSProperties {
+  8:   "--cursor-x": string;
+  9:   "--cursor-y": string;
+ 10: }
+ 11: interface MatrixTrail {
+ 12:   id: string;
+ 13:   x: number;
+ 14:   y: number;
+ 15:   char: string;
+ 16: }
+ 17: interface CursorState {
+ 18:   cursorPosition: { x: number; y: number };
+ 19:   isHovered: boolean;
+ 20:   trails: MatrixTrail[];
+ 21: }
+ 22: type CursorAction =
+ 23:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
+ 24:   | { type: "MOUSE_ENTER" }
+ 25:   | { type: "MOUSE_LEAVE" }
+ 26:   | { type: "REMOVE_TRAIL"; trailId: string };
+ 27: const MAX_TRAILS = 20;
+ 28: const cursorReducer = (
+ 29:   state: CursorState,
+ 30:   action: CursorAction,
+ 31: ): CursorState => {
+ 32:   switch (action.type) {
+ 33:     case "MOUSE_MOVE": {
+ 34:       const newPosition = { x: action.x, y: action.y };
+ 35:       if (!action.trail) {
+ 36:         return { ...state, cursorPosition: newPosition };
+ 37:       }
+ 38:       const updatedTrails = [...state.trails, action.trail];
+ 39:       return {
+ 40:         ...state,
+ 41:         cursorPosition: newPosition,
+ 42:         trails:
+ 43:           updatedTrails.length > MAX_TRAILS
+ 44:             ? updatedTrails.slice(1)
+ 45:             : updatedTrails,
+ 46:       };
+ 47:     }
+ 48:     case "MOUSE_ENTER":
+ 49:       return { ...state, isHovered: true };
+ 50:     case "MOUSE_LEAVE":
+ 51:       return { ...state, isHovered: false, trails: [] };
+ 52:     case "REMOVE_TRAIL":
+ 53:       return {
+ 54:         ...state,
+ 55:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
+ 56:       };
+ 57:   }
+ 58: };
+ 59: const initialState: CursorState = {
+ 60:   cursorPosition: { x: 0, y: 0 },
+ 61:   isHovered: false,
+ 62:   trails: [],
+ 63: };
+ 64: /**
+ 65:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
+ 66:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
+ 67:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
+ 68:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
+ 69:  */
+ 70: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
+ 71:   const isMobile = useMobile(); // Pd528
+ 72:   const [state, dispatch] = useReducer(cursorReducer, initialState);
+ 73:   const getRandomChar = useCallback(() => {
+ 74:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
+ 75:     const array = new Uint32Array(1);
+ 76:     crypto.getRandomValues(array);
+ 77:     const index = array[0]! % matrixChars.length;
+ 78:     return matrixChars[index] ?? matrixChars[0] ?? "X";
+ 79:   }, []);
+ 80:   useEffect(() => {
+ 81:     const heroSection = heroRef.current;
+ 82:     if (!heroSection) return;
+ 83:     // Add cursor: none to the hero section when hovered
+ 84:     if (state.isHovered) {
+ 85:       heroSection.style.cursor = "none";
+ 86:     } else {
+ 87:       heroSection.style.cursor = "";
+ 88:     }
+ 89:     const handleMouseMove = (e: MouseEvent) => {
+ 90:       const trail: MatrixTrail | undefined = state.isHovered
+ 91:         ? {
+ 92:             id: crypto.randomUUID(),
+ 93:             x: e.clientX,
+ 94:             y: e.clientY,
+ 95:             char: getRandomChar(),
+ 96:           }
+ 97:         : undefined;
+ 98:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
+ 99:     };
+100:     const handleMouseEnter = () => {
+101:       dispatch({ type: "MOUSE_ENTER" });
+102:       heroSection.style.cursor = "none";
+103:     };
+104:     const handleMouseLeave = () => {
+105:       dispatch({ type: "MOUSE_LEAVE" });
+106:       heroSection.style.cursor = "";
+107:     };
+108:     heroSection.addEventListener("mousemove", handleMouseMove);
+109:     heroSection.addEventListener("mouseenter", handleMouseEnter);
+110:     heroSection.addEventListener("mouseleave", handleMouseLeave);
+111:     return () => {
+112:       heroSection.removeEventListener("mousemove", handleMouseMove);
+113:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
+114:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
+115:       heroSection.style.cursor = "";
+116:     };
+117:   }, [heroRef, state.isHovered, getRandomChar]);
+118:   const handleAnimationEnd = useCallback((trailId: string) => {
+119:     dispatch({ type: "REMOVE_TRAIL", trailId });
+120:   }, []);
+121:   if (!heroRef.current || isMobile) return null; // P6ecf
+122:   const cursorStyles: CursorStyles = {
+123:     position: "fixed",
+124:     top: 0,
+125:     left: 0,
+126:     width: "100%",
+127:     height: "100%",
+128:     pointerEvents: "none",
+129:     isolation: "isolate",
+130:     zIndex: 40,
+131:     "--cursor-x": `${state.cursorPosition.x}px`,
+132:     "--cursor-y": `${state.cursorPosition.y}px`,
+133:   };
+134:   return (
+135:     <div
+136:       data-testid="matrix-cursor"
+137:       className={state.isHovered ? "matrix-cursor" : ""}
+138:       style={cursorStyles}
+139:     >
+140:       {state.trails.map((trail) => (
+141:         <div
+142:           key={trail.id}
+143:           data-testid="matrix-trail"
+144:           className="matrix-trail"
+145:           style={{
+146:             position: "fixed",
+147:             left: `${trail.x}px`,
+148:             top: `${trail.y}px`,
+149:             zIndex: 2,
+150:             pointerEvents: "none",
+151:           }}
+152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
+153:         >
+154:           {trail.char}
+155:         </div>
+156:       ))}
+157:       {state.isHovered && (
+158:         <div
+159:           style={{
+160:             position: "fixed",
+161:             top: 0,
+162:             left: 0,
+163:             width: "100%",
+164:             height: "100%",
+165:             pointerEvents: "none",
+166:             zIndex: 1,
+167:           }}
+168:         />
+169:       )}
+170:     </div>
+171:   );
+172: };
+173: export default MatrixCursor;
 ````
 
 ## File: src/components/ErrorBoundary/RouteError.component.tsx
@@ -15441,256 +16082,6 @@ vitest.setup.ts
 37:   );
 38: };
 39: export default RouteError;
-````
-
-## File: src/components/Index/Hero.component.tsx
-````typescript
- 1: "use client";
- 2: import { useRef } from "react";
- 3: import dynamic from "next/dynamic";
- 4: import type { Herocontent } from "@/types/sanity.types";
- 5: import Icons from "./Icons.component";
- 6: import FadeIn from "@/components/Animations/FadeIn.component";
- 7: import RotatingLoader from "@/components/Animations/RotatingLoader.component";
- 8: import MobileBackground from "./MobileBackground.component";
- 9: import MatrixCursor from "@/components/Animations/MatrixCursor.component";
-10: const ReactMatrixAnimation = dynamic(
-11:   () => import("@/components/Animations/Matrix.component"),
-12:   {
-13:     ssr: false,
-14:     loading: () => (
-15:       <div className="text-center">
-16:         <RotatingLoader />
-17:       </div>
-18:     ),
-19:   },
-20: );
-21: /**
-22:  * Safely retrieves hero text at a given index with a fallback.
-23:  */
-24: function getHeroText(
-25:   content: Herocontent[],
-26:   index: number,
-27:   fallback = "",
-28: ): string {
-29:   return content[index]?.text ?? fallback;
-30: }
-31: /**
-32:  * Hero component for rendering the main hero section of the page
-33:  * @param {Object} props - The props for the Hero component
-34:  * @param {Herocontent[]} props.content - Array of hero content from Sanity
-35:  * @returns {JSX.Element} The rendered Hero component
-36:  */
-37: const Hero = ({ content }: { content: Herocontent[] }) => {
-38:   const heroRef = useRef<HTMLElement>(null);
-39:   const heading = getHeroText(content, 0, "Hei!");
-40:   const subheading = getHeroText(content, 1);
-41:   const paragraph = getHeroText(content, 2);
-42:   return (
-43:     <article
-44:       aria-label="Kontainer for animasjoner av introtekst"
-45:       id="main-hero"
-46:       data-testid="main-hero"
-47:       ref={heroRef}
-48:       className="relative flex flex-col justify-center text-lg h-[26rem] md:h-[30rem] overflow-hidden w-full"
-49:     >
-50:       <MatrixCursor heroRef={heroRef} />
-51:       <MobileBackground />
-52:       <div className="hidden md:block absolute inset-0 w-full h-full">
-53:         <ReactMatrixAnimation />
-54:       </div>
-55:       <div className="relative z-10">
-56:         <div className="px-4 md:px-0" data-testid="fade-in">
-57:           <div className="max-w-sm md:max-w-none mx-auto text-left md:text-center">
-58:             <FadeIn delay={0.3}>
-59:               <h1
-60:                 data-cy="hei"
-61:                 className="text-4xl md:text-6xl font-bold text-matrix-light text-center"
-62:               >
-63:                 {heading}
-64:               </h1>
-65:             </FadeIn>
-66:             <FadeIn delay={0.9}>
-67:               <h2 className="mt-4 text-xl md:text-2xl text-slate-300 text-left md:text-center">
-68:                 {subheading}
-69:               </h2>
-70:             </FadeIn>
-71:             <FadeIn delay={1.5}>
-72:               <p className="mt-4 text-lg md:text-xl text-slate-300 text-left md:text-center">
-73:                 {paragraph}
-74:               </p>
-75:             </FadeIn>
-76:           </div>
-77:           <div className="mt-4">
-78:             <Icons />
-79:           </div>
-80:         </div>
-81:       </div>
-82:     </article>
-83:   );
-84: };
-85: export default Hero;
-````
-
-## File: src/components/Index/Icons.component.tsx
-````typescript
- 1: import { IconType } from "react-icons";
- 2: import { FaReact, FaVuejs, FaPhp } from "react-icons/fa";
- 3: import { SiTypescript, SiWordpress } from "react-icons/si";
- 4: import Grow from "@/components/Animations/Grow.component";
- 5: interface IAnimateIcons {
- 6:   id: number;
- 7:   Icon: IconType;
- 8:   iconName: string;
- 9: }
-10: const AnimateIcons: IAnimateIcons[] = [
-11:   {
-12:     id: 0,
-13:     Icon: FaReact,
-14:     iconName: "React",
-15:   },
-16:   {
-17:     id: 1,
-18:     Icon: FaVuejs,
-19:     iconName: "VueJS",
-20:   },
-21:   {
-22:     id: 2,
-23:     Icon: SiTypescript,
-24:     iconName: "TypeScript",
-25:   },
-26:   {
-27:     id: 3,
-28:     Icon: SiWordpress,
-29:     iconName: "WordPress",
-30:   },
-31:   {
-32:     id: 4,
-33:     Icon: FaPhp,
-34:     iconName: "PHP",
-35:   },
-36: ];
-37: /**
-38:  * Icons component that renders SVG icons used on the front page
-39:  * Uses Framer Motion for animations to show the SVGs
-40:  * @returns {JSX.Element} The rendered Icons component
-41:  */
-42: const Icons = () => (
-43:   <div
-44:     data-testid="icons"
-45:     className="flex flex-wrap justify-center gap-2 md:gap-8 p-2 text-slate-300/[0.8]"
-46:   >
-47:     {AnimateIcons.map(({ Icon, id, iconName }) => (
-48:       <div className="relative" key={id}>
-49:         <Grow delay={2.5 + id * 0.2}>
-50:           <div className="relative group">
-51:             <div className="p-3 md:p-4 rounded-lg bg-slate-900/50 backdrop-blur-sm border border-slate-800/50 transition-[background-color,border-color] duration-300 group-hover:border-matrix-light/30 group-hover:bg-slate-900/70 text-[1.6em] md:text-[2.5em]">
-52:               <Icon
-53:                 data-testid={iconName}
-54:                 aria-label={`${iconName} ikon`}
-55:                 title={`${iconName} ikon`}
-56:                 size="1em"
-57:                 className="transition-[color] duration-300 group-hover:text-matrix-light"
-58:               />
-59:             </div>
-60:             <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap text-matrix-light">
-61:               {iconName}
-62:             </span>
-63:           </div>
-64:         </Grow>
-65:       </div>
-66:     ))}
-67:   </div>
-68: );
-69: export default Icons;
-````
-
-## File: src/components/Index/Section.component.tsx
-````typescript
- 1: "use client";
- 2: import { PortableText } from "@portabletext/react";
- 3: import { useState } from "react";
- 4: import FadeInScroll from "@/components/Animations/FadeInScroll.component";
- 5: import Button from "@/components/UI/Button.component";
- 6: import { myPortableTextComponents } from "@/utils/portableTextComponents";
- 7: import type { Pagecontent } from "@/types/sanity.types";
- 8: interface SectionProps extends Pagecontent {
- 9:   variant?: "default" | "alternate";
-10:   showDebugButton?: boolean;
-11:   viewAmount?: number;
-12: }
-13: const sectionStyles = {
-14:   default: "bg-slate-900",
-15:   alternate: "bg-slate-800/30",
-16: };
-17: /**
-18:  * Section component that renders a single content section
-19:  * @param {SectionProps} props - The props for the Section component
-20:  * @param {Pagecontent['text']} props.text - The text content from Sanity
-21:  * @param {string} props.title - The title of the section
-22:  * @param {"default" | "alternate"} [props.variant="default"] - Visual style variant of the section. Controls background color.
-23:  * @param {boolean} [props.showDebugButton=true] - If true (default), shows the debug button in development mode. Set to false to hide the button (e.g., in stories or production).
-24:  * @param {number} [props.viewAmount=0.2] - The viewport amount (0-1) required to trigger the fade-in animation. Lower values trigger earlier.
-25:  * @returns {JSX.Element | null} The rendered Section component or null if invalid data
-26:  */
-27: const Section = ({
-28:   text,
-29:   title,
-30:   variant = "default",
-31:   showDebugButton = true,
-32:   viewAmount = 0.2,
-33: }: SectionProps) => {
-34:   const [shouldError, setShouldError] = useState(false);
-35:   if (!title || !text) {
-36:     console.error(
-37:       `Ugyldig seksjon data: tittel=${title}, tekst=${JSON.stringify(text)}`,
-38:     );
-39:     return null;
-40:   }
-41:   if (shouldError) {
-42:     throw new Error("En uventet feil har oppstått");
-43:   }
-44:   return (
-45:     <section
-46:       aria-label={title}
-47:       data-testid="sanity-section"
-48:       className={`
-49:         md:py-6
-50:         relative
-51:         transition-colors
-52:         duration-300
-53:         contain-layout
-54:         ${sectionStyles[variant]}
-55:       `}
-56:     >
-57:       <div className="p-6 md:p-2 text-lg h-full max-w-7xl mx-auto">
-58:         <FadeInScroll viewAmount={viewAmount} data-testid="fade-in-scroll">
-59:           <h2
-60:             data-testid="sanity-title"
-61:             data-cy={title}
-62:             className="text-2xl md:text-3xl text-center text-slate-100"
-63:           >
-64:             {title}
-65:           </h2>
-66:           <div className="flex justify-center">
-67:             <div className="mt-4 text-lg text-left md:max-w-3xl text-slate-300/[0.9]">
-68:               <PortableText
-69:                 value={text}
-70:                 components={myPortableTextComponents}
-71:               />
-72:             </div>
-73:           </div>
-74:           {process.env.NODE_ENV === "development" && showDebugButton && (
-75:             <Button onClick={() => setShouldError(true)} type="button">
-76:               Utløs Testfeil
-77:             </Button>
-78:           )}
-79:         </FadeInScroll>
-80:       </div>
-81:     </section>
-82:   );
-83: };
-84: export default Section;
 ````
 
 ## File: src/components/Layout/NavigationLink.component.tsx
@@ -17127,6 +17518,116 @@ vitest.setup.ts
 35:   - '@vercel/speed-insights@2.1.0'
 ````
 
+## File: .github/workflows/pa11y.yml
+````yaml
+ 1: name: A11y
+ 2: on:
+ 3:   push:
+ 4:     branches: [main]
+ 5:   pull_request:
+ 6:     branches: [main]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   pa11y:
+11:     runs-on: ubuntu-latest
+12:     timeout-minutes: 30
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - name: Setup Node.js
+16:         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+17:         with:
+18:           node-version: "26"
+19:       - name: Install pnpm
+20:         uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+21:       - name: Get pnpm store directory
+22:         shell: bash
+23:         run: |
+24:           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+25:       - name: Setup pnpm cache
+26:         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+27:         with:
+28:           path: ${{ env.STORE_PATH }}
+29:           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+30:       - name: Install dependencies
+31:         run: pnpm install --frozen-lockfile --ignore-scripts
+32:       - name: Create pa11y config
+33:         run: |
+34:           # Create pa11y config file
+35:           echo '{"chromeLaunchConfig":{"args":["--no-sandbox"]}}' > .pa11y.json
+36:       - name: Build Next.js app
+37:         run: pnpm build
+38:       - name: Start Next.js app
+39:         run: pnpm start &
+40:       - name: Wait for the application to be ready
+41:         run: pnpm exec wait-on http://localhost:3000
+42:       - name: Run pa11y
+43:         run: |
+44:           # Create a directory for the reports
+45:           mkdir -p pa11y-reports
+46:           # Run pa11y on main pages with config
+47:           pnpm exec pa11y --config .pa11y.json http://localhost:3000 > pa11y-reports/home.txt || true
+48:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/cv > pa11y-reports/cv.txt || true
+49:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/prosjekter > pa11y-reports/prosjekter.txt || true
+50:           pnpm exec pa11y --config .pa11y.json http://localhost:3000/kontakt > pa11y-reports/kontakt.txt || true
+51:       - name: Upload pa11y results
+52:         if: always()
+53:         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+54:         with:
+55:           name: pa11y-reports
+56:           path: pa11y-reports/
+57:       - name: Check for accessibility issues
+58:         run: |
+59:           if grep -q "Error:" pa11y-reports/*.txt; then
+60:             echo "Accessibility issues found. Check the uploaded artifacts for details."
+61:             exit 1
+62:           fi
+````
+
+## File: .github/workflows/playwright.yml
+````yaml
+ 1: name: Playwright Tests
+ 2: on:
+ 3:   push:
+ 4:     branches: [main, master]
+ 5:   pull_request:
+ 6:     branches: [main, master]
+ 7: permissions:
+ 8:   contents: read
+ 9: jobs:
+10:   test:
+11:     timeout-minutes: 60
+12:     runs-on: ubuntu-latest
+13:     steps:
+14:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+15:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+16:       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+17:         with:
+18:           node-version: 26
+19:           cache: "pnpm"
+20:       - name: Install dependencies
+21:         run: pnpm install --frozen-lockfile --ignore-scripts
+22:       - name: Install Playwright Browsers
+23:         env:
+24:           npm_config_ignore_scripts: true
+25:         run: pnpm exec playwright install --with-deps chromium firefox # NOSONAR - playwright install downloads binaries, not npm packages
+26:       - name: Build the project
+27:         run: pnpm build
+28:       - name: Start the application
+29:         run: pnpm start &
+30:       - name: Wait for the application to be ready
+31:         run: |
+32:           npx --ignore-scripts wait-on@8.0.1 http://localhost:3000
+33:       - name: Run Playwright tests
+34:         run: pnpm exec playwright test
+35:       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+36:         if: always()
+37:         with:
+38:           name: playwright-report
+39:           path: playwright-report/
+40:           retention-days: 30
+````
+
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -17916,147 +18417,6 @@ vitest.setup.ts
 59:     });
 60:   });
 61: });
-````
-
-## File: src/__tests__/architecture/boundaries.test.ts
-````typescript
-  1: /**
-  2:  * @vitest-environment node
-  3:  */
-  4: import fs from "node:fs";
-  5: import path from "node:path";
-  6: const ROOT = process.cwd();
-  7: const SRC = path.join(ROOT, "src");
-  8: /**
-  9:  * Which layer may import from which. A layer may always import from itself.
- 10:  * Keep in sync with the layer table in AGENTS.md.
- 11:  */
- 12: const ALLOWED_IMPORTS: Record<string, readonly string[]> = {
- 13:   app: ["components", "hooks", "lib", "utils", "types"],
- 14:   components: ["hooks", "lib", "utils", "types"],
- 15:   hooks: ["lib", "utils", "types"],
- 16:   lib: ["utils", "types"],
- 17:   utils: ["types"],
- 18:   types: [],
- 19: };
- 20: const LAYERS = Object.keys(ALLOWED_IMPORTS);
- 21: /** Folders that production code must never import from. */
- 22: const NON_PRODUCTION_FOLDERS = ["__tests__", "__mocks__", "stories", "e2e"];
- 23: const SOURCE_EXTENSIONS = [".ts", ".tsx"];
- 24: const IMPORT_PATTERNS = [
- 25:   /\bfrom\s+["']([^"']+)["']/g,
- 26:   /\bimport\s+["']([^"']+)["']/g,
- 27:   /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
- 28:   /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
- 29: ];
- 30: type ImportRecord = { file: string; specifier: string };
- 31: /** Installed or generated folders that are not project source. */
- 32: const SKIPPED_FOLDERS = ["node_modules", "dist"];
- 33: const listFiles = (dir: string): string[] => {
- 34:   if (!fs.existsSync(dir)) {
- 35:     return [];
- 36:   }
- 37:   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
- 38:     const fullPath = path.join(dir, entry.name);
- 39:     if (entry.isDirectory()) {
- 40:       return SKIPPED_FOLDERS.includes(entry.name) ? [] : listFiles(fullPath);
- 41:     }
- 42:     return [fullPath];
- 43:   });
- 44: };
- 45: const toRepoPath = (file: string) =>
- 46:   path.relative(ROOT, file).split(path.sep).join("/");
- 47: const extractSpecifiers = (source: string): string[] =>
- 48:   IMPORT_PATTERNS.flatMap((pattern) =>
- 49:     Array.from(source.matchAll(pattern), (match) => match[1]),
- 50:   );
- 51: const collectImports = (): ImportRecord[] =>
- 52:   LAYERS.flatMap((layer) =>
- 53:     listFiles(path.join(SRC, layer))
- 54:       .filter((file) => SOURCE_EXTENSIONS.includes(path.extname(file)))
- 55:       .flatMap((file) =>
- 56:         extractSpecifiers(fs.readFileSync(file, "utf8")).map((specifier) => ({
- 57:           file,
- 58:           specifier,
- 59:         })),
- 60:       ),
- 61:   );
- 62: const layerOfFile = (file: string): string =>
- 63:   path.relative(SRC, file).split(path.sep)[0];
- 64: /** Returns the top-level src folder a specifier points to, or null for packages. */
- 65: const targetFolder = (file: string, specifier: string): string | null => {
- 66:   if (specifier.startsWith("@/")) {
- 67:     return specifier.slice(2).split("/")[0];
- 68:   }
- 69:   if (specifier.startsWith("src/")) {
- 70:     return specifier.slice(4).split("/")[0];
- 71:   }
- 72:   if (specifier.startsWith(".")) {
- 73:     const resolved = path.resolve(path.dirname(file), specifier);
- 74:     const relative = path.relative(SRC, resolved);
- 75:     return relative.startsWith("..") ? null : relative.split(path.sep)[0];
- 76:   }
- 77:   return null;
- 78: };
- 79: const describeImport = ({ file, specifier }: ImportRecord) =>
- 80:   `${toRepoPath(file)} -> "${specifier}"`;
- 81: describe("Architecture: import boundaries", () => {
- 82:   const imports = collectImports();
- 83:   it("finds source files in every layer that exists", () => {
- 84:     // Arrange
- 85:     const existingLayers = LAYERS.filter((layer) =>
- 86:       fs.existsSync(path.join(SRC, layer)),
- 87:     );
- 88:     // Act
- 89:     const layersWithImports = new Set(
- 90:       imports.map(({ file }) => layerOfFile(file)),
- 91:     );
- 92:     // Assert
- 93:     expect(existingLayers.length).toBeGreaterThan(0);
- 94:     expect(layersWithImports.size).toBeGreaterThan(0);
- 95:   });
- 96:   it("each layer imports only from the layers it is allowed to use", () => {
- 97:     // Arrange
- 98:     const isAllowed = (from: string, to: string) =>
- 99:       from === to || ALLOWED_IMPORTS[from].includes(to);
-100:     // Act
-101:     const violations = imports
-102:       .filter((record) => {
-103:         const target = targetFolder(record.file, record.specifier);
-104:         return (
-105:           target !== null &&
-106:           LAYERS.includes(target) &&
-107:           !isAllowed(layerOfFile(record.file), target)
-108:         );
-109:       })
-110:       .map(describeImport);
-111:     // Assert
-112:     expect(violations).toStrictEqual([]);
-113:   });
-114:   it("production code never imports tests, mocks, stories or e2e code", () => {
-115:     // Arrange
-116:     const isNonProduction = (target: string | null) =>
-117:       target !== null && NON_PRODUCTION_FOLDERS.includes(target);
-118:     // Act
-119:     const violations = imports
-120:       .filter((record) =>
-121:         isNonProduction(targetFolder(record.file, record.specifier)),
-122:       )
-123:       .map(describeImport);
-124:     // Assert
-125:     expect(violations).toStrictEqual([]);
-126:   });
-127:   it("production code uses the @/ alias instead of parent-relative imports", () => {
-128:     // Arrange
-129:     const isParentRelative = (specifier: string) => specifier.startsWith("../");
-130:     // Act
-131:     const violations = imports
-132:       .filter(({ specifier }) => isParentRelative(specifier))
-133:       .map(describeImport);
-134:     // Assert
-135:     expect(violations).toStrictEqual([]);
-136:   });
-137: });
 ````
 
 ## File: src/__tests__/ErrorBoundary/ErrorFallback.test.tsx
@@ -18924,366 +19284,6 @@ vitest.setup.ts
 58: });
 ````
 
-## File: src/app/layout.tsx
-````typescript
- 1: import type { Metadata } from "next";
- 2: import { JetBrains_Mono } from "next/font/google";
- 3: import { SpeedInsights } from "@vercel/speed-insights/next";
- 4: import "./globals.css";
- 5: import { getNavigation, getSettings } from "@/lib/sanity/content";
- 6: import LazyMotionProvider from "@/lib/framer/LazyMotionProvider";
- 7: import SkipLink from "@/components/UI/SkipLink.component";
- 8: import Header from "@/components/Layout/Header.component";
- 9: import Footer from "@/components/Layout/Footer.component";
-10: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
-11: const jetbrainsMono = JetBrains_Mono({
-12:   subsets: ["latin"],
-13:   display: "swap", // Prevent invisible text during font load (improves FCP)
-14:   preload: true, // Preload font to reduce request chain
-15: });
-16: export const metadata: Metadata = {
-17:   title: "Forside - Dfweb",
-18:   description: "Daniel Fjeldstad | Frontend Web Utvikler | Portefølje",
-19: };
-20: export default async function RootLayout({
-21:   children,
-22: }: Readonly<{
-23:   children: React.ReactNode;
-24: }>) {
-25:   const [navigation, settings] = await Promise.all([
-26:     getNavigation(),
-27:     getSettings(),
-28:   ]);
-29:   const footerCopyrightText = settings?.footerCopyrightText;
-30:   return (
-31:     <html lang="nb">
-32:       <head>
-33:         <meta
-34:           name="viewport"
-35:           content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"
-36:         />
-37:         <link
-38:           rel="preconnect"
-39:           href="https://cdn.sanity.io"
-40:           crossOrigin="anonymous"
-41:         />
-42:         <link rel="dns-prefetch" href="https://cdn.sanity.io" />
-43:         <link rel="icon" href="/favicon.ico" />
-44:         <link rel="apple-touch-icon" href="/logo.png" />
-45:         <meta property="og:title" content="Daniel Fjeldstad" />
-46:         <meta name="author" content="Daniel Fjeldstad" />
-47:         <meta property="og:locale" content="nb_NO" />
-48:         <meta
-49:           property="og:description"
-50:           content="Daniel Fjeldstad | Frontend Web Utvikler | Portefølje"
-51:         />
-52:         <meta property="og:url" content="https://www.dfweb.no/" />
-53:         <meta property="og:site_name" content="dfweb.no" />
-54:         <meta name="theme-color" content="#004014" />
-55:       </head>
-56:       <body
-57:         className={`flex flex-col min-h-screen bg-slate-900 leading-relaxed text-slate-300/[0.9] antialiased selection:bg-teal-300 selection:text-teal-900 ${jetbrainsMono.className}`}
-58:       >
-59:         <LazyMotionProvider>
-60:           <SkipLink />
-61:           <ErrorBoundary>
-62:             <div id="main-content" className="grow flex flex-col">
-63:               <Header navigation={navigation} />
-64:               <SpeedInsights />
-65:               <div className="grow">{children}</div>
-66:               <Footer
-67:                 footerCopyrightText={
-68:                   footerCopyrightText ?? "Copyright Daniel Fjeldstad"
-69:                 }
-70:               />
-71:             </div>
-72:           </ErrorBoundary>
-73:         </LazyMotionProvider>
-74:       </body>
-75:     </html>
-76:   );
-77: }
-````
-
-## File: src/components/Animations/MatrixCursor.component.tsx
-````typescript
-  1: "use client";
-  2: import { useEffect, useReducer, RefObject, useCallback } from "react";
-  3: import { useMobile } from "@/hooks/useMobile";
-  4: interface MatrixCursorProps {
-  5:   heroRef: RefObject<HTMLElement | null>;
-  6: }
-  7: interface CursorStyles extends React.CSSProperties {
-  8:   "--cursor-x": string;
-  9:   "--cursor-y": string;
- 10: }
- 11: interface MatrixTrail {
- 12:   id: string;
- 13:   x: number;
- 14:   y: number;
- 15:   char: string;
- 16: }
- 17: interface CursorState {
- 18:   cursorPosition: { x: number; y: number };
- 19:   isHovered: boolean;
- 20:   trails: MatrixTrail[];
- 21: }
- 22: type CursorAction =
- 23:   | { type: "MOUSE_MOVE"; x: number; y: number; trail?: MatrixTrail }
- 24:   | { type: "MOUSE_ENTER" }
- 25:   | { type: "MOUSE_LEAVE" }
- 26:   | { type: "REMOVE_TRAIL"; trailId: string };
- 27: const MAX_TRAILS = 20;
- 28: const cursorReducer = (
- 29:   state: CursorState,
- 30:   action: CursorAction,
- 31: ): CursorState => {
- 32:   switch (action.type) {
- 33:     case "MOUSE_MOVE": {
- 34:       const newPosition = { x: action.x, y: action.y };
- 35:       if (!action.trail) {
- 36:         return { ...state, cursorPosition: newPosition };
- 37:       }
- 38:       const updatedTrails = [...state.trails, action.trail];
- 39:       return {
- 40:         ...state,
- 41:         cursorPosition: newPosition,
- 42:         trails:
- 43:           updatedTrails.length > MAX_TRAILS
- 44:             ? updatedTrails.slice(1)
- 45:             : updatedTrails,
- 46:       };
- 47:     }
- 48:     case "MOUSE_ENTER":
- 49:       return { ...state, isHovered: true };
- 50:     case "MOUSE_LEAVE":
- 51:       return { ...state, isHovered: false, trails: [] };
- 52:     case "REMOVE_TRAIL":
- 53:       return {
- 54:         ...state,
- 55:         trails: state.trails.filter((trail) => trail.id !== action.trailId),
- 56:       };
- 57:   }
- 58: };
- 59: const initialState: CursorState = {
- 60:   cursorPosition: { x: 0, y: 0 },
- 61:   isHovered: false,
- 62:   trails: [],
- 63: };
- 64: /**
- 65:  * MatrixCursor component that renders a custom cursor with a matrix trail effect
- 66:  * @param {MatrixCursorProps} props - The props for the MatrixCursor component
- 67:  * @param {RefObject<HTMLElement | null>} props.heroRef - Reference to the hero section element
- 68:  * @returns {JSX.Element | null} The rendered MatrixCursor component or null if heroRef is not available
- 69:  */
- 70: const MatrixCursor = ({ heroRef }: MatrixCursorProps) => {
- 71:   const isMobile = useMobile(); // Pd528
- 72:   const [state, dispatch] = useReducer(cursorReducer, initialState);
- 73:   const getRandomChar = useCallback(() => {
- 74:     const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*";
- 75:     const array = new Uint32Array(1);
- 76:     crypto.getRandomValues(array);
- 77:     const index = array[0]! % matrixChars.length;
- 78:     return matrixChars[index] ?? matrixChars[0] ?? "X";
- 79:   }, []);
- 80:   useEffect(() => {
- 81:     const heroSection = heroRef.current;
- 82:     if (!heroSection) return;
- 83:     // Add cursor: none to the hero section when hovered
- 84:     if (state.isHovered) {
- 85:       heroSection.style.cursor = "none";
- 86:     } else {
- 87:       heroSection.style.cursor = "";
- 88:     }
- 89:     const handleMouseMove = (e: MouseEvent) => {
- 90:       const trail: MatrixTrail | undefined = state.isHovered
- 91:         ? {
- 92:             id: crypto.randomUUID(),
- 93:             x: e.clientX,
- 94:             y: e.clientY,
- 95:             char: getRandomChar(),
- 96:           }
- 97:         : undefined;
- 98:       dispatch({ type: "MOUSE_MOVE", x: e.clientX, y: e.clientY, trail });
- 99:     };
-100:     const handleMouseEnter = () => {
-101:       dispatch({ type: "MOUSE_ENTER" });
-102:       heroSection.style.cursor = "none";
-103:     };
-104:     const handleMouseLeave = () => {
-105:       dispatch({ type: "MOUSE_LEAVE" });
-106:       heroSection.style.cursor = "";
-107:     };
-108:     heroSection.addEventListener("mousemove", handleMouseMove);
-109:     heroSection.addEventListener("mouseenter", handleMouseEnter);
-110:     heroSection.addEventListener("mouseleave", handleMouseLeave);
-111:     return () => {
-112:       heroSection.removeEventListener("mousemove", handleMouseMove);
-113:       heroSection.removeEventListener("mouseenter", handleMouseEnter);
-114:       heroSection.removeEventListener("mouseleave", handleMouseLeave);
-115:       heroSection.style.cursor = "";
-116:     };
-117:   }, [heroRef, state.isHovered, getRandomChar]);
-118:   const handleAnimationEnd = useCallback((trailId: string) => {
-119:     dispatch({ type: "REMOVE_TRAIL", trailId });
-120:   }, []);
-121:   if (!heroRef.current || isMobile) return null; // P6ecf
-122:   const cursorStyles: CursorStyles = {
-123:     position: "fixed",
-124:     top: 0,
-125:     left: 0,
-126:     width: "100%",
-127:     height: "100%",
-128:     pointerEvents: "none",
-129:     isolation: "isolate",
-130:     zIndex: 40,
-131:     "--cursor-x": `${state.cursorPosition.x}px`,
-132:     "--cursor-y": `${state.cursorPosition.y}px`,
-133:   };
-134:   return (
-135:     <div
-136:       data-testid="matrix-cursor"
-137:       className={state.isHovered ? "matrix-cursor" : ""}
-138:       style={cursorStyles}
-139:     >
-140:       {state.trails.map((trail) => (
-141:         <div
-142:           key={trail.id}
-143:           data-testid="matrix-trail"
-144:           className="matrix-trail"
-145:           style={{
-146:             position: "fixed",
-147:             left: `${trail.x}px`,
-148:             top: `${trail.y}px`,
-149:             zIndex: 2,
-150:             pointerEvents: "none",
-151:           }}
-152:           onAnimationEnd={() => handleAnimationEnd(trail.id)}
-153:         >
-154:           {trail.char}
-155:         </div>
-156:       ))}
-157:       {state.isHovered && (
-158:         <div
-159:           style={{
-160:             position: "fixed",
-161:             top: 0,
-162:             left: 0,
-163:             width: "100%",
-164:             height: "100%",
-165:             pointerEvents: "none",
-166:             zIndex: 1,
-167:           }}
-168:         />
-169:       )}
-170:     </div>
-171:   );
-172: };
-173: export default MatrixCursor;
-````
-
-## File: src/components/CV/EducationTabContent.component.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
- 3: interface Education {
- 4:   _key: string;
- 5:   period?: string;
- 6:   institution?: string;
- 7:   degree?: string;
- 8:   description?: string;
- 9: }
-10: interface EducationTabContentProps {
-11:   education?: Education[];
-12: }
-13: const renderEducationHeader = (edu: Education): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{edu.period ?? ""}</span> -{" "}
-16:     {edu.institution ?? ""}
-17:   </>
-18: );
-19: const renderEducationSubHeader = (edu: Education): React.ReactNode =>
-20:   edu.degree && <p className="italic">{edu.degree}</p>;
-21: const EducationTabContent: React.FC<EducationTabContentProps> = ({
-22:   education,
-23: }) => (
-24:   <GenericCVSectionContent<Education>
-25:     items={education}
-26:     renderHeaderContent={renderEducationHeader}
-27:     renderSubHeaderContent={renderEducationSubHeader}
-28:   />
-29: );
-30: export default EducationTabContent;
-````
-
-## File: src/components/CV/ExperienceTabContent.component.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
- 3: interface Experience {
- 4:   _key: string;
- 5:   period?: string;
- 6:   company?: string;
- 7:   role?: string;
- 8:   description?: string;
- 9: }
-10: interface ExperienceTabContentProps {
-11:   experience?: Experience[];
-12: }
-13: const renderExperienceHeader = (exp: Experience): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{exp.period ?? ""}</span> -{" "}
-16:     {exp.company ?? ""}
-17:   </>
-18: );
-19: const renderExperienceSubHeader = (exp: Experience): React.ReactNode =>
-20:   exp.role && <p className="italic">{exp.role}</p>;
-21: const ExperienceTabContent: React.FC<ExperienceTabContentProps> = ({
-22:   experience,
-23: }) => (
-24:   <GenericCVSectionContent<Experience>
-25:     items={experience}
-26:     renderHeaderContent={renderExperienceHeader}
-27:     renderSubHeaderContent={renderExperienceSubHeader}
-28:   />
-29: );
-30: export default ExperienceTabContent;
-````
-
-## File: src/components/CV/VolunteerWorkTabContent.component.tsx
-````typescript
- 1: import React from "react";
- 2: import GenericCVSectionContent from "./GenericCVSectionContent.component";
- 3: interface VolunteerWork {
- 4:   _key: string;
- 5:   period?: string;
- 6:   organization?: string;
- 7:   role?: string;
- 8:   description?: string;
- 9: }
-10: interface VolunteerWorkTabContentProps {
-11:   volunteerWork?: VolunteerWork[];
-12: }
-13: const renderVolunteerHeader = (vol: VolunteerWork): React.ReactNode => (
-14:   <>
-15:     <span className='font-feature-settings-["tnum"]'>{vol.period ?? ""}</span> -{" "}
-16:     {vol.organization ?? ""}
-17:   </>
-18: );
-19: const renderVolunteerSubHeader = (vol: VolunteerWork): React.ReactNode =>
-20:   vol.role && <p className="italic">{vol.role}</p>;
-21: const VolunteerWorkTabContent: React.FC<VolunteerWorkTabContentProps> = ({
-22:   volunteerWork,
-23: }) => (
-24:   <GenericCVSectionContent<VolunteerWork>
-25:     items={volunteerWork}
-26:     renderHeaderContent={renderVolunteerHeader}
-27:     renderSubHeaderContent={renderVolunteerSubHeader}
-28:   />
-29: );
-30: export default VolunteerWorkTabContent;
-````
-
 ## File: src/components/Layout/MobileMenu.component.tsx
 ````typescript
   1: "use client";
@@ -19941,39 +19941,6 @@ vitest.setup.ts
 65:     jobs:
 66:       - build:
 67:           name: Build Next.js project
-````
-
-## File: .github/workflows/lint.yml
-````yaml
- 1: name: Code Quality
- 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
- 3: # structure/architecture (Vitest tests in src/__tests__/architecture).
- 4: on: [push, pull_request]
- 5: permissions:
- 6:   contents: read
- 7: concurrency:
- 8:   group: ${{ github.workflow }}-${{ github.ref }}
- 9:   cancel-in-progress: true
-10: jobs:
-11:   quality:
-12:     name: Style and architecture
-13:     runs-on: ubuntu-latest
-14:     timeout-minutes: 15
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-17:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
-18:       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-19:         with:
-20:           node-version: 26
-21:           cache: "pnpm"
-22:       - name: Install dependencies
-23:         run: pnpm install --frozen-lockfile --ignore-scripts
-24:       - name: Check formatting (Prettier)
-25:         run: pnpm format:check
-26:       - name: Lint CSS (Stylelint)
-27:         run: pnpm lint:css
-28:       - name: Architecture tests (naming and import boundaries)
-29:         run: pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false
 ````
 
 ## File: DOCS/README.md
@@ -20831,6 +20798,74 @@ vitest.setup.ts
 183: });
 ````
 
+## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
+````typescript
+ 1: import type { MockInstance } from "vitest";
+ 2: import React from "react";
+ 3: import { render, screen } from "@testing-library/react";
+ 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
+ 5: describe("ErrorBoundary", () => {
+ 6:   let consoleErrorSpy: MockInstance;
+ 7:   const errorMock = new Error("Dette er en testfeil");
+ 8:   beforeAll(() => {
+ 9:     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+10:   });
+11:   afterAll(() => {
+12:     consoleErrorSpy.mockRestore();
+13:   });
+14:   it("should render children when there is no error", () => {
+15:     // Arrange
+16:     const testContent = "Test Innhold";
+17:     // Act
+18:     render(
+19:       <ErrorBoundary>
+20:         <div>{testContent}</div>
+21:       </ErrorBoundary>,
+22:     );
+23:     // Assert
+24:     expect(screen.getByText(testContent)).toBeInTheDocument();
+25:   });
+26:   it("should render error fallback when there is an error", () => {
+27:     // Arrange
+28:     const ErrorComponent = () => {
+29:       throw errorMock;
+30:     };
+31:     const expectedTexts = {
+32:       heading: "Har du funnet en feil i Matrix?",
+33:       error: "Dette er en testfeil",
+34:     };
+35:     // Act
+36:     render(
+37:       <ErrorBoundary>
+38:         <ErrorComponent />
+39:       </ErrorBoundary>,
+40:     );
+41:     // Assert
+42:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
+43:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
+44:   });
+45:   it("should call console.error when an error occurs", () => {
+46:     // Arrange
+47:     const ErrorComponent = () => {
+48:       throw errorMock;
+49:     };
+50:     const expectedErrorArgs = [
+51:       "Uventet feil i Matrix:",
+52:       errorMock,
+53:       { componentStack: expect.any(String) },
+54:     ];
+55:     // Act
+56:     render(
+57:       <ErrorBoundary>
+58:         <ErrorComponent />
+59:       </ErrorBoundary>,
+60:     );
+61:     // Assert
+62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
+63:   });
+64: });
+````
+
 ## File: src/__tests__/Index/Section.test.tsx
 ````typescript
   1: import type { MockInstance } from "vitest";
@@ -21648,6 +21683,39 @@ vitest.setup.ts
 56: });
 ````
 
+## File: .github/workflows/lint.yml
+````yaml
+ 1: name: Code Quality
+ 2: # Enforces the hard rules for agents: code style (Prettier, Stylelint) and
+ 3: # structure/architecture (Vitest tests in src/__tests__/architecture).
+ 4: on: [push, pull_request]
+ 5: permissions:
+ 6:   contents: read
+ 7: concurrency:
+ 8:   group: ${{ github.workflow }}-${{ github.ref }}
+ 9:   cancel-in-progress: true
+10: jobs:
+11:   quality:
+12:     name: Style and architecture
+13:     runs-on: ubuntu-latest
+14:     timeout-minutes: 15
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+17:       - uses: pnpm/action-setup@2e223e0f0d2b8fd9872cbadb8b7428e5f8b5556d
+18:       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+19:         with:
+20:           node-version: 26
+21:           cache: "pnpm"
+22:       - name: Install dependencies
+23:         run: pnpm install --frozen-lockfile --ignore-scripts
+24:       - name: Check formatting (Prettier)
+25:         run: pnpm format:check
+26:       - name: Lint CSS (Stylelint)
+27:         run: pnpm lint:css
+28:       - name: Architecture tests (naming and import boundaries)
+29:         run: pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false
+````
+
 ## File: src/__tests__/api/form.test.ts
 ````typescript
   1: /**
@@ -22015,74 +22083,6 @@ vitest.setup.ts
 128:     });
 129:   });
 130: });
-````
-
-## File: src/__tests__/ErrorBoundary/ErrorBoundary.test.tsx
-````typescript
- 1: import type { MockInstance } from "vitest";
- 2: import React from "react";
- 3: import { render, screen } from "@testing-library/react";
- 4: import ErrorBoundary from "@/components/ErrorBoundary/ErrorBoundary.component";
- 5: describe("ErrorBoundary", () => {
- 6:   let consoleErrorSpy: MockInstance;
- 7:   const errorMock = new Error("Dette er en testfeil");
- 8:   beforeAll(() => {
- 9:     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-10:   });
-11:   afterAll(() => {
-12:     consoleErrorSpy.mockRestore();
-13:   });
-14:   it("should render children when there is no error", () => {
-15:     // Arrange
-16:     const testContent = "Test Innhold";
-17:     // Act
-18:     render(
-19:       <ErrorBoundary>
-20:         <div>{testContent}</div>
-21:       </ErrorBoundary>,
-22:     );
-23:     // Assert
-24:     expect(screen.getByText(testContent)).toBeInTheDocument();
-25:   });
-26:   it("should render error fallback when there is an error", () => {
-27:     // Arrange
-28:     const ErrorComponent = () => {
-29:       throw errorMock;
-30:     };
-31:     const expectedTexts = {
-32:       heading: "Har du funnet en feil i Matrix?",
-33:       error: "Dette er en testfeil",
-34:     };
-35:     // Act
-36:     render(
-37:       <ErrorBoundary>
-38:         <ErrorComponent />
-39:       </ErrorBoundary>,
-40:     );
-41:     // Assert
-42:     expect(screen.getByText(expectedTexts.heading)).toBeInTheDocument();
-43:     expect(screen.getByText(expectedTexts.error)).toBeInTheDocument();
-44:   });
-45:   it("should call console.error when an error occurs", () => {
-46:     // Arrange
-47:     const ErrorComponent = () => {
-48:       throw errorMock;
-49:     };
-50:     const expectedErrorArgs = [
-51:       "Uventet feil i Matrix:",
-52:       errorMock,
-53:       { componentStack: expect.any(String) },
-54:     ];
-55:     // Act
-56:     render(
-57:       <ErrorBoundary>
-58:         <ErrorComponent />
-59:       </ErrorBoundary>,
-60:     );
-61:     // Assert
-62:     expect(consoleErrorSpy).toHaveBeenCalledWith(...expectedErrorArgs);
-63:   });
-64: });
 ````
 
 ## File: src/__tests__/ErrorBoundary/RouteError.test.tsx
