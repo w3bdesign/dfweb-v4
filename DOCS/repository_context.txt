@@ -915,6 +915,74 @@ vitest.setup.ts
 83:           fi
 ````
 
+## File: .github/workflows/security.yml
+````yaml
+ 1: name: OWASP Security Scan
+ 2: on:
+ 3:   pull_request:
+ 4:   push:
+ 5:     branches: [main]
+ 6: permissions:
+ 7:   contents: read
+ 8: jobs:
+ 9:   secrets:
+10:     name: Secret Detection
+11:     runs-on: ubuntu-latest
+12:     permissions:
+13:       contents: read
+14:       pull-requests: write
+15:     steps:
+16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+17:         with:
+18:           fetch-depth: 0
+19:       - name: Run gitleaks
+20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+21:         env:
+22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+23:   sast:
+24:     name: SAST - Semgrep
+25:     runs-on: ubuntu-latest
+26:     permissions:
+27:       contents: read
+28:     container:
+29:       image: semgrep/semgrep:1.184.0
+30:     steps:
+31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+32:       - name: Run Semgrep with OWASP rules
+33:         run: |
+34:           semgrep scan \
+35:             --config .semgrep/ \
+36:             --config "p/owasp-top-ten" \
+37:             --config "p/javascript" \
+38:             --config "p/typescript" \
+39:             --config "p/react" \
+40:             --severity ERROR \
+41:             --error \
+42:             --verbose
+43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
+44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
+45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
+46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
+47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
+48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
+49:         # --error                    → Exit code 1 if findings (fails the job)
+50:   dependencies:
+51:     name: Dependency Scan
+52:     runs-on: ubuntu-latest
+53:     permissions:
+54:       contents: read
+55:     steps:
+56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+57:       - name: Run Trivy vulnerability scanner
+58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+59:         with:
+60:           scan-type: fs
+61:           scan-ref: .
+62:           severity: CRITICAL,HIGH
+63:           exit-code: 1
+64:           format: table
+````
+
 ## File: .github/workflows/snyk-scan.yml
 ````yaml
  1: name: Snyk Security Scan
@@ -14860,74 +14928,6 @@ vitest.setup.ts
 29:         run: pnpm exec vitest run src/__tests__/architecture --coverage.enabled=false
 ````
 
-## File: .github/workflows/security.yml
-````yaml
- 1: name: OWASP Security Scan
- 2: on:
- 3:   pull_request:
- 4:   push:
- 5:     branches: [main]
- 6: permissions:
- 7:   contents: read
- 8: jobs:
- 9:   secrets:
-10:     name: Secret Detection
-11:     runs-on: ubuntu-latest
-12:     permissions:
-13:       contents: read
-14:       pull-requests: write
-15:     steps:
-16:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-17:         with:
-18:           fetch-depth: 0
-19:       - name: Run gitleaks
-20:         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
-21:         env:
-22:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-23:   sast:
-24:     name: SAST - Semgrep
-25:     runs-on: ubuntu-latest
-26:     permissions:
-27:       contents: read
-28:     container:
-29:       image: semgrep/semgrep:1.184.0
-30:     steps:
-31:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-32:       - name: Run Semgrep with OWASP rules
-33:         run: |
-34:           semgrep scan \
-35:             --config .semgrep/ \
-36:             --config "p/owasp-top-ten" \
-37:             --config "p/javascript" \
-38:             --config "p/typescript" \
-39:             --config "p/react" \
-40:             --severity ERROR \
-41:             --error \
-42:             --verbose
-43:         # --config .semgrep/         → Custom rules (owasp-top10, react, nextjs)
-44:         # --config "p/owasp-top-ten" → Semgrep registry OWASP rules (auto-updated)
-45:         # --config "p/javascript"    → Semgrep registry JS rules (auto-updated)
-46:         # --config "p/typescript"    → Semgrep registry TS rules (auto-updated)
-47:         # --config "p/react"         → Semgrep registry React rules (auto-updated)
-48:         # --severity ERROR           → Only report ERROR-level findings (ignore WARNINGs)
-49:         # --error                    → Exit code 1 if findings (fails the job)
-50:   dependencies:
-51:     name: Dependency Scan
-52:     runs-on: ubuntu-latest
-53:     permissions:
-54:       contents: read
-55:     steps:
-56:       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-57:       - name: Run Trivy vulnerability scanner
-58:         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-59:         with:
-60:           scan-type: fs
-61:           scan-ref: .
-62:           severity: CRITICAL,HIGH
-63:           exit-code: 1
-64:           format: table
-````
-
 ## File: .github/copilot-instructions.md
 ````markdown
   1: # DFWeb v4 - Copilot Instructions
@@ -17206,84 +17206,6 @@ vitest.setup.ts
 74: );
 ````
 
-## File: studio/package.json
-````json
- 1: {
- 2:   "name": "dfweb-v4",
- 3:   "private": true,
- 4:   "version": "1.0.5",
- 5:   "main": "package.json",
- 6:   "scripts": {
- 7:     "dev": "sanity dev",
- 8:     "start": "sanity start",
- 9:     "build": "sanity build",
-10:     "deploy": "sanity deploy",
-11:     "deploy-graphql": "sanity graphql deploy"
-12:   },
-13:   "keywords": [
-14:     "sanity"
-15:   ],
-16:   "dependencies": {
-17:     "react": "^19.2.8",
-18:     "react-dom": "^19.2.8",
-19:     "react-icons": "^5.7.0",
-20:     "sanity": "^6.21.0",
-21:     "styled-components": "^6.5.3"
-22:   },
-23:   "devDependencies": {
-24:     "@types/react": "^19.2.18",
-25:     "eslint": "^10.9.1",
-26:     "prettier": "^3.9.10",
-27:     "typescript": "^7.0.2"
-28:   },
-29:   "pnpm": {
-30:     "overrides": {
-31:       "adm-zip": ">=0.6.1",
-32:       "basic-ftp": ">=6.2.1",
-33:       "brace-expansion": ">=5.0.12",
-34:       "dompurify": ">=3.4.17",
-35:       "esbuild": ">=0.28.2",
-36:       "flatted": ">=3.4.4",
-37:       "js-yaml": ">=5.4.1",
-38:       "lodash": ">=4.18.1",
-39:       "lodash-es": ">=4.18.1",
-40:       "minimatch": "11.0.5",
-41:       "nanoid": "5.1.16",
-42:       "picomatch": "4.0.7",
-43:       "postcss": ">=8.5.26",
-44:       "smol-toml": ">=1.9.1",
-45:       "source-map-js": ">=1.2.2",
-46:       "undici": ">=8.12.2",
-47:       "vite": ">=8.3.3",
-48:       "ws": ">=8.21.3",
-49:       "yaml": ">=2.9.0",
-50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
-51:     }
-52:   },
-53:   "overrides": {
-54:     "adm-zip": ">=0.6.1",
-55:     "smol-toml": ">=1.9.1",
-56:     "brace-expansion": ">=5.0.12",
-57:     "dompurify": ">=3.4.17",
-58:     "esbuild": ">=0.28.2",
-59:     "uuid": ">=14.0.3",
-60:     "js-yaml": ">=5.5.0",
-61:     "nanoid": ">=6.0.2",
-62:     "postcss": ">=8.5.26",
-63:     "source-map-js": ">=1.2.2",
-64:     "undici": ">=8.12.4",
-65:     "vite": ">=8.3.3",
-66:     "ws": ">=8.21.3"
-67:   },
-68:   "prettier": {
-69:     "semi": false,
-70:     "printWidth": 100,
-71:     "bracketSpacing": false,
-72:     "singleQuote": true
-73:   }
-74: }
-````
-
 ## File: .eslintrc.json
 ````json
  1: {
@@ -19514,6 +19436,84 @@ vitest.setup.ts
 73:     ),
 74:     viewAmount: 0.2,
 75:   });
+````
+
+## File: studio/package.json
+````json
+ 1: {
+ 2:   "name": "dfweb-v4",
+ 3:   "private": true,
+ 4:   "version": "1.0.5",
+ 5:   "main": "package.json",
+ 6:   "scripts": {
+ 7:     "dev": "sanity dev",
+ 8:     "start": "sanity start",
+ 9:     "build": "sanity build",
+10:     "deploy": "sanity deploy",
+11:     "deploy-graphql": "sanity graphql deploy"
+12:   },
+13:   "keywords": [
+14:     "sanity"
+15:   ],
+16:   "dependencies": {
+17:     "react": "^19.2.8",
+18:     "react-dom": "^19.2.8",
+19:     "react-icons": "^5.7.0",
+20:     "sanity": "^6.21.0",
+21:     "styled-components": "^6.5.3"
+22:   },
+23:   "devDependencies": {
+24:     "@types/react": "^19.2.18",
+25:     "eslint": "^10.9.1",
+26:     "prettier": "^3.10.1",
+27:     "typescript": "^7.0.2"
+28:   },
+29:   "pnpm": {
+30:     "overrides": {
+31:       "adm-zip": ">=0.6.1",
+32:       "basic-ftp": ">=6.2.1",
+33:       "brace-expansion": ">=5.0.12",
+34:       "dompurify": ">=3.4.17",
+35:       "esbuild": ">=0.28.2",
+36:       "flatted": ">=3.4.4",
+37:       "js-yaml": ">=5.4.1",
+38:       "lodash": ">=4.18.1",
+39:       "lodash-es": ">=4.18.1",
+40:       "minimatch": "11.0.5",
+41:       "nanoid": "5.1.16",
+42:       "picomatch": "4.0.7",
+43:       "postcss": ">=8.5.26",
+44:       "smol-toml": ">=1.9.1",
+45:       "source-map-js": ">=1.2.2",
+46:       "undici": ">=8.12.2",
+47:       "vite": ">=8.3.3",
+48:       "ws": ">=8.21.3",
+49:       "yaml": ">=2.9.0",
+50:       "@babel/plugin-transform-modules-systemjs": ">=8.0.1"
+51:     }
+52:   },
+53:   "overrides": {
+54:     "adm-zip": ">=0.6.1",
+55:     "smol-toml": ">=1.9.1",
+56:     "brace-expansion": ">=5.0.12",
+57:     "dompurify": ">=3.4.17",
+58:     "esbuild": ">=0.28.2",
+59:     "uuid": ">=14.0.3",
+60:     "js-yaml": ">=5.5.0",
+61:     "nanoid": ">=6.0.2",
+62:     "postcss": ">=8.5.26",
+63:     "source-map-js": ">=1.2.2",
+64:     "undici": ">=8.12.4",
+65:     "vite": ">=8.3.3",
+66:     "ws": ">=8.21.3"
+67:   },
+68:   "prettier": {
+69:     "semi": false,
+70:     "printWidth": 100,
+71:     "bracketSpacing": false,
+72:     "singleQuote": true
+73:   }
+74: }
 ````
 
 ## File: tsconfig.json
@@ -22620,7 +22620,7 @@ vitest.setup.ts
 79:     "pa11y": "^10.0.0",
 80:     "postcss": "^8.5.32",
 81:     "postcss-load-config": "^6.0.1",
-82:     "prettier": "3.9.10",
+82:     "prettier": "3.10.1",
 83:     "react-doctor": "^0.9.22",
 84:     "sanity": "6.21.0",
 85:     "stylelint": "^17.14.1",
