@@ -69,5 +69,19 @@ class AnthropicProvider(BaseProvider):
             messages=[{"role": "user", "content": prompt}],
         )
 
-        # Anthropic returns a list of content blocks
-        return response.content[0].text.strip()
+        # Anthropic returns a list of content blocks of mixed types
+        # (thinking, redacted_thinking, text, tool_use, ...). Keep only text.
+        text_parts = [
+            block.text
+            for block in response.content
+            if getattr(block, "type", None) == "text"
+        ]
+
+        if not text_parts:
+            raise RuntimeError(
+                f"Anthropic returned no text content (stop_reason={response.stop_reason}). "
+                "If thinking is enabled, max_tokens may have been exhausted before "
+                "the answer was produced."
+            )
+
+        return "".join(text_parts).strip()

@@ -1,68 +1,68 @@
 import React from "react";
 import { Meta, Story } from "@ladle/react";
-import BounceInScroll from "@/components/Animations/BounceInScroll.component";
-import { IAnimateBounceProps } from "@/components/Animations/types/Animations.types";
+import SlideUpInScroll from "@/components/Animations/SlideUpInScroll.component";
+import { ISlideUpProps } from "@/components/Animations/types/Animations.types";
 
 export default {
-  title: "Animations/BounceInScroll",
-  component: BounceInScroll,
+  title: "Animations/SlideUpInScroll",
+  component: SlideUpInScroll,
 } as Meta;
 
 const Card = () => (
   <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
     <h2 className="text-2xl text-white mb-4">Animated Card</h2>
     <p className="text-gray-300">
-      This card demonstrates the BounceInScroll animation component.
+      This card demonstrates the SlideUpInScroll animation component.
     </p>
   </div>
 );
 
-const storyWrapper = (storyArgs: IAnimateBounceProps) => (
+const storyWrapper = (storyArgs: ISlideUpProps) => (
   <div className="min-h-[150vh] bg-gray-800 p-8">
     <div className="text-white mb-[100vh]">
       ⬇️ Scroll down to see the animation
     </div>
-    <BounceInScroll {...storyArgs} />
+    <SlideUpInScroll {...storyArgs} />
   </div>
 );
 
-export const Default: Story<IAnimateBounceProps> = () =>
+export const Default: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     viewAmount: 0.2,
   });
 
-export const InstantAnimation: Story<IAnimateBounceProps> = () =>
+export const InstantAnimation: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     instant: true,
   });
 
-export const FullViewTrigger: Story<IAnimateBounceProps> = () =>
+export const FullViewTrigger: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     viewAmount: "all",
   });
 
-export const PartialViewTrigger: Story<IAnimateBounceProps> = () =>
+export const PartialViewTrigger: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     viewAmount: "some",
   });
 
-export const CustomViewAmount: Story<IAnimateBounceProps> = () =>
+export const CustomViewAmount: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     viewAmount: 0.5,
   });
 
-export const WithCustomClass: Story<IAnimateBounceProps> = () =>
+export const WithCustomClass: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: <Card />,
     cssClass: "max-w-md mx-auto",
   });
 
-export const LargeContent: Story<IAnimateBounceProps> = () =>
+export const LargeContent: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -74,7 +74,7 @@ export const LargeContent: Story<IAnimateBounceProps> = () =>
     viewAmount: 0.2,
   });
 
-export const TextContent: Story<IAnimateBounceProps> = () =>
+export const TextContent: Story<ISlideUpProps> = () =>
   storyWrapper({
     children: (
       <div className="text-white text-center">

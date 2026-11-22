@@ -60,14 +60,13 @@ Sanity.io and Typescript.
 - React testing library for unit testing
 - Cypress for E2E testing
 - Playwright for cross-browser E2E testing
-- Contact form with Email.js and CSRF protection
+- Contact form sent directly from the browser with EmailJS (requires JavaScript)
 - Polymorphic components
-- Automatic sitemap generation (see /api/siteMapGenerator.ts)
-- Google rich results for each individual page
-- 100% / 100% / 100% / 100% score in Google Lighthouse
+- Automatic sitemap generation in [`src/app/sitemap.ts`](src/app/sitemap.ts)
+- Person and WebSite JSON-LD structured data shared across pages
+- Lighthouse results shown above are measurements, not a guarantee for every run
 - Automated Lighthouse CI testing integrated with GitHub Actions
 - React Hook Form with Typescript and Zod for efficient form handling and validation
-- Reusable GenericForm component for easy form creation and management
 - Error handling with react-error-boundary for improved user experience and
   easier debugging
 - AI-friendly repository documentation with automated updates (Repomix with
@@ -76,13 +75,11 @@ Sanity.io and Typescript.
   covering project-specific patterns, gotchas, code quality principles, UI rules
   and supply chain security
 - Sanity image URL generation with automatic resizing via `@sanity/image-url`.
-- Efficient data fetching in `/prosjekter` using Next.js preloading,
-  React.cache, and server-only patterns, this achieves a LCP of 0.18s, down with
-  around 1 second.
+- Cached, server-only project fetching with tag-based revalidation and preloading
 
 ### Design
 
-- Fully responsive design tested on all devices
+- Responsive layouts with desktop and mobile styles
 - React Icons for project icons
 - Tailwind 4 for styling with a CSS custom-property design token system
   ([`tailwind.config.ts`](tailwind.config.ts:1)) — brand/matrix colors, semantic
@@ -108,11 +105,12 @@ Sanity.io and Typescript.
 - Continuous Integration with CircleCI
 - CircleCI will warn before deploy if tests fail (setup for React testing library)
 - Github action workflow for Cypress
-- Code quality analysis with Codacy, Sonarcloud and Codeclimate
+- Code quality analysis with Codacy
 - E2E testing with Cypress and Playwright integrated with Github actions
 - Unit testing with Vitest and React Testing Library integrated with CircleCI
 - Test coverage setup with Codecov
-- 100% Vitest coverage of components, API routes and CSRF (see [`DOCS/TEST-STRATEGY.md`](DOCS/TEST-STRATEGY.md))
+- Vitest coverage thresholds enforced for components, API routes and structured
+  data (see [`DOCS/TEST-STRATEGY.md`](DOCS/TEST-STRATEGY.md))
 - AI-powered commit message generation following Conventional Commits with
   gitmojis
 - Automated React health checks with [React Doctor](https://github.com/millionco/react-doctor)
@@ -155,10 +153,10 @@ Sanity.io and Typescript.
 - Automated security vulnerability scanning with Snyk
   - Scans for vulnerabilities in open-source dependencies on every PR and push to main
   - Integrates with GitHub Security tab for vulnerability tracking
-- Supply chain attack prevention with 7-day minimum release age
-  - Packages must be published for at least 7 days before installation
-  - Enforced via `.npmrc` (pnpm runtime) and `renovate.json` (automated updates)
-  - All CI workflows use `--frozen-lockfile` to prevent bypassing
+- Supply chain defenses with minimum release ages
+  - Manual installs wait at least 48 hours, enforced via `.npmrc`
+  - Renovate updates wait at least 7 days, configured in `renovate.json`
+  - CI installs use `--frozen-lockfile` to preserve the committed dependency graph
   - Protects against compromised package releases (like Shai Hulud incidents)
 - GitHub Actions supply chain hardening with SHA pinning
   - All workflow action references pinned to immutable commit SHAs (not mutable tags or branches)
@@ -172,30 +170,33 @@ Sanity.io and Typescript.
 
 ### Environment Variables
 
-- Type-safe environment variable validation with envalid
-  - Runtime validation of required environment variables
-  - Clear error messages with examples for missing variables
-  - Separate handling of client-side and server-side variables
-  - Default values where appropriate
-  - Required variables:
+Copy [`.env.example`](.env.example) to `.env.local` and configure the services
+you use. Environment variables are read directly; there is no startup schema
+validation.
 
-    ```env
-    # Email Configuration (client-side)
-    NEXT_PUBLIC_EMAIL_API_KEY=user_xxx        # EmailJS API key
-    NEXT_PUBLIC_EMAIL_TEMPLATE_KEY=template_xxx # EmailJS template key
-    NEXT_PUBLIC_EMAIL_SERVICE_KEY=service_xxx  # EmailJS service key
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project; defaults to `41s7iutf` |
+| `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset; defaults to `production` |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | Sanity API version; defaults to `2026-05-01` |
+| `NEXT_PUBLIC_EMAIL_API_KEY` | EmailJS public key, required to send the contact form |
+| `NEXT_PUBLIC_EMAIL_TEMPLATE_KEY` | EmailJS template ID, required to send the contact form |
+| `NEXT_PUBLIC_EMAIL_SERVICE_KEY` | EmailJS service ID, required to send the contact form |
+| `REVALIDATE_SECRET` | Server-only secret for the Sanity revalidation webhook |
 
-    # Security Configuration (server-side)
-    CSRF_SECRET=your-secure-csrf-secret-key   # CSRF protection secret key
-    ```
+The EmailJS identifiers are intentionally public and bundled into the browser.
+Never put private keys in `NEXT_PUBLIC_*` variables. Configure allowed origins
+and any supported anti-abuse controls in the EmailJS dashboard. The form sends
+through EmailJS, not a custom server endpoint, and requires JavaScript.
 
-  - Validation prevents application startup if required variables are missing
-  - TypeScript integration for type-safe access to environment variables
+Generate a strong random value for `REVALIDATE_SECRET` and configure the same
+value in the deployment environment and Sanity webhook. Without it, the
+revalidation endpoint rejects requests; time-based content revalidation still
+works.
 
 ### Testing Standards
 
 - ISTQB-aligned comprehensive test strategy
-  - Detailed test strategy documentation in `DOCS/TEST_STRATEGY.md`
   - Multi-level test approach (Unit, Component, E2E)
   - Risk-based testing methodology
   - Defined test metrics and reporting
